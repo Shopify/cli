@@ -1,0 +1,1 @@
+shopify app config push [flags]

@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "rootDir": "/",
+    },
+    "include": [
+        "../src-docs/**/*.doc.ts"
+    ],
+    "exclude": []
+}

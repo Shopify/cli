@@ -1,0 +1,3441 @@
+[
+  {
+    "name": "app build",
+    "description": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
+    "overviewPreviewDescription": "Build the app.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app build",
+            "code": "shopify app build [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app build"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app build` command:",
+        "type": "appbuild",
+        "typeDefinitions": {
+          "appbuild": {
+            "filePath": "docs-commands/interfaces/app-build.interface.ts",
+            "name": "appbuild",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--skip-dependencies-installation",
+                "value": "\"\"",
+                "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "Application's Client ID that will be exposed at build time.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appbuild {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Skips the installation of dependencies. Deprecated, use workspaces instead.\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Application's Client ID that will be exposed at build time.\n   */\n  '--client-id <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app config link",
+    "description": "Pulls app configuration from the Partner Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  This command presents you with a prompt with the following steps:\n\n  - Which Partner organization is this work for?\n    - This prompt shows only if the account you are logged into has more than one organization.\n  - Create this project as a new app on Shopify?\n    - Choosing yes will create a new app in your Partner Dashboard with the default configuration\n    - Choosing no will prompt you to choose from a list of all the apps in your organization\n  - Configuration file name\n    - Enter the name for this configuration file. The `shopify.app.{config-name}.toml` file will be created. If it already exists, you will be prompted to confirm overwriting.\n\n  For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
+    "overviewPreviewDescription": "Fetch your app configuration from the Partner Dashboard.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app config link",
+            "code": "shopify app config link [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app config link"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app config link` command:",
+        "type": "appconfiglink",
+        "typeDefinitions": {
+          "appconfiglink": {
+            "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
+            "name": "appconfiglink",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appconfiglink {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app config push",
+    "description": "Pushes your default app configuration to Shopify. You can specify a different configuration file with the `--config` flag. This overwrites the settings for the app specified in the configuration file in your Partner Dashboard.",
+    "overviewPreviewDescription": "Pushes your default app configuration to Shopify.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app config push",
+            "code": "shopify app config push [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app config push"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app config push` command:",
+        "type": "appconfigpush",
+        "typeDefinitions": {
+          "appconfigpush": {
+            "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
+            "name": "appconfigpush",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Push configuration without asking for confirmation.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appconfigpush {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Push configuration without asking for confirmation.\n   */\n  '-f, --force'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app config use",
+    "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
+    "overviewPreviewDescription": "Activate an app configuration.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app config use",
+            "code": "shopify app config use [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app config use"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app config use` command:",
+        "type": "appconfiguse",
+        "typeDefinitions": {
+          "appconfiguse": {
+            "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
+            "name": "appconfiguse",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset current configuration.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appconfiguse {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset current configuration.\n   */\n  '--reset'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app deploy",
+    "description": "[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and deploys app extensions.\n\n  When you run this command, Shopify CLI creates an app version that contains a snapshot of all of your app extensions, including the app extensions that you manage in the Partner Dashboard, and releases the app version to users.\n\n  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). When you're ready to deploy your app, you need to deploy these components to your own hosting solution. [Learn more about deploying your web app](https://shopify.dev/docs/apps/deployment/web).\n  ",
+    "overviewPreviewDescription": "Deploy your Shopify app.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app deploy",
+            "code": "shopify app deploy [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app deploy"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app deploy` command:",
+        "type": "appdeploy",
+        "typeDefinitions": {
+          "appdeploy": {
+            "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+            "name": "appdeploy",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Deploy without asking for confirmation.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-release",
+                "value": "\"\"",
+                "description": "Creates a version but doesn't release it - it's not made available to merchants.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--message <value>",
+                "value": "string",
+                "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--version <value>",
+                "value": "string",
+                "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--source-control-url <value>",
+                "value": "string",
+                "description": "URL associated with the new app version.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appdeploy {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Reset all your settings.\n   */\n  '--reset'?: ''\n\n  /**\n   * Deploy without asking for confirmation.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Creates a version but doesn't release it - it's not made available to merchants.\n   */\n  '--no-release'?: ''\n\n  /**\n   * Optional message that will be associated with this version. This is for internal use only and won't be available externally.\n   */\n  '--message <value>'?: string\n\n  /**\n   * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.\n   */\n  '--version <value>'?: string\n\n  /**\n   * URL associated with the new app version.\n   */\n  '--source-control-url <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app dev",
+    "description": "[Builds the app](/docs/apps/tools/cli/commands#build) and lets you preview it on a [development store](/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB).\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a staff account on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n  ",
+    "overviewPreviewDescription": "Run the app.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app dev",
+            "code": "shopify app dev [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app dev"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app dev` command:",
+        "type": "appdev",
+        "typeDefinitions": {
+          "appdev": {
+            "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+            "name": "appdev",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--skip-dependencies-installation",
+                "value": "\"\"",
+                "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-update",
+                "value": "\"\"",
+                "description": "Skips the Partners Dashboard URL update step.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--subscription-product-url <value>",
+                "value": "string",
+                "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--checkout-cart-url <value>",
+                "value": "string",
+                "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--tunnel-url <value>",
+                "value": "string",
+                "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the theme app extension host theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--theme-app-extension-port <value>",
+                "value": "string",
+                "description": "Local port of the theme app extension development server.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--notify <value>",
+                "value": "string",
+                "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appdev {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Store URL. Must be an existing development or Shopify Plus sandbox store.\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Reset all your settings.\n   */\n  '--reset'?: ''\n\n  /**\n   * Skips the installation of dependencies. Deprecated, use workspaces instead.\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Skips the Partners Dashboard URL update step.\n   */\n  '--no-update'?: ''\n\n  /**\n   * Resource URL for subscription UI extension. Format: \"/products/{productId}\"\n   */\n  '--subscription-product-url <value>'?: string\n\n  /**\n   * Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"\n   */\n  '--checkout-cart-url <value>'?: string\n\n  /**\n   * Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".\n   */\n  '--tunnel-url <value>'?: string\n\n  /**\n   * Theme ID or name of the theme app extension host theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Local port of the theme app extension development server.\n   */\n  '--theme-app-extension-port <value>'?: string\n\n  /**\n   * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.\n   */\n  '--notify <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app env pull",
+    "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
+    "overviewPreviewDescription": "Pull app and extensions environment variables.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app env pull",
+            "code": "shopify app env pull [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app env pull"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app env pull` command:",
+        "type": "appenvpull",
+        "typeDefinitions": {
+          "appenvpull": {
+            "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
+            "name": "appenvpull",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Specify an environment file to update if the update flag is set",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appenvpull {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Specify an environment file to update if the update flag is set\n   */\n  '--env-file <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app env show",
+    "description": "Displays environment variables that can be used to deploy apps and app extensions.",
+    "overviewPreviewDescription": "Display app and extensions environment variables.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app env show",
+            "code": "shopify app env show [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app env show"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app env show` command:",
+        "type": "appenvshow",
+        "typeDefinitions": {
+          "appenvshow": {
+            "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
+            "name": "appenvshow",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appenvshow {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app function build",
+    "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
+    "overviewPreviewDescription": "Compile a function to wasm.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app function build",
+            "code": "shopify app function build [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app function build"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app function build` command:",
+        "type": "appfunctionbuild",
+        "typeDefinitions": {
+          "appfunctionbuild": {
+            "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
+            "name": "appfunctionbuild",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appfunctionbuild {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app function run",
+    "description": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
+    "overviewPreviewDescription": "Run a function locally for testing.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app function run",
+            "code": "shopify app function run [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app function run"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app function run` command:",
+        "type": "appfunctionrun",
+        "typeDefinitions": {
+          "appfunctionrun": {
+            "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+            "name": "appfunctionrun",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-i, --input <value>",
+                "value": "string",
+                "description": "The input JSON to pass to the function. If omitted, standard input is used.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --export <value>",
+                "value": "string",
+                "description": "Name of the wasm export to invoke.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Log the run result as a JSON object.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appfunctionrun {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The input JSON to pass to the function. If omitted, standard input is used.\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Name of the wasm export to invoke.\n   */\n  '-e, --export <value>'?: string\n\n  /**\n   * Log the run result as a JSON object.\n   */\n  '-j, --json'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app function schema",
+    "description": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
+    "overviewPreviewDescription": "Fetch the latest GraphQL schema for a function.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app function schema",
+            "code": "shopify app function schema [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app function schema"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app function schema` command:",
+        "type": "appfunctionschema",
+        "typeDefinitions": {
+          "appfunctionschema": {
+            "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+            "name": "appfunctionschema",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID to fetch the schema with.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--stdout",
+                "value": "\"\"",
+                "description": "Output the schema to stdout instead of writing to a file.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appfunctionschema {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID to fetch the schema with.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Output the schema to stdout instead of writing to a file.\n   */\n  '--stdout'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app function typegen",
+    "description": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
+    "overviewPreviewDescription": "Generate GraphQL types for a JavaScript function.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app function typegen",
+            "code": "shopify app function typegen [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app function typegen"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app function typegen` command:",
+        "type": "appfunctiontypegen",
+        "typeDefinitions": {
+          "appfunctiontypegen": {
+            "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
+            "name": "appfunctiontypegen",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appfunctiontypegen {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app generate extension",
+    "description": "Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.\n  ",
+    "overviewPreviewDescription": "Generate a new app Extension.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app generate extension",
+            "code": "shopify app generate extension [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app generate extension"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app generate extension` command:",
+        "type": "appgenerateextension",
+        "typeDefinitions": {
+          "appgenerateextension": {
+            "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+            "name": "appgenerateextension",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --type <value>",
+                "value": "string",
+                "description": "Deprecated. Please use --template",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --template <value>",
+                "value": "string",
+                "description": "Extension template",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "name of your Extension",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--flavor <value>",
+                "value": "string",
+                "description": "Choose a starting template for your extension, where applicable",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appgenerateextension {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Deprecated. Please use --template\n   */\n  '-t, --type <value>'?: string\n\n  /**\n   * Extension template\n   */\n  '-t, --template <value>'?: string\n\n  /**\n   * name of your Extension\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Choose a starting template for your extension, where applicable\n   */\n  '--flavor <value>'?: string\n\n  /**\n   * Reset all your settings.\n   */\n  '--reset'?: ''\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app import-flow-legacy-extensions",
+    "description": "Import dashboard-managed flow extensions into your app.",
+    "overviewPreviewDescription": "Import dashboard-managed flow extensions into your app.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app import-flow-legacy-extensions",
+            "code": "shopify app import-flow-legacy-extensions [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app import-flow-legacy-extensions"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app import-flow-legacy-extensions` command:",
+        "type": "appimportflowlegacyextensions",
+        "typeDefinitions": {
+          "appimportflowlegacyextensions": {
+            "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+            "name": "appimportflowlegacyextensions",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appimportflowlegacyextensions {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app info",
+    "description": "The information returned includes the following:\n\n  - The app and development store or Plus sandbox store that's used when you run the [dev](https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using [dev --reset](https://shopify.dev/docs/apps/tools/cli/commands#dev).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
+    "overviewPreviewDescription": "Print basic information about your app and extensions.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app info",
+            "code": "shopify app info [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app info"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app info` command:",
+        "type": "appinfo",
+        "typeDefinitions": {
+          "appinfo": {
+            "filePath": "docs-commands/interfaces/app-info.interface.ts",
+            "name": "appinfo",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--json",
+                "value": "\"\"",
+                "description": "format output as JSON",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--web-env",
+                "value": "\"\"",
+                "description": "Outputs environment variables necessary for running and deploying web/.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appinfo {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * format output as JSON\n   */\n  '--json'?: ''\n\n  /**\n   * Outputs environment variables necessary for running and deploying web/.\n   */\n  '--web-env'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app release",
+    "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
+    "overviewPreviewDescription": "Release an app version.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app release",
+            "code": "shopify app release --version &lt;version&gt;",
+            "language": "bash"
+          }
+        ],
+        "title": "app release"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app release` command:",
+        "type": "apprelease",
+        "typeDefinitions": {
+          "apprelease": {
+            "filePath": "docs-commands/interfaces/app-release.interface.ts",
+            "name": "apprelease",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Release without asking for confirmation.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--version <value>",
+                "value": "string",
+                "description": "The name of the app version to release."
+              }
+            ],
+            "value": "export interface apprelease {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Reset all your settings.\n   */\n  '--reset'?: ''\n\n  /**\n   * Release without asking for confirmation.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The name of the app version to release.\n   */\n  '--version <value>': string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app update-url",
+    "description": "Updates the app URL and allowed redirection URLs for your app. When you specify URLs using this command, the current URLs are overwritten.\n\n  Your current app URLs are provided as placeholder responses. To keep either your app URL or redirect URLs the same, submit the placeholder content. Alternatively, use the `--app-url` or `--redirect-urls` flag to update only one of these settings.",
+    "overviewPreviewDescription": "Update your app and redirect URLs in the Partners Dashboard.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app update-url",
+            "code": "shopify app update-url [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app update-url"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app update-url` command:",
+        "type": "appupdateurl",
+        "typeDefinitions": {
+          "appupdateurl": {
+            "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+            "name": "appupdateurl",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--app-url <value>",
+                "value": "string",
+                "description": "URL through which merchants will access your app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--redirect-urls <value>",
+                "value": "string",
+                "description": "Comma separated list of allowed URLs where merchants are redirected after the app is installed",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appupdateurl {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * URL through which merchants will access your app.\n   */\n  '--app-url <value>'?: string\n\n  /**\n   * Comma separated list of allowed URLs where merchants are redirected after the app is installed\n   */\n  '--redirect-urls <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "app versions list",
+    "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
+    "overviewPreviewDescription": "List deployed versions of your app.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app versions list",
+            "code": "shopify app versions list [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app versions list"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app versions list` command:",
+        "type": "appversionslist",
+        "typeDefinitions": {
+          "appversionslist": {
+            "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+            "name": "appversionslist",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID to fetch versions for.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--json",
+                "value": "\"\"",
+                "description": "Output the versions list as JSON.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appversionslist {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID to fetch versions for.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Output the versions list as JSON.\n   */\n  '--json'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "auth logout",
+    "description": "Logs you out of the Shopify account or Partner account and store.",
+    "overviewPreviewDescription": "Logs you out of the Shopify account or Partner account and store.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "auth logout",
+            "code": "shopify auth logout ",
+            "language": "bash"
+          }
+        ],
+        "title": "auth logout"
+      }
+    },
+    "definitions": [],
+    "category": "Commands",
+    "subCategory": "auth",
+    "related": []
+  },
+  {
+    "name": "config autocorrect off",
+    "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+    "overviewPreviewDescription": "Disable autocorrect. Off by default.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autocorrect off",
+            "code": "shopify config autocorrect off",
+            "language": "bash"
+          }
+        ],
+        "title": "config autocorrect off"
+      }
+    },
+    "definitions": [],
+    "category": "Commands",
+    "subCategory": "config",
+    "related": []
+  },
+  {
+    "name": "config autocorrect on",
+    "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+    "overviewPreviewDescription": "Enable autocorrect. Off by default.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autocorrect on",
+            "code": "shopify config autocorrect on",
+            "language": "bash"
+          }
+        ],
+        "title": "config autocorrect on"
+      }
+    },
+    "definitions": [],
+    "category": "Commands",
+    "subCategory": "config",
+    "related": []
+  },
+  {
+    "name": "config autocorrect status",
+    "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+    "overviewPreviewDescription": "Check whether autocorrect is enabled or disabled. On by default.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autocorrect status",
+            "code": "shopify config autocorrect status",
+            "language": "bash"
+          }
+        ],
+        "title": "config autocorrect status"
+      }
+    },
+    "definitions": [],
+    "category": "Commands",
+    "subCategory": "config",
+    "related": []
+  },
+  {
+    "name": "search",
+    "description": "Starts a search on shopify.dev.",
+    "overviewPreviewDescription": "Starts a search on shopify.dev.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "search",
+            "code": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search &lt;query&gt;\n\n# search for a phrase on Shopify.dev\nshopify search \"&lt;a search query separated by spaces&gt;\"\n",
+            "language": "bash"
+          }
+        ],
+        "title": "search"
+      }
+    },
+    "definitions": [],
+    "category": "Commands",
+    "subCategory": "common",
+    "related": []
+  },
+  {
+    "name": "theme check",
+    "description": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
+    "overviewPreviewDescription": "Validate the theme.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme check",
+            "code": "shopify theme check [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme check"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme check` command:",
+        "type": "themecheck",
+        "typeDefinitions": {
+          "themecheck": {
+            "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+            "name": "themecheck",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--dev-preview",
+                "value": "\"\"",
+                "description": "Use the dev preview version of theme check Applies the typescript implementation of theme check to the theme",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-a, --auto-correct",
+                "value": "\"\"",
+                "description": "Automatically fix offenses",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --category <value>",
+                "value": "string",
+                "description": "Only run this category of checks Runs checks matching all categories when specified more than once",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-C, --config <value>",
+                "value": "string",
+                "description": "Use the config provided, overriding .theme-check.yml if present  Supports all theme-check: config values, e.g., theme-check:theme-app-extension,  theme-check:recommended, theme-check:all  For backwards compatibility, :theme_app_extension is also supported",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-x, --exclude-category <value>",
+                "value": "string",
+                "description": "Exclude this category of checks Excludes checks matching any category when specified more than once",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--fail-level <value>",
+                "value": "string",
+                "description": "Minimum severity for exit with error code",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--update-docs",
+                "value": "\"\"",
+                "description": "Update Theme Check docs (objects, filters, and tags)",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--init",
+                "value": "\"\"",
+                "description": "Generate a .theme-check.yml file",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--list",
+                "value": "\"\"",
+                "description": "List enabled checks",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --output <value>",
+                "value": "string",
+                "description": "The output format to use",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--print",
+                "value": "\"\"",
+                "description": "Output active config to STDOUT",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-v, --version",
+                "value": "\"\"",
+                "description": "Print Theme Check version",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themecheck {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme\n   */\n  '--dev-preview'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Automatically fix offenses\n   */\n  '-a, --auto-correct'?: ''\n\n  /**\n   * Only run this category of checks\nRuns checks matching all categories when specified more than once\n   */\n  '-c, --category <value>'?: string\n\n  /**\n   * Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported \n   */\n  '-C, --config <value>'?: string\n\n  /**\n   * Exclude this category of checks\nExcludes checks matching any category when specified more than once\n   */\n  '-x, --exclude-category <value>'?: string\n\n  /**\n   * Minimum severity for exit with error code\n   */\n  '--fail-level <value>'?: string\n\n  /**\n   * Update Theme Check docs (objects, filters, and tags)\n   */\n  '--update-docs'?: ''\n\n  /**\n   * Generate a .theme-check.yml file\n   */\n  '--init'?: ''\n\n  /**\n   * List enabled checks\n   */\n  '--list'?: ''\n\n  /**\n   * The output format to use\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * Output active config to STDOUT\n   */\n  '--print'?: ''\n\n  /**\n   * Print Theme Check version\n   */\n  '-v, --version'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme console",
+    "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
+    "overviewPreviewDescription": "Shopify Liquid REPL (read-eval-print loop) tool",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme console",
+            "code": "\n  shopify theme console\n\n  shopify theme console --url /products/classic-leather-jacket\n  ",
+            "language": "bash"
+          }
+        ],
+        "title": "theme console"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme console` command:",
+        "type": "themeconsole",
+        "typeDefinitions": {
+          "themeconsole": {
+            "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+            "name": "themeconsole",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--url <value>",
+                "value": "string",
+                "description": "The url to be used as context",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--port <value>",
+                "value": "string",
+                "description": "Local port to serve authentication service.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themeconsole {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * The url to be used as context\n   */\n  '--url <value>'?: string\n\n  /**\n   * Local port to serve authentication service.\n   */\n  '--port <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme delete",
+    "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
+    "overviewPreviewDescription": "Delete remote themes from the connected store. This command can't be undone.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme delete",
+            "code": "shopify theme delete [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme delete"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme delete` command:",
+        "type": "themedelete",
+        "typeDefinitions": {
+          "themedelete": {
+            "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+            "name": "themedelete",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Delete your development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-a, --show-all",
+                "value": "\"\"",
+                "description": "Include others development themes in theme list.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Skip confirmation.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themedelete {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Delete your development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Include others development themes in theme list.\n   */\n  '-a, --show-all'?: ''\n\n  /**\n   * Skip confirmation.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme dev",
+    "description": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or [push](https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+    "overviewPreviewDescription": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme dev",
+            "code": "shopify theme dev [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme dev"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme dev` command:",
+        "type": "themedev",
+        "typeDefinitions": {
+          "themedev": {
+            "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+            "name": "themedev",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--host <value>",
+                "value": "string",
+                "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--live-reload <value>",
+                "value": "string",
+                "description": "The live reload mode switches the server behavior when a file is modified: - hot-reload Hot reloads local changes to CSS and sections (default) - full-page  Always refreshes the entire page - off        Deactivate live reload",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--poll",
+                "value": "\"\"",
+                "description": "Force polling to detect file changes.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--theme-editor-sync",
+                "value": "\"\"",
+                "description": "Synchronize Theme Editor updates in the local theme files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--port <value>",
+                "value": "string",
+                "description": "Local port to serve theme preview from.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --nodelete",
+                "value": "\"\"",
+                "description": "Runs the dev command without deleting local files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --only <value>",
+                "value": "string",
+                "description": "Hot reload only files that match the specified pattern.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-x, --ignore <value>",
+                "value": "string",
+                "description": "Skip hot reloading any files that match the specified pattern.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--notify <value>",
+                "value": "string",
+                "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--open",
+                "value": "\"\"",
+                "description": "Automatically launch the theme preview in your default web browser.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themedev {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Set which network interface the web server listens on. The default value is 127.0.0.1.\n   */\n  '--host <value>'?: string\n\n  /**\n   * The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload\n   */\n  '--live-reload <value>'?: string\n\n  /**\n   * Force polling to detect file changes.\n   */\n  '--poll'?: ''\n\n  /**\n   * Synchronize Theme Editor updates in the local theme files.\n   */\n  '--theme-editor-sync'?: ''\n\n  /**\n   * Local port to serve theme preview from.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Runs the dev command without deleting local files.\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Hot reload only files that match the specified pattern.\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Skip hot reloading any files that match the specified pattern.\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.\n   */\n  '--notify <value>'?: string\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   */\n  '--open'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme info",
+    "description": "Displays information about your theme environment, including your current store.",
+    "overviewPreviewDescription": "Displays information about your theme environment, including your current store.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme info",
+            "code": "shopify theme info [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme info"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme info` command:",
+        "type": "themeinfo",
+        "typeDefinitions": {
+          "themeinfo": {
+            "filePath": "docs-commands/interfaces/theme-info.interface.ts",
+            "name": "themeinfo",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themeinfo {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme init",
+    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be [substantively different from Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).\n  ",
+    "overviewPreviewDescription": "Clones a Git repository to use as a starting point for building a new theme.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme init",
+            "code": "shopify theme init [name]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme init"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme init` command:",
+        "type": "themeinit",
+        "typeDefinitions": {
+          "themeinit": {
+            "filePath": "docs-commands/interfaces/theme-init.interface.ts",
+            "name": "themeinit",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-u, --clone-url <value>",
+                "value": "string",
+                "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-l, --latest",
+                "value": "\"\"",
+                "description": "Downloads the latest release of the `clone-url`",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themeinit {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   */\n  '-l, --latest'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme language-server",
+    "description": "Start a Language Server Protocol server.",
+    "overviewPreviewDescription": "Start a Language Server Protocol server.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme language-server",
+            "code": "shopify theme language-server [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme language-server"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme language-server` command:",
+        "type": "themelanguageserver",
+        "typeDefinitions": {
+          "themelanguageserver": {
+            "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
+            "name": "themelanguageserver",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--dev-preview",
+                "value": "\"\"",
+                "description": "Use the dev preview version of theme check Applies the typescript implementation of theme check to the theme",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themelanguageserver {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme\n   */\n  '--dev-preview'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme list",
+    "description": "Lists the themes in your store, along with their IDs and statuses.",
+    "overviewPreviewDescription": "Lists the themes in your store, along with their IDs and statuses.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme list",
+            "code": "shopify theme list [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme list"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme list` command:",
+        "type": "themelist",
+        "typeDefinitions": {
+          "themelist": {
+            "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+            "name": "themelist",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--role <value>",
+                "value": "string",
+                "description": "Only list themes with the given role.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--name <value>",
+                "value": "string",
+                "description": "Only list themes that contain the given name.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--id <value>",
+                "value": "string",
+                "description": "Only list theme with the given ID.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--json",
+                "value": "\"\"",
+                "description": "Output the theme list as JSON.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themelist {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Only list themes with the given role.\n   */\n  '--role <value>'?: string\n\n  /**\n   * Only list themes that contain the given name.\n   */\n  '--name <value>'?: string\n\n  /**\n   * Only list theme with the given ID.\n   */\n  '--id <value>'?: string\n\n  /**\n   * Output the theme list as JSON.\n   */\n  '--json'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme open",
+    "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
+    "overviewPreviewDescription": "Opens the preview of your remote theme.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme open",
+            "code": "shopify theme open [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme open"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme open` command:",
+        "type": "themeopen",
+        "typeDefinitions": {
+          "themeopen": {
+            "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+            "name": "themeopen",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Open your development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-E, --editor",
+                "value": "\"\"",
+                "description": "Open the theme editor for the specified theme in the browser.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-l, --live",
+                "value": "\"\"",
+                "description": "Open your live (published) theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themeopen {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Open your development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Open the theme editor for the specified theme in the browser.\n   */\n  '-E, --editor'?: ''\n\n  /**\n   * Open your live (published) theme.\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme package",
+    "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
+    "overviewPreviewDescription": "Package your theme into a .zip file, ready to upload to the Online Store.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme package",
+            "code": "shopify theme package [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme package"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme package` command:",
+        "type": "themepackage",
+        "typeDefinitions": {
+          "themepackage": {
+            "filePath": "docs-commands/interfaces/theme-package.interface.ts",
+            "name": "themepackage",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-package.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-package.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-package.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themepackage {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme publish",
+    "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
+    "overviewPreviewDescription": "Set a remote theme as the live theme.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme publish",
+            "code": "shopify theme publish [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme publish"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme publish` command:",
+        "type": "themepublish",
+        "typeDefinitions": {
+          "themepublish": {
+            "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+            "name": "themepublish",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Skip confirmation.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themepublish {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Skip confirmation.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme pull",
+    "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
+    "overviewPreviewDescription": "Download your remote theme files locally.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme pull",
+            "code": "shopify theme pull [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme pull"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme pull` command:",
+        "type": "themepull",
+        "typeDefinitions": {
+          "themepull": {
+            "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+            "name": "themepull",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Pull theme files from your remote development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-l, --live",
+                "value": "\"\"",
+                "description": "Pull theme files from your remote live theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --nodelete",
+                "value": "\"\"",
+                "description": "Runs the pull command without deleting local files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --only <value>",
+                "value": "string",
+                "description": "Download only the specified files (Multiple flags allowed).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-x, --ignore <value>",
+                "value": "string",
+                "description": "Skip downloading the specified files (Multiple flags allowed).",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themepull {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Pull theme files from your remote development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Pull theme files from your remote live theme.\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Runs the pull command without deleting local files.\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed).\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed).\n   */\n  '-x, --ignore <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme push",
+    "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
+    "overviewPreviewDescription": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme push",
+            "code": "shopify theme push\n\nshopify theme push --unpublished --json\n  ",
+            "language": "bash"
+          }
+        ],
+        "title": "theme push"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme push` command:",
+        "type": "themepush",
+        "typeDefinitions": {
+          "themepush": {
+            "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+            "name": "themepush",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Push theme files from your remote development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-l, --live",
+                "value": "\"\"",
+                "description": "Push theme files from your remote live theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-u, --unpublished",
+                "value": "\"\"",
+                "description": "Create a new unpublished theme and push to it.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --nodelete",
+                "value": "\"\"",
+                "description": "Runs the push command without deleting local files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --only <value>",
+                "value": "string",
+                "description": "Download only the specified files (Multiple flags allowed).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-x, --ignore <value>",
+                "value": "string",
+                "description": "Skip downloading the specified files (Multiple flags allowed).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Output JSON instead of a UI.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-a, --allow-live",
+                "value": "\"\"",
+                "description": "Allow push to a live theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-p, --publish",
+                "value": "\"\"",
+                "description": "Publish as the live theme after uploading.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themepush {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Push theme files from your remote development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Push theme files from your remote live theme.\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Create a new unpublished theme and push to it.\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Runs the push command without deleting local files.\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed).\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed).\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output JSON instead of a UI.\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Allow push to a live theme.\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Publish as the live theme after uploading.\n   */\n  '-p, --publish'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "theme share",
+    "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
+    "overviewPreviewDescription": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme share",
+            "code": "shopify theme share [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme share"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme share` command:",
+        "type": "themeshare",
+        "typeDefinitions": {
+          "themeshare": {
+            "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+            "name": "themeshare",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface themeshare {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your theme directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "theme",
+    "related": []
+  },
+  {
+    "name": "upgrade",
+    "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](/docs/api/shopify-cli#upgrade) documentation.",
+    "overviewPreviewDescription": "Upgrade your CLI dependency.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "upgrade",
+            "code": "shopify upgrade [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "upgrade"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `upgrade` command:",
+        "type": "upgrade",
+        "typeDefinitions": {
+          "upgrade": {
+            "filePath": "docs-commands/interfaces/upgrade.interface.ts",
+            "name": "upgrade",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/upgrade.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your project directory.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface upgrade {\n  /**\n   * The path to your project directory.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "common",
+    "related": []
+  },
+  {
+    "name": "version",
+    "description": "Shopify CLI version currently installed.",
+    "overviewPreviewDescription": "Shopify CLI version currently installed.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "version",
+            "code": "shopify version ",
+            "language": "bash"
+          }
+        ],
+        "title": "version"
+      }
+    },
+    "definitions": [],
+    "category": "Commands",
+    "subCategory": "common",
+    "related": []
+  },
+  {
+    "name": "webhook trigger",
+    "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+    "overviewPreviewDescription": "Trigger delivery of a sample webhook topic payload to a designated address.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "webhook trigger",
+            "code": "shopify webhook trigger [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "webhook trigger"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `webhook trigger` command:",
+        "type": "webhooktrigger",
+        "typeDefinitions": {
+          "webhooktrigger": {
+            "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+            "name": "webhooktrigger",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--help",
+                "value": "\"\"",
+                "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--topic <value>",
+                "value": "string",
+                "description": "The requested webhook topic.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--api-version <value>",
+                "value": "string",
+                "description": "The API Version of the webhook topic.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--delivery-method <value>",
+                "value": "string",
+                "description": "Method chosen to deliver the topic payload. If not passed, it's inferred from the address.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--shared-secret <value>",
+                "value": "string",
+                "description": "Deprecated. Please use client-secret.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-secret <value>",
+                "value": "string",
+                "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--address <value>",
+                "value": "string",
+                "description": "The URL where the webhook payload should be sent.                You will need a different address type for each delivery-method:                      · For remote HTTP testing, use a URL that starts with https://  · For local HTTP testing, use http://localhost:{port}/{url-path}                      · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}                      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface webhooktrigger {\n  /**\n   * This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.\n   */\n  '--help'?: ''\n\n  /**\n   * The requested webhook topic.\n   */\n  '--topic <value>'?: string\n\n  /**\n   * The API Version of the webhook topic.\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * Method chosen to deliver the topic payload. If not passed, it's inferred from the address.\n   */\n  '--delivery-method <value>'?: string\n\n  /**\n   * Deprecated. Please use client-secret.\n   */\n  '--shared-secret <value>'?: string\n\n  /**\n   * Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.\n   */\n  '--client-secret <value>'?: string\n\n  /**\n   * The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:\n   */\n  '--address <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "webhook",
+    "related": []
+  }
+]
