@@ -154,10 +154,10 @@
       "flags": {},
       "args": {}
     },
-    "docs:generate": {
-      "id": "docs:generate",
-      "description": "Generate CLI commands documentation",
-      "strict": true,
+    "hydrogen:init": {
+      "id": "hydrogen:init",
+      "summary": "Create a new hydrogen project",
+      "strict": false,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
       "pluginType": "core",

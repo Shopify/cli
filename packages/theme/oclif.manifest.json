@@ -1118,6 +1118,81 @@
         "development-theme-id"
       ]
     },
+    "theme:rename": {
+      "id": "theme:rename",
+      "description": "Renames an existing theme.",
+      "strict": true,
+      "pluginName": "@shopify/theme",
+      "pluginAlias": "@shopify/theme",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "store": {
+          "name": "store",
+          "type": "option",
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+          "multiple": false
+        },
+        "password": {
+          "name": "password",
+          "type": "option",
+          "description": "Password generated from the Theme Access app.",
+          "multiple": false
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "multiple": false
+        },
+        "name": {
+          "name": "name",
+          "type": "option",
+          "char": "n",
+          "description": "The new name for the theme.",
+          "required": true,
+          "multiple": false
+        },
+        "development": {
+          "name": "development",
+          "type": "boolean",
+          "char": "d",
+          "description": "Rename your development theme.",
+          "allowNo": false
+        },
+        "theme": {
+          "name": "theme",
+          "type": "option",
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "multiple": false
+        },
+        "live": {
+          "name": "live",
+          "type": "boolean",
+          "char": "l",
+          "description": "Rename your remote live theme.",
+          "allowNo": false
+        }
+      },
+      "args": {}
+    },
     "theme:serve": {
       "id": "theme:serve",
       "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
