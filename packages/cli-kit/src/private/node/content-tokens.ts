@@ -38,7 +38,7 @@ export class LinkContentToken extends ContentToken<OutputMessage> {
 
 export class CommandContentToken extends ContentToken<OutputMessage> {
   output(): string {
-    return colors.bold(colors.yellow(stringifyMessage(this.value)))
+    return `\`${colors.magentaBright(stringifyMessage(this.value))}\``
   }
 }
 
