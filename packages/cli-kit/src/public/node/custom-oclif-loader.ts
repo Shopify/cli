@@ -5,20 +5,10 @@ export class ShopifyConfig extends Config {
   constructor(options: Options) {
     super(options)
     // eslint-disable-next-line dot-notation
-    this['determinePriority'] = (commands: Command.Loadable[]) => {
-      console.log(commands)
-      const isHydrogenCommand = commands.some((command) => command.id.startsWith('hydrogen:'))
-      if (!isHydrogenCommand) return this.privateDeterminePriority(commands)
-
-      // Hydrogen plugin should have higher priority than any hydrogen command defined in CLI
-      // This is done so that the real `hydrogen:init` is called instead of the one defined in Global CLI
-      const hydrogenPlugin = commands.find((command) => command.pluginAlias === '@shopify/cli-hydrogen')
-      const bestChoice = hydrogenPlugin ?? this.privateDeterminePriority(commands)
-      return bestChoice
-    }
+    this['determinePriority'] = this.customPriority
   }
 
-  privateDeterminePriority(commands: Command.Loadable[]): Command.Loadable | undefined {
+  customPriority(commands: Command.Loadable[]): Command.Loadable | undefined {
     const oclifPlugins = this.pjson.oclif?.plugins ?? []
     const commandPlugins = commands.sort((aCommand, bCommand) => {
       // eslint-disable-next-line no-restricted-syntax
@@ -27,6 +17,19 @@ export class ShopifyConfig extends Config {
       const pluginAliasB = bCommand.pluginAlias ?? 'B-Cannot-Find-This'
       const aIndex = oclifPlugins.indexOf(pluginAliasA)
       const bIndex = oclifPlugins.indexOf(pluginAliasB)
+
+      // Hydrogen has higher priority than core plugins to override the custom init method.
+      if (aCommand.pluginType === 'core' && bCommand.pluginAlias === '@shopify/cli-hydrogen') {
+        // If b is hydrogen and a is core sort b first
+        return 1
+      }
+
+      if (aCommand.pluginAlias === '@shopify/cli-hydrogen' && bCommand.pluginType === 'core') {
+        // If a is hydrogen and b is core sort a first
+        return -1
+      }
+
+      // All other cases are the default implementation from the private `determinePriority` method
       // When both plugin types are 'core' plugins sort based on index
       if (aCommand.pluginType === 'core' && bCommand.pluginType === 'core') {
         // If b appears first in the pjson.plugins sort it first

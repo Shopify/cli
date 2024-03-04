@@ -1,6 +1,7 @@
 import {isTruthy} from './context/utilities.js'
 import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {Flags} from '@oclif/core'
+// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import {fileURLToPath} from 'url'
 
 /**
