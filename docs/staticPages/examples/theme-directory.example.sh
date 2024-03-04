@@ -1,9 +1,0 @@
-└── project
-    ├── assets
-    ├── config
-    ├── layout
-    ├── locales
-    ├── sections
-    ├── snippets
-    └── templates
-        └── customers
