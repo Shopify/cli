@@ -1,10 +1,10 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
-import replace from 'esbuild-plugin-replace'
 
 const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
   'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
+  'stacktracey',
   'esbuild',
   '@luckycatfactory/esbuild-graphql-loader',
 ]
@@ -19,11 +19,7 @@ await esBuild({
   external,
   loader: {'.node': 'copy'},
   splitting: true,
-  plugins: [
-    replace({
-      'nodeRequire (': 'module.require('
-    })
-  ],
+  plugins: [],
 })
 
 await cleanBundledDependencies(external)
