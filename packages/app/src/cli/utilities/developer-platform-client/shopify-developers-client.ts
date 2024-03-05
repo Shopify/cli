@@ -203,13 +203,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   }
 }
 
-interface AppModule {
-  uuid: string
-  title: string
-  specificationIdentifier: string
-  config: string
-}
-
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
