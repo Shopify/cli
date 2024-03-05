@@ -305,6 +305,9 @@ importers:
       esbuild:
         specifier: 0.19.8
         version: 0.19.8
+      stacktracey:
+        specifier: 2.1.8
+        version: 2.1.8
       yoga-wasm-web:
         specifier: ^0.3.3
         version: 0.3.3
