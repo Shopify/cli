@@ -29,6 +29,7 @@ const MAX_RETRIES = 5
 export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
     const client = new TunnelClientInstance(port)
+    await client.startTunnel()
     return ok(client)
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -46,13 +47,16 @@ class TunnelClientInstance implements TunnelClient {
 
   constructor(port: number) {
     this.port = port
-    install()
-      .then(() => {
-        this.tunnel()
-      })
-      .catch((error) => {
-        this.currentStatus = {status: 'error', message: error.message, tryMessage: whatToTry()}
-      })
+  }
+
+  async startTunnel() {
+    try {
+      await install()
+      this.tunnel()
+      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      this.currentStatus = {status: 'error', message: error.message, tryMessage: whatToTry()}
+    }
   }
 
   getTunnelStatus(): TunnelStatusType {
