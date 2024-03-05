@@ -13,12 +13,14 @@ import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import Index from './cli/commands/plugins/index.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
+import {commands as PluginCommands} from '@oclif/plugin-plugins'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
 
 export {default as DidYouMeanHook} from '@shopify/plugin-did-you-mean'
 export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunnel'
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
+export {hooks as PluginHook} from '@oclif/plugin-plugins'
 
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.
@@ -67,6 +69,7 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
 export const COMMANDS: any = {
   ...AppCommands,
   ...ThemeCommands,
+  ...PluginCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,

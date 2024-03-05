@@ -193,6 +193,10 @@
       "tunnel_provider": {
         "target": "./dist/index.js",
         "identifier": "TunnelProviderHook"
+      },
+      "update": {
+        "target": "./dist/index.js",
+        "identifier": "PluginHook"
       }
     }
   }
