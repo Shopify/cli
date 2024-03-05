@@ -1555,6 +1555,522 @@
       "pluginType": "core",
       "strict": true
     },
+    "auth:logout": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Logout from Shopify.",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "auth:logout",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "debug:command-flags": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View all the available command flags",
+      "flags": {
+        "csv": {
+          "allowNo": false,
+          "description": "Output as CSV",
+          "env": "SHOPIFY_FLAG_OUTPUT_CSV",
+          "name": "csv",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "debug:command-flags",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "demo:catalog": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Browse the catalog for steps",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "demo:catalog",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "demo:generate-file": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Create a command design file",
+      "flags": {
+        "file": {
+          "description": "The name of the demo file.",
+          "env": "SHOPIFY_FLAG_FILENAME",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "file",
+          "required": true,
+          "type": "option"
+        },
+        "path": {
+          "default": ".",
+          "description": "The directory for generating the demo file.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "demo:generate-file",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Creates a JSON file alongside a JSON schema that will validate it"
+    },
+    "demo:print-ai-prompt": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "demo:print-ai-prompt",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "kitchen-sink:async": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View the UI kit components that process async tasks",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "kitchen-sink:async",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "kitchen-sink:prompts": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View the UI kit components prompts",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "kitchen-sink:prompts",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "kitchen-sink:static": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View the UI kit components that display static output",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "kitchen-sink:static",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "plugins": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "List installed plugins.",
+      "enableJsonFlag": true,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "core": {
+          "allowNo": false,
+          "description": "Show core plugins.",
+          "name": "core",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "Format output as json.",
+          "helpGroup": "GLOBAL",
+          "name": "json",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "plugins:index": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:index",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "plugins:inspect": {
+      "aliases": [
+      ],
+      "args": {
+        "plugin": {
+          "default": ".",
+          "description": "Plugin to inspect.",
+          "name": "plugin",
+          "required": true
+        }
+      },
+      "description": "Displays installation properties of a plugin.",
+      "enableJsonFlag": true,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> "
+      ],
+      "flags": {
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "Format output as json.",
+          "helpGroup": "GLOBAL",
+          "name": "json",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "char": "v",
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:inspect",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": false,
+      "usage": "plugins:inspect PLUGIN..."
+    },
+    "plugins:install": {
+      "aliases": [
+        "plugins:add"
+      ],
+      "args": {
+        "plugin": {
+          "description": "Plugin to install.",
+          "name": "plugin",
+          "required": true
+        }
+      },
+      "description": "Installs a plugin into the CLI.\nCan be installed from npm or a git url.\n\nInstallation of a user-installed plugin will override a core plugin.\n\ne.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in the CLI without the need to patch and update the whole CLI.\n",
+      "enableJsonFlag": true,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> ",
+        "<%= config.bin %> <%= command.id %> https://github.com/someuser/someplugin",
+        "<%= config.bin %> <%= command.id %> someuser/someplugin"
+      ],
+      "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Run yarn install with force flag.",
+          "name": "force",
+          "type": "boolean"
+        },
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "jit": {
+          "allowNo": false,
+          "hidden": true,
+          "name": "jit",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "Format output as json.",
+          "helpGroup": "GLOBAL",
+          "name": "json",
+          "type": "boolean"
+        },
+        "silent": {
+          "allowNo": false,
+          "char": "s",
+          "description": "Silences yarn output.",
+          "exclusive": [
+            "verbose"
+          ],
+          "name": "silent",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "char": "v",
+          "description": "Show verbose yarn output.",
+          "exclusive": [
+            "silent"
+          ],
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:install",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": false,
+      "usage": "plugins:install PLUGIN..."
+    },
+    "plugins:link": {
+      "aliases": [
+      ],
+      "args": {
+        "path": {
+          "default": ".",
+          "description": "path to plugin",
+          "name": "path",
+          "required": true
+        }
+      },
+      "description": "Links a plugin into the CLI for development.\nInstallation of a linked plugin will override a user-installed or core plugin.\n\ne.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello' command will override the user-installed or core plugin implementation. This is useful for development work.\n",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> "
+      ],
+      "flags": {
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "install": {
+          "allowNo": true,
+          "description": "Install dependencies after linking the plugin.",
+          "name": "install",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "char": "v",
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:link",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "usage": "plugins:link PLUGIN"
+    },
+    "plugins:reset": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "enableJsonFlag": false,
+      "flags": {
+        "hard": {
+          "allowNo": false,
+          "name": "hard",
+          "summary": "Delete node_modules and package manager related files in addition to uninstalling plugins.",
+          "type": "boolean"
+        },
+        "reinstall": {
+          "allowNo": false,
+          "name": "reinstall",
+          "summary": "Reinstall all plugins after uninstalling.",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:reset",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Remove all user-installed and linked plugins."
+    },
+    "plugins:uninstall": {
+      "aliases": [
+        "plugins:unlink",
+        "plugins:remove"
+      ],
+      "args": {
+        "plugin": {
+          "description": "plugin to uninstall",
+          "name": "plugin"
+        }
+      },
+      "description": "Removes a plugin from the CLI.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %>"
+      ],
+      "flags": {
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "char": "v",
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:uninstall",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": false,
+      "usage": "plugins:uninstall PLUGIN..."
+    },
+    "plugins:update": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Update installed plugins.",
+      "enableJsonFlag": false,
+      "flags": {
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "char": "v",
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "plugins:update",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "search": {
+      "aliases": [
+      ],
+      "args": {
+        "query": {
+          "name": "query"
+        }
+      },
+      "description": "Starts a search on shopify.dev.",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "search",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "theme:check": {
       "aliases": [
       ],
@@ -3125,6 +3641,33 @@
       "hiddenAliases": [
       ],
       "id": "theme:share",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "upgrade": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Upgrade the Shopify CLI.",
+      "flags": {
+        "path": {
+          "default": ".",
+          "description": "The path to your project directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "upgrade",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
