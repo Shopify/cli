@@ -127,6 +127,6 @@ describe('install-cloudflare', () => {
     const res = install(env, 'darwin', 'mips')
 
     // Then
-    await expect(res).rejects.toThrow('Unsupported system platform: darwin or arch: mips')
+    await expect(res).rejects.toThrow('Unsupported system arch: mips')
   })
 })

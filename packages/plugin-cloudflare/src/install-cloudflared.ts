@@ -15,7 +15,7 @@ import {pipeline} from 'stream'
 // eslint-disable-next-line no-restricted-imports
 import {execSync, execFileSync} from 'child_process'
 
-const EXPECTED_CLOUDFLARE_VERSION = '2024.2.1'
+export const EXPECTED_CLOUDFLARE_VERSION = '2024.2.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${EXPECTED_CLOUDFLARE_VERSION}/`
 
 const LINUX_URL: {[key: string]: string} = {
@@ -48,7 +48,7 @@ function getURL(platform = process.platform, arch = process.arch) {
 
   const fileName = URL[platform]![arch]
   if (fileName === undefined) {
-    throw new Error(`Unsupported system platform: ${platform} or arch: ${arch}`)
+    throw new Error(`Unsupported system arch: ${arch}`)
   }
   return CLOUDFLARE_REPO + fileName
 }
@@ -72,11 +72,6 @@ function getBinPathTarget(env = process.env, platform = process.platform) {
 export default async function install(env = process.env, platform = process.platform, arch = process.arch) {
   // Don't install cloudflare if the SHOPIFY_CLI_IGNORE_CLOUDFLARED environment variable is set
   if (env.SHOPIFY_CLI_IGNORE_CLOUDFLARED) return
-
-  const fileName = URL[platform]
-  if (fileName === undefined) {
-    throw new Error(`Unsupported system platform: ${platform} or arch: ${arch}`)
-  }
 
   const fileUrlPath = getURL(platform, arch)
   const binTarget = getBinPathTarget(env, platform)
