@@ -318,22 +318,6 @@ async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[
         "argo": undefined,
       }
     },
-    {
-      "name": "App Access",
-      "externalName": "App Access",
-      "externalIdentifier": "app_access",
-      "identifier": "app_access",
-      "gated": false,
-      "experience": "configuration",
-      "registrationLimit": 1,
-      "options": {
-        "managementExperience": "cli",
-        "registrationLimit": 1
-      },
-      "features": {
-        "argo": undefined,
-      }
-    },
   ]
 
   const local = await loadLocalExtensionsSpecifications()
