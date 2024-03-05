@@ -60,6 +60,7 @@ const developerPlatformClient = testDeveloperPlatformClient({
             id: org.id,
             title: org.title,
             apiKey: org.apiKey,
+            organizationId: org.id,
           })),
           hasMorePages: false,
         }

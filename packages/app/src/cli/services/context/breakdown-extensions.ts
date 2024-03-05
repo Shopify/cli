@@ -3,6 +3,7 @@ import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './i
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ActiveAppVersionQuerySchema, AppModuleVersion} from '../../api/graphql/app_active_version.js'
@@ -44,7 +45,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
     extensionIdentifiersBreakdown = await resolveRemoteExtensionIdentifiersBreakdown(
       options.developerPlatformClient,
       options.appId,
-      options.orgId,
+      options.partnersApp.organizationId,
       extensionsToConfirm.validMatches,
       extensionsToConfirm.extensionsToCreate,
       extensionsToConfirm.dashboardOnlyExtensions,
@@ -81,14 +82,14 @@ export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKe
 export async function configExtensionsIdentifiersBreakdown({
   developerPlatformClient,
   apiKey,
-  orgId,
+  partnersApp,
   localApp,
   versionAppModules,
   release,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
-  orgId: string
+  partnersApp: MinimalOrganizationApp
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
@@ -96,7 +97,7 @@ export async function configExtensionsIdentifiersBreakdown({
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
-  return resolveRemoteConfigExtensionIdentifiersBreakdown(developerPlatformClient, apiKey, orgId, localApp, versionAppModules)
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(developerPlatformClient, apiKey, partnersApp, localApp, versionAppModules)
 }
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
@@ -111,13 +112,13 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
-  orgId: string,
+  partnersApp: MinimalOrganizationApp,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
   const remoteConfig = await fetchAppRemoteConfiguration(
     apiKey,
-    orgId,
+    partnersApp.organizationId,
     developerPlatformClient,
     app.specifications ?? [],
     app.remoteBetaFlags,

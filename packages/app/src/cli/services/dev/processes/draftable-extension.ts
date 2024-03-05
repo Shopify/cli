@@ -86,7 +86,6 @@ export async function setupDraftableExtensionsProcess({
     partnersApp: remoteApp,
     appId: apiKey,
     appName: remoteApp.title,
-    orgId,
     force: true,
     release: true,
     developerPlatformClient,
