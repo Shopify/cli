@@ -1,79 +1,67 @@
 {
   "commands": {
     "config:autocorrect:off": {
-      "aliases": [
-      ],
-      "args": {
-      },
+      "aliases": [],
+      "args": {},
       "description": "Disable autocorrect.",
-      "flags": {
-      },
+      "flags": {},
       "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
+      "hiddenAliases": [],
       "id": "config:autocorrect:off",
-      "isESM": true,
       "pluginAlias": "@shopify/plugin-did-you-mean",
       "pluginName": "@shopify/plugin-did-you-mean",
       "pluginType": "core",
+      "strict": true,
+      "isESM": true,
       "relativePath": [
         "dist",
         "commands",
         "config",
         "autocorrect",
         "off.js"
-      ],
-      "strict": true
+      ]
     },
     "config:autocorrect:on": {
-      "aliases": [
-      ],
-      "args": {
-      },
+      "aliases": [],
+      "args": {},
       "description": "Enable autocorrect.",
-      "flags": {
-      },
+      "flags": {},
       "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
+      "hiddenAliases": [],
       "id": "config:autocorrect:on",
-      "isESM": true,
       "pluginAlias": "@shopify/plugin-did-you-mean",
       "pluginName": "@shopify/plugin-did-you-mean",
       "pluginType": "core",
+      "strict": true,
+      "isESM": true,
       "relativePath": [
         "dist",
         "commands",
         "config",
         "autocorrect",
         "on.js"
-      ],
-      "strict": true
+      ]
     },
     "config:autocorrect:status": {
-      "aliases": [
-      ],
-      "args": {
-      },
+      "aliases": [],
+      "args": {},
       "description": "Check autocorrect current status.",
-      "flags": {
-      },
+      "flags": {},
       "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
+      "hiddenAliases": [],
       "id": "config:autocorrect:status",
-      "isESM": true,
       "pluginAlias": "@shopify/plugin-did-you-mean",
       "pluginName": "@shopify/plugin-did-you-mean",
       "pluginType": "core",
+      "strict": true,
+      "isESM": true,
       "relativePath": [
         "dist",
         "commands",
         "config",
         "autocorrect",
         "status.js"
-      ],
-      "strict": true
+      ]
     }
   },
   "version": "3.56.0"
