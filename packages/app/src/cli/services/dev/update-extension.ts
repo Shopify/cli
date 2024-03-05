@@ -1,12 +1,8 @@
-import {
-  ExtensionUpdateDraftInput,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateSchema,
-} from '../../api/graphql/update_draft.js'
+import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
@@ -16,7 +12,7 @@ import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
   extension: ExtensionInstance
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   registrationId: string
   stdout: Writable
@@ -25,7 +21,7 @@ interface UpdateExtensionDraftOptions {
 
 export async function updateExtensionDraft({
   extension,
-  token,
+  developerPlatformClient,
   apiKey,
   registrationId,
   stdout,
@@ -38,7 +34,7 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const config = (await extension.deployConfig({apiKey, token})) || {}
+  const config = (await extension.deployConfig({apiKey, developerPlatformClient})) || {}
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
@@ -50,9 +46,8 @@ export async function updateExtensionDraft({
     context: extension.contextValue,
     registrationId,
   }
-  const mutation = ExtensionUpdateDraftMutation
 
-  const mutationResult: ExtensionUpdateSchema = await partnersRequest(mutation, token, extensionInput)
+  const mutationResult: ExtensionUpdateSchema = await developerPlatformClient.updateExtension(extensionInput)
   if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)

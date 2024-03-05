@@ -9,13 +9,17 @@ import {
   testWebPixelExtension,
   testWebhookExtensions,
   testFlowActionExtension,
+  testDeveloperPlatformClient,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 function functionConfiguration(): FunctionConfigType {
   return {
@@ -176,7 +180,7 @@ describe('deployConfig', async () => {
   test('returns deployConfig when defined', async () => {
     const extensionInstance = await testThemeExtensions()
 
-    const got = await extensionInstance.deployConfig({token: 'token', apiKey: 'apiKey'})
+    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
 
     expect(got).toMatchObject({theme_extension: {files: {}}})
   })
@@ -184,7 +188,7 @@ describe('deployConfig', async () => {
   test('returns transformed config when defined', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
-    const got = await extensionInstance.deployConfig({token: 'token', apiKey: 'apiKey'})
+    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
 
     expect(got).toMatchObject({embedded: true})
   })
@@ -192,7 +196,7 @@ describe('deployConfig', async () => {
   test('returns undefined when the transformed config is empty', async () => {
     const extensionInstance = await testAppConfigExtensions(true)
 
-    const got = await extensionInstance.deployConfig({token: 'token', apiKey: 'apiKey'})
+    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
 
     expect(got).toBeUndefined()
   })
@@ -209,7 +213,7 @@ describe('bundleConfig', async () => {
         app: 'My app',
         extensionsNonUuidManaged: {},
       },
-      token: 'token',
+      developerPlatformClient,
       apiKey: 'apiKey',
     })
 
@@ -231,7 +235,7 @@ describe('bundleConfig', async () => {
         app: 'My app',
         extensionsNonUuidManaged: {},
       },
-      token: 'token',
+      developerPlatformClient,
       apiKey: 'apiKey',
     })
 
@@ -253,7 +257,7 @@ describe('bundleConfig', async () => {
         app: 'My app',
         extensionsNonUuidManaged: {'point-of-sale': 'uuid'},
       },
-      token: 'token',
+      developerPlatformClient,
       apiKey: 'apiKey',
     })
 
@@ -274,7 +278,7 @@ describe('bundleConfig', async () => {
         app: 'My app',
         extensionsNonUuidManaged: {webhooks: 'uuid'},
       },
-      token: 'token',
+      developerPlatformClient,
       apiKey: 'apiKey',
     })
 

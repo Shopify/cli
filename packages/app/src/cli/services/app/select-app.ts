@@ -1,11 +1,11 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchActiveAppVersion, BetaFlag} from '../dev/fetch.js'
+import {BetaFlag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {buildSpecsAppConfiguration} from '../../models/app/app.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
-import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
@@ -20,11 +20,11 @@ export async function selectApp(): Promise<OrganizationApp> {
 
 export async function fetchAppRemoteConfiguration(
   apiKey: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
   betas: BetaFlag[],
 ) {
-  const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey)
   const appModuleVersionsConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification?.experience === 'configuration',

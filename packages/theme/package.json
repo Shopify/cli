@@ -39,10 +39,10 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.5-dev.0",
+    "@oclif/core": "3.22.0",
     "@shopify/cli-kit": "3.56.0",
-    "@shopify/theme-check-node": "2.0.3",
-    "@shopify/theme-language-server-node": "1.7.6",
+    "@shopify/theme-check-node": "2.2.1",
+    "@shopify/theme-language-server-node": "1.8.2",
     "yaml": "2.3.2"
   },
   "devDependencies": {
