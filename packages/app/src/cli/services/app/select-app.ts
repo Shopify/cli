@@ -1,4 +1,4 @@
-import {OrganizationApp} from '../../models/organization.js'
+import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {BetaFlag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
@@ -18,13 +18,12 @@ export async function selectApp(): Promise<OrganizationApp> {
 }
 
 export async function fetchAppRemoteConfiguration(
-  apiKey: string,
-  organizationId: string,
+  remoteApp: MinimalOrganizationApp,
   developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
   betas: BetaFlag[],
 ) {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey, organizationId)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification?.experience === 'configuration',

@@ -195,8 +195,7 @@ export async function ensureDevContext(
   selectedApp = {
     ...selectedApp,
     configuration: await fetchAppRemoteConfiguration(
-      selectedApp.apiKey,
-      organization.id,
+      selectedApp,
       developerPlatformClient,
       specifications,
       selectedApp.betas,

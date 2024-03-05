@@ -3,10 +3,9 @@ import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {configurationSpecifications, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 
 vi.mock('../dev/fetch.js')
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 const webhooksActiveAppModule: AppModuleVersion = {
   registrationId: 'C_A',
@@ -60,18 +59,24 @@ const activeVersion = {
     },
   },
 }
+const minimalOrganizationApp: MinimalOrganizationApp = {
+  id: '12345',
+  title: 'My App',
+  apiKey: 'API_KEY',
+  organizationId: '67890',
+}
+
 
 describe('fetchAppRemoteConfiguration', () => {
   test('when configuration modules are present the remote configuration is returned ', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+      activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
     })
 
     // When
     const result = await fetchAppRemoteConfiguration(
-      'token',
-      'ORG1',
+      minimalOrganizationApp,
       developerPlatformClient,
       await configurationSpecifications(),
       [],
@@ -110,13 +115,12 @@ describe('fetchAppRemoteConfiguration', () => {
     }
     activeVersion.app.activeAppVersion.appModuleVersions.push(complianceActiveAppModule)
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+      activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
     })
 
     // When
     const result = await fetchAppRemoteConfiguration(
-      'token',
-      'ORG1',
+      minimalOrganizationApp,
       developerPlatformClient,
       await configurationSpecifications(),
       [],

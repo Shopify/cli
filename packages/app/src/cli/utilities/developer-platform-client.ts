@@ -52,7 +52,7 @@ export interface DeveloperPlatformClient {
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (appId: string) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
-  activeAppVersion: (appId: string, orgId: string) => Promise<ActiveAppVersionQuerySchema>
+  activeAppVersion: (app: MinimalOrganizationApp) => Promise<ActiveAppVersionQuerySchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>

@@ -5,7 +5,7 @@ import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {Organization, OrganizationApp} from '../organization.js'
+import {MinimalOrganizationApp, Organization, OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
@@ -774,7 +774,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
-    activeAppVersion: (_appId: string) => Promise.resolve(emptyActiveAppVersion),
+    activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),

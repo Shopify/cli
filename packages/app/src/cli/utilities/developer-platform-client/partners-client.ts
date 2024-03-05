@@ -212,7 +212,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AppVersionsQuery, variables)
   }
 
-  async activeAppVersion(apiKey: string): Promise<ActiveAppVersionQuerySchema> {
+  async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersionQuerySchema> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     return this.makeRequest(ActiveAppVersionQuery, variables)
   }

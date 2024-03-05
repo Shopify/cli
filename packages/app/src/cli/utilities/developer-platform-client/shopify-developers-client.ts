@@ -159,10 +159,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appExtensionRegistrations')
   }
 
-  async activeAppVersion(appId: string, orgId: string): Promise<ActiveAppVersionQuerySchema> {
+  async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersionQuerySchema> {
     const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId}
-    const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(orgId, query, await this.token(), variables)
+    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
     return {
       app: {
         activeAppVersion: {

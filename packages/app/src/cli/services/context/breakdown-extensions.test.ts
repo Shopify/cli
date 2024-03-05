@@ -17,7 +17,7 @@ import {
   testUIExtension,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
@@ -418,7 +418,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       const activeVersion = {app: {activeAppVersion: {appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A]}}}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
         appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -455,7 +455,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
         appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -496,7 +496,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
         appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -551,7 +551,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
         appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -767,7 +767,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -861,7 +861,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -922,7 +922,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -1033,7 +1033,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -1089,7 +1089,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       }
       const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -1146,7 +1146,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}},
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -1227,7 +1227,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -1308,7 +1308,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -1381,7 +1381,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       }
       const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
       })
 
       // When
