@@ -117,7 +117,6 @@ export async function setupDevProcesses({
     await setupDraftableExtensionsProcess({
       localApp,
       remoteApp,
-      orgId: remoteApp.organizationId,
       apiKey,
       developerPlatformClient,
       proxyUrl: network.proxyUrl,
