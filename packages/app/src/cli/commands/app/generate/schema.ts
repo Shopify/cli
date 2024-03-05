@@ -1,5 +1,3 @@
 import FetchSchema from '../function/schema.js'
 
-export default class GenerateSchema extends FetchSchema {
-  static hidden = true
-}
+export default class GenerateSchema extends FetchSchema {}

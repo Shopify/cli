@@ -12,6 +12,7 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
+* [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
@@ -452,6 +453,34 @@ EXAMPLES
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/generate/extension.js)_
+
+## `shopify app generate schema`
+
+Fetch the latest GraphQL schema for a function.
+
+```
+USAGE
+  $ shopify app generate schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID to fetch the schema with.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --stdout             Output the schema to stdout instead of writing to a file.
+      --verbose            Increase the verbosity of the logs.
+
+DESCRIPTION
+  Fetch the latest GraphQL schema for a function.
+
+  Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
+  function in your app. Run this command from the function directory.
+
+  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
+  latest GraphQL schema. The schema is written to the `schema.graphql` file.
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/generate/schema.js)_
 
 ## `shopify app import-flow-legacy-extensions`
 
