@@ -32,6 +32,18 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
+import {
+  ExtensionCreateQuery,
+  ExtensionCreateSchema,
+  ExtensionCreateVariables,
+} from '../../api/graphql/extension_create.js'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
+import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
+import {AppVersionsQuery, AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -185,12 +197,20 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AllAppExtensionRegistrationsQuery, {apiKey: appId})
   }
 
+  async appVersions(appId: string): Promise<AppVersionsQuerySchema> {
+    return this.makeRequest(AppVersionsQuery, {apiKey: appId})
+  }
+
   async activeAppVersion(appId: string): Promise<ActiveAppVersionQuerySchema> {
     return this.makeRequest(ActiveAppVersionQuery, {apiKey: appId})
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
     return this.makeRequest(FunctionUploadUrlGenerateMutation)
+  }
+
+  async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
+    return this.makeRequest(ExtensionCreateQuery, input)
   }
 
   async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
@@ -203,5 +223,13 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
     return this.makeRequest(GenerateSignedUploadUrl, input)
+  }
+
+  async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
+    return this.makeRequest(ConvertDevToTestStoreQuery, input)
+  }
+
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    return this.makeRequest(FindStoreByDomainQuery, {id: orgId, shopDomain})
   }
 }

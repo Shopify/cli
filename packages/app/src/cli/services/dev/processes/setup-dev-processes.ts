@@ -125,7 +125,7 @@ export async function setupDevProcesses({
       allExtensions: localApp.allExtensions,
       storeFqdn,
       apiKey,
-      token,
+      developerPlatformClient,
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
       notify: commandOptions.notify,

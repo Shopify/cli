@@ -45,5 +45,5 @@ export interface AppVersionsQuerySchema {
         totalResults: number
       }
     }
-  }
+  } | null
 }
