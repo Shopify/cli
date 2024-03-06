@@ -1,5 +1,5 @@
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchStoreByDomain} from './dev/fetch.js'
+import {fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
@@ -792,7 +792,7 @@ export async function getAppContext({
  * @returns The selected organization ID
  */
 async function selectOrg(developerPlatformClient: DeveloperPlatformClient): Promise<string> {
-  const orgs = await developerPlatformClient.organizations()
+  const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   return org.id
 }
@@ -809,10 +809,6 @@ interface ReusedValuesOptions {
  */
 function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
-
-  const usingDifferentSettings =
-    selectedApp.apiKey !== cachedInfo?.appId || selectedStore.shopDomain !== cachedInfo.storeFqdn
-  const configFileName = usingDifferentSettings ? undefined : cachedInfo.configFile
 
   let updateURLs = 'Not yet configured'
   if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'

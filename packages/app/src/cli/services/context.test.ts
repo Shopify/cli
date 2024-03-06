@@ -147,12 +147,15 @@ const options = (app: AppInterface, reset = false, force = false): DeployContext
   }
 }
 
-const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptions => {
+const draftExtensionsPushOptions = (
+  app: AppInterface,
+  extras?: Partial<DeveloperPlatformClient>,
+): DraftExtensionsPushOptions => {
   return {
     directory: app.directory,
     reset: false,
     enableDeveloperPreview: false,
-    developerPlatformClient: buildDeveloperPlatformClient(),
+    developerPlatformClient: buildDeveloperPlatformClient(extras),
   }
 }
 
@@ -1044,29 +1047,21 @@ describe('ensureDeployContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     const developerPlatformClient = buildDeveloperPlatformClient({
-      async appsForOrg(_orgId: string) {
+      async orgAndApps(_orgId: string) {
         return {
+          organization: ORG1,
           apps: [APP1, APP2],
           hasMorePages: false,
         }
       },
     })
     const opts = {...options(app), developerPlatformClient}
-    const {organizations} = developerPlatformClient
-    const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(organizations)
-    developerPlatformClient.orgAndApps = async (_orgId: string) => {
-      return {
-        organization: ORG1,
-        apps: [APP1, APP2],
-        hasMorePages: false,
-      }
-    }
 
     // When
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1122,25 +1117,22 @@ describe('ensureDeployContext', () => {
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
 
-    const opts = options(app)
-    opts.reset = true
-    const originalOrganizations = opts.developerPlatformClient.organizations
-    const organizationsSpy = vi
-      .spyOn(opts.developerPlatformClient, 'organizations')
-      .mockImplementation(originalOrganizations)
-    opts.developerPlatformClient.orgAndApps = async (_orgId: string) => {
-      return {
-        organization: ORG1,
-        apps: [APP1, APP2],
-        hasMorePages: false,
-      }
-    }
+    const developerPlatformClient = buildDeveloperPlatformClient({
+      async orgAndApps(_orgId: string) {
+        return {
+          organization: ORG1,
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
+    })
+    const opts = {...options(app, true), developerPlatformClient}
 
     // When
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledWith()
+    expect(fetchOrganizations).toHaveBeenCalledWith(opts.developerPlatformClient)
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1580,23 +1572,22 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    const opts = draftExtensionsPushOptions(app)
-    const {developerPlatformClient} = opts
-    const {organizations} = developerPlatformClient!
-    const organizationsSpy = vi.spyOn(opts.developerPlatformClient!, 'organizations').mockImplementation(organizations)
-    developerPlatformClient!.orgAndApps = async (_orgId: string) => {
-      return {
-        organization: ORG1,
-        apps: [APP1, APP2],
-        hasMorePages: false,
-      }
+    const extras = {
+      async orgAndApps(_orgId: string) {
+        return {
+          organization: ORG1,
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
     }
+    const opts = draftExtensionsPushOptions(app, extras)
 
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1642,19 +1633,36 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
-    const opts = draftExtensionsPushOptions(app)
+    const extras: Partial<DeveloperPlatformClient> = {
+      organizations: () =>
+        Promise.resolve({
+          organizations: {
+            nodes: [ORG1],
+          },
+        }),
+      async orgAndApps(_orgId: string) {
+        return {
+          organization: ORG1,
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
+      async appsForOrg(_orgId: string) {
+        return {
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
+    }
+    const opts = draftExtensionsPushOptions(app, extras)
     opts.reset = true
-
     const developerPlatformClient = opts.developerPlatformClient!
-    const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(async () => [ORG1])
-    developerPlatformClient.appsForOrg = async () => ({apps: [APP1, APP2], hasMorePages: false})
-    developerPlatformClient.orgAndApps = async () => ({organization: ORG1, apps: [APP1, APP2], hasMorePages: false})
 
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
