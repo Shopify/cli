@@ -7,6 +7,7 @@ const external = [
   'stacktracey',
   'esbuild',
   '@luckycatfactory/esbuild-graphql-loader',
+  'vscode-json-language-service',
 ]
 
 await esBuild({
