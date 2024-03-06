@@ -108,8 +108,7 @@
     "esbuild": "0.19.8",
     "yoga-wasm-web": "^0.3.3",
     "zod-to-json-schema": "3.21.4",
-    "stacktracey": "2.1.8",
-    "@shopify/theme-language-server-node": "1.8.2"
+    "stacktracey": "2.1.8"
   },
   "devDependencies": {
     "@shopify/app": "3.56.0",

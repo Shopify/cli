@@ -6,8 +6,7 @@ const external = [
   'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
   'stacktracey',
   'esbuild',
-  '@luckycatfactory/esbuild-graphql-loader',
-  '@shopify/theme-language-server-node',
+  '@luckycatfactory/esbuild-graphql-loader'
 ]
 
 await esBuild({

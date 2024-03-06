@@ -302,9 +302,6 @@ importers:
       '@shopify/theme':
         specifier: 3.56.0
         version: link:../theme
-      '@shopify/theme-language-server-node':
-        specifier: 1.8.2
-        version: 1.8.2
       esbuild:
         specifier: 0.19.8
         version: 0.19.8
