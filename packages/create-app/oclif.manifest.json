@@ -6,8 +6,6 @@
       ],
       "args": {
       },
-      "description": "",
-      "enableJsonFlag": false,
       "flags": {
         "flavor": {
           "description": "Which flavor of the given template to use.",

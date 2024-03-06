@@ -87,11 +87,11 @@ DESCRIPTION
   Build the app, including extensions.
 
   This command executes the build script specified in the element's TOML file. You can specify a custom script in the
-  file. To learn about configuration files in Shopify apps, refer to [App
-  configuration](https://shopify.dev/docs/apps/tools/cli/configuration).
+  file. To learn about configuration files in Shopify apps, refer to "App configuration"
+  (https://shopify.dev/docs/apps/tools/cli/configuration).
 
-  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
-  running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your
+  If you're building a "theme app extension" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
+  running the `build` command runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) against your
   extension to ensure that it's valid.
 ```
 
@@ -118,8 +118,8 @@ DESCRIPTION
   Pulls app configuration from the Partner Dashboard and creates or overwrites a configuration file. You can create a
   new app with this command to start with a default configuration file.
 
-  For more information on the format of the created TOML configuration file, refer to the [App
-  configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
+  For more information on the format of the created TOML configuration file, refer to the "App configuration"
+  (https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/config/link.js)_
@@ -177,14 +177,14 @@ FLAGS
 DESCRIPTION
   Deploy your Shopify app.
 
-  [Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build), then deploys your app configuration and
+  "Builds the app" (https://shopify.dev/docs/apps/tools/cli/commands#build), then deploys your app configuration and
   extensions.
 
   This command creates an app version, which is a snapshot of your app configuration and all extensions, including the
   app extensions that you manage in the Partner Dashboard. This version is then released to users.
 
-  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need
-  to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
+  This command doesn't deploy your "web app" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You
+  need to "deploy your web app" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/deploy.js)_
@@ -355,10 +355,9 @@ FLAGS
 DESCRIPTION
   Run a function locally for testing.
 
-  Runs the function from your current directory for [testing
-  purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug
-  functions when errors occur, refer to [Shopify Functions error
-  handling](https://shopify.dev/docs/api/functions/errors).
+  Runs the function from your current directory for "testing purposes"
+  (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
+  errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/function/run.js)_
@@ -382,7 +381,7 @@ FLAGS
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
 
-  Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
+  Generates the latest "GraphQL schema" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
   function in your app. Run this command from the function directory.
 
   This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
@@ -408,7 +407,7 @@ FLAGS
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
 
-  Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a
+  Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function written in JavaScript.
 ```
 
@@ -440,12 +439,12 @@ FLAGS
 DESCRIPTION
   Generate a new app Extension.
 
-  Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you
-  can generate using this command, refer to [Supported
-  extensions](https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).
+  Generates a new "app extension" (https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you
+  can generate using this command, refer to "Supported extensions"
+  (https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
-  refer to [App structure](https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
+  refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
 
 
 EXAMPLES
@@ -473,7 +472,7 @@ FLAGS
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
 
-  Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
+  Generates the latest "GraphQL schema" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
   function in your app. Run this command from the function directory.
 
   This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
@@ -997,9 +996,9 @@ FLAGS
 DESCRIPTION
   Validate the theme.
 
-  Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
-  and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check
-  runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)
+  Calls and runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
+  and to ensure that it follows theme and Liquid best practices. "Learn more about the checks that Theme Check runs."
+  (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/check.js)_
@@ -1147,8 +1146,8 @@ DESCRIPTION
   your terminal. While running, changes will push to the store in real time.
 
 
-  Uploads the current theme as the specified theme, or a [development
-  theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
+  Uploads the current theme as the specified theme, or a "development theme"
+  (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
   This command returns the following information:
 
@@ -1158,10 +1157,10 @@ DESCRIPTION
 
   You can specify a different network interface and port using `--host` and `--port`.
 
-  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A link to the "editor" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
 
-  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91
-  C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+  - A "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-9
+  1C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
 
   If you already have a development theme for your current environment, then this command replaces the development theme
   with your local theme. You can override this using the `--theme-editor-sync` flag.
@@ -1169,11 +1168,11 @@ DESCRIPTION
   > Note: You can't preview checkout customizations using http://127.0.0.1:9292.
 
   Development themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after
-  you log out, then you should [share](https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or
-  [push](https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.
+  you log out, then you should "share" (https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or "push"
+  (https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.
 
-  You can run this command only in a directory that matches the [default Shopify theme folder
-  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+  You can run this command only in a directory that matches the "default Shopify theme folder structure"
+  (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/dev.js)_
@@ -1220,14 +1219,14 @@ DESCRIPTION
 
   Clones a Git repository to your local machine to use as the starting point for building a theme.
 
-  If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn),
+  If no Git repository is specified, then this command creates a copy of "Dawn" (https://github.com/Shopify/dawn),
   Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted
   to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However,
-  the theme that you submit needs to be [substantively different from
-  Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn
-  about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
+  the theme that you submit needs to be "substantively different from Dawn"
+  (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about
+  the "ways that you can use Dawn" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/init.js)_
@@ -1247,7 +1246,7 @@ FLAGS
 DESCRIPTION
   Start a Language Server Protocol server.
 
-  Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).
+  Starts the "Language Server" (https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/language-server.js)_
@@ -1306,9 +1305,9 @@ DESCRIPTION
 
   Returns links that let you preview the specified theme. The following links are returned:
 
-  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
-  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91
-  C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+  - A link to the "editor" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-9
+  1C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
 
   If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your
   store.
@@ -1334,11 +1333,11 @@ DESCRIPTION
 
   Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 
-  Only folders that match the [default Shopify theme folder
-  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.
+  Only folders that match the "default Shopify theme folder structure"
+  (https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.
 
-  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your
-  [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
+  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
+  (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/package.js)_
@@ -1369,8 +1368,8 @@ DESCRIPTION
   If no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes
   in your store.
 
-  You can run this command only in a directory that matches the [default Shopify theme folder
-  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+  You can run this command only in a directory that matches the "default Shopify theme folder structure"
+  (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 
   If you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
@@ -1452,14 +1451,14 @@ DESCRIPTION
   If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your
   store.
 
-  You can run this command only in a directory that matches the [default Shopify theme folder
-  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+  You can run this command only in a directory that matches the "default Shopify theme folder structure"
+  (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 
   This command returns the following information:
 
-  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
-  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91
-  C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
+  - A link to the "editor" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-9
+  1C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
 
   If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a
   machine-readable input for scripts or continuous integration.
@@ -1536,8 +1535,8 @@ DESCRIPTION
 
   Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
 
-  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a8
-  9-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
+  This command returns a "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a
+  89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/share.js)_
@@ -1557,7 +1556,7 @@ DESCRIPTION
   Upgrade your CLI dependency.
 
   If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the
-  [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
+  "upgrade" (https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
 ```
 
 _See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/upgrade.js)_
@@ -1628,16 +1627,16 @@ DESCRIPTION
   Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from
   your app's local directory, but send the webhook to a staging environment endpoint.
 
-  To learn more about using webhooks in a Shopify app, refer to [Webhooks
-  overview](https://shopify.dev/docs/apps/webhooks).
+  To learn more about using webhooks in a Shopify app, refer to "Webhooks overview"
+  (https://shopify.dev/docs/apps/webhooks).
 
   ### Limitations
 
   - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that
   differ based on the payload contents.
   - Webhooks triggered using this method aren't retried when they fail.
-  - Trigger requests are rate-limited using the [Partner API rate
-  limit](https://shopify.dev/docs/api/partner#rate_limits).
+  - Trigger requests are rate-limited using the "Partner API rate limit"
+  (https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
 ```
 
