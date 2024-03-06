@@ -8,7 +8,9 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 export default class FunctionBuild extends Command {
   static summary = 'Compile a function to wasm.'
 
-  static description = `Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.`
+  static descriptionWithMarkdown = `Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

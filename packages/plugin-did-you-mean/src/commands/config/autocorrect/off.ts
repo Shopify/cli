@@ -6,12 +6,15 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 export default class AutocorrectOff extends Command {
   static summary = 'Disable autocorrect. Off by default.'
 
-  static description = `Disable autocorrect. Off by default.
+  static descriptionWithMarkdown = `Disable autocorrect. Off by default.
 
   When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 `
+
+  static description = this.descriptionWithoutMarkdown()
+
   static usage = 'shopify config autocorrect off'
 
   async run(): Promise<void> {

@@ -10,7 +10,7 @@ export default class WebhookTrigger extends Command {
 
   static usage = 'shopify webhook trigger [flags]'
 
-  static description = `
+  static descriptionWithMarkdown = `
   Triggers the delivery of a sample Admin API event topic payload to a designated address.
 
   You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.
@@ -26,6 +26,8 @@ export default class WebhookTrigger extends Command {
   - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
   `
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     help: Flags.help({

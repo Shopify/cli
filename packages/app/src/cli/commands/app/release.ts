@@ -14,7 +14,9 @@ export default class Release extends Command {
 
   static usage = `shopify app release --version <version>`
 
-  static description = `Releases an existing app version. Pass the name of the version that you want to release using the \`--version\` flag.`
+  static descriptionWithMarkdown = `Releases an existing app version. Pass the name of the version that you want to release using the \`--version\` flag.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

@@ -35,6 +35,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
 > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.
 `
+
   static description = this.descriptionWithoutMarkdown()
 
   static flags = {

@@ -12,12 +12,14 @@ export default class Init extends ThemeCommand {
 
   static usage = 'shopify theme init [name]'
 
-  static description = `Clones a Git repository to your local machine to use as the starting point for building a theme.
+  static descriptionWithMarkdown = `Clones a Git repository to your local machine to use as the starting point for building a theme.
 
   If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be [substantively different from Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
   `
+
+  static description = this.descriptionWithoutMarkdown()
 
   static args = {
     name: Args.string({

@@ -14,9 +14,11 @@ import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 export default class Pull extends ThemeCommand {
   static summary = 'Download your remote theme files locally.'
 
-  static description = `Retrieves theme files from Shopify.
+  static descriptionWithMarkdown = `Retrieves theme files from Shopify.
 
 If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

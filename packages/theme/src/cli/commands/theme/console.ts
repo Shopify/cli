@@ -17,9 +17,11 @@ export default class Console extends ThemeCommand {
   shopify theme console --url /products/classic-leather-jacket
   `
 
-  static description = `Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.
+  static descriptionWithMarkdown = `Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.
 
   You can also provide context to the console using a URL, as some Liquid objects are context-specific`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

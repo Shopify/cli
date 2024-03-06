@@ -11,7 +11,9 @@ import {Args, Flags} from '@oclif/core'
 export default class VersionsList extends Command {
   static summary = 'List deployed versions of your app.'
 
-  static description = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
+  static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

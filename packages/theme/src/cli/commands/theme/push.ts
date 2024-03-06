@@ -15,7 +15,7 @@ export default class Push extends ThemeCommand {
 shopify theme push --unpublished --json
   `
 
-  static description = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
+  static descriptionWithMarkdown = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
 
   If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.
 
@@ -43,6 +43,9 @@ shopify theme push --unpublished --json
   }
   \`\`\`
     `
+
+  static description = this.descriptionWithoutMarkdown()
+
   static flags = {
     ...globalFlags,
     ...themeFlags,
