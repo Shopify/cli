@@ -20,6 +20,10 @@ export const AllDevStoresByOrganizationQuery = gql`
   }
 `
 
+export interface AllDevStoresByOrganizationQueryVariables {
+  id: string
+}
+
 export interface AllDevStoresByOrganizationSchema {
   organizations: {
     nodes: {

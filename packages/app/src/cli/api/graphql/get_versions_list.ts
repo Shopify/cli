@@ -25,6 +25,10 @@ export const AppVersionsQuery = gql`
   }
 `
 
+export interface AppVersionsQueryVariables {
+  apiKey: string
+}
+
 export interface AppVersionsQuerySchema {
   app: {
     id: string
