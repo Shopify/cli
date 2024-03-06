@@ -2,7 +2,7 @@ import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {testPartnersUserSession, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -16,6 +16,8 @@ vi.mock('@shopify/cli-kit/node/dot-env')
 vi.mock('@shopify/cli-kit/node/path')
 vi.mock('../dev/fetch')
 vi.mock('../../prompts/dev')
+
+const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('findInEnv', () => {
   test('.env file not available', async () => {
@@ -77,7 +79,7 @@ describe('findApiKey', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const apiKey = await findApiKey(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(undefined)
@@ -89,7 +91,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const apiKey = await findApiKey(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -101,7 +103,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const apiKey = await findApiKey(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -114,7 +116,7 @@ describe('findApiKey', () => {
     vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const apiKey = await findApiKey(developerPlatformClient)
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()

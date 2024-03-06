@@ -1,6 +1,7 @@
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {isValueSet} from './trigger.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface WebhookTriggerFlags {
@@ -9,6 +10,7 @@ export interface WebhookTriggerFlags {
   deliveryMethod?: string
   address?: string
   clientSecret?: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export const DELIVERY_METHOD = {
