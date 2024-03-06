@@ -15,8 +15,8 @@ import {pipeline} from 'stream'
 // eslint-disable-next-line no-restricted-imports
 import {execSync, execFileSync} from 'child_process'
 
-export const EXPECTED_CLOUDFLARE_VERSION = '2024.2.1'
-const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${EXPECTED_CLOUDFLARE_VERSION}/`
+export const CURRENT_CLOUDFLARE_VERSION = '2024.2.1'
+const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CURRENT_CLOUDFLARE_VERSION}/`
 
 const LINUX_URL: {[key: string]: string} = {
   arm64: 'cloudflared-linux-arm64',
@@ -71,7 +71,10 @@ function getBinPathTarget(env = process.env, platform = process.platform) {
 
 export default async function install(env = process.env, platform = process.platform, arch = process.arch) {
   // Don't install cloudflare if the SHOPIFY_CLI_IGNORE_CLOUDFLARED environment variable is set
-  if (env.SHOPIFY_CLI_IGNORE_CLOUDFLARED) return
+  if (env.SHOPIFY_CLI_IGNORE_CLOUDFLARED) {
+    outputDebug('Skipping cloudflared installation because SHOPIFY_CLI_IGNORE_CLOUDFLARED is set')
+    return
+  }
 
   const fileUrlPath = getURL(platform, arch)
   const binTarget = getBinPathTarget(env, platform)
@@ -81,7 +84,7 @@ export default async function install(env = process.env, platform = process.plat
     try {
       const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
       const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
-      const needsUpdate = versionIsGreaterThan(EXPECTED_CLOUDFLARE_VERSION, versionNumber!)
+      const needsUpdate = versionIsGreaterThan(CURRENT_CLOUDFLARE_VERSION, versionNumber!)
       if (!needsUpdate) {
         outputDebug('cloudflared already installed, skipping')
         return
@@ -103,7 +106,7 @@ export default async function install(env = process.env, platform = process.plat
   }
 }
 
-function versionIsGreaterThan(versionA: string, versionB: string) {
+export function versionIsGreaterThan(versionA: string, versionB: string) {
   const [majorA, minorA, patchA] = versionA.split('.').map(Number)
   const [majorB, minorB, patchB] = versionB.split('.').map(Number)
 
