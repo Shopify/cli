@@ -35,7 +35,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.22.0",
+    "@oclif/core": "3.23.0",
     "@shopify/cli-kit": "3.56.0",
     "n-gram": "2.0.2"
   },
