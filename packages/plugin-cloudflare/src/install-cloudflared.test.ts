@@ -1,4 +1,4 @@
-import install, {EXPECTED_CLOUDFLARE_VERSION} from './install-cloudflared.js'
+import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
 import * as fsActions from '@shopify/cli-kit/node/fs'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import util from 'util'
@@ -85,7 +85,7 @@ describe('install-cloudflare', () => {
     const env = {}
     vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(true)
     vi.spyOn(childProcess, 'execFileSync').mockReturnValue(
-      `cloudflared version ${EXPECTED_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
+      `cloudflared version ${CURRENT_CLOUDFLARE_VERSION} (built 2023-03-13-1444 UTC)`,
     )
 
     // When
@@ -128,5 +128,22 @@ describe('install-cloudflare', () => {
 
     // Then
     await expect(res).rejects.toThrow('Unsupported system arch: mips')
+  })
+})
+
+describe('version-compare', () => {
+  test('versionIsGreaterThan', () => {
+    expect(versionIsGreaterThan('1.0.0', '0.9.0')).toBe(true)
+    expect(versionIsGreaterThan('0.9.0', '1.0.0')).toBe(false)
+    expect(versionIsGreaterThan('1.0.0', '1.0.0')).toBe(false)
+    expect(versionIsGreaterThan('1.0.0', '1.0.1')).toBe(false)
+    expect(versionIsGreaterThan('1.0.1', '1.0.0')).toBe(true)
+    expect(versionIsGreaterThan('2', '1.9.9')).toBe(true)
+    expect(versionIsGreaterThan('2.9', '1.9.9')).toBe(true)
+    expect(versionIsGreaterThan('2.9.9', '1.9.9')).toBe(true)
+    expect(versionIsGreaterThan('2.0.0', '3')).toBe(false)
+    expect(versionIsGreaterThan('2.0.0', '3.0')).toBe(false)
+    expect(versionIsGreaterThan('5', '4')).toBe(true)
+    expect(versionIsGreaterThan('4', '5')).toBe(false)
   })
 })
