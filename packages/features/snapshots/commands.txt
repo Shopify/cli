@@ -13,6 +13,7 @@
  app generate schema               @shopify/app                 
  app import-flow-legacy-extensions @shopify/app                 
  app info                          @shopify/app                 
+ app init                          @shopify/app                 
  app release                       @shopify/app                 
  app versions list                 @shopify/app                 
  auth logout                       @shopify/cli                 
