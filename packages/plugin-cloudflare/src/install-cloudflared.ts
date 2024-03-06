@@ -70,7 +70,6 @@ function getBinPathTarget(env = process.env, platform = process.platform) {
 }
 
 export default async function install(env = process.env, platform = process.platform, arch = process.arch) {
-  // Don't install cloudflare if the SHOPIFY_CLI_IGNORE_CLOUDFLARED environment variable is set
   if (env.SHOPIFY_CLI_IGNORE_CLOUDFLARED) {
     outputDebug('Skipping cloudflared installation because SHOPIFY_CLI_IGNORE_CLOUDFLARED is set')
     return
