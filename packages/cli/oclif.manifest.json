@@ -6,6 +6,7 @@
       "args": {
       },
       "description": "Logs you out of the Shopify account or Partner account and store.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -31,6 +32,7 @@
       "args": {
       },
       "description": "View all the available command flags",
+      "enableJsonFlag": false,
       "flags": {
         "csv": {
           "allowNo": false,
@@ -64,6 +66,7 @@
       "args": {
       },
       "description": "Demo a command design defined in a file",
+      "enableJsonFlag": false,
       "flags": {
         "file": {
           "default": ".",
@@ -100,6 +103,7 @@
       "args": {
       },
       "description": "Browse the catalog for steps",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -126,6 +130,7 @@
       "args": {
       },
       "description": "Create a command design file",
+      "enableJsonFlag": false,
       "flags": {
         "file": {
           "description": "The name of the demo file.",
@@ -173,6 +178,7 @@
       "args": {
       },
       "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -199,6 +205,7 @@
       "args": {
       },
       "description": "View all the available UI kit components",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -226,6 +233,7 @@
       "args": {
       },
       "description": "View the UI kit components that process async tasks",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -252,6 +260,7 @@
       "args": {
       },
       "description": "View the UI kit components prompts",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -278,6 +287,7 @@
       "args": {
       },
       "description": "View the UI kit components that display static output",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -303,6 +313,8 @@
       ],
       "args": {
       },
+      "description": "",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -332,6 +344,7 @@
         }
       },
       "description": "Starts a search on shopify.dev.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -357,6 +370,7 @@
       "args": {
       },
       "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "default": ".",
@@ -392,6 +406,7 @@
       "args": {
       },
       "description": "Shopify CLI version currently installed.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,

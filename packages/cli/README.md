@@ -224,9 +224,9 @@ FLAGS
 DESCRIPTION
   Run the app.
 
-  [Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a [development
-  store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partne
-  rs/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
+  "Builds the app" (https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a "development
+  store" (https://shopify.dev/docs/apps/tools/development-stores) or "Plus sandbox store" (https://help.shopify.com/part
+  ners/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
 
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps.
   If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these
@@ -245,22 +245,22 @@ DESCRIPTION
   you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.
 
   - Enabling development store preview for extensions.
-  - Serving [GraphiQL for the Admin
-  API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's
-  credentials and access scopes.
+  - Serving "GraphiQL for the Admin API"
+  (https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials
+  and access scopes.
   - Building and serving your app and app extensions.
 
   If you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview
   your app for the first time:
 
-  - PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)
-  - Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
+  - PHP: "Set up your Laravel app" (https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)
+  - Ruby: "Set up your Rails app" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
 
   > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have
-  a [staff
-  account](https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on
-  the store. Staff accounts are created automatically the first time you access a development store with your Partner
-  staff account through the Partner Dashboard.
+  a "staff account"
+  (https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on the
+  store. Staff accounts are created automatically the first time you access a development store with your Partner staff
+  account through the Partner Dashboard.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/dev.js)_
@@ -525,11 +525,11 @@ DESCRIPTION
 
   The information returned includes the following:
 
-  - The app and development store or Plus sandbox store that's used when you run the
-  [dev](https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using [dev
-  --reset](https://shopify.dev/docs/apps/tools/cli/commands#dev).
-  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
-  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.
+  - The app and development store or Plus sandbox store that's used when you run the "dev"
+  (https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using "dev --reset"
+  (https://shopify.dev/docs/apps/tools/cli/commands#dev).
+  - The "structure" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
+  - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.
 ```
 

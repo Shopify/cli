@@ -10,7 +10,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 export default class Dev extends Command {
   static summary = 'Run the app.'
 
-  static description = `[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
+  static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
 
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run \`dev\` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using \`dev --reset\` to go through all of them again:
 
@@ -35,6 +35,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
 > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.
 `
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

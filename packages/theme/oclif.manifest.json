@@ -542,6 +542,7 @@
       "args": {
       },
       "description": "Show help from Ruby CLI",
+      "enableJsonFlag": false,
       "flags": {
         "command": {
           "description": "The command for which to show CLI2 help.",
