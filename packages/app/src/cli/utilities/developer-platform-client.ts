@@ -10,6 +10,10 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../api/graphql/generate_signed_upload_url.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
+import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../api/graphql/convert_dev_to_test_store.js'
+import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
+import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 
 export type Paginateable<T> = T & {
@@ -39,10 +43,14 @@ export interface DeveloperPlatformClient {
   specifications: (appId: string) => Promise<ExtensionSpecification[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
+  storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (appId: string) => Promise<AllAppExtensionRegistrationsQuerySchema>
+  appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (appId: string) => Promise<ActiveAppVersionQuerySchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
+  createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployVariables) => Promise<AppDeploySchema>
+  convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
 }

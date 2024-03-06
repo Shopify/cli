@@ -95,7 +95,7 @@ DESCRIPTION
   extension to ensure that it's valid.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/build.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/build.js)_
 
 ## `shopify app config link`
 
@@ -122,7 +122,7 @@ DESCRIPTION
   configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/config/link.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/config/link.js)_
 
 ## `shopify app config use [CONFIG]`
 
@@ -148,7 +148,7 @@ DESCRIPTION
   be prompted to choose from the configuration files in your project.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/config/use.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/config/use.js)_
 
 ## `shopify app deploy`
 
@@ -187,7 +187,7 @@ DESCRIPTION
   to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/deploy.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/deploy.js)_
 
 ## `shopify app dev`
 
@@ -263,7 +263,7 @@ DESCRIPTION
   account through the Partner Dashboard.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/dev.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/dev.js)_
 
 ## `shopify app env pull`
 
@@ -289,7 +289,7 @@ DESCRIPTION
   variables and commented variables are preserved.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/env/pull.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/env/pull.js)_
 
 ## `shopify app env show`
 
@@ -311,7 +311,7 @@ DESCRIPTION
   Displays environment variables that can be used to deploy apps and app extensions.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/env/show.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/env/show.js)_
 
 ## `shopify app function build`
 
@@ -333,7 +333,7 @@ DESCRIPTION
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/function/build.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/function/build.js)_
 
 ## `shopify app function run`
 
@@ -361,7 +361,7 @@ DESCRIPTION
   handling](https://shopify.dev/docs/api/functions/errors).
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/function/run.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/function/run.js)_
 
 ## `shopify app function schema`
 
@@ -389,7 +389,7 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/function/schema.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/function/schema.js)_
 
 ## `shopify app function typegen`
 
@@ -412,7 +412,7 @@ DESCRIPTION
   function written in JavaScript.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/function/typegen.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/function/typegen.js)_
 
 ## `shopify app generate extension [FILE]`
 
@@ -452,7 +452,7 @@ EXAMPLES
   $ shopify app generate extension
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/generate/extension.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/generate/extension.js)_
 
 ## `shopify app generate schema`
 
@@ -480,7 +480,7 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/generate/schema.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/generate/schema.js)_
 
 ## `shopify app import-flow-legacy-extensions`
 
@@ -502,7 +502,7 @@ DESCRIPTION
   Import dashboard-managed flow extensions into your app.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/import-flow-legacy-extensions.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/import-flow-legacy-extensions.js)_
 
 ## `shopify app info`
 
@@ -533,7 +533,7 @@ DESCRIPTION
   - System information, including the package manager and version of Shopify CLI used in the project.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/info.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/info.js)_
 
 ## `shopify shopify app release --version <version>`
 
@@ -559,7 +559,7 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/release.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/release.js)_
 
 ## `shopify app versions list [FILE]`
 
@@ -587,7 +587,7 @@ EXAMPLES
   $ shopify app versions list
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/versions/list.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/versions/list.js)_
 
 ## `shopify auth logout`
 
@@ -601,7 +601,7 @@ DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
 ```
 
-_See code: [dist/cli/commands/auth/logout.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.56.0/dist/cli/commands/auth/logout.js)_
+_See code: [dist/cli/commands/auth/logout.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/auth/logout.js)_
 
 ## `shopify commands`
 
@@ -964,7 +964,7 @@ DESCRIPTION
   Starts a search on shopify.dev.
 ```
 
-_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.56.0/dist/cli/commands/search.js)_
+_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/search.js)_
 
 ## `shopify theme check`
 
@@ -1002,7 +1002,7 @@ DESCRIPTION
   runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/check.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/check.js)_
 
 ## `shopify 
   shopify theme console
@@ -1037,7 +1037,7 @@ DESCRIPTION
   You can also provide context to the console using a URL, as some Liquid objects are context-specific
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/console.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/console.js)_
 
 ## `shopify theme delete`
 
@@ -1072,7 +1072,7 @@ DESCRIPTION
   confirmation using the `--force` flag.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/delete.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/delete.js)_
 
 ## `shopify theme dev`
 
@@ -1176,7 +1176,7 @@ DESCRIPTION
   structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/dev.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/dev.js)_
 
 ## `shopify theme info`
 
@@ -1194,7 +1194,7 @@ DESCRIPTION
   Displays information about your theme environment, including your current store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/info.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/info.js)_
 
 ## `shopify shopify theme init [name]`
 
@@ -1230,7 +1230,7 @@ DESCRIPTION
   about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/init.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/init.js)_
 
 ## `shopify theme language-server`
 
@@ -1250,7 +1250,7 @@ DESCRIPTION
   Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/language-server.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/language-server.js)_
 
 ## `shopify theme list`
 
@@ -1278,7 +1278,7 @@ DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/list.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/list.js)_
 
 ## `shopify theme open`
 
@@ -1314,7 +1314,7 @@ DESCRIPTION
   store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/open.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/open.js)_
 
 ## `shopify theme package`
 
@@ -1341,7 +1341,7 @@ DESCRIPTION
   [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/package.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/package.js)_
 
 ## `shopify theme publish`
 
@@ -1376,7 +1376,7 @@ DESCRIPTION
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/publish.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/publish.js)_
 
 ## `shopify theme pull`
 
@@ -1410,7 +1410,7 @@ DESCRIPTION
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/pull.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/pull.js)_
 
 ## `shopify shopify theme push
 
@@ -1480,7 +1480,7 @@ DESCRIPTION
   ```
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/push.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/push.js)_
 
 ## `shopify theme rename`
 
@@ -1512,7 +1512,7 @@ DESCRIPTION
   your store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/rename.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/rename.js)_
 
 ## `shopify theme share`
 
@@ -1540,7 +1540,7 @@ DESCRIPTION
   9-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/share.js)_
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/share.js)_
 
 ## `shopify upgrade`
 
@@ -1560,7 +1560,7 @@ DESCRIPTION
   [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
 ```
 
-_See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.56.0/dist/cli/commands/upgrade.js)_
+_See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/upgrade.js)_
 
 ## `shopify version`
 
@@ -1574,7 +1574,7 @@ DESCRIPTION
   Shopify CLI version currently installed.
 ```
 
-_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.56.0/dist/cli/commands/version.js)_
+_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/version.js)_
 
 ## `shopify shopify webhook trigger [flags]`
 
@@ -1641,5 +1641,5 @@ DESCRIPTION
   - You can't use this method to validate your API webhook subscriptions.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/webhook/trigger.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/webhook/trigger.js)_
 <!-- commandsstop -->

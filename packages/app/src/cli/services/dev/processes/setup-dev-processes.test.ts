@@ -210,11 +210,11 @@ describe('setup-dev-processes', () => {
           token: 'admin-token',
         },
         themeExtensionServerArgs:
-          './my-extension --api-key api-key --extension-id 123 --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
+          './my-extension --api-key api-key --extension-id extension-id --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
             ' ',
           ),
         storefrontToken: 'storefront-token',
-        token: 'token',
+        developerPlatformClient,
       },
     })
     expect(res.processes[5]).toMatchObject({

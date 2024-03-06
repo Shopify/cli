@@ -7,7 +7,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -95,11 +95,12 @@ export async function deployConfirmed(
     options.app,
     options.appId,
     options.includeDraftExtensions,
+    options.developerPlatformClient,
   )
 
   const validMatchesById: {[key: string]: string} = {}
   if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId, options.developerPlatformClient)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id
@@ -124,6 +125,7 @@ async function ensureNonUuidManagedExtensionsIds(
   app: AppInterface,
   appId: string,
   includeDraftExtensions = false,
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
   let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
 
@@ -140,7 +142,7 @@ async function ensureNonUuidManagedExtensionsIds(
   })
 
   if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, appId, false)
+    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id
@@ -150,8 +152,12 @@ async function ensureNonUuidManagedExtensionsIds(
   return {extensionsNonUuidManaged: validMatches, extensionsIdsNonUuidManaged: validMatchesById}
 }
 
-async function createExtensions(extensions: LocalSource[], appId: string, output = true) {
-  const token = await ensureAuthenticatedPartners()
+async function createExtensions(
+  extensions: LocalSource[],
+  appId: string,
+  developerPlatformClient: DeveloperPlatformClient,
+  output = true,
+) {
   const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
     // Create one at a time to avoid API rate limiting issues.
@@ -160,7 +166,7 @@ async function createExtensions(extensions: LocalSource[], appId: string, output
       appId,
       extension.graphQLType,
       extension.handle,
-      token,
+      developerPlatformClient,
       extension.contextValue,
     )
     if (output) outputCompleted(`Created extension ${extension.handle}.`)

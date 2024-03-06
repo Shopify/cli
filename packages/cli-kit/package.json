@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.56.0",
+  "version": "3.57.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -83,6 +83,7 @@
                 "./error-handler.js",
                 "../../public/node/context/local.js",
                 "./context/local.js",
+                "./custom-oclif-loader.js",
                 "@oclif/core",
                 "../../private/node/constants.js",
                 "./path.js",
@@ -123,8 +124,8 @@
     "cross-zip": "4.0.0",
     "deepmerge": "4.3.1",
     "del": "6.1.1",
+    "dotenv": "16.4.5",
     "env-paths": "3.0.0",
-    "envfile": "6.18.0",
     "execa": "7.2.0",
     "fast-glob": "3.3.1",
     "figures": "5.0.0",

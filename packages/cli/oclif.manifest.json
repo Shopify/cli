@@ -199,6 +199,32 @@
       ],
       "strict": true
     },
+    "hydrogen:init": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "hydrogen:init",
+      "isESM": true,
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "hydrogen",
+        "init.js"
+      ],
+      "strict": false,
+      "summary": "Create a new hydrogen project"
+    },
     "kitchen-sink": {
       "aliases": [
       ],
@@ -426,5 +452,5 @@
       "strict": true
     }
   },
-  "version": "3.56.0"
+  "version": "3.57.0"
 }

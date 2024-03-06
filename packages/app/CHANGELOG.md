@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.57.0
+
+### Minor Changes
+
+- c9cbf05b4: Remove zod schemas from app info (JSON format)
+
+### Patch Changes
+
+- 3879af1a3: spec reverseTransform receives betas
+  - @shopify/cli-kit@3.57.0
+  - @shopify/plugin-cloudflare@3.57.0
+
 ## 3.56.0
 
 ### Minor Changes
