@@ -433,7 +433,7 @@ FLAGS
       --verbose                   Increase the verbosity of the logs.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/init.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/init.js)_
 
 ## `shopify app release`
 
