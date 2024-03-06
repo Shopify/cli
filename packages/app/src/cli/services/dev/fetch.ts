@@ -3,7 +3,7 @@ import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQuerySchema,
 } from '../../api/graphql/all_app_extension_registrations.js'
-import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
@@ -112,11 +112,10 @@ export async function fetchAppExtensionRegistrations({
  * @param token - Token to access partners API
  * @returns List of organizations
  */
-export async function fetchOrganizations(partnersSession: PartnersSession): Promise<Organization[]> {
-  const query = AllOrganizationsQuery
-  const result: AllOrganizationsQuerySchema = await partnersRequest(query, partnersSession.token)
+export async function fetchOrganizations(developerPlatformClient: DeveloperPlatformClient): Promise<Organization[]> {
+  const result: AllOrganizationsQuerySchema = await developerPlatformClient.organizations()
   const organizations = result.organizations.nodes
-  if (organizations.length === 0) throw new NoOrgError(partnersSession.accountInfo)
+  if (organizations.length === 0) throw new NoOrgError(await developerPlatformClient.accountInfo())
   return organizations
 }
 

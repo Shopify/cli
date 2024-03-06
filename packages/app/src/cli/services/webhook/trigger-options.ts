@@ -10,7 +10,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
-import {PartnersSession} from '../context/partner-account-info.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -24,12 +24,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
  *    - Get from Partners (possible prompts for organization and app)
  *    - prompt and use
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param secret - secret flag
  * @returns a pair with client-secret, api-key (possibly empty)
  */
 export async function collectCredentials(
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   secret: string | undefined,
 ): Promise<AppCredentials> {
   if (isValueSet(secret)) {
@@ -55,13 +55,14 @@ export async function collectCredentials(
     return localCredentials
   }
 
-  const apiKey = await findApiKey(partnersSession)
+  const apiKey = await findApiKey(developerPlatformClient)
   if (apiKey === undefined) {
     const manualSecret = await clientSecretPrompt()
     const credentials: AppCredentials = {clientSecret: manualSecret}
     return credentials
   }
 
+  const partnersSession = await developerPlatformClient.session()
   const appCredentials = await requestAppInfo(partnersSession.token, apiKey)
   if (isValueSet(appCredentials.clientSecret)) {
     outputInfo('Reading client-secret from app settings in Partners')
@@ -78,18 +79,18 @@ export async function collectCredentials(
  *  - Get from .env
  *  - Get from Partners (possible prompts for organization and app)
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @returns a api-key
  * @throws AbortError if none found
  */
-export async function collectApiKey(partnersSession: PartnersSession): Promise<string> {
+export async function collectApiKey(developerPlatformClient: DeveloperPlatformClient): Promise<string> {
   const localCredentials = await findInEnv()
   if (isValueSet(localCredentials.apiKey)) {
     outputInfo('Using api-key from .env file')
     return localCredentials.apiKey as string
   }
 
-  const apiKey = await findApiKey(partnersSession)
+  const apiKey = await findApiKey(developerPlatformClient)
   if (apiKey === undefined) {
     throw new AbortError(
       'No app configuration found in Partners or .env file',

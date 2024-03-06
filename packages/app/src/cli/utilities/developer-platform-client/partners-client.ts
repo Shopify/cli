@@ -8,9 +8,9 @@ import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../develo
 import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   fetchAppDetailsFromApiKey,
-  fetchOrganizations,
   fetchOrgAndApps,
   fetchOrgFromId,
+  fetchOrganizations,
   filterDisabledBetas,
 } from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
@@ -68,6 +68,7 @@ import {
   FindAppPreviewModeSchema,
   FindAppPreviewModeVariables,
 } from '../../api/graphql/find_app_preview_mode.js'
+import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -152,12 +153,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     return fetchAppDetailsFromApiKey(appId, await this.token())
   }
 
-  async organizations(): Promise<Organization[]> {
-    return fetchOrganizations(await this.session())
+  async organizations(): Promise<AllOrganizationsQuerySchema> {
+    return this.makeRequest(AllOrganizationsQuery)
   }
 
   async selectOrg(): Promise<Organization> {
-    const organizations = await this.organizations()
+    const organizations = await fetchOrganizations(this)
     return selectOrganizationPrompt(organizations)
   }
 

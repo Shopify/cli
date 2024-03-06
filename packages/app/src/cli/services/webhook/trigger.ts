@@ -8,7 +8,7 @@ import {
   collectCredentials,
   collectTopic,
 } from './trigger-options.js'
-import {fetchPartnersSession, PartnersSession} from '../context/partner-account-info.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
 
 interface WebhookTriggerOptions {
@@ -29,18 +29,21 @@ interface WebhookTriggerOptions {
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   // Validation and collection of flags
-  const [partnerSessions, validFlags] = await validatedFlags(flags)
+  const [developerPlatformClient, validFlags] = await validatedFlags(flags)
 
   // Request of prompts for missing flags
-  const options: WebhookTriggerOptions = await collectMissingFlags(partnerSessions, validFlags)
+  const options: WebhookTriggerOptions = await collectMissingFlags(developerPlatformClient, validFlags)
 
-  await sendSample(partnerSessions.token, options)
+  const partnersSession = await developerPlatformClient.session()
+  await sendSample(partnersSession.token, options)
 }
 
-async function validatedFlags(flags: WebhookTriggerFlags): Promise<[PartnersSession, WebhookTriggerFlags]> {
+async function validatedFlags(flags: WebhookTriggerFlags): Promise<[DeveloperPlatformClient, WebhookTriggerFlags]> {
   const [deliveryMethod, address] = parseAddressAndMethod(flags)
 
-  const partnersSession = await fetchPartnersSession()
+  const developerPlatformClient: DeveloperPlatformClient =
+    flags.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
   const [apiVersion, topic] = await parseVersionAndTopic(partnersSession.token, flags)
 
   let clientSecret
@@ -50,7 +53,7 @@ async function validatedFlags(flags: WebhookTriggerFlags): Promise<[PartnersSess
   }
 
   return [
-    partnersSession,
+    developerPlatformClient,
     {
       topic,
       apiVersion,
@@ -62,16 +65,17 @@ async function validatedFlags(flags: WebhookTriggerFlags): Promise<[PartnersSess
 }
 
 async function collectMissingFlags(
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   flags: WebhookTriggerFlags,
 ): Promise<WebhookTriggerOptions> {
+  const partnersSession = await developerPlatformClient.session()
   const apiVersion = await collectApiVersion(partnersSession.token, flags.apiVersion)
 
   const topic = await collectTopic(partnersSession.token, apiVersion, flags.topic)
 
   const [deliveryMethod, address] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
 
-  const clientCredentials = await collectCredentials(partnersSession, flags.clientSecret)
+  const clientCredentials = await collectCredentials(developerPlatformClient, flags.clientSecret)
 
   const options: WebhookTriggerOptions = {
     topic,
@@ -85,7 +89,7 @@ async function collectMissingFlags(
     if (isValueSet(clientCredentials.apiKey)) {
       options.apiKey = clientCredentials.apiKey
     } else {
-      options.apiKey = await collectApiKey(partnersSession)
+      options.apiKey = await collectApiKey(developerPlatformClient)
     }
   }
 

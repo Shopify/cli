@@ -26,7 +26,7 @@ const CreateStoreLink = async (orgId: string) => {
  * If there are no stores, show a link to create a store and prompt the user to refresh the store list
  * If no store is finally selected, exit process
  * @param stores - List of available stores
- * @param org - Current organizatio
+ * @param org - Current organization
  * @param developerPlatformClient - The client to access the platform API
  * @returns The selected store
  */

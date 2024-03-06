@@ -6,7 +6,7 @@ import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {findApiKey, findInEnv} from './find-app-info.js'
 import {fetchPartnersSession} from '../context/partner-account-info.js'
-import {testPartnersUserSession} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testPartnersUserSession} from '../../models/app/app.test-data.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -48,6 +48,7 @@ const successEmptyResponse = {
   userErrors: [],
 }
 const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
+const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('webhookTriggerService', () => {
   beforeEach(async () => {
@@ -204,6 +205,7 @@ describe('webhookTriggerService', () => {
       deliveryMethod: 'http',
       clientSecret: aSecret,
       address: anAddress,
+      developerPlatformClient,
     }
 
     return flags
@@ -216,6 +218,7 @@ describe('webhookTriggerService', () => {
       deliveryMethod: 'event-bridge',
       clientSecret: aSecret,
       address: anEventBridgeAddress,
+      developerPlatformClient,
     }
 
     return flags
@@ -228,6 +231,7 @@ describe('webhookTriggerService', () => {
       deliveryMethod: 'http',
       clientSecret: aSecret,
       address: aFullLocalAddress,
+      developerPlatformClient,
     }
 
     return flags

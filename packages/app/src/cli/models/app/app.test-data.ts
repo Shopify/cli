@@ -27,6 +27,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
+import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -771,13 +772,19 @@ const appPreviewModeResponse: FindAppPreviewModeSchema = {
   },
 }
 
+const organizationsResponse: AllOrganizationsQuerySchema = {
+  organizations: {
+    nodes: [testOrganization()],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
-    organizations: () => Promise.resolve([testOrganization()]),
+    organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     selectOrg: () => Promise.resolve(testOrganization()),
