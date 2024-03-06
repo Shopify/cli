@@ -2,9 +2,12 @@ import {configExtensionsIdentifiersBreakdown, extensionsIdentifiersDeployBreakdo
 import {ensureDeploymentIdsPresence} from './identifiers.js'
 import {deployConfirmed} from './identifiers-extensions.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
-import {testApp} from '../../models/app/app.test-data.js'
+import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('./breakdown-extensions.js')
 vi.mock('../../prompts/deploy-release.js')
@@ -20,7 +23,7 @@ describe('ensureDeploymentIdsPresence', () => {
     // When / Then
     const params = {
       app: testApp(),
-      token: 'token',
+      developerPlatformClient,
       appId: 'appId',
       appName: 'appName',
       envIdentifiers: {},
@@ -46,7 +49,7 @@ describe('ensureDeploymentIdsPresence', () => {
     // When
     const params = {
       app: testApp(),
-      token: 'token',
+      developerPlatformClient,
       appId: 'appId',
       appName: 'appName',
       envIdentifiers: {},

@@ -1,12 +1,10 @@
-import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {
-  ConvertDevToTestStoreQuery,
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -28,18 +26,18 @@ const CreateStoreLink = async (orgId: string) => {
  * If there are no stores, show a link to create a store and prompt the user to refresh the store list
  * If no store is finally selected, exit process
  * @param stores - List of available stores
- * @param orgId - Current organization ID
- * @param cachedStoreName - Cached store name
+ * @param org - Current organizatio
+ * @param developerPlatformClient - The client to access the platform API
  * @returns The selected store
  */
 export async function selectStore(
   stores: OrganizationStore[],
   org: Organization,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> {
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store, org.id, token)
+    await convertToTestStoreIfNeeded(store, org.id, developerPlatformClient)
     return store
   }
 
@@ -51,18 +49,21 @@ export async function selectStore(
     throw new CancelExecution()
   }
 
-  const data = await waitForCreatedStore(org.id, token)
-  return selectStore(data, org, token)
+  const data = await waitForCreatedStore(org.id, developerPlatformClient)
+  return selectStore(data, org, developerPlatformClient)
 }
 
 /**
  * Retrieves the list of stores from an organization, retrying a few times if the list is empty.
  * That is because after creating the dev store, it can take some seconds for the API to return it.
  * @param orgId - Current organization ID
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns List of stores
  */
-async function waitForCreatedStore(orgId: string, token: string): Promise<OrganizationStore[]> {
+async function waitForCreatedStore(
+  orgId: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<OrganizationStore[]> {
   const retries = 10
   const secondsToWait = 3
   let data = [] as OrganizationStore[]
@@ -72,7 +73,7 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
       task: async () => {
         for (let i = 0; i < retries; i++) {
           // eslint-disable-next-line no-await-in-loop
-          const stores = await fetchAllDevStores(orgId, token)
+          const stores = await developerPlatformClient.devStoresForOrg(orgId)
           if (stores.length > 0) {
             data = stores
             return
@@ -94,14 +95,14 @@ async function waitForCreatedStore(orgId: string, token: string): Promise<Organi
  * @param storeDomain - Store domain to check
  * @param stores - List of available stores
  * @param orgId - Current organization ID
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns True if the store is valid
  * @throws If the store can't be found in the organization or we fail to make it a test store
  */
 export async function convertToTestStoreIfNeeded(
   store: OrganizationStore,
   orgId: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<void> {
   /**
    * It's not possible to convert stores to dev ones in spin environments. Should be created directly as development.
@@ -115,7 +116,7 @@ export async function convertToTestStoreIfNeeded(
       'Run dev --reset and select an eligible dev store.',
     )
   }
-  if (!store.transferDisabled) await convertStoreToTest(store, orgId, token)
+  if (!store.transferDisabled) await convertStoreToTest(store, orgId, developerPlatformClient)
 }
 
 /**
@@ -123,17 +124,20 @@ export async function convertToTestStoreIfNeeded(
  * This can't be undone, so we ask the user to confirm
  * @param store - Store to convert
  * @param orgId - Current organization ID
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  */
-export async function convertStoreToTest(store: OrganizationStore, orgId: string, token: string) {
-  const query = ConvertDevToTestStoreQuery
+export async function convertStoreToTest(
+  store: OrganizationStore,
+  orgId: string,
+  developerPlatformClient: DeveloperPlatformClient,
+) {
   const variables: ConvertDevToTestStoreVariables = {
     input: {
       organizationID: parseInt(orgId, 10),
       shopId: store.shopId,
     },
   }
-  const result: ConvertDevToTestStoreSchema = await partnersRequest(query, token, variables)
+  const result: ConvertDevToTestStoreSchema = await developerPlatformClient.convertToTestStore(variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw new BugError(

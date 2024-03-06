@@ -16,9 +16,43 @@ import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore
 import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
+import {
+  AllAppExtensionRegistrationsQuery,
+  AllAppExtensionRegistrationsQuerySchema,
+} from '../../api/graphql/all_app_extension_registrations.js'
+import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {
+  ExtensionUpdateDraftInput,
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateSchema,
+} from '../../api/graphql/update_draft.js'
+import {AppDeploy, AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {
+  GenerateSignedUploadUrl,
+  GenerateSignedUploadUrlSchema,
+  GenerateSignedUploadUrlVariables,
+} from '../../api/graphql/generate_signed_upload_url.js'
+import {
+  ExtensionCreateQuery,
+  ExtensionCreateSchema,
+  ExtensionCreateVariables,
+} from '../../api/graphql/extension_create.js'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
+import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
+import {AppVersionsQuery, AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {
+  FunctionUploadUrlGenerateMutation,
+  FunctionUploadUrlGenerateResponse,
+  partnersRequest,
+} from '@shopify/cli-kit/node/api/partners'
+import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -73,8 +107,21 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this._session
   }
 
+  async makeRequest<T>(query: string, variables: GraphQLVariables | undefined = undefined): Promise<T> {
+    return partnersRequest(query, await this.token(), variables)
+  }
+
   async token(): Promise<string> {
     return (await this.session()).token
+  }
+
+  async refreshToken(): Promise<string> {
+    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+    const session = await this.session()
+    if (newToken) {
+      session.token = newToken
+    }
+    return session.token
   }
 
   async accountInfo(): Promise<PartnersSession['accountInfo']> {
@@ -129,9 +176,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     },
   ): Promise<OrganizationApp> {
     const variables = getAppVars(org, name, options?.isLaunchable, options?.scopesArray)
-
-    const query = CreateAppQuery
-    const result: CreateAppQuerySchema = await partnersRequest(query, await this.token(), variables)
+    const result: CreateAppQuerySchema = await this.makeRequest(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -142,10 +187,49 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const query = AllDevStoresByOrganizationQuery
-    const result: AllDevStoresByOrganizationSchema = await partnersRequest(query, await this.token(), {
+    const result: AllDevStoresByOrganizationSchema = await this.makeRequest(AllDevStoresByOrganizationQuery, {
       id: orgId,
     })
     return result.organizations.nodes[0]!.stores.nodes
+  }
+
+  async appExtensionRegistrations(appId: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
+    return this.makeRequest(AllAppExtensionRegistrationsQuery, {apiKey: appId})
+  }
+
+  async appVersions(appId: string): Promise<AppVersionsQuerySchema> {
+    return this.makeRequest(AppVersionsQuery, {apiKey: appId})
+  }
+
+  async activeAppVersion(appId: string): Promise<ActiveAppVersionQuerySchema> {
+    return this.makeRequest(ActiveAppVersionQuery, {apiKey: appId})
+  }
+
+  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
+    return this.makeRequest(FunctionUploadUrlGenerateMutation)
+  }
+
+  async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
+    return this.makeRequest(ExtensionCreateQuery, input)
+  }
+
+  async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
+    return this.makeRequest(ExtensionUpdateDraftMutation, extensionInput)
+  }
+
+  async deploy(deployInput: AppDeployVariables): Promise<AppDeploySchema> {
+    return this.makeRequest(AppDeploy, deployInput)
+  }
+
+  async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
+    return this.makeRequest(GenerateSignedUploadUrl, input)
+  }
+
+  async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
+    return this.makeRequest(ConvertDevToTestStoreQuery, input)
+  }
+
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    return this.makeRequest(FindStoreByDomainQuery, {id: orgId, shopDomain})
   }
 }

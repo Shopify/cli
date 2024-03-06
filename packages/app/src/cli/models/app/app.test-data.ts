@@ -13,6 +13,16 @@ import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
+import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {
+  GenerateSignedUploadUrlSchema,
+  GenerateSignedUploadUrlVariables,
+} from '../../api/graphql/generate_signed_upload_url.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
+import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -650,9 +660,105 @@ export const testPartnersUserSession: PartnersSession = {
   },
 }
 
+const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = {
+  app: {
+    extensionRegistrations: [],
+    configurationRegistrations: [],
+    dashboardManagedExtensionRegistrations: [],
+  },
+}
+
+const emptyAppVersions = {
+  app: {
+    id: 'app-id',
+    organizationId: 'org-id',
+    title: 'my app',
+    appVersions: {
+      nodes: [],
+      pageInfo: {
+        totalResults: 0,
+      },
+    },
+  },
+}
+
+const emptyActiveAppVersion: ActiveAppVersionQuerySchema = {
+  app: {
+    activeAppVersion: {
+      appModuleVersions: [],
+    },
+  },
+}
+
+const functionUploadUrlResponse = {
+  functionUploadUrlGenerate: {
+    generatedUrlDetails: {
+      headers: {},
+      maxSize: '200 kb',
+      url: 'https://example.com/upload-url',
+      moduleId: 'module-id',
+      maxBytes: 200,
+    },
+  },
+}
+
+export const extensionCreateResponse: ExtensionCreateSchema = {
+  extensionCreate: {
+    extensionRegistration: {
+      id: 'extension-id',
+      uuid: 'extension-uuid',
+      title: 'my extension',
+      type: 'other',
+      draftVersion: {
+        config: 'config',
+        registrationId: 'registration-id',
+        lastUserInteractionAt: '2024-01-01',
+        validationErrors: [],
+      },
+    },
+    userErrors: [],
+  },
+}
+
+const extensionUpdateResponse: ExtensionUpdateSchema = {
+  extensionUpdateDraft: {
+    clientMutationId: 'client-mutation-id',
+    userErrors: [],
+  },
+}
+
+const deployResponse: AppDeploySchema = {
+  appDeploy: {
+    appVersion: {
+      uuid: 'uuid',
+      id: 1,
+      versionTag: 'version-tag',
+      location: 'location',
+      message: 'message',
+      appModuleVersions: [],
+    },
+    userErrors: [],
+  },
+}
+
+const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
+  appVersionGenerateSignedUploadUrl: {
+    signedUploadUrl: 'signed-upload-url',
+    userErrors: [],
+  },
+}
+
+const convertedToTestStoreResponse = {
+  convertDevToTestStore: {
+    convertedToTestStore: true,
+    userErrors: [],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
+    refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve([testOrganization()]),
@@ -665,6 +771,17 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
       Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
+    storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
+    appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
+    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    activeAppVersion: (_appId: string) => Promise.resolve(emptyActiveAppVersion),
+    functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
+    createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
+    updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
+    deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
+    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
+      Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
     ...stubs,
   }
 }

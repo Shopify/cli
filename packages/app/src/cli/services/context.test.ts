@@ -1011,7 +1011,7 @@ describe('ensureDeployContext', () => {
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
     const opts = options(app)
-    const developerPlatformClient = opts.developerPlatformClient!
+    const developerPlatformClient = opts.developerPlatformClient
     const {appFromId} = developerPlatformClient
     const appFromIdSpy = vi.spyOn(developerPlatformClient, 'appFromId').mockImplementation(appFromId)
 
@@ -1123,11 +1123,11 @@ describe('ensureDeployContext', () => {
 
     const opts = options(app)
     opts.reset = true
-    const originalOrganizations = opts.developerPlatformClient!.organizations
+    const originalOrganizations = opts.developerPlatformClient.organizations
     const organizationsSpy = vi
-      .spyOn(opts.developerPlatformClient!, 'organizations')
+      .spyOn(opts.developerPlatformClient, 'organizations')
       .mockImplementation(originalOrganizations)
-    opts.developerPlatformClient!.orgAndApps = async (_orgId: string) => {
+    opts.developerPlatformClient.orgAndApps = async (_orgId: string) => {
       return {
         organization: ORG1,
         apps: [APP1, APP2],
@@ -1674,6 +1674,7 @@ describe('ensureReleaseContext', () => {
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
     const got = await ensureReleaseContext({
@@ -1681,7 +1682,7 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient,
     })
 
     // Then
@@ -1695,18 +1696,17 @@ describe('ensureReleaseContext', () => {
 
     expect(got.app).toEqual(app)
     expect(got.partnersApp).toEqual(APP2)
-    expect(got.token).toEqual('token')
+    expect(got.developerPlatformClient).toEqual(developerPlatformClient)
   })
 })
 
 describe('ensureThemeExtensionDevContext', () => {
   test('fetches theme extension when it exists', async () => {
     // Given
-    const token = 'token'
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+    const mockedExtensionRegistrations = {
       app: {
         extensionRegistrations: [
           {
@@ -1725,10 +1725,14 @@ describe('ensureThemeExtensionDevContext', () => {
         configurationRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
       },
+    }
+
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      appExtensionRegistrations: (_appId: string) => Promise.resolve(mockedExtensionRegistrations),
     })
 
     // When
-    const got = await ensureThemeExtensionDevContext(extension, apiKey, token)
+    const got = await ensureThemeExtensionDevContext(extension, apiKey, developerPlatformClient)
 
     // Then
     expect('existing ID').toEqual(got.id)
@@ -1739,7 +1743,6 @@ describe('ensureThemeExtensionDevContext', () => {
 
   test('creates theme extension when it does not exist', async () => {
     // Given
-    const token = 'token'
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
@@ -1754,7 +1757,7 @@ describe('ensureThemeExtensionDevContext', () => {
     })
 
     // When
-    const got = await ensureThemeExtensionDevContext(extension, apiKey, token)
+    const got = await ensureThemeExtensionDevContext(extension, apiKey, buildDeveloperPlatformClient())
 
     // Then
     expect('new ID').toEqual(got.id)
@@ -1768,19 +1771,20 @@ describe('ensureVersionsListContext', () => {
   test('returns the partners token and app', async () => {
     // Given
     const app = testApp()
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
     const got = await ensureVersionsListContext({
       app,
       apiKey: APP2.apiKey,
       reset: false,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient,
     })
 
     // Then
     expect(got).toEqual({
       partnersApp: APP2,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
     })
   })
 })

@@ -1,8 +1,7 @@
 import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
-import {fetchOrgFromId} from './dev/fetch.js'
-import {AppVersionsQuery, AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
+import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
@@ -22,7 +21,7 @@ type AppVersionLine = {
 const TABLE_FORMATTING_CHARS = 12
 
 async function fetchAppVersions(
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
   json: boolean,
 ): Promise<{
@@ -30,8 +29,7 @@ async function fetchAppVersions(
   totalResults: number
   app: AppVersionsQuerySchema['app']
 }> {
-  const query = AppVersionsQuery
-  const res: AppVersionsQuerySchema = await partnersRequest(query, token, {apiKey})
+  const res: AppVersionsQuerySchema = await developerPlatformClient.appVersions(apiKey)
   if (!res.app) throw new AbortError(`Invalid API Key: ${apiKey}`)
 
   const appVersions = res.app.appVersions.nodes.map((appVersion) => {
@@ -86,15 +84,18 @@ interface VersionListOptions {
   apiKey?: string
   reset: false
   json: boolean
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const {partnersSession, partnersApp} = await ensureVersionsListContext(options)
-  const {id: appId, organizationId, title, apiKey} = partnersApp
+  const result = await ensureVersionsListContext(options)
+  const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
 
-  const {appVersions, totalResults} = await fetchAppVersions(partnersSession.token, apiKey, options.json)
+  const {id: appId, organizationId, title, apiKey} = result.partnersApp
 
-  const {businessName: org} = await fetchOrgFromId(organizationId, partnersSession)
+  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, apiKey, options.json)
+
+  const {businessName: org} = await developerPlatformClient.orgFromId(organizationId)
 
   if (options.json) {
     return outputInfo(JSON.stringify(appVersions, null, 2))
