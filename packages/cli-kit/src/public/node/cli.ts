@@ -1,6 +1,8 @@
 import {isTruthy} from './context/utilities.js'
 import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {Flags} from '@oclif/core'
+// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
+import {fileURLToPath} from 'url'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -79,13 +81,18 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
   const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
   const {run, settings, flush, Errors} = await import('@oclif/core')
+  const {ShopifyConfig} = await import('./custom-oclif-loader.js')
 
   if (isDevelopment()) {
     settings.debug = true
   }
 
   try {
-    await run(undefined, options.moduleURL)
+    // Use a custom OCLIF config to customize the behavior of the CLI
+    const config = new ShopifyConfig({root: fileURLToPath(options.moduleURL)})
+    await config.load()
+
+    await run(undefined, config)
     await flush()
     printEventsJson()
     // eslint-disable-next-line no-catch-all/no-catch-all
