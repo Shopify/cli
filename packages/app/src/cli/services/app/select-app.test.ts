@@ -2,8 +2,8 @@ import {fetchAppRemoteConfiguration} from './select-app.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {configurationSpecifications, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {describe, expect, test, vi} from 'vitest'
 import {MinimalOrganizationApp} from '../../models/organization.js'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../dev/fetch.js')
 
@@ -65,7 +65,6 @@ const minimalOrganizationApp: MinimalOrganizationApp = {
   apiKey: 'API_KEY',
   organizationId: '67890',
 }
-
 
 describe('fetchAppRemoteConfiguration', () => {
   test('when configuration modules are present the remote configuration is returned ', async () => {

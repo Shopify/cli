@@ -95,7 +95,12 @@ export async function configExtensionsIdentifiersBreakdown({
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
-  return resolveRemoteConfigExtensionIdentifiersBreakdown(developerPlatformClient, partnersApp, localApp, versionAppModules)
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(
+    developerPlatformClient,
+    partnersApp,
+    localApp,
+    versionAppModules,
+  )
 }
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {

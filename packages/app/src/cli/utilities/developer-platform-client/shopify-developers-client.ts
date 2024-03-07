@@ -1,16 +1,22 @@
-import {CreateAppMutation, CreateAppMutationVariables, CreateAppMutationSchema} from './shopify-developers-client/graphql/create-app.js'
-import {ActiveAppReleaseQuery, ActiveAppReleaseQueryVariables, ActiveAppReleaseQuerySchema} from './shopify-developers-client/graphql/active-app-release.js'
+import {
+  CreateAppMutation,
+  CreateAppMutationVariables,
+  CreateAppMutationSchema,
+} from './shopify-developers-client/graphql/create-app.js'
+import {
+  ActiveAppReleaseQuery,
+  ActiveAppReleaseQueryVariables,
+  ActiveAppReleaseQuerySchema,
+} from './shopify-developers-client/graphql/active-app-release.js'
 // import {SpecificationsQuery, SpecificationsQueryVariables, SpecificationsQuerySchema} from './shopify-developers-client/graphql/specifications.js'
 import {
   // ExtensionSpecificationsQuerySchema,
-  FlattenedRemoteSpecification
+  FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {
-  filterDisabledBetas,
-} from '../../../cli/services/dev/fetch.js'
+import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
@@ -23,15 +29,18 @@ import {
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
+import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
+import {
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
 
 const ORG1 = {
   id: '1',
@@ -56,7 +65,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         accountInfo: {
           type: 'UserAccount',
           email: 'mail@example.com',
-        }
+        },
       }
     }
     return this._session
@@ -90,7 +99,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async orgFromId(orgId: string): Promise<Organization> {
     if (orgId === '1') return ORG1
 
-    throw new BugError(`Cannot fetch organization with id ${orgId}`)
+    throw new BugError(`Can't fetch organization with id ${orgId}`)
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
@@ -101,7 +110,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         hasMorePages: false,
       }
     } else {
-      throw new BugError(`Cannot fetch organization with id ${orgId}`)
+      throw new BugError(`Can't fetch organization with id ${orgId}`)
     }
   }
 
@@ -120,14 +129,14 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     // const result = await orgScopedShopifyDevelopersRequest<SpecificationsQuerySchema>(ORG1.id, query, await this.token(), variables)
     // console.log(JSON.stringify(result, null, 2))
     // return result.specifications.map((spec): ExtensionSpecification => ({
-      // externalName: spec.name,
-      // additionalIdentifiers: [],
-      // partnersWebIdentifier: spec.identifier,
-      // surface: '',
-      // registrationLimit: 1,
-      // appModuleFeatures: (_config) => [],
-      // ...spec,
-      // experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
+    // externalName: spec.name,
+    // additionalIdentifiers: [],
+    // partnersWebIdentifier: spec.identifier,
+    // surface: '',
+    // registrationLimit: 1,
+    // appModuleFeatures: (_config) => [],
+    // ...spec,
+    // experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
     // }))
   }
 
@@ -143,7 +152,12 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray)
 
     const mutation = CreateAppMutation
-    const result = await orgScopedShopifyDevelopersRequest<CreateAppMutationSchema>(org.id, mutation, await this.token(), variables)
+    const result = await orgScopedShopifyDevelopersRequest<CreateAppMutationSchema>(
+      org.id,
+      mutation,
+      await this.token(),
+      variables,
+    )
     if (result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -152,7 +166,16 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     // Need to figure this out still
     const betas = filterDisabledBetas([])
     const createdApp = result.appCreate.app
-    return {...createdApp, title: name, apiKey: createdApp.id, apiSecretKeys: [], grantedScopes: options?.scopesArray ?? [], organizationId: org.id, newApp: true, betas}
+    return {
+      ...createdApp,
+      title: name,
+      apiKey: createdApp.id,
+      apiSecretKeys: [],
+      grantedScopes: options?.scopesArray ?? [],
+      organizationId: org.id,
+      newApp: true,
+      betas,
+    }
   }
 
   async devStoresForOrg(_orgId: string): Promise<OrganizationStore[]> {
@@ -166,7 +189,12 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersionQuerySchema> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
+    const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
     return {
       app: {
         activeAppVersion: {
@@ -179,14 +207,14 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
               config: mod.config,
               specification: {
                 ...mod.specification,
-                options: { managementExperience: 'cli' },
-                experience: mod.specification.experience.toLowerCase() as "configuration" | "extension" | "deprecated",
+                options: {managementExperience: 'cli'},
+                experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
               },
             }
           }),
           ...result.app.activeRelease,
-        }
-      }
+        },
+      },
     }
   }
 
@@ -238,7 +266,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
         config: JSON.stringify({
           app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
           embedded: isLaunchable,
-        })
+        }),
       },
       {
         uuid: randomUUID(),
@@ -261,75 +289,75 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
         }),
       },
-    ]
+    ],
   }
 }
 
 async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[]> {
   const extensionSpecifications: FlattenedRemoteSpecification[] = [
     {
-      "name": "App access",
-      "externalName": "App access",
-      "externalIdentifier": "app_access",
-      "identifier": "app_access",
-      "gated": false,
-      "experience": "configuration",
-      "registrationLimit": 1,
-      "options": {
-        "managementExperience": "cli",
-        "registrationLimit": 1,
+      name: 'App access',
+      externalName: 'App access',
+      externalIdentifier: 'app_access',
+      identifier: 'app_access',
+      gated: false,
+      experience: 'configuration',
+      registrationLimit: 1,
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
       },
-      "features": {
-        "argo": undefined
-      }
+      features: {
+        argo: undefined,
+      },
     },
     {
-      "name": "App Home",
-      "externalName": "App Home",
-      "externalIdentifier": "app_home",
-      "identifier": "app_home",
-      "gated": false,
-      "experience": "configuration",
-      "registrationLimit": 1,
-      "options": {
-        "managementExperience": "cli",
-        "registrationLimit": 1,
+      name: 'App Home',
+      externalName: 'App Home',
+      externalIdentifier: 'app_home',
+      identifier: 'app_home',
+      gated: false,
+      experience: 'configuration',
+      registrationLimit: 1,
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
       },
-      "features": {
-        "argo": undefined
-      }
+      features: {
+        argo: undefined,
+      },
     },
     {
-      "name": "Branding",
-      "externalName": "Branding",
-      "externalIdentifier": "branding",
-      "identifier": "branding",
-      "gated": false,
-      "experience": "configuration",
-      "registrationLimit": 1,
-      "options": {
-        "managementExperience": "cli",
-        "registrationLimit": 1,
+      name: 'Branding',
+      externalName: 'Branding',
+      externalIdentifier: 'branding',
+      identifier: 'branding',
+      gated: false,
+      experience: 'configuration',
+      registrationLimit: 1,
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
       },
-      "features": {
-        "argo": undefined
-      }
+      features: {
+        argo: undefined,
+      },
     },
     {
-      "name": "Webhooks",
-      "externalName": "Webhooks",
-      "externalIdentifier": "webhooks",
-      "identifier": "webhooks",
-      "gated": false,
-      "experience": "configuration",
-      "registrationLimit": 1,
-      "options": {
-        "managementExperience": "cli",
-        "registrationLimit": 1
+      name: 'Webhooks',
+      externalName: 'Webhooks',
+      externalIdentifier: 'webhooks',
+      identifier: 'webhooks',
+      gated: false,
+      experience: 'configuration',
+      registrationLimit: 1,
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
       },
-      "features": {
-        "argo": undefined,
-      }
+      features: {
+        argo: undefined,
+      },
     },
   ]
 

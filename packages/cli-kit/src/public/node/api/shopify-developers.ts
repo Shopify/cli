@@ -20,7 +20,12 @@ const limiter = new Bottleneck({
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function orgScopedShopifyDevelopersRequest<T>(orgId: string, query: string, token: string, variables?: GraphQLVariables): Promise<T> {
+export async function orgScopedShopifyDevelopersRequest<T>(
+  orgId: string,
+  query: string,
+  token: string,
+  variables?: GraphQLVariables,
+): Promise<T> {
   const api = 'Shopify Developers'
   const fqdn = await shopifyDevelopersFqdn()
   const url = `https://${fqdn}/organization/${orgId}/graphql`
