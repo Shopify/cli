@@ -11,8 +11,6 @@ vi.mock('@shopify/cli-kit/node/system')
 const address = 'http://localhost:3000/test/path'
 const storeFqdn = 'test-store.myshopify.io'
 
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('sendUninstallWebhookToAppServer', () => {
   test('requests sample and API versions, triggers local webhook', async () => {
     vi.mocked(triggerLocalWebhook).mockResolvedValueOnce(true)
