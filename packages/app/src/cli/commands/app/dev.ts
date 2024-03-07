@@ -6,6 +6,7 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {io} from 'socket.io-client'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -109,6 +110,67 @@ export default class Dev extends Command {
   }
 
   public async run(): Promise<void> {
+    const socket = io('https://web.prd-s5y-app-event-realti-d91a.prod.shopifyapps.com', {transports: ['websocket']})
+    const user = 'mock_session_token'
+    const shopId = 123
+    const appId = 456
+    // const room = `shop-${shopId}-app-${appId}`
+    const room = 'test'
+
+    console.log(`connecting to room: ${room}`)
+
+    socket.emit('signin', {user, room}, (error: string, history: {messages: [string]}) => {
+      if (error) {
+        console.error(error)
+      } else if (history) {
+        console.log('historic messages detected:')
+        console.log(history.messages)
+        console.log('end of historic messages')
+      }
+    })
+
+    socket.on('message', (msg) => {
+      console.log('message received: ', msg)
+    })
+
+    console.log('test')
+
+    socket.on('notification', (msg: string) => {
+      console.log('notification received: ', msg)
+    })
+
+    // Listen connect event
+    socket.on('connect', () => {
+      console.log('connected')
+    })
+    // [END cloudrun_websockets_listen]
+
+    // Listen for disconnect event
+    socket.on('disconnect', (err: string) => {
+      console.log('server disconnected: ', err)
+      if (err === 'io server disconnect') {
+        // Reconnect manually if the disconnection was initiated by the server
+        socket.connect()
+      }
+    })
+
+    // [START cloudrun_websockets_reconnect]
+    // Listen for reconnect event
+    socket.io.on('reconnect', () => {
+      console.log('reconnected')
+      // Emit "updateSocketId" event to update the recorded socket ID with user and room
+      socket.emit('updateSocketId', {user, room}, (error: string) => {
+        if (error) {
+          console.error(error)
+        }
+      })
+    })
+
+    setInterval(() => {
+      console.log(`socket is connected: ${socket.connected}`)
+    }, 1000)
+    return
+
     const {flags} = await this.parse(Dev)
 
     if (!flags['api-key']) {
