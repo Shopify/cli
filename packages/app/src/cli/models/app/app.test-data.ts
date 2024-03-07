@@ -31,6 +31,9 @@ import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_relea
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -816,6 +819,23 @@ const organizationsResponse: AllOrganizationsQuerySchema = {
   },
 }
 
+const sendSampleWebhookResponse: SendSampleWebhookSchema = {
+  sendSampleWebhook: {
+    samplePayload: '{ "sampleField": "SampleValue" }',
+    headers: '{ "header": "Header Value" }',
+    success: true,
+    userErrors: [],
+  },
+}
+
+const apiVersionsResponse: PublicApiVersionsSchema = {
+  publicApiVersions: ['2022', 'unstable', '2023'],
+}
+
+const topicsResponse: WebhookTopicsSchema = {
+  webhookTopics: ['orders/create', 'shop/redact'],
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub = {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -849,6 +869,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
+    sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
+    apiVersions: () => Promise.resolve(apiVersionsResponse),
+    topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = {}

@@ -1,5 +1,5 @@
 import {webhookTriggerService} from './trigger.js'
-import {getWebhookSample} from './request-sample.js'
+import {SendSampleWebhookVariables, getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {WebhookTriggerFlags} from './trigger-flags.js'
@@ -11,7 +11,6 @@ import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/out
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-const aToken = 'token'
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 const aTopic = 'A_TOPIC'
@@ -103,16 +102,22 @@ describe('webhookTriggerService', () => {
   test('notifies about real delivery being sent', async () => {
     // Given
     mockLists(aVersion, aTopic)
-
     vi.mocked(triggerLocalWebhook)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
+    const expectedSampleWebhookVariables: SendSampleWebhookVariables = {
+      topic: aTopic,
+      delivery_method: 'http',
+      address: anAddress,
+      shared_secret: aSecret,
+      api_version: aVersion,
+    }
 
     // When
     await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion)
-    expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'http', anAddress, aSecret)
+    expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
@@ -133,21 +138,21 @@ describe('webhookTriggerService', () => {
     vi.mocked(findInEnv).mockResolvedValue({})
     vi.mocked(findApiKey).mockResolvedValue(anApiKey)
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
+    const expectedSampleWebhookVariables: SendSampleWebhookVariables = {
+      topic: aTopic,
+      delivery_method: 'event-bridge',
+      address: anEventBridgeAddress,
+      shared_secret: aSecret,
+      api_version: aVersion,
+      api_key: anApiKey,
+    }
 
     // When
     await webhookTriggerService(eventBridgeFlags())
 
     // Then
     expectCalls(aVersion)
-    expect(getWebhookSample).toHaveBeenCalledWith(
-      aToken,
-      aTopic,
-      aVersion,
-      'event-bridge',
-      anEventBridgeAddress,
-      aSecret,
-      anApiKey,
-    )
+    expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
     expect(outputInfo).toHaveBeenCalledWith('Using api-key from app settings in Partners')
   })
@@ -156,16 +161,22 @@ describe('webhookTriggerService', () => {
     test('delivers to localhost', async () => {
       // Given
       mockLists(aVersion, aTopic)
-
       vi.mocked(triggerLocalWebhook).mockResolvedValue(true)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+      const expectedSampleWebhookVariables: SendSampleWebhookVariables = {
+        topic: aTopic,
+        delivery_method: 'localhost',
+        address: aFullLocalAddress,
+        shared_secret: aSecret,
+        api_version: aVersion,
+      }
 
       // When
       await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion)
-      expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
+      expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
@@ -173,16 +184,22 @@ describe('webhookTriggerService', () => {
     test('shows an error if localhost is not ready', async () => {
       // Given
       mockLists(aVersion, aTopic)
-
       vi.mocked(triggerLocalWebhook).mockResolvedValue(false)
       vi.mocked(getWebhookSample).mockResolvedValue(successDirectResponse)
+      const expectedSampleWebhookVariables: SendSampleWebhookVariables = {
+        topic: aTopic,
+        delivery_method: 'localhost',
+        address: aFullLocalAddress,
+        shared_secret: aSecret,
+        api_version: aVersion,
+      }
 
       // When
       await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion)
-      expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
+      expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(consoleError).toHaveBeenCalledWith('Localhost delivery failed')
     })
@@ -194,8 +211,8 @@ describe('webhookTriggerService', () => {
   }
 
   function expectCalls(version: string) {
-    expect(requestApiVersions).toHaveBeenCalledWith(aToken)
-    expect(requestTopics).toHaveBeenCalledWith(aToken, version)
+    expect(requestApiVersions).toHaveBeenCalledWith(developerPlatformClient)
+    expect(requestTopics).toHaveBeenCalledWith(developerPlatformClient, version)
   }
 
   function sampleFlags(): WebhookTriggerFlags {
