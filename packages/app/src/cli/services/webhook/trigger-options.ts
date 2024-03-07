@@ -62,8 +62,7 @@ export async function collectCredentials(
     return credentials
   }
 
-  const partnersSession = await developerPlatformClient.session()
-  const appCredentials = await requestAppInfo(partnersSession.token, apiKey)
+  const appCredentials = await requestAppInfo(developerPlatformClient, apiKey)
   if (isValueSet(appCredentials.clientSecret)) {
     outputInfo('Reading client-secret from app settings in Partners')
   } else {
@@ -105,14 +104,17 @@ export async function collectApiKey(developerPlatformClient: DeveloperPlatformCl
 /**
  * Returns passed apiVersion or prompts for an existing one
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID or undefined api-version
  * @returns api-version
  */
-export async function collectApiVersion(token: string, apiVersion: string | undefined): Promise<string> {
+export async function collectApiVersion(
+  developerPlatformClient: DeveloperPlatformClient,
+  apiVersion: string | undefined,
+): Promise<string> {
   const selected = isValueSet(apiVersion)
     ? (apiVersion as string)
-    : await apiVersionPrompt(await requestApiVersions(token))
+    : await apiVersionPrompt(await requestApiVersions(developerPlatformClient))
 
   return selected
 }
@@ -120,17 +122,21 @@ export async function collectApiVersion(token: string, apiVersion: string | unde
 /**
  * Returns passed topic if valid or prompts for an existing one
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID api-version
  * @param topic - topic or undefined
  * @returns topic
  */
-export async function collectTopic(token: string, apiVersion: string, topic: string | undefined): Promise<string> {
+export async function collectTopic(
+  developerPlatformClient: DeveloperPlatformClient,
+  apiVersion: string,
+  topic: string | undefined,
+): Promise<string> {
   if (isValueSet(topic)) {
-    return parseTopicFlag(topic as string, apiVersion, await requestTopics(token, apiVersion))
+    return parseTopicFlag(topic as string, apiVersion, await requestTopics(developerPlatformClient, apiVersion))
   }
 
-  const selected = await topicPrompt(await requestTopics(token, apiVersion))
+  const selected = await topicPrompt(await requestTopics(developerPlatformClient, apiVersion))
 
   return selected
 }

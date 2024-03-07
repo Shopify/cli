@@ -69,6 +69,13 @@ import {
   FindAppPreviewModeVariables,
 } from '../../api/graphql/find_app_preview_mode.js'
 import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+  sendSampleWebhookMutation,
+} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema, getApiVersionsQuery} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables, getTopicsQuery} from '../../services/webhook/request-topics.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -275,5 +282,17 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
     return this.makeRequest(FindAppPreviewModeQuery, input)
+  }
+
+  async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+    return this.makeRequest(sendSampleWebhookMutation, input)
+  }
+
+  async apiVersions(): Promise<PublicApiVersionsSchema> {
+    return this.makeRequest(getApiVersionsQuery)
+  }
+
+  async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+    return this.makeRequest(getTopicsQuery, input)
   }
 }

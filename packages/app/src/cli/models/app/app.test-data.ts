@@ -28,6 +28,9 @@ import {
 } from '../../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -778,6 +781,23 @@ const organizationsResponse: AllOrganizationsQuerySchema = {
   },
 }
 
+const sendSampleWebhookResponse: SendSampleWebhookSchema = {
+  sendSampleWebhook: {
+    samplePayload: '{ "sampleField": "SampleValue" }',
+    headers: '{ "header": "Header Value" }',
+    success: true,
+    userErrors: [],
+  },
+}
+
+const apiVersionsResponse: PublicApiVersionsSchema = {
+  publicApiVersions: ['2022', 'unstable', '2023'],
+}
+
+const topicsResponse: WebhookTopicsSchema = {
+  webhookTopics: ['orders/create', 'shop/redact'],
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -808,6 +828,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
+    sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
+    apiVersions: () => Promise.resolve(apiVersionsResponse),
+    topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     ...stubs,
   }
 }

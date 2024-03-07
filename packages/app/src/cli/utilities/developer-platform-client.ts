@@ -20,6 +20,9 @@ import {
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {AllOrganizationsQuerySchema} from '../api/graphql/all_orgs.js'
+import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables} from '../services/webhook/request-topics.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -88,4 +91,7 @@ export interface DeveloperPlatformClient {
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
+  sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>
+  apiVersions: () => Promise<PublicApiVersionsSchema>
+  topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
 }

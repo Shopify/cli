@@ -225,7 +225,7 @@ describe('setup-dev-processes', () => {
         apiSecret: 'api-secret',
         deliveryPort: 111,
         storeFqdn: 'store.myshopify.io',
-        token: 'token',
+        developerPlatformClient,
         webhooksPath: '/webhooks',
       },
     })
