@@ -28,7 +28,6 @@ vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
 vi.mock('./find-app-info.js')
 
-const aToken = 'token'
 const aSecret = 'A_SECRET'
 const anApiKey = 'AN_API_KEY'
 const developerPlatformClient = testDeveloperPlatformClient()
@@ -39,7 +38,7 @@ describe('collectApiVersion', () => {
     vi.mocked(apiVersionPrompt)
 
     // When
-    const version = await collectApiVersion(aToken, '2023-01')
+    const version = await collectApiVersion(developerPlatformClient, '2023-01')
 
     // Then
     expect(version).toEqual('2023-01')
@@ -52,7 +51,7 @@ describe('collectApiVersion', () => {
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
     // When
-    const version = await collectApiVersion(aToken, undefined)
+    const version = await collectApiVersion(developerPlatformClient, undefined)
 
     // Then
     expect(version).toEqual('2023-01')
@@ -68,7 +67,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const method = await collectTopic(aToken, '2023-01', 'shop/redact')
+    const method = await collectTopic(developerPlatformClient, '2023-01', 'shop/redact')
 
     // Then
     expect(method).toEqual('shop/redact')
@@ -81,7 +80,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When then
-    await expect(collectTopic(aToken, '2023-01', 'unknown/topic')).rejects.toThrow(AbortError)
+    await expect(collectTopic(developerPlatformClient, '2023-01', 'unknown/topic')).rejects.toThrow(AbortError)
     expect(topicPrompt).toHaveBeenCalledTimes(0)
   })
 
@@ -91,7 +90,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const topic = await collectTopic(aToken, 'unstable', undefined)
+    const topic = await collectTopic(developerPlatformClient, 'unstable', undefined)
 
     // Then
     expect(topic).toEqual('orders/create')
@@ -242,7 +241,7 @@ describe('collectCredentials', () => {
     expect(clientSecretPrompt).toHaveBeenCalledTimes(0)
     expect(findInEnv).toHaveBeenCalledOnce()
     expect(findApiKey).toHaveBeenCalledOnce()
-    expect(requestAppInfo).toHaveBeenCalledWith(aToken, anApiKey)
+    expect(requestAppInfo).toHaveBeenCalledWith(developerPlatformClient, anApiKey)
     expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
   })
 
@@ -262,7 +261,7 @@ describe('collectCredentials', () => {
     expect(clientSecretPrompt).toHaveBeenCalledOnce()
     expect(findInEnv).toHaveBeenCalledOnce()
     expect(findApiKey).toHaveBeenCalledOnce()
-    expect(requestAppInfo).toHaveBeenCalledWith(aToken, anApiKey)
+    expect(requestAppInfo).toHaveBeenCalledWith(developerPlatformClient, anApiKey)
   })
 })
 

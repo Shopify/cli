@@ -1,5 +1,5 @@
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
+import {fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -66,12 +66,15 @@ export async function findApiKey(developerPlatformClient: DeveloperPlatformClien
 /**
  * Find the app api_key, if available
  *
- * @param token - partners token
+ * @param developerPlatformClient - The client to access the platform API
  * @param apiKey - app api_key
  * @returns client_id, client_secret, client_api_key
  */
-export async function requestAppInfo(token: string, apiKey: string): Promise<AppCredentials> {
-  const fullSelectedApp = await fetchAppDetailsFromApiKey(apiKey, token)
+export async function requestAppInfo(
+  developerPlatformClient: DeveloperPlatformClient,
+  apiKey: string,
+): Promise<AppCredentials> {
+  const fullSelectedApp = await developerPlatformClient.appFromId(apiKey)
   const credentials: AppCredentials = {}
   if (fullSelectedApp === undefined) {
     return credentials

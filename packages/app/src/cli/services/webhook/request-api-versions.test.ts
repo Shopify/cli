@@ -1,21 +1,13 @@
 import {requestApiVersions} from './request-api-versions.js'
-import {describe, expect, vi, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {describe, expect, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
-
-const aToken = 'A_TOKEN'
+const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('requestApiVersions', () => {
   test('calls partners to request data and returns ordered array', async () => {
-    // Given
-    const graphQLResult = {
-      publicApiVersions: ['2022', 'unstable', '2023'],
-    }
-    vi.mocked(partnersRequest).mockResolvedValue(graphQLResult)
-
-    // When
-    const got = await requestApiVersions(aToken)
+    // Given - When
+    const got = await requestApiVersions(developerPlatformClient)
 
     // Then
     expect(got).toEqual(['2023', '2022', 'unstable'])

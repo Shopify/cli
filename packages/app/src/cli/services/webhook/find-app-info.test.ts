@@ -8,7 +8,6 @@ import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {basename} from '@shopify/cli-kit/node/path'
 
-const aToken = 'A_TOKEN'
 const anApiKey = 'API_KEY'
 
 vi.mock('@shopify/cli-kit/node/fs')
@@ -133,10 +132,12 @@ describe('findApiKey', () => {
 describe('requestAppInfo', () => {
   test('no app found', async () => {
     // Given
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromId: vi.fn().mockResolvedValue(undefined),
+    })
 
     // When
-    const credentials = await requestAppInfo(aToken, anApiKey)
+    const credentials = await requestAppInfo(developerPlatformClient, anApiKey)
 
     // Then
     expect(credentials).toEqual({})
@@ -144,15 +145,16 @@ describe('requestAppInfo', () => {
 
   test('no secrets available', async () => {
     // Given
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
-      testOrganizationApp({
-        apiKey: anApiKey,
-        apiSecretKeys: [],
-      }),
-    )
+    const app = testOrganizationApp({
+      apiKey: anApiKey,
+      apiSecretKeys: [],
+    })
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromId: vi.fn().mockResolvedValue(app),
+    })
 
     // When
-    const credentials = await requestAppInfo(aToken, anApiKey)
+    const credentials = await requestAppInfo(developerPlatformClient, anApiKey)
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey})
@@ -167,7 +169,7 @@ describe('requestAppInfo', () => {
     )
 
     // When
-    const credentials = await requestAppInfo(aToken, anApiKey)
+    const credentials = await requestAppInfo(developerPlatformClient, anApiKey)
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey, clientSecret: 'api-secret'})
