@@ -2,7 +2,6 @@
   "commands": {
     "init": {
       "aliases": [
-        "create-app"
       ],
       "args": {
       },
@@ -95,8 +94,9 @@
         "commands",
         "init.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Create a new app project"
     }
   },
-  "version": "3.56.0"
+  "version": "3.57.0"
 }

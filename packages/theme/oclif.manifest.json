@@ -5,7 +5,8 @@
       ],
       "args": {
       },
-      "description": "Validate the theme.",
+      "description": "Calls and runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. \"Learn more about the checks that Theme Check runs.\" (https://shopify.dev/docs/themes/tools/theme-check/checks)",
+      "descriptionWithMarkdown": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
       "flags": {
         "auto-correct": {
           "allowNo": false,
@@ -142,14 +143,16 @@
         "theme",
         "check.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Validate the theme."
     },
     "theme:console": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Shopify Liquid REPL (read-eval-print loop) tool",
+      "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
+      "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "flags": {
         "environment": {
           "char": "e",
@@ -227,14 +230,17 @@
         "theme",
         "console.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
+      "usage": "\n  shopify theme console\n\n  shopify theme console --url /products/classic-leather-jacket\n  "
     },
     "theme:delete": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Delete remote themes from the connected store. This command can't be undone.",
+      "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
+      "descriptionWithMarkdown": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
       "flags": {
         "development": {
           "allowNo": false,
@@ -327,7 +333,8 @@
         "theme",
         "delete.js"
       ],
-      "strict": false
+      "strict": false,
+      "summary": "Delete remote themes from the connected store. This command can't be undone."
     },
     "theme:dev": {
       "aliases": [
@@ -349,7 +356,8 @@
         "force",
         "notify"
       ],
-      "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
+      "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or \"push\" (https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+      "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or [push](https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
         "environment": {
           "char": "e",
@@ -529,7 +537,8 @@
         "theme",
         "dev.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time."
     },
     "theme:help-old": {
       "aliases": [
@@ -586,7 +595,7 @@
       ],
       "args": {
       },
-      "description": "Print basic information about your theme environment.",
+      "description": "Displays information about your theme environment, including your current store.",
       "flags": {
         "no-color": {
           "allowNo": false,
@@ -632,7 +641,8 @@
           "required": false
         }
       },
-      "description": "Clones a Git repository to use as a starting point for building a new theme.",
+      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of \"Dawn\" (https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be \"substantively different from Dawn\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the \"ways that you can use Dawn\" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).\n  ",
+      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be [substantively different from Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).\n  ",
       "flags": {
         "clone-url": {
           "char": "u",
@@ -693,14 +703,17 @@
         "theme",
         "init.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Clones a Git repository to use as a starting point for building a new theme.",
+      "usage": "shopify theme init [name]"
     },
     "theme:language-server": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Start a Language Server Protocol server.",
+      "description": "Starts the \"Language Server\" (https://shopify.dev/docs/themes/tools/cli/language-server).",
+      "descriptionWithMarkdown": "Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).",
       "flags": {
         "no-color": {
           "allowNo": false,
@@ -734,14 +747,15 @@
         "theme",
         "language-server.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Start a Language Server Protocol server."
     },
     "theme:list": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Lists your remote themes.",
+      "description": "Lists the themes in your store, along with their IDs and statuses.",
       "flags": {
         "environment": {
           "char": "e",
@@ -844,7 +858,8 @@
       ],
       "args": {
       },
-      "description": "Opens the preview of your remote theme.",
+      "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
+      "descriptionWithMarkdown": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "flags": {
         "development": {
           "allowNo": false,
@@ -937,14 +952,16 @@
         "theme",
         "open.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Opens the preview of your remote theme."
     },
     "theme:package": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Package your theme into a .zip file, ready to upload to the Online Store.",
+      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
+      "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
       "flags": {
         "no-color": {
           "allowNo": false,
@@ -987,14 +1004,16 @@
         "theme",
         "package.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Package your theme into a .zip file, ready to upload to the Online Store."
     },
     "theme:publish": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Set a remote theme as the live theme.",
+      "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
+      "descriptionWithMarkdown": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "flags": {
         "environment": {
           "char": "e",
@@ -1071,7 +1090,8 @@
         "theme",
         "publish.js"
       ],
-      "strict": false
+      "strict": false,
+      "summary": "Set a remote theme as the live theme."
     },
     "theme:pull": {
       "aliases": [
@@ -1088,7 +1108,8 @@
         "force",
         "development-theme-id"
       ],
-      "description": "Download your remote theme files locally.",
+      "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
+      "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "flags": {
         "beta": {
           "allowNo": false,
@@ -1233,7 +1254,8 @@
         "theme",
         "pull.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Download your remote theme files locally."
     },
     "theme:push": {
       "aliases": [
@@ -1255,7 +1277,8 @@
         "force",
         "development-theme-id"
       ],
-      "description": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
+      "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
+      "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "flags": {
         "allow-live": {
           "allowNo": false,
@@ -1424,14 +1447,17 @@
         "theme",
         "push.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
+      "usage": "shopify theme push\n\nshopify theme push --unpublished --json\n  "
     },
     "theme:rename": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Renames an existing theme.",
+      "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
+      "descriptionWithMarkdown": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "flags": {
         "development": {
           "allowNo": false,
@@ -1526,7 +1552,8 @@
         "theme",
         "rename.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Renames an existing theme."
     },
     "theme:serve": {
       "aliases": [
@@ -1548,7 +1575,8 @@
         "force",
         "notify"
       ],
-      "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
+      "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or \"push\" (https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+      "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or [push](https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
         "environment": {
           "char": "e",
@@ -1728,7 +1756,8 @@
         "commands",
         "theme",
         "serve.js"
-      ]
+      ],
+      "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time."
     },
     "theme:share": {
       "aliases": [
@@ -1738,7 +1767,8 @@
       "cli2Flags": [
         "force"
       ],
-      "description": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
+      "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.",
+      "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.",
       "flags": {
         "environment": {
           "char": "e",
@@ -1816,8 +1846,9 @@
         "theme",
         "share.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name."
     }
   },
-  "version": "3.56.0"
+  "version": "3.57.0"
 }

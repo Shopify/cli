@@ -8,8 +8,43 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Push extends ThemeCommand {
-  static description =
-    'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
+  static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
+
+  static usage = `shopify theme push
+
+shopify theme push --unpublished --json
+  `
+
+  static descriptionWithMarkdown = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
+
+  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.
+
+  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+
+  This command returns the following information:
+
+  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
+
+  If you use the \`--json\` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.
+
+  Sample output:
+
+  \`\`\`json
+  {
+    "theme": {
+      "id": 108267175958,
+      "name": "MyTheme",
+      "role": "unpublished",
+      "shop": "mystore.myshopify.com",
+      "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+      "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+    }
+  }
+  \`\`\`
+    `
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

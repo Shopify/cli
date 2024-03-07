@@ -7,7 +7,14 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Rename extends ThemeCommand {
-  static description = 'Renames an existing theme.'
+  static summary = 'Renames an existing theme.'
+
+  static descriptionWithMarkdown = `Renames a theme in your store.
+
+  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.
+  `
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

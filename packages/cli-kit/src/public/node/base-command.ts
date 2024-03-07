@@ -19,6 +19,12 @@ interface EnvironmentFlags {
 }
 
 abstract class BaseCommand extends Command {
+  // Replace markdown links to plain text like: "link label" (url)
+  public static descriptionWithoutMarkdown(): string | undefined {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ((this as any).descriptionWithMarkdown ?? '').replace(/(\[)(.*?)(])(\()(.*?)(\))/gm, '"$2" ($5)')
+  }
+
   public static analyticsNameOverride(): string | undefined {
     return undefined
   }

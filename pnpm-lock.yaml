@@ -161,13 +161,16 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
       '@shopify/cli-kit':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../cli-kit
+      '@shopify/create-app':
+        specifier: 3.57.0
+        version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -288,20 +291,20 @@ importers:
         specifier: 4.3.0
         version: 4.3.0
       '@shopify/cli-kit':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
     devDependencies:
       '@shopify/app':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../app
       '@shopify/theme':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../theme
       '@types/node':
         specifier: 18.19.3
@@ -384,12 +387,12 @@ importers:
       del:
         specifier: 6.1.1
         version: 6.1.1
+      dotenv:
+        specifier: 16.4.5
+        version: 16.4.5
       env-paths:
         specifier: 3.0.0
         version: 3.0.0
-      envfile:
-        specifier: 6.18.0
-        version: 6.18.0
       execa:
         specifier: 7.2.0
         version: 7.2.0
@@ -563,7 +566,7 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
       '@shopify/cli-kit':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -685,7 +688,7 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
       '@shopify/cli-kit':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../cli-kit
     devDependencies:
       vite:
@@ -701,7 +704,7 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
       '@shopify/cli-kit':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -720,7 +723,7 @@ importers:
         specifier: 3.22.0
         version: 3.22.0
       '@shopify/cli-kit':
-        specifier: 3.56.0
+        specifier: 3.57.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 2.2.1
@@ -9196,6 +9199,11 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
+  /dotenv@16.4.5:
+    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+    engines: {node: '>=12'}
+    dev: false
+
   /duplexer@0.1.2:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
     dev: true
@@ -9259,12 +9267,6 @@ packages:
   /env-paths@3.0.0:
     resolution: {integrity: sha512-dtJUTepzMW3Lm/NPxRf3wP4642UWhjL2sQxc+ym2YMj1m/H2zDNQOlezafzkHwn6sMstjHTwG6iQQsctDW/b1A==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-    dev: false
-
-  /envfile@6.18.0:
-    resolution: {integrity: sha512-IsYv64dtlNXTm4huvCBpbXsdZQurYUju9WoYCkSj+SDYpO3v4/dq346QsCnNZ3JcnWw0G3E6+saVkVtmPw98Gg==}
-    engines: {node: '>=10'}
-    hasBin: true
     dev: false
 
   /err-code@2.0.3:
@@ -10928,6 +10930,7 @@ packages:
   /iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dependencies:
       safer-buffer: 2.1.2
 
@@ -11936,6 +11939,7 @@ packages:
 
   /loupe@2.3.6:
     resolution: {integrity: sha512-RaPMZKiMy8/JruncMU5Bt6na1eftNoo++R4Y+N2FrxkDVTrGvcyzFTsaGif4QTeKESheMGegbhw6iUAq+5A8zA==}
+    deprecated: Please upgrade to 2.3.7 which fixes GHSA-4q6p-r6v2-jvc5
     dependencies:
       get-func-name: 2.0.0
 

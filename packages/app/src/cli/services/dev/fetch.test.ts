@@ -10,13 +10,15 @@ import {Organization, OrganizationStore} from '../../models/organization.js'
 import {AllOrganizationsQuery} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
-import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
+import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   testPartnersServiceSession,
   testPartnersUserSession,
   testOrganizationApp,
+  testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -57,13 +59,13 @@ const FETCH_ORG_RESPONSE_VALUE = {
     ],
   },
 }
-const FETCH_STORE_RESPONSE_VALUE = {
+const FETCH_STORE_RESPONSE_VALUE: FindStoreByDomainSchema = {
   organizations: {
     nodes: [
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        website: ORG1.website,
+        website: 'https://example.com',
         stores: {nodes: [STORE1]},
       },
     ],
@@ -147,17 +149,18 @@ describe('fetchAllDevStores', async () => {
 describe('fetchStoreByDomain', async () => {
   test('returns fetched store and organization', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValue(FETCH_STORE_RESPONSE_VALUE)
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
+    })
+    const {storeByDomain} = developerPlatformClient
+    const storeByDomainSpy = vi.spyOn(developerPlatformClient, 'storeByDomain').mockImplementation(storeByDomain)
 
     // When
-    const got = await fetchStoreByDomain(ORG1.id, 'token', 'domain1')
+    const got = await fetchStoreByDomain(ORG1.id, 'domain1', developerPlatformClient)
 
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
-    expect(partnersRequest).toHaveBeenCalledWith(FindStoreByDomainQuery, 'token', {
-      id: ORG1.id,
-      shopDomain: STORE1.shopDomain,
-    })
+    expect(storeByDomainSpy).toHaveBeenCalledWith(ORG1.id, 'domain1')
   })
 })
 

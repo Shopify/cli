@@ -10,7 +10,11 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 const {config, ...appFlagsWithoutConfig} = appFlags
 
 export default class ConfigUse extends Command {
-  static description = 'Activate an app configuration.'
+  static summary = 'Activate an app configuration.'
+
+  static descriptionWithMarkdown = `Sets default configuration when you run app-related CLI commands. If you omit the \`config-name\` parameter, then you'll be prompted to choose from the configuration files in your project.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

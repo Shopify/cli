@@ -35,6 +35,9 @@
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
     "@nrwl/tao": "16.7.4",
+    "@nx/eslint-plugin": "16.8.1",
+    "@nx/js": "16.8.1",
+    "@nx/workspace": "16.8.1",
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
@@ -72,10 +75,7 @@
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
-    "typescript": "5.2.2",
-    "@nx/workspace": "16.8.1",
-    "@nx/js": "16.8.1",
-    "@nx/eslint-plugin": "16.8.1"
+    "typescript": "5.2.2"
   },
   "workspaces": {
     "packages": [

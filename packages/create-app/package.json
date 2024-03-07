@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "3.56.0",
+  "version": "3.57.0",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "keywords": [
@@ -19,6 +19,10 @@
   "license": "MIT",
   "type": "module",
   "exports": {
+    "./commands/*": {
+      "import": "./dist/commands/*.js",
+      "require": "./dist/commands/*.d.ts"
+    },
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
@@ -50,7 +54,7 @@
   },
   "dependencies": {
     "@oclif/core": "3.22.0",
-    "@shopify/cli-kit": "3.56.0"
+    "@shopify/cli-kit": "3.57.0"
   },
   "devDependencies": {
     "@types/node": "18.19.3",

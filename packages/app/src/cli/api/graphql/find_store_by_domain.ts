@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const FindStoreByDomainQuery = gql`
-  query FindOrganization($id: ID!, $shopDomain: String) {
-    organizations(id: $id, first: 1) {
+  query FindOrganization($orgId: ID!, $shopDomain: String) {
+    organizations(id: $orgId, first: 1) {
       nodes {
         id
         businessName
@@ -21,6 +21,11 @@ export const FindStoreByDomainQuery = gql`
     }
   }
 `
+
+export interface FindStoreByDomainQueryVariables {
+  orgId: string
+  shopDomain: string
+}
 
 export interface FindStoreByDomainSchema {
   organizations: {

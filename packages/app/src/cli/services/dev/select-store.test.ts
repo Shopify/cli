@@ -2,9 +2,9 @@ import {selectStore} from './select-store.js'
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
@@ -48,9 +48,10 @@ const STORE3: OrganizationStore = {
 }
 
 beforeEach(() => {
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(isSpinEnvironment).mockReturnValue(false)
 })
+
+const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('selectStore', async () => {
   test('prompts user to select', async () => {
@@ -58,7 +59,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, 'token')
+    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE1)
@@ -71,7 +72,7 @@ describe('selectStore', async () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, 'token')
+    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE2)
@@ -85,7 +86,7 @@ describe('selectStore', async () => {
     vi.mocked(firstPartyDev).mockReturnValue(true)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, 'token')
+    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE2)
@@ -103,7 +104,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE3)
 
     // When
-    const got = selectStore([STORE1, STORE2, STORE3], ORG1, 'token')
+    const got = selectStore([STORE1, STORE2, STORE3], ORG1, developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrow('The store you specified (domain3) is not a dev store')
@@ -115,7 +116,7 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = () => selectStore([STORE1, STORE2], ORG1, 'token')
+    const got = () => selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrowError()
@@ -128,12 +129,14 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
     vi.mocked(fetchAllDevStores).mockResolvedValue([])
+    const {devStoresForOrg} = developerPlatformClient
+    const devStoresForOrgSpy = vi.spyOn(developerPlatformClient, 'devStoresForOrg').mockImplementation(devStoresForOrg)
 
     // When
-    const got = selectStore([], ORG1, 'token')
+    const got = selectStore([], ORG1, developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrow()
-    expect(fetchAllDevStores).toHaveBeenCalledTimes(10)
+    expect(devStoresForOrgSpy).toHaveBeenCalledTimes(10)
   })
 })
