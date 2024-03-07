@@ -7,7 +7,15 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Delete extends ThemeCommand {
-  static description = "Delete remote themes from the connected store. This command can't be undone."
+  static summary = "Delete remote themes from the connected store. This command can't be undone."
+
+  static descriptionWithMarkdown = `Deletes a theme from your store.
+
+  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.
+
+  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the \`--force\` flag.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   // Accept any number of args without naming them
   static strict = false

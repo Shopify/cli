@@ -10,7 +10,13 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends Command {
-  static description = 'Pull app and extensions environment variables.'
+  static summary = 'Pull app and extensions environment variables.'
+
+  static descriptionWithMarkdown = `Creates or updates an \`.env\` files that contains app and app extension environment variables.
+
+  When an existing \`.env\` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

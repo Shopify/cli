@@ -8,7 +8,35 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends Command {
-  static description = 'Run the app.'
+  static summary = 'Run the app.'
+
+  static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
+
+  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run \`dev\` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using \`dev --reset\` to go through all of them again:
+
+- Associating your project with an app associated with your Partner account or organization, or creating a new app.
+- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.
+- Installing your app on the store using the provided install link.
+- Creating a tunnel between your local environment and the store using Cloudflare.
+
+  You can use your own tunneling software instead, by passing your tunnel URL with the \`--tunnel-url\` flag.
+- Updating the app URLs that are set in the Partner Dashboard.
+
+  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.
+
+- Enabling development store preview for extensions.
+- Serving [GraphiQL for the Admin API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.
+- Building and serving your app and app extensions.
+
+If you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:
+
+- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)
+- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
+
+> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.
+`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
