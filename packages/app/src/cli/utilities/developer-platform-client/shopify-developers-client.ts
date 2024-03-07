@@ -22,12 +22,16 @@ import {
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
+import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
 
 const ORG1 = {
   id: '1',
@@ -200,6 +204,22 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async deploy(_input: AppDeployVariables): Promise<AppDeploySchema> {
     throw new BugError('Not implemented: deploy')
+  }
+
+  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
+    throw new BugError('Not implemented: storeByDomain')
+  }
+
+  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
+  async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
+    throw new BugError('Not implemented: createExtension')
+  }
+
+  async convertToTestStore(_input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
+    throw new BugError('Not implemented: convertToTestStore')
   }
 }
 

@@ -774,7 +774,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
-    activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyAppVersion),
+    activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyActiveAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
