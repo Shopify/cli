@@ -17,6 +17,7 @@ export interface DeveloperPreviewController {
   enable: () => Promise<void>
   disable: () => Promise<void>
   update: (state: boolean) => Promise<boolean>
+  fetchLogs: (functionId: string) => Promise<any>
 }
 
 export interface DevProps {
@@ -50,6 +51,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
+  const pollingLogsInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultStatusMessage = `Preview URL: ${previewUrl}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
@@ -92,6 +94,16 @@ const Dev: FunctionComponent<DevProps> = ({
   }, [processes, abortController])
 
   useEffect(() => {
+    const pollLogService = async (functionId: string) => {
+      try {
+        const logs =  await developerPreview.fetchLogs(functionId)
+        console.log("🤖 THE POLING SERVICE HAS POLLED 🤖")
+        console.log(logs)
+      } catch (_) {
+        setError('Failed to fetch the latest logs, trying again in 5 seconds.')
+      }
+    }
+
     const pollDevPreviewMode = async () => {
       try {
         const enabled = await developerPreview.fetchMode()
@@ -128,8 +140,16 @@ const Dev: FunctionComponent<DevProps> = ({
           pollingTime,
         )
       }
+      const startPollingLogs = () => {
+        return setInterval(
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          () => pollLogService('123'),
+          pollingTime,
+        )
+      }
 
       pollingInterval.current = startPolling()
+      pollingLogsInterval.current = startPollingLogs()
     }
 
     return () => {

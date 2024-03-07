@@ -9,7 +9,7 @@ import {
   updateURLs,
 } from './dev/urls.js'
 import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
-import {fetchAppPreviewMode} from './dev/fetch.js'
+import {fetchAppPreviewMode, fetchFunctionLogs} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
@@ -61,10 +61,15 @@ export interface DevOptions {
 }
 
 export async function dev(commandOptions: DevOptions) {
+  console.log('HELLLLO DEV')
   const config = await prepareForDev(commandOptions)
+  console.log('config', config)
+  // this has info on the remoteApp, localApp, storeId, 'real extensions,
+
   await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
+
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
 
@@ -328,6 +333,8 @@ export function developerPreviewController(apiKey: string, originalToken: string
 
   return {
     fetchMode: async () => withRefreshToken(async (token: string) => Boolean(await fetchAppPreviewMode(apiKey, token))),
+    fetchLogs: async (functionId: string) =>
+      withRefreshToken(async (token: string) => fetchFunctionLogs(functionId, apiKey, token)),
     enable: async () =>
       withRefreshToken(async (token: string) => {
         await enableDeveloperPreview({apiKey, token})

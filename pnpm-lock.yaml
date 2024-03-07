@@ -6477,6 +6477,7 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.5.4
+      semver: 7.5.4
       tsutils: 3.21.0(typescript@5.2.2)
       typescript: 5.2.2
     transitivePeerDependencies:
@@ -10288,7 +10289,7 @@ packages:
     resolution: {integrity: sha512-rXckvqPBB0Krifk5rn/5LvQGmyXwCUpBfmTwbkQNBY9JY8RSl3b8OftBNEYxg4+SWUhEKcPifgope28uL9inlA==}
     engines: {node: '>=14.16'}
     peerDependencies:
-      '@types/react': 17.0.2
+      '@types/react': '>=18.0.0'
       react: '>=18.0.0'
       react-devtools-core: ^4.19.1
     peerDependenciesMeta:
@@ -13759,7 +13760,6 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
-    dev: true
 
   /send@0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
@@ -15121,7 +15121,7 @@ packages:
   /vite-tsconfig-paths@3.6.0(vite@4.4.9):
     resolution: {integrity: sha512-UfsPYonxLqPD633X8cWcPFVuYzx/CMNHAjZTasYwX69sXpa4gNmQkR0XCjj82h7zhLGdTWagMjC1qfb9S+zv0A==}
     peerDependencies:
-      vite: 4.4.9
+      vite: '>2.0.0-0'
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       globrex: 0.1.2
@@ -15686,7 +15686,6 @@ packages:
 
   /yeoman-environment@3.19.3:
     resolution: {integrity: sha512-/+ODrTUHtlDPRH9qIC0JREH8+7nsRcjDl3Bxn2Xo/rvAaVvixH5275jHwg0C85g4QsF4P6M2ojfScPPAl+pLAg==}
-    engines: {node: '>=12.10.0'}
     hasBin: true
     dependencies:
       '@npmcli/arborist': 4.3.1
@@ -15824,6 +15823,7 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
+    version: 3.47.0
     peerDependencies:
       eslint: ^8.48.0
     dependencies:

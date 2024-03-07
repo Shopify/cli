@@ -169,6 +169,31 @@ export async function fetchAppPreviewMode(apiKey: string, token: string): Promis
   return res.app?.developmentStorePreviewEnabled
 }
 
+export async function fetchFunctionLogs(function_id: string, apiKey: string, token: string): Promise<any> {
+  // const query = FindFunctionLogsQuery
+  // const result: FindFunctionLogsQuerySchema = await partnersRequest(query, token, {
+  //   functionId,
+  // })
+  return new Promise((resolve) =>
+    setTimeout(
+      () =>
+        resolve({
+          type: 'function-run',
+          input: '{}',
+          inputBytes: '100',
+          output: '{}',
+          outputBytes: '100',
+          logs: 'Hello World',
+          functionId: '123',
+          fuelConsumer: '123',
+          errorMessage: 'Fake Error',
+          errorType: 'FakeError',
+        }),
+      500,
+    ),
+  )
+}
+
 export async function fetchOrgFromId(id: string, partnersSession: PartnersSession): Promise<Organization> {
   const query = FindOrganizationBasicQuery
   const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, partnersSession.token, {id})
