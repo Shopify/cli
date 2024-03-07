@@ -94,10 +94,10 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.22.0",
-    "@oclif/plugin-commands": "3.1.7",
-    "@oclif/plugin-help": "6.0.15",
-    "@oclif/plugin-plugins": "4.3.0",
+    "@oclif/core": "3.23.0",
+    "@oclif/plugin-commands": "3.2.0",
+    "@oclif/plugin-help": "6.0.17",
+    "@oclif/plugin-plugins": "4.3.2",
     "@shopify/cli-kit": "3.57.0",
     "@shopify/plugin-did-you-mean": "3.57.0",
     "zod-to-json-schema": "3.21.4"
