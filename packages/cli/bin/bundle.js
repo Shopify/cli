@@ -1,6 +1,7 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
+import { readFile } from 'fs/promises';
 
 const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
@@ -9,6 +10,23 @@ const external = [
   '@luckycatfactory/esbuild-graphql-loader',
   'vscode-json-languageservice'
 ]
+
+/**
+ * Custom plugin to solve some issues with specific dependencies.
+ */
+function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
+  return {
+      name: "ShopifyESBuildPlugin",
+      setup(build) {
+
+        // Stacktracey has a custom require implementation that doesn't work with esbuild
+        build.onLoad({ filter: /.*stacktracey\.js/ }, async (args) => {
+          const contents = await readFile(args.path, 'utf8')
+          return { contents: contents.replace(/nodeRequire \(/, 'module.require(') }
+        })
+      }
+  }
+}
 
 await esBuild({
   bundle: true,
@@ -21,8 +39,8 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
-    requireResolvePlugin(), // To allow using require.resolve in esbuild
-    myPlugin()
+    ShopifyESBuildPlugin(),
+    requireResolvePlugin() // To allow using require.resolve in esbuild
   ],
 })
 
@@ -30,25 +48,3 @@ await cleanBundledDependencies(external)
 
 
 
-function myPlugin ({greeting = "world"} = {}) {
-  return {
-      name: "MyPlugin",
-      setup(build) {
-        build.onResolve({ filter: /stacktracey\.js$/ }, (args) => {
-          return {
-              path: args.path,
-              namespace: 'vanilla'
-          }
-        })
-
-        build.onLoad({ filter: /.*/, namespace: "vanilla" }, async (args) => {
-          const contents = await readFile(args.path, 'utf8')
-          return {
-              // a simple substitution just to prove that we've
-              // loaded the file and are transforming it
-              contents: contents.replace('nodeRequire(', 'module.require(')
-          }
-        })
-      }
-  }
-}
