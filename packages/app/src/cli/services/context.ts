@@ -648,10 +648,8 @@ export async function fetchAppAndIdentifiers(
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
     reuseDevCache = false
-    if (isCurrentAppSchema(app.configuration)) {
-      const configuration = await link({directory: app.directory, developerPlatformClient})
-      app.configuration = configuration
-    }
+    const configuration = await link({directory: app.directory, developerPlatformClient})
+    app.configuration = configuration
   }
 
   if (isCurrentAppSchema(app.configuration)) {
