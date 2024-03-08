@@ -21,13 +21,6 @@
         "cwd": "packages/plugin-cloudflare"
       }
     },
-    "bundle": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node bin/bundle",
-        "cwd": "packages/plugin-cloudflare"
-      }
-    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

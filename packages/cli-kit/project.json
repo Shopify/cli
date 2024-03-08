@@ -21,13 +21,6 @@
         "cwd": "packages/cli-kit"
       }
     },
-    "bundle": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node bin/bundle",
-        "cwd": "packages/cli-kit"
-      }
-    },
     "docs:generate": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/docs"],

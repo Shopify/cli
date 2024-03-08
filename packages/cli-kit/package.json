@@ -44,7 +44,6 @@
   ],
   "scripts": {
     "build": "nx build",
-    "bundle": "nx bundle",
     "clean": "nx clean",
     "docs:generate": "nx docs:generate",
     "docs:open": "nx docs:open",

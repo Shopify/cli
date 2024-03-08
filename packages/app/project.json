@@ -22,13 +22,6 @@
         "cwd": "packages/app"
       }
     },
-    "bundle": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node bin/bundle",
-        "cwd": "packages/app"
-      }
-    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
