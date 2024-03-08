@@ -1703,11 +1703,10 @@ describe('ensureReleaseContext', () => {
 describe('ensureThemeExtensionDevContext', () => {
   test('fetches theme extension when it exists', async () => {
     // Given
-    const token = 'token'
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+    const mockedExtensionRegistrations = {
       app: {
         extensionRegistrations: [
           {
@@ -1726,10 +1725,14 @@ describe('ensureThemeExtensionDevContext', () => {
         configurationRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
       },
+    }
+
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      appExtensionRegistrations: (_appId: string) => Promise.resolve(mockedExtensionRegistrations),
     })
 
     // When
-    const got = await ensureThemeExtensionDevContext(extension, apiKey, token)
+    const got = await ensureThemeExtensionDevContext(extension, apiKey, developerPlatformClient)
 
     // Then
     expect('existing ID').toEqual(got.id)
@@ -1740,7 +1743,6 @@ describe('ensureThemeExtensionDevContext', () => {
 
   test('creates theme extension when it does not exist', async () => {
     // Given
-    const token = 'token'
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
@@ -1755,7 +1757,7 @@ describe('ensureThemeExtensionDevContext', () => {
     })
 
     // When
-    const got = await ensureThemeExtensionDevContext(extension, apiKey, token)
+    const got = await ensureThemeExtensionDevContext(extension, apiKey, buildDeveloperPlatformClient())
 
     // Then
     expect('new ID').toEqual(got.id)
@@ -1769,19 +1771,20 @@ describe('ensureVersionsListContext', () => {
   test('returns the partners token and app', async () => {
     // Given
     const app = testApp()
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
     const got = await ensureVersionsListContext({
       app,
       apiKey: APP2.apiKey,
       reset: false,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient,
     })
 
     // Then
     expect(got).toEqual({
       partnersApp: APP2,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
     })
   })
 })

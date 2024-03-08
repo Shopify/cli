@@ -1,6 +1,7 @@
-import {CreateAppQuery, CreateAppQuerySchema} from '../../api/graphql/create_app.js'
+import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
   AllDevStoresByOrganizationQuery,
+  AllDevStoresByOrganizationQueryVariables,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
@@ -18,9 +19,14 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {
   AllAppExtensionRegistrationsQuery,
+  AllAppExtensionRegistrationsQueryVariables,
   AllAppExtensionRegistrationsQuerySchema,
 } from '../../api/graphql/all_app_extension_registrations.js'
-import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {
+  ActiveAppVersionQuery,
+  ActiveAppVersionQuerySchema,
+  ActiveAppVersionQueryVariables,
+} from '../../api/graphql/app_active_version.js'
 import {
   ExtensionUpdateDraftInput,
   ExtensionUpdateDraftMutation,
@@ -32,6 +38,26 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
+import {
+  ExtensionCreateQuery,
+  ExtensionCreateSchema,
+  ExtensionCreateVariables,
+} from '../../api/graphql/extension_create.js'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
+import {
+  FindStoreByDomainQuery,
+  FindStoreByDomainQueryVariables,
+  FindStoreByDomainSchema,
+} from '../../api/graphql/find_store_by_domain.js'
+import {
+  AppVersionsQuery,
+  AppVersionsQueryVariables,
+  AppVersionsQuerySchema,
+} from '../../api/graphql/get_versions_list.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -47,16 +73,12 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-interface AppVars {
-  org: number
-  title: string
-  appUrl: string
-  redir: string[]
-  requestedAccessScopes: string[]
-  type: string
-}
-
-function getAppVars(org: Organization, name: string, isLaunchable = true, scopesArray?: string[]): AppVars {
+function getAppVars(
+  org: Organization,
+  name: string,
+  isLaunchable = true,
+  scopesArray?: string[],
+): CreateAppQueryVariables {
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),
@@ -163,7 +185,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       directory?: string
     },
   ): Promise<OrganizationApp> {
-    const variables = getAppVars(org, name, options?.isLaunchable, options?.scopesArray)
+    const variables: CreateAppQueryVariables = getAppVars(org, name, options?.isLaunchable, options?.scopesArray)
     const result: CreateAppQuerySchema = await this.makeRequest(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
@@ -175,22 +197,32 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const result: AllDevStoresByOrganizationSchema = await this.makeRequest(AllDevStoresByOrganizationQuery, {
-      id: orgId,
-    })
+    const variables: AllDevStoresByOrganizationQueryVariables = {id: orgId}
+    const result: AllDevStoresByOrganizationSchema = await this.makeRequest(AllDevStoresByOrganizationQuery, variables)
     return result.organizations.nodes[0]!.stores.nodes
   }
 
-  async appExtensionRegistrations(appId: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    return this.makeRequest(AllAppExtensionRegistrationsQuery, {apiKey: appId})
+  async appExtensionRegistrations(apiKey: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
+    const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
+    return this.makeRequest(AllAppExtensionRegistrationsQuery, variables)
   }
 
-  async activeAppVersion(appId: string): Promise<ActiveAppVersionQuerySchema> {
-    return this.makeRequest(ActiveAppVersionQuery, {apiKey: appId})
+  async appVersions(apiKey: string): Promise<AppVersionsQuerySchema> {
+    const variables: AppVersionsQueryVariables = {apiKey}
+    return this.makeRequest(AppVersionsQuery, variables)
+  }
+
+  async activeAppVersion(apiKey: string): Promise<ActiveAppVersionQuerySchema> {
+    const variables: ActiveAppVersionQueryVariables = {apiKey}
+    return this.makeRequest(ActiveAppVersionQuery, variables)
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
     return this.makeRequest(FunctionUploadUrlGenerateMutation)
+  }
+
+  async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
+    return this.makeRequest(ExtensionCreateQuery, input)
   }
 
   async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
@@ -203,5 +235,14 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
     return this.makeRequest(GenerateSignedUploadUrl, input)
+  }
+
+  async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
+    return this.makeRequest(ConvertDevToTestStoreQuery, input)
+  }
+
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
+    return this.makeRequest(FindStoreByDomainQuery, variables)
   }
 }

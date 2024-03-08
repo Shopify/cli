@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-cloudflare",
-  "version": "3.56.0",
+  "version": "3.57.0",
   "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
@@ -17,7 +17,6 @@
   "types": "dist/index.d.ts",
   "files": [
     "/dist",
-    "/scripts",
     "/oclif.manifest.json"
   ],
   "exports": {
@@ -35,8 +34,7 @@
     "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
     "test": "nx run plugin-cloudflare:test",
     "test:watch": "nx test:watch",
-    "type-check": "nx type-check",
-    "postinstall": "node scripts/postinstall.js"
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [
@@ -45,7 +43,7 @@
   },
   "dependencies": {
     "@oclif/core": "3.23.0",
-    "@shopify/cli-kit": "3.56.0"
+    "@shopify/cli-kit": "3.57.0"
   },
   "devDependencies": {
     "vite": "^4.4.9",

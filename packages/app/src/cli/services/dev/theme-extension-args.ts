@@ -1,13 +1,14 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ensureThemeExtensionDevContext} from '../context.js'
 
 export async function themeExtensionArgs(
   extension: ExtensionInstance,
   apiKey: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
   options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean; notify?: string},
 ) {
-  const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, token)
+  const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, developerPlatformClient)
   const extensionId = extensionRegistration.id
   const directory = extension.directory
   const extensionTitle = extension.localIdentifier

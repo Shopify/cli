@@ -1,12 +1,18 @@
 import {hookStart} from './tunnel.js'
-import {describe, vi, expect, test} from 'vitest'
+import install from './install-cloudflared.js'
+import {describe, vi, expect, test, beforeAll} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
 const port = 1234
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('./install-cloudflared.js')
 
 describe('hookStart', () => {
+  beforeAll(() => {
+    vi.mocked(install).mockReturnValue(Promise.resolve())
+  })
+
   test('returns a url if cloudflare prints a URL and a connection is established', async () => {
     // Given
     vi.mocked(exec).mockImplementationOnce(async (command, args, options) => {
@@ -132,5 +138,16 @@ describe('hookStart', () => {
         'Could not start Cloudflare tunnel: Failed to serve quic connection error="Application error 0x0 (remote)" ',
       tryMessage: expect.anything(),
     })
+  })
+
+  test('returns error if it fails to install cloudflared', async () => {
+    // Given
+    vi.mocked(install).mockReturnValueOnce(Promise.reject(new Error('Failed to install cloudflared')))
+    // When
+    const tunnelClient = await hookStart(port)
+    const result = tunnelClient.valueOrAbort().getTunnelStatus()
+
+    // Then
+    expect(result).toEqual({status: 'error', message: 'Failed to install cloudflared', tryMessage: expect.anything()})
   })
 })

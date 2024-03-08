@@ -21,6 +21,8 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
+import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -666,7 +668,21 @@ const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = 
   },
 }
 
-const emptyAppVersion: ActiveAppVersionQuerySchema = {
+const emptyAppVersions = {
+  app: {
+    id: 'app-id',
+    organizationId: 'org-id',
+    title: 'my app',
+    appVersions: {
+      nodes: [],
+      pageInfo: {
+        totalResults: 0,
+      },
+    },
+  },
+}
+
+const emptyActiveAppVersion: ActiveAppVersionQuerySchema = {
   app: {
     activeAppVersion: {
       appModuleVersions: [],
@@ -683,6 +699,24 @@ const functionUploadUrlResponse = {
       moduleId: 'module-id',
       maxBytes: 200,
     },
+  },
+}
+
+export const extensionCreateResponse: ExtensionCreateSchema = {
+  extensionCreate: {
+    extensionRegistration: {
+      id: 'extension-id',
+      uuid: 'extension-uuid',
+      title: 'my extension',
+      type: 'other',
+      draftVersion: {
+        config: 'config',
+        registrationId: 'registration-id',
+        lastUserInteractionAt: '2024-01-01',
+        validationErrors: [],
+      },
+    },
+    userErrors: [],
   },
 }
 
@@ -714,6 +748,13 @@ const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
   },
 }
 
+const convertedToTestStoreResponse = {
+  convertDevToTestStore: {
+    convertedToTestStore: true,
+    userErrors: [],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -730,13 +771,17 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
       Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
+    storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
-    activeAppVersion: (_appId: string) => Promise.resolve(emptyAppVersion),
+    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    activeAppVersion: (_appId: string) => Promise.resolve(emptyActiveAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
-    updateExtension: (input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
-    deploy: (input: AppDeployVariables) => Promise.resolve(deployResponse),
-    generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) =>
+    createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
+    updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
+    deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
+    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
     ...stubs,
   }
 }

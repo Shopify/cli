@@ -12,9 +12,9 @@ import {
   AllDevStoresByOrganizationQuery,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
-import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AccountInfo, PartnersSession, isServiceAccount, isUserAccount} from '../context/partner-account-info.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -101,20 +101,6 @@ export async function fetchAppExtensionRegistrations({
 }): Promise<AllAppExtensionRegistrationsQuerySchema> {
   const query = AllAppExtensionRegistrationsQuery
   const result: AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
-    apiKey,
-  })
-  return result
-}
-
-export async function fetchActiveAppVersion({
-  token,
-  apiKey,
-}: {
-  token: string
-  apiKey: string
-}): Promise<ActiveAppVersionQuerySchema> {
-  const query = ActiveAppVersionQuery
-  const result: ActiveAppVersionQuerySchema = await partnersRequest(query, token, {
     apiKey,
   })
   return result
@@ -207,19 +193,15 @@ interface FetchStoreByDomainOutput {
  * Returns the organization and the store based on passed domain
  * If a store with that domain doesn't exist the method returns undefined
  * @param orgId - Organization ID
- * @param token - Token to access partners API
  * @param shopDomain - shop domain fqdn
+ * @param developerPlatformClient - The client to access the platform API
  */
 export async function fetchStoreByDomain(
   orgId: string,
-  token: string,
   shopDomain: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<FetchStoreByDomainOutput | undefined> {
-  const query = FindStoreByDomainQuery
-  const result: FindStoreByDomainSchema = await partnersRequest(query, token, {
-    id: orgId,
-    shopDomain,
-  })
+  const result: FindStoreByDomainSchema = await developerPlatformClient.storeByDomain(orgId, shopDomain)
   const org = result.organizations.nodes[0]
   if (!org) {
     return undefined

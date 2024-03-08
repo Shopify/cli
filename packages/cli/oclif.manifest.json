@@ -1560,7 +1560,7 @@
       ],
       "args": {
       },
-      "description": "Logout from Shopify.",
+      "description": "Logs you out of the Shopify account or Partner account and store.",
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -1570,6 +1570,16 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+<<<<<<< HEAD
+=======
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "auth",
+        "logout.js"
+      ],
+>>>>>>> main
       "strict": true
     },
     "debug:command-flags": {
@@ -1670,6 +1680,69 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+<<<<<<< HEAD
+=======
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "demo",
+        "print-ai-prompt.js"
+      ],
+      "strict": true
+    },
+    "hydrogen:init": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "hydrogen:init",
+      "isESM": true,
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "hydrogen",
+        "init.js"
+      ],
+      "strict": false,
+      "summary": "Create a new hydrogen project"
+    },
+    "kitchen-sink": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View all the available UI kit components",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+        "kitchen-sink all"
+      ],
+      "id": "kitchen-sink",
+      "isESM": true,
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "kitchen-sink",
+        "index.js"
+      ],
+>>>>>>> main
       "strict": true
     },
     "kitchen-sink:async": {
@@ -2074,6 +2147,7 @@
     "theme:check": {
       "aliases": [
       ],
+<<<<<<< HEAD
       "args": {
       },
       "description": "Validate the theme.",
@@ -3645,13 +3719,18 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true
+=======
+      "strict": true,
+      "usage": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search <query>\n\n# search for a phrase on Shopify.dev\nshopify search \"<a search query separated by spaces>\"\n"
+>>>>>>> main
     },
     "upgrade": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Upgrade the Shopify CLI.",
+      "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the \"upgrade\" (https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
+      "descriptionWithMarkdown": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
       "flags": {
         "path": {
           "default": ".",
@@ -3671,14 +3750,25 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+<<<<<<< HEAD
       "strict": true
+=======
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "upgrade.js"
+      ],
+      "strict": true,
+      "summary": "Upgrade your CLI dependency."
+>>>>>>> main
     },
     "version": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Shopify CLI version.",
+      "description": "Shopify CLI version currently installed.",
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -3691,5 +3781,5 @@
       "strict": true
     }
   },
-  "version": "3.56.0"
+  "version": "3.57.0"
 }

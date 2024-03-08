@@ -2,6 +2,7 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
 import {themeExtensionArgs} from '../theme-extension-args.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -19,7 +20,7 @@ export interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
   themeExtensionServerArgs: string[]
   storefrontToken: string
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThemeAppExtensionsOptions> {
@@ -67,8 +68,8 @@ export async function setupPreviewThemeAppExtensionsProcess({
   theme,
   themeExtensionPort,
   notify,
-  token,
-}: Pick<PreviewThemeAppExtensionsOptions, 'token'> & {
+  developerPlatformClient,
+}: Pick<PreviewThemeAppExtensionsOptions, 'developerPlatformClient'> & {
   allExtensions: ExtensionInstance[]
   apiKey: string
   storeFqdn: string
@@ -93,7 +94,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   }
   const [storefrontToken, args] = await Promise.all([
     ensureAuthenticatedStorefront(),
-    themeExtensionArgs(extension, apiKey, token, {
+    themeExtensionArgs(extension, apiKey, developerPlatformClient, {
       theme,
       themeExtensionPort,
       notify,
@@ -109,7 +110,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
       adminSession,
       themeExtensionServerArgs: args,
       storefrontToken,
-      token,
+      developerPlatformClient,
     },
   }
 }
