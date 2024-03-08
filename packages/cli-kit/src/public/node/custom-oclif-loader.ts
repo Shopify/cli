@@ -1,9 +1,10 @@
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
+import {cwd} from './path.js'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
-    const path = sniffForPath()
+    const path = sniffForPath() ?? cwd()
     options.pluginAdditions = {
       core: ['@shopify/cli-hydrogen'],
       path,
