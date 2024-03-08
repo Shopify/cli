@@ -22,7 +22,7 @@ function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
         // Stacktracey has a custom require implementation that doesn't work with esbuild
         build.onLoad({ filter: /.*stacktracey\.js/ }, async (args) => {
           const contents = await readFile(args.path, 'utf8')
-          return { contents: contents.replace(/nodeRequire \(/, 'module.require(') }
+          return { contents: contents.replaceAll('nodeRequire (', 'module.require(') }
         })
       }
   }
