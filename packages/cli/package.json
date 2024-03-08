@@ -96,7 +96,6 @@
   },
   "dependencies": {
     "@chialab/esbuild-plugin-require-resolve": "^0.18.0",
-    "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "3.23.0",
     "@oclif/plugin-commands": "3.2.0",
     "@oclif/plugin-help": "6.0.17",

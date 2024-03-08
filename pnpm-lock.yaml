@@ -275,9 +275,6 @@ importers:
       '@chialab/esbuild-plugin-require-resolve':
         specifier: ^0.18.0
         version: 0.18.0
-      '@luckycatfactory/esbuild-graphql-loader':
-        specifier: 3.8.1
-        version: 3.8.1(esbuild@0.19.8)(graphql-tag@2.12.6)(graphql@16.8.1)
       '@oclif/core':
         specifier: 3.23.0
         version: 3.23.0
