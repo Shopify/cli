@@ -1,7 +1,6 @@
-import {createRequire} from 'module'
+import lodashGroupBy from 'lodash/groupBy.js'
+import lodashPartition from 'lodash/partition.js'
 import type {List, ValueIteratee} from 'lodash'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Creates an object composed of keys generated from the results of running each element of collection through
@@ -18,8 +17,7 @@ export function groupBy<T>(
 ): {
   [index: string]: T[]
 } {
-  const lodashBroupBy = require('lodash/groupBy')
-  return lodashBroupBy(collection, iteratee)
+  return lodashGroupBy(collection, iteratee)
 }
 
 /**
@@ -32,6 +30,5 @@ export function groupBy<T>(
  * @returns Returns the array of grouped elements.
  */
 export function partition<T>(collection: List<T> | null | undefined, callback: ValueIteratee<T>): [T[], T[]] {
-  const lodashPartition = require('lodash/partition')
   return lodashPartition(collection, callback)
 }
