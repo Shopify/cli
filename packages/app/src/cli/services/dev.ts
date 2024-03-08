@@ -302,6 +302,8 @@ async function launchDevProcesses({
     token,
   }
 
+  console.log('localApp', config.localApp)
+
   return renderDev({
     processes: processesForTaskRunner,
     previewUrl,

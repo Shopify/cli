@@ -17,7 +17,7 @@ export interface DeveloperPreviewController {
   enable: () => Promise<void>
   disable: () => Promise<void>
   update: (state: boolean) => Promise<boolean>
-  fetchLogs: (functionId: string) => Promise<any>
+  fetchLogs: (functionId: string) => Promise<unknown>
 }
 
 export interface DevProps {
@@ -96,8 +96,8 @@ const Dev: FunctionComponent<DevProps> = ({
   useEffect(() => {
     const pollLogService = async (functionId: string) => {
       try {
-        const logs =  await developerPreview.fetchLogs(functionId)
-        console.log("🤖 THE POLING SERVICE HAS POLLED 🤖")
+        const logs = await developerPreview.fetchLogs(functionId)
+        console.log('🤖 THE POLING SERVICE HAS POLLED 🤖')
         console.log(logs)
       } catch (_) {
         setError('Failed to fetch the latest logs, trying again in 5 seconds.')
@@ -141,6 +141,7 @@ const Dev: FunctionComponent<DevProps> = ({
         )
       }
       const startPollingLogs = () => {
+        console.log('APP', app)
         return setInterval(
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           () => pollLogService('123'),
