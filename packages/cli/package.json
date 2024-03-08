@@ -140,12 +140,6 @@
       "target": "./dist/index.js",
       "identifier": "COMMANDS"
     },
-    "plugins": [
-      "@shopify/theme",
-      "@shopify/cli-hydrogen",
-      "@oclif/plugin-help",
-      "@oclif/plugin-commands"
-    ],
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {

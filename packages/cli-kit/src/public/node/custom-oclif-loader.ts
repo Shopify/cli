@@ -3,6 +3,11 @@ import {Options} from '@oclif/core/lib/interfaces/plugin.js'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
+    const path = sniffForPath()
+    options.pluginAdditions = {
+      core: ['@shopify/cli-hydrogen'],
+      path,
+    }
     super(options)
     // eslint-disable-next-line dot-notation
     this['determinePriority'] = this.customPriority
@@ -61,4 +66,15 @@ export class ShopifyConfig extends Config {
     })
     return commandPlugins[0]
   }
+}
+
+/**
+ * Tries to get the value of the `--path` argument, if provided.
+ */
+function sniffForPath(): string | undefined {
+  const pathFlagIndex = process.argv.indexOf('--path')
+  if (pathFlagIndex === -1) return
+  const pathFlag = process.argv[pathFlagIndex + 1]
+  if (!pathFlag || pathFlag.startsWith('-')) return
+  return pathFlag
 }
