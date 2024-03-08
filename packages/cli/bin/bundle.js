@@ -7,7 +7,7 @@ const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
   'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
   'esbuild',
-  '@luckycatfactory/esbuild-graphql-loader',
+  //'@luckycatfactory/esbuild-graphql-loader',
   'vscode-json-languageservice'
 ]
 
