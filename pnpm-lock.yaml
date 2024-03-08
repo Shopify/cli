@@ -272,6 +272,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@chialab/esbuild-plugin-require-resolve':
+        specifier: ^0.18.0
+        version: 0.18.0
       '@luckycatfactory/esbuild-graphql-loader':
         specifier: 3.8.1
         version: 3.8.1(esbuild@0.19.8)(graphql-tag@2.12.6)(graphql@16.8.1)
@@ -3721,6 +3724,34 @@ packages:
       prettier: 2.8.8
     dev: true
 
+  /@chialab/esbuild-plugin-require-resolve@0.18.0:
+    resolution: {integrity: sha512-5xDQBqgwx+biV8m7lqRsiwBh9pPa0rWslLZ9h10QgpeYDhX/xigY2miEc4QueTjmhMWdvE+WPHnPXl4ViBn4/g==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@chialab/esbuild-rna': 0.18.2
+      '@chialab/estransform': 0.18.0
+    dev: false
+
+  /@chialab/esbuild-rna@0.18.2:
+    resolution: {integrity: sha512-ckzskez7bxstVQ4c5cxbx0DRP2teldzrcSGQl2KPh1VJGdO2ZmRrb6vNkBBD5K3dx9tgTyvskWp4dV+Fbg07Ag==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@chialab/estransform': 0.18.0
+      '@chialab/node-resolve': 0.18.0
+    dev: false
+
+  /@chialab/estransform@0.18.0:
+    resolution: {integrity: sha512-GqQV36E/NZeAKjxq178i6XlbN9B6cGYYliw1grWghGo9YE4r1yO0eylYm9WaaDvvO1ozN/arVvyQ9G1TNJsRsQ==}
+    engines: {node: '>=18'}
+    dependencies:
+      '@parcel/source-map': 2.1.1
+    dev: false
+
+  /@chialab/node-resolve@0.18.0:
+    resolution: {integrity: sha512-eV1m70Qn9pLY9xwFmZ2FlcOzwiaUywsJ7NB/ud8VB7DouvCQtIHkQ3Om7uPX0ojXGEG1LCyO96kZkvbNTxNu0Q==}
+    engines: {node: '>=18'}
+    dev: false
+
   /@colors/colors@1.5.0:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
@@ -5541,6 +5572,13 @@ packages:
   /@opentelemetry/semantic-conventions@1.17.1:
     resolution: {integrity: sha512-xbR2U+2YjauIuo42qmE8XyJK6dYeRMLJuOlUP5SO4auET4VtOHOzgkRVOq+Ik18N+Xf3YPcqJs9dZMiDddz1eQ==}
     engines: {node: '>=14'}
+    dev: false
+
+  /@parcel/source-map@2.1.1:
+    resolution: {integrity: sha512-Ejx1P/mj+kMjQb8/y5XxDUn4reGdr+WyKYloBljpppUy8gs42T+BNoEOuRYqDVdgPc6NxduzIDoJS9pOFfV5Ew==}
+    engines: {node: ^12.18.3 || >=14}
+    dependencies:
+      detect-libc: 1.0.3
     dev: false
 
   /@parcel/watcher@2.0.4:
@@ -8798,6 +8836,12 @@ packages:
     resolution: {integrity: sha512-Mc7QhQ8s+cLrnUfU/Ji94vG/r8M26m8f++vyres4ZoojaRDpZ1eSIh/EpzLNwlWuvzSZ3UbDFspjFvTDXe6e/g==}
     engines: {node: '>=12.20'}
     dev: true
+
+  /detect-libc@1.0.3:
+    resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
+    engines: {node: '>=0.10'}
+    hasBin: true
+    dev: false
 
   /detect-newline@4.0.1:
     resolution: {integrity: sha512-qE3Veg1YXzGHQhlA6jzebZN2qVf6NX+A7m7qlhCGG30dJixrAQhYOsJjsnBjJkCSmuOPpCk30145fr8FV0bzog==}

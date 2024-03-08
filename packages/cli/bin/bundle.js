@@ -1,5 +1,6 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
+import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
 
 const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
@@ -20,7 +21,9 @@ await esBuild({
   external,
   loader: {'.node': 'copy'},
   splitting: true,
-  plugins: [],
+  plugins: [
+    requireResolvePlugin(),
+  ],
 })
 
 await cleanBundledDependencies(external)
