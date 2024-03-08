@@ -4,10 +4,10 @@ import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
 import { readFile } from 'fs/promises';
 
 const external = [
-  'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
-  'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
-  'esbuild',
-  'vscode-json-languageservice'
+  'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it.
+  'yoga-wasm-web', // yoga-wasm-web can't be bundled because it's a wasm file (maybe fixable via plugin?)
+  'esbuild', // esbuild can't be bundled per design
+  'vscode-json-languageservice' // Errors because of a bad import/export design (maybe fixable via plugin?)
 ]
 
 /**
