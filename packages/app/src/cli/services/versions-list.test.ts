@@ -28,7 +28,7 @@ describe('versions-list', () => {
   beforeEach(() => {
     vi.mocked(ensureVersionsListContext).mockResolvedValue({
       developerPlatformClient,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         apiKey: 'app-api-key',
         title: 'app-title',

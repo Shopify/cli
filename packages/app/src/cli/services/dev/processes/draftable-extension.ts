@@ -81,7 +81,7 @@ export async function setupDraftableExtensionsProcess({
 
   const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({
     app: localApp,
-    partnersApp: remoteApp,
+    remoteApp,
     appId: apiKey,
     appName: remoteApp.title,
     force: true,

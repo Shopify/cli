@@ -60,7 +60,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
@@ -90,7 +90,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
@@ -118,7 +118,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
@@ -146,7 +146,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
@@ -239,7 +239,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: testOrganizationApp({
+      remoteApp: testOrganizationApp({
         id: 'app-id',
         organizationId: 'org-id',
       }),
@@ -362,7 +362,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
@@ -400,7 +400,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id2',
         organizationId: 'org-id',
         title: 'app-title',
@@ -440,7 +440,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      partnersApp: {
+      remoteApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
@@ -479,7 +479,7 @@ describe('deploy', () => {
 
 interface TestDeployBundleInput {
   app: AppInterface
-  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  remoteApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   options?: {
     force?: boolean
     noRelease?: boolean
@@ -494,7 +494,7 @@ interface TestDeployBundleInput {
 
 async function testDeployBundle({
   app,
-  partnersApp,
+  remoteApp,
   options,
   released = true,
   commitReference,
@@ -520,8 +520,8 @@ async function testDeployBundle({
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app: appToDeploy ?? app,
     identifiers,
-    partnersApp:
-      partnersApp ??
+    remoteApp:
+      remoteApp ??
       testOrganizationApp({
         id: 'app-id',
         organizationId: 'org-id',

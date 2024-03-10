@@ -44,7 +44,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   if (options.release) {
     extensionIdentifiersBreakdown = await resolveRemoteExtensionIdentifiersBreakdown(
       options.developerPlatformClient,
-      options.partnersApp,
+      options.remoteApp,
       extensionsToConfirm.validMatches,
       extensionsToConfirm.extensionsToCreate,
       extensionsToConfirm.dashboardOnlyExtensions,
@@ -80,14 +80,14 @@ export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKe
 
 export async function configExtensionsIdentifiersBreakdown({
   developerPlatformClient,
-  partnersApp,
+  remoteApp,
   localApp,
   versionAppModules,
   release,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
-  partnersApp: MinimalOrganizationApp
+  remoteApp: MinimalOrganizationApp
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
@@ -97,7 +97,7 @@ export async function configExtensionsIdentifiersBreakdown({
 
   return resolveRemoteConfigExtensionIdentifiersBreakdown(
     developerPlatformClient,
-    partnersApp,
+    remoteApp,
     localApp,
     versionAppModules,
   )
@@ -114,12 +114,12 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
-  partnersApp: MinimalOrganizationApp,
+  remoteApp: MinimalOrganizationApp,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
   const remoteConfig = await fetchAppRemoteConfiguration(
-    partnersApp,
+    remoteApp,
     developerPlatformClient,
     app.specifications ?? [],
     app.remoteBetaFlags,
@@ -248,12 +248,12 @@ function loadLocalExtensionsIdentifiersBreakdown({
 
 async function resolveRemoteExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
-  partnersApp: MinimalOrganizationApp,
+  remoteApp: MinimalOrganizationApp,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
 ): Promise<ExtensionIdentifiersBreakdown> {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(partnersApp)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
   const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
     activeAppVersion,

@@ -28,27 +28,27 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  const {developerPlatformClient, app, partnersApp} = await ensureReleaseContext(options)
+  const {developerPlatformClient, app, remoteApp} = await ensureReleaseContext(options)
   const partnerSession = await developerPlatformClient.session()
   const token = partnerSession.token
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
     token,
-    partnersApp.apiKey,
+    remoteApp.apiKey,
     options.version,
   )
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
     developerPlatformClient,
-    apiKey: partnersApp.apiKey,
+    apiKey: remoteApp.apiKey,
     localApp: app,
-    partnersApp,
+    remoteApp,
     versionAppModules: versionDetails.appModuleVersions,
     release: true,
   })
   const confirmed = await deployOrReleaseConfirmationPrompt({
     configExtensionIdentifiersBreakdown,
     extensionIdentifiersBreakdown,
-    appTitle: partnersApp.title,
+    appTitle: remoteApp.title,
     release: true,
     force: options.force,
   })
@@ -58,7 +58,7 @@ export async function release(options: ReleaseOptions) {
   }
 
   const variables: AppReleaseVariables = {
-    apiKey: partnersApp.apiKey,
+    apiKey: remoteApp.apiKey,
     appVersionId: versionDetails.id,
   }
 

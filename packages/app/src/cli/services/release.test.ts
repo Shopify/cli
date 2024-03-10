@@ -151,7 +151,7 @@ describe('release', () => {
 async function testRelease(
   app: AppInterface,
   version: string,
-  partnersApp?: OrganizationApp,
+  remoteApp?: OrganizationApp,
   options?: {
     force?: boolean
   },
@@ -160,7 +160,7 @@ async function testRelease(
   vi.mocked(ensureReleaseContext).mockResolvedValue({
     app,
     developerPlatformClient,
-    partnersApp: partnersApp ?? APP,
+    remoteApp: remoteApp ?? APP,
   })
 
   vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())

@@ -235,7 +235,7 @@ const LOCAL_APP = async (
 const options = async (params: {
   uiExtensions: ExtensionInstance[]
   identifiers?: any
-  partnersApp?: OrganizationApp
+  remoteApp?: OrganizationApp
   release?: boolean
   developerPlatformClient?: DeveloperPlatformClient
 }) => {
@@ -246,7 +246,7 @@ const options = async (params: {
     appName: 'appName',
     envIdentifiers: {extensions: params.identifiers ?? {}},
     force: false,
-    partnersApp: params.partnersApp ?? testOrganizationApp(),
+    remoteApp: params.remoteApp ?? testOrganizationApp(),
     release: params.release ?? true,
   }
 }
@@ -678,7 +678,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         apiKey: 'apiKey',
         localApp: await LOCAL_APP([], configuration),
         release: false,
@@ -774,7 +774,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -868,7 +868,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -929,7 +929,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -1040,7 +1040,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -1096,7 +1096,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1153,7 +1153,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1234,7 +1234,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule, configToReleasePosAppModule],
         release: true,
@@ -1315,7 +1315,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1388,7 +1388,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
-        partnersApp: testOrganizationApp(),
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         versionAppModules: [configToReleaseAppModule],
         release: true,

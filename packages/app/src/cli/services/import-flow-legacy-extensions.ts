@@ -19,12 +19,12 @@ interface ImportFlowOptions {
 
 export async function importFlowExtensions(options: ImportFlowOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
+  const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
-  await logMetadataForLoadedContext(partnersApp)
+  await logMetadataForLoadedContext(remoteApp)
 
   const partnersSession = await developerPlatformClient.session()
-  const flowExtensions = await getActiveDashboardExtensions({token: partnersSession.token, apiKey: partnersApp.apiKey})
+  const flowExtensions = await getActiveDashboardExtensions({token: partnersSession.token, apiKey: remoteApp.apiKey})
 
   if (flowExtensions.length === 0) {
     renderSuccess({headline: ['No extensions to migrate.']})
@@ -54,7 +54,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
   renderSuccessMessages(generatedExtensions)
   await updateAppIdentifiers({
     app: options.app,
-    identifiers: {extensions: extensionUuids, app: partnersApp.apiKey},
+    identifiers: {extensions: extensionUuids, app: remoteApp.apiKey},
     command: 'deploy',
   })
 }
