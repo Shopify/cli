@@ -31,7 +31,6 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {
   DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
@@ -44,7 +43,6 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -905,32 +903,42 @@ export async function logMetadataForLoadedContext(app: {organizationId: string; 
   }))
 }
 
-export async function enableDeveloperPreview({apiKey, token}: {apiKey: string; token: string}) {
-  return developerPreviewUpdate({apiKey, token, enabled: true})
+export async function enableDeveloperPreview({
+  apiKey,
+  developerPlatformClient,
+}: {
+  apiKey: string
+  developerPlatformClient: DeveloperPlatformClient
+}) {
+  return developerPreviewUpdate({apiKey, developerPlatformClient, enabled: true})
 }
 
-export async function disableDeveloperPreview({apiKey, token}: {apiKey: string; token: string}) {
-  await developerPreviewUpdate({apiKey, token, enabled: false})
+export async function disableDeveloperPreview({
+  apiKey,
+  developerPlatformClient,
+}: {
+  apiKey: string
+  developerPlatformClient: DeveloperPlatformClient
+}) {
+  await developerPreviewUpdate({apiKey, developerPlatformClient, enabled: false})
 }
 
 export async function developerPreviewUpdate({
   apiKey,
-  token,
+  developerPlatformClient,
   enabled,
 }: {
   apiKey: string
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   enabled: boolean
 }) {
-  const query = DevelopmentStorePreviewUpdateQuery
-  const variables: DevelopmentStorePreviewUpdateInput = {
+  const input: DevelopmentStorePreviewUpdateInput = {
     input: {
       apiKey,
       enabled,
     },
   }
-
-  const result: DevelopmentStorePreviewUpdateSchema | undefined = await partnersRequest(query, token, variables)
-  const userErrors = result?.developmentStorePreviewUpdate?.userErrors
+  const result: DevelopmentStorePreviewUpdateSchema = await developerPlatformClient.updateDeveloperPreview(input)
+  const userErrors = result.developmentStorePreviewUpdate.userErrors
   return !userErrors || userErrors.length === 0
 }

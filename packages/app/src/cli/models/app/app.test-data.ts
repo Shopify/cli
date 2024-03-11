@@ -22,6 +22,11 @@ import {
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../../api/graphql/development_preview.js'
+import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -750,6 +755,22 @@ const convertedToTestStoreResponse = {
   },
 }
 
+const updateDeveloperPreviewResponse: DevelopmentStorePreviewUpdateSchema = {
+  developmentStorePreviewUpdate: {
+    app: {
+      id: 'app-id',
+      developmentStorePreviewEnabled: true,
+    },
+    userErrors: [],
+  },
+}
+
+const appPreviewModeResponse: FindAppPreviewModeSchema = {
+  app: {
+    developmentStorePreviewEnabled: true,
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -777,6 +798,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
     convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
+      Promise.resolve(updateDeveloperPreviewResponse),
+    appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     ...stubs,
   }
 }

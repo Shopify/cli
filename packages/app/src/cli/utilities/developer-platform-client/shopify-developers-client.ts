@@ -34,6 +34,11 @@ import {
   ConvertDevToTestStoreSchema,
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
+import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../../api/graphql/development_preview.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -243,6 +248,16 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async convertToTestStore(_input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
     throw new BugError('Not implemented: convertToTestStore')
+  }
+
+  async updateDeveloperPreview(
+    _input: DevelopmentStorePreviewUpdateInput,
+  ): Promise<DevelopmentStorePreviewUpdateSchema> {
+    throw new BugError('Not implemented: updateDeveloperPreview')
+  }
+
+  async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
+    throw new BugError('Not implemented: appPreviewMode')
   }
 }
 

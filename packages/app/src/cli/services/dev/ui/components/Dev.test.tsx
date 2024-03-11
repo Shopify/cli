@@ -1,5 +1,6 @@
 import {Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
+import {testDeveloperPlatformClient} from '../../../../models/app/app.test-data.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -20,11 +21,13 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../../context.js')
 vi.mock('../../fetch.js')
 
+const developerPlatformClient = testDeveloperPlatformClient()
+
 const testApp = {
   canEnablePreviewMode: true,
   developmentStorePreviewEnabled: false,
   apiKey: '123',
-  token: '123',
+  developerPlatformClient,
 }
 
 const developerPreview = {
