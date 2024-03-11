@@ -42,8 +42,8 @@ const APP2 = testOrganizationApp({
   apiSecretKeys: [{secret: 'secret2'}],
 })
 const APPS = [
-  {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey},
-  {id: APP2.id, title: APP2.title, apiKey: APP2.apiKey},
+  {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey, organizationId: ORG1.id},
+  {id: APP2.id, title: APP2.title, apiKey: APP2.apiKey, organizationId: ORG1.id},
 ]
 
 function mockDeveloperPlatformClient() {

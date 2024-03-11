@@ -3,11 +3,11 @@ import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './i
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {ActiveAppVersionQuerySchema, AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -43,7 +43,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   if (options.release) {
     extensionIdentifiersBreakdown = await resolveRemoteExtensionIdentifiersBreakdown(
       options.developerPlatformClient,
-      options.appId,
+      options.remoteApp,
       extensionsToConfirm.validMatches,
       extensionsToConfirm.extensionsToCreate,
       extensionsToConfirm.dashboardOnlyExtensions,
@@ -56,7 +56,16 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   }
 }
 
-export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKey: string, version: string) {
+interface ExtensionsIdentifiersReleaseBreakdown {
+  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  versionDetails: Awaited<ReturnType<typeof versionDiffByVersion>>['versionDetails']
+}
+
+export async function extensionsIdentifiersReleaseBreakdown(
+  token: string,
+  apiKey: string,
+  version: string,
+): Promise<ExtensionsIdentifiersReleaseBreakdown> {
   const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, token)
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
@@ -79,13 +88,14 @@ export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKe
 
 export async function configExtensionsIdentifiersBreakdown({
   developerPlatformClient,
-  apiKey,
+  remoteApp,
   localApp,
   versionAppModules,
   release,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
+  remoteApp: MinimalOrganizationApp
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
@@ -93,7 +103,12 @@ export async function configExtensionsIdentifiersBreakdown({
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
-  return resolveRemoteConfigExtensionIdentifiersBreakdown(developerPlatformClient, apiKey, localApp, versionAppModules)
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(
+    developerPlatformClient,
+    remoteApp,
+    localApp,
+    versionAppModules,
+  )
 }
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
@@ -107,12 +122,12 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
-  apiKey: string,
+  remoteApp: MinimalOrganizationApp,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
   const remoteConfig = await fetchAppRemoteConfiguration(
-    apiKey,
+    remoteApp,
     developerPlatformClient,
     app.specifications ?? [],
     app.remoteBetaFlags,
@@ -241,12 +256,12 @@ function loadLocalExtensionsIdentifiersBreakdown({
 
 async function resolveRemoteExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
-  apiKey: string,
+  remoteApp: MinimalOrganizationApp,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
 ): Promise<ExtensionIdentifiersBreakdown> {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
   const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
     activeAppVersion,
@@ -269,12 +284,12 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
 }
 
 function loadExtensionsIdentifiersBreakdown(
-  activeAppVersion: ActiveAppVersionQuerySchema,
+  activeAppVersion: ActiveAppVersion,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
 ) {
   const extensionModules =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+    activeAppVersion?.appModuleVersions.filter(
       (module) => !module.specification || module.specification.experience === 'extension',
     ) || []
 
@@ -302,12 +317,9 @@ function loadExtensionsIdentifiersBreakdown(
   }
 }
 
-function loadDashboardIdentifiersBreakdown(
-  currentRegistrations: RemoteSource[],
-  activeAppVersion: ActiveAppVersionQuerySchema,
-) {
+function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: ActiveAppVersion) {
   const currentVersions =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+    activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification!.options.managementExperience === 'dashboard',
     ) || []
 

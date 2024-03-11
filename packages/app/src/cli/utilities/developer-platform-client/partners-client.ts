@@ -4,7 +4,7 @@ import {
   AllDevStoresByOrganizationQueryVariables,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
-import {DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
+import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   fetchAppDetailsFromApiKey,
@@ -212,9 +212,19 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AppVersionsQuery, variables)
   }
 
-  async activeAppVersion(apiKey: string): Promise<ActiveAppVersionQuerySchema> {
+  async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
-    return this.makeRequest(ActiveAppVersionQuery, variables)
+    const result = await this.makeRequest<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
+    const version = result.app.activeAppVersion
+    return {
+      ...version,
+      appModuleVersions: version.appModuleVersions.map((mod) => {
+        return {
+          ...mod,
+          config: mod.config ? (JSON.parse(mod.config) as object) : {},
+        }
+      }),
+    }
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {

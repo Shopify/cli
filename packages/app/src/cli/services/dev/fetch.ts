@@ -138,7 +138,8 @@ export async function fetchOrgAndApps(
   const org = result.organizations.nodes[0]
   if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName}
-  return {organization: parsedOrg, apps: org.apps, stores: []}
+  const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
+  return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
 }
 
 export enum BetaFlag {}

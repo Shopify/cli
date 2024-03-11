@@ -34,6 +34,24 @@ export async function partnersFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the Shopify Developers' API service we should interact with.
+ *
+ * @returns Fully-qualified domain of the Shopify Developers service we should interact with.
+ */
+export async function shopifyDevelopersFqdn(): Promise<string> {
+  const environment = serviceEnvironment()
+  const productionFqdn = 'shopify.com'
+  switch (environment) {
+    case 'local':
+      return 'app.shopify.myshopify.io'
+    case 'spin':
+      return `app.shopify.${await spinFqdn()}`
+    default:
+      return productionFqdn
+  }
+}
+
+/**
  * It returns the BusinessPlatform' API service we should interact with.
  *
  * @returns Fully-qualified domain of the partners service we should interact with.

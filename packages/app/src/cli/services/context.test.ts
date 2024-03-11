@@ -958,9 +958,9 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
 
@@ -988,9 +988,9 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
   })
@@ -1022,9 +1022,9 @@ describe('ensureDeployContext', () => {
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
     expect(appFromIdSpy).toHaveBeenCalledWith(APP2.apiKey)
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
@@ -1080,9 +1080,9 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
-    expect(got.partnersApp.id).toEqual(APP1.id)
-    expect(got.partnersApp.title).toEqual(APP1.title)
-    expect(got.partnersApp.appType).toEqual(APP1.appType)
+    expect(got.remoteApp.id).toEqual(APP1.id)
+    expect(got.remoteApp.title).toEqual(APP1.title)
+    expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
   })
@@ -1154,9 +1154,9 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
-    expect(got.partnersApp.id).toEqual(APP1.id)
-    expect(got.partnersApp.title).toEqual(APP1.title)
-    expect(got.partnersApp.appType).toEqual(APP1.appType)
+    expect(got.remoteApp.id).toEqual(APP1.id)
+    expect(got.remoteApp.title).toEqual(APP1.title)
+    expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
@@ -1185,9 +1185,9 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
     expect(got.app.allExtensions).toEqual(appWithExtensions.allExtensions)
@@ -1697,7 +1697,7 @@ describe('ensureReleaseContext', () => {
     })
 
     expect(got.app).toEqual(app)
-    expect(got.partnersApp).toEqual(APP2)
+    expect(got.remoteApp).toEqual(APP2)
     expect(got.developerPlatformClient).toEqual(developerPlatformClient)
   })
 })
@@ -1785,7 +1785,7 @@ describe('ensureVersionsListContext', () => {
 
     // Then
     expect(got).toEqual({
-      partnersApp: APP2,
+      remoteApp: APP2,
       developerPlatformClient,
     })
   })
