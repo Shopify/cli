@@ -18,7 +18,7 @@ import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
-import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -37,7 +37,6 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   directory: string
@@ -283,18 +282,16 @@ async function launchDevProcesses({
   })
 
   const apiKey = config.remoteApp.apiKey
-  const partnersSession = await config.developerPlatformClient.session()
-  const token = partnersSession.token
+  const developerPlatformClient = config.developerPlatformClient
   const app = {
     canEnablePreviewMode: await canEnablePreviewMode({
-      remoteApp: config.remoteApp,
       localApp: config.localApp,
-      token,
+      developerPlatformClient,
       apiKey,
     }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
-    token,
+    developerPlatformClient,
   }
 
   return renderDev({
@@ -304,21 +301,23 @@ async function launchDevProcesses({
     graphiqlPort: config.graphiqlPort,
     app,
     abortController,
-    developerPreview: developerPreviewController(apiKey, token),
+    developerPreview: developerPreviewController(apiKey, developerPlatformClient),
   })
 }
 
-export function developerPreviewController(apiKey: string, originalToken: string): DeveloperPreviewController {
-  let currentToken = originalToken
-
+export function developerPreviewController(
+  apiKey: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): DeveloperPreviewController {
   const refreshToken = async () => {
-    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
-    if (newToken) currentToken = newToken
+    await developerPlatformClient.refreshToken()
   }
 
-  const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
+  const withRefreshToken = async <T>(
+    fn: (developerPlatformClient: DeveloperPlatformClient) => Promise<T>,
+  ): Promise<T> => {
     try {
-      const result = await performActionWithRetryAfterRecovery(async () => fn(currentToken), refreshToken)
+      const result = await performActionWithRetryAfterRecovery(async () => fn(developerPlatformClient), refreshToken)
       return result
     } catch (err) {
       outputDebug('Failed to refresh token')
@@ -327,17 +326,22 @@ export function developerPreviewController(apiKey: string, originalToken: string
   }
 
   return {
-    fetchMode: async () => withRefreshToken(async (token: string) => Boolean(await fetchAppPreviewMode(apiKey, token))),
+    fetchMode: async () =>
+      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
+        Boolean(await fetchAppPreviewMode(apiKey, developerPlatformClient)),
+      ),
     enable: async () =>
-      withRefreshToken(async (token: string) => {
-        await enableDeveloperPreview({apiKey, token})
+      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) => {
+        await enableDeveloperPreview({apiKey, developerPlatformClient})
       }),
     disable: async () =>
-      withRefreshToken(async (token: string) => {
-        await disableDeveloperPreview({apiKey, token})
+      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) => {
+        await disableDeveloperPreview({apiKey, developerPlatformClient})
       }),
     update: async (state: boolean) =>
-      withRefreshToken(async (token: string) => developerPreviewUpdate({apiKey, token, enabled: state})),
+      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
+        developerPreviewUpdate({apiKey, developerPlatformClient, enabled: state}),
+      ),
   }
 }
 

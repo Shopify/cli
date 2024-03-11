@@ -6,7 +6,7 @@ import {
 import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {FindAppPreviewModeQuery, FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
+import {FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
 import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
 import {
   AllDevStoresByOrganizationQuery,
@@ -163,10 +163,11 @@ export function filterDisabledBetas(disabledBetas: string[] = []): BetaFlag[] {
   return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
 }
 
-export async function fetchAppPreviewMode(apiKey: string, token: string): Promise<boolean | undefined> {
-  const res: FindAppPreviewModeQuerySchema = await partnersRequest(FindAppPreviewModeQuery, token, {
-    apiKey,
-  })
+export async function fetchAppPreviewMode(
+  apiKey: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<boolean | undefined> {
+  const res: FindAppPreviewModeQuerySchema = await developerPlatformClient.appPreviewMode(apiKey)
   return res.app?.developmentStorePreviewEnabled
 }
 

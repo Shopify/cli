@@ -58,6 +58,12 @@ import {
   AppVersionsQueryVariables,
   AppVersionsQuerySchema,
 } from '../../api/graphql/get_versions_list.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateQuery,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../../api/graphql/development_preview.js'
+import {FindAppPreviewModeQuery, FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -254,5 +260,15 @@ export class PartnersClient implements DeveloperPlatformClient {
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
     return this.makeRequest(FindStoreByDomainQuery, variables)
+  }
+
+  async updateDeveloperPreview(
+    input: DevelopmentStorePreviewUpdateInput,
+  ): Promise<DevelopmentStorePreviewUpdateSchema> {
+    return this.makeRequest(DevelopmentStorePreviewUpdateQuery, input)
+  }
+
+  async appPreviewMode(appId: string): Promise<FindAppPreviewModeQuerySchema> {
+    return this.makeRequest(FindAppPreviewModeQuery, {apiKey: appId})
   }
 }
