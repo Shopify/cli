@@ -18,7 +18,7 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
-import {FindAppPreviewModeQuerySchema} from '../api/graphql/find_app_preview_mode.js'
+import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -86,5 +86,5 @@ export interface DeveloperPlatformClient {
   deploy: (input: AppDeployVariables) => Promise<AppDeploySchema>
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
-  appPreviewMode: (appId: string) => Promise<FindAppPreviewModeQuerySchema>
+  appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
 }

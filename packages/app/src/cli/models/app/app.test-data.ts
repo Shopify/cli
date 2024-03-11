@@ -26,7 +26,7 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
-import {FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
+import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -765,7 +765,7 @@ const updateDeveloperPreviewResponse: DevelopmentStorePreviewUpdateSchema = {
   },
 }
 
-const appPreviewModeResponse: FindAppPreviewModeQuerySchema = {
+const appPreviewModeResponse: FindAppPreviewModeSchema = {
   app: {
     developmentStorePreviewEnabled: true,
   },
@@ -800,7 +800,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
-    appPreviewMode: (_appId: string) => Promise.resolve(appPreviewModeResponse),
+    appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     ...stubs,
   }
 }

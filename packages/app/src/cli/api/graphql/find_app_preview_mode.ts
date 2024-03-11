@@ -8,8 +8,12 @@ export const FindAppPreviewModeQuery = gql`
   }
 `
 
-export interface FindAppPreviewModeQuerySchema {
+export interface FindAppPreviewModeSchema {
   app: {
     developmentStorePreviewEnabled: boolean
   }
+}
+
+export interface FindAppPreviewModeVariables {
+  apiKey: string
 }

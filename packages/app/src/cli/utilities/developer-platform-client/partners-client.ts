@@ -63,7 +63,11 @@ import {
   DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
-import {FindAppPreviewModeQuery, FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
+import {
+  FindAppPreviewModeQuery,
+  FindAppPreviewModeSchema,
+  FindAppPreviewModeVariables,
+} from '../../api/graphql/find_app_preview_mode.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -268,7 +272,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(DevelopmentStorePreviewUpdateQuery, input)
   }
 
-  async appPreviewMode(appId: string): Promise<FindAppPreviewModeQuerySchema> {
-    return this.makeRequest(FindAppPreviewModeQuery, {apiKey: appId})
+  async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
+    return this.makeRequest(FindAppPreviewModeQuery, input)
   }
 }

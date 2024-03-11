@@ -6,7 +6,7 @@ import {
 import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
+import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
 import {
   AllDevStoresByOrganizationQuery,
@@ -167,7 +167,7 @@ export async function fetchAppPreviewMode(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<boolean | undefined> {
-  const res: FindAppPreviewModeQuerySchema = await developerPlatformClient.appPreviewMode(apiKey)
+  const res: FindAppPreviewModeSchema = await developerPlatformClient.appPreviewMode({apiKey})
   return res.app?.developmentStorePreviewEnabled
 }
 
