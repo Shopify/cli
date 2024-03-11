@@ -16,7 +16,7 @@ import {
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
+import {fetchOrganizations, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
@@ -39,6 +39,10 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
+import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -91,12 +95,16 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appFromId')
   }
 
-  async organizations(): Promise<Organization[]> {
-    return [ORG1]
+  async organizations(): Promise<AllOrganizationsQuerySchema> {
+    return {
+      organizations: {
+        nodes: [ORG1],
+      },
+    }
   }
 
   async selectOrg(): Promise<Organization> {
-    const organizations = await this.organizations()
+    const organizations = await fetchOrganizations(this)
     return selectOrganizationPrompt(organizations)
   }
 
@@ -258,6 +266,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
     throw new BugError('Not implemented: appPreviewMode')
+  }
+
+  async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+    throw new BugError('Not implemented: sendSampleWebhook')
+  }
+
+  async apiVersions(): Promise<PublicApiVersionsSchema> {
+    throw new BugError('Not implemented: apiVersions')
+  }
+
+  async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+    throw new BugError('Not implemented: topics')
   }
 }
 
