@@ -19,6 +19,7 @@ vi.mock('./ui/components/Dev.js')
 vi.mock('../context.js')
 
 const developerPreview = {
+  fetchLogs: vi.fn(async () => {}),
   fetchMode: vi.fn(async () => true),
   enable: vi.fn(async () => {}),
   disable: vi.fn(async () => {}),

@@ -6,7 +6,12 @@ import {
 import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {FindAppPreviewModeQuery, FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
+import {
+  FindAppPreviewModeQuery,
+  FindAppPreviewModeQuerySchema,
+  FindAppFunctionLogs,
+  FindAppFunctionLogsQuerySchema,
+} from '../../api/graphql/find_app_preview_mode.js'
 import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
 import {
   AllDevStoresByOrganizationQuery,
@@ -168,6 +173,15 @@ export async function fetchAppPreviewMode(apiKey: string, token: string): Promis
     apiKey,
   })
   return res.app?.developmentStorePreviewEnabled
+}
+
+export async function fetchFunctionLogs(functionId: string, apiKey: string, token: string): Promise<unknown> {
+  // const query = FindAppFunctionLogsQuerySchema
+  console.log('making partners request')
+  const result: FindAppFunctionLogsQuerySchema = await partnersRequest(FindAppFunctionLogs, token, {
+    functionId,
+  })
+  return result.app.functionLogs
 }
 
 export async function fetchOrgFromId(id: string, partnersSession: PartnersSession): Promise<Organization> {
