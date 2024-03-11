@@ -6,9 +6,7 @@ import {
 } from './context/breakdown-extensions.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {AppInterface} from '../models/app/app.js'
-import {OrganizationApp} from '../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -31,8 +29,6 @@ const APP = {
   apiSecretKeys: [],
   betas: [],
 }
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -76,14 +72,13 @@ describe('release', () => {
         },
       }
     })
-    const {release} = developerPlatformClient
-    const releaseSpy = vi.spyOn(developerPlatformClient, 'release').mockImplementation(release)
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    await testRelease(app, 'app-version')
+    await testRelease(app, 'app-version', {developerPlatformClient})
 
     // Then
-    expect(releaseSpy).toHaveBeenCalledWith({apiKey: APP.apiKey, appVersionId: 1})
+    expect(developerPlatformClient.release).toHaveBeenCalledWith({apiKey: APP.apiKey, appVersionId: 1})
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
         {
@@ -147,16 +142,13 @@ describe('release', () => {
 async function testRelease(
   app: AppInterface,
   version: string,
-  remoteApp?: OrganizationApp,
-  options?: {
-    force?: boolean
-  },
+  {developerPlatformClient = testDeveloperPlatformClient()} = {},
 ) {
   // Given
   vi.mocked(ensureReleaseContext).mockResolvedValue({
     app,
     developerPlatformClient,
-    remoteApp: remoteApp ?? APP,
+    remoteApp: APP,
   })
 
   vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())
@@ -165,7 +157,7 @@ async function testRelease(
   await release({
     app,
     reset: false,
-    force: Boolean(options?.force),
+    force: false,
     version,
   })
 }

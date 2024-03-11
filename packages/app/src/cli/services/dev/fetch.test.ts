@@ -152,15 +152,13 @@ describe('fetchStoreByDomain', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
       storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
     })
-    const {storeByDomain} = developerPlatformClient
-    const storeByDomainSpy = vi.spyOn(developerPlatformClient, 'storeByDomain').mockImplementation(storeByDomain)
 
     // When
     const got = await fetchStoreByDomain(ORG1.id, 'domain1', developerPlatformClient)
 
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
-    expect(storeByDomainSpy).toHaveBeenCalledWith(ORG1.id, 'domain1')
+    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
   })
 })
 

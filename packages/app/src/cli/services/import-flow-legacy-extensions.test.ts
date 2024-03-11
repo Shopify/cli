@@ -44,8 +44,6 @@ const flowExtensionB: ExtensionRegistration = {
   },
 }
 
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('import-flow-legacy-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
@@ -57,7 +55,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, developerPlatformClient})
+      await importFlowExtensions({app, developerPlatformClient: testDeveloperPlatformClient()})
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -83,7 +81,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, developerPlatformClient})
+      await importFlowExtensions({app, developerPlatformClient: testDeveloperPlatformClient()})
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -110,7 +108,7 @@ describe('import-flow-legacy-extensions', () => {
 
       await importFlowExtensions({
         app,
-        developerPlatformClient,
+        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then

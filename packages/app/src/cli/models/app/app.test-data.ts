@@ -30,6 +30,7 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/g
 import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -809,7 +810,7 @@ const appPreviewModeResponse: FindAppPreviewModeSchema = {
 }
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  return {
+  const clientStub = {
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -843,6 +844,13 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     ...stubs,
   }
+  const retVal: Partial<DeveloperPlatformClient> = {}
+  for (const [key, value] of Object.entries(clientStub)) {
+    if (typeof value === 'function') {
+      retVal[key as keyof DeveloperPlatformClient] = vi.fn().mockImplementation(value)
+    }
+  }
+  return retVal as DeveloperPlatformClient
 }
 
 export const testPartnersServiceSession: PartnersSession = {
