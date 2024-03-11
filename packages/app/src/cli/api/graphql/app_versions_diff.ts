@@ -63,3 +63,8 @@ export interface AppVersionsDiffSchema {
     }
   }
 }
+
+export interface AppVersionsDiffVariables {
+  apiKey: string
+  versionId?: number
+}

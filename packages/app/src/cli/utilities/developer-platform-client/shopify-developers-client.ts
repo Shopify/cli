@@ -39,6 +39,9 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -189,6 +192,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appExtensionRegistrations')
   }
 
+  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
+  async appVersionByTag(_input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
+  async appVersionsDiff(_input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
   async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
@@ -233,12 +248,12 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: deploy')
   }
 
-  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+  async release(_input: AppReleaseVariables): Promise<AppReleaseSchema> {
+    throw new BugError('Not implemented: release')
   }
 
-  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
-    throw new BugError('Not implemented: appVersions')
+  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
+    throw new BugError('Not implemented: storeByDomain')
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
