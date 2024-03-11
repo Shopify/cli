@@ -7,6 +7,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {io} from 'socket.io-client'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -110,30 +111,38 @@ export default class Dev extends Command {
   }
 
   public async run(): Promise<void> {
-    const socket = io('https://web.prd-s5y-app-event-realti-d91a.prod.shopifyapps.com', {transports: ['websocket']})
-    const user = 'mock_session_token'
+    // const socket = io('https://web.prd-s5y-app-event-realti-d91a.prod.shopifyapps.com', {transports: ['websocket']})
+    // const socket = io('http://localhost:58865', {transports: ['websocket']})
+    const server_url = process.env.APP_EVENT_SERVER_URL || 'http://localhost:58865'
+    const socket = io(server_url, {transports: ['websocket']})
+    socket.on('connect_error', (error) => {
+      console.log('Connection Error:', error)
+    })
+
+    socket.on('error', (error) => {
+      console.log('Error:', error)
+    })
+
+    const sessionToken = process.env.MOCK_SESSION_TOKEN || randomUUID()
+
     const shopId = 123
     const appId = 456
     // const room = `shop-${shopId}-app-${appId}`
-    const room = 'test'
+    const channel = 'test'
 
-    console.log(`connecting to room: ${room}`)
-
-    socket.emit('signin', {user, room}, (error: string, history: {messages: [string]}) => {
+    socket.emit('signin', {sessionToken, channel}, (error: string, history: {messages: [string]}) => {
       if (error) {
         console.error(error)
-      } else if (history) {
-        console.log('historic messages detected:')
-        console.log(history.messages)
-        console.log('end of historic messages')
       }
+
+      history.messages.forEach((msg) => {
+        console.log('message received: ', msg)
+      })
     })
 
     socket.on('message', (msg) => {
       console.log('message received: ', msg)
     })
-
-    console.log('test')
 
     socket.on('notification', (msg: string) => {
       console.log('notification received: ', msg)
@@ -157,18 +166,15 @@ export default class Dev extends Command {
     // [START cloudrun_websockets_reconnect]
     // Listen for reconnect event
     socket.io.on('reconnect', () => {
-      console.log('reconnected')
       // Emit "updateSocketId" event to update the recorded socket ID with user and room
-      socket.emit('updateSocketId', {user, room}, (error: string) => {
-        if (error) {
-          console.error(error)
-        }
+      socket.emit('updateSocketId', {sessionToken, channel}, (messages: [string]) => {
+        messages.forEach((msg) => {
+          console.log('message received: ', msg)
+        })
       })
     })
 
-    setInterval(() => {
-      console.log(`socket is connected: ${socket.connected}`)
-    }, 1000)
+    setInterval(() => {}, 2000)
     return
 
     const {flags} = await this.parse(Dev)
