@@ -6,9 +6,8 @@ import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {ActiveAppVersionQuerySchema, AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -57,7 +56,16 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   }
 }
 
-export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKey: string, version: string) {
+interface ExtensionsIdentifiersReleaseBreakdown {
+  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  versionDetails: Awaited<ReturnType<typeof versionDiffByVersion>>['versionDetails']
+}
+
+export async function extensionsIdentifiersReleaseBreakdown(
+  token: string,
+  apiKey: string,
+  version: string,
+): Promise<ExtensionsIdentifiersReleaseBreakdown> {
   const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, token)
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
@@ -276,12 +284,12 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
 }
 
 function loadExtensionsIdentifiersBreakdown(
-  activeAppVersion: ActiveAppVersionQuerySchema,
+  activeAppVersion: ActiveAppVersion,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
 ) {
   const extensionModules =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+    activeAppVersion?.appModuleVersions.filter(
       (module) => !module.specification || module.specification.experience === 'extension',
     ) || []
 
@@ -309,12 +317,9 @@ function loadExtensionsIdentifiersBreakdown(
   }
 }
 
-function loadDashboardIdentifiersBreakdown(
-  currentRegistrations: RemoteSource[],
-  activeAppVersion: ActiveAppVersionQuerySchema,
-) {
+function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: ActiveAppVersion) {
   const currentVersions =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+    activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification!.options.managementExperience === 'dashboard',
     ) || []
 

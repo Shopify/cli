@@ -4,7 +4,6 @@ import {PartnersSession} from '../../cli/services/context/partner-account-info.j
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {ActiveAppVersionQuerySchema} from '../api/graphql/app_active_version.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 import {
@@ -36,6 +35,28 @@ export interface CreateAppOptions {
   directory?: string
 }
 
+interface AppModuleVersionSpecification {
+  identifier: string
+  name: string
+  experience: 'extension' | 'configuration' | 'deprecated'
+  options: {
+    managementExperience: 'cli' | 'custom' | 'dashboard'
+  }
+}
+
+export interface AppModuleVersion {
+  registrationId: string
+  registrationUuid: string
+  registrationTitle: string
+  config?: object
+  type: string
+  specification?: AppModuleVersionSpecification
+}
+
+export interface ActiveAppVersion {
+  appModuleVersions: AppModuleVersion[]
+}
+
 export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
@@ -52,7 +73,7 @@ export interface DeveloperPlatformClient {
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (appId: string) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
-  activeAppVersion: (app: MinimalOrganizationApp) => Promise<ActiveAppVersionQuerySchema>
+  activeAppVersion: (app: MinimalOrganizationApp) => Promise<ActiveAppVersion>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>

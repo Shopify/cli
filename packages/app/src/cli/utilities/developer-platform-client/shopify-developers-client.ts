@@ -14,14 +14,13 @@ import {
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
+import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
-import {ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
 import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
@@ -186,7 +185,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appExtensionRegistrations')
   }
 
-  async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersionQuerySchema> {
+  async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
     const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
@@ -196,25 +195,21 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       variables,
     )
     return {
-      app: {
-        activeAppVersion: {
-          appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
-            return {
-              registrationId: mod.gid,
-              registrationUuid: mod.gid,
-              registrationTitle: mod.handle,
-              type: mod.specification.identifier,
-              config: mod.config,
-              specification: {
-                ...mod.specification,
-                options: {managementExperience: 'cli'},
-                experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
-              },
-            }
-          }),
-          ...result.app.activeRelease,
-        },
-      },
+      appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
+        return {
+          registrationId: mod.gid,
+          registrationUuid: mod.gid,
+          registrationTitle: mod.handle,
+          type: mod.specification.identifier,
+          config: mod.config,
+          specification: {
+            ...mod.specification,
+            options: {managementExperience: 'cli'},
+            experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+          },
+        }
+      }),
+      ...result.app.activeRelease,
     }
   }
 

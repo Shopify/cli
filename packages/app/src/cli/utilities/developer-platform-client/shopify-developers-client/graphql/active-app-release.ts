@@ -36,7 +36,7 @@ export interface AppModuleSpecification {
 export interface AppModule {
   gid: string
   handle: string
-  config: string
+  config: object
   specification: AppModuleSpecification
 }
 

@@ -42,7 +42,10 @@ export async function release(options: ReleaseOptions) {
     apiKey: remoteApp.apiKey,
     localApp: app,
     remoteApp,
-    versionAppModules: versionDetails.appModuleVersions,
+    versionAppModules: versionDetails.appModuleVersions.map((appModuleVersion) => ({
+      ...appModuleVersion,
+      ...(appModuleVersion.config ? {config: JSON.parse(appModuleVersion.config)} : {}),
+    })),
     release: true,
   })
   const confirmed = await deployOrReleaseConfirmationPrompt({

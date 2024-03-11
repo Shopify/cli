@@ -12,8 +12,7 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -682,12 +681,8 @@ const emptyAppVersions = {
   },
 }
 
-const emptyActiveAppVersion: ActiveAppVersionQuerySchema = {
-  app: {
-    activeAppVersion: {
-      appModuleVersions: [],
-    },
-  },
+const emptyActiveAppVersion: ActiveAppVersion = {
+  appModuleVersions: [],
 }
 
 const functionUploadUrlResponse = {
