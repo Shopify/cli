@@ -1115,6 +1115,7 @@ describe('ensureDeployContext', () => {
 
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     const writeAppConfigurationFileSpy = vi
@@ -1638,6 +1639,7 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     const opts = draftExtensionsPushOptions(app)

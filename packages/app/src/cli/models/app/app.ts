@@ -5,7 +5,6 @@ import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
-import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {BetaFlag} from '../../services/dev/fetch.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -13,7 +12,6 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -293,68 +291,7 @@ export class App implements AppInterface {
 
   private configurationTyped(configuration: AppConfiguration) {
     if (isLegacyAppSchema(configuration)) return configuration
-    return {
-      ...configuration,
-      ...buildSpecsAppConfiguration(configuration),
-    } as CurrentAppConfiguration & SpecsAppConfiguration
-  }
-}
-
-export function buildSpecsAppConfiguration(content: object) {
-  return {
-    ...homeConfiguration(content),
-    ...appProxyConfiguration(content),
-    ...posConfiguration(content),
-    ...webhooksConfiguration(content),
-    ...accessConfiguration(content),
-  }
-}
-
-function appProxyConfiguration(configuration: object) {
-  if (!getPathValue(configuration, 'app_proxy')) return
-  return {
-    app_proxy: {
-      url: getPathValue<string>(configuration, 'app_proxy.url')!,
-      prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
-      subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
-    },
-  }
-}
-
-function homeConfiguration(configuration: object) {
-  const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
-  return {
-    name: getPathValue<string>(configuration, 'name')!,
-    application_url: getPathValue<string>(configuration, 'application_url')!,
-    embedded: getPathValue<boolean>(configuration, 'embedded')!,
-    ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
-  }
-}
-
-function posConfiguration(configuration: object) {
-  const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
-  return embedded === undefined
-    ? undefined
-    : {
-        pos: {
-          embedded,
-        },
-      }
-}
-
-function webhooksConfiguration(configuration: object) {
-  return {
-    webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
-  }
-}
-
-function accessConfiguration(configuration: object) {
-  const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
-  const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
-  const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
-  return {
-    ...(scopes || useLegacyInstallFlow ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}} : {}),
-    ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
+    return configuration as CurrentAppConfiguration & SpecsAppConfiguration
   }
 }
 
