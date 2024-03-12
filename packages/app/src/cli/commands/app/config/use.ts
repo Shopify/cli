@@ -40,6 +40,7 @@ export default class ConfigUse extends Command {
     // eslint-disable-next-line @shopify/cli/required-fields-when-loading-app
     const localApp = await loadAppConfiguration({
       directory: flags.path,
+      allowDynamicallySpecifiedConfigs: true,
     })
 
     await use({directory: localApp.directory, configName: args.config, reset: flags.reset})
