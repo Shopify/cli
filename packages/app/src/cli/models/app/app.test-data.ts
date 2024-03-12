@@ -34,6 +34,7 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
+import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -819,6 +820,12 @@ const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
   },
 }
 
+const updateURLsResponse: UpdateURLsSchema = {
+  appUpdate: {
+    userErrors: [],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -853,6 +860,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
+    updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     ...stubs,
   }
 }

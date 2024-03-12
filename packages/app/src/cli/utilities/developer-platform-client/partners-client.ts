@@ -84,6 +84,7 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionMutation,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
+import {UpdateURLsVariables, UpdateURLsSchema, UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -306,5 +307,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async migrateFlowExtension(input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
     return this.makeRequest(MigrateFlowExtensionMutation, input)
+  }
+
+  async updateURLs(input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
+    return this.makeRequest(UpdateURLsQuery, input)
   }
 }
