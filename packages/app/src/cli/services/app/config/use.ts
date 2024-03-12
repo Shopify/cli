@@ -3,7 +3,7 @@ import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -11,7 +11,6 @@ import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface UseOptions {
   directory: string
@@ -19,6 +18,7 @@ export interface UseOptions {
   reset?: boolean
   warningContent?: RenderAlertOptions
   shouldRenderSuccess?: boolean
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export default async function use({
@@ -27,6 +27,7 @@ export default async function use({
   warningContent,
   shouldRenderSuccess = true,
   reset = false,
+  developerPlatformClient = selectDeveloperPlatformClient(),
 }: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
@@ -56,7 +57,7 @@ export default async function use({
     })
   }
 
-  await logMetadata(configuration)
+  await logMetadata(configuration, developerPlatformClient)
 
   return configFileName
 }
@@ -93,9 +94,8 @@ async function getConfigFileName(directory: string, configName?: string): Promis
   return selectConfigFile(directory)
 }
 
-async function logMetadata(configuration: CurrentAppConfiguration) {
-  const token = await ensureAuthenticatedPartners()
-  const app = await fetchAppDetailsFromApiKey(configuration.client_id, token)
+async function logMetadata(configuration: CurrentAppConfiguration, developerPlatformClient: DeveloperPlatformClient) {
+  const app = await developerPlatformClient.appFromId(configuration.client_id)
   if (app) {
     await logMetadataForLoadedContext(app)
   } else {
