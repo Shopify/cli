@@ -40,7 +40,6 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
@@ -203,7 +202,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
           registrationId: mod.gid,
-          registrationUuid: mod.gid,
+          registrationUid: mod.uid,
           registrationTitle: mod.handle,
           type: mod.specification.identifier,
           config: mod.config,
@@ -270,8 +269,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
   return {
     appModules: [
       {
-        uuid: randomUUID(),
-        title: 'home',
+        uid: 'app_home',
         specificationIdentifier: 'app_home',
         config: JSON.stringify({
           app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
@@ -279,20 +277,17 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
         }),
       },
       {
-        uuid: randomUUID(),
-        title: 'branding',
+        uid: 'branding',
         specificationIdentifier: 'branding',
         config: JSON.stringify({name}),
       },
       {
-        uuid: randomUUID(),
-        title: 'webhooks',
+        uid: 'webhooks',
         specificationIdentifier: 'webhooks',
         config: JSON.stringify({api_version: '2024-01'}),
       },
       {
-        uuid: randomUUID(),
-        title: 'app access',
+        uid: 'app_access',
         specificationIdentifier: 'app_access',
         config: JSON.stringify({
           redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
