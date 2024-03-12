@@ -44,6 +44,10 @@ import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -281,6 +285,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
     throw new BugError('Not implemented: topics')
+  }
+
+  async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
+    throw new BugError('Not implemented: migrateFlowExtension')
   }
 }
 

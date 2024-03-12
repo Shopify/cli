@@ -25,6 +25,10 @@ import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/ap
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../services/webhook/request-topics.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../api/graphql/extension_migrate_flow_extension.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -99,4 +103,5 @@ export interface DeveloperPlatformClient {
   sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>
   apiVersions: () => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
+  migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
 }

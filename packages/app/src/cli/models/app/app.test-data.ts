@@ -33,6 +33,10 @@ import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -823,6 +827,13 @@ const sendSampleWebhookResponse: SendSampleWebhookSchema = {
   },
 }
 
+const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
+  migrateFlowExtension: {
+    migratedFlowExtension: true,
+    userErrors: [],
+  },
+}
+
 const apiVersionsResponse: PublicApiVersionsSchema = {
   publicApiVersions: ['2022', 'unstable', '2023'],
 }
@@ -866,6 +877,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
+    migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = {}
