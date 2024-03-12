@@ -42,6 +42,10 @@ import {
 import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -272,6 +276,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
     throw new BugError('Not implemented: appPreviewMode')
+  }
+
+  async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
+    throw new BugError('Not implemented: migrateFlowExtension')
   }
 }
 

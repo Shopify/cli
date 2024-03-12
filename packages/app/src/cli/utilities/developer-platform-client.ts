@@ -22,6 +22,10 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/grap
 import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/app_versions_diff.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../api/graphql/extension_migrate_flow_extension.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -94,4 +98,5 @@ export interface DeveloperPlatformClient {
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
+  migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
 }

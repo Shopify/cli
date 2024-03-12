@@ -1,12 +1,10 @@
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from './migrate-flow-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
-import {MigrateFlowExtensionMutation} from '../../api/graphql/extension_migrate_flow_extension.js'
-import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {describe, expect, vi, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
@@ -117,13 +115,6 @@ describe('getExtensionsToMigrate()', () => {
 })
 
 describe('migrateExtensions()', () => {
-  beforeEach(() => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('mockToken')
-    vi.mocked(partnersRequest).mockResolvedValue({
-      migrateFlowExtension: {userErrors: null, migratedFlowExtension: true},
-    })
-  })
-
   test('performs a graphQL mutation for each extension', async () => {
     // Given
     const extensionsToMigrate = [
@@ -132,17 +123,22 @@ describe('migrateExtensions()', () => {
     ]
     const appId = '123abc'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const {migrateFlowExtension} = developerPlatformClient
+    const migrateFlowExtensionSpy = vi
+      .spyOn(developerPlatformClient, 'migrateFlowExtension')
+      .mockImplementation(migrateFlowExtension)
 
     // When
-    await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions)
+    await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledTimes(extensionsToMigrate.length)
-    expect(partnersRequest).toHaveBeenCalledWith(MigrateFlowExtensionMutation, 'mockToken', {
+    expect(migrateFlowExtensionSpy).toHaveBeenCalledTimes(extensionsToMigrate.length)
+    expect(migrateFlowExtensionSpy).toHaveBeenCalledWith({
       apiKey: appId,
       registrationId: extensionsToMigrate[0]!.remote.id,
     })
-    expect(partnersRequest).toHaveBeenCalledWith(MigrateFlowExtensionMutation, 'mockToken', {
+    expect(migrateFlowExtensionSpy).toHaveBeenCalledWith({
       apiKey: appId,
       registrationId: extensionsToMigrate[1]!.remote.id,
     })
@@ -158,7 +154,7 @@ describe('migrateExtensions()', () => {
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
     // When
-    const result = await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions)
+    const result = await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
 
     // Then
     expect(result).toStrictEqual(remoteExtensions.map((remote) => ({...remote, type: 'FLOW_ACTION'})))

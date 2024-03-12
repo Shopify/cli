@@ -43,6 +43,7 @@ export async function ensureExtensionsIds(
       flowExtensionsToMigrate,
       options.appId,
       dashboardOnlyExtensions,
+      options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }

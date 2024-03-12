@@ -79,6 +79,11 @@ import {
   AppVersionByTagSchema,
   AppVersionByTagVariables,
 } from '../../api/graphql/app_version_by_tag.js'
+import {
+  MigrateFlowExtensionVariables,
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionMutation,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -297,5 +302,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
     return this.makeRequest(FindAppPreviewModeQuery, input)
+  }
+
+  async migrateFlowExtension(input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
+    return this.makeRequest(MigrateFlowExtensionMutation, input)
   }
 }
