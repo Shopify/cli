@@ -33,6 +33,10 @@ import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhoo
 import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -822,6 +826,13 @@ const sendSampleWebhookResponse: SendSampleWebhookSchema = {
   },
 }
 
+const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
+  migrateFlowExtension: {
+    migratedFlowExtension: true,
+    userErrors: [],
+  },
+}
+
 const apiVersionsResponse: PublicApiVersionsSchema = {
   publicApiVersions: ['2022', 'unstable', '2023'],
 }
@@ -865,6 +876,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
+    migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     ...stubs,
   }
 }

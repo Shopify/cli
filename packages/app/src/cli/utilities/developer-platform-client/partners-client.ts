@@ -86,6 +86,11 @@ import {
   AppVersionByTagSchema,
   AppVersionByTagVariables,
 } from '../../api/graphql/app_version_by_tag.js'
+import {
+  MigrateFlowExtensionVariables,
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionMutation,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -317,5 +322,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
     return this.makeRequest(getTopicsQuery, input)
+  }
+
+  async migrateFlowExtension(input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
+    return this.makeRequest(MigrateFlowExtensionMutation, input)
   }
 }
