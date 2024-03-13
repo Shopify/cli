@@ -1,5 +1,5 @@
-import {fileExists, readFile, matchGlob} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
@@ -22,7 +22,7 @@ function filterBy(patterns: string[] | undefined, type: string, invertMatch = fa
   return ({key}: Checksum) => {
     if (!patterns) return true
 
-    const match = patterns.some((pattern) => matchGlob(key, pattern) || key.match(pattern))
+    const match = patterns.some((pattern) => matchGlob(key, pattern) || regexMatch(key, pattern))
     const shouldIgnore = invertMatch ? !match : match
 
     if (shouldIgnore) {
@@ -46,4 +46,29 @@ async function shopifyIgnoredPatterns({root}: ThemeFileSystem) {
     .split(/(\r\n|\r|\n)/)
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'))
+}
+
+function matchGlob(key: string, pattern: string) {
+  const result = originalMatchGlob(key, pattern)
+
+  if (result) return true
+
+  // When the the standard match fails and the pattern includes '/*.', we
+  // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
+  // based on 'File.fnmatch'.
+  if (pattern.includes('/*.')) {
+    outputWarn(`The pattern ${pattern} is unsafe, please use a valid regex or glob.`)
+    return originalMatchGlob(key, pattern.replace('/*.', '/**/*.'))
+  }
+
+  return false
+}
+
+function regexMatch(key: string, pattern: string) {
+  try {
+    return key.match(pattern)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }

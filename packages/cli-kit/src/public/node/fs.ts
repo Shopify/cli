@@ -511,12 +511,17 @@ export async function findPathUp(
   return got ? normalizePath(got) : undefined
 }
 
+export interface MatchGlobOptions {
+  matchBase: boolean
+}
+
 /**
  * Matches a key against a glob pattern.
  * @param key - The key to match.
  * @param pattern - The glob pattern to match against.
- * @returns True if the key matches the pattern, false otherwise.
+ * @param options - The options to refine the matching approach.
+ * @returns true if the key matches the pattern, false otherwise.
  */
-export function matchGlob(key: string, pattern: string): boolean {
-  return minimatch(key, pattern)
+export function matchGlob(key: string, pattern: string, options: MatchGlobOptions = {matchBase: true}): boolean {
+  return minimatch(key, pattern, options)
 }
