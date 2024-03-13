@@ -68,6 +68,17 @@ import {
   FindAppPreviewModeSchema,
   FindAppPreviewModeVariables,
 } from '../../api/graphql/find_app_preview_mode.js'
+import {
+  AppVersionsDiffQuery,
+  AppVersionsDiffSchema,
+  AppVersionsDiffVariables,
+} from '../../api/graphql/app_versions_diff.js'
+import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {
+  AppVersionByTagQuery,
+  AppVersionByTagSchema,
+  AppVersionByTagVariables,
+} from '../../api/graphql/app_version_by_tag.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -222,6 +233,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AppVersionsQuery, variables)
   }
 
+  async appVersionByTag(input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
+    return this.makeRequest(AppVersionByTagQuery, input)
+  }
+
+  async appVersionsDiff(input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
+    return this.makeRequest(AppVersionsDiffQuery, input)
+  }
+
   async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.makeRequest<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
@@ -251,6 +270,10 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async deploy(deployInput: AppDeployVariables): Promise<AppDeploySchema> {
     return this.makeRequest(AppDeploy, deployInput)
+  }
+
+  async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {
+    return this.makeRequest(AppRelease, input)
   }
 
   async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {

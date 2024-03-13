@@ -7,18 +7,15 @@ import {
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
-import {AppRelease} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('../api/graphql/app_release.js')
 vi.mock('./context/breakdown-extensions.js')
 vi.mock('../prompts/deploy-release.js')
@@ -79,15 +76,14 @@ describe('release', () => {
         },
       }
     })
+    const {release} = developerPlatformClient
+    const releaseSpy = vi.spyOn(developerPlatformClient, 'release').mockImplementation(release)
 
     // When
     await testRelease(app, 'app-version')
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'token', {
-      apiKey: APP.apiKey,
-      appVersionId: 1,
-    })
+    expect(releaseSpy).toHaveBeenCalledWith({apiKey: APP.apiKey, appVersionId: 1})
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
         {

@@ -56,17 +56,12 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   }
 }
 
-interface ExtensionsIdentifiersReleaseBreakdown {
-  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
-  versionDetails: Awaited<ReturnType<typeof versionDiffByVersion>>['versionDetails']
-}
-
 export async function extensionsIdentifiersReleaseBreakdown(
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
   version: string,
-): Promise<ExtensionsIdentifiersReleaseBreakdown> {
-  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, token)
+) {
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, developerPlatformClient)
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
