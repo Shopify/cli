@@ -10,7 +10,6 @@ import {
   fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrgFromId,
-  fetchOrganizations,
   filterDisabledBetas,
 } from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
@@ -171,12 +170,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return fetchAppDetailsFromApiKey(appId, await this.token())
   }
 
-  async organizations(): Promise<AllOrganizationsQuerySchema> {
-    return this.makeRequest(AllOrganizationsQuery)
+  async organizations(): Promise<Organization[]> {
+    const result: AllOrganizationsQuerySchema = await this.makeRequest(AllOrganizationsQuery)
+    return result.organizations.nodes
   }
 
   async selectOrg(): Promise<Organization> {
-    const organizations = await fetchOrganizations(this)
+    const organizations = await this.organizations()
     return selectOrganizationPrompt(organizations)
   }
 

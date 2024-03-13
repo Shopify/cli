@@ -42,7 +42,6 @@ import {
 import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
-import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -97,12 +96,8 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appFromId')
   }
 
-  async organizations(): Promise<AllOrganizationsQuerySchema> {
-    return {
-      organizations: {
-        nodes: [ORG1],
-      },
-    }
+  async organizations(): Promise<Organization[]> {
+    return [ORG1]
   }
 
   async selectOrg(): Promise<Organization> {

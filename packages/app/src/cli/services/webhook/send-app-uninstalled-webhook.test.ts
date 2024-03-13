@@ -39,6 +39,11 @@ describe('sendUninstallWebhookToAppServer', () => {
   test('gracefully deals with the webhook delivery failing', async () => {
     vi.mocked(triggerLocalWebhook).mockResolvedValueOnce(false)
     const stdout = {write: vi.fn()} as unknown as Writable
+    const {apiVersions, sendSampleWebhook} = developerPlatformClient
+    const apiVersionsSpy = vi.spyOn(developerPlatformClient, 'apiVersions').mockImplementation(apiVersions)
+    const sendSampleWebhookSpy = vi
+      .spyOn(developerPlatformClient, 'sendSampleWebhook')
+      .mockImplementation(sendSampleWebhook)
 
     const result = await sendUninstallWebhookToAppServer({
       stdout,
@@ -49,7 +54,9 @@ describe('sendUninstallWebhookToAppServer', () => {
     })
 
     expect(result).toBe(false)
-    expect(triggerLocalWebhook).toHaveBeenCalledTimes(1)
+    expect(apiVersionsSpy).toHaveBeenCalledOnce()
+    expect(sendSampleWebhookSpy).toHaveBeenCalledOnce()
+    expect(triggerLocalWebhook).toHaveBeenCalledOnce()
     expect(stdout.write).toHaveBeenNthCalledWith(1, expect.stringMatching(/Sending APP_UNINSTALLED/))
     expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/failed/))
   })
@@ -59,6 +66,12 @@ describe('sendUninstallWebhookToAppServer', () => {
     fakeError.code = 'ECONNREFUSED'
     vi.mocked(triggerLocalWebhook).mockRejectedValueOnce(fakeError).mockResolvedValueOnce(true)
     const stdout = {write: vi.fn()} as unknown as Writable
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const {apiVersions, sendSampleWebhook} = developerPlatformClient
+    const apiVersionsSpy = vi.spyOn(developerPlatformClient, 'apiVersions').mockImplementation(apiVersions)
+    const sendSampleWebhookSpy = vi
+      .spyOn(developerPlatformClient, 'sendSampleWebhook')
+      .mockImplementation(sendSampleWebhook)
 
     const result = await sendUninstallWebhookToAppServer({
       stdout,
@@ -69,6 +82,8 @@ describe('sendUninstallWebhookToAppServer', () => {
     })
 
     expect(result).toBe(true)
+    expect(apiVersionsSpy).toHaveBeenCalledOnce()
+    expect(sendSampleWebhookSpy).toHaveBeenCalledOnce()
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(2)
     expect(stdout.write).toHaveBeenNthCalledWith(1, expect.stringMatching(/Sending APP_UNINSTALLED/))
     expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/retrying/))

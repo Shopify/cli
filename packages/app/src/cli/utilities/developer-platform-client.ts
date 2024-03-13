@@ -75,7 +75,6 @@ export interface DeveloperPlatformClient {
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (appId: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
-  selectOrg: () => Promise<Organization>
   orgFromId: (orgId: string) => Promise<Organization>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>

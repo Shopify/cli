@@ -81,7 +81,7 @@ describe('fetchOrganizations', async () => {
   test('returns fetched organizations', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve({organizations: {nodes: [ORG1, ORG2]}}),
+      organizations: () => Promise.resolve([ORG1, ORG2]),
     })
     const {organizations} = developerPlatformClient
     const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(organizations)
@@ -97,7 +97,7 @@ describe('fetchOrganizations', async () => {
   test('throws if there are no organizations', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve({organizations: {nodes: []}}),
+      organizations: () => Promise.resolve([]),
     })
     const {organizations} = developerPlatformClient
     const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(organizations)
