@@ -250,6 +250,8 @@ const options = async (params: {
   }
 }
 
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+
 let EXTENSION_A: ExtensionInstance
 let EXTENSION_A_2: ExtensionInstance
 let DASH_MIGRATED_EXTENSION_A: ExtensionInstance
@@ -590,7 +592,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, 'apiKey', ' 1.0.0')
 
     // Then
     expect(result).toEqual({
@@ -623,7 +625,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, 'apiKey', ' 1.0.0')
 
     // Then
     expect(result).toEqual({

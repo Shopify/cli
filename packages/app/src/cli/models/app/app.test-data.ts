@@ -30,6 +30,9 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/g
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -693,6 +696,29 @@ const emptyActiveAppVersion: ActiveAppVersion = {
   appModuleVersions: [],
 }
 
+const appVersionByTagResponse: AppVersionByTagSchema = {
+  app: {
+    appVersion: {
+      id: 1,
+      uuid: 'uuid',
+      versionTag: 'version-tag',
+      location: 'location',
+      message: 'MESSAGE',
+      appModuleVersions: [],
+    },
+  },
+}
+
+const appVersionsDiffResponse: AppVersionsDiffSchema = {
+  app: {
+    versionsDiff: {
+      added: [],
+      updated: [],
+      removed: [],
+    },
+  },
+}
+
 const functionUploadUrlResponse = {
   functionUploadUrlGenerate: {
     generatedUrlDetails: {
@@ -739,6 +765,17 @@ const deployResponse: AppDeploySchema = {
       location: 'location',
       message: 'message',
       appModuleVersions: [],
+    },
+    userErrors: [],
+  },
+}
+
+const releaseResponse: AppReleaseSchema = {
+  appRelease: {
+    appVersion: {
+      versionTag: 'version-tag',
+      location: 'location',
+      message: 'message',
     },
     userErrors: [],
   },
@@ -812,10 +849,13 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyActiveAppVersion),
+    appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
+    appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
+    release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
     convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),

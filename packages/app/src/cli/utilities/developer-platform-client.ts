@@ -22,6 +22,9 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/grap
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../services/webhook/request-topics.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
+import {AppVersionByTagSchema, AppVersionByTagVariables} from '../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/app_versions_diff.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -54,7 +57,8 @@ interface AppModuleVersionSpecification {
 
 export interface AppModuleVersion {
   registrationId: string
-  registrationUuid: string
+  registrationUuid?: string
+  registrationUid?: string
   registrationTitle: string
   config?: object
   type: string
@@ -81,11 +85,14 @@ export interface DeveloperPlatformClient {
   appExtensionRegistrations: (appId: string) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (app: MinimalOrganizationApp) => Promise<ActiveAppVersion>
+  appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
+  appVersionsDiff: (input: AppVersionsDiffVariables) => Promise<AppVersionsDiffSchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployVariables) => Promise<AppDeploySchema>
+  release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
