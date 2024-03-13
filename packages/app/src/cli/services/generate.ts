@@ -38,8 +38,6 @@ export interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
   const apiKey = await ensureGenerateContext({...options, developerPlatformClient})
   const specifications = await developerPlatformClient.specifications(apiKey)
   const app: AppInterface = await loadApp({
@@ -48,7 +46,7 @@ async function generate(options: GenerateOptions) {
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
+  const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, apiKey, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)

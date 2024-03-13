@@ -867,6 +867,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_appId: string) => Promise.resolve([]),
+    templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
