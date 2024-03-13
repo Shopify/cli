@@ -1,5 +1,5 @@
 import {getCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface PartnersSession {
@@ -33,16 +33,6 @@ export function isServiceAccount(account: AccountInfo): account is ServiceAccoun
 
 export function isUnknownAccount(account: AccountInfo): account is UnknownAccountInfo {
   return account.type === 'UnknownAccount'
-}
-
-export async function fetchPartnersSession(): Promise<PartnersSession> {
-  const developerPlatformClient = selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
-  return {
-    token,
-    accountInfo: await fetchCurrentAccountInformation(developerPlatformClient),
-  }
 }
 
 export async function fetchCurrentAccountInformation(

@@ -1,13 +1,11 @@
 import {InfoOptions, info} from './info.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
-import * as accountInfo from './context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
-  testPartnersUserSession,
   testApp,
   testOrganizationApp,
   testUIExtension,
@@ -15,7 +13,7 @@ import {
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {describe, expect, vi, test, beforeEach} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
@@ -80,10 +78,6 @@ function infoOptions(): InfoOptions {
     developerPlatformClient: buildDeveloperPlatformClient(),
   }
 }
-
-beforeEach(() => {
-  vi.spyOn(accountInfo, 'fetchPartnersSession').mockResolvedValue(testPartnersUserSession)
-})
 
 describe('info', () => {
   test('returns update shopify cli reminder when last version is greater than current version', async () => {
