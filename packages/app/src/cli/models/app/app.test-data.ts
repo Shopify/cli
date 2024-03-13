@@ -873,10 +873,11 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub = {
+    supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
+    appFromId: (_app: MinimalOrganizationApp) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
@@ -888,7 +889,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
-    appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
+    appExtensionRegistrations: (_app: MinimalOrganizationApp) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
@@ -918,7 +919,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const retVal: Partial<DeveloperPlatformClient> = {}
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
-      retVal[key as keyof DeveloperPlatformClient] = vi.fn().mockImplementation(value)
+      retVal[key as keyof Omit<DeveloperPlatformClient, 'supportsAtomicDeployments'>] = vi.fn().mockImplementation(value)
     }
   }
   return retVal as DeveloperPlatformClient

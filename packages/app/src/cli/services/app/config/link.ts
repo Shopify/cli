@@ -118,7 +118,13 @@ async function loadRemoteApp(
   if (!apiKey) {
     return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
   }
-  const app = await developerPlatformClient.appFromId(apiKey)
+  const app = await developerPlatformClient.appFromId({
+    id: apiKey,
+    title: localApp.name,
+    // Partners doesn't need this, and for now we can stub org 1 in Shopify Developers
+    organizationId: '1',
+    apiKey,
+  })
   if (!app) {
     const errorMessage = InvalidApiKeyErrorMessage(apiKey)
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)

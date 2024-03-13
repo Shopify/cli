@@ -165,18 +165,29 @@ async function createExtensions(
   output = true,
 ) {
   const result: {[localIdentifier: string]: RemoteSource} = {}
+  let counter = 0
   for (const extension of extensions) {
-    // Create one at a time to avoid API rate limiting issues.
-    // eslint-disable-next-line no-await-in-loop
-    const registration = await createExtension(
-      appId,
-      extension.graphQLType,
-      extension.handle,
-      developerPlatformClient,
-      extension.contextValue,
-    )
-    if (output) outputCompleted(`Created extension ${extension.handle}.`)
-    result[extension.localIdentifier] = registration
+    counter++
+    if (developerPlatformClient.supportsAtomicDeployments) {
+      result[extension.localIdentifier] = {
+        id: `${extension.localIdentifier}-${counter}`,
+        uuid: `${extension.localIdentifier}-${counter}`,
+        type: extension.type,
+        title: extension.handle,
+      }
+    } else {
+      // Create one at a time to avoid API rate limiting issues.
+      // eslint-disable-next-line no-await-in-loop
+      const registration = await createExtension(
+        appId,
+        extension.graphQLType,
+        extension.handle,
+        developerPlatformClient,
+        extension.contextValue,
+      )
+      if (output) outputCompleted(`Created extension ${extension.handle}.`)
+      result[extension.localIdentifier] = registration
+    }
   }
   return result
 }

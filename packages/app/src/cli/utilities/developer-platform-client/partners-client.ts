@@ -161,6 +161,7 @@ function getAppVars(
 
 export class PartnersClient implements DeveloperPlatformClient {
   private _session: PartnersSession | undefined
+  public supportsAtomicDeployments = false
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -203,8 +204,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appId: string): Promise<OrganizationApp | undefined> {
-    return fetchAppDetailsFromApiKey(appId, await this.token())
+  async appFromId({apiKey}: MinimalOrganizationApp): Promise<OrganizationApp | undefined> {
+    return fetchAppDetailsFromApiKey(apiKey, await this.token())
   }
 
   async organizations(): Promise<Organization[]> {
@@ -273,7 +274,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return result.organizations.nodes[0]!.stores.nodes
   }
 
-  async appExtensionRegistrations(apiKey: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations({apiKey}: MinimalOrganizationApp): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
   }

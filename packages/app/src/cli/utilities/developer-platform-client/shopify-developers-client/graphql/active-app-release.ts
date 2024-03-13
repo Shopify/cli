@@ -3,6 +3,7 @@ import {gql} from 'graphql-request'
 export const ActiveAppReleaseQuery = gql`
   query activeAppRelease($appId: ID!) {
     app(id: $appId) {
+      id
       activeRelease {
         id
         version {
@@ -13,6 +14,7 @@ export const ActiveAppReleaseQuery = gql`
             config
             specification {
               identifier
+              externalIdentifier
               name
               experience
             }
@@ -38,12 +40,15 @@ export interface AppModule {
   gid: string
   uid: string
   handle: string
-  config: object
+  config: {
+    [key: string]: string | number | boolean | string[]
+  }
   specification: AppModuleSpecification
 }
 
 export interface ActiveAppReleaseQuerySchema {
   app: {
+    id: string
     activeRelease: {
       id: string
       version: {

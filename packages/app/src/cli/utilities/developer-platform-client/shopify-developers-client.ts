@@ -56,6 +56,9 @@ import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partn
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
+import {CreateAppVersionMutation, CreateAppVersionMutationSchema, CreateAppVersionMutationVariables} from './shopify-developers-client/graphql/create-app-version.js'
+import {underscore} from '@shopify/cli-kit/common/string'
+import {ReleaseVersionMutation, ReleaseVersionMutationSchema, ReleaseVersionMutationVariables} from './shopify-developers-client/graphql/release-version.js'
 
 const ORG1 = {
   id: '1',
@@ -64,6 +67,7 @@ const ORG1 = {
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   private _session: PartnersSession | undefined
+  public supportsAtomicDeployments = true
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -98,8 +102,31 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(_appId: string): Promise<OrganizationApp | undefined> {
-    throw new BugError('Not implemented: appFromId')
+  async appFromId(appIdentifiers: MinimalOrganizationApp): Promise<OrganizationApp | undefined> {
+    const {app} = await this.fetchApp(appIdentifiers)
+    const {modules} = app.activeRelease.version
+    const brandingModule = modules.find((mod) => mod.specification.identifier === 'branding')!
+    const appAccessModule = modules.find((mod) => mod.specification.identifier === 'app_access')!
+    return {
+      id: app.id,
+      title: brandingModule.config.name as string,
+      apiKey: app.id,
+      organizationId: appIdentifiers.organizationId,
+      apiSecretKeys: [],
+      grantedScopes: appAccessModule.config.scopes as string[],
+      betas: [],
+    }
+  }
+
+  private async fetchApp({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppReleaseQuerySchema> {
+    const query = ActiveAppReleaseQuery
+    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
   }
 
   async organizations(): Promise<Organization[]> {
@@ -197,8 +224,21 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return []
   }
 
-  async appExtensionRegistrations(_appId: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    throw new BugError('Not implemented: appExtensionRegistrations')
+  async appExtensionRegistrations(appIdentifiers: MinimalOrganizationApp): Promise<AllAppExtensionRegistrationsQuerySchema> {
+    const {app} = await this.fetchApp(appIdentifiers)
+    const {modules} = app.activeRelease.version
+    return {
+      app: {
+        extensionRegistrations: [],
+        dashboardManagedExtensionRegistrations: [],
+        configurationRegistrations: modules.filter((mod) => mod.specification.experience === 'CONFIGURATION').map((mod) => ({
+          id: mod.uid,
+          uuid: mod.uid,
+          title: mod.specification.name,
+          type: mod.specification.identifier,
+        })),
+      }
+    }
   }
 
   async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
@@ -253,8 +293,54 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: updateExtension')
   }
 
-  async deploy(_input: AppDeployVariables): Promise<AppDeploySchema> {
-    throw new BugError('Not implemented: deploy')
+  async deploy({apiKey, appModules, versionTag}: AppDeployVariables): Promise<AppDeploySchema> {
+    const variables: CreateAppVersionMutationVariables = {
+      appId: apiKey,
+      appModules: (appModules ?? []).map((mod) => {
+        return {
+          uid: underscore(mod.handle),
+          specificationIdentifier: mod.specificationIdentifier ?? underscore(mod.handle),
+          handle: mod.handle,
+          config: mod.config,
+        }
+      }),
+      versionTag,
+    }
+
+    const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>('1', CreateAppVersionMutation, await this.token(), variables)
+    const {version, userErrors} = result.versionCreate
+    if (!version) return {appDeploy: {userErrors}} as any as AppDeploySchema
+
+    const versionResult = {
+      appDeploy: {
+        appVersion: {
+          uuid: version.id,
+          // Need to deal with ID properly as it's expected to be a number... how do we use it?
+          id: parseInt(version.id, 10),
+          versionTag: version.versionTag,
+          location: 'location',
+          appModuleVersions: version.modules.map((mod) => {
+            return {
+              uuid: mod.uid,
+              registrationUuid: mod.uid,
+              validationErrors: [],
+            }
+          }),
+          message: 'Success!'
+        },
+        userErrors: userErrors?.map(err => ({...err, category: 'deploy', details: []})),
+      }
+    }
+
+    const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
+    const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>('1', ReleaseVersionMutation, await this.token(), releaseVariables)
+    if (releaseResult.versionRelease?.userErrors) {
+      versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
+        releaseResult.versionRelease.userErrors.map(err => ({...err, category: 'release', details: []}))
+      )
+    }
+
+    return versionResult
   }
 
   async release(_input: AppReleaseVariables): Promise<AppReleaseSchema> {

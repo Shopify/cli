@@ -249,7 +249,12 @@ export async function ensureDevContext(
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
 const appFromId = async (appId: string, developerPlatformClient: DeveloperPlatformClient): Promise<OrganizationApp> => {
-  const app = await developerPlatformClient.appFromId(appId)
+  const app = await developerPlatformClient.appFromId({
+    id: appId,
+    apiKey: appId,
+    title: '',
+    organizationId: '1',
+  })
   if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
   return app
 }
@@ -303,7 +308,7 @@ interface ReleaseContextOutput {
 
 interface DeployContextOutput {
   app: AppInterface
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>
   identifiers: Identifiers
   release: boolean
 }
@@ -338,7 +343,12 @@ export async function ensureThemeExtensionDevContext(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<ExtensionRegistration> {
-  const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations(apiKey)
+  const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations({
+    id: apiKey,
+    apiKey,
+    title: '',
+    organizationId: '1',
+  })
   const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
     return extension.type === 'THEME_APP_EXTENSION'
   })
@@ -411,6 +421,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     app: options.app,
     remoteApp: {
       id: remoteApp.id,
+      apiKey: remoteApp.apiKey,
       title: remoteApp.title,
       appType: remoteApp.appType,
       organizationId: remoteApp.organizationId,

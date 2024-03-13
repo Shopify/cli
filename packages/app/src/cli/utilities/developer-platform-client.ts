@@ -83,10 +83,11 @@ export interface ActiveAppVersion {
 }
 
 export interface DeveloperPlatformClient {
+  supportsAtomicDeployments: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (appId: string) => Promise<OrganizationApp | undefined>
+  appFromId: (app: MinimalOrganizationApp) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
@@ -96,7 +97,7 @@ export interface DeveloperPlatformClient {
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
-  appExtensionRegistrations: (appId: string) => Promise<AllAppExtensionRegistrationsQuerySchema>
+  appExtensionRegistrations: (app: MinimalOrganizationApp) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (app: MinimalOrganizationApp) => Promise<ActiveAppVersion>
   appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
