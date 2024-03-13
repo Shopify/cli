@@ -63,7 +63,6 @@ export interface DevOptions {
 export async function dev(commandOptions: DevOptions) {
   console.log('HELLLLO DEV')
   const config = await prepareForDev(commandOptions)
-  console.log('config', config)
   // this has info on the remoteApp, localApp, storeId, 'real extensions,
 
   await actionsBeforeSettingUpDevProcesses(config)
@@ -301,8 +300,6 @@ async function launchDevProcesses({
     apiKey,
     token,
   }
-
-  console.log('localApp', config.localApp)
 
   return renderDev({
     processes: processesForTaskRunner,

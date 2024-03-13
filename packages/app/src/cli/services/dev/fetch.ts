@@ -176,11 +176,13 @@ export async function fetchAppPreviewMode(apiKey: string, token: string): Promis
 
 export async function fetchFunctionLogs(functionId: string, apiKey: string, token: string): Promise<unknown> {
   // const query = FindAppFunctionLogsQuerySchema
-  console.log('making partners request')
-  const result: FindAppFunctionLogsQuerySchema = await partnersRequest(FindAppFunctionLogs, token, {
-    functionId,
-  })
-  return result.app.functionLogs
+  try {
+    const result: FindAppFunctionLogsQuerySchema = await partnersRequest(FindAppFunctionLogs, token)
+    console.log(`result: ${result}`)
+    return result.appEvents
+  } catch (e) {
+    console.log(`error: ${e}`)
+  }
 }
 
 export async function fetchOrgFromId(id: string, partnersSession: PartnersSession): Promise<Organization> {
