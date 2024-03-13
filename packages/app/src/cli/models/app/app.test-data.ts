@@ -38,6 +38,7 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -849,6 +850,14 @@ const updateURLsResponse: UpdateURLsSchema = {
   },
 }
 
+const currentAccountInfoResponse: CurrentAccountInfoSchema = {
+  currentAccountInfo: {
+    __typename: 'UserAccount',
+    email: 'user@example.com',
+    orgName: 'org1',
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub = {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -886,6 +895,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
+    currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = {}
