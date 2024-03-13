@@ -4,7 +4,7 @@ export interface PublicApiVersionsSchema {
   publicApiVersions: string[]
 }
 
-export const getApiVersionsQuery = `
+export const GetApiVersionsQuery = `
   query getApiVersions {
     publicApiVersions
   }
