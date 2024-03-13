@@ -27,7 +27,6 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
-import {AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -775,11 +774,7 @@ const appPreviewModeResponse: FindAppPreviewModeSchema = {
   },
 }
 
-const organizationsResponse: AllOrganizationsQuerySchema = {
-  organizations: {
-    nodes: [testOrganization()],
-  },
-}
+const organizationsResponse: Organization[] = [testOrganization()]
 
 const sendSampleWebhookResponse: SendSampleWebhookSchema = {
   sendSampleWebhook: {
@@ -807,7 +802,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    selectOrg: () => Promise.resolve(testOrganization()),
     specifications: (_appId: string) => Promise.resolve([]),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),

@@ -157,7 +157,7 @@ export async function ensureDevContext(
     promptLinkingApp: !options.apiKey,
   })
 
-  const orgId = getOrganization() || cachedInfo?.orgId || (await developerPlatformClient.selectOrg()).id
+  const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(developerPlatformClient))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
   const organization = await developerPlatformClient.orgFromId(orgId)

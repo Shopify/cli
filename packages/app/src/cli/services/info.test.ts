@@ -49,7 +49,7 @@ const developerPlatformClient = testDeveloperPlatformClient({
   },
 
   async organizations() {
-    return {organizations: {nodes: [ORG1]}}
+    return [ORG1]
   },
 
   async appsForOrg(organizationId: string, _term?: string) {

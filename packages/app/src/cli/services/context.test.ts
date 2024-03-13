@@ -747,8 +747,6 @@ api_version = "2023-04"
 
     // When
     const developerPlatformClient = buildDeveloperPlatformClient()
-    const {selectOrg} = developerPlatformClient
-    const selectOrgSpy = vi.spyOn(developerPlatformClient, 'selectOrg').mockImplementation(selectOrg)
     const got = await ensureDevContext(INPUT, developerPlatformClient)
 
     // Then
@@ -759,7 +757,7 @@ api_version = "2023-04"
       remoteAppUpdated: false,
       updateURLs: undefined,
     })
-    expect(selectOrgSpy).not.toBeCalled()
+    expect(fetchOrganizations).not.toHaveBeenCalled()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
@@ -800,8 +798,6 @@ api_version = "2023-04"
 
     // When
     const developerPlatformClient = buildDeveloperPlatformClient()
-    const {selectOrg} = developerPlatformClient
-    const selectOrgSpy = vi.spyOn(developerPlatformClient, 'selectOrg').mockImplementation(selectOrg)
     const got = await ensureDevContext(
       {
         ...INPUT_WITH_DATA,
@@ -825,7 +821,7 @@ api_version = "2023-04"
       orgId: ORG1.id,
       title: APP2.title,
     })
-    expect(selectOrgSpy).toBeCalled()
+    expect(fetchOrganizations).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
     expect(fetchOrgAndApps).not.toBeCalled()
@@ -1634,12 +1630,7 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     const extras: Partial<DeveloperPlatformClient> = {
-      organizations: () =>
-        Promise.resolve({
-          organizations: {
-            nodes: [ORG1],
-          },
-        }),
+      organizations: () => Promise.resolve([ORG1]),
       async orgAndApps(_orgId: string) {
         return {
           organization: ORG1,
