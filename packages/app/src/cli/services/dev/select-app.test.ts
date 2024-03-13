@@ -2,18 +2,10 @@ import {selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {
-  testPartnersUserSession,
-  testApp,
-  testOrganizationApp,
-  testDeveloperPlatformClient,
-} from '../../models/app/app.test-data.js'
-import {fetchPartnersSession} from '../context/partner-account-info.js'
-import {beforeEach, describe, expect, vi, test} from 'vitest'
+import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev')
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('../context/partner-account-info.js')
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
@@ -59,10 +51,6 @@ function mockDeveloperPlatformClient() {
   const createAppSpy = vi.spyOn(developerPlatformClient, 'createApp').mockImplementation(createAppFunction)
   return {developerPlatformClient, createAppSpy}
 }
-
-beforeEach(() => {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-})
 
 describe('selectOrCreateApp', () => {
   test('prompts user to select', async () => {

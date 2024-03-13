@@ -1,7 +1,6 @@
 import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
 import {generateExtensionTemplate} from './generate/extension.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
 import {loadApp} from '../models/app/loader.js'
 import {
   testAppWithConfig,
@@ -10,7 +9,6 @@ import {
   testLocalExtensionTemplates,
   testRemoteExtensionTemplates,
   testThemeExtensions,
-  testPartnersUserSession,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
@@ -18,7 +16,6 @@ import {loadLocalExtensionsSpecifications} from '../models/extensions/load-speci
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {describe, expect, vi, afterEach, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -38,9 +35,7 @@ vi.mock('../models/app/loader.js')
 vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('./local-storage.js')
-vi.mock('./context/partner-account-info.js')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -173,8 +168,6 @@ describe('generate', () => {
 })
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-
   const appRoot = '/'
   const app = testAppWithConfig({
     app: {
@@ -189,7 +182,6 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteExtensionTemplates})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
