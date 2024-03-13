@@ -1,15 +1,15 @@
 import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './context.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {
-  testPartnersUserSession,
   testApp,
   testFunctionExtension,
   testOrganizationApp,
+  testDeveloperPlatformClient,
 } from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
 import {TargetSchemaDefinitionQuery} from '../api/graphql/functions/target_schema_definition.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
@@ -22,7 +22,6 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/context/local')
 
 vi.mock('../../../models/app/loader.ts')
-vi.mock('./context/partner-account-info.js')
 
 vi.mock('../models/app/identifiers.js', async () => {
   const identifiers: any = await vi.importActual('../models/app/identifiers.js')
@@ -38,13 +37,13 @@ vi.mock('./context.js', async () => {
     fetchOrCreateOrganizationApp: vi.fn(),
   }
 })
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('generateSchemaService', () => {
   const token = 'token'
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
 
   beforeEach(() => {
-    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 
@@ -63,6 +62,7 @@ describe('generateSchemaService', () => {
         apiKey,
         path,
         stdout: false,
+        developerPlatformClient,
       })
 
       // Then
@@ -89,6 +89,7 @@ describe('generateSchemaService', () => {
         apiKey,
         path,
         stdout,
+        developerPlatformClient,
       })
 
       // Then
@@ -128,6 +129,7 @@ describe('generateSchemaService', () => {
           apiKey,
           path,
           stdout: false,
+          developerPlatformClient,
         })
 
         // Then
@@ -176,6 +178,7 @@ describe('generateSchemaService', () => {
           apiKey,
           path,
           stdout: false,
+          developerPlatformClient,
         })
 
         // Then
@@ -202,6 +205,7 @@ describe('generateSchemaService', () => {
       apiKey,
       path: '',
       stdout: true,
+      developerPlatformClient,
     })
 
     // Then
@@ -244,6 +248,7 @@ describe('generateSchemaService', () => {
         apiKey,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       // Then
@@ -269,6 +274,7 @@ describe('generateSchemaService', () => {
         extension,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       // Then
@@ -295,6 +301,7 @@ describe('generateSchemaService', () => {
         extension,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       // Then
@@ -318,6 +325,7 @@ describe('generateSchemaService', () => {
         extension,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       await expect(result).rejects.toThrow()

@@ -5,7 +5,7 @@ import {
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
-import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
@@ -92,6 +92,7 @@ import {
   MigrateFlowExtensionMutation,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsVariables, UpdateURLsSchema, UpdateURLsQuery} from '../../api/graphql/update_urls.js'
+import {CurrentAccountInfoQuery, CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -146,7 +147,11 @@ export class PartnersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
-      this._session = await fetchPartnersSession()
+      const token = await ensureAuthenticatedPartners()
+      this._session = {
+        token,
+        accountInfo: await fetchCurrentAccountInformation(this),
+      }
     }
     return this._session
   }
@@ -331,5 +336,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async updateURLs(input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
     return this.makeRequest(UpdateURLsQuery, input)
+  }
+
+  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
+    return this.makeRequest(CurrentAccountInfoQuery)
   }
 }

@@ -1,5 +1,5 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
-import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {
@@ -27,11 +27,12 @@ interface GenerateSchemaOptions {
   apiKey?: string
   stdout: boolean
   path: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
-  const developerPlatformClient = selectDeveloperPlatformClient()
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   const token = (await developerPlatformClient.session()).token
   const {api_version: version, type, targeting} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app

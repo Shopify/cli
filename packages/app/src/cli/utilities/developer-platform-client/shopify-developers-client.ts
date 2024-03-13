@@ -50,6 +50,7 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -300,6 +301,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
     throw new BugError('Not implemented: updateURLs')
+  }
+
+  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
+    throw new BugError('Not implemented: currentAccountInfo')
   }
 }
 
