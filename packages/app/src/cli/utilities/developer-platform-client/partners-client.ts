@@ -74,7 +74,7 @@ import {
   SendSampleWebhookVariables,
   sendSampleWebhookMutation,
 } from '../../services/webhook/request-sample.js'
-import {PublicApiVersionsSchema, getApiVersionsQuery} from '../../services/webhook/request-api-versions.js'
+import {PublicApiVersionsSchema, GetApiVersionsQuery} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables, getTopicsQuery} from '../../services/webhook/request-topics.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -289,7 +289,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    return this.makeRequest(getApiVersionsQuery)
+    return this.makeRequest(GetApiVersionsQuery)
   }
 
   async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
