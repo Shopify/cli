@@ -187,7 +187,6 @@ export async function updateURLs(
 ): Promise<void> {
   const variables: UpdateURLsVariables = {apiKey, ...urls}
   const result: UpdateURLsSchema = await developerPlatformClient.updateURLs(variables)
-  console.log(result)
   if (result.appUpdate.userErrors.length > 0) {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
