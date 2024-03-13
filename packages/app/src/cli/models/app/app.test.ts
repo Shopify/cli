@@ -282,54 +282,6 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
   })
 })
 
-describe('buildSpecsAppConfiguration', () => {
-  test('simplifies the webhook subscriptions', () => {
-    // Given
-    const appConfig = {
-      webhooks: {
-        api_version: '2024-01',
-        subscriptions: [
-          {
-            topics: ['products/create'],
-            uri: 'https://example.com/webhooks',
-          },
-          {
-            compliance_topics: ['customers/redact'],
-            uri: 'https://example.com/webhooks',
-          },
-          {
-            compliance_topics: ['customers/data_request'],
-            uri: 'https://example.com/webhooks',
-          },
-          {
-            topics: ['metaobjects/create'],
-            sub_topic: 'subtopic',
-            uri: 'https://example.com/webhooks',
-          },
-        ],
-      },
-    }
-    const expected = {
-      webhooks: {
-        api_version: '2024-01',
-        subscriptions: [
-          {
-            topics: ['products/create'],
-            compliance_topics: ['customers/redact', 'customers/data_request'],
-            uri: 'https://example.com/webhooks',
-          },
-          {
-            topics: ['metaobjects/create'],
-            sub_topic: 'subtopic',
-            uri: 'https://example.com/webhooks',
-          },
-        ],
-      },
-    }
-    expect(buildSpecsAppConfiguration(appConfig)).toEqual(expected)
-  })
-})
-
 function createPackageJson(tmpDir: string, type: string, version: string) {
   const packagePath = joinPath(tmpDir, 'node_modules', '@shopify', type, 'package.json')
   const packageJson = {name: 'name', version}
