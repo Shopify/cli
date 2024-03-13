@@ -31,7 +31,7 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
   if (uniq(complianceTopics).length !== complianceTopics.length) {
     return {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the same compliance topic',
+      message: 'You can’t have multiple subscriptions with the same compliance topic',
       fatal: true,
       path: ['subscriptions'],
     }
