@@ -24,7 +24,7 @@ describe('fetchCurrentAccountInformation', () => {
     expect(got).toEqual(userAccountInfo)
   })
 
-  test('when error fetching account info returns unkonwn partner info', async () => {
+  test('returns unkonwn partner info when fetching account info raises an error', async () => {
     // Given
     vi.mocked(getCurrentAccountInfo).mockRejectedValue(new AbortError('Error'))
 
