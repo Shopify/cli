@@ -92,6 +92,12 @@ import {
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsVariables, UpdateURLsSchema, UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoQuery, CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {
+  RemoteTemplateSpecificationsQuery,
+  RemoteTemplateSpecificationsSchema,
+  RemoteTemplateSpecificationsVariables,
+} from '../../api/graphql/template_specifications.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -208,6 +214,15 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async specifications(appId: string): Promise<ExtensionSpecification[]> {
     return fetchSpecifications({token: await this.token(), apiKey: appId})
+  }
+
+  async templateSpecifications(appId: string): Promise<ExtensionTemplate[]> {
+    const variables: RemoteTemplateSpecificationsVariables = {apiKey: appId}
+    const result: RemoteTemplateSpecificationsSchema = await this.makeRequest(
+      RemoteTemplateSpecificationsQuery,
+      variables,
+    )
+    return result.templateSpecifications
   }
 
   async createApp(

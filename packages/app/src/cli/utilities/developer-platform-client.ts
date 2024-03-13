@@ -31,6 +31,7 @@ import {
 } from '../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../api/graphql/current_account_info.js'
+import {ExtensionTemplate} from '../models/app/template.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -85,6 +86,7 @@ export interface DeveloperPlatformClient {
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (appId: string) => Promise<ExtensionSpecification[]>
+  templateSpecifications: (appId: string) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
