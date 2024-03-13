@@ -22,7 +22,6 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/grap
 import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/app_versions_diff.js'
-import {AllOrganizationsQuerySchema} from '../api/graphql/all_orgs.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../services/webhook/request-topics.js'
@@ -75,8 +74,7 @@ export interface DeveloperPlatformClient {
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (appId: string) => Promise<OrganizationApp | undefined>
-  organizations: () => Promise<AllOrganizationsQuerySchema>
-  selectOrg: () => Promise<Organization>
+  organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
