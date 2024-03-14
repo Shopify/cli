@@ -15,7 +15,6 @@ export async function fetchAppFromConfigOrSelect(
     organizationApp = await developerPlatformClient.appFromId({
       id: apiKey,
       apiKey,
-      title: app.configuration.name,
       organizationId: '1',
     })
     if (!organizationApp) {

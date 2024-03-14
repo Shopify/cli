@@ -59,7 +59,6 @@ export async function canEnablePreviewMode({
   const {dashboardManagedExtensionRegistrations} = (await developerPlatformClient.appExtensionRegistrations({
     id: apiKey,
     apiKey,
-    title: '',
     organizationId: '1',
   })).app
   if (dashboardManagedExtensionRegistrations.length > 0) return true

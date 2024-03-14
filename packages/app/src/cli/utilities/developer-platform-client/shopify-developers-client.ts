@@ -13,7 +13,7 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   GenerateSignedUploadUrlSchema,
@@ -102,7 +102,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appIdentifiers: MinimalOrganizationApp): Promise<OrganizationApp | undefined> {
+  async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
     const brandingModule = modules.find((mod) => mod.specification.identifier === 'branding')!
@@ -118,7 +118,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  private async fetchApp({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppReleaseQuerySchema> {
+  private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
     return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
@@ -224,7 +224,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return []
   }
 
-  async appExtensionRegistrations(appIdentifiers: MinimalOrganizationApp): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations(appIdentifiers: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
     return {
@@ -253,7 +253,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appVersions')
   }
 
-  async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
+  async activeAppVersion({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
     const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(

@@ -1,7 +1,7 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
 import {ShopifyDevelopersClient} from './developer-platform-client/shopify-developers-client.js'
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
@@ -87,7 +87,7 @@ export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (app: MinimalOrganizationApp) => Promise<OrganizationApp | undefined>
+  appFromId: (app: MinimalAppIdentifiers) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
@@ -97,9 +97,9 @@ export interface DeveloperPlatformClient {
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
-  appExtensionRegistrations: (app: MinimalOrganizationApp) => Promise<AllAppExtensionRegistrationsQuerySchema>
+  appExtensionRegistrations: (app: MinimalAppIdentifiers) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
-  activeAppVersion: (app: MinimalOrganizationApp) => Promise<ActiveAppVersion>
+  activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion>
   appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
   appVersionsDiff: (input: AppVersionsDiffVariables) => Promise<AppVersionsDiffSchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>

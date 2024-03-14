@@ -252,7 +252,6 @@ const appFromId = async (appId: string, developerPlatformClient: DeveloperPlatfo
   const app = await developerPlatformClient.appFromId({
     id: appId,
     apiKey: appId,
-    title: '',
     organizationId: '1',
   })
   if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
@@ -346,7 +345,6 @@ export async function ensureThemeExtensionDevContext(
   const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations({
     id: apiKey,
     apiKey,
-    title: '',
     organizationId: '1',
   })
   const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {

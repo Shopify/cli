@@ -120,7 +120,6 @@ async function loadRemoteApp(
   }
   const app = await developerPlatformClient.appFromId({
     id: apiKey,
-    title: localApp.name,
     // Partners doesn't need this, and for now we can stub org 1 in Shopify Developers
     organizationId: '1',
     apiKey,

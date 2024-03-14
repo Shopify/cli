@@ -7,7 +7,7 @@ import {
 import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQueryVariables,
@@ -204,7 +204,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId({apiKey}: MinimalOrganizationApp): Promise<OrganizationApp | undefined> {
+  async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     return fetchAppDetailsFromApiKey(apiKey, await this.token())
   }
 
@@ -274,7 +274,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return result.organizations.nodes[0]!.stores.nodes
   }
 
-  async appExtensionRegistrations({apiKey}: MinimalOrganizationApp): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations({apiKey}: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
   }
@@ -292,7 +292,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsDiffQuery, input)
   }
 
-  async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
+  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
