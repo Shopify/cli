@@ -11,6 +11,7 @@ export default class Catalog extends Command {
   static hidden = true
 
   async run(): Promise<void> {
+    console.log('test')
     const commands = this.config.commands
 
     // Remove all files and recreate the folder. To make sure we don't leave any orphaned files.
