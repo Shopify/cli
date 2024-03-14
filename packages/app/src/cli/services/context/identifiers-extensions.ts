@@ -140,7 +140,9 @@ async function ensureNonUuidManagedExtensionsIds(
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}
   localExtensionRegistrations.forEach((local) => {
-    const possibleMatch = remoteConfigurationRegistrations.find((remote) => remote.type === local.graphQLType)
+    const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
+      return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
+    })
     if (possibleMatch) {
       validMatches[local.localIdentifier] = possibleMatch.uuid
       validMatchesById[local.localIdentifier] = possibleMatch.id
@@ -169,6 +171,8 @@ async function createExtensions(
   for (const extension of extensions) {
     counter++
     if (developerPlatformClient.supportsAtomicDeployments) {
+      // Just pretend to create the extension, as it's not necessary to do anything
+      // in this case.
       result[extension.localIdentifier] = {
         id: `${extension.localIdentifier}-${counter}`,
         uuid: `${extension.localIdentifier}-${counter}`,

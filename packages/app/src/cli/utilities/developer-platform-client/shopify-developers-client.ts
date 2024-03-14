@@ -298,7 +298,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       appId: apiKey,
       appModules: (appModules ?? []).map((mod) => {
         return {
-          uid: underscore(mod.handle),
+          uid: mod.uuid ?? mod.handle,
           specificationIdentifier: mod.specificationIdentifier ?? underscore(mod.handle),
           handle: mod.handle,
           config: mod.config,
@@ -403,6 +403,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
     throw new BugError('Not implemented: migrateToUiExtension')
+  }
+
+  toExtensionGraphQLType(input: string) {
+    return input.toLowerCase()
   }
 }
 

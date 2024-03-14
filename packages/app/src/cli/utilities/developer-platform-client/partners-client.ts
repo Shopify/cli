@@ -387,4 +387,8 @@ export class PartnersClient implements DeveloperPlatformClient {
   async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
     return this.request(MigrateToUiExtensionQuery, input)
   }
+
+  toExtensionGraphQLType(input: string) {
+    return input.toUpperCase()
+  }
 }

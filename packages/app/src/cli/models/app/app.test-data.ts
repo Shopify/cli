@@ -914,6 +914,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
     apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
+    toExtensionGraphQLType: (input: string) => input,
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = {}

@@ -120,4 +120,5 @@ export interface DeveloperPlatformClient {
   targetSchemaDefinition: (input: TargetSchemaDefinitionQueryVariables) => Promise<string | null>
   apiSchemaDefinition: (input: ApiSchemaDefinitionQueryVariables) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
+  toExtensionGraphQLType: (input: string) => string
 }
