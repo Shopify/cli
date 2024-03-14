@@ -1,10 +1,10 @@
 echo "STARTING"
-COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-commands  --output ./docs-shopify.dev/generated && rm -rf docs-shopify.dev/commands/**/*.doc.js docs-commands/*.doc.js"
-COMPILE_STATIC_PAGES="npx tsc docs-static/staticPages/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-shopify.dev/static --output ./docs-shopify.dev/generated && rm -rf docs-shopify.dev/static/staticPages/*.doc.js"
+COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-shopify.dev/commands  --output ./docs-shopify.dev/generated && rm -rf docs-shopify.dev/commands/**/*.doc.js docs-shopify.dev/commands/*.doc.js"
+COMPILE_STATIC_PAGES="npx tsc docs-shopify.dev/static/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-shopify.dev/static --output ./docs-shopify.dev/generated && rm -rf docs-shopify.dev/static/*.doc.js"
 
 if [ "$1" = "isTest" ];
 then
-COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node  --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-commands --output ./docs-shopify.dev/static/temp && rm -rf docs-shopify.dev/commands/**/*.doc.js docs-commands/*.doc.js"
+COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node  --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-shopify.dev/commands --output ./docs-shopify.dev/static/temp && rm -rf docs-shopify.dev/commands/**/*.doc.js docs-shopify.dev/commands/*.doc.js"
 COMPILE_STATIC_PAGES="npx tsc docs-shopify.dev/static/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-shopify.dev/static/docs-shopify.dev  --output ./docs-shopify.dev/static/temp && rm -rf docs-shopify.dev/static/*.doc.js"
 fi
 
@@ -21,7 +21,7 @@ if [ -n "$SPIN" ]; then
     # cd ~/src/github.com/Shopify/shopify-dev
     # restart
   else
-    echo "If you include shopify-dev in your Spin constellation, this will automatically copy ./docs-static/generated to shopify-dev"
+    echo "If you include shopify-dev in your Spin constellation, this will automatically copy ./docs-shopify.dev/generated to shopify-dev"
   fi
 else
   echo "Not copying docs to shopify-dev because we're not in Spin"
