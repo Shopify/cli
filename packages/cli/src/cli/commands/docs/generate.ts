@@ -4,7 +4,7 @@ import {mkdir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
-const docsPath = joinPath(cwd(), '/docs-commands')
+const docsPath = joinPath(cwd(), '/docs-shopify.dev/commands/')
 
 export default class Catalog extends Command {
   static description = 'Generate CLI commands documentation'

@@ -1,11 +1,11 @@
 echo "STARTING"
-COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-commands  --output ./docs-static/generated && rm -rf docs-commands/**/*.doc.js docs-commands/*.doc.js"
-COMPILE_STATIC_PAGES="npx tsc docs-static/staticPages/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-static/staticPages --output ./docs-static/generated && rm -rf docs-static/staticPages/*.doc.js"
+COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-commands  --output ./docs-shopify.dev/generated && rm -rf docs-shopify.dev/commands/**/*.doc.js docs-commands/*.doc.js"
+COMPILE_STATIC_PAGES="npx tsc docs-static/staticPages/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-shopify.dev/static --output ./docs-shopify.dev/generated && rm -rf docs-shopify.dev/static/staticPages/*.doc.js"
 
 if [ "$1" = "isTest" ];
 then
-COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node  --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-commands --output ./docs-static/temp && rm -rf docs-commands/**/*.doc.js docs-commands/*.doc.js"
-COMPILE_STATIC_PAGES="npx tsc docs-static/staticPages/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-static/staticPages  --output ./docs-static/temp && rm -rf docs-static/staticPages/*.doc.js"
+COMPILE_DOCS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node  --target esNext && npx generate-docs --overridePath ./bin/docs/typeOverride.json --input ./docs-commands --output ./docs-shopify.dev/static/temp && rm -rf docs-shopify.dev/commands/**/*.doc.js docs-commands/*.doc.js"
+COMPILE_STATIC_PAGES="npx tsc docs-shopify.dev/static/*.doc.ts --moduleResolution node  --target esNext && npx generate-docs --isLandingPage --input ./docs-shopify.dev/static/docs-shopify.dev  --output ./docs-shopify.dev/static/temp && rm -rf docs-shopify.dev/static/*.doc.js"
 fi
 
 echo $1
@@ -16,8 +16,8 @@ echo "DONE"
 
 if [ -n "$SPIN" ]; then
   if [ -n "$SPIN_SHOPIFY_DEV_SERVICE_FQDN" ]; then
-    cp ./docs-static/generated/* ~/src/github.com/Shopify/shopify-dev/db/data/docs/templated_apis/shopify-cli/v3/
-    cp ./docs-static/screenshots/* ~/src/github.com/Shopify/shopify-dev/app/assets/images/templated-apis-screenshots/shopify-cli/v3/
+    cp ./docs-shopify.dev/static/generated/* ~/src/github.com/Shopify/shopify-dev/db/data/docs/templated_apis/shopify-cli/v3/
+    cp ./docs-shopify.dev/static/screenshots/* ~/src/github.com/Shopify/shopify-dev/app/assets/images/templated-apis-screenshots/shopify-cli/v3/
     # cd ~/src/github.com/Shopify/shopify-dev
     # restart
   else

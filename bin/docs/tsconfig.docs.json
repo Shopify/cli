@@ -3,7 +3,7 @@
         "rootDir": "/",
     },
     "include": [
-        "../../docs-commands/**/*.doc.ts"
+        "../../docs-shopify.dev/commands/**/*.doc.ts"
     ],
     "exclude": []
 }
