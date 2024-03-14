@@ -267,16 +267,16 @@ class AppLoader {
 
   showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
     const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
-    if (currentProcessIsGlobal() && hasLocalCLI) return
-
-    // Warn the user that they are using a global installation of the CLI but their project defines a local dependency also.
-    const warningContent = {
-      headline: 'You are running a global installation of the Shopify CLI',
-      body: [
-        `This project has a local dependency of the Shopify CLI. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
-      ],
+    if (currentProcessIsGlobal() && hasLocalCLI) {
+      // Warn the user that they are using a global installation of the CLI but their project defines a local dependency also.
+      const warningContent = {
+        headline: 'You are running a global installation of the Shopify CLI',
+        body: [
+          `This project has a local dependency of the Shopify CLI. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
+        ],
+      }
+      renderWarning(warningContent)
     }
-    renderWarning(warningContent)
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
