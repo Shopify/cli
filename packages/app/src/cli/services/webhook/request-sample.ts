@@ -1,4 +1,4 @@
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export interface SampleWebhook {
   samplePayload: string
@@ -6,7 +6,17 @@ export interface SampleWebhook {
   success: boolean
   userErrors: UserErrors[]
 }
-export interface SamplePayloadSchema {
+
+export interface SendSampleWebhookVariables {
+  topic: string
+  api_version: string
+  address: string
+  delivery_method: string
+  shared_secret: string
+  api_key?: string
+}
+
+export interface SendSampleWebhookSchema {
   sendSampleWebhook: SampleWebhook
 }
 
@@ -15,7 +25,7 @@ export interface UserErrors {
   fields: string[]
 }
 
-const sendSampleWebhookMutation = `
+export const sendSampleWebhookMutation = `
   mutation samplePayload($topic: String!, $api_version: String!, $address: String!, $delivery_method: String!, $shared_secret: String!, $api_key: String) {
     sendSampleWebhook(input: {topic: $topic, apiVersion: $api_version, address: $address, deliveryMethod: $delivery_method, sharedSecret: $shared_secret, apiKey: $api_key}) {
         samplePayload
@@ -35,36 +45,21 @@ const sendSampleWebhookMutation = `
  * In all the other cases, core creates a job that sends the request to Captain-Hook. Captain-Hook will be in
  * charge of delivering the webhook payload to the requested destination.
  *
- * @param token - Partners session token
- * @param topic - A webhook topic (eg: orders/create)
- * @param apiVersion - Api version for the topic
- * @param deliveryMethod - one of DELIVERY_METHOD
- * @param address - A destination for the webhook notification
- * @param clientSecret - A secret to generate the HMAC header apps can use to validate the origin
- * @param apiKey - Client Api Key required to validate Event-Bridge addresses
+ * @param developerPlatformClient - The client to access the platform API
+ * @param variables - The variables to send the sample webhook:
+ *  - topic - The topic to send the sample webhook
+ *  - api_version - The version of the topic
+ *  - delivery_method - one of DELIVERY_METHOD
+ *  - address - A destination for the webhook notification
+ *  - shared_secret - A secret to generate the HMAC header apps can use to validate the origin
+ *  - api_key - Client Api Key required to validate Event-Bridge addresses (optional)
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
 export async function getWebhookSample(
-  token: string,
-  topic: string,
-  apiVersion: string,
-  deliveryMethod: string,
-  address: string,
-  clientSecret: string,
-  apiKey?: string,
+  developerPlatformClient: DeveloperPlatformClient,
+  variables: SendSampleWebhookVariables,
 ): Promise<SampleWebhook> {
-  const variables = {
-    topic,
-    api_version: apiVersion,
-    address,
-    delivery_method: deliveryMethod,
-    shared_secret: clientSecret,
-    api_key: apiKey,
-  }
-
-  const {sendSampleWebhook: result}: SamplePayloadSchema = await partnersRequest(
-    sendSampleWebhookMutation,
-    token,
+  const {sendSampleWebhook: result}: SendSampleWebhookSchema = await developerPlatformClient.sendSampleWebhook(
     variables,
   )
 

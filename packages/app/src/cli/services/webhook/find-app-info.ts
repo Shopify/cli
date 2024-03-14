@@ -1,6 +1,6 @@
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
-import {PartnersSession} from '../context/partner-account-info.js'
+import {fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, cwd} from '@shopify/cli-kit/node/path'
@@ -36,9 +36,10 @@ export async function findInEnv(): Promise<AppCredentials> {
  * @param token - partners token
  * @returns apiKey
  */
-export async function findApiKey(partnersSession: PartnersSession): Promise<string | undefined> {
-  const orgs = await fetchOrganizations(partnersSession)
+export async function findApiKey(developerPlatformClient: DeveloperPlatformClient): Promise<string | undefined> {
+  const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
+  const partnersSession = await developerPlatformClient.session()
   const {apps} = await fetchOrgAndApps(org.id, partnersSession)
 
   if (apps.nodes.length === 0) {
@@ -65,12 +66,15 @@ export async function findApiKey(partnersSession: PartnersSession): Promise<stri
 /**
  * Find the app api_key, if available
  *
- * @param token - partners token
+ * @param developerPlatformClient - The client to access the platform API
  * @param apiKey - app api_key
  * @returns client_id, client_secret, client_api_key
  */
-export async function requestAppInfo(token: string, apiKey: string): Promise<AppCredentials> {
-  const fullSelectedApp = await fetchAppDetailsFromApiKey(apiKey, token)
+export async function requestAppInfo(
+  developerPlatformClient: DeveloperPlatformClient,
+  apiKey: string,
+): Promise<AppCredentials> {
+  const fullSelectedApp = await developerPlatformClient.appFromId(apiKey)
   const credentials: AppCredentials = {}
   if (fullSelectedApp === undefined) {
     return credentials
