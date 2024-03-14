@@ -303,13 +303,16 @@ wrong = "property"
     expect(mockOutput.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  You are running a global installation of the Shopify CLI                    │
+      │  You are running a global installation of Shopify CLI                        │
       │                                                                              │
-      │  This project has a local dependency of the Shopify CLI. If you prefer to    │
-      │  use that version, run the command with your package manager (e.g. npm run   │
-      │  shopify).                                                                   │
+      │  This project has Shopify CLI as a local dependency in package.json. If you  │
+      │   prefer to use that version, run the command with your package manager      │
+      │  (e.g. npm run shopify).                                                     │
+      │                                                                              │
+      │  For more information, see Shopify CLI documentation [1]                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/tools/cli
       "
     `)
     mockOutput.clear()
