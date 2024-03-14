@@ -9,12 +9,10 @@ const inputValues: SendSampleWebhookVariables = {
   address: 'https://example.org',
   shared_secret: 'A_SECRET',
 }
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('getWebhookSample', () => {
   test('calls partners to request data without api-key', async () => {
     // Given/When
-    const got = await getWebhookSample(developerPlatformClient, inputValues)
+    const got = await getWebhookSample(testDeveloperPlatformClient(), inputValues)
 
     // Then
     expect(got.samplePayload).toEqual('{ "sampleField": "SampleValue" }')
@@ -31,7 +29,7 @@ describe('getWebhookSample', () => {
     }
 
     // When
-    const got = await getWebhookSample(developerPlatformClient, variables)
+    const got = await getWebhookSample(testDeveloperPlatformClient(), variables)
 
     // Then
     expect(got.samplePayload).toEqual('{ "sampleField": "SampleValue" }')

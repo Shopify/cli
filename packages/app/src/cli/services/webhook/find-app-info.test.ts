@@ -16,8 +16,6 @@ vi.mock('@shopify/cli-kit/node/path')
 vi.mock('../dev/fetch')
 vi.mock('../../prompts/dev')
 
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('findInEnv', () => {
   test('.env file not available', async () => {
     // Given
@@ -78,7 +76,7 @@ describe('findApiKey', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
 
     // When
-    const apiKey = await findApiKey(developerPlatformClient)
+    const apiKey = await findApiKey(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(undefined)
@@ -90,7 +88,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
 
     // When
-    const apiKey = await findApiKey(developerPlatformClient)
+    const apiKey = await findApiKey(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -102,7 +100,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
 
     // When
-    const apiKey = await findApiKey(developerPlatformClient)
+    const apiKey = await findApiKey(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -115,7 +113,7 @@ describe('findApiKey', () => {
     vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
 
     // When
-    const apiKey = await findApiKey(developerPlatformClient)
+    const apiKey = await findApiKey(testDeveloperPlatformClient())
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()
@@ -169,7 +167,7 @@ describe('requestAppInfo', () => {
     )
 
     // When
-    const credentials = await requestAppInfo(developerPlatformClient, anApiKey)
+    const credentials = await requestAppInfo(testDeveloperPlatformClient(), anApiKey)
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey, clientSecret: 'api-secret'})

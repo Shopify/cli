@@ -754,7 +754,7 @@ api_version = "2023-04"
       remoteAppUpdated: false,
       updateURLs: undefined,
     })
-    expect(developerPlatformClient.selectOrg).not.toBeCalled()
+    expect(developerPlatformClient.organizations).not.toBeCalled()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
@@ -792,9 +792,9 @@ api_version = "2023-04"
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
-    const developerPlatformClient = buildDeveloperPlatformClient()
     const got = await ensureDevContext(
       {
         ...INPUT_WITH_DATA,
@@ -818,7 +818,7 @@ api_version = "2023-04"
       orgId: ORG1.id,
       title: APP2.title,
     })
-    expect(developerPlatformClient.selectOrg).toBeCalled()
+    expect(fetchOrganizations).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
     expect(fetchOrgAndApps).not.toBeCalled()
@@ -1055,7 +1055,7 @@ describe('ensureDeployContext', () => {
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(developerPlatformClient.organizations).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1125,7 +1125,7 @@ describe('ensureDeployContext', () => {
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(opts.developerPlatformClient.organizations).toHaveBeenCalledWith()
+    expect(fetchOrganizations).toHaveBeenCalled()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1576,7 +1576,7 @@ describe('ensureDraftExtensionsPushContext', () => {
     const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
-    expect(developerPlatformClient!.organizations).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1625,22 +1625,24 @@ describe('ensureDraftExtensionsPushContext', () => {
     const opts = draftExtensionsPushOptions(app)
     opts.reset = true
 
-    const developerPlatformClient = opts.developerPlatformClient!
-    const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(async () => [ORG1])
-    developerPlatformClient.appsForOrg = async () => ({apps: [APP1, APP2], hasMorePages: false})
-    developerPlatformClient.orgAndApps = async () => ({organization: ORG1, apps: [APP1, APP2], hasMorePages: false})
+    opts.developerPlatformClient!.appsForOrg = async () => ({apps: [APP1, APP2], hasMorePages: false})
+    opts.developerPlatformClient!.orgAndApps = async () => ({
+      organization: ORG1,
+      apps: [APP1, APP2],
+      hasMorePages: false,
+    })
 
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
       false,
       ORG1,
-      developerPlatformClient,
+      opts.developerPlatformClient,
       DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(got.remoteApp.id).toEqual(APP1.id)
