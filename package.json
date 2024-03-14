@@ -27,7 +27,8 @@
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
-    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache"
+    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
+    "build-docs": "sh ./bin/docs/build-docs.sh"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",
