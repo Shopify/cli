@@ -6,7 +6,7 @@ import {
   formatPackageManagerCommand,
 } from './output.js'
 
-import {currentProcessIsGlobal} from './node-package-manager.js'
+import {currentProcessIsGlobal} from './is-global.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
 
