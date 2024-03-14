@@ -72,14 +72,11 @@ describe('extractSecureSessionIdFromResponseHeaders', () => {
     expect(result).toBe('123')
   })
 
-  test('returns "" when secure_session_id cookie is not present', async () => {
+  test('throws an error when secure_session_id cookie is not present', async () => {
     // Given
     const cookie = ['other_cookie_value=some_value']
 
-    // When
-    const result = extractSecureSessionIdFromResponseHeaders(cookie)
-
-    // Then
-    expect(result).toBe('')
+    // When & Then
+    expect(() => extractSecureSessionIdFromResponseHeaders(cookie)).toThrow(Error)
   })
 })

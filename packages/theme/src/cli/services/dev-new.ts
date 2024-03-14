@@ -4,6 +4,7 @@ import {H3Event, createApp, defineEventHandler, getRequestIP, sendWebResponse, t
 import {randomUUID} from 'crypto'
 import {createServer} from 'http'
 
+// !! fix the routing logic
 // !! store secure session id + refresh only when needed (WIP)
 // !! sync files
 // !! watch for file changes and reload the server
@@ -14,8 +15,11 @@ import {createServer} from 'http'
 // !! Error Handling
 // !! Polish
 
+// 1 day - leeway of 1h
+const SESSION_COOKIE_MAX_AGE = 1000 * 60 * 60 * 23
 const SESSION_COOKIE_NAME = '_secure_session_id'
 const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=(\\w+)`)
+
 const DEFAULT_PORT = '9292'
 const DEFAULT_HOST = '127.0.0.1'
 
@@ -73,13 +77,18 @@ async function handleProxy(event: H3Event, options: ServerOptions) {
 
 export function configureCookies(cookies: string | undefined, sessionId: string): string {
   if (!cookies) {
-    return `_secure_session_id=${sessionId}`
+    return `${SESSION_COOKIE_NAME}=${sessionId}`
   }
 
-  if (cookies.includes('_secure_session_id')) {
-    return cookies.replace(SESSION_COOKIE_REGEXP, `_secure_session_id=${sessionId}`)
+  const expectedSecureSessionIdCookie = `${SESSION_COOKIE_NAME}=${sessionId}`
+  if (cookies.includes(expectedSecureSessionIdCookie)) {
+    return cookies
+  }
+
+  if (cookies.includes(SESSION_COOKIE_NAME)) {
+    return cookies.replace(SESSION_COOKIE_REGEXP, expectedSecureSessionIdCookie)
   } else {
-    return `${cookies}; _secure_session_id=${sessionId}`
+    return `${cookies}; ${expectedSecureSessionIdCookie}`
   }
 }
 
@@ -100,18 +109,23 @@ async function getSessionId(event: H3Event, options: ServerOptions) {
   const session = await useSession(event, {
     password: options.sessionPassword!,
   })
-  const secureSessionId = session.data.secureSessionId
-  if (secureSessionId) {
-    // check if this is the expected secure session ID
-    // if not, update it
-    // if so, check if that session token is expired
-    return secureSessionId
-  } else {
+
+  if (secureSessionExpired(session.data.lastUpdated)) {
     await session.update({
       secureSessionId: await fetchSecureSessionId(options),
+      lastUpdated: Date.now(),
     })
   }
+
   return session.data.secureSessionId
+}
+
+function secureSessionExpired(lastUpdated: number) {
+  if (!lastUpdated) {
+    return true
+  }
+
+  return Date.now() - lastUpdated > SESSION_COOKIE_MAX_AGE
 }
 
 async function fetchSecureSessionId(options: ServerOptions) {
