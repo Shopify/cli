@@ -22,7 +22,6 @@ import {
   pnpmLockfile,
   PackageJson,
   pnpmWorkspaceFile,
-  currentProcessIsGlobal,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
@@ -30,18 +29,13 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
-vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
-  return {
-    ...actual,
-    currentProcessIsGlobal: vi.fn().mockReturnValue(false),
-  }
-})
+vi.mock('@shopify/cli-kit/node/is-global')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
