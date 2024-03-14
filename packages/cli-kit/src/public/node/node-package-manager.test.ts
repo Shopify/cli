@@ -17,7 +17,6 @@ import {
   DependencyVersion,
   PackageJsonNotFoundError,
   UnknownPackageManagerError,
-  currentProcessIsGlobal,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -101,30 +100,6 @@ describe('packageManagerFromUserAgent', () => {
 
     // Then
     expect(got).toBe('unknown')
-  })
-})
-
-describe('currentProcessIsGlobal', () => {
-  test('returns true if npm_config_user_agent is undefined', () => {
-    // Given
-    const env = {}
-
-    // When
-    const got = currentProcessIsGlobal(env)
-
-    // Then
-    expect(got).toBeTruthy()
-  })
-
-  test('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
-    // Given
-    const env = {npm_config_user_agent: 'pnpm'}
-
-    // When
-    const got = currentProcessIsGlobal(env)
-
-    // Then
-    expect(got).toBeFalsy()
   })
 })
 

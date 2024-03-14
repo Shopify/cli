@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './context/local.js'
-import {PackageManager, currentProcessIsGlobal} from './node-package-manager.js'
+import {PackageManager} from './node-package-manager.js'
+import {currentProcessIsGlobal} from './is-global.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
 import {isTruthy} from './context/utilities.js'
