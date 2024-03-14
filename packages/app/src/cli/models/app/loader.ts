@@ -103,6 +103,15 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   return {...configuration, path: filepath}
 }
 
+export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
+  let humanReadableError = ''
+  issues.forEach((issue) => {
+    const path = issue.path ? issue?.path.join('.') : 'n/a'
+    humanReadableError += `• [${path}]: ${issue.message}\n`
+  })
+  return humanReadableError
+}
+
 export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -113,9 +122,10 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
 
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
-    const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
-      outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
+      outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
+        filepath,
+      )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
       fallbackOutput,
       filepath,
       parseResult.error.issues,
