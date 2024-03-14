@@ -1,12 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {H3Event, createApp, defineEventHandler, getRequestIP, sendWebResponse, toNodeListener} from 'h3'
+import {H3Event, createApp, defineEventHandler, getRequestIP, sendWebResponse, toNodeListener, useSession} from 'h3'
+import {randomUUID} from 'crypto'
 import {createServer} from 'http'
 
+// !! store secure session id + refresh only when needed (WIP)
+// !! sync files
+// !! watch for file changes and reload the server
+// !! local assets, fonts, etc
+// !! Tests
+// !! Edge Cases
+// !! Logging
+// !! Error Handling
+// !! Polish
+
+const SESSION_COOKIE_NAME = '_secure_session_id'
+const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=(\\w+)`)
+const DEFAULT_PORT = '9292'
+const DEFAULT_HOST = '127.0.0.1'
+
 interface ServerOptions {
-  theme?: string
+  theme: string
   host?: string
   port?: string
+  sessionPassword?: string
 }
 
 export function startDevServer(options: ServerOptions) {
@@ -14,21 +31,8 @@ export function startDevServer(options: ServerOptions) {
   startWatcher()
 }
 
-const SESSION_COOKIE_NAME = '_secure_session_id'
-const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=(\\w+)`)
-
-// 1 -  proxy requests to the live theme DONE
-// 2 - proxy reqeusts to an unpublished theme (preview theme id) -> something is wrong with the secure session id at the moment
-// 3 - sync files
-// 3 - watch for file changes and reload the server
-// 4 - local assets, fonts, etc
-// 5 - Tests
-// 6 - Edge Cases
-// 7 - Logging
-// 8 - Error Handling
-// 9 - Polish
-
 function startServer(options: ServerOptions) {
+  options.sessionPassword = randomUUID()
   const httpApp = createApp()
 
   httpApp.use(
@@ -39,9 +43,8 @@ function startServer(options: ServerOptions) {
   )
 
   const httpServer = createServer(toNodeListener(httpApp))
-
-  const port = options.port || '9292'
-  const host = options.host || '127.0.0.1'
+  const port = options.port || DEFAULT_PORT
+  const host = options.host || DEFAULT_HOST
 
   httpServer.listen(parseInt(port, 10), host)
 
@@ -51,12 +54,10 @@ function startServer(options: ServerOptions) {
 }
 
 async function handleProxy(event: H3Event, options: ServerOptions) {
-  const sessionId = await getSecureSessionId(options)
-
-  outputInfo(sessionId)
+  const sessionId = await getSessionId(event, options)
 
   const cookies = configureCookies(event.node.req.headers.cookie, sessionId)
-  await cleanSfrCache(event, sessionId, options.theme, cookies)
+  await cleanSfrCache(event, options.theme, cookies)
   const result = await fetch(`https://mammoth-matcha.myshopify.com`, {
     method: event.node.req.method,
     headers: {
@@ -70,7 +71,6 @@ async function handleProxy(event: H3Event, options: ServerOptions) {
   return sendWebResponse(event, result)
 }
 
-// no need to replace if the value is alreday the correct value
 export function configureCookies(cookies: string | undefined, sessionId: string): string {
   if (!cookies) {
     return `_secure_session_id=${sessionId}`
@@ -83,8 +83,7 @@ export function configureCookies(cookies: string | undefined, sessionId: string)
   }
 }
 
-async function cleanSfrCache(event: H3Event, secureSessionId: string, theme = '140324634868', cookies: string) {
-  outputInfo(theme)
+async function cleanSfrCache(event: H3Event, theme: string, cookies: string) {
   await fetch(`https://mammoth-matcha.myshopify.com/?preview_theme_id=${theme}&_fd=0&pb=0`, {
     method: event.node.req.method,
     headers: {
@@ -97,10 +96,27 @@ async function cleanSfrCache(event: H3Event, secureSessionId: string, theme = '1
   })
 }
 
-async function getSecureSessionId(options: ServerOptions) {
-  const themeId = options.theme ? options.theme : '140324634868'
-  outputInfo(themeId)
-  const response = await fetch(`https://mammoth-matcha.myshopify.com/?preview_theme_id=${themeId}&_fd=0&pb=0`, {
+async function getSessionId(event: H3Event, options: ServerOptions) {
+  const session = await useSession(event, {
+    password: options.sessionPassword!,
+  })
+  const secureSessionId = session.data.secureSessionId
+  if (secureSessionId) {
+    // check if this is the expected secure session ID
+    // if not, update it
+    // if so, check if that session token is expired
+    return secureSessionId
+  } else {
+    await session.update({
+      secureSessionId: await fetchSecureSessionId(options),
+    })
+  }
+  return session.data.secureSessionId
+}
+
+async function fetchSecureSessionId(options: ServerOptions) {
+  outputInfo('Fetching secure session id')
+  const response = await fetch(`https://mammoth-matcha.myshopify.com/?preview_theme_id=${options.theme}&_fd=0&pb=0`, {
     method: 'HEAD',
   })
   const responseHeaderSetCookie: string[] = response.headers.getSetCookie()
@@ -110,6 +126,10 @@ async function getSecureSessionId(options: ServerOptions) {
 export function extractSecureSessionIdFromResponseHeaders(cookie: string[]) {
   const secureSessionIdCookie = cookie.find((cookie) => SESSION_COOKIE_REGEXP.test(cookie))
   const match = secureSessionIdCookie?.match(SESSION_COOKIE_REGEXP)?.[1]
-  return match || ''
+  if (!match) {
+    throw new Error('Secure session ID not found in response headers')
+  }
+  return match
 }
+
 function startWatcher() {}
