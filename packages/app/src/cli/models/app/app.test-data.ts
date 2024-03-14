@@ -5,15 +5,14 @@ import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {Organization, OrganizationApp} from '../organization.js'
+import {MinimalOrganizationApp, Organization, OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -23,6 +22,11 @@ import {
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../../api/graphql/development_preview.js'
+import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -682,12 +686,8 @@ const emptyAppVersions = {
   },
 }
 
-const emptyActiveAppVersion: ActiveAppVersionQuerySchema = {
-  app: {
-    activeAppVersion: {
-      appModuleVersions: [],
-    },
-  },
+const emptyActiveAppVersion: ActiveAppVersion = {
+  appModuleVersions: [],
 }
 
 const functionUploadUrlResponse = {
@@ -755,6 +755,22 @@ const convertedToTestStoreResponse = {
   },
 }
 
+const updateDeveloperPreviewResponse: DevelopmentStorePreviewUpdateSchema = {
+  developmentStorePreviewUpdate: {
+    app: {
+      id: 'app-id',
+      developmentStorePreviewEnabled: true,
+    },
+    userErrors: [],
+  },
+}
+
+const appPreviewModeResponse: FindAppPreviewModeSchema = {
+  app: {
+    developmentStorePreviewEnabled: true,
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -774,7 +790,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
-    activeAppVersion: (_appId: string) => Promise.resolve(emptyActiveAppVersion),
+    activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyActiveAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
@@ -782,6 +798,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
     convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
+      Promise.resolve(updateDeveloperPreviewResponse),
+    appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
     ...stubs,
   }
 }

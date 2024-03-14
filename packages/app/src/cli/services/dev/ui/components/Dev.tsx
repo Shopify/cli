@@ -1,4 +1,5 @@
 import metadata from '../../../../metadata.js'
+import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -29,7 +30,7 @@ export interface DevProps {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
     apiKey: string
-    token: string
+    developerPlatformClient: DeveloperPlatformClient
   }
   pollingTime?: number
   developerPreview: DeveloperPreviewController

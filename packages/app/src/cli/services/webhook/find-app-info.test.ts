@@ -58,14 +58,14 @@ describe('findApiKey', () => {
   const anAppName = 'app-name'
   const anotherAppName = 'another-app'
   const anotherApiKey = 'ANOTHER_API_KEY'
-  const anApp = {id: '1', title: anAppName, apiKey: anApiKey}
-  const anotherApp = {id: '2', title: anotherAppName, apiKey: anotherApiKey}
   const org = {
     id: '1',
     businessName: 'org1',
     betas: {},
     website: 'http://example.org',
   }
+  const anApp = {id: '1', title: anAppName, apiKey: anApiKey, organizationId: org.id}
+  const anotherApp = {id: '2', title: anotherAppName, apiKey: anotherApiKey, organizationId: org.id}
 
   beforeEach(async () => {
     vi.mocked(fetchOrganizations).mockResolvedValue([org])

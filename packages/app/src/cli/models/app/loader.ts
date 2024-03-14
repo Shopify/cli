@@ -29,6 +29,7 @@ import {
   getPackageManager,
   getPackageName,
   usesWorkspaces as appUsesWorkspaces,
+  currentProcessIsGlobal,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -39,6 +40,7 @@ import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/c
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -230,6 +232,7 @@ class AppLoader {
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(directory)
+    this.showGlobalCLIWarningIfNeeded(nodeDependencies, packageManager)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -260,6 +263,20 @@ class AppLoader {
     })
 
     return appClass
+  }
+
+  showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
+    const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
+    if (currentProcessIsGlobal() && hasLocalCLI) {
+      // Warn the user that they are using a global installation of the CLI but their project defines a local dependency also.
+      const warningContent = {
+        headline: 'You are running a global installation of the Shopify CLI',
+        body: [
+          `This project has a local dependency of the Shopify CLI. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
+        ],
+      }
+      renderWarning(warningContent)
+    }
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {

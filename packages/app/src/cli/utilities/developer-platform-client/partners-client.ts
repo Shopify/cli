@@ -4,7 +4,7 @@ import {
   AllDevStoresByOrganizationQueryVariables,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
-import {DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
+import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   fetchAppDetailsFromApiKey,
@@ -58,6 +58,16 @@ import {
   AppVersionsQueryVariables,
   AppVersionsQuerySchema,
 } from '../../api/graphql/get_versions_list.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateQuery,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../../api/graphql/development_preview.js'
+import {
+  FindAppPreviewModeQuery,
+  FindAppPreviewModeSchema,
+  FindAppPreviewModeVariables,
+} from '../../api/graphql/find_app_preview_mode.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -212,9 +222,19 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AppVersionsQuery, variables)
   }
 
-  async activeAppVersion(apiKey: string): Promise<ActiveAppVersionQuerySchema> {
+  async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
-    return this.makeRequest(ActiveAppVersionQuery, variables)
+    const result = await this.makeRequest<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
+    const version = result.app.activeAppVersion
+    return {
+      ...version,
+      appModuleVersions: version.appModuleVersions.map((mod) => {
+        return {
+          ...mod,
+          config: mod.config ? (JSON.parse(mod.config) as object) : {},
+        }
+      }),
+    }
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
@@ -244,5 +264,15 @@ export class PartnersClient implements DeveloperPlatformClient {
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
     return this.makeRequest(FindStoreByDomainQuery, variables)
+  }
+
+  async updateDeveloperPreview(
+    input: DevelopmentStorePreviewUpdateInput,
+  ): Promise<DevelopmentStorePreviewUpdateSchema> {
+    return this.makeRequest(DevelopmentStorePreviewUpdateQuery, input)
+  }
+
+  async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
+    return this.makeRequest(FindAppPreviewModeQuery, input)
   }
 }

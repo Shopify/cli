@@ -101,7 +101,7 @@ const options = (
   uiExtensions: ExtensionInstance[],
   functionExtensions: ExtensionInstance[] = [],
   identifiers: any = {},
-  partnersApp: OrganizationApp = testOrganizationApp(),
+  remoteApp: OrganizationApp = testOrganizationApp(),
   release = true,
   includeDeployConfig = false,
   configExtensions: ExtensionInstance[] = [],
@@ -114,7 +114,7 @@ const options = (
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
-    partnersApp,
+    remoteApp,
     release,
   }
   setPathValue(localApp.app, 'remoteBetaFlags', betas)

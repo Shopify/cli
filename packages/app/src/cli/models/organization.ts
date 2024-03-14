@@ -11,10 +11,10 @@ export interface MinimalOrganizationApp {
   id: string
   title: string
   apiKey: string
+  organizationId: string
 }
 
 export type OrganizationApp = MinimalOrganizationApp & {
-  organizationId: string
   apiSecretKeys: {
     secret: string
   }[]
