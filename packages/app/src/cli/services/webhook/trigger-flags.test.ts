@@ -8,6 +8,7 @@ import {
 } from './trigger-flags.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, vi, test} from 'vitest'
 
@@ -17,8 +18,7 @@ const remoteHttpAddress = 'https://example.org/api/webhooks'
 const localHttpAddress = 'http://localhost:9090/api/webhooks'
 const ftpAddress = 'ftp://user:pass@host'
 
-const aToken = 'A_TOKEN'
-const aVersion = 'unstable'
+const developerPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
@@ -170,7 +170,7 @@ describe('validateAddressMethod', () => {
 describe('parseVersionAndTopic', () => {
   test('ignores when no flags', async () => {
     // When
-    const got = await parseVersionAndTopic(aToken, {})
+    const got = await parseVersionAndTopic(developerPlatformClient, {})
 
     // Then
     expect(got).toEqual([undefined, undefined])
@@ -178,7 +178,7 @@ describe('parseVersionAndTopic', () => {
 
   test('gets topic when no version', async () => {
     // When
-    const got = await parseVersionAndTopic(aToken, {topic: 'topic'})
+    const got = await parseVersionAndTopic(developerPlatformClient, {topic: 'topic'})
 
     // Then
     expect(got).toEqual([undefined, 'topic'])
@@ -189,7 +189,7 @@ describe('parseVersionAndTopic', () => {
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
     // When
-    const got = await parseVersionAndTopic(aToken, {apiVersion: 'unstable'})
+    const got = await parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable'})
 
     // Then
     expect(got).toEqual(['unstable', undefined])
@@ -200,7 +200,7 @@ describe('parseVersionAndTopic', () => {
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
     // When Then
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unknown'})).rejects.toThrow(AbortError)
+    await expect(parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unknown'})).rejects.toThrow(AbortError)
   })
 
   test('validates the version and topic', async () => {
@@ -209,7 +209,7 @@ describe('parseVersionAndTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'products/delete'])
 
     // When
-    const got = await parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'shop/redact'})
+    const got = await parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'shop/redact'})
 
     // Then
     expect(got).toEqual(['unstable', 'shop/redact'])
@@ -221,9 +221,9 @@ describe('parseVersionAndTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue([])
 
     // When then
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'shop/redact'})).rejects.toThrow(
-      AbortError,
-    )
+    await expect(
+      parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'shop/redact'}),
+    ).rejects.toThrow(AbortError)
   })
 
   test('validates the version and GraphQL-like topic', async () => {
@@ -232,7 +232,7 @@ describe('parseVersionAndTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create', 'products/delete'])
 
     // When
-    const got = await parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'ORDERS_CREATE'})
+    const got = await parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'ORDERS_CREATE'})
 
     // Then
     expect(got).toEqual(['unstable', 'orders/create'])
@@ -244,19 +244,21 @@ describe('parseVersionAndTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create', 'products/delete'])
 
     // Then when
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'unknown'})).rejects.toThrow(AbortError)
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'OrdERS_Create'})).rejects.toThrow(
-      AbortError,
-    )
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'orders_create'})).rejects.toThrow(
-      AbortError,
-    )
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'OrdERS/CreaTE'})).rejects.toThrow(
-      AbortError,
-    )
-    await expect(parseVersionAndTopic(aToken, {apiVersion: 'unstable', topic: 'ORDERS/CREATE'})).rejects.toThrow(
-      AbortError,
-    )
+    await expect(
+      parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'unknown'}),
+    ).rejects.toThrow(AbortError)
+    await expect(
+      parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'OrdERS_Create'}),
+    ).rejects.toThrow(AbortError)
+    await expect(
+      parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'orders_create'}),
+    ).rejects.toThrow(AbortError)
+    await expect(
+      parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'OrdERS/CreaTE'}),
+    ).rejects.toThrow(AbortError)
+    await expect(
+      parseVersionAndTopic(developerPlatformClient, {apiVersion: 'unstable', topic: 'ORDERS/CREATE'}),
+    ).rejects.toThrow(AbortError)
   })
 })
 

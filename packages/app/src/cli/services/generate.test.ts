@@ -46,11 +46,13 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-  async specifications(_appId: string): Promise<ExtensionSpecification[]> {
-    return loadLocalExtensionsSpecifications()
-  },
-})
+function buildDeveloperPlatformClient(): DeveloperPlatformClient {
+  return testDeveloperPlatformClient({
+    async specifications(_appId: string): Promise<ExtensionSpecification[]> {
+      return loadLocalExtensionsSpecifications()
+    },
+  })
+}
 
 describe('generate', () => {
   test('displays a confirmation message with instructions to run dev', async () => {
@@ -58,7 +60,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient})
+    await generate({directory: '/', reset: false, developerPlatformClient: buildDeveloperPlatformClient()})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -80,7 +82,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient})
+    await generate({directory: '/', reset: false, developerPlatformClient: buildDeveloperPlatformClient()})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -102,7 +104,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient})
+    await generate({directory: '/', reset: false, developerPlatformClient: buildDeveloperPlatformClient()})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -124,7 +126,12 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('unknown_type')
 
     // When
-    const got = generate({directory: '/', reset: false, template: 'unknown_type', developerPlatformClient})
+    const got = generate({
+      directory: '/',
+      reset: false,
+      template: 'unknown_type',
+      developerPlatformClient: buildDeveloperPlatformClient(),
+    })
 
     // Then
     await expect(got).rejects.toThrow(/Unknown extension type: unknown_type/)
@@ -136,7 +143,12 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('theme_app_extension', [themeExtension])
 
     // When
-    const got = generate({directory: '/', reset: false, template: 'theme_app_extension', developerPlatformClient})
+    const got = generate({
+      directory: '/',
+      reset: false,
+      template: 'theme_app_extension',
+      developerPlatformClient: buildDeveloperPlatformClient(),
+    })
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -148,7 +160,12 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('product_discounts', [discountsFunction])
 
     // When
-    const got = generate({directory: '/', reset: false, template: 'product_discounts', developerPlatformClient})
+    const got = generate({
+      directory: '/',
+      reset: false,
+      template: 'product_discounts',
+      developerPlatformClient: buildDeveloperPlatformClient(),
+    })
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -164,7 +181,7 @@ describe('generate', () => {
       reset: false,
       template: 'subscription_ui',
       flavor: 'unknown',
-      developerPlatformClient,
+      developerPlatformClient: buildDeveloperPlatformClient(),
     })
 
     // Then

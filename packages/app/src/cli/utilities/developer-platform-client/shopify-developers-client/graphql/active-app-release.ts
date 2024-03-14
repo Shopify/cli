@@ -8,6 +8,7 @@ export const ActiveAppReleaseQuery = gql`
         version {
           modules {
             gid
+            uid
             handle
             config
             specification {
@@ -35,6 +36,7 @@ export interface AppModuleSpecification {
 
 export interface AppModule {
   gid: string
+  uid: string
   handle: string
   config: object
   specification: AppModuleSpecification

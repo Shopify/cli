@@ -14,6 +14,7 @@ import {
   testAppConfigExtensions,
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -36,44 +37,48 @@ const ORG1 = {
   apps: {nodes: []},
 }
 
-const developerPlatformClient = testDeveloperPlatformClient({
-  async appFromId(clientId: string): Promise<OrganizationApp> {
-    switch (clientId) {
-      case '123':
-        return APP1
-      case APP.apiKey:
-        return APP
-      default:
-        throw new Error(`App not found for client ID ${clientId}`)
-    }
-  },
+function buildDeveloperPlatformClient(): DeveloperPlatformClient {
+  return testDeveloperPlatformClient({
+    async appFromId(clientId: string): Promise<OrganizationApp> {
+      switch (clientId) {
+        case '123':
+          return APP1
+        case APP.apiKey:
+          return APP
+        default:
+          throw new Error(`App not found for client ID ${clientId}`)
+      }
+    },
 
-  async organizations() {
-    return [ORG1]
-  },
+    async organizations() {
+      return [ORG1]
+    },
 
-  async appsForOrg(organizationId: string, _term?: string) {
-    switch (organizationId) {
-      case '123':
-        return {
-          apps: [APP, APP1].map((org) => ({
-            id: org.id,
-            title: org.title,
-            apiKey: org.apiKey,
-            organizationId: org.id,
-          })),
-          hasMorePages: false,
-        }
-      default:
-        throw new Error(`Organization not found for ID ${organizationId}`)
-    }
-  },
-})
+    async appsForOrg(organizationId: string, _term?: string) {
+      switch (organizationId) {
+        case '123':
+          return {
+            apps: [APP, APP1].map((org) => ({
+              id: org.id,
+              title: org.title,
+              apiKey: org.apiKey,
+              organizationId: org.id,
+            })),
+            hasMorePages: false,
+          }
+        default:
+          throw new Error(`Organization not found for ID ${organizationId}`)
+      }
+    },
+  })
+}
 
-const infoOptions: InfoOptions = {
-  format: 'text',
-  webEnv: false,
-  developerPlatformClient,
+function infoOptions(): InfoOptions {
+  return {
+    format: 'text',
+    webEnv: false,
+    developerPlatformClient: buildDeveloperPlatformClient(),
+  }
 }
 
 beforeEach(() => {
@@ -89,7 +94,7 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions))
+      const result = stringifyMessage(await info(app, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch('Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run `yarn shopify upgrade`')
     })
@@ -132,7 +137,7 @@ describe('info', () => {
       })
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions))
+      const result = stringifyMessage(await info(app, infoOptions()))
 
       // Then
       expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
@@ -159,7 +164,7 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions))
+      const result = stringifyMessage(await info(app, infoOptions()))
 
       // Then
       expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
@@ -178,7 +183,7 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions))
+      const result = stringifyMessage(await info(app, infoOptions()))
 
       // Then
       expect(unstyled(result)).toMatch(/App name\s*Not yet configured/)
@@ -196,7 +201,7 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions))
+      const result = stringifyMessage(await info(app, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch('Shopify CLI       2.2.2')
       expect(unstyled(result)).not.toMatch('CLI reminder')
@@ -212,7 +217,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, {...infoOptions, webEnv: true})
+      const result = await info(app, {...infoOptions(), webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -233,7 +238,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, {...infoOptions, format: 'json', webEnv: true})
+      const result = await info(app, {...infoOptions(), format: 'json', webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -282,7 +287,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
-      const result = await info(app, infoOptions)
+      const result = await info(app, infoOptions())
 
       // Then
       expect(result).toContain('Extensions with errors')
@@ -321,7 +326,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
-      const result = await info(app, infoOptions)
+      const result = await info(app, infoOptions())
 
       // Then
       expect(result).toContain('📂 handle-for-extension-1')

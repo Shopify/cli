@@ -1,6 +1,7 @@
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {isValueSet} from './trigger.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface WebhookTriggerFlags {
@@ -9,6 +10,7 @@ export interface WebhookTriggerFlags {
   deliveryMethod?: string
   address?: string
   clientSecret?: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export const DELIVERY_METHOD = {
@@ -88,26 +90,26 @@ export function parseAddressAndMethod(flags: WebhookTriggerFlags): [string | und
 /**
  * Returns valid api-version - topic pairs
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param flags - Command flags
  * @returns [apiVersion, topic]
  */
 export async function parseVersionAndTopic(
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
   flags: WebhookTriggerFlags,
 ): Promise<[string | undefined, string | undefined]> {
   let topic
   let apiVersion
   const versionWasPassed = isValueSet(flags.apiVersion)
   if (versionWasPassed) {
-    apiVersion = parseApiVersionFlag(flags.apiVersion as string, await requestApiVersions(token))
+    apiVersion = parseApiVersionFlag(flags.apiVersion as string, await requestApiVersions(developerPlatformClient))
   }
   const topicWasPassed = isValueSet(flags.topic)
   if (topicWasPassed && versionWasPassed) {
     topic = parseTopicFlag(
       flags.topic as string,
       flags.apiVersion as string,
-      await requestTopics(token, flags.apiVersion as string),
+      await requestTopics(developerPlatformClient, flags.apiVersion as string),
     )
   } else if (topicWasPassed) {
     topic = flags.topic

@@ -325,8 +325,6 @@ describe('uploadExtensionsBundle', () => {
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       const developerPlatformClient = testDeveloperPlatformClient()
-      const {deploy} = developerPlatformClient
-      const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
 
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
@@ -340,7 +338,7 @@ describe('uploadExtensionsBundle', () => {
       })
 
       // Then
-      expect(deploySpy).toHaveBeenCalledWith({
+      expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -362,8 +360,6 @@ describe('uploadExtensionsBundle', () => {
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       const developerPlatformClient = testDeveloperPlatformClient()
-      const {deploy} = developerPlatformClient
-      const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
 
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
@@ -379,7 +375,7 @@ describe('uploadExtensionsBundle', () => {
       })
 
       // Then
-      expect(deploySpy).toHaveBeenCalledWith({
+      expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -399,8 +395,6 @@ describe('uploadExtensionsBundle', () => {
 
   test('calls a mutation on partners when there are no extensions', async () => {
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {deploy} = developerPlatformClient
-    const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
     const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
@@ -414,7 +408,7 @@ describe('uploadExtensionsBundle', () => {
     })
 
     // Then
-    expect(deploySpy).toHaveBeenCalledWith({
+    expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
       apiKey: 'app-id',
       skipPublish: false,
       message: undefined,

@@ -16,8 +16,7 @@ export const CreateAppMutation = gql`
 
 export interface CreateAppMutationVariables {
   appModules: {
-    uuid: string
-    title: string
+    uid: string
     specificationIdentifier: string
     config: string
   }[]

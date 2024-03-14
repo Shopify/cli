@@ -51,10 +51,6 @@ describe('updateExtensionDraft()', () => {
           userErrors: [],
         },
       })
-      const {updateExtension} = developerPlatformClient
-      const updateExtensionSpy = vi
-        .spyOn(developerPlatformClient, 'updateExtension')
-        .mockImplementation(updateExtension)
 
       await writeFile(mockExtension.outputPath, 'test content')
 
@@ -67,7 +63,7 @@ describe('updateExtensionDraft()', () => {
         stderr,
       })
 
-      expect(updateExtensionSpy).toHaveBeenCalledWith({
+      expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
         apiKey,
         context: '',
         handle,
@@ -87,8 +83,6 @@ describe('updateExtensionDraft()', () => {
   test('updates draft successfully with context for extension with target', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const mockExtension = await testPaymentExtensions()
-    const {updateExtension} = developerPlatformClient
-    const updateExtensionSpy = vi.spyOn(developerPlatformClient, 'updateExtension').mockImplementation(updateExtension)
 
     await updateExtensionDraft({
       extension: mockExtension,
@@ -99,7 +93,7 @@ describe('updateExtensionDraft()', () => {
       stderr,
     })
 
-    expect(updateExtensionSpy).toHaveBeenCalledWith({
+    expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
       apiKey,
       context: 'payments.offsite.render',
       handle: mockExtension.handle,
@@ -132,11 +126,6 @@ describe('updateExtensionDraft()', () => {
 
       await mkdir(joinPath(tmpDir, 'dist'))
 
-      const {updateExtension} = developerPlatformClient
-      const updateExtensionSpy = vi
-        .spyOn(developerPlatformClient, 'updateExtension')
-        .mockImplementation(updateExtension)
-
       await updateExtensionDraft({
         extension: mockExtension,
         developerPlatformClient,
@@ -146,7 +135,7 @@ describe('updateExtensionDraft()', () => {
         stderr,
       })
 
-      expect(updateExtensionSpy).toHaveBeenCalledWith({
+      expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
         apiKey,
         context: '',
         handle,
