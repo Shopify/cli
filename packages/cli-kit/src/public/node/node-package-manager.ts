@@ -97,7 +97,7 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
 
 export function currentProcessIsGlobal(env = process.env): boolean {
   // npm, yarn, pnpm and bun define this if run locally.
-  // If undefined, we can assume it's global. But there is no foolproof way to know.
+  // If undefined, we can assume it's global (But there is no foolproof way to know)
   return env.npm_config_user_agent === undefined
 }
 
