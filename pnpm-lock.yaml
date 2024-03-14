@@ -46,6 +46,9 @@ importers:
       '@shopify/eslint-plugin-cli':
         specifier: file:packages/eslint-plugin-cli
         version: file:packages/eslint-plugin-cli(eslint@8.49.0)(prettier@2.8.8)(typescript@5.2.2)(vitest@0.34.4)
+      '@shopify/generate-docs':
+        specifier: ^0.13.2
+        version: 0.13.2
       '@shopify/typescript-configs':
         specifier: ^5.1.0
         version: 5.1.0
@@ -5277,6 +5280,15 @@ packages:
       cachedir: 2.3.0
       node-fetch: 3.3.1
     dev: false
+
+  /@shopify/generate-docs@0.13.2:
+    resolution: {integrity: sha512-3F733/9wXQMSXbOH2t6WEmmtw+4zao4K51DLOZy/ppxtTFnHywCGXTeTa/E6/He4jrX2kPaZP171IrIPd4E85Q==}
+    hasBin: true
+    dependencies:
+      '@types/react': 17.0.2
+      globby: 11.1.0
+      typescript: 5.2.2
+    dev: true
 
   /@shopify/i18n@1.0.9:
     resolution: {integrity: sha512-ZxoIB8UTmWHvRig6E4zvYJt3fAa24iJGYTQLHsjZBV3cmqi/AiSet9Qys7GkqzKcYV/4xukZIfpeWXVjef3v7A==}
