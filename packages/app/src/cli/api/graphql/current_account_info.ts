@@ -26,8 +26,8 @@ export interface CurrentAccountInfoSchema {
   currentAccountInfo: AccountInfoSchema
 }
 
-export async function getCurrentAccountInfo(DeveloperPlatformClient: DeveloperPlatformClient) {
-  const {currentAccountInfo} = await DeveloperPlatformClient.currentAccountInfo()
+export async function getCurrentAccountInfo(developerPlatformClient: DeveloperPlatformClient) {
+  const {currentAccountInfo} = await developerPlatformClient.currentAccountInfo()
 
   if (!currentAccountInfo) {
     throw new AbortError('Unable to get current user account')

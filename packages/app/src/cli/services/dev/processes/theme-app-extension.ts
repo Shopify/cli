@@ -6,12 +6,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {
-  AdminSession,
-  ensureAuthenticatedAdmin,
-  ensureAuthenticatedPartners,
-  ensureAuthenticatedStorefront,
-} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 
 // Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
 const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000
@@ -29,16 +24,16 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
 
 export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
-  {adminSession, themeExtensionServerArgs: args, storefrontToken},
+  {adminSession, themeExtensionServerArgs: args, storefrontToken, developerPlatformClient},
 ) => {
   const refreshSequence = (attempt = 0) => {
-    outputDebug(`Refreshing partners token (attempt ${attempt})...`, stdout)
-    refreshToken()
+    outputDebug(`Refreshing Developer Platform token (attempt ${attempt})...`, stdout)
+    refreshToken(developerPlatformClient)
       .then(() => {
-        outputDebug('Refreshed partners token successfully', stdout)
+        outputDebug('Refreshed Developer Platform token successfully', stdout)
       })
       .catch((error) => {
-        outputDebug(`Failed to refresh partners token: ${error}`, stderr)
+        outputDebug(`Failed to refresh Developer Platform token: ${error}`, stderr)
         if (attempt < 3) {
           // Retry after 30 seconds. Sometimes we see random ECONNREFUSED errors
           // so let's let the network sort itself out and retry.
@@ -50,7 +45,7 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
   }
   setInterval(refreshSequence, PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS)
 
-  await refreshToken()
+  await refreshToken(developerPlatformClient)
   await execCLI2(['extension', 'serve', ...args], {
     store: adminSession.storeFqdn,
     adminToken: adminSession.token,
@@ -115,8 +110,8 @@ export async function setupPreviewThemeAppExtensionsProcess({
   }
 }
 
-async function refreshToken() {
-  const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+async function refreshToken(developerPlatformClient: DeveloperPlatformClient) {
+  const newToken = await developerPlatformClient.refreshToken()
   if (useEmbeddedThemeCLI()) {
     await execCLI2(['theme', 'token', '--partners', newToken])
   }

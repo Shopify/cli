@@ -12,9 +12,6 @@ import {
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
-import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {describe, expect, vi, afterEach, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -41,21 +38,13 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-function buildDeveloperPlatformClient(): DeveloperPlatformClient {
-  return testDeveloperPlatformClient({
-    async specifications(_appId: string): Promise<ExtensionSpecification[]> {
-      return loadLocalExtensionsSpecifications()
-    },
-  })
-}
-
 describe('generate', () => {
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient: buildDeveloperPlatformClient()})
+    await generate({directory: '/', reset: false, developerPlatformClient: testDeveloperPlatformClient()})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -77,7 +66,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient: buildDeveloperPlatformClient()})
+    await generate({directory: '/', reset: false, developerPlatformClient: testDeveloperPlatformClient()})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -99,7 +88,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient: buildDeveloperPlatformClient()})
+    await generate({directory: '/', reset: false, developerPlatformClient: testDeveloperPlatformClient()})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -125,7 +114,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       template: 'unknown_type',
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
@@ -142,7 +131,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       template: 'theme_app_extension',
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
@@ -159,7 +148,7 @@ describe('generate', () => {
       directory: '/',
       reset: false,
       template: 'product_discounts',
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
@@ -176,7 +165,7 @@ describe('generate', () => {
       reset: false,
       template: 'subscription_ui',
       flavor: 'unknown',
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then

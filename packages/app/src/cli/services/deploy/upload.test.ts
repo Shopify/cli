@@ -12,16 +12,13 @@ import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/crypto')
 
 describe('uploadWasmBlob', () => {
   let extension: ExtensionInstance<FunctionConfigType>
   let identifiers: Identifiers
   let apiKey: string
-  let token: string
 
   beforeEach(async () => {
     extension = await testFunctionExtension({
@@ -53,7 +50,6 @@ describe('uploadWasmBlob', () => {
       },
     })
     apiKey = 'api-key'
-    token = 'token'
     identifiers = {
       app: 'api=key',
       extensions: {},

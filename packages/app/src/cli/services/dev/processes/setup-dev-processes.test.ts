@@ -14,7 +14,6 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
-import {fetchAppExtensionRegistrations} from '../fetch.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
@@ -39,20 +38,6 @@ beforeEach(() => {
     token: 'admin-token',
   })
   vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
-  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {
-      extensionRegistrations: [
-        {
-          type: 'THEME_APP_EXTENSION',
-          id: '123',
-          uuid: '123',
-          title: 'mock-theme',
-        },
-      ],
-      configurationRegistrations: [],
-      dashboardManagedExtensionRegistrations: [],
-    },
-  })
 })
 
 describe('setup-dev-processes', () => {

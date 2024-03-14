@@ -1,7 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
 import {uploadWasmBlob, uploadExtensionsBundle} from './deploy/upload.js'
-import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {
   testApp,
@@ -538,9 +537,6 @@ async function testDeployBundle({
     location: 'https://partners.shopify.com/0/apps/0/versions/1',
   })
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
-  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
-  })
 
   await deploy({
     app,

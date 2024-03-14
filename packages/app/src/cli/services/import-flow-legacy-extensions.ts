@@ -23,8 +23,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
 
   await logMetadataForLoadedContext(remoteApp)
 
-  const partnersSession = await developerPlatformClient.session()
-  const flowExtensions = await getActiveDashboardExtensions({token: partnersSession.token, apiKey: remoteApp.apiKey})
+  const flowExtensions = await getActiveDashboardExtensions({developerPlatformClient, apiKey: remoteApp.apiKey})
 
   if (flowExtensions.length === 0) {
     renderSuccess({headline: ['No extensions to migrate.']})

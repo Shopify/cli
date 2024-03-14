@@ -1,5 +1,4 @@
 import {
-  fetchAppExtensionRegistrations,
   fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
@@ -1638,13 +1637,6 @@ describe('ensureDraftExtensionsPushContext', () => {
     const opts = draftExtensionsPushOptions(app, extras)
     opts.reset = true
 
-    opts.developerPlatformClient!.appsForOrg = async () => ({apps: [APP1, APP2], hasMorePages: false})
-    opts.developerPlatformClient!.orgAndApps = async () => ({
-      organization: ORG1,
-      apps: [APP1, APP2],
-      hasMorePages: false,
-    })
-
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
@@ -1743,9 +1735,6 @@ describe('ensureThemeExtensionDevContext', () => {
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
-    })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',
       uuid: 'UUID',
@@ -1765,7 +1754,7 @@ describe('ensureThemeExtensionDevContext', () => {
 })
 
 describe('ensureVersionsListContext', () => {
-  test('returns the partners token and app', async () => {
+  test('returns the developer platform client and the app', async () => {
     // Given
     const app = testApp()
     const developerPlatformClient = buildDeveloperPlatformClient()

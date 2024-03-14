@@ -1,7 +1,7 @@
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from './migrate-flow-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
@@ -121,21 +121,17 @@ describe('migrateExtensions()', () => {
     const appId = '123abc'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {migrateFlowExtension} = developerPlatformClient
-    const migrateFlowExtensionSpy = vi
-      .spyOn(developerPlatformClient, 'migrateFlowExtension')
-      .mockImplementation(migrateFlowExtension)
 
     // When
     await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
 
     // Then
-    expect(migrateFlowExtensionSpy).toHaveBeenCalledTimes(extensionsToMigrate.length)
-    expect(migrateFlowExtensionSpy).toHaveBeenCalledWith({
+    expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledTimes(extensionsToMigrate.length)
+    expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledWith({
       apiKey: appId,
       registrationId: extensionsToMigrate[0]!.remote.id,
     })
-    expect(migrateFlowExtensionSpy).toHaveBeenCalledWith({
+    expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledWith({
       apiKey: appId,
       registrationId: extensionsToMigrate[1]!.remote.id,
     })

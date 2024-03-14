@@ -66,14 +66,12 @@ describe('updateURLs', () => {
       ...urls,
     }
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {updateURLs: updateURLsAPIcall} = developerPlatformClient
-    const updateURLsSpy = vi.spyOn(developerPlatformClient, 'updateURLs').mockImplementation(updateURLsAPIcall)
 
     // When
     await updateURLs(urls, 'apiKey', developerPlatformClient)
 
     // Then
-    expect(updateURLsSpy).toHaveBeenCalledWith(expectedVariables)
+    expect(developerPlatformClient.updateURLs).toHaveBeenCalledWith(expectedVariables)
   })
 
   test('when config as code is enabled, the configuration is updated as well', async () => {
@@ -153,8 +151,6 @@ describe('updateURLs', () => {
       },
     }
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {updateURLs: updateURLsAPIcall} = developerPlatformClient
-    const updateURLsSpy = vi.spyOn(developerPlatformClient, 'updateURLs').mockImplementation(updateURLsAPIcall)
     const expectedVariables = {
       apiKey: 'apiKey',
       ...urls,
@@ -164,7 +160,7 @@ describe('updateURLs', () => {
     await updateURLs(urls, 'apiKey', developerPlatformClient)
 
     // Then
-    expect(updateURLsSpy).toHaveBeenCalledWith(expectedVariables)
+    expect(developerPlatformClient.updateURLs).toHaveBeenCalledWith(expectedVariables)
   })
 
   test('also updates app proxy url when config as code is enabled', async () => {

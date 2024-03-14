@@ -2,7 +2,6 @@ import {PartnersClient} from './developer-platform-client/partners-client.js'
 import {ShopifyDevelopersClient} from './developer-platform-client/shopify-developers-client.js'
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
@@ -38,6 +37,7 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
+import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -88,10 +88,10 @@ export interface DeveloperPlatformClient {
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (appId: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
-  orgFromId: (orgId: string) => Promise<Organization>
+  orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
-  specifications: (appId: string) => Promise<ExtensionSpecification[]>
+  specifications: (appId: string) => Promise<RemoteSpecification[]>
   templateSpecifications: (appId: string) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>

@@ -1,10 +1,7 @@
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from './migrate-to-ui-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {describe, expect, vi, test} from 'vitest'
-
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
+import {describe, expect, test} from 'vitest'
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
