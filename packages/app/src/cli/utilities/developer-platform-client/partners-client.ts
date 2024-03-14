@@ -13,7 +13,6 @@ import {
   filterDisabledBetas,
 } from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {
@@ -173,11 +172,6 @@ export class PartnersClient implements DeveloperPlatformClient {
   async organizations(): Promise<Organization[]> {
     const result: AllOrganizationsQuerySchema = await this.makeRequest(AllOrganizationsQuery)
     return result.organizations.nodes
-  }
-
-  async selectOrg(): Promise<Organization> {
-    const organizations = await this.organizations()
-    return selectOrganizationPrompt(organizations)
   }
 
   async orgFromId(orgId: string): Promise<Organization> {

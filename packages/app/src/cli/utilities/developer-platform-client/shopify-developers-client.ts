@@ -16,9 +16,8 @@ import {
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {fetchOrganizations, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
+import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
@@ -98,11 +97,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async organizations(): Promise<Organization[]> {
     return [ORG1]
-  }
-
-  async selectOrg(): Promise<Organization> {
-    const organizations = await fetchOrganizations(this)
-    return selectOrganizationPrompt(organizations)
   }
 
   async orgFromId(orgId: string): Promise<Organization> {
