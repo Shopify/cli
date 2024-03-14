@@ -1,10 +1,7 @@
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from './migrate-flow-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
@@ -154,7 +151,12 @@ describe('migrateExtensions()', () => {
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
     // When
-    const result = await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
+    const result = await migrateFlowExtensions(
+      extensionsToMigrate,
+      appId,
+      remoteExtensions,
+      testDeveloperPlatformClient(),
+    )
 
     // Then
     expect(result).toStrictEqual(remoteExtensions.map((remote) => ({...remote, type: 'FLOW_ACTION'})))

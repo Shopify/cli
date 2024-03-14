@@ -16,7 +16,6 @@ import {
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -50,8 +49,6 @@ const defaultOptions: FrontendURLOptions = {
     port: 1111,
   },
 }
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('updateURLs', () => {
   test('sends a request to update the URLs', async () => {
@@ -93,7 +90,7 @@ describe('updateURLs', () => {
     }
 
     // When
-    await updateURLs(urls, apiKey, developerPlatformClient, appWithConfig)
+    await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
     expect(writeAppConfigurationFile).toHaveBeenCalledWith(
@@ -190,7 +187,7 @@ describe('updateURLs', () => {
     }
 
     // When
-    await updateURLs(urls, apiKey, developerPlatformClient, appWithConfig)
+    await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
     expect(writeAppConfigurationFile).toHaveBeenCalledWith(

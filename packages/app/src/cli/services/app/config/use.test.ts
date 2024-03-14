@@ -10,7 +10,6 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -24,7 +23,6 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context.js')
 
 const REMOTE_APP = testOrganizationApp()
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('use', () => {
   test('clears currentConfiguration when reset is true', async () => {
@@ -34,7 +32,7 @@ describe('use', () => {
         directory: tmp,
         configName: 'invalid',
         reset: true,
-        developerPlatformClient,
+        developerPlatformClient: testDeveloperPlatformClient(),
       }
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
 
@@ -139,7 +137,7 @@ describe('use', () => {
       const options: UseOptions = {
         directory: tmp,
         configName: 'staging',
-        developerPlatformClient,
+        developerPlatformClient: testDeveloperPlatformClient(),
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
 
@@ -178,7 +176,7 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.local.toml')
       const options: UseOptions = {
         directory: tmp,
-        developerPlatformClient,
+        developerPlatformClient: testDeveloperPlatformClient(),
       }
       vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
@@ -239,7 +237,7 @@ describe('use', () => {
         directory,
         configName: 'something',
         warningContent: {headline: "we're doomed. DOOMED."},
-        developerPlatformClient,
+        developerPlatformClient: testDeveloperPlatformClient(),
       }
 
       // When
@@ -259,7 +257,12 @@ describe('use', () => {
       vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
-      const options = {directory, configName: 'something', shouldRenderSuccess: false, developerPlatformClient}
+      const options = {
+        directory,
+        configName: 'something',
+        shouldRenderSuccess: false,
+        developerPlatformClient: testDeveloperPlatformClient(),
+      }
 
       // When
       await use(options)
@@ -278,7 +281,7 @@ describe('use', () => {
       vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
-      const options = {directory, configName: 'something', developerPlatformClient}
+      const options = {directory, configName: 'something', developerPlatformClient: testDeveloperPlatformClient()}
 
       // When
       await use(options)
