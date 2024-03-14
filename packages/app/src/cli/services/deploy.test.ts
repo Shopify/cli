@@ -61,6 +61,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -91,6 +92,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -119,6 +121,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -147,6 +150,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -363,6 +367,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -401,6 +406,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id2',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -441,6 +447,7 @@ describe('deploy', () => {
       app,
       remoteApp: {
         id: 'app-id',
+        apiKey: 'api-key',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
@@ -478,7 +485,7 @@ describe('deploy', () => {
 
 interface TestDeployBundleInput {
   app: AppInterface
-  remoteApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
+  remoteApp?: Omit<OrganizationApp, 'apiSecretKeys'>
   options?: {
     force?: boolean
     noRelease?: boolean

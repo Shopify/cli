@@ -74,7 +74,11 @@ export async function requestAppInfo(
   developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
 ): Promise<AppCredentials> {
-  const fullSelectedApp = await developerPlatformClient.appFromId(apiKey)
+  const fullSelectedApp = await developerPlatformClient.appFromId({
+    id: apiKey,
+    apiKey,
+    organizationId: '1',
+  })
   const credentials: AppCredentials = {}
   if (fullSelectedApp === undefined) {
     return credentials

@@ -1,6 +1,7 @@
 import {fetchAppFromConfigOrSelect} from './fetch-app-from-config-or-select.js'
 import {selectApp} from './select-app.js'
 import {AppInterface} from '../../models/app/app.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {
   testApp,
   testAppWithConfig,
@@ -20,8 +21,8 @@ const APP1 = testOrganizationApp()
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId(clientId: string) {
-      expect(clientId).toBe(APP1.apiKey)
+    async appFromId({apiKey}: MinimalAppIdentifiers) {
+      expect(apiKey).toBe(APP1.apiKey)
       return APP1
     },
   })

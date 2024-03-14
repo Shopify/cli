@@ -25,7 +25,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {MinimalAppIdentifiers, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -160,11 +160,11 @@ const draftExtensionsPushOptions = (
 function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     ...extras,
-    async appFromId(clientId: string) {
+    async appFromId({apiKey}: MinimalAppIdentifiers) {
       for (const app of [APP1, APP2]) {
-        if (clientId === app.apiKey) return app
+        if (apiKey === app.apiKey) return app
       }
-      throw new Error(`Unexpected client id: ${clientId}`)
+      throw new Error(`Unexpected client id: ${apiKey}`)
     },
     async appsForOrg(orgId: string) {
       if (orgId !== ORG1.id) {
@@ -1717,7 +1717,7 @@ describe('ensureThemeExtensionDevContext', () => {
     }
 
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: (_appId: string) => Promise.resolve(mockedExtensionRegistrations),
+      appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(mockedExtensionRegistrations),
     })
 
     // When

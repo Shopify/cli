@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {Organization} from '../../models/organization.js'
+import {MinimalAppIdentifiers, Organization} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
@@ -41,10 +41,10 @@ const APPS = [
 function mockDeveloperPlatformClient() {
   const developerPlatformClient = testDeveloperPlatformClient({
     createApp: async () => ({...APP1, newApp: true}),
-    async appFromId(id: string) {
-      if (id === APP1.apiKey) return APP1
-      if (id === APP2.apiKey) return APP2
-      throw new Error(`App with client ID ${id} not found`)
+    async appFromId({apiKey}: MinimalAppIdentifiers) {
+      if (apiKey === APP1.apiKey) return APP1
+      if (apiKey === APP2.apiKey) return APP2
+      throw new Error(`App with client ID ${apiKey} not found`)
     },
   })
   return {developerPlatformClient}
