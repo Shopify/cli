@@ -39,6 +39,12 @@ import {
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
+import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
+import {
+  MigrateToUiExtensionSchema,
+  MigrateToUiExtensionVariables,
+} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -858,6 +864,13 @@ const currentAccountInfoResponse: CurrentAccountInfoSchema = {
   },
 }
 
+const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
+  migrateToUiExtension: {
+    migratedToUiExtension: true,
+    userErrors: [],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub = {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -897,6 +910,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
+    targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = {}

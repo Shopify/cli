@@ -51,6 +51,12 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
+import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
+import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
+import {
+  MigrateToUiExtensionVariables,
+  MigrateToUiExtensionSchema,
+} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -304,6 +310,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
     throw new BugError('Not implemented: currentAccountInfo')
+  }
+
+  async targetSchemaDefinition(_input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
+    throw new BugError('Not implemented: targetSchemaDefinition')
+  }
+
+  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
+    throw new BugError('Not implemented: apiSchemaDefinition')
+  }
+
+  async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
+    throw new BugError('Not implemented: migrateToUiExtension')
   }
 }
 

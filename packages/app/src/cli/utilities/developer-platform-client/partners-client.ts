@@ -98,6 +98,21 @@ import {
   RemoteTemplateSpecificationsVariables,
 } from '../../api/graphql/template_specifications.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
+import {
+  TargetSchemaDefinitionQueryVariables,
+  TargetSchemaDefinitionQuerySchema,
+  TargetSchemaDefinitionQuery,
+} from '../../api/graphql/functions/target_schema_definition.js'
+import {
+  ApiSchemaDefinitionQueryVariables,
+  ApiSchemaDefinitionQuerySchema,
+  ApiSchemaDefinitionQuery,
+} from '../../api/graphql/functions/api_schema_definition.js'
+import {
+  MigrateToUiExtensionVariables,
+  MigrateToUiExtensionSchema,
+  MigrateToUiExtensionQuery,
+} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -351,5 +366,19 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
     return this.makeRequest(CurrentAccountInfoQuery)
+  }
+
+  async targetSchemaDefinition(input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
+    const response: TargetSchemaDefinitionQuerySchema = await this.makeRequest(TargetSchemaDefinitionQuery, input)
+    return response.definition
+  }
+
+  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
+    const response: ApiSchemaDefinitionQuerySchema = await this.makeRequest(ApiSchemaDefinitionQuery, input)
+    return response.definition
+  }
+
+  async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
+    return this.makeRequest(MigrateToUiExtensionQuery, input)
   }
 }

@@ -33,7 +33,12 @@ export async function ensureExtensionsIds(
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
     if (!confirmedMigration) throw new AbortSilentError()
-    remoteExtensions = await migrateExtensionsToUIExtension(uiExtensionsToMigrate, options.appId, remoteExtensions)
+    remoteExtensions = await migrateExtensionsToUIExtension(
+      uiExtensionsToMigrate,
+      options.appId,
+      remoteExtensions,
+      options.developerPlatformClient,
+    )
   }
 
   if (flowExtensionsToMigrate.length > 0) {
