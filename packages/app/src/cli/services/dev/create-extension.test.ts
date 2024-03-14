@@ -1,15 +1,11 @@
 import {createExtension} from './create-extension.js'
 import {extensionCreateResponse, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 describe('createExtension', () => {
   test('sends request to create extension and returns it', async () => {
     // Given
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {createExtension: createExtensionQuery} = developerPlatformClient
-    const createExtensionSpy = vi
-      .spyOn(developerPlatformClient, 'createExtension')
-      .mockImplementation(createExtensionQuery)
 
     const variables = {
       apiKey: '123',
@@ -25,16 +21,12 @@ describe('createExtension', () => {
 
     // Then
     expect(got).toEqual(extensionCreateResponse.extensionCreate.extensionRegistration)
-    expect(createExtensionSpy).toHaveBeenCalledWith(variables)
+    expect(developerPlatformClient.createExtension).toHaveBeenCalledWith(variables)
   })
 
   test('sends request to create extension with context and returns it', async () => {
     // Given
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {createExtension: createExtensionQuery} = developerPlatformClient
-    const createExtensionSpy = vi
-      .spyOn(developerPlatformClient, 'createExtension')
-      .mockImplementation(createExtensionQuery)
 
     const variables = {
       apiKey: '321',
@@ -56,6 +48,6 @@ describe('createExtension', () => {
 
     // Then
     expect(got).toEqual(extensionCreateResponse.extensionCreate.extensionRegistration)
-    expect(createExtensionSpy).toHaveBeenCalledWith(variables)
+    expect(developerPlatformClient.createExtension).toHaveBeenCalledWith(variables)
   })
 })
