@@ -29,8 +29,8 @@ import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
-
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+// eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
