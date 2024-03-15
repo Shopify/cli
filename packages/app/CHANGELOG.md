@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.57.1
+
+### Patch Changes
+
+- cc14243c9: Fix link command for apps with empty scopes
+  - @shopify/cli-kit@3.57.1
+  - @shopify/plugin-cloudflare@3.57.1
+
 ## 3.57.0
 
 ### Minor Changes
