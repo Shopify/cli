@@ -4,9 +4,8 @@ import {
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
 import {AppInterface} from '../models/app/app.js'
-import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -29,11 +28,9 @@ interface ReleaseOptions {
 
 export async function release(options: ReleaseOptions) {
   const {developerPlatformClient, app, remoteApp} = await ensureReleaseContext(options)
-  const partnerSession = await developerPlatformClient.session()
-  const token = partnerSession.token
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
-    token,
+    developerPlatformClient,
     remoteApp.apiKey,
     options.version,
   )
@@ -69,7 +66,7 @@ export async function release(options: ReleaseOptions) {
     {
       title: 'Releasing version',
       task: async (context: Context) => {
-        context.appRelease = await partnersRequest(AppRelease, token, variables)
+        context.appRelease = await developerPlatformClient.release(variables)
       },
     },
   ]

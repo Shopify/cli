@@ -56,17 +56,12 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   }
 }
 
-interface ExtensionsIdentifiersReleaseBreakdown {
-  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
-  versionDetails: Awaited<ReturnType<typeof versionDiffByVersion>>['versionDetails']
-}
-
 export async function extensionsIdentifiersReleaseBreakdown(
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
   version: string,
-): Promise<ExtensionsIdentifiersReleaseBreakdown> {
-  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, token)
+) {
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, developerPlatformClient)
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
@@ -294,19 +289,19 @@ function loadExtensionsIdentifiersBreakdown(
     ) || []
 
   const extensionsToUpdate = Object.entries(localRegistration)
-    .filter(([_identifier, uuid]) => extensionModules.map((module) => module.registrationUuid).includes(uuid))
+    .filter(([_identifier, uuid]) => extensionModules.map((module) => module.registrationUuid!).includes(uuid))
     .map(([identifier, _uuid]) => identifier)
 
   let extensionsToCreate = Object.entries(localRegistration)
-    .filter(([_identifier, uuid]) => !extensionModules.map((module) => module.registrationUuid).includes(uuid))
+    .filter(([_identifier, uuid]) => !extensionModules.map((module) => module.registrationUuid!).includes(uuid))
     .map(([identifier, _uuid]) => identifier)
   extensionsToCreate = Array.from(new Set(extensionsToCreate.concat(toCreate.map((source) => source.localIdentifier))))
 
   const extensionsOnlyRemote = extensionModules
     .filter(
       (module) =>
-        !Object.values(localRegistration).includes(module.registrationUuid) &&
-        !toCreate.map((source) => source.localIdentifier).includes(module.registrationUuid),
+        !Object.values(localRegistration).includes(module.registrationUuid!) &&
+        !toCreate.map((source) => source.localIdentifier).includes(module.registrationUuid!),
     )
     .map((module) => module.registrationTitle)
 
@@ -324,7 +319,7 @@ function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[],
     ) || []
 
   const versionsNotIncluded = (version: AppModuleVersion) =>
-    !currentRegistrations.map((registration) => registration.uuid).includes(version.registrationUuid)
+    !currentRegistrations.map((registration) => registration.uuid).includes(version.registrationUuid!)
   const onlyRemote = currentVersions
     .filter(versionsNotIncluded)
     .map((module) => buildDashboardBreakdownInfo(module.registrationTitle))

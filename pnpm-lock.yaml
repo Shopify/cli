@@ -468,6 +468,9 @@ importers:
       macaddress:
         specifier: 0.5.3
         version: 0.5.3
+      minimatch:
+        specifier: 9.0.3
+        version: 9.0.3
       mrmime:
         specifier: 1.0.1
         version: 1.0.1

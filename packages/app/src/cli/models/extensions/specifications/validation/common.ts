@@ -15,8 +15,17 @@ export const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   message: 'Only https urls are allowed',
 }).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-export const UriValidation = zod.union([
-  zod.string().regex(httpsRegex),
-  zod.string().regex(pubSubRegex),
-  zod.string().regex(arnRegex),
-])
+export const UriValidation = zod.union(
+  [
+    zod.string({invalid_type_error: 'Value must be string'}).regex(httpsRegex, {
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+    }),
+    zod.string({invalid_type_error: 'Value must be string'}).regex(pubSubRegex, {
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+    }),
+    zod.string({invalid_type_error: 'Value must be string'}).regex(arnRegex, {
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+    }),
+  ],
+  {invalid_type_error: 'Invalid URI format'},
+)

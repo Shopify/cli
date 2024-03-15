@@ -1,6 +1,6 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {BetaFlag} from '../dev/fetch.js'
+import {BetaFlag, fetchOrganizations} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {
@@ -12,7 +12,7 @@ import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
   const developerPlatformClient = selectDeveloperPlatformClient()
-  const orgs = await developerPlatformClient.organizations()
+  const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
   const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})

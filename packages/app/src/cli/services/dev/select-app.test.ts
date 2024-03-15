@@ -47,17 +47,15 @@ const APPS = [
 ]
 
 function mockDeveloperPlatformClient() {
-  const createAppFunction = async () => ({...APP1, newApp: true})
   const developerPlatformClient = testDeveloperPlatformClient({
-    createApp: createAppFunction,
+    createApp: async () => ({...APP1, newApp: true}),
     async appFromId(id: string) {
       if (id === APP1.apiKey) return APP1
       if (id === APP2.apiKey) return APP2
       throw new Error(`App with client ID ${id} not found`)
     },
   })
-  const createAppSpy = vi.spyOn(developerPlatformClient, 'createApp').mockImplementation(createAppFunction)
-  return {developerPlatformClient, createAppSpy}
+  return {developerPlatformClient}
 }
 
 beforeEach(() => {
@@ -87,12 +85,12 @@ describe('selectOrCreateApp', () => {
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
 
     // When
-    const {developerPlatformClient, createAppSpy} = mockDeveloperPlatformClient()
+    const {developerPlatformClient} = mockDeveloperPlatformClient()
     const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
 
     // Then
     expect(got).toEqual({...APP1, newApp: true})
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
-    expect(createAppSpy).toHaveBeenCalledWith(ORG1, 'app-name', {})
+    expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, 'app-name', {})
   })
 })

@@ -1,10 +1,10 @@
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export interface PublicApiVersionsSchema {
   publicApiVersions: string[]
 }
 
-const getApiVersionsQuery = `
+export const GetApiVersionsQuery = `
   query getApiVersions {
     publicApiVersions
   }
@@ -13,11 +13,11 @@ const getApiVersionsQuery = `
 /**
  * Requests available api-versions in order to validate flags or present a list of options
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @returns List of public api-versions
  */
-export async function requestApiVersions(token: string): Promise<string[]> {
-  const {publicApiVersions: result}: PublicApiVersionsSchema = await partnersRequest(getApiVersionsQuery, token)
+export async function requestApiVersions(developerPlatformClient: DeveloperPlatformClient): Promise<string[]> {
+  const {publicApiVersions: result}: PublicApiVersionsSchema = await developerPlatformClient.apiVersions()
 
   const unstableIdx = result.indexOf('unstable')
   if (unstableIdx === -1) {

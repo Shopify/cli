@@ -8,13 +8,11 @@ import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../develo
 import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   fetchAppDetailsFromApiKey,
-  fetchOrganizations,
   fetchOrgAndApps,
   fetchOrgFromId,
   filterDisabledBetas,
 } from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {
@@ -68,6 +66,25 @@ import {
   FindAppPreviewModeSchema,
   FindAppPreviewModeVariables,
 } from '../../api/graphql/find_app_preview_mode.js'
+import {
+  AppVersionsDiffQuery,
+  AppVersionsDiffSchema,
+  AppVersionsDiffVariables,
+} from '../../api/graphql/app_versions_diff.js'
+import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {
+  AppVersionByTagQuery,
+  AppVersionByTagSchema,
+  AppVersionByTagVariables,
+} from '../../api/graphql/app_version_by_tag.js'
+import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+import {
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+  sendSampleWebhookMutation,
+} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema, GetApiVersionsQuery} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables, getTopicsQuery} from '../../services/webhook/request-topics.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -153,12 +170,8 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    return fetchOrganizations(await this.session())
-  }
-
-  async selectOrg(): Promise<Organization> {
-    const organizations = await this.organizations()
-    return selectOrganizationPrompt(organizations)
+    const result: AllOrganizationsQuerySchema = await this.makeRequest(AllOrganizationsQuery)
+    return result.organizations.nodes
   }
 
   async orgFromId(orgId: string): Promise<Organization> {
@@ -222,6 +235,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AppVersionsQuery, variables)
   }
 
+  async appVersionByTag(input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
+    return this.makeRequest(AppVersionByTagQuery, input)
+  }
+
+  async appVersionsDiff(input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
+    return this.makeRequest(AppVersionsDiffQuery, input)
+  }
+
   async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.makeRequest<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
@@ -253,6 +274,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.makeRequest(AppDeploy, deployInput)
   }
 
+  async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {
+    return this.makeRequest(AppRelease, input)
+  }
+
   async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
     return this.makeRequest(GenerateSignedUploadUrl, input)
   }
@@ -274,5 +299,17 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
     return this.makeRequest(FindAppPreviewModeQuery, input)
+  }
+
+  async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+    return this.makeRequest(sendSampleWebhookMutation, input)
+  }
+
+  async apiVersions(): Promise<PublicApiVersionsSchema> {
+    return this.makeRequest(GetApiVersionsQuery)
+  }
+
+  async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+    return this.makeRequest(getTopicsQuery, input)
   }
 }

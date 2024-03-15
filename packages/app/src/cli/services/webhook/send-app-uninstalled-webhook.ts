@@ -1,14 +1,15 @@
 import {requestApiVersions} from './request-api-versions.js'
-import {getWebhookSample, SampleWebhook} from './request-sample.js'
+import {getWebhookSample, SampleWebhook, SendSampleWebhookVariables} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {DELIVERY_METHOD} from './trigger-flags.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {FetchError} from '@shopify/cli-kit/node/http'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
 interface SendUninstallWebhookToAppServerOptions {
   stdout: Writable
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   address: string
   sharedSecret: string
@@ -17,17 +18,15 @@ interface SendUninstallWebhookToAppServerOptions {
 export async function sendUninstallWebhookToAppServer(
   options: SendUninstallWebhookToAppServerOptions,
 ): Promise<boolean> {
-  const apiVersions = await requestApiVersions(options.token)
-
-  const sample = await getWebhookSample(
-    options.token,
-    'app/uninstalled',
-    // Use the latest stable version, skipping the RC
-    apiVersions[1]!,
-    DELIVERY_METHOD.LOCALHOST,
-    options.address,
-    options.sharedSecret,
-  )
+  const apiVersions = await requestApiVersions(options.developerPlatformClient)
+  const variables: SendSampleWebhookVariables = {
+    topic: 'app/uninstalled',
+    api_version: apiVersions[1]!,
+    address: options.address,
+    delivery_method: DELIVERY_METHOD.LOCALHOST,
+    shared_secret: options.sharedSecret,
+  }
+  const sample = await getWebhookSample(options.developerPlatformClient, variables)
 
   options.stdout.write('Sending APP_UNINSTALLED webhook to app server')
 

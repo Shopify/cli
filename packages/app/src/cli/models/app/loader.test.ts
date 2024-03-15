@@ -4,6 +4,7 @@ import {
   loadApp,
   loadDotEnv,
   parseConfigurationObject,
+  parseHumanReadableError,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -408,7 +409,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Fix a schema error in/)
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Validation errors in/)
   })
 
   test('throws an error if the extension type is invalid', async () => {
@@ -2315,10 +2316,13 @@ describe('parseConfigurationObject', () => {
         expected: 'boolean',
         received: 'undefined',
         path: ['embedded'],
-        message: 'Required',
+        message: 'Boolean is required',
       },
     ]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      errorObject,
+    )}`
+
     const abortOrReport = vi.fn()
 
     const {schema} = await buildVersionedAppSchema()
@@ -2342,7 +2346,9 @@ describe('parseConfigurationObject', () => {
         message: 'Expected string, received array',
       },
     ]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      errorObject,
+    )}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2389,7 +2395,9 @@ describe('parseConfigurationObject', () => {
         message: 'Invalid input',
       },
     ]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      errorObject,
+    )}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2411,7 +2419,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2439,7 +2447,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2592,7 +2600,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2845,7 +2853,9 @@ describe('WebhooksSchema', () => {
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(err, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      err,
+    )}`
     const abortOrReport = vi.fn()
 
     const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)

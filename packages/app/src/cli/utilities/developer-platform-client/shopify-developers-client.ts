@@ -18,7 +18,6 @@ import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../develo
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
@@ -39,8 +38,13 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
@@ -93,11 +97,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async organizations(): Promise<Organization[]> {
     return [ORG1]
-  }
-
-  async selectOrg(): Promise<Organization> {
-    const organizations = await this.organizations()
-    return selectOrganizationPrompt(organizations)
   }
 
   async orgFromId(orgId: string): Promise<Organization> {
@@ -190,6 +189,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appExtensionRegistrations')
   }
 
+  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
+  async appVersionByTag(_input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
+  async appVersionsDiff(_input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
+    throw new BugError('Not implemented: appVersions')
+  }
+
   async activeAppVersion({id, organizationId}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
@@ -203,7 +214,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
           registrationId: mod.gid,
-          registrationUuid: mod.gid,
+          registrationUid: mod.uid,
           registrationTitle: mod.handle,
           type: mod.specification.identifier,
           config: mod.config,
@@ -234,12 +245,12 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: deploy')
   }
 
-  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+  async release(_input: AppReleaseVariables): Promise<AppReleaseSchema> {
+    throw new BugError('Not implemented: release')
   }
 
-  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
-    throw new BugError('Not implemented: appVersions')
+  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
+    throw new BugError('Not implemented: storeByDomain')
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -259,6 +270,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
     throw new BugError('Not implemented: appPreviewMode')
   }
+
+  async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+    throw new BugError('Not implemented: sendSampleWebhook')
+  }
+
+  async apiVersions(): Promise<PublicApiVersionsSchema> {
+    throw new BugError('Not implemented: apiVersions')
+  }
+
+  async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+    throw new BugError('Not implemented: topics')
+  }
 }
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
@@ -270,8 +293,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
   return {
     appModules: [
       {
-        uuid: randomUUID(),
-        title: 'home',
+        uid: 'app_home',
         specificationIdentifier: 'app_home',
         config: JSON.stringify({
           app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
@@ -279,20 +301,17 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
         }),
       },
       {
-        uuid: randomUUID(),
-        title: 'branding',
+        uid: 'branding',
         specificationIdentifier: 'branding',
         config: JSON.stringify({name}),
       },
       {
-        uuid: randomUUID(),
-        title: 'webhooks',
+        uid: 'webhooks',
         specificationIdentifier: 'webhooks',
         config: JSON.stringify({api_version: '2024-01'}),
       },
       {
-        uuid: randomUUID(),
-        title: 'app access',
+        uid: 'app_access',
         specificationIdentifier: 'app_access',
         config: JSON.stringify({
           redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],

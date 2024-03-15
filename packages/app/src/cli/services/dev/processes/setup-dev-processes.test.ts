@@ -20,8 +20,6 @@ import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
@@ -59,6 +57,7 @@ beforeEach(() => {
 
 describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
@@ -225,7 +224,7 @@ describe('setup-dev-processes', () => {
         apiSecret: 'api-secret',
         deliveryPort: 111,
         storeFqdn: 'store.myshopify.io',
-        token: 'token',
+        developerPlatformClient,
         webhooksPath: '/webhooks',
       },
     })

@@ -5,16 +5,25 @@ import {CustomTransformationConfig, createConfigExtensionSpecification} from '..
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const WebhookSubscriptionSchema = zod.object({
-  topics: zod.array(zod.string()).nonempty(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation),
-  sub_topic: zod.string().optional(),
-  include_fields: zod.array(zod.string()).optional(),
-  metafield_namespaces: zod.array(zod.string()).optional(),
-  compliance_topics: zod.array(zod.enum(['customers/redact', 'customers/data_request', 'shop/redact'])).optional(),
+  topics: zod
+    .array(zod.string({invalid_type_error: 'Values within array must be a string'}), {
+      invalid_type_error: 'Value must be string[]',
+    })
+    .nonempty({message: "Value can't be empty"}),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
+  sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
+  metafield_namespaces: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
+  compliance_topics: zod
+    .array(zod.enum(['customers/redact', 'customers/data_request', 'shop/redact']), {
+      invalid_type_error:
+        'Value must be an array containing values: customers/redact, customers/data_request or shop/redact',
+    })
+    .optional(),
 })
 
 const WebhooksSchema = zod.object({
-  api_version: zod.string(),
+  api_version: zod.string({required_error: 'String is required'}),
   privacy_compliance: zod
     .object({
       customer_deletion_url: UriValidation.optional(),

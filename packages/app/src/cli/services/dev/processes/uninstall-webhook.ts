@@ -2,10 +2,11 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {frontAndBackendConfig} from './utils.js'
 import {sendUninstallWebhookToAppServer} from '../../webhook/send-app-uninstalled-webhook.js'
 import {Web} from '../../../models/app/app.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 
 export interface SendWebhookOptions {
   deliveryPort: number
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   apiSecret: string
   webhooksPath: string
@@ -18,7 +19,7 @@ export interface SendWebhookProcess extends BaseProcess<SendWebhookOptions> {
 export const sendWebhook: DevProcessFunction<SendWebhookOptions> = async ({stdout}, options) => {
   await sendUninstallWebhookToAppServer({
     stdout,
-    token: options.token,
+    developerPlatformClient: options.developerPlatformClient,
     address: `http://localhost:${options.deliveryPort}${options.webhooksPath}`,
     sharedSecret: options.apiSecret,
     storeFqdn: options.storeFqdn,
@@ -31,7 +32,7 @@ export function setupSendUninstallWebhookProcess({
   backendPort,
   frontendPort,
   ...options
-}: Pick<SendWebhookOptions, 'token' | 'storeFqdn' | 'apiSecret'> & {
+}: Pick<SendWebhookOptions, 'developerPlatformClient' | 'storeFqdn' | 'apiSecret'> & {
   remoteAppUpdated: boolean
   backendPort: number
   frontendPort: number

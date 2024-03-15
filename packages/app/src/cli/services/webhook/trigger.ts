@@ -1,5 +1,5 @@
 import {DELIVERY_METHOD, parseAddressAndMethod, parseVersionAndTopic, WebhookTriggerFlags} from './trigger-flags.js'
-import {getWebhookSample, UserErrors} from './request-sample.js'
+import {getWebhookSample, SendSampleWebhookVariables, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {
   collectAddressAndMethod,
@@ -8,7 +8,7 @@ import {
   collectCredentials,
   collectTopic,
 } from './trigger-options.js'
-import {fetchPartnersSession, PartnersSession} from '../context/partner-account-info.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
 
 interface WebhookTriggerOptions {
@@ -29,19 +29,20 @@ interface WebhookTriggerOptions {
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   // Validation and collection of flags
-  const [partnerSessions, validFlags] = await validatedFlags(flags)
+  const [developerPlatformClient, validFlags] = await validatedFlags(flags)
 
   // Request of prompts for missing flags
-  const options: WebhookTriggerOptions = await collectMissingFlags(partnerSessions, validFlags)
+  const options: WebhookTriggerOptions = await collectMissingFlags(developerPlatformClient, validFlags)
 
-  await sendSample(partnerSessions.token, options)
+  await sendSample(developerPlatformClient, options)
 }
 
-async function validatedFlags(flags: WebhookTriggerFlags): Promise<[PartnersSession, WebhookTriggerFlags]> {
+async function validatedFlags(flags: WebhookTriggerFlags): Promise<[DeveloperPlatformClient, WebhookTriggerFlags]> {
   const [deliveryMethod, address] = parseAddressAndMethod(flags)
 
-  const partnersSession = await fetchPartnersSession()
-  const [apiVersion, topic] = await parseVersionAndTopic(partnersSession.token, flags)
+  const developerPlatformClient: DeveloperPlatformClient =
+    flags.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const [apiVersion, topic] = await parseVersionAndTopic(developerPlatformClient, flags)
 
   let clientSecret
   if (isValueSet(flags.clientSecret)) {
@@ -50,7 +51,7 @@ async function validatedFlags(flags: WebhookTriggerFlags): Promise<[PartnersSess
   }
 
   return [
-    partnersSession,
+    developerPlatformClient,
     {
       topic,
       apiVersion,
@@ -62,16 +63,16 @@ async function validatedFlags(flags: WebhookTriggerFlags): Promise<[PartnersSess
 }
 
 async function collectMissingFlags(
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   flags: WebhookTriggerFlags,
 ): Promise<WebhookTriggerOptions> {
-  const apiVersion = await collectApiVersion(partnersSession.token, flags.apiVersion)
+  const apiVersion = await collectApiVersion(developerPlatformClient, flags.apiVersion)
 
-  const topic = await collectTopic(partnersSession.token, apiVersion, flags.topic)
+  const topic = await collectTopic(developerPlatformClient, apiVersion, flags.topic)
 
   const [deliveryMethod, address] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
 
-  const clientCredentials = await collectCredentials(partnersSession, flags.clientSecret)
+  const clientCredentials = await collectCredentials(developerPlatformClient, flags.clientSecret)
 
   const options: WebhookTriggerOptions = {
     topic,
@@ -85,7 +86,7 @@ async function collectMissingFlags(
     if (isValueSet(clientCredentials.apiKey)) {
       options.apiKey = clientCredentials.apiKey
     } else {
-      options.apiKey = await collectApiKey(partnersSession)
+      options.apiKey = await collectApiKey(developerPlatformClient)
     }
   }
 
@@ -100,28 +101,16 @@ export function isValueSet(value: string | undefined): boolean {
   return value.length > 0
 }
 
-async function sendSample(token: string, options: WebhookTriggerOptions) {
-  let sample
-  if (options.apiKey === undefined) {
-    sample = await getWebhookSample(
-      token,
-      options.topic,
-      options.apiVersion,
-      options.deliveryMethod,
-      options.address,
-      options.clientSecret,
-    )
-  } else {
-    sample = await getWebhookSample(
-      token,
-      options.topic,
-      options.apiVersion,
-      options.deliveryMethod,
-      options.address,
-      options.clientSecret,
-      options.apiKey,
-    )
+async function sendSample(developerPlatformClient: DeveloperPlatformClient, options: WebhookTriggerOptions) {
+  const variables: SendSampleWebhookVariables = {
+    topic: options.topic,
+    api_version: options.apiVersion,
+    address: options.address,
+    delivery_method: options.deliveryMethod,
+    shared_secret: options.clientSecret,
+    api_key: options.apiKey,
   }
+  const sample = await getWebhookSample(developerPlatformClient, variables)
 
   if (!sample.success) {
     consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)

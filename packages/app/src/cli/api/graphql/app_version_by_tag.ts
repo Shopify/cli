@@ -26,9 +26,9 @@ export const AppVersionByTagQuery = gql`
   }
 `
 
-interface ErrorDetail {
-  extension_id: number
-  extension_title: string
+export interface AppVersionByTagVariables {
+  apiKey: string
+  versionTag?: string
 }
 
 export interface AppVersionByTagSchema {

@@ -27,6 +27,13 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
+import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
+import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -690,6 +697,29 @@ const emptyActiveAppVersion: ActiveAppVersion = {
   appModuleVersions: [],
 }
 
+const appVersionByTagResponse: AppVersionByTagSchema = {
+  app: {
+    appVersion: {
+      id: 1,
+      uuid: 'uuid',
+      versionTag: 'version-tag',
+      location: 'location',
+      message: 'MESSAGE',
+      appModuleVersions: [],
+    },
+  },
+}
+
+const appVersionsDiffResponse: AppVersionsDiffSchema = {
+  app: {
+    versionsDiff: {
+      added: [],
+      updated: [],
+      removed: [],
+    },
+  },
+}
+
 const functionUploadUrlResponse = {
   functionUploadUrlGenerate: {
     generatedUrlDetails: {
@@ -741,6 +771,17 @@ const deployResponse: AppDeploySchema = {
   },
 }
 
+const releaseResponse: AppReleaseSchema = {
+  appRelease: {
+    appVersion: {
+      versionTag: 'version-tag',
+      location: 'location',
+      message: 'message',
+    },
+    userErrors: [],
+  },
+}
+
 const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
   appVersionGenerateSignedUploadUrl: {
     signedUploadUrl: 'signed-upload-url',
@@ -771,16 +812,34 @@ const appPreviewModeResponse: FindAppPreviewModeSchema = {
   },
 }
 
+const organizationsResponse: Organization[] = [testOrganization()]
+
+const sendSampleWebhookResponse: SendSampleWebhookSchema = {
+  sendSampleWebhook: {
+    samplePayload: '{ "sampleField": "SampleValue" }',
+    headers: '{ "header": "Header Value" }',
+    success: true,
+    userErrors: [],
+  },
+}
+
+const apiVersionsResponse: PublicApiVersionsSchema = {
+  publicApiVersions: ['2022', 'unstable', '2023'],
+}
+
+const topicsResponse: WebhookTopicsSchema = {
+  webhookTopics: ['orders/create', 'shop/redact'],
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  return {
+  const clientStub = {
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
-    organizations: () => Promise.resolve([testOrganization()]),
+    organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    selectOrg: () => Promise.resolve(testOrganization()),
     specifications: (_appId: string) => Promise.resolve([]),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
@@ -791,18 +850,31 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(emptyActiveAppVersion),
+    appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
+    appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
+    release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
     convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
+    sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
+    apiVersions: () => Promise.resolve(apiVersionsResponse),
+    topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     ...stubs,
   }
+  const retVal: Partial<DeveloperPlatformClient> = {}
+  for (const [key, value] of Object.entries(clientStub)) {
+    if (typeof value === 'function') {
+      retVal[key as keyof DeveloperPlatformClient] = vi.fn().mockImplementation(value)
+    }
+  }
+  return retVal as DeveloperPlatformClient
 }
 
 export const testPartnersServiceSession: PartnersSession = {

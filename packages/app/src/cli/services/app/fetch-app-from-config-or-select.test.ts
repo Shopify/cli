@@ -7,6 +7,7 @@ import {
   testDeveloperPlatformClient,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -22,17 +23,19 @@ beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
-const developerPlatformClient = testDeveloperPlatformClient({
-  async appFromId(clientId: string) {
-    expect(clientId).toBe(APP1.apiKey)
-    return APP1
-  },
-})
+function buildDeveloperPlatformClient(): DeveloperPlatformClient {
+  return testDeveloperPlatformClient({
+    async appFromId(clientId: string) {
+      expect(clientId).toBe(APP1.apiKey)
+      return APP1
+    },
+  })
+}
 
 describe('fetchAppFromConfigOrSelect', () => {
   test('if app has config as code, fetch app from config', async () => {
     // When
-    const got = await fetchAppFromConfigOrSelect(APP_WITH_CONFIG, developerPlatformClient)
+    const got = await fetchAppFromConfigOrSelect(APP_WITH_CONFIG, buildDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(APP1)
@@ -43,7 +46,7 @@ describe('fetchAppFromConfigOrSelect', () => {
     vi.mocked(selectApp).mockResolvedValue(APP1)
 
     // When
-    const got = await fetchAppFromConfigOrSelect(APP_WITHOUT_CONFIG, developerPlatformClient)
+    const got = await fetchAppFromConfigOrSelect(APP_WITHOUT_CONFIG, buildDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(APP1)
