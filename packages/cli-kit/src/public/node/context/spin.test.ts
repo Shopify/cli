@@ -246,7 +246,7 @@ describe('appHost', () => {
 
 describe('fetchSpinPort', () => {
   ;['1', '2'].forEach((spinVersion: string) => {
-    test(`using sping${spinVersion} when the file exists and the port is defined then is returned`, async () => {
+    test(`using spin${spinVersion} when the file exists and the port is defined then the port is returned`, async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const portValue = '1030'
@@ -262,7 +262,7 @@ describe('fetchSpinPort', () => {
       })
     })
 
-    test('when the file exists and the port is wrong defined then undefined is returned', async () => {
+    test(`using spin${spinVersion} when the file exists and the port is defined wrong then undefined is returned`, async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const portValue = 'wrong-port'
@@ -279,7 +279,7 @@ describe('fetchSpinPort', () => {
     })
   })
 
-  test(`using both versions when the version2 file exists and the port is defined then is returned`, async () => {
+  test(`using both versions when the spin2 file exists and the port is defined then is returned`, async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const port2Value = '1030'
@@ -297,7 +297,7 @@ describe('fetchSpinPort', () => {
     })
   })
 
-  test(`using both versions when the version2 file exists and the port is wrong defined but version1 port is ok then the latest is returned`, async () => {
+  test(`using both versions when the spin2 file exists and the port is defined wrong but spin1 file is ok then the latest is returned`, async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const port2Value = 'wrong-port'
@@ -315,7 +315,7 @@ describe('fetchSpinPort', () => {
     })
   })
 
-  test(`using both versions when port is wrong defined in both files then undefined is returned`, async () => {
+  test(`using both versions when port is defined wrong in both files then undefined is returned`, async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const port2Value = 'wrong-port'
