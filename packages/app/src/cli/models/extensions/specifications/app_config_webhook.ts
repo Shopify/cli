@@ -1,7 +1,9 @@
 import {transformToWebhookConfig, transformFromWebhookConfig} from './transform/app_config_webhook.js'
 import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {webhookValidator} from './validation/app_config_webhook.js'
-import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {WebhookSubscription} from './types/app_config_webhook.js'
+import {SpecsAppConfiguration} from './types/app_config.js'
+import {CustomTransformationConfig, SimplifyConfig, createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export enum ComplianceTopic {
@@ -56,10 +58,47 @@ const WebhookTransformConfig: CustomTransformationConfig = {
   reverse: (content: object) => transformToWebhookConfig(content),
 }
 
+export const WebhookSimplifyConfig: SimplifyConfig = {
+  simplify: (remoteConfig: SpecsAppConfiguration) => simplifyWebhooks(remoteConfig),
+}
+
 const appWebhooksSpec = createConfigExtensionSpecification({
   identifier: WebhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: WebhookTransformConfig,
+  simplify: WebhookSimplifyConfig,
 })
 
 export default appWebhooksSpec
+
+function simplifyWebhooks(remoteConfig: SpecsAppConfiguration) {
+  if (!remoteConfig.webhooks?.subscriptions) return remoteConfig
+
+  remoteConfig.webhooks.subscriptions = mergeWebhooks(remoteConfig.webhooks.subscriptions)
+  return remoteConfig
+}
+
+function mergeWebhooks(subscriptions: WebhookSubscription[]): WebhookSubscription[] {
+  return subscriptions.reduce((accumulator, subscription) => {
+    const existingSubscription = accumulator.find(
+      (sub) =>
+        sub.uri === subscription.uri &&
+        sub.sub_topic === subscription.sub_topic &&
+        sub.include_fields === subscription.include_fields &&
+        sub.metafield_namespaces === subscription.metafield_namespaces,
+    )
+    if (existingSubscription) {
+      if (subscription.compliance_topics) {
+        existingSubscription.compliance_topics ??= []
+        existingSubscription.compliance_topics.push(...subscription.compliance_topics)
+      }
+      if (subscription.topics) {
+        existingSubscription.topics ??= []
+        existingSubscription.topics.push(...subscription.topics)
+      }
+    } else {
+      accumulator.push(subscription)
+    }
+    return accumulator
+  }, [] as WebhookSubscription[])
+}

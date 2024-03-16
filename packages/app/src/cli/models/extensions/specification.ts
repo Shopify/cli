@@ -1,5 +1,6 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
+import {SpecsAppConfiguration} from './specifications/types/app_config.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../services/dev/fetch.js'
@@ -24,6 +25,10 @@ export interface TransformationConfig {
 export interface CustomTransformationConfig {
   forward?: (obj: object, options?: {flags?: Flag[]}) => object
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
+}
+
+export interface SimplifyConfig {
+  simplify?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
 }
 
 export type ExtensionExperience = 'extension' | 'configuration'
@@ -58,6 +63,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   transform?: (content: object) => object
   reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
+  simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
 }
 
 /**
@@ -116,6 +122,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     transform: spec.transform,
     reverseTransform: spec.reverseTransform,
+    simplify: spec.simplify,
     experience: spec.experience ?? 'extension',
   }
   return {...defaults, ...spec}
@@ -134,6 +141,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   schema: zod.ZodObject<any>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
+  simplify?: SimplifyConfig
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -144,8 +152,14 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     appModuleFeatures,
     transform: resolveAppConfigTransform(spec.transformConfig),
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    simplify: resolveSimplifyAppConfig(spec.simplify),
     experience: 'configuration',
   })
+}
+
+function resolveSimplifyAppConfig(simplifyConfig?: SimplifyConfig) {
+  // returns the configuration if there is no simplify function defined in the specification
+  return simplifyConfig?.simplify ?? ((content: SpecsAppConfiguration) => content)
 }
 
 function resolveAppConfigTransform(transformConfig?: TransformationConfig | CustomTransformationConfig) {

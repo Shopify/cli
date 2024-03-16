@@ -1,4 +1,5 @@
 import spec from './app_config_webhook.js'
+import {SpecsAppConfiguration} from './types/app_config.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhooks', () => {
@@ -204,6 +205,85 @@ describe('webhooks', () => {
         webhooks: {
           api_version: '2021-01',
         },
+      })
+    })
+  })
+
+  describe('simplify', () => {
+    test('simplifies all webhooks, including privacy compliance webhooks, under the same [[webhook.subscription]] if they have the same fields', () => {
+      // Given
+      const remoteApp = {
+        name: 'test-app',
+        handle: 'test-app',
+        access_scopes: {scopes: 'write_products'},
+        auth: {
+          redirect_urls: [
+            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/callback',
+            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/shopify/callback',
+            'https://decided-tabs-chevrolet-stating.trycloudflare.com/api/auth/callback',
+          ],
+        },
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks',
+            },
+            {
+              compliance_topics: ['customers/redact'],
+              uri: 'https://example.com/webhooks',
+            },
+            {
+              compliance_topics: ['customers/data_request'],
+              uri: 'https://example.com/webhooks',
+            },
+            {
+              topics: ['metaobjects/create'],
+              sub_topic: 'subtopic',
+              uri: 'https://example.com/webhooks',
+            },
+          ],
+          privacy_compliance: undefined,
+        },
+        pos: {embedded: false},
+        application_url: 'https://decided-tabs-chevrolet-stating.trycloudflare.com',
+        embedded: true,
+      } as unknown as SpecsAppConfiguration
+      const webhookSpec = spec
+      // When
+      const result = webhookSpec.simplify!(remoteApp)
+      // Then
+      expect(result).toMatchObject({
+        name: 'test-app',
+        handle: 'test-app',
+        access_scopes: {scopes: 'write_products'},
+        auth: {
+          redirect_urls: [
+            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/callback',
+            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/shopify/callback',
+            'https://decided-tabs-chevrolet-stating.trycloudflare.com/api/auth/callback',
+          ],
+        },
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['products/create'],
+              compliance_topics: ['customers/redact', 'customers/data_request'],
+              uri: 'https://example.com/webhooks',
+            },
+            {
+              topics: ['metaobjects/create'],
+              sub_topic: 'subtopic',
+              uri: 'https://example.com/webhooks',
+            },
+          ],
+          privacy_compliance: undefined,
+        },
+        pos: {embedded: false},
+        application_url: 'https://decided-tabs-chevrolet-stating.trycloudflare.com',
+        embedded: true,
       })
     })
   })

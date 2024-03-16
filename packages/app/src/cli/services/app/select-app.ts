@@ -30,11 +30,15 @@ export async function fetchAppRemoteConfiguration(
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
     activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
-  return remoteAppConfigurationExtensionContent(
+  const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
     specifications,
     flags,
   ) as unknown as SpecsAppConfiguration
+  return specifications.reduce(
+    (simplifiedConfiguration, spec) => spec.simplify?.(simplifiedConfiguration) ?? simplifiedConfiguration,
+    remoteConfiguration,
+  )
 }
 
 export function remoteAppConfigurationExtensionContent(
@@ -54,5 +58,6 @@ export function remoteAppConfigurationExtensionContent(
 
     remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {flags}) ?? config)
   })
+
   return {...remoteAppConfig}
 }

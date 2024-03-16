@@ -1,4 +1,4 @@
-import {ComplianceTopic, WebhookSchema} from './app_config_webhook.js'
+import {ComplianceTopic, WebhookSchema, WebhookSimplifyConfig} from './app_config_webhook.js'
 import {WebhookSubscription, WebhooksConfig} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {Flag} from '../../../services/dev/fetch.js'
@@ -17,6 +17,7 @@ const appPrivacyComplienceSpec = createConfigExtensionSpecification({
   identifier: PrivacyComplianceWebhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: PrivacyComplianceWebhooksTransformConfig,
+  simplify: WebhookSimplifyConfig,
 })
 
 export default appPrivacyComplienceSpec
