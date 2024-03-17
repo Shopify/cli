@@ -80,6 +80,7 @@ const ORG1 = {
 }
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
+  public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined
 

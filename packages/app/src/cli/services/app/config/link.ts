@@ -49,7 +49,14 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     localApp.remoteBetaFlags,
   )
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-  configuration = deepMergeObjects(configuration, remoteAppConfiguration, replaceLocalArrayStrategy)
+  configuration = deepMergeObjects(
+    configuration,
+    {
+      ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
+      ...remoteAppConfiguration,
+    },
+    replaceLocalArrayStrategy,
+  )
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})

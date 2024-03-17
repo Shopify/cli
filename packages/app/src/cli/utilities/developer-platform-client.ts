@@ -90,6 +90,7 @@ export interface ActiveAppVersion {
 
 export interface DeveloperPlatformClient {
   supportsAtomicDeployments: boolean
+  requiresOrganization: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
