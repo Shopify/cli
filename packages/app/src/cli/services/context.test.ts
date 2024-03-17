@@ -1012,7 +1012,11 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith(APP2.apiKey)
+    expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith({
+      id: APP2.apiKey,
+      apiKey: APP2.apiKey,
+      organizationId: '1',
+    })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
     expect(got.remoteApp.appType).toEqual(APP2.appType)
@@ -1536,7 +1540,11 @@ describe('ensureDraftExtensionsPushContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(opts.developerPlatformClient!.appFromId).toHaveBeenCalledWith(APP2.apiKey)
+    expect(opts.developerPlatformClient!.appFromId).toHaveBeenCalledWith({
+      id: APP2.apiKey,
+      apiKey: APP2.apiKey,
+      organizationId: '1',
+    })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
     expect(got.remoteApp.appType).toEqual(APP2.appType)

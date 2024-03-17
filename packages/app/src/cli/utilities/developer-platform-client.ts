@@ -1,7 +1,13 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
 import {ShopifyDevelopersClient} from './developer-platform-client/shopify-developers-client.js'
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
-import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {
+  MinimalAppIdentifiers,
+  MinimalOrganizationApp,
+  Organization,
+  OrganizationApp,
+  OrganizationStore,
+} from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'

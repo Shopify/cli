@@ -7,7 +7,13 @@ import {
 import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
-import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {
+  MinimalAppIdentifiers,
+  MinimalOrganizationApp,
+  Organization,
+  OrganizationApp,
+  OrganizationStore,
+} from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQueryVariables,
@@ -160,8 +166,8 @@ function getAppVars(
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
-  private _session: PartnersSession | undefined
   public supportsAtomicDeployments = false
+  private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
     this._session = session

@@ -17,7 +17,7 @@ import {
   testUIExtension,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {OrganizationApp, MinimalOrganizationApp, MinimalAppIdentifiers} from '../../models/organization.js'
+import {OrganizationApp, MinimalAppIdentifiers} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'

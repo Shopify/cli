@@ -1,14 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const ReleaseVersionMutation = gql`
-  mutation ReleaseVersion(
-    $appId: ID!,
-    $versionId: ID!
-  ) {
-    versionRelease(
-      appId: $appId,
-      versionId: $versionId
-    ) {
+  mutation ReleaseVersion($appId: ID!, $versionId: ID!) {
+    versionRelease(appId: $appId, versionId: $versionId) {
       userErrors {
         field
         message

@@ -5,7 +5,7 @@ import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp} from '../organization.js'
+import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
@@ -920,7 +920,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const retVal: Partial<DeveloperPlatformClient> = {}
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
-      retVal[key as keyof Omit<DeveloperPlatformClient, 'supportsAtomicDeployments'>] = vi.fn().mockImplementation(value)
+      retVal[key as keyof Omit<DeveloperPlatformClient, 'supportsAtomicDeployments'>] = vi
+        .fn()
+        .mockImplementation(value)
     }
   }
   return retVal as DeveloperPlatformClient

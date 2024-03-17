@@ -10,10 +10,26 @@ import {
 } from './shopify-developers-client/graphql/active-app-release.js'
 // import {SpecificationsQuery, SpecificationsQueryVariables, SpecificationsQuerySchema} from './shopify-developers-client/graphql/specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {
+  CreateAppVersionMutation,
+  CreateAppVersionMutationSchema,
+  CreateAppVersionMutationVariables,
+} from './shopify-developers-client/graphql/create-app-version.js'
+import {
+  ReleaseVersionMutation,
+  ReleaseVersionMutationSchema,
+  ReleaseVersionMutationVariables,
+} from './shopify-developers-client/graphql/release-version.js'
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
-import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {
+  MinimalAppIdentifiers,
+  MinimalOrganizationApp,
+  Organization,
+  OrganizationApp,
+  OrganizationStore,
+} from '../../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   GenerateSignedUploadUrlSchema,
@@ -56,9 +72,7 @@ import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partn
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
-import {CreateAppVersionMutation, CreateAppVersionMutationSchema, CreateAppVersionMutationVariables} from './shopify-developers-client/graphql/create-app-version.js'
 import {underscore} from '@shopify/cli-kit/common/string'
-import {ReleaseVersionMutation, ReleaseVersionMutationSchema, ReleaseVersionMutationVariables} from './shopify-developers-client/graphql/release-version.js'
 
 const ORG1 = {
   id: '1',
@@ -66,8 +80,8 @@ const ORG1 = {
 }
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
-  private _session: PartnersSession | undefined
   public supportsAtomicDeployments = true
+  private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -116,17 +130,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       grantedScopes: appAccessModule.config.scopes as string[],
       betas: [],
     }
-  }
-
-  private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-    )
   }
 
   async organizations(): Promise<Organization[]> {
@@ -224,20 +227,24 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return []
   }
 
-  async appExtensionRegistrations(appIdentifiers: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations(
+    appIdentifiers: MinimalAppIdentifiers,
+  ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
     return {
       app: {
         extensionRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
-        configurationRegistrations: modules.filter((mod) => mod.specification.experience === 'CONFIGURATION').map((mod) => ({
-          id: mod.uid,
-          uuid: mod.uid,
-          title: mod.specification.name,
-          type: mod.specification.identifier,
-        })),
-      }
+        configurationRegistrations: modules
+          .filter((mod) => mod.specification.experience === 'CONFIGURATION')
+          .map((mod) => ({
+            id: mod.uid,
+            uuid: mod.uid,
+            title: mod.specification.name,
+            type: mod.specification.identifier,
+          })),
+      },
     }
   }
 
@@ -307,9 +314,14 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       versionTag,
     }
 
-    const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>('1', CreateAppVersionMutation, await this.token(), variables)
+    const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
+      '1',
+      CreateAppVersionMutation,
+      await this.token(),
+      variables,
+    )
     const {version, userErrors} = result.versionCreate
-    if (!version) return {appDeploy: {userErrors}} as any as AppDeploySchema
+    if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
     const versionResult = {
       appDeploy: {
@@ -326,17 +338,22 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
               validationErrors: [],
             }
           }),
-          message: 'Success!'
+          message: 'Success!',
         },
-        userErrors: userErrors?.map(err => ({...err, category: 'deploy', details: []})),
-      }
+        userErrors: userErrors?.map((err) => ({...err, category: 'deploy', details: []})),
+      },
     }
 
     const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
-    const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>('1', ReleaseVersionMutation, await this.token(), releaseVariables)
+    const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>(
+      '1',
+      ReleaseVersionMutation,
+      await this.token(),
+      releaseVariables,
+    )
     if (releaseResult.versionRelease?.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
-        releaseResult.versionRelease.userErrors.map(err => ({...err, category: 'release', details: []}))
+        releaseResult.versionRelease.userErrors.map((err) => ({...err, category: 'release', details: []})),
       )
     }
 
@@ -407,6 +424,17 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   toExtensionGraphQLType(input: string) {
     return input.toLowerCase()
+  }
+
+  private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+    const query = ActiveAppReleaseQuery
+    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
   }
 }
 
