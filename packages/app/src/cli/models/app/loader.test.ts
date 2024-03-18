@@ -300,8 +300,8 @@ wrong = "property"
     await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(mockOutput.warn()).toMatchInlineSnapshot(`
-      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  You are running a global installation of Shopify CLI                        │
       │                                                                              │

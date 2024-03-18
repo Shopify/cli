@@ -39,7 +39,7 @@ import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/c
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
 const defaultExtensionDirectory = 'extensions/*'
@@ -279,7 +279,7 @@ class AppLoader {
           url: 'https://shopify.dev/docs/apps/tools/cli',
         },
       }
-      renderWarning(warningContent)
+      renderInfo(warningContent)
     }
   }
 
