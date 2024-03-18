@@ -1,6 +1,5 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
-import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
 import { readFile } from 'fs/promises';
 
 const external = [
