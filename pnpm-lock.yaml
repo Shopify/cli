@@ -321,6 +321,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^0.34.3
         version: 0.34.4(vitest@0.34.4)
+      esbuild-plugin-copy:
+        specifier: ^2.1.1
+        version: 2.1.1(esbuild@0.19.8)
       esbuild-plugin-text-replace:
         specifier: ^1.3.0
         version: 1.3.0
@@ -9132,6 +9135,18 @@ packages:
       is-date-object: 1.0.5
       is-symbol: 1.0.4
 
+  /esbuild-plugin-copy@2.1.1(esbuild@0.19.8):
+    resolution: {integrity: sha512-Bk66jpevTcV8KMFzZI1P7MZKZ+uDcrZm2G2egZ2jNIvVnivDpodZI+/KnpL3Jnap0PBdIHU7HwFGB8r+vV5CVw==}
+    peerDependencies:
+      esbuild: '>= 0.14.0'
+    dependencies:
+      chalk: 4.1.2
+      chokidar: 3.5.3
+      esbuild: 0.19.8
+      fs-extra: 10.1.0
+      globby: 11.1.0
+    dev: true
+
   /esbuild-plugin-text-replace@1.3.0:
     resolution: {integrity: sha512-RWB/bbdP0xDHBOtA0st4CAE6UZtky76aCB7Shw5r350JY403lfvrj2UMkInUB346tMtFWXKWXNf4gqNM+WbXag==}
     engines: {node: '>=10.1.0'}
@@ -10047,6 +10062,15 @@ packages:
 
   /fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
+
+  /fs-extra@10.1.0:
+    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
+    engines: {node: '>=12'}
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 6.1.0
+      universalify: 2.0.0
+    dev: true
 
   /fs-extra@11.1.0:
     resolution: {integrity: sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==}

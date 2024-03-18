@@ -1,6 +1,7 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
+import { copy } from 'esbuild-plugin-copy';
 import { readFile } from 'fs/promises';
 
 const external = [
@@ -39,7 +40,17 @@ await esBuild({
   splitting: true,
   plugins: [
     ShopifyESBuildPlugin(),
-    requireResolvePlugin() // To allow using require.resolve in esbuild
+    requireResolvePlugin(), // To allow using require.resolve in esbuild
+    copy({
+      // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
+      // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
+      resolveFrom: 'cwd',
+      assets: {
+        from: ['./assets/*'],
+        to: ['./assets', './tmp-assets'],
+      },
+      watch: true,
+    }),
   ],
 })
 
