@@ -8,7 +8,7 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
@@ -404,13 +404,17 @@ embedded = false
   test('fetches the remote app when an api key is provided', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
         apiKey: 'api-key',
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(selectConfigName).mockResolvedValue('staging')
+      vi.mocked(appFromId).mockImplementation(async ({apiKey}: {apiKey: string}) => {
+        return (await developerPlatformClient.appFromId({id: apiKey, apiKey, organizationId: '1'}))!
+      })
 
       // When
       await link(options)

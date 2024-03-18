@@ -9,7 +9,12 @@ import {
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
+import {
+  InvalidApiKeyErrorMessage,
+  fetchOrCreateOrganizationApp,
+  logMetadataForLoadedContext,
+  appFromId,
+} from '../../context.js'
 import {BetaFlag} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -125,12 +130,7 @@ async function loadRemoteApp(
   if (!apiKey) {
     return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
   }
-  const app = await developerPlatformClient.appFromId({
-    id: apiKey,
-    // Partners doesn't need this, and for now we can stub org 1 in Shopify Developers
-    organizationId: '1',
-    apiKey,
-  })
+  const app = await appFromId({apiKey, developerPlatformClient})
   if (!app) {
     const errorMessage = InvalidApiKeyErrorMessage(apiKey)
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)

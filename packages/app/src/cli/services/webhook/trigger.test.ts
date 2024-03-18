@@ -4,7 +4,7 @@ import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {findApiKey, findInEnv} from './find-app-info.js'
+import {findOrganizationApp, findInEnv} from './find-app-info.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
@@ -120,7 +120,7 @@ describe('webhookTriggerService', () => {
     // Given
     mockLists(aVersion, aTopic)
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(undefined)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1'})
 
     // When
     await expect(webhookTriggerService(eventBridgeFlags())).rejects.toThrow(AbortError)
@@ -130,7 +130,7 @@ describe('webhookTriggerService', () => {
     // Given
     mockLists(aVersion, aTopic)
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(anApiKey)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1', id: anApiKey, apiKey: anApiKey})
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
     const expectedSampleWebhookVariables: SendSampleWebhookVariables = {
       topic: aTopic,

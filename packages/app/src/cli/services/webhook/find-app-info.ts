@@ -1,6 +1,7 @@
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, cwd} from '@shopify/cli-kit/node/path'
@@ -34,16 +35,18 @@ export async function findInEnv(): Promise<AppCredentials> {
  * Find the app api_key, if available
  *
  * @param developerPlatformClient - The client to access the platform API
- * @returns string with the API key or undefined
+ * @returns appIdentifiers
  */
-export async function findApiKey(developerPlatformClient: DeveloperPlatformClient): Promise<string | undefined> {
+export async function findOrganizationApp(
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<Partial<MinimalAppIdentifiers> & {organizationId: MinimalAppIdentifiers['organizationId']}> {
   const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   const partnersSession = await developerPlatformClient.session()
   const {apps} = await fetchOrgAndApps(org.id, partnersSession)
 
   if (apps.nodes.length === 0) {
-    return
+    return {organizationId: org.id}
   }
 
   // Try to infer from current folder
@@ -60,7 +63,7 @@ export async function findApiKey(developerPlatformClient: DeveloperPlatformClien
     apiKey = appFromDir.apiKey
   }
 
-  return apiKey
+  return {id: apiKey, apiKey, organizationId: org.id}
 }
 
 /**
@@ -71,14 +74,10 @@ export async function findApiKey(developerPlatformClient: DeveloperPlatformClien
  * @returns client_id, client_secret, client_api_key
  */
 export async function requestAppInfo(
+  {id, apiKey, organizationId}: MinimalAppIdentifiers,
   developerPlatformClient: DeveloperPlatformClient,
-  apiKey: string,
 ): Promise<AppCredentials> {
-  const fullSelectedApp = await developerPlatformClient.appFromId({
-    id: apiKey,
-    apiKey,
-    organizationId: '1',
-  })
+  const fullSelectedApp = await developerPlatformClient.appFromId({id, apiKey, organizationId})
   const credentials: AppCredentials = {}
   if (fullSelectedApp === undefined) {
     return credentials

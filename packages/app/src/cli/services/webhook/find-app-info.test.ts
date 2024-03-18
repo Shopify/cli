@@ -1,4 +1,4 @@
-import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
+import {findInEnv, findOrganizationApp, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
@@ -55,7 +55,7 @@ describe('findInEnv', () => {
   })
 })
 
-describe('findApiKey', () => {
+describe('findOrganizationApp', () => {
   const anAppName = 'app-name'
   const anotherAppName = 'another-app'
   const anotherApiKey = 'ANOTHER_API_KEY'
@@ -78,7 +78,7 @@ describe('findApiKey', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
 
     // When
-    const apiKey = await findApiKey(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(undefined)
@@ -90,7 +90,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
 
     // When
-    const apiKey = await findApiKey(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -102,7 +102,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
 
     // When
-    const apiKey = await findApiKey(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -115,7 +115,7 @@ describe('findApiKey', () => {
     vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
 
     // When
-    const apiKey = await findApiKey(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()
@@ -137,7 +137,10 @@ describe('requestAppInfo', () => {
     })
 
     // When
-    const credentials = await requestAppInfo(developerPlatformClient, anApiKey)
+    const credentials = await requestAppInfo(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      developerPlatformClient,
+    )
 
     // Then
     expect(credentials).toEqual({})
@@ -154,7 +157,10 @@ describe('requestAppInfo', () => {
     })
 
     // When
-    const credentials = await requestAppInfo(developerPlatformClient, anApiKey)
+    const credentials = await requestAppInfo(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      developerPlatformClient,
+    )
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey})
@@ -169,7 +175,10 @@ describe('requestAppInfo', () => {
     )
 
     // When
-    const credentials = await requestAppInfo(testDeveloperPlatformClient(), anApiKey)
+    const credentials = await requestAppInfo(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      testDeveloperPlatformClient(),
+    )
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey, clientSecret: 'api-secret'})
