@@ -7,8 +7,8 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-// eslint-disable-next-line node/prefer-global/url
-import {URL} from 'url'
+
+import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class Init extends Command {
   static summary?: string | undefined = 'Create a new app project'
@@ -57,11 +57,14 @@ export default class Init extends Command {
     this.validateTemplateValue(flags.template)
     this.validateFlavorValue(flags.template, flags.flavor)
 
+    const inferredPackageManager = this.inferPackageManager(flags['package-manager'])
+
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
       flavor: flags.flavor,
       directory: flags.path,
+      packageManager: inferredPackageManager,
     })
 
     await addPublicMetadata(() => ({
@@ -71,10 +74,11 @@ export default class Init extends Command {
 
     await initService({
       name: promptAnswers.name,
-      packageManager: flags['package-manager'],
+      packageManager: inferredPackageManager,
       template: promptAnswers.template,
       local: flags.local,
       directory: flags.path,
+      useGlobalCI: promptAnswers.globalCLIInstalled,
     })
   }
 
@@ -144,5 +148,13 @@ export default class Init extends Command {
     } catch (error) {
       return undefined
     }
+  }
+
+  inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+    if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+      return optionsPackageManager as PackageManager
+    }
+    const usedPackageManager = packageManagerFromUserAgent()
+    return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
   }
 }

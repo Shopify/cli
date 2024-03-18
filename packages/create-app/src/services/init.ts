@@ -2,9 +2,7 @@ import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/n
 import cleanup from '../utils/template/cleanup.js'
 import {
   findUpAndReadPackageJson,
-  packageManager,
   PackageManager,
-  packageManagerFromUserAgent,
   UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
@@ -32,12 +30,13 @@ interface InitOptions {
   name: string
   directory: string
   template: string
-  packageManager: string | undefined
+  packageManager: PackageManager
   local: boolean
+  useGlobalCI: boolean
 }
 
 async function init(options: InitOptions) {
-  const packageManager: PackageManager = inferPackageManager(options.packageManager)
+  const packageManager: PackageManager = options.packageManager
   const hyphenizedName = hyphenate(options.name)
   const outputDirectory = joinPath(options.directory, hyphenizedName)
   const githubRepo = parseGitHubRepositoryReference(options.template)
@@ -103,7 +102,12 @@ async function init(options: InitOptions) {
               throw new UnknownPackageManagerError()
           }
 
-          await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
+          await updateCLIDependencies({
+            packageJSON,
+            local: options.local,
+            directory: templateScaffoldDir,
+            useGlobalCLI: options.useGlobalCI,
+          })
           await writePackageJSON(templateScaffoldDir, packageJSON)
         },
       },
@@ -161,14 +165,6 @@ async function init(options: InitOptions) {
       ],
     ],
   })
-}
-
-function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
-  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
-    return optionsPackageManager as PackageManager
-  }
-  const usedPackageManager = packageManagerFromUserAgent()
-  return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
