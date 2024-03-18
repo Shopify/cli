@@ -1,3 +1,4 @@
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const ActiveAppReleaseQuery = gql`
@@ -40,9 +41,7 @@ export interface AppModule {
   gid: string
   uid: string
   handle: string
-  config: {
-    [key: string]: string | number | boolean | string[]
-  }
+  config: JsonMapType
   specification: AppModuleSpecification
 }
 
