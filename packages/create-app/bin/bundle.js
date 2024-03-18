@@ -37,8 +37,7 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
-    ShopifyESBuildPlugin(),
-    requireResolvePlugin() // To allow using require.resolve in esbuild
+    ShopifyESBuildPlugin()
   ],
 })
 
