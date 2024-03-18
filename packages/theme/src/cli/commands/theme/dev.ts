@@ -1,12 +1,12 @@
 import {themeFlags} from '../../flags.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand from '../../utilities/theme-command.js'
 import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
-import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
-import {Flags} from '@oclif/core'
+import ThemeCommand from '../../utilities/theme-command.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {Flags} from '@oclif/core'
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -110,6 +110,11 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_OPEN',
       default: false,
     }),
+    beta: Flags.boolean({
+      hidden: true,
+      description: 'Performs the dev command by relying on the new implementation.',
+      env: 'SHOPIFY_FLAG_BETA',
+    }),
   }
 
   static cli2Flags = [
@@ -166,6 +171,7 @@ You can run this command only in a directory that matches the [default Shopify t
       port: flags.port,
       force: flags.force,
       open: flags.open,
+      beta: flags.beta,
       flagsToPass,
     })
   }
