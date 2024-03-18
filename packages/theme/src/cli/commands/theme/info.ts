@@ -56,6 +56,7 @@ export default class ThemeInfo extends ThemeCommand {
               id: theme?.id,
               name: theme?.name,
               role: theme?.role,
+              shop: store,
               preview_url: `https://${store}/?preview_theme_url=${theme?.id}`,
               editor_url: `https://admin.shopify.com/store/${store.split('.')[0]}/themes/${theme?.id}/editor`,
             },
