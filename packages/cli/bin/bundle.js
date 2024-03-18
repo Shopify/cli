@@ -45,11 +45,24 @@ await esBuild({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
       resolveFrom: 'cwd',
-      assets: {
-        from: ['./assets/*'],
-        to: ['./assets', './tmp-assets'],
-      },
-      watch: true,
+      assets: [
+        {
+          from: ['../app/assets/**/*'],
+          to: ['./dist/assets'],
+        },
+        {
+          from: ['../app/templates/**/*'],
+          to: ['./dist/templates'],
+        },
+        {
+          from: ['./assets/*'],
+          to: ['./dist/assets'],
+        },
+        {
+          from: ['../cli-kit/assets/**/*'],
+          to: ['./dist/assets'],
+        }
+      ]
     }),
   ],
 })
