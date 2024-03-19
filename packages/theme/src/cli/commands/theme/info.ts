@@ -2,21 +2,23 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {themeInfo} from '../../services/info.js'
+import {ThemeInfo, themeInfo, devInfo} from '../../services/info.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {Flags} from '@oclif/core'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {formatSection, outputInfo} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
-export default class ThemeInfo extends ThemeCommand {
+export default class Info extends ThemeCommand {
   static description =
     'Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.'
 
   static flags = {
     ...globalFlags,
-    password: themeFlags.password,
     store: themeFlags.store,
+    password: themeFlags.password,
+    environment: themeFlags.environment,
     development: Flags.boolean({
       char: 'd',
       description: 'Retrieve info from your development theme.',
@@ -35,7 +37,7 @@ export default class ThemeInfo extends ThemeCommand {
   }
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(ThemeInfo)
+    const {flags} = await this.parse(Info)
 
     if (flags.theme || flags.development) {
       const store = ensureThemeStore(flags)
@@ -50,33 +52,22 @@ export default class ThemeInfo extends ThemeCommand {
         theme = await findOrSelectTheme(adminSession, filter)
       }
 
-      const themeInfo: {theme: {[key: string]: unknown}} | undefined = theme
-        ? {
-            theme: {
-              id: theme?.id,
-              name: theme?.name,
-              role: theme?.role,
-              shop: store,
-              preview_url: `https://${store}/?preview_theme_url=${theme?.id}`,
-              editor_url: `https://admin.shopify.com/store/${store.split('.')[0]}/themes/${theme?.id}/editor`,
-            },
-          }
-        : undefined
+      const output: ThemeInfo | undefined = theme ? themeInfo(theme, store, adminSession) : undefined
 
       if (flags.json) {
-        return outputInfo(JSON.stringify(themeInfo, null, 2))
+        return outputInfo(JSON.stringify(output, null, 2))
       }
 
-      if (!themeInfo) {
-        return outputInfo('Theme not found!')
+      if (!output) {
+        throw new AbortError('Theme not found!')
       }
 
-      const infoMessage = Object.entries(themeInfo?.theme)
+      const infoMessage = Object.entries(output.theme)
         .map(([key, val]) => formatSection(key, `${val}`))
         .join('\n\n')
       outputInfo(infoMessage)
     } else {
-      const infoMessage = await themeInfo({cliVersion: this.config.version})
+      const infoMessage = await devInfo({cliVersion: this.config.version})
       outputInfo(infoMessage)
     }
   }
