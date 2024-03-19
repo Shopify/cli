@@ -339,7 +339,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
               validationErrors: [],
             }
           }),
-          message: 'Success!',
+          message: '',
         },
         userErrors: userErrors?.map((err) => ({...err, category: 'deploy', details: []})),
       },
