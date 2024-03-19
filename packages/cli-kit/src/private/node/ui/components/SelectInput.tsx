@@ -6,9 +6,7 @@ import React, {useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
+import sortBy from 'lodash/sortBy.js'
 
 declare module 'react' {
   function forwardRef<T, P>(
@@ -153,9 +151,8 @@ function SelectInputInner<T>(
     noItems = true
   }
 
-  const sortBy = require('lodash/sortBy')
   const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
-  const items = sortBy(rawItems, 'group') as Item<T>[]
+  const items = sortBy(rawItems, 'group')
   const itemsHaveKeys = items.some((item) => typeof item.key !== 'undefined' && item.key.length > 0)
 
   if (itemsHaveKeys) validateKeys(items)
