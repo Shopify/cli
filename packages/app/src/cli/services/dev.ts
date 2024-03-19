@@ -61,7 +61,7 @@ export interface DevOptions {
 
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
-  await actionsBeforeSettingUpDevProcesses(config)
+  await actionsBeforeSettingUpDevProcesses(config.localApp, config.remoteApp.configuration)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
@@ -134,12 +134,16 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 }
 
-async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConfig) {
-  if (
-    isCurrentAppSchema(localApp.configuration) &&
-    !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    localApp.configuration.access_scopes?.scopes !== remoteApp.configuration?.access_scopes?.scopes
-  ) {
+export async function actionsBeforeSettingUpDevProcesses(
+  localApp: AppInterface,
+  remoteConfig: SpecsAppConfiguration | undefined,
+) {
+  if (!isCurrentAppSchema(localApp.configuration) || localApp.configuration.access_scopes?.use_legacy_install_flow) {
+    return
+  }
+  const sortedLocalScopes = localApp.configuration.access_scopes?.scopes?.split(',').sort().join(',')
+  const sortedRemoteScopes = remoteConfig?.access_scopes?.scopes?.split(',').sort().join(',')
+  if (sortedLocalScopes !== sortedRemoteScopes) {
     const nextSteps = [
       [
         'Run',
@@ -155,7 +159,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
-        scopesMessage(remoteApp.configuration?.access_scopes?.scopes?.split(',') || []),
+        scopesMessage(remoteConfig?.access_scopes?.scopes?.split(',') || []),
       ],
       nextSteps,
     })
