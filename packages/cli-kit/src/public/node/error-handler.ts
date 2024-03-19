@@ -247,12 +247,12 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
 function initializeBugsnag() {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  if (Bugsnag.default.isStarted()) {
+  if (Bugsnag.isStarted()) {
     return
   }
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  Bugsnag.default.start({
+  Bugsnag.start({
     appType: 'node',
     apiKey: bugsnagApiKey,
     logger: null,

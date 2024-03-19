@@ -82,7 +82,7 @@
     "refresh-readme": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo 'missing readme'",
+        "command": "pnpm oclif readme",
         "cwd": "packages/cli"
       }
     }

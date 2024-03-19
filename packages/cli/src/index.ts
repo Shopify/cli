@@ -10,7 +10,6 @@ import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
-import Index from './cli/commands/plugins/index.js'
 import HydrogenInit from './cli/commands/hydrogen/init.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
@@ -66,6 +65,9 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
   })
 }
 
+// Hide plugins command
+PluginCommands.plugins.hidden = true
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const COMMANDS: any = {
   ...AppCommands,
@@ -82,7 +84,6 @@ export const COMMANDS: any = {
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
-  'plugins:index': Index,
   'hydrogen:init': HydrogenInit,
 }
 

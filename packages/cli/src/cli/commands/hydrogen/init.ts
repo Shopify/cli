@@ -4,7 +4,6 @@ import {exec} from '@shopify/cli-kit/node/system'
 
 export default class Init extends Command {
   static summary = 'Create a new hydrogen project'
-  static description = 'Create a new hydrogen project'
   static strict = false
 
   async run(): Promise<void> {
