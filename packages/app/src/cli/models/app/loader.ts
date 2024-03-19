@@ -268,7 +268,6 @@ class AppLoader {
   showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
     const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
     if (currentProcessIsGlobal() && hasLocalCLI) {
-      // Warn the user that they are using a global installation of the CLI but their project defines a local dependency also.
       const warningContent = {
         headline: 'You are running a global installation of Shopify CLI',
         body: [
