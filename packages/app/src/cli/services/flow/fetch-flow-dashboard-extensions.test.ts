@@ -1,6 +1,7 @@
 import {getActiveDashboardExtensions} from './fetch-flow-dashboard-extensions.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {describe, expect, vi} from 'vitest'
 
 vi.mock('../dev/fetch')
@@ -50,11 +51,11 @@ describe('getActiveDashboardExtensions', (it) => {
       },
     }
     const developerPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: (_appId: string) => Promise.resolve(appExtensionRegistrations),
+      appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(appExtensionRegistrations),
     })
 
     // When
-    const got = await getActiveDashboardExtensions({developerPlatformClient, apiKey: 'apiKey'})
+    const got = await getActiveDashboardExtensions({developerPlatformClient, apiKey: 'apiKey', organizationId: '1'})
 
     // Then
     expect(got).toEqual([

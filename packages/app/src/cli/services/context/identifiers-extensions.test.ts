@@ -128,7 +128,7 @@ const options = (
   } = options
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
-    developerPlatformClient: testDeveloperPlatformClient(),
+    developerPlatformClient,
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
@@ -954,7 +954,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     })
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledWith({
+    expect(developerPlatformClient.createExtension).toHaveBeenCalledWith({
       apiKey: 'appId',
       type: PAYMENTS_A.graphQLType,
       config: '{}',

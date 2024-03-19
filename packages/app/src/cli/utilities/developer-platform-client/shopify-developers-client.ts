@@ -9,7 +9,6 @@ import {
   ActiveAppReleaseQuerySchema,
 } from './shopify-developers-client/graphql/active-app-release.js'
 // import {SpecificationsQuery, SpecificationsQueryVariables, SpecificationsQuerySchema} from './shopify-developers-client/graphql/specifications.js'
-import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   CreateAppVersionMutation,
   CreateAppVersionMutationSchema,
@@ -20,6 +19,7 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './shopify-developers-client/graphql/release-version.js'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'

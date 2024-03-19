@@ -2,7 +2,7 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
-import {logMetadataForLoadedContext} from '../../context.js'
+import {appFromId, logMetadataForLoadedContext} from '../../context.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -95,7 +95,11 @@ async function getConfigFileName(directory: string, configName?: string): Promis
 }
 
 async function logMetadata(configuration: CurrentAppConfiguration, developerPlatformClient: DeveloperPlatformClient) {
-  const app = await developerPlatformClient.appFromId(configuration.client_id)
+  const app = await appFromId({
+    apiKey: configuration.client_id,
+    organizationId: configuration.organization_id,
+    developerPlatformClient,
+  })
   if (app) {
     await logMetadataForLoadedContext(app)
   } else {
