@@ -5,16 +5,9 @@ import {
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
-import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {
-  fetchAppDetailsFromApiKey,
-  fetchOrgAndApps,
-  fetchOrgFromId,
-  filterDisabledBetas,
-} from '../../../cli/services/dev/fetch.js'
+import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQueryVariables,
@@ -85,6 +78,45 @@ import {
 } from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema, GetApiVersionsQuery} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables, getTopicsQuery} from '../../services/webhook/request-topics.js'
+import {
+  MigrateFlowExtensionVariables,
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionMutation,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
+import {UpdateURLsVariables, UpdateURLsSchema, UpdateURLsQuery} from '../../api/graphql/update_urls.js'
+import {CurrentAccountInfoQuery, CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {
+  RemoteTemplateSpecificationsQuery,
+  RemoteTemplateSpecificationsSchema,
+  RemoteTemplateSpecificationsVariables,
+} from '../../api/graphql/template_specifications.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
+import {
+  TargetSchemaDefinitionQueryVariables,
+  TargetSchemaDefinitionQuerySchema,
+  TargetSchemaDefinitionQuery,
+} from '../../api/graphql/functions/target_schema_definition.js'
+import {
+  ApiSchemaDefinitionQueryVariables,
+  ApiSchemaDefinitionQuerySchema,
+  ApiSchemaDefinitionQuery,
+} from '../../api/graphql/functions/api_schema_definition.js'
+import {
+  MigrateToUiExtensionVariables,
+  MigrateToUiExtensionSchema,
+  MigrateToUiExtensionQuery,
+} from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {
+  ExtensionSpecificationsQuery,
+  ExtensionSpecificationsQuerySchema,
+  ExtensionSpecificationsQueryVariables,
+  RemoteSpecification,
+} from '../../api/graphql/extension_specifications.js'
+import {
+  FindOrganizationBasicQuery,
+  FindOrganizationBasicQuerySchema,
+  FindOrganizationBasicVariables,
+} from '../../api/graphql/find_org_basic.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -139,12 +171,18 @@ export class PartnersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
-      this._session = await fetchPartnersSession()
+      const token = await ensureAuthenticatedPartners()
+      this._session = {
+        token,
+        accountInfo: {type: 'UnknownAccount'},
+      }
+      const accountInfo = await fetchCurrentAccountInformation(this)
+      this._session = {token, accountInfo}
     }
     return this._session
   }
 
-  async makeRequest<T>(query: string, variables: GraphQLVariables | undefined = undefined): Promise<T> {
+  async request<T>(query: string, variables: GraphQLVariables | undefined = undefined): Promise<T> {
     return partnersRequest(query, await this.token(), variables)
   }
 
@@ -170,12 +208,14 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    const result: AllOrganizationsQuerySchema = await this.makeRequest(AllOrganizationsQuery)
+    const result: AllOrganizationsQuerySchema = await this.request(AllOrganizationsQuery)
     return result.organizations.nodes
   }
 
-  async orgFromId(orgId: string): Promise<Organization> {
-    return fetchOrgFromId(orgId, await this.session())
+  async orgFromId(orgId: string): Promise<Organization | undefined> {
+    const variables: FindOrganizationBasicVariables = {id: orgId}
+    const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
+    return result.organizations.nodes[0]
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
@@ -195,8 +235,16 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(appId: string): Promise<ExtensionSpecification[]> {
-    return fetchSpecifications({token: await this.token(), apiKey: appId})
+  async specifications(appId: string): Promise<RemoteSpecification[]> {
+    const variables: ExtensionSpecificationsQueryVariables = {api_key: appId}
+    const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
+    return result.extensionSpecifications
+  }
+
+  async templateSpecifications(appId: string): Promise<ExtensionTemplate[]> {
+    const variables: RemoteTemplateSpecificationsVariables = {apiKey: appId}
+    const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
+    return result.templateSpecifications
   }
 
   async createApp(
@@ -209,7 +257,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     },
   ): Promise<OrganizationApp> {
     const variables: CreateAppQueryVariables = getAppVars(org, name, options?.isLaunchable, options?.scopesArray)
-    const result: CreateAppQuerySchema = await this.makeRequest(CreateAppQuery, variables)
+    const result: CreateAppQuerySchema = await this.request(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -221,31 +269,31 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
     const variables: AllDevStoresByOrganizationQueryVariables = {id: orgId}
-    const result: AllDevStoresByOrganizationSchema = await this.makeRequest(AllDevStoresByOrganizationQuery, variables)
+    const result: AllDevStoresByOrganizationSchema = await this.request(AllDevStoresByOrganizationQuery, variables)
     return result.organizations.nodes[0]!.stores.nodes
   }
 
   async appExtensionRegistrations(apiKey: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
-    return this.makeRequest(AllAppExtensionRegistrationsQuery, variables)
+    return this.request(AllAppExtensionRegistrationsQuery, variables)
   }
 
   async appVersions(apiKey: string): Promise<AppVersionsQuerySchema> {
     const variables: AppVersionsQueryVariables = {apiKey}
-    return this.makeRequest(AppVersionsQuery, variables)
+    return this.request(AppVersionsQuery, variables)
   }
 
   async appVersionByTag(input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
-    return this.makeRequest(AppVersionByTagQuery, input)
+    return this.request(AppVersionByTagQuery, input)
   }
 
   async appVersionsDiff(input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
-    return this.makeRequest(AppVersionsDiffQuery, input)
+    return this.request(AppVersionsDiffQuery, input)
   }
 
   async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
-    const result = await this.makeRequest<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
+    const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
     return {
       ...version,
@@ -259,57 +307,83 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
-    return this.makeRequest(FunctionUploadUrlGenerateMutation)
+    return this.request(FunctionUploadUrlGenerateMutation)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
-    return this.makeRequest(ExtensionCreateQuery, input)
+    return this.request(ExtensionCreateQuery, input)
   }
 
   async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
-    return this.makeRequest(ExtensionUpdateDraftMutation, extensionInput)
+    return this.request(ExtensionUpdateDraftMutation, extensionInput)
   }
 
   async deploy(deployInput: AppDeployVariables): Promise<AppDeploySchema> {
-    return this.makeRequest(AppDeploy, deployInput)
+    return this.request(AppDeploy, deployInput)
   }
 
   async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {
-    return this.makeRequest(AppRelease, input)
+    return this.request(AppRelease, input)
   }
 
   async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
-    return this.makeRequest(GenerateSignedUploadUrl, input)
+    return this.request(GenerateSignedUploadUrl, input)
   }
 
   async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
-    return this.makeRequest(ConvertDevToTestStoreQuery, input)
+    return this.request(ConvertDevToTestStoreQuery, input)
   }
 
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
-    return this.makeRequest(FindStoreByDomainQuery, variables)
+    return this.request(FindStoreByDomainQuery, variables)
   }
 
   async updateDeveloperPreview(
     input: DevelopmentStorePreviewUpdateInput,
   ): Promise<DevelopmentStorePreviewUpdateSchema> {
-    return this.makeRequest(DevelopmentStorePreviewUpdateQuery, input)
+    return this.request(DevelopmentStorePreviewUpdateQuery, input)
   }
 
   async appPreviewMode(input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
-    return this.makeRequest(FindAppPreviewModeQuery, input)
+    return this.request(FindAppPreviewModeQuery, input)
   }
 
   async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    return this.makeRequest(sendSampleWebhookMutation, input)
+    return this.request(sendSampleWebhookMutation, input)
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    return this.makeRequest(GetApiVersionsQuery)
+    return this.request(GetApiVersionsQuery)
   }
 
   async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
-    return this.makeRequest(getTopicsQuery, input)
+    return this.request(getTopicsQuery, input)
+  }
+
+  async migrateFlowExtension(input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
+    return this.request(MigrateFlowExtensionMutation, input)
+  }
+
+  async updateURLs(input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
+    return this.request(UpdateURLsQuery, input)
+  }
+
+  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
+    return this.request(CurrentAccountInfoQuery)
+  }
+
+  async targetSchemaDefinition(input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
+    const response: TargetSchemaDefinitionQuerySchema = await this.request(TargetSchemaDefinitionQuery, input)
+    return response.definition
+  }
+
+  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
+    const response: ApiSchemaDefinitionQuerySchema = await this.request(ApiSchemaDefinitionQuery, input)
+    return response.definition
+  }
+
+  async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
+    return this.request(MigrateToUiExtensionQuery, input)
   }
 }

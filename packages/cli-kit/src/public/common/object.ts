@@ -1,6 +1,15 @@
 import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
-import lodash, {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
+import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
+import lodashPickBy from 'lodash/pickBy.js'
+import lodashMapValues from 'lodash/mapValues.js'
+import lodashIsEqual from 'lodash/isEqual.js'
+import differenceWith from 'lodash/differenceWith.js'
+import fromPairs from 'lodash/fromPairs.js'
+import toPairs from 'lodash/toPairs.js'
+import get from 'lodash/get.js'
+import set from 'lodash/set.js'
+import lodashIsEmpty from 'lodash/isEmpty.js'
 
 /**
  * Deep merges the two objects and returns a new object with the merge result.
@@ -28,7 +37,7 @@ export function deepMergeObjects<T1, T2>(
  * @returns Returns the new object.
  */
 export function pickBy<T>(object: Dictionary<T> | null | undefined, predicate: ValueKeyIteratee<T>): Dictionary<T> {
-  return lodash.pickBy(object, predicate)
+  return lodashPickBy(object, predicate)
 }
 
 /**
@@ -44,7 +53,7 @@ export function mapValues<T extends object, TResult>(
   source: T | null | undefined,
   callback: ObjectIterator<T, TResult>,
 ): {[P in keyof T]: TResult} {
-  return lodash.mapValues(source, callback)
+  return lodashMapValues(source, callback)
 }
 
 /**
@@ -55,7 +64,7 @@ export function mapValues<T extends object, TResult>(
  * @returns True if the objects are equal, false otherwise.
  */
 export function deepCompare(one: object, two: object): boolean {
-  return lodash.isEqual(one, two)
+  return lodashIsEqual(one, two)
 }
 
 /**
@@ -66,9 +75,9 @@ export function deepCompare(one: object, two: object): boolean {
  * @returns Two objects containing the fields that are different, each one with the values of one object.
  */
 export function deepDifference(one: object, two: object): [object, object] {
-  const changes = lodash.differenceWith(lodash.toPairs(one), lodash.toPairs(two), deepCompare)
-  const changes2 = lodash.differenceWith(lodash.toPairs(two), lodash.toPairs(one), deepCompare)
-  return [lodash.fromPairs(changes), lodash.fromPairs(changes2)]
+  const changes = differenceWith(toPairs(one), toPairs(two), deepCompare)
+  const changes2 = differenceWith(toPairs(two), toPairs(one), deepCompare)
+  return [fromPairs(changes), fromPairs(changes2)]
 }
 
 /**
@@ -79,7 +88,7 @@ export function deepDifference(one: object, two: object): [object, object] {
  * @returns - Returns the resolved value.
  */
 export function getPathValue<T = object>(object: object, path: string): T | undefined {
-  return lodash.get(object, path) === undefined ? undefined : (lodash.get(object, path) as T)
+  return get(object, path) === undefined ? undefined : (get(object, path) as T)
 }
 
 /**
@@ -91,7 +100,7 @@ export function getPathValue<T = object>(object: object, path: string): T | unde
  * @returns - Returns object.
  */
 export function setPathValue(object: object, path: string, value?: unknown): object {
-  return lodash.set(object, path, value)
+  return set(object, path, value)
 }
 
 /**
@@ -101,5 +110,5 @@ export function setPathValue(object: object, path: string, value?: unknown): obj
  * @returns - Returns true if value is empty, else false.
  */
 export function isEmpty(object: object): boolean {
-  return lodash.isEmpty(object)
+  return lodashIsEmpty(object)
 }

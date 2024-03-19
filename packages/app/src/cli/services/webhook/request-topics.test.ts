@@ -1,10 +1,7 @@
 import {requestTopics} from './request-topics.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
-
-const developerPlatformClient = testDeveloperPlatformClient()
 const aVersion = 'SOME_VERSION'
 
 describe('requestTopics', () => {

@@ -1,12 +1,7 @@
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from './migrate-to-ui-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
-import {ExtensionMigrateToUiExtensionQuery} from '../../api/graphql/extension_migrate_to_ui_extension.js'
-import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {describe, expect, test} from 'vitest'
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
@@ -129,13 +124,6 @@ describe('getExtensionsToMigrate()', () => {
 })
 
 describe('migrateExtensions()', () => {
-  beforeEach(() => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('mockToken')
-    vi.mocked(partnersRequest).mockResolvedValue({
-      migrateToUiExtension: {userErrors: null, migratedToUiExtension: true},
-    })
-  })
-
   test('performs a graphQL mutation for each extension', async () => {
     // Given
     const extensionsToMigrate = [
@@ -144,17 +132,18 @@ describe('migrateExtensions()', () => {
     ]
     const appId = '123abc'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => ({...remote, type: 'CHECKOUT_UI_EXTENSION'}))
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    await migrateExtensionsToUIExtension(extensionsToMigrate, appId, remoteExtensions)
+    await migrateExtensionsToUIExtension(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledTimes(extensionsToMigrate.length)
-    expect(partnersRequest).toHaveBeenCalledWith(ExtensionMigrateToUiExtensionQuery, 'mockToken', {
+    expect(developerPlatformClient.migrateToUiExtension).toHaveBeenCalledTimes(extensionsToMigrate.length)
+    expect(developerPlatformClient.migrateToUiExtension).toHaveBeenCalledWith({
       apiKey: appId,
       registrationId: extensionsToMigrate[0]!.remote.id,
     })
-    expect(partnersRequest).toHaveBeenCalledWith(ExtensionMigrateToUiExtensionQuery, 'mockToken', {
+    expect(developerPlatformClient.migrateToUiExtension).toHaveBeenCalledWith({
       apiKey: appId,
       registrationId: extensionsToMigrate[1]!.remote.id,
     })
@@ -170,7 +159,12 @@ describe('migrateExtensions()', () => {
     const remoteExtensions = extensionsToMigrate.map(({remote}) => ({...remote, type: 'CHECKOUT_UI_EXTENSION'}))
 
     // When
-    const result = await migrateExtensionsToUIExtension(extensionsToMigrate, appId, remoteExtensions)
+    const result = await migrateExtensionsToUIExtension(
+      extensionsToMigrate,
+      appId,
+      remoteExtensions,
+      testDeveloperPlatformClient(),
+    )
 
     // Then
     expect(result).toStrictEqual(remoteExtensions.map((remote) => ({...remote, type: 'UI_EXTENSION'})))

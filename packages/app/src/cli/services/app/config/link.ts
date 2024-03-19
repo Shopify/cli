@@ -18,6 +18,7 @@ import {ExtensionSpecification} from '../../../models/extensions/specification.j
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
+import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -71,7 +72,10 @@ async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions,
 }
 
 async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
-  const specifications = await options.developerPlatformClient!.specifications(remoteApp.apiKey)
+  const specifications = await fetchSpecifications({
+    developerPlatformClient: options.developerPlatformClient!,
+    apiKey: remoteApp.apiKey,
+  })
   const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)

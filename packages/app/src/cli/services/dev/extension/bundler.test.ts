@@ -25,7 +25,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import * as cliKitFS from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../../models/app/loader.js')
 vi.mock('../update-extension.js')

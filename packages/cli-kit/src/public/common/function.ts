@@ -1,4 +1,5 @@
-import lodash from 'lodash'
+import lodashMemoize from 'lodash/memoize.js'
+import lodashDebounce from 'lodash/debounce.js'
 import type {DebouncedFunc, DebounceSettings} from 'lodash'
 
 /**
@@ -13,7 +14,7 @@ import type {DebouncedFunc, DebounceSettings} from 'lodash'
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function memoize<T extends (...args: any) => any>(func: T, resolver?: (...args: Parameters<T>) => unknown): T {
-  return lodash.memoize(func, resolver)
+  return lodashMemoize(func, resolver)
 }
 
 /**
@@ -39,5 +40,5 @@ export function debounce<T extends (...args: any) => any>(
   wait?: number,
   options?: DebounceSettings,
 ): DebouncedFunc<T> {
-  return lodash.debounce(func, wait, options)
+  return lodashDebounce(func, wait, options)
 }

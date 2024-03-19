@@ -5,13 +5,10 @@ import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./dev/fetch.js')
 
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('developerPreviewController', () => {
   test('does not refresh the tokens when they are still valid', async () => {
     // Given
-    const {refreshToken} = developerPlatformClient
-    const refreshTokenSpy = vi.spyOn(developerPlatformClient, 'refreshToken').mockImplementation(refreshToken)
+    const developerPlatformClient = testDeveloperPlatformClient()
     const controller = developerPreviewController('apiKey', developerPlatformClient)
     vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce(true)
 
@@ -20,22 +17,21 @@ describe('developerPreviewController', () => {
 
     // Then
     expect(got).toBe(true)
-    expect(refreshTokenSpy).not.toHaveBeenCalled()
+    expect(developerPlatformClient.refreshToken).not.toHaveBeenCalled()
   })
   test('refreshes the tokens when they expire', async () => {
     // Given
+    const developerPlatformClient = testDeveloperPlatformClient()
     const controller = developerPreviewController('apiKey', developerPlatformClient)
     vi.mocked(fetchAppPreviewMode).mockRejectedValueOnce(new Error('expired token'))
     vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce(true)
-    const {refreshToken} = developerPlatformClient
-    const refreshTokenSpy = vi.spyOn(developerPlatformClient, 'refreshToken').mockImplementation(refreshToken)
 
     // When
     const got = await controller.fetchMode()
 
     // Then
     expect(got).toBe(true)
-    expect(refreshTokenSpy).toHaveBeenCalledOnce()
+    expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
     expect(fetchAppPreviewMode).toHaveBeenCalledTimes(2)
   })
 })

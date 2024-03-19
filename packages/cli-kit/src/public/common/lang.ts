@@ -1,4 +1,4 @@
-import lodash from 'lodash'
+import lodashIsEqual from 'lodash/isEqual.js'
 
 /**
  * Performs a deep comparison between two values to determine if they are
@@ -16,5 +16,5 @@ import lodash from 'lodash'
  * @example
  */
 export function isEqual(value: unknown, other: unknown): boolean {
-  return lodash.isEqual(value, other)
+  return lodashIsEqual(value, other)
 }

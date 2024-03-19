@@ -1,29 +1,22 @@
 import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './context.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {
-  testPartnersUserSession,
   testApp,
+  testDeveloperPlatformClient,
   testFunctionExtension,
   testOrganizationApp,
 } from '../models/app/app.test-data.js'
-import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
-import {TargetSchemaDefinitionQuery} from '../api/graphql/functions/target_schema_definition.js'
+import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
 import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as output from '@shopify/cli-kit/node/output'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/context/local')
-
 vi.mock('../../../models/app/loader.ts')
-vi.mock('./context/partner-account-info.js')
-
 vi.mock('../models/app/identifiers.js', async () => {
   const identifiers: any = await vi.importActual('../models/app/identifiers.js')
   return {
@@ -40,14 +33,6 @@ vi.mock('./context.js', async () => {
 })
 
 describe('generateSchemaService', () => {
-  const token = 'token'
-  const request = partnersRequest as MockedFunction<typeof partnersRequest>
-
-  beforeEach(() => {
-    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-    request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
-  })
-
   test('Save the latest GraphQL schema to ./[extension]/schema.graphql when stdout flag is ABSENT', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -63,6 +48,7 @@ describe('generateSchemaService', () => {
         apiKey,
         path,
         stdout: false,
+        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then
@@ -89,6 +75,7 @@ describe('generateSchemaService', () => {
         apiKey,
         path,
         stdout,
+        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then
@@ -120,6 +107,7 @@ describe('generateSchemaService', () => {
           configuration: {api_version: version},
           type,
         } = extension
+        const developerPlatformClient = testDeveloperPlatformClient()
 
         // When
         await generateSchemaService({
@@ -128,10 +116,11 @@ describe('generateSchemaService', () => {
           apiKey,
           path,
           stdout: false,
+          developerPlatformClient,
         })
 
         // Then
-        expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
+        expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
           apiKey,
           version,
           type,
@@ -168,6 +157,7 @@ describe('generateSchemaService', () => {
         const path = tmpDir
         const expectedTarget = extension.configuration.targeting![0]!.target
         const version = extension.configuration.api_version
+        const developerPlatformClient = testDeveloperPlatformClient()
 
         // When
         await generateSchemaService({
@@ -176,10 +166,11 @@ describe('generateSchemaService', () => {
           apiKey,
           path,
           stdout: false,
+          developerPlatformClient,
         })
 
         // Then
-        expect(request).toHaveBeenCalledWith(TargetSchemaDefinitionQuery, token, {
+        expect(developerPlatformClient.targetSchemaDefinition).toHaveBeenCalledWith({
           apiKey,
           version,
           target: expectedTarget,
@@ -193,7 +184,9 @@ describe('generateSchemaService', () => {
     const app = testApp()
     const extension = await testFunctionExtension()
     const apiKey = 'api-key'
-    request.mockImplementation(() => Promise.resolve({definition: null}))
+    const developerPlatformClient = testDeveloperPlatformClient({
+      apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve(null),
+    })
 
     // When
     const result = generateSchemaService({
@@ -202,6 +195,7 @@ describe('generateSchemaService', () => {
       apiKey,
       path: '',
       stdout: true,
+      developerPlatformClient,
     })
 
     // Then
@@ -236,6 +230,7 @@ describe('generateSchemaService', () => {
         configuration: {api_version: version},
         type,
       } = extension
+      const developerPlatformClient = testDeveloperPlatformClient()
 
       // When
       await generateSchemaService({
@@ -244,10 +239,11 @@ describe('generateSchemaService', () => {
         apiKey,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       // Then
-      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
+      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
         apiKey,
         version,
         type,
@@ -262,6 +258,7 @@ describe('generateSchemaService', () => {
         configuration: {api_version: version},
         type,
       } = extension
+      const developerPlatformClient = testDeveloperPlatformClient()
 
       // When
       await generateSchemaService({
@@ -269,10 +266,11 @@ describe('generateSchemaService', () => {
         extension,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       // Then
-      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
+      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
         apiKey: identifiersApiKey,
         version,
         type,
@@ -288,6 +286,7 @@ describe('generateSchemaService', () => {
         type,
       } = extension
       getAppIdentifiers.mockReturnValue({app: undefined})
+      const developerPlatformClient = testDeveloperPlatformClient()
 
       // When
       await generateSchemaService({
@@ -295,10 +294,11 @@ describe('generateSchemaService', () => {
         extension,
         path: '',
         stdout: true,
+        developerPlatformClient,
       })
 
       // Then
-      expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
+      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
         apiKey: promptApiKey,
         version,
         type,
@@ -311,6 +311,7 @@ describe('generateSchemaService', () => {
       const extension = await testFunctionExtension()
       getAppIdentifiers.mockReturnValue({app: undefined})
       vi.mocked(isTerminalInteractive).mockReturnValue(false)
+      const developerPlatformClient = testDeveloperPlatformClient()
 
       // When
       const result = generateSchemaService({
@@ -318,10 +319,11 @@ describe('generateSchemaService', () => {
         extension,
         path: '',
         stdout: true,
+        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       await expect(result).rejects.toThrow()
-      expect(request).not.toHaveBeenCalled()
+      expect(developerPlatformClient.apiSchemaDefinition).not.toHaveBeenCalled()
     })
   })
 })

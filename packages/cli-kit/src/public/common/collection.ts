@@ -1,4 +1,5 @@
-import lodash from 'lodash'
+import lodashGroupBy from 'lodash/groupBy.js'
+import lodashPartition from 'lodash/partition.js'
 import type {List, ValueIteratee} from 'lodash'
 
 /**
@@ -16,7 +17,7 @@ export function groupBy<T>(
 ): {
   [index: string]: T[]
 } {
-  return lodash.groupBy(collection, iteratee)
+  return lodashGroupBy(collection, iteratee)
 }
 
 /**
@@ -29,5 +30,5 @@ export function groupBy<T>(
  * @returns Returns the array of grouped elements.
  */
 export function partition<T>(collection: List<T> | null | undefined, callback: ValueIteratee<T>): [T[], T[]] {
-  return lodash.partition(collection, callback)
+  return lodashPartition(collection, callback)
 }

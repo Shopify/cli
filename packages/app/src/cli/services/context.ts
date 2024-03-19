@@ -1,5 +1,5 @@
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
+import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
@@ -7,6 +7,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -97,7 +98,7 @@ export async function ensureGenerateContext(options: {
   const {cachedInfo, remoteApp} = await getAppContext(options)
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
-    const org = await options.developerPlatformClient.orgFromId(cachedInfo.orgId)
+    const org = await fetchOrgFromId(cachedInfo.orgId, options.developerPlatformClient)
     const app = remoteApp || (await appFromId(cachedInfo.appId, options.developerPlatformClient))
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
@@ -160,7 +161,7 @@ export async function ensureDevContext(
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(developerPlatformClient))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
-  const organization = await developerPlatformClient.orgFromId(orgId)
+  const organization = await fetchOrgFromId(orgId, developerPlatformClient)
 
   if (!selectedApp || !selectedStore) {
     // if we have selected an app or a dev store from a command flag, we keep them
@@ -188,7 +189,7 @@ export async function ensureDevContext(
     }
   }
 
-  const specifications = await developerPlatformClient.specifications(selectedApp.apiKey)
+  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: selectedApp.apiKey})
 
   selectedApp = {
     ...selectedApp,
@@ -325,7 +326,7 @@ async function fetchDevAppAndPrompt(
   const partnersResponse = await appFromId(devAppId, developerPlatformClient)
   if (!partnersResponse) return undefined
 
-  const org = await developerPlatformClient.orgFromId(partnersResponse.organizationId)
+  const org = await fetchOrgFromId(partnersResponse.organizationId, developerPlatformClient)
 
   showDevValues(org.businessName ?? 'unknown', partnersResponse.title)
   const reuse = await reuseDevConfigPrompt()
@@ -377,7 +378,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const {reset, force, noRelease, developerPlatformClient} = options
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
-  const specifications = await developerPlatformClient.specifications(remoteApp.apiKey)
+  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: remoteApp.apiKey})
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,
@@ -385,7 +386,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     remoteBetas: remoteApp.betas,
   })
 
-  const org = await developerPlatformClient.orgFromId(remoteApp.organizationId)
+  const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 
   await ensureIncludeConfigOnDeploy({org, app, remoteApp, reset, force})
 
@@ -449,7 +450,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
 
   const [remoteApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, developerPlatformClient)
 
-  const org = await developerPlatformClient.orgFromId(remoteApp.organizationId)
+  const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 
   await ensureIncludeConfigOnDeploy({
     org,
@@ -593,7 +594,7 @@ interface VersionsListContextOutput {
  * If the app doesn't have the simplified deployments beta enabled, throw an error.
  *
  * @param options - Current dev context options
- * @returns The partners token and app
+ * @returns The Developer Platform client and the app
  */
 export async function ensureVersionsListContext(
   options: VersionListContextOptions,

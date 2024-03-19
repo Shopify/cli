@@ -15,10 +15,9 @@ import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey} from '../../private/node/constants.js'
 import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {Bugsnag} from '../../private/node/error-handler.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
-import {Event} from '@bugsnag/js'
+import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
 export async function errorHandler(
@@ -121,7 +120,9 @@ export async function sendErrorToBugsnag(
           resolve(reportableError)
         }
       }
-      Bugsnag.default.notify(reportableError, eventHandler, errorHandler)
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      Bugsnag.notify(reportableError, eventHandler, errorHandler)
     })
   }
   return {error: reportableError, reported: report, unhandled}

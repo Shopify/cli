@@ -4,7 +4,6 @@ import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
@@ -12,8 +11,6 @@ vi.mock('../../prompts/dev')
 vi.mock('./fetch')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/spin')
 
 const ORG1: Organization = {
@@ -67,7 +64,6 @@ describe('selectStore', async () => {
   test('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(partnersRequest).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
@@ -82,18 +78,14 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
     vi.mocked(isSpinEnvironment).mockReturnValue(true)
     vi.mocked(firstPartyDev).mockReturnValue(true)
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
+    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(partnersRequest).not.toHaveBeenCalledWith({
-      input: {
-        organizationID: parseInt(ORG1.id, 10),
-        shopId: STORE2.shopId,
-      },
-    })
+    expect(developerPlatformClient.convertToTestStore).not.toHaveBeenCalled()
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 

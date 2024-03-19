@@ -5,10 +5,9 @@ import {requestTopics} from './request-topics.js'
 import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {findApiKey, findInEnv} from './find-app-info.js'
-import {fetchPartnersSession} from '../context/partner-account-info.js'
-import {testDeveloperPlatformClient, testPartnersUserSession} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
-import {beforeEach, describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -24,7 +23,6 @@ const anEventBridgeAddress = 'arn:aws:events:us-east-3::event-source/aws.partner
 
 vi.mock('@shopify/cli-kit')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('../context/partner-account-info.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../prompts/webhook/options-prompt.js')
 vi.mock('./request-sample.js')
@@ -50,10 +48,6 @@ const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('webhookTriggerService', () => {
-  beforeEach(async () => {
-    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-  })
-
   test('notifies about request errors', async () => {
     // Given
     const response = {

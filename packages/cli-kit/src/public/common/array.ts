@@ -1,4 +1,5 @@
-import lodash from 'lodash'
+import lodashUniqBy from 'lodash/uniqBy.js'
+import lodashDifference from 'lodash/difference.js'
 import type {List, ValueIteratee} from 'lodash'
 
 /**
@@ -41,7 +42,7 @@ export function getArrayContainsDuplicates<T>(array: T[]): boolean {
  * @returns Returns the new duplicate free array.
  */
 export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIteratee<T>): T[] {
-  return lodash.uniqBy(array, iteratee)
+  return lodashUniqBy(array, iteratee)
 }
 
 /**
@@ -53,5 +54,5 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
  * @returns Returns the new array of filtered values.
  */
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
-  return lodash.difference(array, ...values)
+  return lodashDifference(array, ...values)
 }

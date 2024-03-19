@@ -1,20 +1,11 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
-import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
-import {
-  ApiSchemaDefinitionQuery,
-  ApiSchemaDefinitionQuerySchema,
-  ApiSchemaDefinitionQueryVariables,
-} from '../api/graphql/functions/api_schema_definition.js'
-import {
-  TargetSchemaDefinitionQuery,
-  TargetSchemaDefinitionQuerySchema,
-  TargetSchemaDefinitionQueryVariables,
-} from '../api/graphql/functions/target_schema_definition.js'
+import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
+import {TargetSchemaDefinitionQueryVariables} from '../api/graphql/functions/target_schema_definition.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
@@ -27,12 +18,12 @@ interface GenerateSchemaOptions {
   apiKey?: string
   stdout: boolean
   path: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
-  const developerPlatformClient = selectDeveloperPlatformClient()
-  const token = (await developerPlatformClient.session()).token
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   const {api_version: version, type, targeting} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
   const stdout = options.stdout
@@ -52,12 +43,18 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   const definition = await (usingTargets
     ? generateSchemaFromTarget({
         localIdentifier: extension.localIdentifier,
-        token,
+        developerPlatformClient,
         apiKey,
         target: targeting![0]!.target,
         version,
       })
-    : generateSchemaFromType({localIdentifier: extension.localIdentifier, token, apiKey, type, version}))
+    : generateSchemaFromType({
+        localIdentifier: extension.localIdentifier,
+        developerPlatformClient,
+        apiKey,
+        type,
+        version,
+      }))
 
   if (stdout) {
     outputInfo(definition)
@@ -70,7 +67,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
 
 interface BaseGenerateSchemaOptions {
   localIdentifier: string
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   version: string
 }
@@ -81,27 +78,26 @@ interface GenerateSchemaFromTargetOptions extends BaseGenerateSchemaOptions {
 
 async function generateSchemaFromTarget({
   localIdentifier,
-  token,
+  developerPlatformClient,
   apiKey,
   target,
   version,
 }: GenerateSchemaFromTargetOptions): Promise<string> {
-  const query = TargetSchemaDefinitionQuery
   const variables: TargetSchemaDefinitionQueryVariables = {
     apiKey,
     target,
     version,
   }
-  const response: TargetSchemaDefinitionQuerySchema = await partnersRequest(query, token, variables)
+  const definition = await developerPlatformClient.targetSchemaDefinition(variables)
 
-  if (!response.definition) {
+  if (!definition) {
     throw new AbortError(
       outputContent`A schema could not be generated for ${localIdentifier}`,
       outputContent`Check that the Function targets and version are valid.`,
     )
   }
 
-  return response.definition
+  return definition
 }
 
 interface GenerateSchemaFromType extends BaseGenerateSchemaOptions {
@@ -110,25 +106,24 @@ interface GenerateSchemaFromType extends BaseGenerateSchemaOptions {
 
 async function generateSchemaFromType({
   localIdentifier,
-  token,
+  developerPlatformClient,
   apiKey,
   version,
   type,
 }: GenerateSchemaFromType): Promise<string> {
-  const query = ApiSchemaDefinitionQuery
   const variables: ApiSchemaDefinitionQueryVariables = {
     apiKey,
     version,
     type,
   }
-  const response: ApiSchemaDefinitionQuerySchema = await partnersRequest(query, token, variables)
+  const definition = await developerPlatformClient.apiSchemaDefinition(variables)
 
-  if (!response.definition) {
+  if (!definition) {
     throw new AbortError(
       outputContent`A schema could not be generated for ${localIdentifier}`,
       outputContent`Check that the Function API type and version are valid.`,
     )
   }
 
-  return response.definition
+  return definition
 }

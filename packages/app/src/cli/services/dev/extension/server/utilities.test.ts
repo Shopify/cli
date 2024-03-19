@@ -7,8 +7,6 @@ import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/spin')
 
 describe('getRedirectURL()', () => {

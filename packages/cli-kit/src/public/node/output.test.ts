@@ -16,7 +16,7 @@ vi.mock('./context/local.js', async () => {
     isUnitTest: () => false,
   }
 })
-vi.mock('./node-package-manager.js')
+vi.mock('./is-global.js')
 
 describe('Output helpers', () => {
   test('can format dependency manager commands with flags', () => {
