@@ -605,6 +605,15 @@
           "name": "development",
           "type": "boolean"
         },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "environment",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "description": "Output the theme info as JSON.",
