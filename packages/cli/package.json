@@ -143,6 +143,9 @@
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
+      "hydrogen": {
+        "description": "Build Hydrogen storefronts."
+      },
       "theme": {
         "description": "Build Liquid themes."
       },
@@ -176,6 +179,7 @@
       "-h"
     ],
     "hooks": {
+      "init": "./dist/hooks/init.js",
       "prerun": "./dist/hooks/prerun.js",
       "postrun": "./dist/hooks/postrun.js",
       "command_not_found": {
