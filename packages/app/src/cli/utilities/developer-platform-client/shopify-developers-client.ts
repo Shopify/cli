@@ -9,16 +9,11 @@ import {
   ActiveAppReleaseQuerySchema,
 } from './shopify-developers-client/graphql/active-app-release.js'
 // import {SpecificationsQuery, SpecificationsQueryVariables, SpecificationsQuerySchema} from './shopify-developers-client/graphql/specifications.js'
-import {
-  // ExtensionSpecificationsQuerySchema,
-  FlattenedRemoteSpecification,
-} from '../../api/graphql/extension_specifications.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   GenerateSignedUploadUrlSchema,
@@ -44,11 +39,23 @@ import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
+import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
+import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
+import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
+import {
+  MigrateToUiExtensionVariables,
+  MigrateToUiExtensionSchema,
+} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 const ORG1 = {
   id: '1',
@@ -99,7 +106,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return [ORG1]
   }
 
-  async orgFromId(orgId: string): Promise<Organization> {
+  async orgFromId(orgId: string): Promise<Organization | undefined> {
     if (orgId === '1') return ORG1
 
     throw new BugError(`Can't fetch organization with id ${orgId}`)
@@ -124,8 +131,9 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(_appId: string): Promise<ExtensionSpecification[]> {
+  async specifications(_appId: string): Promise<RemoteSpecification[]> {
     return stubbedExtensionSpecifications()
+
     // // This should be the actual query, but it's not working at the moment...
     // const query = SpecificationsQuery
     // const variables: SpecificationsQueryVariables = {appId}
@@ -141,6 +149,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     // ...spec,
     // experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
     // }))
+  }
+
+  async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {
+    throw new BugError('Not implemented: templateSpecifications')
   }
 
   async createApp(
@@ -282,6 +294,30 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
     throw new BugError('Not implemented: topics')
   }
+
+  async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
+    throw new BugError('Not implemented: migrateFlowExtension')
+  }
+
+  async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
+    throw new BugError('Not implemented: updateURLs')
+  }
+
+  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
+    throw new BugError('Not implemented: currentAccountInfo')
+  }
+
+  async targetSchemaDefinition(_input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
+    throw new BugError('Not implemented: targetSchemaDefinition')
+  }
+
+  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
+    throw new BugError('Not implemented: apiSchemaDefinition')
+  }
+
+  async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
+    throw new BugError('Not implemented: migrateToUiExtension')
+  }
 }
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
@@ -322,8 +358,8 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
   }
 }
 
-async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[]> {
-  const extensionSpecifications: FlattenedRemoteSpecification[] = [
+async function stubbedExtensionSpecifications(): Promise<RemoteSpecification[]> {
+  return [
     {
       name: 'App access',
       externalName: 'App access',
@@ -331,7 +367,6 @@ async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[
       identifier: 'app_access',
       gated: false,
       experience: 'configuration',
-      registrationLimit: 1,
       options: {
         managementExperience: 'cli',
         registrationLimit: 1,
@@ -347,7 +382,6 @@ async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[
       identifier: 'app_home',
       gated: false,
       experience: 'configuration',
-      registrationLimit: 1,
       options: {
         managementExperience: 'cli',
         registrationLimit: 1,
@@ -363,7 +397,6 @@ async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[
       identifier: 'branding',
       gated: false,
       experience: 'configuration',
-      registrationLimit: 1,
       options: {
         managementExperience: 'cli',
         registrationLimit: 1,
@@ -379,7 +412,6 @@ async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[
       identifier: 'webhooks',
       gated: false,
       experience: 'configuration',
-      registrationLimit: 1,
       options: {
         managementExperience: 'cli',
         registrationLimit: 1,
@@ -389,21 +421,4 @@ async function stubbedExtensionSpecifications(): Promise<ExtensionSpecification[
       },
     },
   ]
-
-  const local = await loadLocalExtensionsSpecifications()
-  const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
-  return [...updatedSpecs]
-}
-
-function mergeLocalAndRemoteSpecs(
-  local: ExtensionSpecification[],
-  remote: FlattenedRemoteSpecification[],
-): ExtensionSpecification[] {
-  const updated = local.map((spec) => {
-    const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
-    return undefined
-  })
-
-  return getArrayRejectingUndefined<ExtensionSpecification>(updated)
 }

@@ -8,8 +8,7 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('../dev/fetch.js')
@@ -18,10 +17,6 @@ vi.mock('./select-app.js')
 const APP_WITH_CONFIG: AppInterface = testAppWithConfig()
 const APP_WITHOUT_CONFIG: AppInterface = testApp()
 const APP1 = testOrganizationApp()
-
-beforeEach(() => {
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-})
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({

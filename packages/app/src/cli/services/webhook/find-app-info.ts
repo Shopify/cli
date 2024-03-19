@@ -33,8 +33,8 @@ export async function findInEnv(): Promise<AppCredentials> {
 /**
  * Find the app api_key, if available
  *
- * @param token - partners token
- * @returns apiKey
+ * @param developerPlatformClient - The client to access the platform API
+ * @returns string with the API key or undefined
  */
 export async function findApiKey(developerPlatformClient: DeveloperPlatformClient): Promise<string | undefined> {
   const orgs = await fetchOrganizations(developerPlatformClient)

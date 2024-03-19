@@ -1,5 +1,4 @@
 import {
-  fetchAppExtensionRegistrations,
   fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
@@ -24,7 +23,6 @@ import {
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -210,7 +208,6 @@ beforeEach(async () => {
   vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
   vi.mocked(getPackageManager).mockResolvedValue('npm')
-  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
   vi.mocked(isWebType).mockReturnValue(true)
 
   // this is needed because using importActual to mock the ui module
@@ -1640,13 +1637,6 @@ describe('ensureDraftExtensionsPushContext', () => {
     const opts = draftExtensionsPushOptions(app, extras)
     opts.reset = true
 
-    opts.developerPlatformClient!.appsForOrg = async () => ({apps: [APP1, APP2], hasMorePages: false})
-    opts.developerPlatformClient!.orgAndApps = async () => ({
-      organization: ORG1,
-      apps: [APP1, APP2],
-      hasMorePages: false,
-    })
-
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
@@ -1745,9 +1735,6 @@ describe('ensureThemeExtensionDevContext', () => {
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
-    })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',
       uuid: 'UUID',
@@ -1767,7 +1754,7 @@ describe('ensureThemeExtensionDevContext', () => {
 })
 
 describe('ensureVersionsListContext', () => {
-  test('returns the partners token and app', async () => {
+  test('returns the developer platform client and the app', async () => {
     // Given
     const app = testApp()
     const developerPlatformClient = buildDeveloperPlatformClient()

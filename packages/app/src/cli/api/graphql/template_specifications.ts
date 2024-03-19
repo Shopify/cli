@@ -24,6 +24,10 @@ export const RemoteTemplateSpecificationsQuery = gql`
   }
 `
 
-export interface RemoteTemplateSpecificationsQuerySchema {
+export interface RemoteTemplateSpecificationsSchema {
   templateSpecifications: ExtensionTemplate[]
+}
+
+export interface RemoteTemplateSpecificationsVariables {
+  apiKey: string
 }

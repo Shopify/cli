@@ -76,8 +76,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const developerPlatformClient = selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
 
   const {
     storeFqdn,
@@ -118,7 +116,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     cachedUpdateURLs,
     remoteApp,
     apiKey,
-    token,
+    developerPlatformClient,
   )
 
   return {
@@ -188,7 +186,7 @@ async function handleUpdatingOfPartnerUrls(
   cachedUpdateURLs: boolean | undefined,
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string | undefined},
   apiKey: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   let shouldUpdateURLs = false
@@ -209,7 +207,7 @@ async function handleUpdatingOfPartnerUrls(
       })
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }

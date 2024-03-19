@@ -3,16 +3,10 @@ import {automaticMatchmaking} from './id-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
-import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {describe, expect, vi, test, beforeAll} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('../dev/fetch')
 vi.mock('../dev/create-extension')
-
-beforeEach(() => {
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-})
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',

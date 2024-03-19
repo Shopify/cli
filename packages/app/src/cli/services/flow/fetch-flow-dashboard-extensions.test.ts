@@ -1,5 +1,6 @@
 import {getActiveDashboardExtensions} from './fetch-flow-dashboard-extensions.js'
-import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, vi} from 'vitest'
 
 vi.mock('../dev/fetch')
@@ -7,7 +8,7 @@ vi.mock('../dev/fetch')
 describe('getActiveDashboardExtensions', (it) => {
   it('should return only flow extensions with any version', async () => {
     // Given
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+    const appExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = {
       app: {
         extensionRegistrations: [],
         configurationRegistrations: [],
@@ -47,10 +48,13 @@ describe('getActiveDashboardExtensions', (it) => {
           },
         ],
       },
+    }
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appExtensionRegistrations: (_appId: string) => Promise.resolve(appExtensionRegistrations),
     })
 
     // When
-    const got = await getActiveDashboardExtensions({token: 'token', apiKey: 'apiKey'})
+    const got = await getActiveDashboardExtensions({developerPlatformClient, apiKey: 'apiKey'})
 
     // Then
     expect(got).toEqual([

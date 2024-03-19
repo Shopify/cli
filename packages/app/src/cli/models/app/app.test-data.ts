@@ -27,12 +27,24 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
+} from '../../api/graphql/extension_migrate_flow_extension.js'
+import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
+import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
+import {
+  MigrateToUiExtensionSchema,
+  MigrateToUiExtensionVariables,
+} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -823,12 +835,40 @@ const sendSampleWebhookResponse: SendSampleWebhookSchema = {
   },
 }
 
+const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
+  migrateFlowExtension: {
+    migratedFlowExtension: true,
+    userErrors: [],
+  },
+}
+
 const apiVersionsResponse: PublicApiVersionsSchema = {
   publicApiVersions: ['2022', 'unstable', '2023'],
 }
 
 const topicsResponse: WebhookTopicsSchema = {
   webhookTopics: ['orders/create', 'shop/redact'],
+}
+
+const updateURLsResponse: UpdateURLsSchema = {
+  appUpdate: {
+    userErrors: [],
+  },
+}
+
+const currentAccountInfoResponse: CurrentAccountInfoSchema = {
+  currentAccountInfo: {
+    __typename: 'UserAccount',
+    email: 'user@example.com',
+    orgName: 'org1',
+  },
+}
+
+const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
+  migrateToUiExtension: {
+    migratedToUiExtension: true,
+    userErrors: [],
+  },
 }
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
@@ -840,7 +880,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    specifications: (_appId: string) => Promise.resolve([]),
+    specifications: (_appId: string) => Promise.resolve(testRemoteSpecifications),
+    templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
@@ -866,6 +907,12 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
+    migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
+    updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
+    currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
+    targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = {}
