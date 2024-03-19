@@ -1,4 +1,6 @@
 import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
+import {findOrSelectTheme} from '../utilities/theme-selector.js'
+import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -19,20 +21,44 @@ export interface ThemeInfo {
   }
 }
 
-export function themeInfo(theme: Theme, store: string, session: AdminSession): ThemeInfo {
+export interface ThemeInfoOptions {
+  store?: string
+  password?: string
+  environment?: string
+  development?: boolean
+  theme?: string
+  json?: boolean
+}
+
+export function themeInfoJSON(theme: Theme, adminSession: AdminSession): ThemeInfo {
   return {
     theme: {
       id: theme.id,
       name: theme.name,
       role: theme.role,
-      shop: store,
-      preview_url: themePreviewUrl(theme, session),
-      editor_url: themeEditorUrl(theme, session),
+      shop: adminSession.storeFqdn,
+      preview_url: themePreviewUrl(theme, adminSession),
+      editor_url: themeEditorUrl(theme, adminSession),
     },
   }
 }
 
-export async function devInfo(config: {cliVersion: string}): Promise<OutputMessage> {
+export async function fetchThemeInfo(
+  adminSession: AdminSession,
+  options: ThemeInfoOptions,
+): Promise<ThemeInfo | undefined> {
+  let theme
+  if (options.development) {
+    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
+    theme = await developmentThemeManager.findOrCreate()
+  } else {
+    const filter = {filter: {theme: options.theme}}
+    theme = await findOrSelectTheme(adminSession, filter)
+  }
+  return theme ? themeInfoJSON(theme, adminSession) : undefined
+}
+
+export async function fetchDevInfo(config: {cliVersion: string}): Promise<OutputMessage> {
   const sections: [string, string][] = [devConfigSection(), await systemInfoSection(config)]
   const message = sections.map((sectionContents) => formatSection(...sectionContents)).join('\n\n')
   return message
