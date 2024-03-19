@@ -39,6 +39,8 @@ import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/c
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -240,6 +242,7 @@ class AppLoader {
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(directory)
+    this.showGlobalCLIWarningIfNeeded(nodeDependencies, packageManager)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -270,6 +273,23 @@ class AppLoader {
     })
 
     return appClass
+  }
+
+  showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
+    const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
+    if (currentProcessIsGlobal() && hasLocalCLI) {
+      const warningContent = {
+        headline: 'You are running a global installation of Shopify CLI',
+        body: [
+          `This project has Shopify CLI as a local dependency in package.json. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
+        ],
+        link: {
+          label: 'For more information, see Shopify CLI documentation',
+          url: 'https://shopify.dev/docs/apps/tools/cli',
+        },
+      }
+      renderInfo(warningContent)
+    }
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {

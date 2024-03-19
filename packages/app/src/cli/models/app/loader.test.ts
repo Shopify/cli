@@ -29,11 +29,14 @@ import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
+vi.mock('@shopify/cli-kit/node/is-global')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -280,6 +283,59 @@ wrong = "property"
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
+  })
+
+  test('shows warning if using global CLI but app has local dependency', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValueOnce(true)
+    const mockOutput = mockAndCaptureOutput()
+    mockOutput.clear()
+    await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {'@shopify/cli': '1.0.0'},
+      devDependencies: {},
+    })
+
+    // When
+    await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  You are running a global installation of Shopify CLI                        │
+      │                                                                              │
+      │  This project has Shopify CLI as a local dependency in package.json. If you  │
+      │   prefer to use that version, run the command with your package manager      │
+      │  (e.g. npm run shopify).                                                     │
+      │                                                                              │
+      │  For more information, see Shopify CLI documentation [1]                     │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/tools/cli
+      "
+    `)
+    mockOutput.clear()
+  })
+
+  test('doesnt show warning if there is no local dependency', async () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    mockOutput.clear()
+    await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+
+    // When
+    await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(mockOutput.warn()).toBe('')
+    mockOutput.clear()
   })
 
   test('identifies if the app uses pnpm workspaces', async () => {

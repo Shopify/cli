@@ -54,7 +54,7 @@ describe('generate', () => {
       │                                                                              │
       │  Next steps                                                                  │
       │    • To preview this extension along with the rest of the project, run       │
-      │      \`yarn dev\`                                                              │
+      │      \`yarn shopify app dev\`                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
@@ -76,7 +76,7 @@ describe('generate', () => {
       │                                                                              │
       │  Next steps                                                                  │
       │    • To preview this extension along with the rest of the project, run       │
-      │      \`yarn dev\`                                                              │
+      │      \`yarn shopify app dev\`                                                  │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "

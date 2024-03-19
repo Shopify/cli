@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
+import {currentProcessIsGlobal} from './is-global.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
 import {isTruthy} from './context/utilities.js'
@@ -103,6 +104,9 @@ export function formatPackageManagerCommand(
   scriptName: string,
   ...scriptArgs: string[]
 ): string {
+  if (currentProcessIsGlobal()) {
+    return [scriptName, ...scriptArgs].join(' ')
+  }
   switch (packageManager) {
     case 'pnpm':
     case 'bun':

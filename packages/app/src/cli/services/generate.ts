@@ -168,7 +168,7 @@ function formatSuccessfulRunMessage(
   if (extensionTemplate.types.some((type) => type.type !== 'function')) {
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
-      {command: `${formatPackageManagerCommand(depndencyManager, 'dev')}`},
+      {command: `${formatPackageManagerCommand(depndencyManager, 'shopify app dev')}`},
     ])
   }
 
