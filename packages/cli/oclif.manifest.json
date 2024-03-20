@@ -1703,6 +1703,32 @@
       "pluginType": "core",
       "strict": true
     },
+    "docs:generate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Generate CLI commands documentation",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "docs:generate",
+      "isESM": true,
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "docs",
+        "generate.js"
+      ],
+      "strict": true
+    },
     "hydrogen:init": {
       "aliases": [
       ],

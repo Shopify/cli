@@ -28,7 +28,8 @@
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
-    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache"
+    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
+    "build-docs": "sh ./bin/docs/build-docs.sh"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",
@@ -42,6 +43,7 @@
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
+    "@shopify/generate-docs": "^0.13.2",
     "@shopify/typescript-configs": "^5.1.0",
     "@types/node": "18.19.3",
     "@types/rimraf": "^3.0.2",
