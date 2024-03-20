@@ -184,7 +184,7 @@ export async function ensureDevContext(
     if (_selectedApp) {
       selectedApp = _selectedApp
     } else {
-      const {apps, hasMorePages} = await developerPlatformClient.orgAndApps(orgId)
+      const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
       // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)

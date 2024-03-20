@@ -70,6 +70,7 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {OrganizationsQuery, OrganizationsQuerySchema} from './shopify-developers-client/graphql/organizations.js'
 import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './shopify-developers-client/graphql/apps.js'
+import {OrganizationQuery, OrganizationQuerySchema, OrganizationQueryVariables} from './shopify-developers-client/graphql/organization.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -157,17 +158,26 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    if (orgId === '1') return ORG1
-
-    throw new BugError(`Can't fetch organization with id ${orgId}`)
+    const gid = `gid://organization/Organization/${orgId}`
+    const base64Id = Buffer.from(gid).toString('base64')
+    const variables: OrganizationQueryVariables = {organizationId: base64Id}
+    const organizationResult = await businessPlatformRequest<OrganizationQuerySchema>(
+      OrganizationQuery,
+      await this.businessPlatformToken(),
+      variables,
+    )
+    return {
+      id: orgId,
+      businessName: organizationResult.currentUserAccount.organization.name,
+    }
   }
 
   async orgAndApps(organizationId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
-    return {
-      // This is an ugly hack for now, to avoid fetching the org again.
-      organization: {...ORG1, id: organizationId},
-      ...await this.appsForOrg(organizationId),
-    }
+    const [organization, {apps, hasMorePages}] = await Promise.all([
+      this.orgFromId(organizationId),
+      this.appsForOrg(organizationId),
+    ])
+    return {organization: organization!, apps, hasMorePages}
   }
 
   async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
