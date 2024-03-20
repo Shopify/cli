@@ -1,6 +1,18 @@
-import {show, isSpin, spinFqdn, instance, isSpinEnvironment, appPort, appHost} from './spin.js'
+import {
+  show,
+  isSpin,
+  spinFqdn,
+  instance,
+  isSpinEnvironment,
+  appPort,
+  appHost,
+  fetchSpinPort,
+  spinVariables,
+} from './spin.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {captureOutput} from '../system.js'
+import {inTemporaryDirectory, mkdir, writeFile} from '../fs.js'
+import {joinPath} from '../path.js'
 import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../system.js')
@@ -230,4 +242,107 @@ describe('appHost', () => {
     // Then
     expect(got).toBeUndefined()
   })
+})
+
+describe('fetchSpinPort', () => {
+  ;['1', '2'].forEach((spinVersion: string) => {
+    test(`using spin${spinVersion} when the file exists and the port is defined then the port is returned`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const portValue = '1030'
+        const serviceName = 'shopify--partners'
+        const portName = 'CLI_EXTENSION_SERVER'
+        await createPortFileContent(tmpDir, spinVersion, serviceName, portName, portValue)
+
+        // When
+        const got = await fetchSpinPort(spinVariables.partnersSpinService, spinVariables.manualCliSpinPortName, tmpDir)
+
+        // Then
+        expect(got).toEqual(parseInt(portValue, 10))
+      })
+    })
+
+    test(`using spin${spinVersion} when the file exists and the port is defined wrong then undefined is returned`, async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const portValue = 'wrong-port'
+        const serviceName = 'shopify--partners'
+        const portName = 'CLI_EXTENSION_SERVER'
+        await createPortFileContent(tmpDir, spinVersion, serviceName, portName, portValue)
+
+        // When
+        const got = await fetchSpinPort(spinVariables.partnersSpinService, spinVariables.manualCliSpinPortName, tmpDir)
+
+        // Then
+        expect(got).toBeUndefined()
+      })
+    })
+  })
+
+  test(`using both versions when the spin2 file exists and the port is defined then is returned`, async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const port2Value = '1030'
+      const port1Value = '1040'
+      const serviceName = 'shopify--partners'
+      const portName = 'CLI_EXTENSION_SERVER'
+      await createPortFileContent(tmpDir, '2', serviceName, portName, port2Value)
+      await createPortFileContent(tmpDir, '1', serviceName, portName, port1Value)
+
+      // When
+      const got = await fetchSpinPort(spinVariables.partnersSpinService, spinVariables.manualCliSpinPortName, tmpDir)
+
+      // Then
+      expect(got).toEqual(parseInt(port2Value, 10))
+    })
+  })
+
+  test(`using both versions when the spin2 file exists and the port is defined wrong but spin1 file is ok then the latest is returned`, async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const port2Value = 'wrong-port'
+      const port1Value = '1040'
+      const serviceName = 'shopify--partners'
+      const portName = 'CLI_EXTENSION_SERVER'
+      await createPortFileContent(tmpDir, '2', serviceName, portName, port2Value)
+      await createPortFileContent(tmpDir, '1', serviceName, portName, port1Value)
+
+      // When
+      const got = await fetchSpinPort(spinVariables.partnersSpinService, spinVariables.manualCliSpinPortName, tmpDir)
+
+      // Then
+      expect(got).toEqual(parseInt(port1Value, 10))
+    })
+  })
+
+  test(`using both versions when port is defined wrong in both files then undefined is returned`, async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const port2Value = 'wrong-port'
+      const port1Value = 'wrong-port'
+      const serviceName = 'shopify--partners'
+      const portName = 'CLI_EXTENSION_SERVER'
+      await createPortFileContent(tmpDir, '2', serviceName, portName, port2Value)
+      await createPortFileContent(tmpDir, '1', serviceName, portName, port1Value)
+
+      // When
+      const got = await fetchSpinPort(spinVariables.partnersSpinService, spinVariables.manualCliSpinPortName, tmpDir)
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+  })
+
+  async function createPortFileContent(
+    tmpDir: string,
+    spinVersion: string,
+    service: string,
+    portName: string,
+    port: string,
+  ) {
+    const portPath =
+      spinVersion === '2' ? joinPath(tmpDir, 'ports2', service, 'custom') : joinPath(tmpDir, 'ports', service, 'proc')
+    const content = spinVersion === '2' ? `[{"internal":${port}}]` : `${port}`
+    return mkdir(portPath).then(() => writeFile(joinPath(portPath, portName), content))
+  }
 })

@@ -3,14 +3,12 @@ import {testDeveloperPlatformClient, testPaymentExtensions, testUIExtension} fro
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftInput} from '../../api/graphql/update_draft.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
@@ -45,13 +43,6 @@ describe('updateExtensionDraft()', () => {
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
-
-      vi.mocked(partnersRequest).mockResolvedValue({
-        extensionUpdateDraft: {
-          userErrors: [],
-        },
-      })
-
       await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionDraft({
@@ -172,13 +163,6 @@ describe('updateExtensionDraft()', () => {
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
-
-      vi.mocked(partnersRequest).mockResolvedValue({
-        extensionUpdateDraft: {
-          userErrors: [{message: 'Error1'}, {message: 'Error2'}],
-        },
-      })
-
       await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionDraft({
@@ -235,12 +219,6 @@ another = "setting"
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
-
-      vi.mocked(partnersRequest).mockResolvedValue({
-        extensionUpdateDraft: {
-          userErrors: [],
-        },
-      })
 
       vi.mocked(parseConfigurationFile).mockResolvedValue({
         type: 'web_pixel_extension',

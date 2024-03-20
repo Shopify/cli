@@ -11,8 +11,6 @@ vi.mock('@shopify/cli-kit/node/system')
 const address = 'http://localhost:3000/test/path'
 const storeFqdn = 'test-store.myshopify.io'
 
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('sendUninstallWebhookToAppServer', () => {
   test('requests sample and API versions, triggers local webhook', async () => {
     vi.mocked(triggerLocalWebhook).mockResolvedValueOnce(true)
@@ -63,11 +61,6 @@ describe('sendUninstallWebhookToAppServer', () => {
     vi.mocked(triggerLocalWebhook).mockRejectedValueOnce(fakeError).mockResolvedValueOnce(true)
     const stdout = {write: vi.fn()} as unknown as Writable
     const developerPlatformClient = testDeveloperPlatformClient()
-    const {apiVersions, sendSampleWebhook} = developerPlatformClient
-    const apiVersionsSpy = vi.spyOn(developerPlatformClient, 'apiVersions').mockImplementation(apiVersions)
-    const sendSampleWebhookSpy = vi
-      .spyOn(developerPlatformClient, 'sendSampleWebhook')
-      .mockImplementation(sendSampleWebhook)
 
     const result = await sendUninstallWebhookToAppServer({
       stdout,
@@ -78,8 +71,8 @@ describe('sendUninstallWebhookToAppServer', () => {
     })
 
     expect(result).toBe(true)
-    expect(apiVersionsSpy).toHaveBeenCalledOnce()
-    expect(sendSampleWebhookSpy).toHaveBeenCalledOnce()
+    expect(developerPlatformClient.apiVersions).toHaveBeenCalledOnce()
+    expect(developerPlatformClient.sendSampleWebhook).toHaveBeenCalledOnce()
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(2)
     expect(stdout.write).toHaveBeenNthCalledWith(1, expect.stringMatching(/Sending APP_UNINSTALLED/))
     expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringMatching(/retrying/))

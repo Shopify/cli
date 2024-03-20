@@ -1,17 +1,11 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
-import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
-import {describe, expect, vi, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-
-vi.mock('@shopify/cli-kit/node/api/partners')
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {describe, expect, test} from 'vitest'
 
 describe('fetchExtensionSpecifications', () => {
   test('returns the filtered and mapped results including theme', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
-
-    // When
-    const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey'})
+    // Given/When
+    const got = await fetchSpecifications({developerPlatformClient: testDeveloperPlatformClient(), apiKey: 'apiKey'})
 
     // Then
     expect(got).toEqual(

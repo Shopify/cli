@@ -5,8 +5,8 @@ import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
-import {Version} from '../../private/node/semver.js'
 import latestVersion from 'latest-version'
+import {SemVer} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -254,7 +254,7 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
   outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
   try {
     const lastVersion = await getLatestNPMPackageVersion(dependency)
-    if (lastVersion && new Version(currentVersion).compare(lastVersion) < 0) {
+    if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
       return lastVersion
     } else {
       return undefined

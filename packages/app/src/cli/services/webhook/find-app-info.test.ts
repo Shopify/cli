@@ -16,6 +16,8 @@ vi.mock('@shopify/cli-kit/node/path')
 vi.mock('../dev/fetch')
 vi.mock('../../prompts/dev')
 
+const developerPlatformClient = testDeveloperPlatformClient()
+
 describe('findInEnv', () => {
   test('.env file not available', async () => {
     // Given

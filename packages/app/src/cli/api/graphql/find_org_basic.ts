@@ -21,3 +21,7 @@ export interface FindOrganizationBasicQuerySchema {
     }[]
   }
 }
+
+export interface FindOrganizationBasicVariables {
+  id: string
+}

@@ -1,7 +1,13 @@
-import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
-export async function getActiveDashboardExtensions({token, apiKey}: {token: string; apiKey: string}) {
-  const initialRemoteExtensions = await fetchAppExtensionRegistrations({token, apiKey})
+export async function getActiveDashboardExtensions({
+  developerPlatformClient,
+  apiKey,
+}: {
+  developerPlatformClient: DeveloperPlatformClient
+  apiKey: string
+}) {
+  const initialRemoteExtensions = await developerPlatformClient.appExtensionRegistrations(apiKey)
   const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
   return dashboardManagedExtensionRegistrations.filter((ext) => {
     const isFlow = ext.type === 'flow_action_definition' || ext.type === 'flow_trigger_definition'

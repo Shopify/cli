@@ -1,12 +1,8 @@
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {
-  AllAppExtensionRegistrationsQuery,
-  AllAppExtensionRegistrationsQuerySchema,
-} from '../../api/graphql/all_app_extension_registrations.js'
+
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
 import {
   AllDevStoresByOrganizationQuery,
   AllDevStoresByOrganizationSchema,
@@ -91,24 +87,10 @@ export interface FetchResponse {
   stores: OrganizationStore[]
 }
 
-export async function fetchAppExtensionRegistrations({
-  token,
-  apiKey,
-}: {
-  token: string
-  apiKey: string
-}): Promise<AllAppExtensionRegistrationsQuerySchema> {
-  const query = AllAppExtensionRegistrationsQuery
-  const result: AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
-    apiKey,
-  })
-  return result
-}
-
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns List of organizations
  */
 export async function fetchOrganizations(developerPlatformClient: DeveloperPlatformClient): Promise<Organization[]> {
@@ -168,11 +150,12 @@ export async function fetchAppPreviewMode(
   return res.app?.developmentStorePreviewEnabled
 }
 
-export async function fetchOrgFromId(id: string, partnersSession: PartnersSession): Promise<Organization> {
-  const query = FindOrganizationBasicQuery
-  const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, partnersSession.token, {id})
-  const org = res.organizations.nodes[0]
-  if (!org) throw new NoOrgError(partnersSession.accountInfo, id)
+export async function fetchOrgFromId(
+  id: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<Organization> {
+  const org = await developerPlatformClient.orgFromId(id)
+  if (!org) throw new NoOrgError((await developerPlatformClient.session()).accountInfo, id)
   return org
 }
 

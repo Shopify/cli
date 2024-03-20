@@ -1,5 +1,12 @@
-import {LogLevel, outputWhereAppropriate, outputToken, shouldDisplayColors} from './output.js'
+import {
+  LogLevel,
+  outputWhereAppropriate,
+  outputToken,
+  shouldDisplayColors,
+  formatPackageManagerCommand,
+} from './output.js'
 
+import {currentProcessIsGlobal} from './is-global.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
 
@@ -9,6 +16,7 @@ vi.mock('./context/local.js', async () => {
     isUnitTest: () => false,
   }
 })
+vi.mock('./is-global.js')
 
 describe('Output helpers', () => {
   test('can format dependency manager commands with flags', () => {
@@ -76,5 +84,51 @@ describe('outputWhereAppropriate', () => {
     vi.spyOn(mockLogger, 'write')
     outputWhereAppropriate(logLevel, mockLogger, message)
     expect(mockLogger.write).toHaveBeenCalledWith(message)
+  })
+})
+
+describe('formatPackageManagerCommand', () => {
+  test('can format yarn commands', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+
+    // When
+    const result = formatPackageManagerCommand('yarn', 'shopify app dev', '--reset')
+
+    // Then
+    expect(result).toEqual('yarn shopify app dev --reset')
+  })
+
+  test('can format pnpm commands', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+
+    // When
+    const result = formatPackageManagerCommand('pnpm', 'shopify app dev', '--reset')
+
+    // Then
+    expect(result).toEqual('pnpm shopify app dev --reset')
+  })
+
+  test('can format npm commands', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+
+    // When
+    const result = formatPackageManagerCommand('npm', 'shopify app dev', '--reset')
+
+    // Then
+    expect(result).toEqual('npm run shopify app dev -- --reset')
+  })
+
+  test('can format global commands', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+
+    // When
+    const result = formatPackageManagerCommand('npm', 'shopify app dev', '--reset')
+
+    // Then
+    expect(result).toEqual('shopify app dev --reset')
   })
 })

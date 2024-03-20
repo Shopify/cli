@@ -18,9 +18,7 @@ import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/m
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
@@ -109,7 +107,7 @@ const options = (
 ): EnsureDeploymentIdsPresenceOptions => {
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
-    developerPlatformClient,
+    developerPlatformClient: testDeveloperPlatformClient(),
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
@@ -121,9 +119,6 @@ const options = (
   return localApp
 }
 
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./prompts', async () => {
   const prompts: any = await vi.importActual('./prompts')
   return {
@@ -239,7 +234,6 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(getUIExtensionsToMigrate).mockReturnValue([])
 })
 
@@ -768,7 +762,12 @@ describe('ensureExtensionsIds: Migrates extension', () => {
     })
 
     // Then
-    expect(migrateExtensionsToUIExtension).toBeCalledWith(extensionsToMigrate, opts.appId, remoteExtensions)
+    expect(migrateExtensionsToUIExtension).toBeCalledWith(
+      extensionsToMigrate,
+      opts.appId,
+      remoteExtensions,
+      opts.developerPlatformClient,
+    )
   })
 })
 
@@ -870,7 +869,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
       'appId',
       PAYMENTS_A.graphQLType,
       PAYMENTS_A.handle,
-      developerPlatformClient,
+      ensureExtensionsIdsOptions.developerPlatformClient,
       'payments.offsite.render',
     )
     expect(got).toEqual({

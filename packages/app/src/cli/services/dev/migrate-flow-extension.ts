@@ -2,12 +2,10 @@ import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {
-  MigrateFlowExtensionMutation,
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
@@ -50,8 +48,11 @@ export async function migrateFlowExtensions(
   extensionsToMigrate: LocalRemoteSource[],
   appId: string,
   remoteExtensions: RemoteSource[],
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const migratedIDs = await Promise.all(extensionsToMigrate.map(({remote}) => migrateFlowExtension(appId, remote.id)))
+  const migratedIDs = await Promise.all(
+    extensionsToMigrate.map(({remote}) => migrateFlowExtension(appId, remote.id, developerPlatformClient)),
+  )
 
   const typesMap = new Map<string, string>([
     ['flow_action_definition', 'FLOW_ACTION'],
@@ -71,14 +72,14 @@ export async function migrateFlowExtensions(
 export async function migrateFlowExtension(
   apiKey: MigrateFlowExtensionVariables['apiKey'],
   registrationId: MigrateFlowExtensionVariables['registrationId'],
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const token = await ensureAuthenticatedPartners()
   const variables: MigrateFlowExtensionVariables = {
     apiKey,
     registrationId,
   }
 
-  const result: MigrateFlowExtensionSchema = await partnersRequest(MigrateFlowExtensionMutation, token, variables)
+  const result: MigrateFlowExtensionSchema = await developerPlatformClient.migrateFlowExtension(variables)
 
   if (result?.migrateFlowExtension?.userErrors?.length > 0) {
     const errors = result.migrateFlowExtension.userErrors.map((error) => error.message).join(', ')
