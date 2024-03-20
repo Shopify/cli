@@ -1,11 +1,11 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 import { readFile } from 'fs/promises';
+import glob from 'fast-glob'
+import { copy } from 'esbuild-plugin-copy';
 
 const external = [
-  'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it.
-  'yoga-wasm-web', // yoga-wasm-web can't be bundled because it's a wasm file (maybe fixable via plugin?)
-  'esbuild', // esbuild can't be bundled per design
+  'react-devtools-core',  // react-devtools-core is a dev dependency,  no need to bundle it but throws errors if not included here.
 ]
 
 /**
@@ -25,6 +25,8 @@ function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
   }
 }
 
+const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
+
 await esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
@@ -36,7 +38,18 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
-    ShopifyESBuildPlugin()
+    ShopifyESBuildPlugin(),
+    copy({
+      // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
+      // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
+      resolveFrom: 'cwd',
+      assets: [
+        {
+          from: [yogafile],
+          to: ['./dist/'],
+        }
+      ]
+    }),
   ],
 })
 
