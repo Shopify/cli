@@ -172,7 +172,9 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  async orgAndApps(organizationId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
+  async orgAndApps(
+    organizationId: string,
+  ): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
     const [organization, {apps, hasMorePages}] = await Promise.all([
       this.orgFromId(organizationId),
       this.appsForOrg(organizationId),
@@ -182,13 +184,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
     const query = AppsQuery
-    const result = await orgScopedShopifyDevelopersRequest<AppsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-    )
+    const result = await orgScopedShopifyDevelopersRequest<AppsQuerySchema>(organizationId, query, await this.token())
     const minimalOrganizationApps = result.apps.map((app) => {
-      const brandingConfig = app.activeRelease.version.modules.find((mod: MinimalAppModule) => mod.specification.identifier === 'branding')!.config
+      const brandingConfig = app.activeRelease.version.modules.find(
+        (mod: MinimalAppModule) => mod.specification.identifier === 'branding',
+      )!.config
       return {
         id: app.id,
         apiKey: app.id,

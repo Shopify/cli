@@ -1,7 +1,7 @@
 import {gql} from 'graphql-request'
 
 export const OrganizationsQuery = gql`
-  query ListOrganizations{
+  query ListOrganizations {
     currentUserAccount {
       uuid
       organizations {
