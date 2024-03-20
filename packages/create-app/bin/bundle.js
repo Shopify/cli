@@ -1,6 +1,6 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
-import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js
+import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import { readFile } from 'fs/promises'
 import glob from 'fast-glob'
 import { copy } from 'esbuild-plugin-copy'
