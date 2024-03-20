@@ -100,15 +100,15 @@
     "@oclif/plugin-plugins": "3.9.4",
     "@shopify/cli-kit": "3.57.0",
     "@shopify/plugin-did-you-mean": "3.57.0",
-    "zod-to-json-schema": "3.21.4"
+    "zod-to-json-schema": "3.22.4"
   },
   "devDependencies": {
     "@shopify/app": "3.57.0",
     "@shopify/theme": "3.57.0",
-    "@types/node": "18.19.3",
-    "@vitest/coverage-istanbul": "^0.34.3",
-    "vite": "^4.4.9",
-    "vitest": "^0.34.3"
+    "@types/node": "18.19.26",
+    "@vitest/coverage-istanbul": "^0.34.6",
+    "vite": "^4.5.2",
+    "vitest": "^0.34.6"
   },
   "engines": {
     "node": ">=18.12.0"
