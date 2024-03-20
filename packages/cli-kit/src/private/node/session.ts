@@ -53,6 +53,11 @@ interface PartnersAPIOAuthOptions {
   scopes: PartnersAPIScope[]
 }
 
+type DeveloperDashboardAPIScope = string
+interface DeveloperDashboardAPIOauthOptions {
+  scopes: DeveloperDashboardAPIScope[]
+}
+
 /**
  * A scope supported by the Storefront Renderer API.
  */
