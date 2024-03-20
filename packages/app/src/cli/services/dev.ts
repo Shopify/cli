@@ -93,7 +93,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     localApp = await installAppDependencies(localApp)
   }
 
-  const graphiqlPort = commandOptions.graphiqlPort || ports.graphiql
+  const graphiqlPort = commandOptions.graphiqlPort || (await getAvailableTCPPort(ports.graphiql))
   const {graphiqlKey} = commandOptions
 
   const {webs, ...network} = await setupNetworkingOptions(
