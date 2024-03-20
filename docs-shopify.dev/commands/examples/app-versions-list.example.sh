@@ -1,0 +1,1 @@
+shopify app versions list [flags]
