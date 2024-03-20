@@ -3,7 +3,6 @@ import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-depend
 import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve'
 import { copy } from 'esbuild-plugin-copy'
-import { readFile } from 'fs/promises'
 import glob from 'fast-glob'
 
 const external = [
@@ -21,7 +20,7 @@ await esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
-  inject: ['../../bin/cjs-shims.js'],
+  inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
   splitting: true,

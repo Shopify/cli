@@ -1,7 +1,6 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
-import { readFile } from 'fs/promises'
 import glob from 'fast-glob'
 import { copy } from 'esbuild-plugin-copy'
 
@@ -17,7 +16,7 @@ await esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
-  inject: ['../../bin/cjs-shims.js'],
+  inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
   splitting: true,

@@ -1,3 +1,5 @@
+import { readFile } from 'fs/promises'
+
 export default function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
   return {
       name: "ShopifyESBuildPlugin",
