@@ -7,7 +7,13 @@ import {
 import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {
+  MinimalAppIdentifiers,
+  MinimalOrganizationApp,
+  Organization,
+  OrganizationApp,
+  OrganizationStore,
+} from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
   AllAppExtensionRegistrationsQueryVariables,
@@ -160,6 +166,8 @@ function getAppVars(
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
+  public supportsAtomicDeployments = false
+  public requiresOrganization = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -203,8 +211,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appId: string): Promise<OrganizationApp | undefined> {
-    return fetchAppDetailsFromApiKey(appId, await this.token())
+  async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+    return fetchAppDetailsFromApiKey(apiKey, await this.token())
   }
 
   async organizations(): Promise<Organization[]> {
@@ -273,7 +281,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return result.organizations.nodes[0]!.stores.nodes
   }
 
-  async appExtensionRegistrations(apiKey: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations({apiKey}: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
   }
@@ -291,7 +299,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsDiffQuery, input)
   }
 
-  async activeAppVersion({apiKey}: MinimalOrganizationApp): Promise<ActiveAppVersion> {
+  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
@@ -385,5 +393,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
     return this.request(MigrateToUiExtensionQuery, input)
+  }
+
+  toExtensionGraphQLType(input: string) {
+    return input.toUpperCase()
   }
 }

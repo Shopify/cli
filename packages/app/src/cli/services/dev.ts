@@ -286,6 +286,7 @@ async function launchDevProcesses({
       localApp: config.localApp,
       developerPlatformClient,
       apiKey,
+      organizationId: config.remoteApp.organizationId,
     }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,

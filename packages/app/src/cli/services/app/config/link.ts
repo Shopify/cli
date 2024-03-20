@@ -9,7 +9,12 @@ import {
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
+import {
+  InvalidApiKeyErrorMessage,
+  fetchOrCreateOrganizationApp,
+  logMetadataForLoadedContext,
+  appFromId,
+} from '../../context.js'
 import {BetaFlag} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -49,7 +54,14 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     localApp.remoteBetaFlags,
   )
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-  configuration = deepMergeObjects(configuration, remoteAppConfiguration, replaceLocalArrayStrategy)
+  configuration = deepMergeObjects(
+    configuration,
+    {
+      ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
+      ...remoteAppConfiguration,
+    },
+    replaceLocalArrayStrategy,
+  )
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
@@ -118,7 +130,7 @@ async function loadRemoteApp(
   if (!apiKey) {
     return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
   }
-  const app = await developerPlatformClient.appFromId(apiKey)
+  const app = await appFromId({apiKey, developerPlatformClient})
   if (!app) {
     const errorMessage = InvalidApiKeyErrorMessage(apiKey)
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)

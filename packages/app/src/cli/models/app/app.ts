@@ -25,6 +25,7 @@ export const LegacyAppSchema = zod
 
 export const AppSchema = zod.object({
   client_id: zod.string(),
+  organization_id: zod.string().optional(),
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),

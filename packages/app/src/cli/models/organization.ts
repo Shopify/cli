@@ -7,11 +7,14 @@ export interface Organization {
   website?: string
 }
 
-export interface MinimalOrganizationApp {
+export interface MinimalAppIdentifiers {
   id: string
-  title: string
   apiKey: string
   organizationId: string
+}
+
+export type MinimalOrganizationApp = MinimalAppIdentifiers & {
+  title: string
 }
 
 export type OrganizationApp = MinimalOrganizationApp & {

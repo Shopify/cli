@@ -52,7 +52,7 @@ export async function deploy(options: DeployOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   // eslint-disable-next-line prefer-const
   let {app, identifiers, remoteApp, release} = await ensureDeployContext({...options, developerPlatformClient})
-  const apiKey = identifiers.app
+  const apiKey = identifiers?.app ?? remoteApp.apiKey
 
   outputNewline()
   if (release) {

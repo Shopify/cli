@@ -36,7 +36,11 @@ export interface ExtensionIdentifiersBreakdown {
 }
 
 export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploymentIdsPresenceOptions) {
-  const remoteExtensionsRegistrations = await options.developerPlatformClient.appExtensionRegistrations(options.appId)
+  const remoteExtensionsRegistrations = await options.developerPlatformClient.appExtensionRegistrations({
+    id: options.appId,
+    apiKey: options.appId,
+    organizationId: '0',
+  })
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
   let extensionIdentifiersBreakdown = loadLocalExtensionsIdentifiersBreakdown(extensionsToConfirm)

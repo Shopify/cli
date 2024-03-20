@@ -12,7 +12,11 @@ export async function fetchAppFromConfigOrSelect(
   let organizationApp
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = app.configuration.client_id
-    organizationApp = await developerPlatformClient.appFromId(apiKey)
+    organizationApp = await developerPlatformClient.appFromId({
+      id: apiKey,
+      apiKey,
+      organizationId: app.configuration.organization_id ?? '0',
+    })
     if (!organizationApp) {
       const errorMessage = InvalidApiKeyErrorMessage(apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)

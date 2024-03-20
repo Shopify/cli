@@ -1,4 +1,4 @@
-import {AppCredentials, findApiKey, findInEnv, requestAppInfo} from './find-app-info.js'
+import {AppCredentials, findOrganizationApp, findInEnv, requestAppInfo} from './find-app-info.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {DELIVERY_METHOD, parseAddressFlag, parseTopicFlag} from './trigger-flags.js'
@@ -55,14 +55,14 @@ export async function collectCredentials(
     return localCredentials
   }
 
-  const apiKey = await findApiKey(developerPlatformClient)
-  if (apiKey === undefined) {
+  const {id, apiKey, organizationId} = await findOrganizationApp(developerPlatformClient)
+  if (id === undefined || apiKey === undefined) {
     const manualSecret = await clientSecretPrompt()
     const credentials: AppCredentials = {clientSecret: manualSecret}
     return credentials
   }
 
-  const appCredentials = await requestAppInfo(developerPlatformClient, apiKey)
+  const appCredentials = await requestAppInfo({id, apiKey, organizationId}, developerPlatformClient)
   if (isValueSet(appCredentials.clientSecret)) {
     outputInfo('Reading client-secret from app settings in Partners')
   } else {
@@ -89,7 +89,7 @@ export async function collectApiKey(developerPlatformClient: DeveloperPlatformCl
     return localCredentials.apiKey as string
   }
 
-  const apiKey = await findApiKey(developerPlatformClient)
+  const {apiKey} = await findOrganizationApp(developerPlatformClient)
   if (apiKey === undefined) {
     throw new AbortError(
       'No app configuration found in Partners or .env file',
