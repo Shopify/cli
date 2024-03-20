@@ -60,7 +60,8 @@
   "devDependencies": {
     "@types/node": "18.19.3",
     "vite": "^4.4.9",
-    "vitest": "^0.34.3"
+    "vitest": "^0.34.3",
+    "esbuild-plugin-copy": "^2.1.1"
   },
   "engines": {
     "node": ">=18.12.0"

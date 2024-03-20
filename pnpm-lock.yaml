@@ -272,9 +272,6 @@ importers:
 
   packages/cli:
     dependencies:
-      '@chialab/esbuild-plugin-require-resolve':
-        specifier: ^0.18.0
-        version: 0.18.0
       '@oclif/core':
         specifier: 3.23.0
         version: 3.23.0
@@ -312,6 +309,9 @@ importers:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
     devDependencies:
+      '@chialab/esbuild-plugin-require-resolve':
+        specifier: ^0.18.0
+        version: 0.18.0
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
@@ -321,9 +321,6 @@ importers:
       esbuild-plugin-copy:
         specifier: ^2.1.1
         version: 2.1.1(esbuild@0.19.8)
-      esbuild-plugin-text-replace:
-        specifier: ^1.3.0
-        version: 1.3.0
       vite:
         specifier: 4.4.9
         version: 4.4.9(@types/node@18.19.3)(sass@1.64.2)
@@ -587,6 +584,9 @@ importers:
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
+      esbuild-plugin-copy:
+        specifier: ^2.1.1
+        version: 2.1.1(esbuild@0.19.8)
       vite:
         specifier: 4.4.9
         version: 4.4.9(@types/node@18.19.3)(sass@1.64.2)
@@ -3726,28 +3726,28 @@ packages:
     engines: {node: '>=18'}
     dependencies:
       '@chialab/esbuild-rna': 0.18.2
-      '@chialab/estransform': 0.18.0
-    dev: false
+      '@chialab/estransform': 0.18.1
+    dev: true
 
   /@chialab/esbuild-rna@0.18.2:
     resolution: {integrity: sha512-ckzskez7bxstVQ4c5cxbx0DRP2teldzrcSGQl2KPh1VJGdO2ZmRrb6vNkBBD5K3dx9tgTyvskWp4dV+Fbg07Ag==}
     engines: {node: '>=18'}
     dependencies:
-      '@chialab/estransform': 0.18.0
+      '@chialab/estransform': 0.18.1
       '@chialab/node-resolve': 0.18.0
-    dev: false
+    dev: true
 
-  /@chialab/estransform@0.18.0:
-    resolution: {integrity: sha512-GqQV36E/NZeAKjxq178i6XlbN9B6cGYYliw1grWghGo9YE4r1yO0eylYm9WaaDvvO1ozN/arVvyQ9G1TNJsRsQ==}
+  /@chialab/estransform@0.18.1:
+    resolution: {integrity: sha512-W/WmjpQL2hndD0/XfR0FcPBAUj+aLNeoAVehOjV/Q9bSnioz0GVSAXXhzp59S33ZynxJBBfn8DNiMTVNJmk4Aw==}
     engines: {node: '>=18'}
     dependencies:
       '@parcel/source-map': 2.1.1
-    dev: false
+    dev: true
 
   /@chialab/node-resolve@0.18.0:
     resolution: {integrity: sha512-eV1m70Qn9pLY9xwFmZ2FlcOzwiaUywsJ7NB/ud8VB7DouvCQtIHkQ3Om7uPX0ojXGEG1LCyO96kZkvbNTxNu0Q==}
     engines: {node: '>=18'}
-    dev: false
+    dev: true
 
   /@colors/colors@1.5.0:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -5163,7 +5163,7 @@ packages:
       semver: 7.6.0
       shelljs: 0.8.5
       validate-npm-package-name: 5.0.0
-      yarn: 1.22.21
+      yarn: 1.22.22
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -5576,7 +5576,7 @@ packages:
     engines: {node: ^12.18.3 || >=14}
     dependencies:
       detect-libc: 1.0.3
-    dev: false
+    dev: true
 
   /@parcel/watcher@2.0.4:
     resolution: {integrity: sha512-cTDi+FUDBIUOBKEtj+nhiJ71AZVlkAsQFuGQTun5tV9mwQBQgZvhCzG+URPQc8myeN32yRVZEfVAPCs1RW+Jvg==}
@@ -8482,11 +8482,6 @@ packages:
       browserslist: 4.21.10
     dev: true
 
-  /core-js@3.36.0:
-    resolution: {integrity: sha512-mt7+TUBbTFg5+GngsAxeKBTl5/VS0guFeJacYge9OmHb+m058UwwIm41SE9T4Den7ClatV57B6TYTuJ0CX1MAw==}
-    requiresBuild: true
-    dev: true
-
   /core-util-is@1.0.2:
     resolution: {integrity: sha512-3lqz5YjWTYnW6dlDa5TLaTCcShfar1e40rmcJVwCBJC6mWlFuj0eCHIElmG1g5kyuJ/GD+8Wn4FFCcz4gJPfaQ==}
     dev: true
@@ -8838,7 +8833,7 @@ packages:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
     hasBin: true
-    dev: false
+    dev: true
 
   /detect-newline@4.0.1:
     resolution: {integrity: sha512-qE3Veg1YXzGHQhlA6jzebZN2qVf6NX+A7m7qlhCGG30dJixrAQhYOsJjsnBjJkCSmuOPpCk30145fr8FV0bzog==}
@@ -9139,13 +9134,6 @@ packages:
       esbuild: 0.19.8
       fs-extra: 10.1.0
       globby: 11.1.0
-    dev: true
-
-  /esbuild-plugin-text-replace@1.3.0:
-    resolution: {integrity: sha512-RWB/bbdP0xDHBOtA0st4CAE6UZtky76aCB7Shw5r350JY403lfvrj2UMkInUB346tMtFWXKWXNf4gqNM+WbXag==}
-    engines: {node: '>=10.1.0'}
-    dependencies:
-      ts-replace-all: 1.0.0
     dev: true
 
   /esbuild@0.18.17:
@@ -15151,12 +15139,6 @@ packages:
       yn: 3.1.1
     dev: true
 
-  /ts-replace-all@1.0.0:
-    resolution: {integrity: sha512-6uBtdkw3jHXkPtx/e9xB/5vcngMm17CyJYsS2YZeQ+9FdRnt6Ev5g931Sg2p+dxbtMGoCm13m3ax/obicTZIkQ==}
-    dependencies:
-      core-js: 3.36.0
-    dev: true
-
   /tsconfig-paths@3.14.2:
     resolution: {integrity: sha512-o/9iXgCYc5L/JxCHPe3Hvh8Q/2xm5Z+p18PESBU6Ff33695QnCHBEjcytY2q19ua7Mbl/DavtBOLq+oG0RCL+g==}
     dependencies:
@@ -16194,8 +16176,8 @@ packages:
       yargs-parser: 21.1.1
     dev: true
 
-  /yarn@1.22.21:
-    resolution: {integrity: sha512-ynXaJsADJ9JiZ84zU25XkPGOvVMmZ5b7tmTSpKURYwgELdjucAOydqIOrOfTxVYcNXe91xvLZwcRh68SR3liCg==}
+  /yarn@1.22.22:
+    resolution: {integrity: sha512-prL3kGtyG7o9Z9Sv8IPfBNrWTDmXB4Qbes8A9rEzt6wkJV8mUvoirjU0Mp3GGAU06Y0XQyA3/2/RQFVuK7MTfg==}
     engines: {node: '>=4.0.0'}
     hasBin: true
     requiresBuild: true
