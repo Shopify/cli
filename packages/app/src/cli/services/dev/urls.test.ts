@@ -19,7 +19,7 @@ import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
+import {isSpin, spinFqdn, appPort, appHost, fetchSpinPort} from '@shopify/cli-kit/node/context/spin'
 import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
@@ -467,12 +467,12 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  test('Returns a cli spin url if we are in a spin environment running a non 1p app', async () => {
+  test('Returns a cli spin url if we are in a spin environment running the cli manually', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     vi.mocked(appPort).mockReturnValue(undefined)
-    vi.mocked(appHost).mockReturnValue(undefined)
+    vi.mocked(fetchSpinPort).mockResolvedValue(4040)
 
     // When
     const got = await generateFrontendURL(defaultOptions)
@@ -487,7 +487,7 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  test('Returns a 1p app spin url if we are in a spin environment running a 1p app', async () => {
+  test('Returns a 1p app spin url if we are in a spin environment running the cli as service', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(appPort).mockReturnValue(1234)
@@ -507,12 +507,13 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  test('Returns a cli spin url if we are in a spin environment but a 1p app backend is running without the cli', async () => {
+  test('Returns a cli spin url if we are in a spin environment running the cli manually with a 1p app backend running as service', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(appPort).mockReturnValue(1234)
     vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     vi.mocked(checkPortAvailability).mockResolvedValue(false)
+    vi.mocked(fetchSpinPort).mockResolvedValue(4040)
 
     // When
     const got = await generateFrontendURL(defaultOptions)
@@ -525,6 +526,23 @@ describe('generateFrontendURL', () => {
     })
     expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
+  })
+
+  test('Returns an error if we are in a spin environment with a 1p app backend is running as service and the partners port is not configured', async () => {
+    // Given
+    vi.mocked(isSpin).mockReturnValue(true)
+    vi.mocked(appPort).mockReturnValue(1234)
+    vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(checkPortAvailability).mockResolvedValue(false)
+    vi.mocked(fetchSpinPort).mockResolvedValue(undefined)
+
+    // When
+    const got = generateFrontendURL(defaultOptions)
+
+    // Then
+    await expect(got).rejects.toThrow(
+      'Error building cli url in spin, cli as service port: 1234, manual cli port: undefined',
+    )
   })
 
   test('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {

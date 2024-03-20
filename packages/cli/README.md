@@ -17,6 +17,7 @@
 * [`shopify app init`](#shopify-app-init)
 * [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
+* [`shopify shopify webhook trigger [flags]`](#shopify-shopify-webhook-trigger-flags)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
@@ -37,7 +38,7 @@ shopify search <query>
 shopify search "<a search query separated by spaces>"
 `](#shopify--open-the-search-modal-on-shopifydevshopify-search-search-for-a-term-on-shopifydevshopify-search-query-search-for-a-phrase-on-shopifydevshopify-search-a-search-query-separated-by-spaces)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify 
+* [`shopify
   shopify theme console
 
   shopify theme console --url /products/classic-leather-jacket
@@ -544,6 +545,75 @@ EXAMPLES
   $ shopify app versions list
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/versions/list.js)_
+
+## `shopify shopify webhook trigger [flags]`
+
+Trigger delivery of a sample webhook topic payload to a designated address.
+
+```
+USAGE
+  $ shopify app webhook trigger shopify webhook trigger [flags]
+
+FLAGS
+  --address=<value>
+      The URL where the webhook payload should be sent.
+      You will need a different address type for each delivery-method:
+      · For remote HTTP testing, use a URL that starts with https://
+      · For local HTTP testing, use http://localhost:{port}/{url-path}
+      · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}
+      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:
+
+  --api-version=<value>
+      The API Version of the webhook topic.
+
+  --client-secret=<value>
+      Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate
+      the origin of the response that you receive.
+
+  --delivery-method=<option>
+      Method chosen to deliver the topic payload. If not passed, it's inferred from the address.
+      <options: http|google-pub-sub|event-bridge>
+
+  --help
+      This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
+      flags.
+
+  --shared-secret=<value>
+      Deprecated. Please use client-secret.
+
+  --topic=<value>
+      The requested webhook topic.
+
+DESCRIPTION
+  Trigger delivery of a sample webhook topic payload to a designated address.
+
+
+  Triggers the delivery of a sample Admin API event topic payload to a designated address.
+
+  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit
+  testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing
+  the related action in Shopify.
+
+  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use
+  Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from
+  your app's local directory, but send the webhook to a staging environment endpoint.
+
+  To learn more about using webhooks in a Shopify app, refer to "Webhooks overview"
+  (https://shopify.dev/docs/apps/webhooks).
+
+  ### Limitations
+
+  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that
+  differ based on the payload contents.
+  - Webhooks triggered using this method aren't retried when they fail.
+  - Trigger requests are rate-limited using the "Partner API rate limit"
+  (https://shopify.dev/docs/api/partner#rate_limits).
+  - You can't use this method to validate your API webhook subscriptions.
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/webhook/trigger.js)_
+
 ## `shopify auth logout`
 
 Logs you out of the Shopify account or Partner account and store.
@@ -600,7 +670,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins add myplugin 
+  $ shopify plugins add myplugin
 
   $ shopify plugins add https://github.com/someuser/someplugin
 
@@ -667,7 +737,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins install myplugin 
+  $ shopify plugins install myplugin
 
   $ shopify plugins install https://github.com/someuser/someplugin
 
@@ -857,7 +927,7 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-## `shopify 
+## `shopify
   shopify theme console
 
   shopify theme console --url /products/classic-leather-jacket
@@ -1362,4 +1432,9 @@ USAGE
 DESCRIPTION
   Shopify CLI version currently installed.
 ```
+<<<<<<< HEAD
+=======
+
+_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/version.js)_
+>>>>>>> main
 <!-- commandsstop -->

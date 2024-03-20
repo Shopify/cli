@@ -1,11 +1,12 @@
 import {isTruthy} from './utilities.js'
-import {fileExists, readFileSync} from '../fs.js'
+import {fileExists, readFile, readFileSync} from '../fs.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
 import {outputContent, outputToken} from '../output.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {AbortError} from '../error.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
+import {joinPath} from '../path.js'
 
 const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
   const errorMessage = outputContent`${outputToken.genericShellCommand(
@@ -117,4 +118,51 @@ export function appPort(env = process.env): number | undefined {
  */
 export function appHost(env = process.env): string | undefined {
   return env[environmentVariables.spinAppHost]
+}
+
+export const spinVariables = {
+  partnersSpinService: 'shopify--partners',
+  manualCliSpinPortName: 'CLI_EXTENSION_SERVER',
+}
+/**
+ * Fetches the port for a given spin service and port environment variable.
+ *
+ * @param service - The name of the spin service to fetch the port for.
+ * @param portEnvName - The name of the environment variable to fetch the port from.
+ * @param basePath - The base path to look for the port file.
+ * @returns The port number or undefined if the port could not be found.
+ */
+export async function fetchSpinPort(
+  service: string,
+  portEnvName: string,
+  basePath = '/run',
+): Promise<number | undefined> {
+  const spinVersionConfigurations = [
+    {
+      path: joinPath(basePath, 'ports2', service, 'custom', portEnvName),
+      contentPattern: /\[{"internal":(\d+)}\]/,
+    },
+    {
+      path: joinPath(basePath, 'ports', service, 'proc', portEnvName),
+      contentPattern: /(\d+)/,
+    },
+  ]
+  for (const config of spinVersionConfigurations) {
+    let fileContent: string
+
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      fileContent = await readFile(config.path)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      continue
+    }
+
+    const match = config.contentPattern.exec(fileContent)
+    if (match && match[1] && !isNaN(parseInt(match[1], 10))) {
+      return parseInt(match[1], 10)
+    }
+  }
+
+  return undefined
 }
