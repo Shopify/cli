@@ -68,11 +68,15 @@ import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {OrganizationsQuery, OrganizationsQuerySchema} from './shopify-developers-client/graphql/organizations.js'
+import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './shopify-developers-client/graphql/apps.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
 import {underscore} from '@shopify/cli-kit/common/string'
+import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 
 const ORG1 = {
   id: '1',
@@ -83,6 +87,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined
+  private _businessPlatformToken: string | undefined
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -113,6 +118,13 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return this.token()
   }
 
+  async businessPlatformToken(): Promise<string> {
+    if (!this._businessPlatformToken) {
+      this._businessPlatformToken = await ensureAuthenticatedBusinessPlatform()
+    }
+    return this._businessPlatformToken
+  }
+
   async accountInfo(): Promise<PartnersSession['accountInfo']> {
     return (await this.session()).accountInfo
   }
@@ -134,7 +146,14 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    return [ORG1]
+    const organizationsResult = await businessPlatformRequest<OrganizationsQuerySchema>(
+      OrganizationsQuery,
+      await this.businessPlatformToken(),
+    )
+    return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
+      id: Buffer.from(org.id, 'base64').toString('ascii').match(/\d+$/)![0],
+      businessName: org.name,
+    }))
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
@@ -143,21 +162,32 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError(`Can't fetch organization with id ${orgId}`)
   }
 
-  async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
-    if (orgId === '1') {
-      return {
-        organization: ORG1,
-        apps: [],
-        hasMorePages: false,
-      }
-    } else {
-      throw new BugError(`Can't fetch organization with id ${orgId}`)
+  async orgAndApps(organizationId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
+    return {
+      // This is an ugly hack for now, to avoid fetching the org again.
+      organization: {...ORG1, id: organizationId},
+      ...await this.appsForOrg(organizationId),
     }
   }
 
-  async appsForOrg(_organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+    const query = AppsQuery
+    const result = await orgScopedShopifyDevelopersRequest<AppsQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+    )
+    const minimalOrganizationApps = result.apps.map((app) => {
+      const brandingConfig = app.activeRelease.version.modules.find((mod: MinimalAppModule) => mod.specification.identifier === 'branding')!.config
+      return {
+        id: app.id,
+        apiKey: app.id,
+        title: brandingConfig.name as string,
+        organizationId,
+      }
+    })
     return {
-      apps: [],
+      apps: minimalOrganizationApps,
       hasMorePages: false,
     }
   }
