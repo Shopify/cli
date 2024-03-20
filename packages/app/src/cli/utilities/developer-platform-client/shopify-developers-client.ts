@@ -79,11 +79,6 @@ import {underscore} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 
-const ORG1 = {
-  id: '1',
-  businessName: 'Test Org',
-}
-
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   public requiresOrganization = true
   public supportsAtomicDeployments = true
