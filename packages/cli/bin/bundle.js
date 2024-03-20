@@ -1,37 +1,19 @@
 import {build as esBuild} from 'esbuild'
-import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
-import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
-import { copy } from 'esbuild-plugin-copy';
-import { readFile } from 'fs/promises';
+import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
+import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
+import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve'
+import { copy } from 'esbuild-plugin-copy'
+import { readFile } from 'fs/promises'
 import glob from 'fast-glob'
 
 const external = [
-  'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it but errors out if not included here.
+  'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
   'esbuild', // esbuild can't be bundled per design
   'vscode-json-languageservice' // Errors because of a bad import/export design (maybe fixable via plugin?)
 ]
 
-/**
- * Custom plugin to solve some issues with specific dependencies.
- */
-function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
-  return {
-      name: "ShopifyESBuildPlugin",
-      setup(build) {
-
-        // Stacktracey has a custom require implementation that doesn't work with esbuild
-        build.onLoad({ filter: /.*stacktracey\.js/ }, async (args) => {
-          const contents = await readFile(args.path, 'utf8')
-          return { contents: contents.replaceAll('nodeRequire (', 'module.require(') }
-        })
-      }
-  }
-}
-
-console.log("SEARCHING FOR YOGA.WASM")
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
-console.log(yogafile)
 
 await esBuild({
   bundle: true,
@@ -44,7 +26,7 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
-    ShopifyESBuildPlugin(),
+    CustomStacktraceyPlugin(),
     requireResolvePlugin(), // To allow using require.resolve in esbuild
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path

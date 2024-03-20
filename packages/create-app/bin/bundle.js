@@ -1,29 +1,13 @@
 import {build as esBuild} from 'esbuild'
-import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
-import { readFile } from 'fs/promises';
+import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
+import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js
+import { readFile } from 'fs/promises'
 import glob from 'fast-glob'
-import { copy } from 'esbuild-plugin-copy';
+import { copy } from 'esbuild-plugin-copy'
 
 const external = [
   'react-devtools-core',  // react-devtools-core is a dev dependency,  no need to bundle it but throws errors if not included here.
 ]
-
-/**
- * Custom plugin to solve some issues with specific dependencies.
- */
-function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
-  return {
-      name: "ShopifyESBuildPlugin",
-      setup(build) {
-
-        // Stacktracey has a custom require implementation that doesn't work with esbuild
-        build.onLoad({ filter: /.*stacktracey\.js/ }, async (args) => {
-          const contents = await readFile(args.path, 'utf8')
-          return { contents: contents.replaceAll('nodeRequire (', 'module.require(') }
-        })
-      }
-  }
-}
 
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
@@ -38,7 +22,7 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
-    ShopifyESBuildPlugin(),
+    CustomStacktraceyPlugin(),
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
