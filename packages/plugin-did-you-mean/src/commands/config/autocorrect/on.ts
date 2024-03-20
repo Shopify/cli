@@ -15,8 +15,6 @@ export default class AutocorrectOn extends Command {
 
   static description = this.descriptionWithoutMarkdown()
 
-  static usage = 'shopify config autocorrect on'
-
   async run(): Promise<void> {
     setAutocorrect(true)
     renderInfo({body: autocorrectStatus.on})
