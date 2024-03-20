@@ -846,7 +846,7 @@ api_version = "2023-04"
 
     // Then
     expect(clearCachedAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
-    expect(developerPlatformClient.orgAndApps).toBeCalled()
+    expect(developerPlatformClient.appsForOrg).toBeCalled()
     expect(link).not.toBeCalled()
   })
 

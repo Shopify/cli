@@ -120,6 +120,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   }
 
   async businessPlatformToken(): Promise<string> {
+    if (isUnitTest()) {
+      throw new Error(
+        'ShopifyDevelopersClient.businessPlatformToken() should not be invoked dynamically in a unit test',
+      )
+    }
     if (!this._businessPlatformToken) {
       this._businessPlatformToken = await ensureAuthenticatedBusinessPlatform()
     }
