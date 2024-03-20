@@ -270,7 +270,7 @@ export const appFromId = async ({
 }: AppFromIdOptions): Promise<OrganizationApp> => {
   // eslint-disable-next-line no-param-reassign
   organizationId =
-    organizationId ?? developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '1'
+    organizationId ?? developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0'
   const app = await developerPlatformClient.appFromId({
     id: apiKey,
     apiKey,
@@ -352,7 +352,7 @@ async function fetchDevAppAndPrompt(
 
   const partnersResponse = await appFromId({
     apiKey: devAppId,
-    organizationId: cachedInfo.orgId ?? '1',
+    organizationId: cachedInfo.orgId ?? '0',
     developerPlatformClient,
   })
   if (!partnersResponse) return undefined

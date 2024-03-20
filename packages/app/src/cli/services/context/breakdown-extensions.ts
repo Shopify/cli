@@ -39,7 +39,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   const remoteExtensionsRegistrations = await options.developerPlatformClient.appExtensionRegistrations({
     id: options.appId,
     apiKey: options.appId,
-    organizationId: '1',
+    organizationId: '0',
   })
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)

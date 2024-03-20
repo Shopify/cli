@@ -1015,7 +1015,7 @@ describe('ensureDeployContext', () => {
     expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith({
       id: APP2.apiKey,
       apiKey: APP2.apiKey,
-      organizationId: '1',
+      organizationId: '0',
     })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
@@ -1543,7 +1543,7 @@ describe('ensureDraftExtensionsPushContext', () => {
     expect(opts.developerPlatformClient!.appFromId).toHaveBeenCalledWith({
       id: APP2.apiKey,
       apiKey: APP2.apiKey,
-      organizationId: '1',
+      organizationId: '0',
     })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
