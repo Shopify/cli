@@ -24,6 +24,13 @@ const AppAccessSchema = zod.object({
       required_scopes: zod.array(zod.string()).optional(),
       optional_scopes: zod.array(zod.string()).optional(),
     })
+    .refine(
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      (access_scopes) => !(access_scopes.scopes && access_scopes.required_scopes),
+      {
+        message: 'Only one of scopes and required_scopes should be present',
+      },
+    )
     .optional(),
   auth: zod.object({
     redirect_urls: zod.array(validateUrl(zod.string())),
