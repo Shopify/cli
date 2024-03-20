@@ -3,10 +3,11 @@ import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve';
 import { copy } from 'esbuild-plugin-copy';
 import { readFile } from 'fs/promises';
+import glob from 'fast-glob'
 
 const external = [
   'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it.
-  'yoga-wasm-web', // yoga-wasm-web can't be bundled because it's a wasm file (maybe fixable via plugin?)
+  // 'yoga-wasm-web', // yoga-wasm-web can't be bundled because it's a wasm file (maybe fixable via plugin?)
   'esbuild', // esbuild can't be bundled per design
   'vscode-json-languageservice' // Errors because of a bad import/export design (maybe fixable via plugin?)
 ]
@@ -27,6 +28,11 @@ function ShopifyESBuildPlugin ({greeting = "world"} = {}) {
       }
   }
 }
+
+console.log("SEARCHING FOR YOGA.WASM")
+// yoga wasm file is not bundled by esbuild, so we need to copy it manually
+const yogafile = glob.sync('./node_modules/**/yoga.wasm')[0]
+console.log(yogafile)
 
 await esBuild({
   bundle: true,
@@ -61,6 +67,10 @@ await esBuild({
         {
           from: ['../cli-kit/assets/**/*'],
           to: ['./dist/assets'],
+        },
+        {
+          from: [yogafile],
+          to: ['./dist/'],
         }
       ]
     }),
