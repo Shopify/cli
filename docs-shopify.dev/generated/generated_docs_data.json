@@ -1653,6 +1653,101 @@
     "related": []
   },
   {
+    "name": "app webhook trigger",
+    "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+    "overviewPreviewDescription": "Trigger delivery of a sample webhook topic payload to a designated address.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app webhook trigger",
+            "code": "shopify webhook trigger [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app webhook trigger"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app webhook trigger` command:",
+        "type": "appwebhooktrigger",
+        "typeDefinitions": {
+          "appwebhooktrigger": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+            "name": "appwebhooktrigger",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--address <value>",
+                "value": "string",
+                "description": "The URL where the webhook payload should be sent.                You will need a different address type for each delivery-method:\n                     · For remote HTTP testing, use a URL that starts with https://\n · For local HTTP testing, use http://localhost:{port}/{url-path}\n                     · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                     · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--api-version <value>",
+                "value": "string",
+                "description": "The API Version of the webhook topic.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-secret <value>",
+                "value": "string",
+                "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--delivery-method <value>",
+                "value": "string",
+                "description": "Method chosen to deliver the topic payload. If not passed, it's inferred from the address.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--help",
+                "value": "\"\"",
+                "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--shared-secret <value>",
+                "value": "string",
+                "description": "Deprecated. Please use client-secret.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--topic <value>",
+                "value": "string",
+                "description": "The requested webhook topic.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appwebhooktrigger {\n  /**\n   * The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:\n   */\n  '--address <value>'?: string\n\n  /**\n   * The API Version of the webhook topic.\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.\n   */\n  '--client-secret <value>'?: string\n\n  /**\n   * Method chosen to deliver the topic payload. If not passed, it's inferred from the address.\n   */\n  '--delivery-method <value>'?: string\n\n  /**\n   * This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.\n   */\n  '--help'?: ''\n\n  /**\n   * Deprecated. Please use client-secret.\n   */\n  '--shared-secret <value>'?: string\n\n  /**\n   * The requested webhook topic.\n   */\n  '--topic <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
     "name": "auth logout",
     "description": "Logs you out of the Shopify account or Partner account and store.",
     "overviewPreviewDescription": "Logs you out of the Shopify account or Partner account and store.",
@@ -3601,101 +3696,6 @@
     "definitions": [],
     "category": "Commands",
     "subCategory": "common",
-    "related": []
-  },
-  {
-    "name": "webhook trigger",
-    "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
-    "overviewPreviewDescription": "Trigger delivery of a sample webhook topic payload to a designated address.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "webhook trigger",
-            "code": "shopify webhook trigger [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "webhook trigger"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `webhook trigger` command:",
-        "type": "webhooktrigger",
-        "typeDefinitions": {
-          "webhooktrigger": {
-            "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-            "name": "webhooktrigger",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--address <value>",
-                "value": "string",
-                "description": "The URL where the webhook payload should be sent.                You will need a different address type for each delivery-method:\n                     · For remote HTTP testing, use a URL that starts with https://\n · For local HTTP testing, use http://localhost:{port}/{url-path}\n                     · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                     · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--api-version <value>",
-                "value": "string",
-                "description": "The API Version of the webhook topic.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--client-secret <value>",
-                "value": "string",
-                "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--delivery-method <value>",
-                "value": "string",
-                "description": "Method chosen to deliver the topic payload. If not passed, it's inferred from the address.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--help",
-                "value": "\"\"",
-                "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--shared-secret <value>",
-                "value": "string",
-                "description": "Deprecated. Please use client-secret.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/webhook-trigger.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--topic <value>",
-                "value": "string",
-                "description": "The requested webhook topic.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface webhooktrigger {\n  /**\n   * The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:\n   */\n  '--address <value>'?: string\n\n  /**\n   * The API Version of the webhook topic.\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.\n   */\n  '--client-secret <value>'?: string\n\n  /**\n   * Method chosen to deliver the topic payload. If not passed, it's inferred from the address.\n   */\n  '--delivery-method <value>'?: string\n\n  /**\n   * This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.\n   */\n  '--help'?: ''\n\n  /**\n   * Deprecated. Please use client-secret.\n   */\n  '--shared-secret <value>'?: string\n\n  /**\n   * The requested webhook topic.\n   */\n  '--topic <value>'?: string\n}"
-          }
-        }
-      }
-    ],
-    "category": "Commands",
-    "subCategory": "webhook",
     "related": []
   }
 ]

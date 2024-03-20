@@ -2,7 +2,7 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'webhook trigger',
+  name: 'app webhook trigger',
   description: `
   Triggers the delivery of a sample Admin API event topic payload to a designated address.
 
@@ -26,23 +26,23 @@ const data: ReferenceEntityTemplateSchema = {
     codeblock: {
       tabs: [
         {
-          title: 'webhook trigger',
-          code: './examples/webhook-trigger.example.sh',
+          title: 'app webhook trigger',
+          code: './examples/app-webhook-trigger.example.sh',
           language: 'bash',
         },
       ],
-      title: 'webhook trigger',
+      title: 'app webhook trigger',
     },
   },
   definitions: [
   {
     title: 'Flags',
-    description: 'The following flags are available for the `webhook trigger` command:',
-    type: 'webhooktrigger',
+    description: 'The following flags are available for the `app webhook trigger` command:',
+    type: 'appwebhooktrigger',
   },
   ],
   category: 'Commands',
-  subCategory: 'webhook',
+  subCategory: 'app',
   related: [
   ],
 }
