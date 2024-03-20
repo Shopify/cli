@@ -17,7 +17,7 @@ const WebhookSubscriptionSchema = zod.object({
     .array(zod.string({invalid_type_error: 'Values within array must be a string'}), {
       invalid_type_error: 'Value must be string[]',
     })
-    .nonempty({message: "Value can't be empty"}),
+    .optional(),
   uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
