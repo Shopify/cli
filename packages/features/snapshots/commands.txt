@@ -16,6 +16,7 @@
  app init                          @shopify/app                 
  app release                       @shopify/app                 
  app versions list                 @shopify/app                 
+ app webhook trigger               @shopify/app                 
  auth logout                       @shopify/cli                 
  commands                          @oclif/plugin-commands       
  config autocorrect off            @shopify/plugin-did-you-mean 
@@ -48,4 +49,3 @@
  theme share                       @shopify/theme               
  upgrade                           @shopify/cli                 
  version                           @shopify/cli                 
- webhook trigger                   @shopify/app                 
