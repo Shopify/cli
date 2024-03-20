@@ -18,12 +18,12 @@
 * [`shopify app init`](#shopify-app-init)
 * [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
-* [`shopify shopify webhook trigger [flags]`](#shopify-shopify-webhook-trigger-flags)
+* [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
-* [`shopify shopify config autocorrect off`](#shopify-shopify-config-autocorrect-off)
-* [`shopify shopify config autocorrect on`](#shopify-shopify-config-autocorrect-on)
-* [`shopify shopify config autocorrect status`](#shopify-shopify-config-autocorrect-status)
+* [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
+* [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
+* [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -613,13 +613,14 @@ EXAMPLES
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/versions/list.js)_
 
-## `shopify shopify webhook trigger [flags]`
+## `shopify app webhook trigger`
 
 Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify app webhook trigger shopify webhook trigger [flags]
+  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-secret <value>] [--delivery-method
+    http|google-pub-sub|event-bridge] [--help] [--shared-secret <value>] [--topic <value>]
 
 FLAGS
   --address=<value>
@@ -726,13 +727,13 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.28/src/commands/commands.ts)_
 
-## `shopify shopify config autocorrect off`
+## `shopify config autocorrect off`
 
 Disable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect off shopify config autocorrect off
+  $ shopify config autocorrect off
 
 DESCRIPTION
   Disable autocorrect. Off by default.
@@ -745,13 +746,13 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify shopify config autocorrect on`
+## `shopify config autocorrect on`
 
 Enable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect on shopify config autocorrect on
+  $ shopify config autocorrect on
 
 DESCRIPTION
   Enable autocorrect. Off by default.
@@ -764,13 +765,13 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify shopify config autocorrect status`
+## `shopify config autocorrect status`
 
 Check whether autocorrect is enabled or disabled. On by default.
 
 ```
 USAGE
-  $ shopify config autocorrect status shopify config autocorrect status
+  $ shopify config autocorrect status
 
 DESCRIPTION
   Check whether autocorrect is enabled or disabled. On by default.
