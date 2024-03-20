@@ -16,7 +16,7 @@
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
-* [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
+* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -33,35 +33,20 @@
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
 * [`shopify plugins update`](#shopify-plugins-update)
-* [`shopify # open the search modal on Shopify.dev
-shopify search
-
-# search for a term on Shopify.dev
-shopify search <query>
-
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`](#shopify--open-the-search-modal-on-shopifydevshopify-search-search-for-a-term-on-shopifydevshopify-search-query-search-for-a-phrase-on-shopifydevshopify-search-a-search-query-separated-by-spaces)
+* [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify 
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `](#shopify---shopify-theme-console--shopify-theme-console---url-productsclassic-leather-jacket--)
+* [`shopify theme:console`](#shopify-themeconsole)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
-* [`shopify shopify theme init [name]`](#shopify-shopify-theme-init-name)
+* [`shopify theme:init [name]`](#shopify-themeinit-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify shopify theme push
-
-shopify theme push --unpublished --json
-  `](#shopify-shopify-theme-pushshopify-theme-push---unpublished---json--)
+* [`shopify theme:push`](#shopify-themepush)
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
@@ -559,13 +544,13 @@ FLAGS
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/init.js)_
 
-## `shopify shopify app release --version <version>`
+## `shopify app:release --version <version>`
 
 Release an app version.
 
 ```
 USAGE
-  $ shopify app release shopify app release --version <version>
+  $ shopify app release --version <version>
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -1028,32 +1013,24 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/update.ts)_
 
-## `shopify # open the search modal on Shopify.dev
-shopify search
-
-# search for a term on Shopify.dev
-shopify search <query>
-
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`
+## `shopify search [QUERY]`
 
 Starts a search on shopify.dev.
 
 ```
 USAGE
-  $ shopify search # open the  modal on Shopify.dev
-  shopify search
-
-  # search for a term on
-    Shopify.dev
-    shopify search <query>
-
-    # search for a phrase on Shopify.dev
-    shopify search "<a search query separated by spaces>"
+  $ shopify search [QUERY]
 
 DESCRIPTION
   Starts a search on shopify.dev.
+
+EXAMPLES
+  # open the search modal on Shopify.dev
+      shopify search
+      # search for a term on Shopify.dev
+      shopify search <query>
+      # search for a phrase on Shopify.dev
+      shopify search "<a search query separated by spaces>"
 ```
 
 _See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/search.js)_
@@ -1096,19 +1073,14 @@ DESCRIPTION
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/check.js)_
 
-## `shopify 
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `
+## `shopify theme:console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
 
 ```
 USAGE
-  $ shopify theme console shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
+  $ shopify theme console
+  $ shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
@@ -1288,13 +1260,13 @@ DESCRIPTION
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/info.js)_
 
-## `shopify shopify theme init [name]`
+## `shopify theme:init [name]`
 
 Clones a Git repository to use as a starting point for building a new theme.
 
 ```
 USAGE
-  $ shopify theme init shopify theme init [name]
+  $ shopify theme init [name]
 
 ARGUMENTS
   NAME  Name of the new theme
@@ -1504,18 +1476,14 @@ DESCRIPTION
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/pull.js)_
 
-## `shopify shopify theme push
-
-shopify theme push --unpublished --json
-  `
+## `shopify theme:push`
 
 Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
 ```
 USAGE
-  $ shopify theme push shopify theme push
-
-  shopify theme push --unpublished --json
+  $ shopify theme push
+  $ shopify theme push --unpublished --json
 
 FLAGS
   -a, --allow-live           Allow push to a live theme.

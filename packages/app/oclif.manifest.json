@@ -1734,7 +1734,7 @@
       ],
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "shopify app release --version <version>"
+      "usage": "app:release --version <version>"
     },
     "app:scaffold:extension": {
       "aliases": [

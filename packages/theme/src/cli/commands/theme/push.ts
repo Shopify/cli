@@ -10,10 +10,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
-  static usage = `shopify theme push
-
-shopify theme push --unpublished --json
-  `
+  static usage = ['theme:push', 'theme:push --unpublished --json']
 
   static descriptionWithMarkdown = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
 
