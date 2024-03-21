@@ -627,7 +627,7 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_orders"
+use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
