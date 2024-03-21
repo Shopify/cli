@@ -12,7 +12,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
-vi.mock('./flow/fetch-dashboard-extensions.js')
+vi.mock('./fetch-dashboard-extensions.js')
 vi.mock('./context/partner-account-info.js')
 
 const organizationApp: OrganizationApp = {
