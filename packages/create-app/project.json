@@ -21,6 +21,13 @@
         "cwd": "packages/create-app"
       }
     },
+    "bundle": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node bin/bundle",
+        "cwd": "packages/create-app"
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

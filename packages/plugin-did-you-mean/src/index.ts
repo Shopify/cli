@@ -1,4 +1,7 @@
 import {isAutocorrectEnabled} from './services/conf.js'
+import AutocorrectOff from './commands/config/autocorrect/off.js'
+import AutocorrectStatus from './commands/config/autocorrect/status.js'
+import AutocorrectOn from './commands/config/autocorrect/on.js'
 import {Hook} from '@oclif/core'
 import {bigram} from 'n-gram'
 import {renderConfirmationPrompt, renderFatalError, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -81,8 +84,14 @@ export async function shouldRunCommand(result: string, userCommand: string) {
   })
 }
 
+export const DidYouMeanCommands = {
+  'config:autocorrect:off': AutocorrectOff,
+  'config:autocorrect:status': AutocorrectStatus,
+  'config:autocorrect:on': AutocorrectOn,
+}
+
 // eslint-disable-next-line func-style
-const hook: Hook.CommandNotFound = async function (opts) {
+export const DidYouMeanHook: Hook.CommandNotFound = async function (opts) {
   const result = findAlternativeCommand(opts)
   const userCommand = sanitizeCmd(opts.id)
   const useForceFlag = opts.argv && (opts.argv.includes('-f') || opts.argv.includes('--force'))
@@ -95,5 +104,3 @@ const hook: Hook.CommandNotFound = async function (opts) {
     await this.config.runCommand(result, opts.argv)
   }
 }
-
-export default hook

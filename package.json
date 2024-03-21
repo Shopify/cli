@@ -22,6 +22,7 @@
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
     "type-check:affected": "nx affected --target=type-check",
     "build": "nx run-many --target=build --all --skip-nx-cache",
+    "bundle": "nx run-many --target=bundle --all --skip-nx-cache",
     "build:affected": "nx affected --target=build",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
@@ -64,7 +65,7 @@
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
     "nx": "16.8.1",
-    "oclif": "4.4.18",
+    "oclif": "4.5.0",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^1.8.0",
@@ -72,7 +73,6 @@
     "prettier": "^2.8.7",
     "react": "17.0.2",
     "rimraf": "^3.0.2",
-    "shx": "^0.3.4",
     "tempy": "^3.0.0",
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
@@ -97,6 +97,6 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "4.4.9",
-    "@oclif/core": "3.19.6"
+    "@oclif/core": "3.23.0"
   }
 }

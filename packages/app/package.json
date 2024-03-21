@@ -3,6 +3,7 @@
   "version": "3.57.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
+  "private": true,
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
@@ -13,6 +14,10 @@
   "license": "MIT",
   "type": "module",
   "exports": {
+    ".": {
+      "import": "./dist/cli/index.js",
+      "types": "./dist/cli/index.d.ts"
+    },
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
@@ -42,7 +47,7 @@
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
-    "@oclif/core": "3.19.6",
+    "@oclif/core": "3.23.0",
     "@shopify/cli-kit": "3.57.0",
     "@shopify/create-app": "3.57.0",
     "@shopify/function-runner": "4.1.1",
@@ -82,10 +87,6 @@
     "graphql-tag": "^2.12.6",
     "vite": "^4.4.9",
     "vitest": "^0.34.3"
-  },
-  "peerDependencies": {
-    "ink": "4.4.1",
-    "react": "18.2.0"
   },
   "engines": {
     "node": ">=18.12.0"
