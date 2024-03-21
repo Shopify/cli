@@ -78,6 +78,7 @@ import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopi
 import {underscore} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -94,12 +95,17 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('ShopifyDevelopersClient.session() should not be invoked dynamically in a unit test')
       }
-      // Need to replace with actual auth
+      const userInfoResult = await businessPlatformRequest<UserInfoQuerySchema>(
+        UserInfoQuery,
+        await this.businessPlatformToken(),
+      )
+      const email = userInfoResult.currentUserAccount.email
       this._session = {
+        // Need to replace with actual auth token for developer platform
         token: 'token',
         accountInfo: {
           type: 'UserAccount',
-          email: 'mail@example.com',
+          email,
         },
       }
     }
