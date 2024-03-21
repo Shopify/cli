@@ -4,7 +4,12 @@ import {
   AllDevStoresByOrganizationQueryVariables,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
-import {ActiveAppVersion, AppDeployOptions, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AppDeployOptions,
+  DeveloperPlatformClient,
+  Paginateable,
+} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {

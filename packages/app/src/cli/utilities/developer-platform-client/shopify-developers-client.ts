@@ -19,8 +19,21 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './shopify-developers-client/graphql/release-version.js'
+import {OrganizationsQuery, OrganizationsQuerySchema} from './shopify-developers-client/graphql/organizations.js'
+import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './shopify-developers-client/graphql/apps.js'
+import {
+  OrganizationQuery,
+  OrganizationQuerySchema,
+  OrganizationQueryVariables,
+} from './shopify-developers-client/graphql/organization.js'
+import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {DeveloperPlatformClient, Paginateable, ActiveAppVersion, AppDeployOptions} from '../developer-platform-client.js'
+import {
+  DeveloperPlatformClient,
+  Paginateable,
+  ActiveAppVersion,
+  AppDeployOptions,
+} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
@@ -68,9 +81,6 @@ import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
-import {OrganizationsQuery, OrganizationsQuerySchema} from './shopify-developers-client/graphql/organizations.js'
-import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './shopify-developers-client/graphql/apps.js'
-import {OrganizationQuery, OrganizationQuerySchema, OrganizationQueryVariables} from './shopify-developers-client/graphql/organization.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -78,7 +88,6 @@ import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopi
 import {underscore} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
-import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
 import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {

@@ -269,8 +269,8 @@ export const appFromId = async ({
   developerPlatformClient,
 }: AppFromIdOptions): Promise<OrganizationApp> => {
   // eslint-disable-next-line no-param-reassign
-  organizationId = organizationId ??
-    (developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0')
+  organizationId =
+    organizationId ?? (developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0')
   const app = await developerPlatformClient.appFromId({
     id: apiKey,
     apiKey,
