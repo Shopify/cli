@@ -33,6 +33,8 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpRouter.use('/extensions/:extensionId/', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/:extensionPointTarget', getExtensionPointMiddleware(options))
   httpRouter.use('/extensions/:extensionId/assets/**:assetPath', getExtensionAssetMiddleware(options))
+  // Because intents can have the shape of `my/intents` we need a wildcard here
+  httpRouter.use('/extensions/:extensionId/**:extensionPointTarget', getExtensionPointMiddleware(options))
   httpRouter.use('/extensions', getExtensionsPayloadMiddleware(options))
   httpRouter.use('/extensions/', getExtensionsPayloadMiddleware(options))
   httpRouter.use('/', redirectToDevConsoleMiddleware)

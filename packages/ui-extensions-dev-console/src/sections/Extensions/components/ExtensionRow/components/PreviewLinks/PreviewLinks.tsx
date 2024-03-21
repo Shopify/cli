@@ -21,21 +21,42 @@ export function PreviewLinks({extension}: Props) {
   }
 
   if (extension.type === 'ui_extension') {
-    const hasMultiple = extension.extensionPoints && extension.extensionPoints.length > 1
-    const titleMarkup = hasMultiple ? (
-      <span className={styles.PreviewLinksTitle}>{i18n.translate('previewLinksTitle')}:</span>
-    ) : null
+    const hasMultipleEP = extension.extensionPoints && extension.extensionPoints.length > 1
+    const hasMultipleIntents = extension.intents && extension.intents.length > 1
+    const hasBoth =
+      extension.extensionPoints &&
+      extension.extensionPoints.length > 0 &&
+      extension.intents &&
+      extension.intents.length > 0
+    const titleMarkup =
+      hasBoth || hasMultipleEP ? (
+        <span className={styles.PreviewLinksTitle}>{i18n.translate('previewLinksTitle')}:</span>
+      ) : null
+    const intentsTitleMarkup =
+      hasBoth || hasMultipleIntents ? (
+        <span className={styles.PreviewLinksTitle}>{i18n.translate('previewIntentsLinksTitle')}:</span>
+      ) : null
 
     return (
       <>
         {titleMarkup}
-        <span className={classNames(hasMultiple && styles.PreviewLinks)}>
+        <span className={classNames(hasMultipleEP && styles.PreviewLinks)}>
           {extension.extensionPoints?.map((extensionPoint) => {
             if (typeof extensionPoint === 'string') {
               return null
             }
 
             const {root, target, resource} = extensionPoint
+
+            return <PreviewLink rootUrl={root.url} title={target} key={target} resourceUrl={resource.url} />
+          })}
+          {intentsTitleMarkup}
+          {extension.intents?.map((intent) => {
+            if (typeof intent === 'string') {
+              return null
+            }
+
+            const {root, target, resource} = intent
 
             return <PreviewLink rootUrl={root.url} title={target} key={target} resourceUrl={resource.url} />
           })}

@@ -58,14 +58,22 @@ const uiExtensionSpec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
-    return config.extension_points.map(({module}) => `import '${module}';`).join('\n')
+    const intents = (config.intents ?? []).map(({module}) => `import '${module}';`).join('\n')
+    const extensionPoints = config.extension_points.map(({module}) => `import '${module}';`).join('\n')
+
+    return `${extensionPoints}\n${intents}`
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
-    return (
+    const hasExtensionPointWithTarget =
       config.extension_points.find((extensionPoint) => {
         return extensionPoint.target === requestedTarget
       }) !== undefined
-    )
+    const hasIntentWithTarget =
+      (config.intents ?? []).find((intent) => {
+        return intent.target === requestedTarget
+      }) !== undefined
+
+    return hasExtensionPointWithTarget || hasIntentWithTarget
   },
 })
 

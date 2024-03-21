@@ -1,5 +1,9 @@
 import {Localization} from '../localization.js'
-import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
+import type {
+  NewExtensionPointSchemaType,
+  ApiVersionSchemaType,
+  IntentSchemaType,
+} from '../../../../models/extensions/schemas.js'
 
 export interface ExtensionsPayloadInterface {
   app: {
@@ -27,6 +31,15 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
 }
 
 export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType {
+  root: {
+    url: string
+  }
+  resource: {
+    url: string
+  }
+}
+
+export interface IntentSchema extends IntentSchemaType {
   root: {
     url: string
   }

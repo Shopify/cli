@@ -46,6 +46,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
       },
       ...((obj.development || {}) as any),
     },
+    intents: [],
     // this is due to the naive DeepPartial but also more complex ones
     // [see stackoverflow](https://stackoverflow.com/a/68699273) assume that
     // `DeepPartial<Array<T>> === Array<T | undefined>` while we are looking for

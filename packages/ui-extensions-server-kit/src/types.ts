@@ -130,6 +130,7 @@ export interface ExtensionPayload {
   name: string
   description?: string
   handle: string
+  intents?: ExtensionPoints
   extensionPoints: ExtensionPoints
   capabilities?: Capabilities
   authenticatedRedirectStartUrl?: string

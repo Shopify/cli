@@ -1,5 +1,5 @@
 import {getLocalization} from './localization.js'
-import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
+import {DevNewExtensionPointSchema, IntentSchema, UIExtensionPayload} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
@@ -48,6 +48,7 @@ export async function getUIExtensionPayload(
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
+    intents: getIntents(extension.configuration.intents, url),
     extensionPoints: getExtensionPoints(extension.configuration.extension_points, url),
     localization: localization ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
@@ -91,9 +92,32 @@ function getExtensionPoints(extensionPoints: ExtensionInstance['configuration'][
   return extensionPoints
 }
 
+function getIntents(intents: ExtensionInstance['configuration']['intents'], url: string) {
+  if (isIntentsSchema(intents)) {
+    return intents.map((intent) => {
+      const {target, resource} = intent
+
+      return {
+        ...intent,
+        surface: getExtensionPointTargetSurface(target),
+        root: {
+          url: `${url}/${target}`,
+        },
+        resource: resource || {url: ''},
+      }
+    })
+  }
+
+  throw new Error('Invalid intents schema')
+}
+
 export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionPoints is DevNewExtensionPointSchema[] {
   return (
     Array.isArray(extensionPoints) &&
     extensionPoints.every((extensionPoint: unknown) => typeof extensionPoint === 'object')
   )
+}
+
+export function isIntentsSchema(intents: unknown): intents is IntentSchema[] {
+  return Array.isArray(intents) && intents.every((intent: unknown) => typeof intent === 'object')
 }

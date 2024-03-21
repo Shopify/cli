@@ -31,6 +31,11 @@ export const NewExtensionPointSchema = zod.object({
   metafields: zod.array(MetafieldSchema).optional(),
 })
 
+export const IntentSchema = zod.object({
+  target: zod.string(),
+  module: zod.string(),
+})
+
 export const OldExtensionPointsSchema = zod.array(zod.string()).default([])
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
 export const ExtensionPointSchema = zod.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
@@ -70,6 +75,8 @@ export const BaseSchema = zod.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   settings: SettingsSchema.optional(),
+  // @todo: Remove the `any` type once we have a proper schema for `intents`
+  intents: zod.array(zod.any()).optional(),
 })
 
 export const BaseSchemaWithHandle = BaseSchema.extend({
@@ -84,6 +91,7 @@ export const UnifiedSchema = zod.object({
 })
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
+export type IntentSchemaType = zod.infer<typeof IntentSchema>
 
 // Base config type that all config schemas must extend.
 export type BaseConfigType = zod.infer<typeof BaseSchema>

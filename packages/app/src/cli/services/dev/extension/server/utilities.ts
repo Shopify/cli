@@ -28,7 +28,7 @@ export function getExtensionPointRedirectUrl(
   extension: ExtensionInstance,
   options: ExtensionDevOptions,
 ): string | undefined {
-  const surface = getExtensionPointTargetSurface(requestedTarget)
+  const surface = getIntentsSurface(requestedTarget, extension) || getExtensionPointTargetSurface(requestedTarget)
   let rawUrl = new URL(`https://${options.storeFqdn}/`)
 
   switch (surface) {
@@ -43,6 +43,11 @@ export function getExtensionPointRedirectUrl(
       rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
       rawUrl.searchParams.append('target', requestedTarget)
       break
+    case 'admin-intent':
+      rawUrl.pathname = 'admin/extensions-dev'
+      rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
+      rawUrl.searchParams.append('intent', requestedTarget)
+      break
     case 'customer-accounts':
       rawUrl = getCustomerAccountsRedirectUrl(extension, options, requestedTarget)
       break
@@ -51,6 +56,14 @@ export function getExtensionPointRedirectUrl(
   }
 
   return rawUrl.toString()
+}
+
+function getIntentsSurface(requestedTarget: string, extension: ExtensionInstance): string | undefined {
+  if (extension.configuration.intents?.find((intent) => intent.target === requestedTarget)) {
+    return 'admin-intent'
+  }
+
+  return undefined
 }
 
 function getCustomerAccountsRedirectUrl(
