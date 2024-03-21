@@ -34,6 +34,7 @@
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
+* [`shopify theme:init [name]`](#shopify-themeinit-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
@@ -1028,6 +1029,40 @@ FLAGS
 
 DESCRIPTION
   Displays information about your theme environment, including your current store.
+```
+
+## `shopify theme:init [name]`
+
+Clones a Git repository to use as a starting point for building a new theme.
+
+```
+USAGE
+  $ shopify theme init [name]
+
+ARGUMENTS
+  NAME  Name of the new theme
+
+FLAGS
+  -l, --latest             Downloads the latest release of the `clone-url`
+  -u, --clone-url=<value>  [default: https://github.com/Shopify/dawn.git] The Git URL to clone from. Defaults to
+                           Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
+      --no-color           Disable color output.
+      --path=<value>       The path to your theme directory.
+      --verbose            Increase the verbosity of the logs.
+
+DESCRIPTION
+  Clones a Git repository to use as a starting point for building a new theme.
+
+  Clones a Git repository to your local machine to use as the starting point for building a theme.
+
+  If no Git repository is specified, then this command creates a copy of "Dawn" (https://github.com/Shopify/dawn),
+  Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted
+  to enter one.
+
+  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However,
+  the theme that you submit needs to be "substantively different from Dawn"
+  (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about
+  the "ways that you can use Dawn" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
 ```
 
 ## `shopify theme language-server`

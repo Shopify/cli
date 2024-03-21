@@ -2650,6 +2650,74 @@
       "pluginType": "core",
       "strict": true
     },
+    "theme:init": {
+      "aliases": [
+      ],
+      "args": {
+        "name": {
+          "description": "Name of the new theme",
+          "name": "name",
+          "required": false
+        }
+      },
+      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of \"Dawn\" (https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be \"substantively different from Dawn\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the \"ways that you can use Dawn\" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).\n  ",
+      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be [substantively different from Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).\n  ",
+      "flags": {
+        "clone-url": {
+          "char": "u",
+          "default": "https://github.com/Shopify/dawn.git",
+          "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
+          "env": "SHOPIFY_FLAG_CLONE_URL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "clone-url",
+          "type": "option"
+        },
+        "latest": {
+          "allowNo": false,
+          "char": "l",
+          "description": "Downloads the latest release of the `clone-url`",
+          "env": "SHOPIFY_FLAG_LATEST",
+          "name": "latest",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:init",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Clones a Git repository to use as a starting point for building a new theme.",
+      "usage": "theme:init [name]"
+    },
     "theme:language-server": {
       "aliases": [
       ],
