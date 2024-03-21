@@ -4,6 +4,8 @@ import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stackt
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve'
 import { copy } from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
+import path from 'path'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 
 const external = [
   'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
@@ -14,18 +16,26 @@ const external = [
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
+const packagesWithUMDexports = [
+  'jsonc-parser',
+  'vscode-json-languageservice',
+  'vscode-languageserver-types',
+  'vscode-languageserver-textdocument'
+]
 
 function CustomVSCodePlugin ({greeting = "world"} = {}) {
   return {
       name: "CustomVSCodePlugin",
-      setup({onResolve, resolve}) {
-
-        // Stacktracey has a custom require implementation that doesn't work with esbuild
-      onResolve({filter: /.*jsonLanguageService\.js/}, ({path, ...options}) => {
-          console.log("FOUND!" , path)
-          return resolve(path.replace(/\/umd\//, '/esm/'), options)
+      setup(build) {
+        build.onLoad({ filter: /\/umd\// }, (args) => {
+          console.log('LOADING', args.path)
+          // If the file is part of a known bad dependency, load the esm version instead
+          if (packagesWithUMDexports.some(pkg => args.path.includes(pkg))) {
+            const contents = readFileSync(args.path.replace('umd', 'esm'), 'utf8')
+            return { contents: contents, loader: 'default'}
+          }
         })
-      }
+    },
   }
 }
 
