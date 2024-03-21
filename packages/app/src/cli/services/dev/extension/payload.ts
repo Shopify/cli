@@ -1,6 +1,6 @@
 import {getLocalization} from './localization.js'
 import {DevNewExtensionPointSchema, IntentSchema, UIExtensionPayload} from './payload/models.js'
-import {getExtensionPointTargetSurface} from './utilities.js'
+import {getExtensionPointTargetSurface, getIntentTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
@@ -99,7 +99,7 @@ function getIntents(intents: ExtensionInstance['configuration']['intents'], url:
 
       return {
         ...intent,
-        surface: getExtensionPointTargetSurface(target),
+        surface: getIntentTargetSurface(target),
         root: {
           url: `${url}/${target}`,
         },

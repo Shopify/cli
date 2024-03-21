@@ -60,3 +60,11 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
       return domain
   }
 }
+
+/**
+ * Returns the surface for UI extension from an intent target
+ */
+export function getIntentTargetSurface(intentTarget: string) {
+  // Right now, only admin intents are supported
+  return 'admin'
+}
