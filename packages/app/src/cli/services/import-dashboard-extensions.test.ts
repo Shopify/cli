@@ -12,7 +12,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
-vi.mock('./flow/fetch-flow-dashboard-extensions.js')
+vi.mock('./flow/fetch-dashboard-extensions.js')
 vi.mock('./context/partner-account-info.js')
 
 const organizationApp: OrganizationApp = {
@@ -45,7 +45,7 @@ const flowExtensionB: ExtensionRegistration = {
   },
 }
 
-describe('import-flow-legacy-extensions', () => {
+describe('import-dashboard-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
