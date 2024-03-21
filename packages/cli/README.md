@@ -15,9 +15,8 @@
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
-* [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
+* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
-* [`shopify shopify webhook trigger [flags]`](#shopify-shopify-webhook-trigger-flags)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
@@ -28,21 +27,10 @@
 * [`shopify plugins reset`](#shopify-plugins-reset)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
-* [`shopify # open the search modal on Shopify.dev
-shopify search
-
-# search for a term on Shopify.dev
-shopify search <query>
-
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`](#shopify--open-the-search-modal-on-shopifydevshopify-search-search-for-a-term-on-shopifydevshopify-search-query-search-for-a-phrase-on-shopifydevshopify-search-a-search-query-separated-by-spaces)
+* [`shopify plugins update`](#shopify-plugins-update)
+* [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `](#shopify---shopify-theme-console--shopify-theme-console---url-productsclassic-leather-jacket--)
+* [`shopify theme:console`](#shopify-themeconsole)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
@@ -52,10 +40,7 @@ shopify search "<a search query separated by spaces>"
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify shopify theme push
-
-shopify theme push --unpublished --json
-  `](#shopify-shopify-theme-pushshopify-theme-push---unpublished---json--)
+* [`shopify theme:push`](#shopify-themepush)
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
@@ -495,13 +480,13 @@ FLAGS
       --verbose                   Increase the verbosity of the logs.
 ```
 
-## `shopify shopify app release --version <version>`
+## `shopify app:release --version <version>`
 
 Release an app version.
 
 ```
 USAGE
-  $ shopify app release shopify app release --version <version>
+  $ shopify app release --version <version>
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -544,75 +529,6 @@ DESCRIPTION
 EXAMPLES
   $ shopify app versions list
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/versions/list.js)_
-
-## `shopify shopify webhook trigger [flags]`
-
-Trigger delivery of a sample webhook topic payload to a designated address.
-
-```
-USAGE
-  $ shopify app webhook trigger shopify webhook trigger [flags]
-
-FLAGS
-  --address=<value>
-      The URL where the webhook payload should be sent.
-      You will need a different address type for each delivery-method:
-      · For remote HTTP testing, use a URL that starts with https://
-      · For local HTTP testing, use http://localhost:{port}/{url-path}
-      · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}
-      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:
-
-  --api-version=<value>
-      The API Version of the webhook topic.
-
-  --client-secret=<value>
-      Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate
-      the origin of the response that you receive.
-
-  --delivery-method=<option>
-      Method chosen to deliver the topic payload. If not passed, it's inferred from the address.
-      <options: http|google-pub-sub|event-bridge>
-
-  --help
-      This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
-      flags.
-
-  --shared-secret=<value>
-      Deprecated. Please use client-secret.
-
-  --topic=<value>
-      The requested webhook topic.
-
-DESCRIPTION
-  Trigger delivery of a sample webhook topic payload to a designated address.
-
-
-  Triggers the delivery of a sample Admin API event topic payload to a designated address.
-
-  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit
-  testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing
-  the related action in Shopify.
-
-  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use
-  Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from
-  your app's local directory, but send the webhook to a staging environment endpoint.
-
-  To learn more about using webhooks in a Shopify app, refer to "Webhooks overview"
-  (https://shopify.dev/docs/apps/webhooks).
-
-  ### Limitations
-
-  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that
-  differ based on the payload contents.
-  - Webhooks triggered using this method aren't retried when they fail.
-  - Trigger requests are rate-limited using the "Partner API rate limit"
-  (https://shopify.dev/docs/api/partner#rate_limits).
-  - You can't use this method to validate your API webhook subscriptions.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/webhook/trigger.js)_
 
 ## `shopify auth logout`
 
@@ -670,7 +586,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins add myplugin
+  $ shopify plugins add myplugin 
 
   $ shopify plugins add https://github.com/someuser/someplugin
 
@@ -737,7 +653,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins install myplugin
+  $ shopify plugins install myplugin 
 
   $ shopify plugins install https://github.com/someuser/someplugin
 
@@ -863,32 +779,40 @@ EXAMPLES
   $ shopify plugins unlink myplugin
 ```
 
-## `shopify # open the search modal on Shopify.dev
-shopify search
+## `shopify plugins update`
 
-# search for a term on Shopify.dev
-shopify search <query>
+Update installed plugins.
 
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`
+```
+USAGE
+  $ shopify plugins update [-h] [-v]
+
+FLAGS
+  -h, --help     Show CLI help.
+  -v, --verbose
+
+DESCRIPTION
+  Update installed plugins.
+```
+
+## `shopify search [QUERY]`
 
 Starts a search on shopify.dev.
 
 ```
 USAGE
-  $ shopify search # open the  modal on Shopify.dev
-  shopify search
-
-  # search for a term on
-    Shopify.dev
-    shopify search <query>
-
-    # search for a phrase on Shopify.dev
-    shopify search "<a search query separated by spaces>"
+  $ shopify search [QUERY]
 
 DESCRIPTION
   Starts a search on shopify.dev.
+
+EXAMPLES
+  # open the search modal on Shopify.dev
+      shopify search
+      # search for a term on Shopify.dev
+      shopify search <query>
+      # search for a phrase on Shopify.dev
+      shopify search "<a search query separated by spaces>"
 ```
 
 ## `shopify theme check`
@@ -927,19 +851,14 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-## `shopify
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `
+## `shopify theme:console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
 
 ```
 USAGE
-  $ shopify theme console shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
+  $ shopify theme console
+  $ shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
@@ -1279,18 +1198,14 @@ DESCRIPTION
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
 
-## `shopify shopify theme push
-
-shopify theme push --unpublished --json
-  `
+## `shopify theme:push`
 
 Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
 ```
 USAGE
-  $ shopify theme push shopify theme push
-
-  shopify theme push --unpublished --json
+  $ shopify theme push
+  $ shopify theme push --unpublished --json
 
 FLAGS
   -a, --allow-live           Allow push to a live theme.
@@ -1432,9 +1347,4 @@ USAGE
 DESCRIPTION
   Shopify CLI version currently installed.
 ```
-<<<<<<< HEAD
-=======
-
-_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/version.js)_
->>>>>>> main
 <!-- commandsstop -->

@@ -1493,7 +1493,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "shopify app release --version <version>"
+      "usage": "app:release --version <version>"
     },
     "app:versions:list": {
       "aliases": [
@@ -1703,32 +1703,6 @@
       "pluginType": "core",
       "strict": true
     },
-    "docs:generate": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Generate CLI commands documentation",
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "docs:generate",
-      "isESM": true,
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "cli",
-        "commands",
-        "docs",
-        "generate.js"
-      ],
-      "strict": true
-    },
     "hydrogen:init": {
       "aliases": [
       ],
@@ -1830,23 +1804,6 @@
       "hiddenAliases": [
       ],
       "id": "plugins",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
-    "plugins:index": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "plugins:index",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -2118,7 +2075,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "plugins:update",
@@ -2136,6 +2092,9 @@
         }
       },
       "description": "Starts a search on shopify.dev.",
+      "examples": [
+        "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
+      ],
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2145,8 +2104,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
-      "usage": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search <query>\n\n# search for a phrase on Shopify.dev\nshopify search \"<a search query separated by spaces>\"\n"
+      "strict": true
     },
     "theme:check": {
       "aliases": [
@@ -2364,7 +2322,10 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
-      "usage": "\n  shopify theme console\n\n  shopify theme console --url /products/classic-leather-jacket\n  "
+      "usage": [
+        "theme:console",
+        "theme:console --url /products/classic-leather-jacket"
+      ]
     },
     "theme:delete": {
       "aliases": [
@@ -3375,7 +3336,10 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
-      "usage": "shopify theme push\n\nshopify theme push --unpublished --json\n  "
+      "usage": [
+        "theme:push",
+        "theme:push --unpublished --json"
+      ]
     },
     "theme:rename": {
       "aliases": [
