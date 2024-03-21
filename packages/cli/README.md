@@ -18,6 +18,9 @@
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
+* [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
+* [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
+* [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -541,6 +544,63 @@ USAGE
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
+```
+
+## `shopify config autocorrect off`
+
+Disable autocorrect. Off by default.
+
+```
+USAGE
+  $ shopify config autocorrect off
+
+DESCRIPTION
+  Disable autocorrect. Off by default.
+
+  Disable autocorrect. Off by default.
+
+  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
+  available.
+
+  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
+```
+
+## `shopify config autocorrect on`
+
+Enable autocorrect. Off by default.
+
+```
+USAGE
+  $ shopify config autocorrect on
+
+DESCRIPTION
+  Enable autocorrect. Off by default.
+
+  Enable autocorrect. Off by default.
+
+  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
+  available.
+
+  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
+```
+
+## `shopify config autocorrect status`
+
+Check whether autocorrect is enabled or disabled. On by default.
+
+```
+USAGE
+  $ shopify config autocorrect status
+
+DESCRIPTION
+  Check whether autocorrect is enabled or disabled. On by default.
+
+  Check whether autocorrect is enabled or disabled. On by default.
+
+  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
+  available.
+
+  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
 ## `shopify hydrogen init`

@@ -14,10 +14,11 @@ import HydrogenInit from './cli/commands/hydrogen/init.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
 import {commands as PluginCommands} from '@oclif/plugin-plugins'
+import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
 
-export {default as DidYouMeanHook} from '@shopify/plugin-did-you-mean'
+export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
 export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunnel'
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
@@ -73,6 +74,7 @@ export const COMMANDS: any = {
   ...AppCommands,
   ...ThemeCommands,
   ...PluginCommands,
+  ...DidYouMeanCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,
