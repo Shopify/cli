@@ -45,7 +45,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     throw new BugError('Failed to start authorization process')
   }
 
-  outputInfo('\nTo run this command, log in to Shopify Partners.')
+  outputInfo('\nTo run this command, log in to Shopify.')
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
   outputInfo(
     outputContent`👉 Open this link to start the auth process: ${outputToken.green(
