@@ -8,11 +8,27 @@ import glob from 'fast-glob'
 const external = [
   'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
   'esbuild', // esbuild can't be bundled per design
-  'vscode-json-languageservice' // Errors because of a bad import/export design (maybe fixable via plugin?)
+  // 'vscode-json-languageservice' // Errors because of a bad import/export design (maybe fixable via plugin?)
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
+
+
+function CustomVSCodePlugin ({greeting = "world"} = {}) {
+  return {
+      name: "CustomVSCodePlugin",
+      setup({onResolve, resolve}) {
+
+        // Stacktracey has a custom require implementation that doesn't work with esbuild
+      onResolve({filter: /.*jsonLanguageService\.js/}, ({path, ...options}) => {
+          console.log("FOUND!" , path)
+          return resolve(path.replace(/\/umd\//, '/esm/'), options)
+        })
+      }
+  }
+}
+
 
 await esBuild({
   bundle: true,
@@ -25,6 +41,18 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
+    CustomVSCodePlugin(),
+    // {
+    //   name: 'alias',
+    //   setup({onResolve, resolve}) {
+    //     onResolve({filter: /^(jsonc-parser)$/}, ({path, ...options}) =>
+    //       resolve(require.resolve(path).replace(/\/umd\//, '/esm/'), options)
+    //     )
+    //     onResolve({filter: /\/umd\//}, ({path, ...options}) =>
+    //       resolve(path.replace(/\/umd\//, '/esm/'), options)
+    //     )
+    //   }
+    // },
     CustomStacktraceyPlugin(),
     requireResolvePlugin(), // To allow using require.resolve in esbuild
     copy({

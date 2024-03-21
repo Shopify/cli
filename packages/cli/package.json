@@ -105,7 +105,6 @@
     "@shopify/plugin-did-you-mean": "3.57.0",
     "@shopify/theme": "3.57.0",
     "esbuild": "0.19.8",
-    "vscode-json-languageservice": "^5.3.9",
     "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
