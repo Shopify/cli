@@ -1,6 +1,7 @@
-import {importFlowExtensions} from './import-dashboard-extensions.js'
+import {importDashboardExtensions} from './import-dashboard-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
+import {buildTomlObject} from './flow/extension-to-toml.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -55,7 +56,12 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, developerPlatformClient: testDeveloperPlatformClient()})
+      await importDashboardExtensions({
+        app,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        buildTomlObject,
+      })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -81,7 +87,12 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, developerPlatformClient: testDeveloperPlatformClient()})
+      await importDashboardExtensions({
+        app,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        buildTomlObject,
+      })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -105,10 +116,11 @@ describe('import-flow-legacy-extensions', () => {
     // When
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
-
-      await importFlowExtensions({
+      await importDashboardExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        buildTomlObject,
       })
 
       // Then

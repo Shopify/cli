@@ -14,13 +14,11 @@ interface ImportOptions {
   app: AppInterface
   apiKey?: string
   developerPlatformClient?: DeveloperPlatformClient
+  extensionTypes: string[]
+  buildTomlObject: (ext: ExtensionRegistration) => string
 }
 
-export async function importDashboardExtensions(
-  options: ImportOptions,
-  extensionTypes: string[],
-  buildTomlObject: (ext: ExtensionRegistration) => string,
-) {
+export async function importDashboardExtensions(options: ImportOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
@@ -30,7 +28,7 @@ export async function importDashboardExtensions(
     developerPlatformClient,
     apiKey: remoteApp.apiKey,
     organizationId: remoteApp.organizationId,
-    extensionTypes,
+    extensionTypes: options.extensionTypes,
   })
 
   if (extensions.length === 0) {
@@ -50,7 +48,7 @@ export async function importDashboardExtensions(
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = buildTomlObject(ext)
+    const tomlObject = options.buildTomlObject(ext)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid

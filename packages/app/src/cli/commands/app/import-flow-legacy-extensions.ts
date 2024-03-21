@@ -28,6 +28,11 @@ export default class AppImportFlowExtension extends Command {
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
     const flowExtensionTypes = ['flow_action_definition', 'flow_trigger_definition']
-    await importDashboardExtensions({app, apiKey: flags['client-id']}, flowExtensionTypes, buildTomlObject)
+    await importDashboardExtensions({
+      app,
+      apiKey: flags['client-id'],
+      extensionTypes: flowExtensionTypes,
+      buildTomlObject,
+    })
   }
 }
