@@ -371,6 +371,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const {version, userErrors} = result.versionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
+    const devDashFqdn = (await shopifyDevelopersFqdn()).replace('app.', 'developers.')
     const versionResult = {
       appDeploy: {
         appVersion: {
@@ -378,7 +379,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.versionTag,
-          location: 'the URL for the version will go here',
+          location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
           appModuleVersions: version.modules.map((mod) => {
             return {
               uuid: mod.uid,
