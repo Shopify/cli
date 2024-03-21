@@ -1,13 +1,15 @@
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
 export async function getActiveDashboardExtensions({
   developerPlatformClient,
   apiKey,
   organizationId,
+  extTypes,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   organizationId: string
+  extTypes: string[]
 }) {
   const initialRemoteExtensions = await developerPlatformClient.appExtensionRegistrations({
     id: apiKey,
@@ -16,9 +18,9 @@ export async function getActiveDashboardExtensions({
   })
   const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
   return dashboardManagedExtensionRegistrations.filter((ext) => {
-    const isFlow = ext.type === 'flow_action_definition' || ext.type === 'flow_trigger_definition'
+    const isNeededExtType = extTypes.includes(ext.type)
     const hasActiveVersion = ext.activeVersion && ext.activeVersion.config
     const hasDraftVersion = ext.draftVersion && ext.draftVersion.config
-    return isFlow && (hasActiveVersion || hasDraftVersion)
+    return isNeededExtType && (hasActiveVersion || hasDraftVersion)
   })
 }

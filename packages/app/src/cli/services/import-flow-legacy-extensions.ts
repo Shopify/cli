@@ -1,7 +1,7 @@
 import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
-import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
+import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -27,6 +27,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
     developerPlatformClient,
     apiKey: remoteApp.apiKey,
     organizationId: remoteApp.organizationId,
+    extTypes: ['flow_action_definition', 'flow_trigger_definition'],
   })
 
   if (flowExtensions.length === 0) {
