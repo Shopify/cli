@@ -1244,18 +1244,27 @@ _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/th
 
 ## `shopify theme info`
 
-Displays information about your theme environment, including your current store.
+Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
 
 ```
 USAGE
-  $ shopify theme info [--no-color] [--verbose]
+  $ shopify theme info [-d] [-e <value>] [--json] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  -d, --development          Retrieve info from your development theme.
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -t, --theme=<value>        Theme ID or name of the remote theme.
+      --json                 Output the theme info as JSON.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
-  Displays information about your theme environment, including your current store.
+  Displays information about your theme environment, including your current store. Can also retrieve information about a
+  specific theme.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/info.js)_
