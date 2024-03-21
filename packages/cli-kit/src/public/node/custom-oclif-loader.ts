@@ -1,13 +1,16 @@
+import {cwd, joinPath} from './path.js'
+import {fileExistsSync} from './fs.js'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
-import {cwd} from './path.js'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
     const path = sniffForPath() ?? cwd()
-    options.pluginAdditions = {
-      core: ['@shopify/cli-hydrogen'],
-      path,
+    if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
+      options.pluginAdditions = {
+        core: ['@shopify/cli-hydrogen'],
+        path,
+      }
     }
     super(options)
     // eslint-disable-next-line dot-notation
@@ -71,6 +74,8 @@ export class ShopifyConfig extends Config {
 
 /**
  * Tries to get the value of the `--path` argument, if provided.
+ *
+ * @returns The value of the `--path` argument, if provided.
  */
 function sniffForPath(): string | undefined {
   const pathFlagIndex = process.argv.indexOf('--path')
