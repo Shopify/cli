@@ -100,6 +100,7 @@ export async function deploy(options: DeployOptions) {
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
               apiKey,
+              organizationId: remoteApp.organizationId,
               bundlePath,
               appModules: getArrayRejectingUndefined(appModules),
               release,

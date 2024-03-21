@@ -20,7 +20,7 @@ import {
   ReleaseVersionMutationVariables,
 } from './shopify-developers-client/graphql/release-version.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
+import {DeveloperPlatformClient, Paginateable, ActiveAppVersion, AppDeployOptions} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
@@ -36,7 +36,7 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
-import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
@@ -79,6 +79,7 @@ import {underscore} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
+import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -347,7 +348,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: updateExtension')
   }
 
-  async deploy({apiKey, appModules, versionTag}: AppDeployVariables): Promise<AppDeploySchema> {
+  async deploy({apiKey, appModules, organizationId, versionTag}: AppDeployOptions): Promise<AppDeploySchema> {
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
       appModules: (appModules ?? []).map((mod) => {
@@ -362,7 +363,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
 
     const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
-      '1',
+      organizationId,
       CreateAppVersionMutation,
       await this.token(),
       variables,

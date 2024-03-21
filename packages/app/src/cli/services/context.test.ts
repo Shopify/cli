@@ -754,7 +754,7 @@ api_version = "2023-04"
       remoteAppUpdated: false,
       updateURLs: undefined,
     })
-    expect(fetchOrganizations).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).not.toHaveBeenCalled()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
