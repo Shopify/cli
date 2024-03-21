@@ -1,4 +1,4 @@
-import {importFlowExtensions} from './import-flow-legacy-extensions.js'
+import {importFlowExtensions} from './import-dashboard-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'

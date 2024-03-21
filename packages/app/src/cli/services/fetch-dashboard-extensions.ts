@@ -4,12 +4,12 @@ export async function getActiveDashboardExtensions({
   developerPlatformClient,
   apiKey,
   organizationId,
-  extTypes,
+  extensionTypes,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   organizationId: string
-  extTypes: string[]
+  extensionTypes: string[]
 }) {
   const initialRemoteExtensions = await developerPlatformClient.appExtensionRegistrations({
     id: apiKey,
@@ -18,9 +18,9 @@ export async function getActiveDashboardExtensions({
   })
   const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
   return dashboardManagedExtensionRegistrations.filter((ext) => {
-    const isNeededExtType = extTypes.includes(ext.type)
+    const isNeededExtensionType = extensionTypes.includes(ext.type)
     const hasActiveVersion = ext.activeVersion && ext.activeVersion.config
     const hasDraftVersion = ext.draftVersion && ext.draftVersion.config
-    return isNeededExtType && (hasActiveVersion || hasDraftVersion)
+    return isNeededExtensionType && (hasActiveVersion || hasDraftVersion)
   })
 }

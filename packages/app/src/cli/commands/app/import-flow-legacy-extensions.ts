@@ -1,7 +1,8 @@
+import {buildTomlObject} from '../../services/flow/extension-to-toml.js'
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
-import {importFlowExtensions} from '../../services/import-flow-legacy-extensions.js'
+import {importDashboardExtensions} from '../../services/import-dashboard-extensions.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
@@ -26,6 +27,7 @@ export default class AppImportFlowExtension extends Command {
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
-    await importFlowExtensions({app, apiKey: flags['client-id']})
+    const flowExtensionTypes = ['flow_action_definition', 'flow_trigger_definition']
+    await importDashboardExtensions({app, apiKey: flags['client-id']}, flowExtensionTypes, buildTomlObject)
   }
 }

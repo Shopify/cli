@@ -59,7 +59,7 @@ describe('getActiveDashboardExtensions', (it) => {
       developerPlatformClient,
       apiKey: 'apiKey',
       organizationId: '1',
-      extTypes: ['flow_action_definition', 'flow_trigger_definition'],
+      extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
     })
 
     // Then
