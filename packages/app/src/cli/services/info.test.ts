@@ -2,7 +2,7 @@ import {InfoOptions, info} from './info.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
-import {OrganizationApp} from '../models/organization.js'
+import {MinimalAppIdentifiers, OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
@@ -37,14 +37,14 @@ const ORG1 = {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId(clientId: string): Promise<OrganizationApp> {
-      switch (clientId) {
+    async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp> {
+      switch (apiKey) {
         case '123':
           return APP1
         case APP.apiKey:
           return APP
         default:
-          throw new Error(`App not found for client ID ${clientId}`)
+          throw new Error(`App not found for client ID ${apiKey}`)
       }
     },
 

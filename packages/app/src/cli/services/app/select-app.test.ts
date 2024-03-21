@@ -1,7 +1,7 @@
 import {fetchAppRemoteConfiguration} from './select-app.js'
 import {configurationSpecifications, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {MinimalOrganizationApp} from '../../models/organization.js'
+import {MinimalAppIdentifiers, MinimalOrganizationApp} from '../../models/organization.js'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../dev/fetch.js')
@@ -65,7 +65,7 @@ describe('fetchAppRemoteConfiguration', () => {
   test('when configuration modules are present the remote configuration is returned ', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
+      activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
     })
 
     // When
@@ -109,7 +109,7 @@ describe('fetchAppRemoteConfiguration', () => {
     }
     activeVersion.appModuleVersions.push(complianceActiveAppModule)
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      activeAppVersion: (_app: MinimalOrganizationApp) => Promise.resolve(activeVersion),
+      activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
     })
 
     // When

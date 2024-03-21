@@ -25,7 +25,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {MinimalAppIdentifiers, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -160,11 +160,11 @@ const draftExtensionsPushOptions = (
 function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     ...extras,
-    async appFromId(clientId: string) {
+    async appFromId({apiKey}: MinimalAppIdentifiers) {
       for (const app of [APP1, APP2]) {
-        if (clientId === app.apiKey) return app
+        if (apiKey === app.apiKey) return app
       }
-      throw new Error(`Unexpected client id: ${clientId}`)
+      throw new Error(`Unexpected client id: ${apiKey}`)
     },
     async appsForOrg(orgId: string) {
       if (orgId !== ORG1.id) {
@@ -754,7 +754,7 @@ api_version = "2023-04"
       remoteAppUpdated: false,
       updateURLs: undefined,
     })
-    expect(fetchOrganizations).not.toHaveBeenCalled()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
@@ -1012,7 +1012,11 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith(APP2.apiKey)
+    expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith({
+      id: APP2.apiKey,
+      apiKey: APP2.apiKey,
+      organizationId: '0',
+    })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
     expect(got.remoteApp.appType).toEqual(APP2.appType)
@@ -1536,7 +1540,11 @@ describe('ensureDraftExtensionsPushContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(opts.developerPlatformClient!.appFromId).toHaveBeenCalledWith(APP2.apiKey)
+    expect(opts.developerPlatformClient!.appFromId).toHaveBeenCalledWith({
+      id: APP2.apiKey,
+      apiKey: APP2.apiKey,
+      organizationId: '0',
+    })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
     expect(got.remoteApp.appType).toEqual(APP2.appType)
@@ -1717,7 +1725,7 @@ describe('ensureThemeExtensionDevContext', () => {
     }
 
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: (_appId: string) => Promise.resolve(mockedExtensionRegistrations),
+      appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(mockedExtensionRegistrations),
     })
 
     // When

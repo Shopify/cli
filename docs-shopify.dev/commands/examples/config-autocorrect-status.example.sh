@@ -1,0 +1,1 @@
+shopify config autocorrect status
