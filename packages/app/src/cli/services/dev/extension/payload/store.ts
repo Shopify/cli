@@ -1,6 +1,6 @@
-import {UIExtensionPayload, ExtensionsEndpointPayload, DevNewExtensionPointSchema} from './models.js'
+import {UIExtensionPayload, ExtensionsEndpointPayload, DevNewExtensionPointSchema, IntentSchema} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
-import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
+import {getUIExtensionPayload, isIntentsSchema, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
@@ -84,8 +84,8 @@ export class ExtensionsPayloadStore extends EventEmitter {
       const foundExtension = extensions.find((ext) => ext.uuid === rawPayloadExtension.uuid)
 
       if (foundExtension) {
-        // We can't do a simple union or replacement when it comes to extension points array
-        // We need special logic to merge extension points only when the target matches
+        // We can't do a simple union or replacement when it comes to extension points or intents array
+        // We need special logic to merge extension points or intents only when the target matches
         if (
           isNewExtensionPointsSchema(foundExtension.extensionPoints) &&
           isNewExtensionPointsSchema(rawPayloadExtension.extensionPoints)
@@ -108,8 +108,28 @@ export class ExtensionsPayloadStore extends EventEmitter {
             },
           )
 
-          const {extensionPoints, ...rest} = foundExtension
-          return deepMergeObjects(rawPayloadExtension, rest)
+          foundExtension.extensionPoints = []
+        }
+        if (isIntentsSchema(foundExtension.intents) && isIntentsSchema(rawPayloadExtension.intents)) {
+          const foundIntentsPayloadMap = foundExtension.intents.reduce((acc, ex) => {
+            return {...acc, [ex.target]: ex}
+          }, {} as {[key: string]: IntentSchema})
+
+          rawPayloadExtension.intents = deepMergeObjects(
+            rawPayloadExtension.intents,
+            foundExtension.intents,
+            (destinationArray) => {
+              return (destinationArray as IntentSchema[]).map((intent) => {
+                const intentPayload = foundIntentsPayloadMap[intent.target]
+                if (intentPayload) {
+                  return deepMergeObjects(intent, intentPayload)
+                }
+                return intent
+              })
+            },
+          )
+
+          foundExtension.intents = []
         }
 
         return deepMergeObjects(rawPayloadExtension, foundExtension)

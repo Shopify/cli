@@ -68,6 +68,7 @@ export interface UIExtensionPayload {
     localizationStatus: ExtensionAssetBuildStatus
   }
   extensionPoints: string[] | null | DevNewExtensionPointSchema[]
+  intents?: IntentSchema[]
   localization: Localization | null
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
