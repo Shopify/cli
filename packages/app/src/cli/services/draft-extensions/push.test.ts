@@ -56,7 +56,7 @@ const remoteApp = {
   applicationUrl: 'https://example.com',
   redirectUrlWhitelist: [],
   apiSecretKeys: [],
-  betas: [],
+  flags: [],
 }
 
 describe('draftExtensionsPush', () => {
