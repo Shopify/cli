@@ -1,1 +1,1 @@
-shopify config autocorrect off
+shopify config autocorrect off [flags]
