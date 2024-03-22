@@ -165,9 +165,6 @@
         "description": "View the available UI kit components.",
         "hidden": true
       },
-      "webhook": {
-        "description": "Manage webhooks."
-      },
       "plugins": {
         "hidden": true
       }

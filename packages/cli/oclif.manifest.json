@@ -3938,19 +3938,9 @@
       ],
       "args": {
       },
-      "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the \"upgrade\" (https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
-      "descriptionWithMarkdown": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
+      "description": "Shows details on how to upgrade Shopify CLI.",
+      "descriptionWithMarkdown": "Shows details on how to upgrade Shopify CLI.",
       "flags": {
-        "path": {
-          "default": ".",
-          "description": "The path to your project directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "path",
-          "type": "option"
-        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3960,7 +3950,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Upgrade your CLI dependency."
+      "summary": "Shows details on how to upgrade Shopify CLI."
     },
     "version": {
       "aliases": [

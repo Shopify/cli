@@ -1482,20 +1482,16 @@ DESCRIPTION
 
 ## `shopify upgrade`
 
-Upgrade your CLI dependency.
+Shows details on how to upgrade Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--path <value>]
-
-FLAGS
-  --path=<value>  [default: .] The path to your project directory.
+  $ shopify upgrade
 
 DESCRIPTION
-  Upgrade your CLI dependency.
+  Shows details on how to upgrade Shopify CLI.
 
-  If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the
-  "upgrade" (https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
+  Shows details on how to upgrade Shopify CLI.
 ```
 
 ## `shopify version`

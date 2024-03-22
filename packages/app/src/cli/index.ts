@@ -1,3 +1,4 @@
+import BaseCommand from '@shopify/cli-kit/node/base-command'
 import Build from './commands/app/build.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
