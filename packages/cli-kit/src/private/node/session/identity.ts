@@ -55,6 +55,9 @@ export function applicationId(api: API): string {
         return 'ace6dc89-b526-456d-a942-4b8ef6acda4b'
       }
     }
+    case 'developer-dashboard': {
+      return '011e7d80-ec52-4e21-b8d1-7b7415e89575'
+    }
     default:
       throw new BugError(`Application id for API of type: ${api}`)
   }

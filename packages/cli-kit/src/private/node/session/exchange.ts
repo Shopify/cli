@@ -6,6 +6,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, ExtendableError} from '../../../public/node/error.js'
+import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
@@ -97,7 +98,21 @@ export async function exchangeCustomPartnerToken(token: string): Promise<Applica
   }
 }
 
-type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
+export async function exchangeForDevDashToken(token: string): Promise<ApplicationToken> {
+  outputDebug(outputContent`EXCHANGING TOKEN: ${token}`)
+  const appId = applicationId('developer-dashboard')
+  const newToken = await requestAppToken('developer-dashboard', token, [
+    'https://api.shopify.com/auth/organization.apps',
+  ])
+  return newToken[appId]!
+}
+
+export type IdentityDeviceError =
+  | 'authorization_pending'
+  | 'access_denied'
+  | 'expired_token'
+  | 'slow_down'
+  | 'unknown_failure'
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.

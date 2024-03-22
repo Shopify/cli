@@ -9,6 +9,7 @@ import {
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
+  exchangeForDevDashToken,
 } from './session/exchange.js'
 import {authorize} from './session/authorize.js'
 import {IdentityToken, Session} from './session/schema.js'
@@ -83,6 +84,7 @@ export interface OAuthApplications {
   storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
   businessPlatformApi?: BusinessPlatformAPIOAuthOptions
+  developerDashboardApi?: DeveloperDashboardAPIOauthOptions
 }
 
 export interface OAuthSession {
@@ -90,6 +92,7 @@ export interface OAuthSession {
   partners?: string
   storefront?: string
   businessPlatform?: string
+  developerDashboard?: string
 }
 
 /**
@@ -159,6 +162,8 @@ The CLI is currently unable to prompt for reauthentication.`,
     }
   }
 
+  outputDebug(outputContent`HERE'S YOUR TOKEN: ${JSON.stringify(newSession)}`)
+
   const completeSession: Session = {...currentSession, ...newSession}
   // Save the new session info if it has changed
   if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
@@ -168,14 +173,26 @@ The CLI is currently unable to prompt for reauthentication.`,
   const envToken = getPartnersToken()
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
+    outputDebug(outputContent`PARTNERS TOKEN: ${tokens.partners}`)
   }
+
+  outputDebug(outputContent`APPLICATIONS: ${JSON.stringify(applications)}`)
+
+  // if (applications.developerDashboardApi) {
+  tokens.developerDashboard = (
+    await exchangeForDevDashToken(completeSession[fqdn]?.identity?.accessToken || '')
+  ).accessToken
+
+  outputDebug(outputContent`APPLICATION TOKEN: ${JSON.stringify(tokens)}`)
+  // }
+
   if (!envToken && tokens.partners) {
     await ensureUserHasPartnerAccount(tokens.partners)
+    outputDebug(outputContent`PARTNERS TOKEN: ${tokens.partners}`)
   }
 
   return tokens
 }
-
 /**
  * Execute the full authentication flow.
  *
@@ -348,6 +365,11 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
   if (applications.businessPlatformApi) {
     const appId = applicationId('business-platform')
     tokens.businessPlatform = fqdnSession.applications[appId]?.accessToken
+  }
+
+  if (applications.developerDashboardApi) {
+    const appId = applicationId('developer-dashboard')
+    tokens.developerDashboard = fqdnSession.applications[appId]?.accessToken
   }
 
   return tokens
