@@ -16,6 +16,7 @@ import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
+import WebhookTrigger from './commands/app/webhook/trigger.js'
 
 const APP_COMMANDS = {
   'app:build': Build,
@@ -36,6 +37,7 @@ const APP_COMMANDS = {
   'app:function:typegen': FunctionTypegen,
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
+  'app:webhook:trigger': WebhookTrigger,
 }
 
 export default APP_COMMANDS
