@@ -5,15 +5,17 @@ import {Args} from '@oclif/core'
 export default class Search extends Command {
   static description = 'Starts a search on shopify.dev.'
 
-  static usage = `# open the search modal on Shopify.dev
-shopify search
+  static examples = [
+    `# open the search modal on Shopify.dev
+    shopify search
 
-# search for a term on Shopify.dev
-shopify search <query>
+    # search for a term on Shopify.dev
+    shopify search <query>
 
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`
+    # search for a phrase on Shopify.dev
+    shopify search "<a search query separated by spaces>"
+    `,
+  ]
 
   static args = {
     query: Args.string(),

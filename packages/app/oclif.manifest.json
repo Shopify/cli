@@ -1734,7 +1734,7 @@
       ],
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "shopify app release --version <version>"
+      "usage": "app:release --version <version>"
     },
     "app:scaffold:extension": {
       "aliases": [
@@ -2097,8 +2097,7 @@
         "trigger.js"
       ],
       "strict": true,
-      "summary": "Trigger delivery of a sample webhook topic payload to a designated address.",
-      "usage": "shopify webhook trigger [flags]"
+      "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     },
     "webhook:trigger": {
       "aliases": [
@@ -2199,8 +2198,7 @@
         "webhook",
         "trigger.js"
       ],
-      "summary": "Trigger delivery of a sample webhook topic payload to a designated address.",
-      "usage": "shopify webhook trigger [flags]"
+      "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
   "version": "3.57.0"
