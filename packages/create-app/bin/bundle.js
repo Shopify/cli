@@ -1,6 +1,6 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
-import CustomStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
+import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import glob from 'fast-glob'
 import { copy } from 'esbuild-plugin-copy'
 
@@ -21,7 +21,7 @@ await esBuild({
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [
-    CustomStacktraceyPlugin(),
+    ShopifyStacktraceyPlugin,
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
