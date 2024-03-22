@@ -1,1 +1,1 @@
-shopify webhook trigger [flags]
+shopify app webhook trigger [flags]
