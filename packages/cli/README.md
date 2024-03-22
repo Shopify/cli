@@ -16,14 +16,14 @@
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
-* [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
+* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
-* [`shopify shopify webhook trigger [flags]`](#shopify-shopify-webhook-trigger-flags)
+* [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
-* [`shopify shopify config autocorrect off`](#shopify-shopify-config-autocorrect-off)
-* [`shopify shopify config autocorrect on`](#shopify-shopify-config-autocorrect-on)
-* [`shopify shopify config autocorrect status`](#shopify-shopify-config-autocorrect-status)
+* [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
+* [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
+* [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -33,35 +33,20 @@
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
 * [`shopify plugins update`](#shopify-plugins-update)
-* [`shopify # open the search modal on Shopify.dev
-shopify search
-
-# search for a term on Shopify.dev
-shopify search <query>
-
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`](#shopify--open-the-search-modal-on-shopifydevshopify-search-search-for-a-term-on-shopifydevshopify-search-query-search-for-a-phrase-on-shopifydevshopify-search-a-search-query-separated-by-spaces)
+* [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify 
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `](#shopify---shopify-theme-console--shopify-theme-console---url-productsclassic-leather-jacket--)
+* [`shopify theme:console`](#shopify-themeconsole)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
-* [`shopify shopify theme init [name]`](#shopify-shopify-theme-init-name)
+* [`shopify theme:init [name]`](#shopify-themeinit-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify shopify theme push
-
-shopify theme push --unpublished --json
-  `](#shopify-shopify-theme-pushshopify-theme-push---unpublished---json--)
+* [`shopify theme:push`](#shopify-themepush)
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
@@ -559,13 +544,13 @@ FLAGS
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/init.js)_
 
-## `shopify shopify app release --version <version>`
+## `shopify app:release --version <version>`
 
 Release an app version.
 
 ```
 USAGE
-  $ shopify app release shopify app release --version <version>
+  $ shopify app release --version <version>
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -613,13 +598,14 @@ EXAMPLES
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/versions/list.js)_
 
-## `shopify shopify webhook trigger [flags]`
+## `shopify app webhook trigger`
 
 Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify app webhook trigger shopify webhook trigger [flags]
+  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-secret <value>] [--delivery-method
+    http|google-pub-sub|event-bridge] [--help] [--shared-secret <value>] [--topic <value>]
 
 FLAGS
   --address=<value>
@@ -726,13 +712,13 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.28/src/commands/commands.ts)_
 
-## `shopify shopify config autocorrect off`
+## `shopify config autocorrect off`
 
 Disable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect off shopify config autocorrect off
+  $ shopify config autocorrect off
 
 DESCRIPTION
   Disable autocorrect. Off by default.
@@ -745,13 +731,13 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify shopify config autocorrect on`
+## `shopify config autocorrect on`
 
 Enable autocorrect. Off by default.
 
 ```
 USAGE
-  $ shopify config autocorrect on shopify config autocorrect on
+  $ shopify config autocorrect on
 
 DESCRIPTION
   Enable autocorrect. Off by default.
@@ -764,13 +750,13 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify shopify config autocorrect status`
+## `shopify config autocorrect status`
 
 Check whether autocorrect is enabled or disabled. On by default.
 
 ```
 USAGE
-  $ shopify config autocorrect status shopify config autocorrect status
+  $ shopify config autocorrect status
 
 DESCRIPTION
   Check whether autocorrect is enabled or disabled. On by default.
@@ -1027,32 +1013,24 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/update.ts)_
 
-## `shopify # open the search modal on Shopify.dev
-shopify search
-
-# search for a term on Shopify.dev
-shopify search <query>
-
-# search for a phrase on Shopify.dev
-shopify search "<a search query separated by spaces>"
-`
+## `shopify search [QUERY]`
 
 Starts a search on shopify.dev.
 
 ```
 USAGE
-  $ shopify search # open the  modal on Shopify.dev
-  shopify search
-
-  # search for a term on
-    Shopify.dev
-    shopify search <query>
-
-    # search for a phrase on Shopify.dev
-    shopify search "<a search query separated by spaces>"
+  $ shopify search [QUERY]
 
 DESCRIPTION
   Starts a search on shopify.dev.
+
+EXAMPLES
+  # open the search modal on Shopify.dev
+      shopify search
+      # search for a term on Shopify.dev
+      shopify search <query>
+      # search for a phrase on Shopify.dev
+      shopify search "<a search query separated by spaces>"
 ```
 
 _See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.57.0/dist/cli/commands/search.js)_
@@ -1095,19 +1073,14 @@ DESCRIPTION
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/check.js)_
 
-## `shopify 
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `
+## `shopify theme:console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
 
 ```
 USAGE
-  $ shopify theme console shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
+  $ shopify theme console
+  $ shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
@@ -1271,29 +1244,38 @@ _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/th
 
 ## `shopify theme info`
 
-Displays information about your theme environment, including your current store.
+Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
 
 ```
 USAGE
-  $ shopify theme info [--no-color] [--verbose]
+  $ shopify theme info [-d] [-e <value>] [--json] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  -d, --development          Retrieve info from your development theme.
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -t, --theme=<value>        Theme ID or name of the remote theme.
+      --json                 Output the theme info as JSON.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
-  Displays information about your theme environment, including your current store.
+  Displays information about your theme environment, including your current store. Can also retrieve information about a
+  specific theme.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/info.js)_
 
-## `shopify shopify theme init [name]`
+## `shopify theme:init [name]`
 
 Clones a Git repository to use as a starting point for building a new theme.
 
 ```
 USAGE
-  $ shopify theme init shopify theme init [name]
+  $ shopify theme init [name]
 
 ARGUMENTS
   NAME  Name of the new theme
@@ -1503,18 +1485,14 @@ DESCRIPTION
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.57.0/dist/cli/commands/theme/pull.js)_
 
-## `shopify shopify theme push
-
-shopify theme push --unpublished --json
-  `
+## `shopify theme:push`
 
 Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
 ```
 USAGE
-  $ shopify theme push shopify theme push
-
-  shopify theme push --unpublished --json
+  $ shopify theme push
+  $ shopify theme push --unpublished --json
 
 FLAGS
   -a, --allow-live           Allow push to a live theme.

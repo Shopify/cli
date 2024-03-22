@@ -2745,107 +2745,71 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('does not allow identical compliance_topics and uri', async () => {
+  test('throws an error if we have privacy_compliance section and subscriptions with compliance_topics', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
+      privacy_compliance: {
+        customer_data_request_url: 'https://example.com',
+      },
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
+          compliance_topics: ['customers/data_request'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-          compliance_topics: ['shop/redact'],
-        },
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_two',
-          compliance_topics: ['shop/redact'],
         },
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
-      fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'compliance_topics', 0, 'shop/redact'],
+      message: `The privacy_compliance section can't be used if there are subscriptions including compliance_topics`,
+      path: ['webhooks'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
-  test('does not allow identical compliance_topics in same subscription (will get by zod enum validation)', async () => {
+  test('throws an error if neither topics nor compliance_topics are added', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-          compliance_topics: ['shop/redact', 'shop/redact'],
         },
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
-      fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'compliance_topics', 1, 'shop/redact'],
+      message: 'Either topics or compliance_topics must be added to the webhook subscription',
+      path: ['webhooks', 'subscriptions', 0],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
-  test('allows same compliance_topics if uri is different', async () => {
+  test('throws an error when there are duplicated compliance topics', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-          compliance_topics: ['shop/redact'],
+          compliance_topics: ['customers/data_request'],
         },
         {
-          topics: ['products/create'],
-          uri: 'https://example-two.com',
-          sub_topic: 'type:metaobject_two',
-          compliance_topics: ['shop/redact'],
+          uri: 'https://example.com/other',
+          compliance_topics: ['customers/data_request'],
         },
       ],
     }
-
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-  })
-
-  test('allows same compliance_topics across https, pub sub and arn with multiple topics', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['products/create'],
-          uri: 'https://example.com/all_webhooks',
-          compliance_topics: ['shop/redact', 'customers/data_request', 'customers/redact'],
-        },
-        {
-          topics: ['products/create'],
-          uri: 'pubsub://my-project-123:my-topic',
-          compliance_topics: ['customers/data_request', 'customers/redact'],
-        },
-        {
-          topics: ['products/create'],
-          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/compliance',
-          compliance_topics: ['shop/redact', 'customers/redact'],
-        },
-      ],
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have multiple subscriptions with the same compliance topic',
+      fatal: true,
+      path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {

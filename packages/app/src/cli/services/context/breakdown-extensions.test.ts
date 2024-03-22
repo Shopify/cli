@@ -214,7 +214,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
 const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
   configuration: AppConfiguration = APP_CONFIGURATION,
-  betas = [],
+  flags = [],
 ): Promise<AppInterface> => {
   const versionSchema = await buildVersionedAppSchema()
 
@@ -227,7 +227,7 @@ const LOCAL_APP = async (
     configSchema: versionSchema.schema,
   })
 
-  setPathValue(localApp, 'remoteBetaFlags', betas)
+  setPathValue(localApp, 'remoteFlags', flags)
   return localApp
 }
 

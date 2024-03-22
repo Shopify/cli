@@ -25,8 +25,7 @@
         "off.js"
       ],
       "strict": true,
-      "summary": "Disable autocorrect. Off by default.",
-      "usage": "shopify config autocorrect off"
+      "summary": "Disable autocorrect. Off by default."
     },
     "config:autocorrect:on": {
       "aliases": [
@@ -53,8 +52,7 @@
         "on.js"
       ],
       "strict": true,
-      "summary": "Enable autocorrect. Off by default.",
-      "usage": "shopify config autocorrect on"
+      "summary": "Enable autocorrect. Off by default."
     },
     "config:autocorrect:status": {
       "aliases": [
@@ -81,8 +79,7 @@
         "status.js"
       ],
       "strict": true,
-      "summary": "Check whether autocorrect is enabled or disabled. On by default.",
-      "usage": "shopify config autocorrect status"
+      "summary": "Check whether autocorrect is enabled or disabled. On by default."
     }
   },
   "version": "3.57.0"

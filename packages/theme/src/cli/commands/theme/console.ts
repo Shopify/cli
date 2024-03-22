@@ -11,11 +11,7 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
 
-  static usage = `
-  shopify theme console
-
-  shopify theme console --url /products/classic-leather-jacket
-  `
+  static usage = ['theme:console', 'theme:console --url /products/classic-leather-jacket']
 
   static descriptionWithMarkdown = `Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.
 

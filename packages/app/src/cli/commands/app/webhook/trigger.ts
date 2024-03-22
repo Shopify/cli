@@ -8,8 +8,6 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 export default class WebhookTrigger extends Command {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
 
-  static usage = 'shopify webhook trigger [flags]'
-
   static descriptionWithMarkdown = `
   Triggers the delivery of a sample Admin API event topic payload to a designated address.
 

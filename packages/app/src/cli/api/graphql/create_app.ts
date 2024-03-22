@@ -29,7 +29,7 @@ export const CreateAppQuery = gql`
         }
         appType
         grantedScopes
-        disabledBetas
+        disabledFlags
       }
       userErrors {
         field
@@ -60,7 +60,10 @@ export interface CreateAppQuerySchema {
       }[]
       appType: string
       grantedScopes: string[]
-      disabledBetas: string[]
+      applicationUrl: string
+      redirectUrlWhitelist: string[]
+      requestedAccessScopes?: string[]
+      disabledFlags: string[]
     }
     userErrors: {
       field: string[]

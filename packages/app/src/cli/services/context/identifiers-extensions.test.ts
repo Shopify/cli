@@ -113,7 +113,7 @@ const options = (
     release?: boolean
     includeDeployConfig?: boolean
     configExtensions?: ExtensionInstance[]
-    betas?: string[]
+    flags?: string[]
     developerPlatformClient?: DeveloperPlatformClient
   } = {},
 ): EnsureDeploymentIdsPresenceOptions => {
@@ -123,7 +123,7 @@ const options = (
     release = true,
     includeDeployConfig = false,
     configExtensions = [],
-    betas = [],
+    flags = [],
     developerPlatformClient = testDeveloperPlatformClient(),
   } = options
   const localApp = {
@@ -136,7 +136,7 @@ const options = (
     remoteApp,
     release,
   }
-  setPathValue(localApp.app, 'remoteBetaFlags', betas)
+  setPathValue(localApp.app, 'remoteFlags', flags)
   return localApp
 }
 

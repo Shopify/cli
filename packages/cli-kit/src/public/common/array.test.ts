@@ -1,4 +1,4 @@
-import {difference, uniqBy} from './array.js'
+import {difference, uniq, uniqBy} from './array.js'
 import {describe, test, expect} from 'vitest'
 
 describe('uniqBy', () => {
@@ -33,6 +33,19 @@ describe('uniqBy', () => {
         name: 'user3',
       },
     ])
+  })
+})
+
+describe('uniq', () => {
+  test('removes duplicates', () => {
+    // Given
+    const array = [1, 2, 2, 3]
+
+    // When
+    const got = uniq(array)
+
+    // Then
+    expect(got).toEqual([1, 2, 3])
   })
 })
 
