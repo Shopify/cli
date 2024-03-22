@@ -11,10 +11,10 @@ import {
   buildTheme,
   buildThemeAsset,
 } from '@shopify/cli-kit/node/themes/factories'
-import {BulkUploadResult, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
-export type AssetParams = Partial<Pick<ThemeAsset, 'key' | 'value'>>
+export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,name,role,processing'})
@@ -51,13 +51,9 @@ export async function bulkUploadThemeAssets(
   id: number,
   assets: AssetParams[],
   session: AdminSession,
-): Promise<BulkUploadResult[]> {
+): Promise<Result[]> {
   const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
-  const bulkResults = response.json.results
-
-  if (bulkResults?.length > 0) return bulkResults.map(buildBulkUploadResults)
-
-  return []
+  return buildBulkUploadResults(response.json.results, assets)
 }
 
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {

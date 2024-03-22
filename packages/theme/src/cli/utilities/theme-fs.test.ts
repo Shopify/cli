@@ -7,6 +7,8 @@ import {
   readThemeFile,
   removeThemeFile,
   writeThemeFile,
+  partitionThemeFiles,
+  readThemeFilesFromDisk,
 } from './theme-fs.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
@@ -33,14 +35,14 @@ describe('theme-fs', () => {
         files: new Map([
           fsEntry({checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'}),
           fsEntry({checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'}),
+          fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
+          fsEntry({checksum: '3f6b44e95dbcf0214a0a82627a37cd53', key: 'config/settings_schema.json'}),
           fsEntry({checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'}),
           fsEntry({checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'}),
           fsEntry({checksum: '94d575574a070397f297a2e9bb32ce7d', key: 'locales/en.default.json'}),
-          fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
-          fsEntry({checksum: '3f6b44e95dbcf0214a0a82627a37cd53', key: 'config/settings_schema.json'}),
-          fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
           fsEntry({checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'}),
           fsEntry({checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'}),
+          fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
         root,
       })
@@ -69,7 +71,7 @@ describe('theme-fs', () => {
 
       // When
       const content = await readThemeFile(root, key)
-      const contentJson = JSON.parse(content ?? '')
+      const contentJson = JSON.parse(content?.toString() || '')
 
       // Then
       expect(contentJson).toEqual({
@@ -93,6 +95,19 @@ describe('theme-fs', () => {
 
       // Then
       expect(content).toBeUndefined()
+    })
+
+    test('returns Buffer for image files', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+      const key = 'assets/sparkle.gif'
+
+      // When
+      const content = await readThemeFile(root, key)
+
+      // Then
+      expect(content).toBeDefined()
+      expect(Buffer.isBuffer(content)).toBe(true)
     })
   })
 
@@ -195,6 +210,110 @@ describe('theme-fs', () => {
 
       // Then
       expect(result).toBeFalsy()
+    })
+  })
+
+  describe('partitionThemeFiles', () => {
+    test('should partition theme files correctly', () => {
+      // Given
+      const files: Checksum[] = [
+        {key: 'assets/base.css', checksum: '1'},
+        {key: 'assets/base.css.liquid', checksum: '2'},
+        {key: 'assets/sparkle.gif', checksum: '3'},
+        {key: 'layout/password.liquid', checksum: '4'},
+        {key: 'layout/theme.liquid', checksum: '5'},
+        {key: 'locales/en.default.json', checksum: '6'},
+        {key: 'templates/404.json', checksum: '7'},
+        {key: 'config/settings_schema.json', checksum: '8'},
+        {key: 'config/settings_data.json', checksum: '9'},
+        {key: 'sections/announcement-bar.liquid', checksum: '10'},
+        {key: 'snippets/language-localization.liquid', checksum: '11'},
+        {key: 'templates/404.context.uk.json', checksum: '11'},
+      ]
+      // When
+      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+
+      // Then
+      expect(liquidFiles).toEqual([
+        {key: 'assets/base.css.liquid', checksum: '2'},
+        {key: 'layout/password.liquid', checksum: '4'},
+        {key: 'layout/theme.liquid', checksum: '5'},
+        {key: 'sections/announcement-bar.liquid', checksum: '10'},
+        {key: 'snippets/language-localization.liquid', checksum: '11'},
+      ])
+      expect(jsonFiles).toEqual([
+        {key: 'locales/en.default.json', checksum: '6'},
+        {key: 'templates/404.json', checksum: '7'},
+      ])
+      expect(configFiles).toEqual([
+        {key: 'config/settings_schema.json', checksum: '8'},
+        {key: 'config/settings_data.json', checksum: '9'},
+      ])
+      expect(staticAssetFiles).toEqual([
+        {key: 'assets/base.css', checksum: '1'},
+        {key: 'assets/sparkle.gif', checksum: '3'},
+      ])
+    })
+
+    test('should handle empty file array', () => {
+      // Given
+      const files: Checksum[] = []
+
+      // When
+      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+
+      // Then
+      expect(liquidFiles).toEqual([])
+      expect(jsonFiles).toEqual([])
+      expect(configFiles).toEqual([])
+      expect(staticAssetFiles).toEqual([])
+    })
+  })
+
+  describe('readThemeFilesFromDisk', () => {
+    test('should read theme files from disk and update themeFileSystem', async () => {
+      // Given
+      const filesToRead = [{key: 'assets/base.css', checksum: '1'}]
+      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+
+      // When
+      const testFile = themeFileSystem.files.get('assets/base.css')
+      expect(testFile).toBeDefined()
+      expect(testFile?.value).toBeUndefined()
+      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
+
+      // Then
+      expect(testFile?.value).toBeDefined()
+    })
+
+    test('should skip files not present in themeFileSystem', async () => {
+      // Given
+      const filesToRead = [{key: 'assets/nonexistent.css', checksum: '1'}]
+      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+
+      // When
+      const testFile = themeFileSystem.files.get('assets/nonexistent.css')
+      expect(testFile).toBeUndefined()
+      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
+
+      // Then
+      expect(themeFileSystem.files.has('assets/nonexistent.gif')).toBe(false)
+    })
+
+    test('should store image data as attachment', async () => {
+      // Given
+      const filesToRead = [{key: 'assets/sparkle.gif', checksum: '2'}]
+      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+
+      // When
+      const testFile = themeFileSystem.files.get('assets/sparkle.gif')
+      expect(testFile).toBeDefined()
+      expect(testFile?.attachment).toBeUndefined()
+      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
+
+      // Then
+      expect(testFile?.attachment).toBeDefined()
+      expect(testFile?.value).toBeUndefined()
     })
   })
 
