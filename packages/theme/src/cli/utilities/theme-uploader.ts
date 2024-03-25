@@ -32,7 +32,7 @@ export async function uploadTheme(
   const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
-  // The task rendering framework will execute the tasks in the order they are added, sychronously
+  // The task execution mechanism processes tasks sequentially in the order they are added.
   await renderTasks(deleteTasks)
   await renderTasks(uploadTasks)
 
@@ -57,14 +57,10 @@ async function buildDeleteTasks(
 
   return orderedFiles.map((file) => ({
     title: `Cleaning your remote theme (removing ${file.key})`,
-    task: async () => deleteFileFromRemote(theme.id, file, session),
+    task: async () => {
+      await deleteThemeAsset(theme.id, file.key, session)
+    },
   }))
-}
-
-// Json Files -> Liquid Files -> Config Files -> Static Asset Files
-function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
-  const {jsonFiles, liquidFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
-  return [...jsonFiles, ...liquidFiles, ...configFiles, ...staticAssetFiles]
 }
 
 async function getRemoteFilesToBeDeleted(
@@ -79,8 +75,10 @@ async function getRemoteFilesToBeDeleted(
   return filesToBeDeleted
 }
 
-async function deleteFileFromRemote(themeId: number, file: Checksum, session: AdminSession) {
-  await deleteThemeAsset(themeId, file.key, session)
+// Json Files -> Liquid Files -> Config Files -> Static Asset Files
+function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
+  const {jsonFiles, liquidFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+  return [...jsonFiles, ...liquidFiles, ...configFiles, ...staticAssetFiles]
 }
 
 async function buildUploadTasks(
@@ -96,6 +94,26 @@ async function buildUploadTasks(
   return createUploadTasks(filesToUpload, themeFileSystem, session, theme, uploadResults)
 }
 
+async function selectUploadableFiles(
+  themeFileSystem: ThemeFileSystem,
+  remoteChecksums: Checksum[],
+  options: UploadOptions,
+): Promise<Checksum[]> {
+  const localChecksums = calculateLocalChecksums(themeFileSystem)
+  const filteredLocalChecksums = await applyIgnoreFilters(localChecksums, themeFileSystem, options)
+  const remoteChecksumsMap = new Map<string, Checksum>()
+  remoteChecksums.forEach((remote) => {
+    remoteChecksumsMap.set(remote.key, remote)
+  })
+
+  const filesToUpload = filteredLocalChecksums.filter((local) => {
+    const remote = remoteChecksumsMap.get(local.key)
+    return !remote || remote.checksum !== local.checksum
+  })
+  outputDebug(`Files to be uploaded:\n${filesToUpload.map((file) => `-${file.key}`).join('\n')}`)
+  return filesToUpload
+}
+
 async function createUploadTasks(
   filesToUpload: Checksum[],
   themeFileSystem: ThemeFileSystem,
@@ -103,16 +121,13 @@ async function createUploadTasks(
   theme: Theme,
   uploadResults: Map<string, Result>,
 ): Promise<Task[]> {
-  const {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles} =
-    partitionThemeFiles(filesToUpload)
-
-  const filesInOrder: Checksum[][] = [liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles]
+  const orderedFiles = orderFilesToBeUploaded(filesToUpload)
 
   let currentFileCount = 0
   const totalFileCount = filesToUpload.length
   const uploadTasks = [] as Task[]
 
-  for (const fileType of filesInOrder) {
+  for (const fileType of orderedFiles) {
     // eslint-disable-next-line no-await-in-loop
     const {tasks: newTasks, updatedFileCount} = await createUploadTaskForFileType(
       fileType,
@@ -128,6 +143,11 @@ async function createUploadTasks(
   }
 
   return uploadTasks
+}
+
+function orderFilesToBeUploaded(files: Checksum[]): Checksum[][] {
+  const {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+  return [liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles]
 }
 
 async function createUploadTaskForFileType(
@@ -177,26 +197,6 @@ function createBatchedUploadTasks(
     tasks,
     updatedFileCount: runningFileCount,
   }
-}
-
-async function selectUploadableFiles(
-  themeFileSystem: ThemeFileSystem,
-  remoteChecksums: Checksum[],
-  options: UploadOptions,
-): Promise<Checksum[]> {
-  const localChecksums = calculateLocalChecksums(themeFileSystem)
-  const filteredLocalChecksums = await applyIgnoreFilters(localChecksums, themeFileSystem, options)
-  const remoteChecksumsMap = new Map<string, Checksum>()
-  remoteChecksums.forEach((remote) => {
-    remoteChecksumsMap.set(remote.key, remote)
-  })
-
-  const filesToUpload = filteredLocalChecksums.filter((local) => {
-    const remote = remoteChecksumsMap.get(local.key)
-    return !remote || remote.checksum !== local.checksum
-  })
-  outputDebug(`Files to be uploaded:\n${filesToUpload.map((file) => `-${file.key}`).join('\n')}`)
-  return filesToUpload
 }
 
 async function createBatches(files: Checksum[], path: string): Promise<FileBatch[]> {
