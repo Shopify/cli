@@ -32,20 +32,9 @@ export async function uploadTheme(
   const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
-  const {jsonTasks, otherTasks} = deleteTasks
-  const {liquidUploadTasks, jsonUploadTasks, contextualizedJsonUploadTasks, configUploadTasks, staticUploadTasks} =
-    uploadTasks
-
   // The sequence of tasks is important here
-  await renderTasks([...jsonTasks, ...otherTasks])
-
-  await renderTasks([
-    ...liquidUploadTasks,
-    ...jsonUploadTasks,
-    ...contextualizedJsonUploadTasks,
-    ...configUploadTasks,
-    ...staticUploadTasks,
-  ])
+  await renderTasks(deleteTasks)
+  await renderTasks(uploadTasks)
 
   reportFailedUploads(uploadResults)
   return uploadResults
@@ -57,9 +46,9 @@ async function buildDeleteTasks(
   options: UploadOptions,
   theme: Theme,
   session: AdminSession,
-) {
+): Promise<Task<unknown>[]> {
   if (options.nodelete) {
-    return {jsonTasks: [], otherTasks: []}
+    return []
   }
 
   const filteredChecksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
@@ -71,7 +60,7 @@ async function buildDeleteTasks(
   const jsonTasks = createDeleteTasks(jsonFiles, theme.id, session)
   const otherTasks = createDeleteTasks(otherFiles, theme.id, session)
 
-  return {jsonTasks, otherTasks}
+  return [...jsonTasks, ...otherTasks]
 }
 
 async function getRemoteFilesToBeDeleted(
@@ -104,20 +93,20 @@ async function buildUploadTasks(
   theme: Theme,
   session: AdminSession,
   uploadResults: Map<string, Result>,
-): Promise<{
-  liquidUploadTasks: Task[]
-  jsonUploadTasks: Task[]
-  contextualizedJsonUploadTasks: Task[]
-  configUploadTasks: Task[]
-  staticUploadTasks: Task[]
-}> {
+): Promise<Task[]> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
 
   await readThemeFilesFromDisk(filesToUpload, themeFileSystem)
   const {liquidUploadTasks, jsonUploadTasks, contextualizedJsonUploadTasks, configUploadTasks, staticUploadTasks} =
     await createUploadTasks(filesToUpload, themeFileSystem, session, theme, uploadResults)
 
-  return {liquidUploadTasks, jsonUploadTasks, contextualizedJsonUploadTasks, configUploadTasks, staticUploadTasks}
+  return [
+    ...liquidUploadTasks,
+    ...jsonUploadTasks,
+    ...contextualizedJsonUploadTasks,
+    ...configUploadTasks,
+    ...staticUploadTasks,
+  ]
 }
 
 async function createUploadTasks(
