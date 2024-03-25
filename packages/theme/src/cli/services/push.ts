@@ -11,10 +11,12 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 
 interface PushOptions {
   path: string
-  nodelete: boolean
-  json: boolean
+  nodelete?: boolean
+  json?: boolean
+  force?: boolean
   publish?: boolean
-  force: boolean
+  ignore?: string[]
+  only?: string[]
 }
 
 interface JsonOutput {
@@ -32,9 +34,7 @@ export async function push(theme: Theme, session: AdminSession, options: PushOpt
   const themeFileSystem = await mountThemeFileSystem(options.path)
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
 
-  const results = await uploadTheme(theme, session, themeChecksums, themeFileSystem, {
-    ...options,
-  })
+  const results = await uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
 
   if (options.publish) {
     await publishTheme(theme.id, session)
