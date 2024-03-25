@@ -32,7 +32,7 @@ export async function uploadTheme(
   const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
-  // The sequence of tasks is important here
+  // The task rendering framework will execute the tasks in the order they are added, sychronously
   await renderTasks(deleteTasks)
   await renderTasks(uploadTasks)
 
@@ -52,15 +52,19 @@ async function buildDeleteTasks(
   }
 
   const filteredChecksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
-
   const remoteFilesToBeDeleted = await getRemoteFilesToBeDeleted(filteredChecksums, themeFileSystem, options)
-  const {jsonFiles, liquidFiles, configFiles, staticAssetFiles} = partitionThemeFiles(remoteFilesToBeDeleted)
-  const otherFiles = [...liquidFiles, ...configFiles, ...staticAssetFiles]
+  const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
-  const jsonTasks = createDeleteTasks(jsonFiles, theme.id, session)
-  const otherTasks = createDeleteTasks(otherFiles, theme.id, session)
+  return orderedFiles.map((file) => ({
+    title: `Cleaning your remote theme (removing ${file.key})`,
+    task: async () => deleteFileFromRemote(theme.id, file, session),
+  }))
+}
 
-  return [...jsonTasks, ...otherTasks]
+// Json Files -> Liquid Files -> Config Files -> Static Asset Files
+function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
+  const {jsonFiles, liquidFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+  return [...jsonFiles, ...liquidFiles, ...configFiles, ...staticAssetFiles]
 }
 
 async function getRemoteFilesToBeDeleted(
@@ -73,13 +77,6 @@ async function getRemoteFilesToBeDeleted(
   const filesToBeDeleted = filteredChecksums.filter((checksum) => !localKeys.has(checksum.key))
   outputDebug(`Files to be deleted:\n${filesToBeDeleted.map((file) => `-${file.key}`).join('\n')}`)
   return filesToBeDeleted
-}
-
-function createDeleteTasks(files: Checksum[], themeId: number, session: AdminSession): Task[] {
-  return files.map((file) => ({
-    title: `Cleaning your remote theme (removing ${file.key})`,
-    task: async () => deleteFileFromRemote(themeId, file, session),
-  }))
 }
 
 async function deleteFileFromRemote(themeId: number, file: Checksum, session: AdminSession) {
