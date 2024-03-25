@@ -14,6 +14,7 @@
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
 * [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
+* [`shopify app import-payments-dashboard-extensions`](#shopify-app-import-payments-dashboard-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
@@ -489,6 +490,28 @@ DESCRIPTION
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-flow-legacy-extensions.js)_
 
+## `shopify app import-payments-dashboard-extensions`
+
+Import dashboard-managed payments extensions into your app.
+
+```
+USAGE
+  $ shopify app import-payments-dashboard-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+  [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --verbose            Increase the verbosity of the logs.
+
+DESCRIPTION
+  Import dashboard-managed payments extensions into your app.
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/import-payments-dashboard-extensions.js)_
+
 ## `shopify app info`
 
 Print basic information about your app and extensions.
@@ -820,7 +843,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins:install myplugin
 
   $ shopify plugins:install https://github.com/someuser/someplugin
 
@@ -885,7 +908,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins:install myplugin
 
   $ shopify plugins:install https://github.com/someuser/someplugin
 
