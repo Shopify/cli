@@ -84,7 +84,7 @@ export async function ensureGenerateContext(options: {
   reset: boolean
   developerPlatformClient: DeveloperPlatformClient
   configName?: string
-}): Promise<string> {
+}): Promise<OrganizationApp> {
   const {apiKey, developerPlatformClient} = options
   if (apiKey) {
     const app = await appFromId({apiKey, developerPlatformClient})
@@ -93,7 +93,7 @@ export async function ensureGenerateContext(options: {
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     await logMetadataForLoadedContext(app)
-    return app.apiKey
+    return app
   }
 
   const {cachedInfo, remoteApp} = await getAppContext(options)
@@ -116,7 +116,7 @@ export async function ensureGenerateContext(options: {
       organizationId: app.organizationId,
       apiKey: app.apiKey,
     })
-    return app.apiKey
+    return app
   } else {
     const orgId = cachedInfo?.orgId || (await selectOrg(options.developerPlatformClient))
     const {organization, apps, hasMorePages} = await options.developerPlatformClient.orgAndApps(orgId)
@@ -138,7 +138,7 @@ export async function ensureGenerateContext(options: {
       organizationId: selectedApp.organizationId,
       apiKey: selectedApp.apiKey,
     })
-    return selectedApp.apiKey
+    return selectedApp
   }
 }
 
@@ -198,7 +198,7 @@ export async function ensureDevContext(
     }
   }
 
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: selectedApp.apiKey})
+  const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
 
   selectedApp = {
     ...selectedApp,
@@ -413,7 +413,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const {reset, force, noRelease, developerPlatformClient} = options
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: remoteApp.apiKey})
+  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,

@@ -254,7 +254,7 @@ describe('ensureGenerateContext', () => {
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
   })
 
   test('returns the cached api key', async () => {
@@ -272,7 +272,7 @@ describe('ensureGenerateContext', () => {
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
   })
 
   test('returns the api key from the current config', async () => {
@@ -298,7 +298,7 @@ describe('ensureGenerateContext', () => {
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
   })
 
   test('links an app on first command run', async () => {
@@ -326,7 +326,7 @@ describe('ensureGenerateContext', () => {
 
     // Then
     expect(link).toBeCalled()
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
   })
 
   test('links an app on reset if already opted into config in code', async () => {
@@ -354,7 +354,7 @@ describe('ensureGenerateContext', () => {
 
     // Then
     expect(link).toBeCalled()
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
   })
 
   test('selects a new app and returns the api key', async () => {
@@ -381,7 +381,7 @@ describe('ensureGenerateContext', () => {
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(got).toEqual(APP1.apiKey)
+    expect(got).toEqual(APP1)
     expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], false, ORG1, input.developerPlatformClient)
     expect(setCachedAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,

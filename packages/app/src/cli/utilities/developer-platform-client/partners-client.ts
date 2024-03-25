@@ -253,7 +253,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(appId: string): Promise<RemoteSpecification[]> {
+  async specifications({id: appId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const variables: ExtensionSpecificationsQueryVariables = {api_key: appId}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     return result.extensionSpecifications

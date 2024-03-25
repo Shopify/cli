@@ -89,7 +89,7 @@ async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions,
 async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
   const specifications = await fetchSpecifications({
     developerPlatformClient: options.developerPlatformClient!,
-    apiKey: remoteApp.apiKey,
+    app: remoteApp,
   })
   const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.flags, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)

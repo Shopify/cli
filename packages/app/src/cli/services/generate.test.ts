@@ -7,6 +7,7 @@ import {
   testDeveloperPlatformClient,
   testFunctionExtension,
   testLocalExtensionTemplates,
+  testOrganizationApp,
   testRemoteExtensionTemplates,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
@@ -188,7 +189,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
+  vi.mocked(ensureGenerateContext).mockResolvedValue(testOrganizationApp())
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
     extensionContent: [
