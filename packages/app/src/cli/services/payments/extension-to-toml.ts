@@ -1,84 +1,108 @@
-import {configFromSerializedFields} from '../flow/serialize-partners-fields.js'
-import {FlowPartnersExtensionTypes} from '../flow/types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
+import {BasePaymentsAppExtensionDeployConfigType} from '../../models/extensions/specifications/payments_app_extension_schemas/base_payments_app_extension_schema.js'
+import {
+  RedeemablePaymentsAppExtensionDeployConfigType,
+  redeemableDeployConfigToCLIConfig,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/redeemable_payments_app_extension_schema.js'
+import {
+  OffsitePaymentsAppExtensionDeployConfigType,
+  offsiteDeployConfigToCLIConfig,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
+import {
+  CustomCreditCardPaymentsAppExtensionDeployConfigType,
+  customCreditCardDeployConfigToCLIConfig,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/custom_credit_card_payments_app_extension_schema.js'
+import {
+  CreditCardPaymentsAppExtensionDeployConfigType,
+  creditCardDeployConfigToCLIConfig,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/credit_card_payments_app_extension_schema.js'
+import {
+  CustomOnsitePaymentsAppExtensionDeployConfigType,
+  customOnsiteDeployConfigToCLIConfig,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {slugify} from '@shopify/cli-kit/common/string'
 
-interface PaymentsAppExtensionConfig {
-  update_payment_session_url: string
-  modal_payment_method_fields: {
-    type: string
-    required: boolean
-    key: string
-  }[]
-
-  checkout_hosted_fields: string[]
-
-  balance_url: string
-  redeemable_type: string
-
-  merchant_label: string
-  start_payment_session_url: string
-  start_refund_session_url: string
-  start_capture_session_url: string
-  start_void_session_url: string
-  confirmation_callback_url: string
-  supported_countries: string[]
-  supported_payment_methods: string[]
-  supports_3ds: boolean
-  supports_installments: boolean
-  supports_deferred_payments: boolean
-  supports_oversell_protection: boolean
-  buyer_label_to_locale: {
-    locale: string
-    label: string
-  }[]
-  start_verification_session_url: string
-  test_mode_available: boolean
-  api_version: string
-  encryption_certificate: {
-    filgerprint: string
-    certificate: string
+function typeToContext(type: string) {
+  switch (type) {
+    case DashboardPaymentExtensionType.Offsite:
+      return 'offsite'
+    case DashboardPaymentExtensionType.CreditCard:
+      return 'credit_card'
+    case DashboardPaymentExtensionType.CustomCreditCard:
+      return 'custom_credit_card'
+    case DashboardPaymentExtensionType.CustomOnsite:
+      return 'custom_onsite'
+    case DashboardPaymentExtensionType.Redeemable:
+      return 'redeemable'
   }
-  multiple_capture: boolean
-  ui_extension_registration_uuid: string
-  checkout_payment_method_fields: {
-    type: string
-    required: boolean
-    key: string
-  }[]
-  default_buyer_label: string
 }
 
+enum DashboardPaymentExtensionType {
+  Offsite = 'payments_app',
+  CreditCard = 'payments_app_credit_card',
+  CustomCreditCard = 'payments_app_custom_credit_card',
+  CustomOnsite = 'payments_app_custom_onsite',
+  Redeemable = 'payments_app_redeemable',
+}
+
+export async function buildTomlObject(extension: ExtensionRegistration) {
+  switch (extension.type) {
+    case DashboardPaymentExtensionType.Offsite:
+      return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(extension, offsiteDeployConfigToCLIConfig)
+    case DashboardPaymentExtensionType.CreditCard:
+      return buildPaymentsToml<CreditCardPaymentsAppExtensionDeployConfigType>(
+        extension,
+        creditCardDeployConfigToCLIConfig,
+      )
+    case DashboardPaymentExtensionType.CustomCreditCard:
+      return buildPaymentsToml<CustomCreditCardPaymentsAppExtensionDeployConfigType>(
+        extension,
+        customCreditCardDeployConfigToCLIConfig,
+      )
+    case DashboardPaymentExtensionType.CustomOnsite:
+      return buildPaymentsToml<CustomOnsitePaymentsAppExtensionDeployConfigType>(
+        extension,
+        customOnsiteDeployConfigToCLIConfig,
+      )
+    case DashboardPaymentExtensionType.Redeemable:
+      return buildPaymentsToml<RedeemablePaymentsAppExtensionDeployConfigType>(
+        extension,
+        redeemableDeployConfigToCLIConfig,
+      )
+    default:
+      throw new Error('Unsupported extension type')
+  }
+}
 /**
  * Given a dashboard-built payments extension config file, convert it to toml for the CLI extension
- * Works for both trigger and action because trigger config is a subset of action config
  */
-export function buildTomlObject(extension: ExtensionRegistration) {
+export async function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
+  extension: ExtensionRegistration,
+  serialize: (config: T) => Promise<{[key: string]: unknown} | undefined>,
+) {
   const version = extension.activeVersion ?? extension.draftVersion
   const versionConfig = version?.config
   if (!versionConfig) throw new Error('No config found for extension')
-  const config: PaymentsAppExtensionConfig = JSON.parse(versionConfig)
+  const dashboardConfig: T = JSON.parse(versionConfig)
 
-  const fields = configFromSerializedFields(extension.type as FlowPartnersExtensionTypes, config.fields ?? [])
-
-  const defaultURL = extension.type === 'flow_action_definition' ? 'https://url.com/api/execute' : undefined
+  const cliConfig = await serialize(dashboardConfig)
+  if (cliConfig) delete cliConfig.api_version
 
   const localExtensionRepresentation = {
+    api_version: dashboardConfig.api_version,
     extensions: [
       {
-        name: config.title,
+        name: extension.title,
         type: 'payments_extension',
-        handle: slugify(extension.title),
-        context: handle_to_context(extension.handle),
-        description: config.description,
-        runtime_url: config.url ?? defaultURL,
-        config_page_url: config.custom_configuration_page_url,
-        config_page_preview_url: config.custom_configuration_page_preview_url,
-        validation_url: config.validation_url,
+        handle: extension.handle,
       },
     ],
-    settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
+    targeting: [
+      {
+        target: `payments.${typeToContext(extension.type)}.render`,
+      },
+    ],
+    configuration: [cliConfig],
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return encodeToml(localExtensionRepresentation as any)

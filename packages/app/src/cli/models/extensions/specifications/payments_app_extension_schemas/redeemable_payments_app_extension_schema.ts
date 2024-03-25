@@ -1,4 +1,8 @@
-import {BasePaymentsAppExtensionSchema, BuyerLabelSchema} from './base_payments_app_extension_schema.js'
+import {
+  BasePaymentsAppExtensionSchema,
+  BasePaymentsAppExtensionDeployConfigType,
+  BuyerLabelSchema,
+} from './base_payments_app_extension_schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type RedeemablePaymentsAppExtensionConfigType = zod.infer<typeof RedeemablePaymentsAppExtensionSchema>
@@ -13,6 +17,40 @@ export const RedeemablePaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
   ui_extension_handle: zod.string().optional(),
   checkout_payment_method_fields: zod.array(zod.string()).optional(),
 })
+
+export interface RedeemablePaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
+  // BuyerLabelSchema
+  default_buyer_label?: string
+  buyer_label_to_locale?: {locale: string; label: string}[]
+
+  // Redeemable-specific fields
+  balance_url: string
+  redeemable_type: 'gift-card'
+  ui_extension_handle?: string
+  checkout_payment_method_fields?: string[]
+}
+
+export async function redeemableDeployConfigToCLIConfig(
+  config: RedeemablePaymentsAppExtensionDeployConfigType,
+): Promise<Omit<RedeemablePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined> {
+  return {
+    api_version: config.api_version,
+    payment_session_url: config.start_payment_session_url,
+    refund_session_url: config.start_refund_session_url,
+    capture_session_url: config.start_capture_session_url,
+    void_session_url: config.start_void_session_url,
+    merchant_label: config.merchant_label,
+    supported_countries: config.supported_countries,
+    supported_payment_methods: config.supported_payment_methods,
+    test_mode_available: config.test_mode_available,
+    buyer_label: config.default_buyer_label,
+    buyer_label_translations: config.buyer_label_to_locale,
+    redeemable_type: config.redeemable_type,
+    balance_url: config.balance_url,
+    checkout_payment_method_fields: config.checkout_payment_method_fields,
+    ui_extension_handle: config.ui_extension_handle,
+  }
+}
 
 export async function redeemablePaymentsAppExtensionDeployConfig(
   config: RedeemablePaymentsAppExtensionConfigType,

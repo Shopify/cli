@@ -3,6 +3,45 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 const MAX_LABEL_SIZE = 50
 
+export interface BasePaymentsAppExtensionDeployConfigType {
+  api_version: string
+  start_payment_session_url: string
+  start_refund_session_url?: string
+  start_capture_session_url?: string
+  start_void_session_url?: string
+  merchant_label: string
+  supported_countries: string[]
+  supported_payment_methods: string[]
+  test_mode_available: boolean
+  supports_oversell_protection?: boolean
+}
+
+export const BasePaymentsDashboardExtensionSchema = BaseSchema.extend({
+  api_version: zod.string(),
+  start_payment_session_url: zod.string().url(),
+  start_refund_session_url: zod.string().url().optional(),
+  start_capture_session_url: zod.string().url().optional(),
+  start_void_session_url: zod.string().url().optional(),
+
+  supported_countries: zod.array(zod.string()),
+  supported_payment_methods: zod.array(zod.string()),
+
+  test_mode_available: zod.boolean(),
+
+  merchant_label: zod.string().max(MAX_LABEL_SIZE),
+
+  input: zod
+    .object({
+      metafield_identifiers: zod
+        .object({
+          namespace: zod.string(),
+          key: zod.string(),
+        })
+        .optional(),
+    })
+    .optional(),
+})
+
 export const BasePaymentsAppExtensionSchema = BaseSchema.extend({
   api_version: zod.string(),
   payment_session_url: zod.string().url(),
