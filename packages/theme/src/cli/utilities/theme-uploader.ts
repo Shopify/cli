@@ -92,18 +92,8 @@ async function buildUploadTasks(
   uploadResults: Map<string, Result>,
 ): Promise<Task[]> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
-
   await readThemeFilesFromDisk(filesToUpload, themeFileSystem)
-  const {liquidUploadTasks, jsonUploadTasks, contextualizedJsonUploadTasks, configUploadTasks, staticUploadTasks} =
-    await createUploadTasks(filesToUpload, themeFileSystem, session, theme, uploadResults)
-
-  return [
-    ...liquidUploadTasks,
-    ...jsonUploadTasks,
-    ...contextualizedJsonUploadTasks,
-    ...configUploadTasks,
-    ...staticUploadTasks,
-  ]
+  return createUploadTasks(filesToUpload, themeFileSystem, session, theme, uploadResults)
 }
 
 async function createUploadTasks(
@@ -112,65 +102,32 @@ async function createUploadTasks(
   session: AdminSession,
   theme: Theme,
   uploadResults: Map<string, Result>,
-): Promise<{
-  liquidUploadTasks: Task[]
-  jsonUploadTasks: Task[]
-  contextualizedJsonUploadTasks: Task[]
-  configUploadTasks: Task[]
-  staticUploadTasks: Task[]
-}> {
-  const totalFileCount = filesToUpload.length
-  const {jsonFiles, contextualizedJsonFiles, liquidFiles, configFiles, staticAssetFiles} =
+): Promise<Task[]> {
+  const {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles} =
     partitionThemeFiles(filesToUpload)
 
-  const {tasks: liquidUploadTasks, updatedFileCount: liquidCount} = await createUploadTaskForFileType(
-    liquidFiles,
-    themeFileSystem,
-    session,
-    uploadResults,
-    theme.id,
-    totalFileCount,
-    0,
-  )
-  const {tasks: jsonUploadTasks, updatedFileCount: jsonCount} = await createUploadTaskForFileType(
-    jsonFiles,
-    themeFileSystem,
-    session,
-    uploadResults,
-    theme.id,
-    totalFileCount,
-    liquidCount,
-  )
-  const {tasks: contextualizedJsonUploadTasks, updatedFileCount: contextualizedJsonCount} =
-    await createUploadTaskForFileType(
-      contextualizedJsonFiles,
+  const filesInOrder: Checksum[][] = [liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles]
+
+  let currentFileCount = 0
+  const totalFileCount = filesToUpload.length
+  const uploadTasks = [] as Task[]
+
+  for (const fileType of filesInOrder) {
+    // eslint-disable-next-line no-await-in-loop
+    const {tasks: newTasks, updatedFileCount} = await createUploadTaskForFileType(
+      fileType,
       themeFileSystem,
       session,
       uploadResults,
       theme.id,
       totalFileCount,
-      jsonCount,
+      currentFileCount,
     )
-  const {tasks: configUploadTasks, updatedFileCount: configCount} = await createUploadTaskForFileType(
-    configFiles,
-    themeFileSystem,
-    session,
-    uploadResults,
-    theme.id,
-    totalFileCount,
-    contextualizedJsonCount,
-  )
-  const {tasks: staticUploadTasks} = await createUploadTaskForFileType(
-    staticAssetFiles,
-    themeFileSystem,
-    session,
-    uploadResults,
-    theme.id,
-    totalFileCount,
-    configCount,
-  )
+    currentFileCount = updatedFileCount
+    uploadTasks.push(...newTasks)
+  }
 
-  return {liquidUploadTasks, jsonUploadTasks, contextualizedJsonUploadTasks, configUploadTasks, staticUploadTasks}
+  return uploadTasks
 }
 
 async function createUploadTaskForFileType(
@@ -187,7 +144,7 @@ async function createUploadTaskForFileType(
   }
 
   const batches = await createBatches(checksums, themeFileSystem.root)
-  const {tasks, updatedFileCount} = await createUploadTaskForBatch(
+  return createBatchedUploadTasks(
     batches,
     themeFileSystem,
     session,
@@ -196,10 +153,9 @@ async function createUploadTaskForFileType(
     totalFileCount,
     currentFileCount,
   )
-  return {tasks, updatedFileCount}
 }
 
-function createUploadTaskForBatch(
+function createBatchedUploadTasks(
   batches: FileBatch[],
   themeFileSystem: ThemeFileSystem,
   session: AdminSession,
