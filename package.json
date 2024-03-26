@@ -28,7 +28,8 @@
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
-    "build-docs": "sh ./bin/docs/build-docs.sh"
+    "build-docs": "sh ./bin/docs/build-docs.sh",
+    "knip": "knip"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",
