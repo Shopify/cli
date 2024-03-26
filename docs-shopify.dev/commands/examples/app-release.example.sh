@@ -1,1 +1,1 @@
-shopify app release --version <version>
+app:release --version <version>

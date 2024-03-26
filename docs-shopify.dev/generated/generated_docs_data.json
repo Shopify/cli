@@ -1474,7 +1474,7 @@
         "tabs": [
           {
             "title": "app release",
-            "code": "shopify app release --version &lt;version&gt;",
+            "code": "app:release --version &lt;version&gt;",
             "language": "bash"
           }
         ],
@@ -1663,7 +1663,7 @@
         "tabs": [
           {
             "title": "app webhook trigger",
-            "code": "shopify webhook trigger [flags]",
+            "code": "shopify app webhook trigger [flags]",
             "language": "bash"
           }
         ],
@@ -1916,7 +1916,7 @@
         "tabs": [
           {
             "title": "config autocorrect off",
-            "code": "shopify config autocorrect off",
+            "code": "shopify config autocorrect off [flags]",
             "language": "bash"
           }
         ],
@@ -1939,7 +1939,7 @@
         "tabs": [
           {
             "title": "config autocorrect on",
-            "code": "shopify config autocorrect on",
+            "code": "shopify config autocorrect on [flags]",
             "language": "bash"
           }
         ],
@@ -1962,7 +1962,7 @@
         "tabs": [
           {
             "title": "config autocorrect status",
-            "code": "shopify config autocorrect status",
+            "code": "shopify config autocorrect status [flags]",
             "language": "bash"
           }
         ],
@@ -2032,7 +2032,7 @@
         "tabs": [
           {
             "title": "search",
-            "code": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search &lt;query&gt;\n\n# search for a phrase on Shopify.dev\nshopify search \"&lt;a search query separated by spaces&gt;\"\n",
+            "code": "shopify search [flags]",
             "language": "bash"
           }
         ],
@@ -2190,7 +2190,7 @@
         "tabs": [
           {
             "title": "theme console",
-            "code": "\n  shopify theme console\n\n  shopify theme console --url /products/classic-leather-jacket\n  ",
+            "code": "theme:console\n\ntheme:console --url /products/classic-leather-jacket",
             "language": "bash"
           }
         ],
@@ -2562,8 +2562,8 @@
   },
   {
     "name": "theme info",
-    "description": "Displays information about your theme environment, including your current store.",
-    "overviewPreviewDescription": "Displays information about your theme environment, including your current store.",
+    "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
+    "overviewPreviewDescription": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2592,9 +2592,57 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Retrieve info from your development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--json",
+                "value": "\"\"",
+                "description": "Output the theme info as JSON.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
                 "isOptional": true
               },
               {
@@ -2606,7 +2654,7 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface themeinfo {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeinfo {\n  /**\n   * Retrieve info from your development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the theme info as JSON.\n   */\n  '--json'?: ''\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -2626,7 +2674,7 @@
         "tabs": [
           {
             "title": "theme init",
-            "code": "shopify theme init [name]",
+            "code": "theme:init [name]",
             "language": "bash"
           }
         ],
@@ -3275,7 +3323,7 @@
         "tabs": [
           {
             "title": "theme push",
-            "code": "shopify theme push\n\nshopify theme push --unpublished --json\n  ",
+            "code": "theme:push\n\ntheme:push --unpublished --json",
             "language": "bash"
           }
         ],

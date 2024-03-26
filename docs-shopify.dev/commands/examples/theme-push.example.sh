@@ -1,4 +1,3 @@
-shopify theme push
+theme:push
 
-shopify theme push --unpublished --json
-  
+theme:push --unpublished --json
