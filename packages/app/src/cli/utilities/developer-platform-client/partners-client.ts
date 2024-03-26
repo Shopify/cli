@@ -123,6 +123,11 @@ import {
   FindOrganizationBasicQuerySchema,
   FindOrganizationBasicVariables,
 } from '../../api/graphql/find_org_basic.js'
+import {
+  MigrateAppModuleMutation,
+  MigrateAppModuleSchema,
+  MigrateAppModuleVariables,
+} from '../../api/graphql/extension_migrate_app_module.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -371,6 +376,10 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async migrateFlowExtension(input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
     return this.request(MigrateFlowExtensionMutation, input)
+  }
+
+  async migrateAppModule(input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {
+    return this.request(MigrateAppModuleMutation, input)
   }
 
   async updateURLs(input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
