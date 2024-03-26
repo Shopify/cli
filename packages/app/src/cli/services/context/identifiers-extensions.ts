@@ -8,6 +8,7 @@ import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/m
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -29,6 +30,11 @@ export async function ensureExtensionsIds(
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
+  const paymentsExtensionsToMigrate = getPaymentsExtensionsToMigrate(
+    localExtensions,
+    dashboardOnlyExtensions,
+    validIdentifiers,
+  )
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
@@ -47,6 +53,19 @@ export async function ensureExtensionsIds(
     const newRemoteExtensions = await migrateFlowExtensions(
       flowExtensionsToMigrate,
       options.appId,
+      dashboardOnlyExtensions,
+      options.developerPlatformClient,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+  }
+
+  if (paymentsExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(paymentsExtensionsToMigrate, false)
+    if (!confirmedMigration) throw new AbortSilentError()
+    const newRemoteExtensions = await migrateAppModules(
+      paymentsExtensionsToMigrate,
+      options.appId,
+      'payments_extension',
       dashboardOnlyExtensions,
       options.developerPlatformClient,
     )
