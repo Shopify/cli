@@ -61,6 +61,7 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "json-stringify-deterministic": "1.0.12",
+    "knip": "^5.6.0",
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
     "nx": "16.8.1",
@@ -98,5 +99,100 @@
     "@types/react": "17.0.2",
     "vite": "4.4.9",
     "@oclif/core": "3.19.6"
+  },
+  "knip": {
+    "$schema": "https://unpkg.com/knip@5/schema.json",
+    "rules": {
+      "binaries": "error",
+      "classMembers": "error",
+      "dependencies": "error",
+      "devDependencies": "error",
+      "duplicates": "error",
+      "enumMembers": "error",
+      "exports": "error",
+      "files": "error",
+      "nsExports": "error",
+      "nsTypes": "error",
+      "types": "error",
+      "unlisted": "error",
+      "unresolved": "error"
+    },
+    "workspaces": {
+      ".": {
+        "entry": ["bin/*.js", "configurations/vite.config.ts", "docs-shopify.dev/**/*.ts", "vite.config.ts", "docs/api/cli-kit/**/*.js"]
+      },
+      "packages/app": {
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!"
+        ],
+        "project": "**/*.{ts,tsx}!"
+      },
+      "packages/cli": {
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/bin/*.js!",
+          "**/index.ts!"
+        ],
+        "project": "**/*.ts!"
+      },
+      "packages/create-app": {
+        "entry": "**/{commands,hooks}/**/*.ts!",
+        "project": "**/*.ts!"
+      },
+      "packages/plugin-cloudflare": {
+        "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
+        "project": "**/*.ts!"
+      },
+      "packages/plugin-did-you-mean": {
+        "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
+        "project": "**/*.ts!"
+      },
+      "packages/theme": {
+        "entry": "**/{commands,hooks}/**/*.ts!",
+        "project": "**/*.ts!"
+      },
+      "packages/cli-kit": {
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/public/**/*.ts!"
+        ],
+        "project": "**/*.{ts,tsx}!"
+      },
+      "packages/ui-extensions-dev-console": {
+        "entry": [
+          "**/src/main.tsx!"
+        ],
+        "project": "**/*.{ts,tsx}!"
+      },
+      "packages/ui-extensions-server-kit": {
+        "entry": [
+          "**/src/index.tsx!",
+          "**/scripts/*.ts!"
+        ],
+        "project": "**/*.{ts,tsx}!"
+      },
+      "packages/ui-extensions-test-utils": {
+        "entry": [
+          "**/src/index.ts"
+        ],
+        "project": "**/*.{ts,tsx}"
+      },
+      "packages/features": {
+        "entry": [
+          "**/cucumber.js",
+          "**/world/index.ts",
+          "**/steps/*.ts",
+          "**/lib/*.ts"
+        ],
+        "project": "**/*.ts"
+      },
+      "packages/eslint-plugin-cli": {
+        "entry": [
+          "**/config.js",
+          "**/rules/*.js"
+        ],
+        "project": "**/*.ts"
+      }
+    }
   }
 }
