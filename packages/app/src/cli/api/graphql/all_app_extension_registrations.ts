@@ -52,7 +52,6 @@ export interface ExtensionRegistration {
   uuid: string
   title: string
   type: string
-  handle: string
   draftVersion?: {
     config: string
   }
