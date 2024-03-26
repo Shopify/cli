@@ -21,6 +21,7 @@ import {
   customOnsiteDeployConfigToCLIConfig,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 function typeToContext(type: string) {
   switch (type) {
@@ -94,7 +95,7 @@ export async function buildPaymentsToml<T extends BasePaymentsAppExtensionDeploy
       {
         name: extension.title,
         type: 'payments_extension',
-        handle: extension.handle,
+        handle: slugify(extension.title),
       },
     ],
     targeting: [
