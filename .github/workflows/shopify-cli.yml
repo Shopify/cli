@@ -146,6 +146,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Post the knip results
         uses: codex-/knip-reporter@v2
+        with:
+          verbose: true
 
   oclif-checks:
     name: '[PR] Check OCLIF manifests & readme & docs'
