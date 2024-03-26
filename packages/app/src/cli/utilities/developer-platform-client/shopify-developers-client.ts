@@ -233,8 +233,8 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       .map((spec): RemoteSpecification => ({
         name: spec.name,
         externalName: spec.name,
-        identifier: spec.identifier,
-        externalIdentifier: spec.identifier,
+        identifier: spec.externalIdentifier,
+        externalIdentifier: spec.externalIdentifier,
         gated: false,
         options: {
           managementExperience: 'cli',
