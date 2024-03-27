@@ -149,8 +149,8 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
-    const brandingModule = modules.find((mod) => mod.specification.identifier === 'branding')!
-    const appAccessModule = modules.find((mod) => mod.specification.identifier === 'app_access')!
+    const brandingModule = modules.find((mod) => mod.specification.externalIdentifier === 'branding')!
+    const appAccessModule = modules.find((mod) => mod.specification.externalIdentifier === 'app_access')!
     return {
       id: app.id,
       title: brandingModule.config.name as string,
@@ -203,7 +203,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const result = await orgScopedShopifyDevelopersRequest<AppsQuerySchema>(organizationId, query, await this.token())
     const minimalOrganizationApps = result.apps.map((app) => {
       const brandingConfig = app.activeRelease.version.modules.find(
-        (mod: MinimalAppModule) => mod.specification.identifier === 'branding',
+        (mod: MinimalAppModule) => mod.specification.externalIdentifier === 'branding',
       )!.config
       return {
         id: app.id,
@@ -299,7 +299,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
             id: mod.uid,
             uuid: mod.uid,
             title: mod.specification.name,
-            type: mod.specification.identifier,
+            type: mod.specification.externalIdentifier,
           })),
       },
     }
@@ -332,10 +332,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
           registrationId: mod.gid,
           registrationUid: mod.uid,
           registrationTitle: mod.handle,
-          type: mod.specification.identifier,
+          type: mod.specification.externalIdentifier,
           config: mod.config,
           specification: {
             ...mod.specification,
+            identifier: mod.specification.externalIdentifier,
             options: {managementExperience: 'cli'},
             experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
           },

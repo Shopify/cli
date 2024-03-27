@@ -14,7 +14,7 @@ export const AppsQuery = gql`
             handle
             config
             specification {
-              identifier
+              externalIdentifier
             }
           }
         }
@@ -29,7 +29,7 @@ export interface MinimalAppModule {
   handle: string
   config: JsonMapType
   specification: {
-    identifier: string
+    externalIdentifier: string
   }
 }
 
