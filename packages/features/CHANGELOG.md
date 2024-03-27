@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.11.1
+
+### Patch Changes
+
+- 960cdc0a2: Add a new "app init" command
+
 ## 0.11.0
 
 ### Minor Changes

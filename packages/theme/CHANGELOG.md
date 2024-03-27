@@ -1,5 +1,21 @@
 # @shopify/theme
 
+## 3.58.0
+
+### Minor Changes
+
+- e0feb4414: - Refine `theme push` implementation to no longer require Ruby setup.
+  - Move Ruby implementation behind `--stable` flag
+- a0a69d9a2: Add support for retrieving single theme information via `shopify theme info --theme <themeNameOrID>` (other supported flags: `--store`, `--environment`, `--development`, `--json`)
+
+### Patch Changes
+
+- ab752de6e: Fix file pattern matching to obey glob patterns on beta version of `theme pull`
+- Updated dependencies [ab752de6e]
+- Updated dependencies [3affd6bbe]
+- Updated dependencies [cedd14e6c]
+  - @shopify/cli-kit@3.58.0
+
 ## 3.57.0
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.58.0
+
+### Minor Changes
+
+- 3affd6bbe: Support parsing multiline environment variables in .env file
+
+### Patch Changes
+
+- ab752de6e: Add function to perform glob pattern matching
+- cedd14e6c: Improve the error message for invalid custom token
+
 ## 3.57.0
 
 ## 3.56.0
