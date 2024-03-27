@@ -52,6 +52,10 @@ export const DeferredPaymentsSchema = zod.object({
   supports_deferred_payments: zod.boolean(),
 })
 
+export const MultipleCaptureSchema = zod.object({
+  multiple_capture: zod.boolean().optional(),
+})
+
 export const ConfirmationSchema = zod.object({
   confirmation_callback_url: zod.string().url().optional(),
   supports_3ds: zod.boolean(),
