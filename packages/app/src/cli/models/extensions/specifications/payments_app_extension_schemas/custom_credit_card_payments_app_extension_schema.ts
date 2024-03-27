@@ -20,6 +20,7 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CUSTOM_CREDIT_CARD_TARGET)})).length(1),
     api_version: zod.string(),
+    ui_extension_registration_uuid: zod.string().optional(),
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
     ui_extension_handle: zod.string().optional(),
@@ -36,6 +37,8 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
   })
 
 export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
+  ui_extension_registration_uuid?: string
+
   // Following are overwritten as they are required for custom credit card extensions
   start_refund_session_url: string
   start_capture_session_url: string
@@ -48,7 +51,7 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
   multiple_capture: boolean
   checkout_hosted_fields?: string[]
   ui_extension_handle?: string
-  encryption_certificate_fingerprint: string
+  encryption_certificate: string
   checkout_payment_method_fields?: {
     type: 'string' | 'number' | 'boolean'
     required: boolean
@@ -63,6 +66,7 @@ export async function customCreditCardDeployConfigToCLIConfig(
 > {
   return {
     api_version: config.api_version,
+    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     payment_session_url: config.start_payment_session_url,
     refund_session_url: config.start_refund_session_url,
     capture_session_url: config.start_capture_session_url,
@@ -72,7 +76,7 @@ export async function customCreditCardDeployConfigToCLIConfig(
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
-    encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
+    encryption_certificate_fingerprint: config.encryption_certificate,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
@@ -86,6 +90,7 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
 ): Promise<{[key: string]: unknown} | undefined> {
   return {
     api_version: config.api_version,
+    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
     start_capture_session_url: config.capture_session_url,
@@ -95,7 +100,7 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
-    encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
+    encryption_certificate: config.encryption_certificate_fingerprint,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,

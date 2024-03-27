@@ -38,7 +38,7 @@ function typeToContext(type: string) {
   }
 }
 
-enum DashboardPaymentExtensionType {
+export enum DashboardPaymentExtensionType {
   Offsite = 'payments_app',
   CreditCard = 'payments_app_credit_card',
   CustomCreditCard = 'payments_app_custom_credit_card',

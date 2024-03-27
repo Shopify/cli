@@ -4,6 +4,7 @@ import {
   BuyerLabelSchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
+  MultipleCaptureSchema,
 } from './base_payments_app_extension_schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -14,6 +15,7 @@ export const OFFSITE_TARGET = 'payments.offsite.render'
 export const OffsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
+  .merge(MultipleCaptureSchema)
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(OFFSITE_TARGET)})).length(1),
     supports_oversell_protection: zod.boolean().optional(),
@@ -27,6 +29,9 @@ export const OffsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.
   })
 
 export interface OffsitePaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
+  // MultipleCaptureSchema
+  multiple_capture?: boolean
+
   // BuyerLabelSchema
   default_buyer_label?: string
   buyer_label_to_locale?: {locale: string; label: string}[]
@@ -50,6 +55,7 @@ export async function offsiteDeployConfigToCLIConfig(
     capture_session_url: config.start_capture_session_url,
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
+    multiple_capture: config.multiple_capture,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
@@ -73,6 +79,7 @@ export async function offsitePaymentsAppExtensionDeployConfig(
     start_capture_session_url: config.capture_session_url,
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
+    multiple_capture: config.multiple_capture,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
