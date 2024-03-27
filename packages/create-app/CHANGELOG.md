@@ -1,5 +1,18 @@
 # @shopify/create-app
 
+## 3.58.0
+
+### Minor Changes
+
+- 960cdc0a2: Add a new "app init" command
+
+### Patch Changes
+
+- Updated dependencies [ab752de6e]
+- Updated dependencies [3affd6bbe]
+- Updated dependencies [cedd14e6c]
+  - @shopify/cli-kit@3.58.0
+
 ## 3.57.0
 
 ### Patch Changes
