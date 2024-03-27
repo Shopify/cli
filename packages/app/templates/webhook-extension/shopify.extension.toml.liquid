@@ -1,8 +1,11 @@
 name = "{{ name }}"
-type = "webhooks"
+type = "{{ type }}"
 handle = "webhooks"
 description = "Webhook subscriptions for my app"
 
-[[http]]
-topic = "products/create"
-url = "https://example.com/hooks"
+[webhooks]
+api_version = "2024-01"
+
+[[webhooks.subscriptions]]
+topics = ["products/create"]
+uri = "https://example.com/hooks"
