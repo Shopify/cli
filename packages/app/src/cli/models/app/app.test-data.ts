@@ -202,11 +202,20 @@ export async function testUIExtension(
   return extension
 }
 
-export async function testThemeExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+interface TestThemeExtensionOptions {
+  directory?: string
+  buildDirectory?: string
+}
+
+export async function testThemeExtensions({
+  directory = './my-extension',
+  buildDirectory,
+}: TestThemeExtensionOptions = {}): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
     metafields: [],
+    ...(buildDirectory ? {build_directory: buildDirectory} : {}),
   }
 
   const allSpecs = await loadLocalExtensionsSpecifications()

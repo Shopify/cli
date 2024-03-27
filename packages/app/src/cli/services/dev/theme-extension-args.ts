@@ -10,7 +10,7 @@ export async function themeExtensionArgs(
 ) {
   const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, developerPlatformClient)
   const extensionId = extensionRegistration.id
-  const directory = extension.directory
+  const directory = extension.buildDirectory
   const extensionTitle = extension.localIdentifier
   const extensionType = extension.graphQLType
 

@@ -84,7 +84,7 @@ export async function bundleThemeExtension(
 
   await Promise.all(
     files.map(function (filepath) {
-      const relativePathName = relativePath(extension.directory, filepath)
+      const relativePathName = relativePath(extension.buildDirectory, filepath)
       const outputFile = joinPath(extension.outputPath, relativePathName)
       return copyFile(filepath, outputFile)
     }),

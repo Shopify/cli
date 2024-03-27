@@ -14,7 +14,7 @@ export async function themeExtensionConfig(themeExtension: ExtensionInstance): P
   const themeFiles = await themeExtensionFiles(themeExtension)
   await Promise.all(
     themeFiles.map(async (filepath) => {
-      const relativePathName = relativePath(themeExtension.directory, filepath)
+      const relativePathName = relativePath(themeExtension.buildDirectory, filepath)
       const directoryName = dirname(relativePathName)
       const encoding = directoryName === 'assets' ? 'binary' : 'utf8'
       const fileContents = await readFile(filepath, {encoding})

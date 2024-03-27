@@ -24,7 +24,7 @@ const ignoredFilePatterns = [
 
 export async function themeExtensionFiles(themeExtension: ExtensionInstance): Promise<string[]> {
   const filename = '.shopifyignore'
-  const filepath = joinPath(themeExtension.directory, filename)
+  const filepath = joinPath(themeExtension.buildDirectory, filename)
   const ignore = ignoredFilePatterns.map((pattern) => joinPath('*', pattern))
 
   if (fileExistsSync(filepath)) {
@@ -34,7 +34,7 @@ export async function themeExtensionFiles(themeExtension: ExtensionInstance): Pr
 
   return glob('*/*', {
     absolute: true,
-    cwd: themeExtension.directory,
+    cwd: themeExtension.buildDirectory,
     ignore,
   })
 }

@@ -72,7 +72,7 @@ async function validateThemeExtension(extension: ExtensionInstance): Promise<voi
   const extensionBytes: number[] = []
   await Promise.all(
     themeFiles.map(async (filepath) => {
-      const relativePathName = relativePath(extension.directory, filepath)
+      const relativePathName = relativePath(extension.buildDirectory, filepath)
       const directoryName = dirname(relativePathName)
       validateFile(relativePathName, directoryName)
       const filesize = await fileSize(filepath)
