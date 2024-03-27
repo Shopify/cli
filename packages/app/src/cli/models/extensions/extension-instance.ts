@@ -320,16 +320,24 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const configValue = await this.deployConfig({apiKey, developerPlatformClient})
     if (!configValue) return undefined
 
+    const uuid = this.isUuidManaged()
+      ? identifiers.extensions[this.localIdentifier]
+      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+
+    if (Array.isArray(configValue)) {
+      const subscriptionMap = (configValue as unknown as object[]).map((config: object) => {
+        return {config: JSON.stringify(config), context: this.contextValue, handle: this.handle, uuid}
+      })
+      return subscriptionMap
+    }
+
     const result = {
       config: JSON.stringify(configValue),
       context: this.contextValue,
       handle: this.handle,
     }
 
-    const uuid = this.isUuidManaged()
-      ? identifiers.extensions[this.localIdentifier]
-      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
-    return {...result, uuid}
+    return [{...result, uuid}]
   }
 }
 
