@@ -168,14 +168,13 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       await this.businessPlatformToken(),
     )
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
-      id: Buffer.from(org.id, 'base64').toString('ascii').match(/\d+$/)![0],
+      id: idFromEncodedGid(org.id),
       businessName: org.name,
     }))
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    const gid = `gid://organization/Organization/${orgId}`
-    const base64Id = Buffer.from(gid).toString('base64')
+    const base64Id = encodedGidFromId(orgId)
     const variables: OrganizationQueryVariables = {organizationId: base64Id}
     const organizationResult = await businessPlatformRequest<OrganizationQuerySchema>(
       OrganizationQuery,
@@ -602,4 +601,18 @@ async function stubbedExtensionSpecifications(): Promise<RemoteSpecification[]> 
       },
     },
   ]
+}
+
+// Business platform uses base64-encoded GIDs, while Shopify Developers uses
+// just the integer portion of that ID. These functions convert between the two.
+
+// 1234 => gid://organization/Organization/1234 => base64
+function encodedGidFromId(id: string): string {
+  const gid = `gid://organization/Organization/${id}`
+  return Buffer.from(gid).toString('base64')
+}
+
+// base64 => gid://organization/Organization/1234 => 1234
+function idFromEncodedGid(gid: string): string {
+  return Buffer.from(gid, 'base64').toString('ascii').match(/\d+$/)![0]
 }
