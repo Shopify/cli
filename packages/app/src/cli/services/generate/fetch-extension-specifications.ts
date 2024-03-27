@@ -1,16 +1,11 @@
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {
-  ExtensionSpecificationsQuery,
-  ExtensionSpecificationsQuerySchema,
-  FlattenedRemoteSpecification,
-} from '../../api/graphql/extension_specifications.js'
-
+import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface FetchSpecificationsOptions {
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   apiKey: string
 }
 /**
@@ -22,18 +17,16 @@ export interface FetchSpecificationsOptions {
  * Will return a merge of the local and remote specifications (remote values override local ones)
  * Will only return the specifications that are also defined locally
  *
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns List of extension specifications
  */
 export async function fetchSpecifications({
-  token,
+  developerPlatformClient,
   apiKey,
 }: FetchSpecificationsOptions): Promise<ExtensionSpecification[]> {
-  const result: ExtensionSpecificationsQuerySchema = await partnersRequest(ExtensionSpecificationsQuery, token, {
-    api_key: apiKey,
-  })
+  const result: RemoteSpecification[] = await developerPlatformClient.specifications(apiKey)
 
-  const extensionSpecifications: FlattenedRemoteSpecification[] = result.extensionSpecifications
+  const extensionSpecifications: FlattenedRemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
     .map((spec) => {
       const newSpec = spec as FlattenedRemoteSpecification

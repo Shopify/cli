@@ -1,13 +1,8 @@
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {
-  AllAppExtensionRegistrationsQuery,
-  AllAppExtensionRegistrationsQuerySchema,
-} from '../../api/graphql/all_app_extension_registrations.js'
-import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
+
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {FindAppPreviewModeQuery, FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
-import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
+import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {
   AllDevStoresByOrganizationQuery,
   AllDevStoresByOrganizationSchema,
@@ -92,31 +87,15 @@ export interface FetchResponse {
   stores: OrganizationStore[]
 }
 
-export async function fetchAppExtensionRegistrations({
-  token,
-  apiKey,
-}: {
-  token: string
-  apiKey: string
-}): Promise<AllAppExtensionRegistrationsQuerySchema> {
-  const query = AllAppExtensionRegistrationsQuery
-  const result: AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
-    apiKey,
-  })
-  return result
-}
-
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns List of organizations
  */
-export async function fetchOrganizations(partnersSession: PartnersSession): Promise<Organization[]> {
-  const query = AllOrganizationsQuery
-  const result: AllOrganizationsQuerySchema = await partnersRequest(query, partnersSession.token)
-  const organizations = result.organizations.nodes
-  if (organizations.length === 0) throw new NoOrgError(partnersSession.accountInfo)
+export async function fetchOrganizations(developerPlatformClient: DeveloperPlatformClient): Promise<Organization[]> {
+  const organizations: Organization[] = await developerPlatformClient.organizations()
+  if (organizations.length === 0) throw new NoOrgError(await developerPlatformClient.accountInfo())
   return organizations
 }
 
@@ -138,12 +117,17 @@ export async function fetchOrgAndApps(
   const org = result.organizations.nodes[0]
   if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName}
-  return {organization: parsedOrg, apps: org.apps, stores: []}
+  const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
+  return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
 }
 
-export enum BetaFlag {}
+export enum Flag {
+  DeclarativeWebhooks,
+}
 
-const FlagMap: {[key: string]: BetaFlag} = {}
+const FlagMap: {[key: string]: Flag} = {
+  '5b25141b': Flag.DeclarativeWebhooks,
+}
 
 export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
   const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
@@ -151,29 +135,31 @@ export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): 
   })
   const app = res.app
   if (app) {
-    const betas = filterDisabledBetas(app.disabledBetas)
-    return {...app, betas}
+    const flags = filterDisabledFlags(app.disabledFlags)
+    return {...app, flags}
   }
 }
 
-export function filterDisabledBetas(disabledBetas: string[] = []): BetaFlag[] {
-  const defaultActiveBetas: BetaFlag[] = []
-  const remoteDisabledFlags = disabledBetas.map((flag) => FlagMap[flag])
-  return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
+export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
+  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
+  return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
 
-export async function fetchAppPreviewMode(apiKey: string, token: string): Promise<boolean | undefined> {
-  const res: FindAppPreviewModeQuerySchema = await partnersRequest(FindAppPreviewModeQuery, token, {
-    apiKey,
-  })
+export async function fetchAppPreviewMode(
+  apiKey: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<boolean | undefined> {
+  const res: FindAppPreviewModeSchema = await developerPlatformClient.appPreviewMode({apiKey})
   return res.app?.developmentStorePreviewEnabled
 }
 
-export async function fetchOrgFromId(id: string, partnersSession: PartnersSession): Promise<Organization> {
-  const query = FindOrganizationBasicQuery
-  const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, partnersSession.token, {id})
-  const org = res.organizations.nodes[0]
-  if (!org) throw new NoOrgError(partnersSession.accountInfo, id)
+export async function fetchOrgFromId(
+  id: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<Organization> {
+  const org = await developerPlatformClient.orgFromId(id)
+  if (!org) throw new NoOrgError((await developerPlatformClient.session()).accountInfo, id)
   return org
 }
 

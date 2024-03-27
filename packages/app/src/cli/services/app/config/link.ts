@@ -9,8 +9,13 @@ import {
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {BetaFlag} from '../../dev/fetch.js'
+import {
+  InvalidApiKeyErrorMessage,
+  fetchOrCreateOrganizationApp,
+  logMetadataForLoadedContext,
+  appFromId,
+} from '../../context.js'
+import {Flag} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
@@ -18,6 +23,7 @@ import {ExtensionSpecification} from '../../../models/extensions/specification.j
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
+import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -42,13 +48,20 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration = await fetchAppRemoteConfiguration(
-    remoteApp.apiKey,
+    remoteApp,
     developerPlatformClient,
     localApp.specifications ?? [],
-    localApp.remoteBetaFlags,
+    localApp.remoteFlags,
   )
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-  configuration = deepMergeObjects(configuration, remoteAppConfiguration, replaceLocalArrayStrategy)
+  configuration = deepMergeObjects(
+    configuration,
+    {
+      ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
+      ...remoteAppConfiguration,
+    },
+    replaceLocalArrayStrategy,
+  )
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
@@ -71,8 +84,11 @@ async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions,
 }
 
 async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
-  const specifications = await options.developerPlatformClient!.specifications(remoteApp.apiKey)
-  const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
+  const specifications = await fetchSpecifications({
+    developerPlatformClient: options.developerPlatformClient!,
+    apiKey: remoteApp.apiKey,
+  })
+  const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.flags, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
@@ -85,7 +101,7 @@ async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, di
 async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
-  remoteBetas?: BetaFlag[],
+  remoteFlags?: Flag[],
   remoteApp?: OrganizationApp,
 ): Promise<AppInterface> {
   try {
@@ -94,14 +110,14 @@ async function loadAppOrEmptyApp(
       directory: options.directory,
       mode: 'report',
       configName: options.baseConfigName,
-      remoteBetas,
+      remoteFlags,
     })
     const configuration = app.configuration
     if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
-    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
+    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas)
+    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteFlags)
   }
 }
 
@@ -114,7 +130,7 @@ async function loadRemoteApp(
   if (!apiKey) {
     return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
   }
-  const app = await developerPlatformClient.appFromId(apiKey)
+  const app = await appFromId({apiKey, developerPlatformClient})
   if (!app) {
     const errorMessage = InvalidApiKeyErrorMessage(apiKey)
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)

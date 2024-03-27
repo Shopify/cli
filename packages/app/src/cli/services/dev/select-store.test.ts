@@ -4,7 +4,6 @@ import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
@@ -12,8 +11,6 @@ vi.mock('../../prompts/dev')
 vi.mock('./fetch')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/spin')
 
 const ORG1: Organization = {
@@ -51,15 +48,13 @@ beforeEach(() => {
   vi.mocked(isSpinEnvironment).mockReturnValue(false)
 })
 
-const developerPlatformClient = testDeveloperPlatformClient()
-
 describe('selectStore', async () => {
   test('prompts user to select', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
+    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(STORE1)
@@ -69,10 +64,9 @@ describe('selectStore', async () => {
   test('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(partnersRequest).mockResolvedValueOnce({convertDevToTestStore: {convertedToTestStore: true}})
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
+    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(STORE2)
@@ -84,18 +78,14 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
     vi.mocked(isSpinEnvironment).mockReturnValue(true)
     vi.mocked(firstPartyDev).mockReturnValue(true)
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(partnersRequest).not.toHaveBeenCalledWith({
-      input: {
-        organizationID: parseInt(ORG1.id, 10),
-        shopId: STORE2.shopId,
-      },
-    })
+    expect(developerPlatformClient.convertToTestStore).not.toHaveBeenCalled()
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
@@ -104,7 +94,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE3)
 
     // When
-    const got = selectStore([STORE1, STORE2, STORE3], ORG1, developerPlatformClient)
+    const got = selectStore([STORE1, STORE2, STORE3], ORG1, testDeveloperPlatformClient())
 
     // Then
     await expect(got).rejects.toThrow('The store you specified (domain3) is not a dev store')
@@ -116,7 +106,7 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = () => selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
+    const got = () => selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
 
     // Then
     await expect(got).rejects.toThrowError()
@@ -129,14 +119,13 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
     vi.mocked(fetchAllDevStores).mockResolvedValue([])
-    const {devStoresForOrg} = developerPlatformClient
-    const devStoresForOrgSpy = vi.spyOn(developerPlatformClient, 'devStoresForOrg').mockImplementation(devStoresForOrg)
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = selectStore([], ORG1, developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrow()
-    expect(devStoresForOrgSpy).toHaveBeenCalledTimes(10)
+    expect(developerPlatformClient.devStoresForOrg).toHaveBeenCalledTimes(10)
   })
 })

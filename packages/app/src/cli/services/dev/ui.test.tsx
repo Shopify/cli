@@ -2,6 +2,7 @@ import {outputUpdateURLsResult, renderDev} from './ui.js'
 import {Dev} from './ui/components/Dev.js'
 import {
   testApp,
+  testDeveloperPlatformClient,
   testFunctionExtension,
   testOrganizationApp,
   testThemeExtensions,
@@ -24,6 +25,8 @@ const developerPreview = {
   disable: vi.fn(async () => {}),
   update: vi.fn(async (_state: boolean) => true),
 }
+
+const developerPlatformClient = testDeveloperPlatformClient()
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -147,7 +150,7 @@ describe('ui', () => {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
-        token: '123',
+        developerPlatformClient,
       }
 
       const abortController = new AbortController()
@@ -178,7 +181,7 @@ describe('ui', () => {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
-        token: '123',
+        developerPlatformClient,
       }
 
       const abortController = new AbortController()
@@ -205,7 +208,7 @@ describe('ui', () => {
         canEnablePreviewMode: false,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
-        token: '123',
+        developerPlatformClient,
       }
 
       const abortController = new AbortController()
@@ -232,7 +235,7 @@ describe('ui', () => {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
-        token: '123',
+        developerPlatformClient,
       }
 
       const abortController = new AbortController()

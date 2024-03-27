@@ -1,20 +1,20 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
-import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
-import {describe, vi, expect, test} from 'vitest'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-
-vi.mock('@shopify/cli-kit/node/api/partners')
+import {describe, expect, test} from 'vitest'
 
 describe('fetchTemplateSpecifications', () => {
   test('returns the remote and local specs', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteExtensionTemplates})
     const enabledSpecifications = ['subscription_ui', 'theme', 'function']
 
     // When
-    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', 'apiKey', enabledSpecifications)
+    const got: ExtensionTemplate[] = await fetchExtensionTemplates(
+      testDeveloperPlatformClient(),
+      'apiKey',
+      enabledSpecifications,
+    )
 
     // Then
     expect(got.length).toEqual(6)
@@ -33,11 +33,19 @@ describe('fetchTemplateSpecifications', () => {
   test('filters out local specs that already exist in remote', async () => {
     // Given
     const remoteTemplates = [...testRemoteExtensionTemplates, productSubscriptionUIExtension]
-    vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: remoteTemplates})
+    const developerPlatformClient = testDeveloperPlatformClient({
+      async templateSpecifications() {
+        return remoteTemplates
+      },
+    })
     const enabledSpecifications = ['subscription_ui', 'theme', 'function']
 
     // When
-    const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', 'apiKey', enabledSpecifications)
+    const got: ExtensionTemplate[] = await fetchExtensionTemplates(
+      developerPlatformClient,
+      'apiKey',
+      enabledSpecifications,
+    )
 
     // Then
     expect(got.length).toEqual(6)

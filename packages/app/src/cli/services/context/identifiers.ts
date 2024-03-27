@@ -17,7 +17,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   envIdentifiers: Partial<Identifiers>
   force: boolean
   release: boolean
-  partnersApp?: PartnersAppForIdentifierMatching
+  remoteApp: PartnersAppForIdentifierMatching
   includeDraftExtensions?: boolean
 }
 
@@ -45,13 +45,14 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     developerPlatformClient: options.developerPlatformClient,
     apiKey: options.appId,
     localApp: options.app,
+    remoteApp: options.remoteApp,
     release: options.release,
   })
 
   const confirmed = await deployOrReleaseConfirmationPrompt({
     extensionIdentifiersBreakdown,
     configExtensionIdentifiersBreakdown,
-    appTitle: options.partnersApp?.title,
+    appTitle: options.remoteApp?.title,
     release: options.release,
     force: options.force,
   })

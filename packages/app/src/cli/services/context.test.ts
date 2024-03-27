@@ -1,5 +1,4 @@
 import {
-  fetchAppExtensionRegistrations,
   fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
@@ -24,10 +23,9 @@ import {
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {MinimalAppIdentifiers, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -147,23 +145,26 @@ const options = (app: AppInterface, reset = false, force = false): DeployContext
   }
 }
 
-const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptions => {
+const draftExtensionsPushOptions = (
+  app: AppInterface,
+  extras?: Partial<DeveloperPlatformClient>,
+): DraftExtensionsPushOptions => {
   return {
     directory: app.directory,
     reset: false,
     enableDeveloperPreview: false,
-    developerPlatformClient: buildDeveloperPlatformClient(),
+    developerPlatformClient: buildDeveloperPlatformClient(extras),
   }
 }
 
 function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     ...extras,
-    async appFromId(clientId: string) {
+    async appFromId({apiKey}: MinimalAppIdentifiers) {
       for (const app of [APP1, APP2]) {
-        if (clientId === app.apiKey) return app
+        if (apiKey === app.apiKey) return app
       }
-      throw new Error(`Unexpected client id: ${clientId}`)
+      throw new Error(`Unexpected client id: ${apiKey}`)
     },
     async appsForOrg(orgId: string) {
       if (orgId !== ORG1.id) {
@@ -207,7 +208,6 @@ beforeEach(async () => {
   vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
   vi.mocked(getPackageManager).mockResolvedValue('npm')
-  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
   vi.mocked(isWebType).mockReturnValue(true)
 
   // this is needed because using importActual to mock the ui module
@@ -744,8 +744,6 @@ api_version = "2023-04"
 
     // When
     const developerPlatformClient = buildDeveloperPlatformClient()
-    const {selectOrg} = developerPlatformClient
-    const selectOrgSpy = vi.spyOn(developerPlatformClient, 'selectOrg').mockImplementation(selectOrg)
     const got = await ensureDevContext(INPUT, developerPlatformClient)
 
     // Then
@@ -756,7 +754,7 @@ api_version = "2023-04"
       remoteAppUpdated: false,
       updateURLs: undefined,
     })
-    expect(selectOrgSpy).not.toBeCalled()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
@@ -794,11 +792,9 @@ api_version = "2023-04"
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
-    const developerPlatformClient = buildDeveloperPlatformClient()
-    const {selectOrg} = developerPlatformClient
-    const selectOrgSpy = vi.spyOn(developerPlatformClient, 'selectOrg').mockImplementation(selectOrg)
     const got = await ensureDevContext(
       {
         ...INPUT_WITH_DATA,
@@ -822,7 +818,7 @@ api_version = "2023-04"
       orgId: ORG1.id,
       title: APP2.title,
     })
-    expect(selectOrgSpy).toBeCalled()
+    expect(fetchOrganizations).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
     expect(fetchOrgAndApps).not.toBeCalled()
@@ -845,14 +841,12 @@ api_version = "2023-04"
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     const developerPlatformClient = buildDeveloperPlatformClient()
-    const {orgAndApps} = developerPlatformClient
-    const orgAndAppsSpy = vi.spyOn(developerPlatformClient, 'orgAndApps').mockImplementation(orgAndApps)
 
     await ensureDevContext({...INPUT, reset: true}, developerPlatformClient)
 
     // Then
     expect(clearCachedAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
-    expect(orgAndAppsSpy).toBeCalled()
+    expect(developerPlatformClient.orgAndApps).toBeCalled()
     expect(link).not.toBeCalled()
   })
 
@@ -958,9 +952,9 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
 
@@ -988,9 +982,9 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
   })
@@ -1011,9 +1005,6 @@ describe('ensureDeployContext', () => {
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
     const opts = options(app)
-    const developerPlatformClient = opts.developerPlatformClient
-    const {appFromId} = developerPlatformClient
-    const appFromIdSpy = vi.spyOn(developerPlatformClient, 'appFromId').mockImplementation(appFromId)
 
     // When
     const got = await ensureDeployContext(opts)
@@ -1021,10 +1012,14 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(appFromIdSpy).toHaveBeenCalledWith(APP2.apiKey)
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith({
+      id: APP2.apiKey,
+      apiKey: APP2.apiKey,
+      organizationId: '0',
+    })
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
@@ -1044,29 +1039,21 @@ describe('ensureDeployContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     const developerPlatformClient = buildDeveloperPlatformClient({
-      async appsForOrg(_orgId: string) {
+      async orgAndApps(_orgId: string) {
         return {
+          organization: ORG1,
           apps: [APP1, APP2],
           hasMorePages: false,
         }
       },
     })
     const opts = {...options(app), developerPlatformClient}
-    const {organizations} = developerPlatformClient
-    const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(organizations)
-    developerPlatformClient.orgAndApps = async (_orgId: string) => {
-      return {
-        organization: ORG1,
-        apps: [APP1, APP2],
-        hasMorePages: false,
-      }
-    }
 
     // When
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1080,9 +1067,9 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
-    expect(got.partnersApp.id).toEqual(APP1.id)
-    expect(got.partnersApp.title).toEqual(APP1.title)
-    expect(got.partnersApp.appType).toEqual(APP1.appType)
+    expect(got.remoteApp.id).toEqual(APP1.id)
+    expect(got.remoteApp.title).toEqual(APP1.title)
+    expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
   })
@@ -1115,31 +1102,29 @@ describe('ensureDeployContext', () => {
 
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
 
-    const opts = options(app)
-    opts.reset = true
-    const originalOrganizations = opts.developerPlatformClient.organizations
-    const organizationsSpy = vi
-      .spyOn(opts.developerPlatformClient, 'organizations')
-      .mockImplementation(originalOrganizations)
-    opts.developerPlatformClient.orgAndApps = async (_orgId: string) => {
-      return {
-        organization: ORG1,
-        apps: [APP1, APP2],
-        hasMorePages: false,
-      }
-    }
+    const developerPlatformClient = buildDeveloperPlatformClient({
+      async orgAndApps(_orgId: string) {
+        return {
+          organization: ORG1,
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
+    })
+    const opts = {...options(app, true), developerPlatformClient}
 
     // When
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledWith()
+    expect(fetchOrganizations).toHaveBeenCalledWith(opts.developerPlatformClient)
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1153,9 +1138,9 @@ describe('ensureDeployContext', () => {
       identifiers,
       command: 'deploy',
     })
-    expect(got.partnersApp.id).toEqual(APP1.id)
-    expect(got.partnersApp.title).toEqual(APP1.title)
-    expect(got.partnersApp.appType).toEqual(APP1.appType)
+    expect(got.remoteApp.id).toEqual(APP1.id)
+    expect(got.remoteApp.title).toEqual(APP1.title)
+    expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
@@ -1184,9 +1169,9 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
     expect(got.app.allExtensions).toEqual(appWithExtensions.allExtensions)
@@ -1548,9 +1533,6 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     const opts = draftExtensionsPushOptions(app)
-    const developerPlatformClient = opts.developerPlatformClient!
-    const originalAppFromId = developerPlatformClient.appFromId
-    const appFromIdSpy = vi.spyOn(developerPlatformClient, 'appFromId').mockImplementation(originalAppFromId)
 
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
@@ -1558,7 +1540,11 @@ describe('ensureDraftExtensionsPushContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(appFromIdSpy).toHaveBeenCalledWith(APP2.apiKey)
+    expect(opts.developerPlatformClient!.appFromId).toHaveBeenCalledWith({
+      id: APP2.apiKey,
+      apiKey: APP2.apiKey,
+      organizationId: '0',
+    })
     expect(got.remoteApp.id).toEqual(APP2.id)
     expect(got.remoteApp.title).toEqual(APP2.title)
     expect(got.remoteApp.appType).toEqual(APP2.appType)
@@ -1579,23 +1565,22 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    const opts = draftExtensionsPushOptions(app)
-    const {developerPlatformClient} = opts
-    const {organizations} = developerPlatformClient!
-    const organizationsSpy = vi.spyOn(opts.developerPlatformClient!, 'organizations').mockImplementation(organizations)
-    developerPlatformClient!.orgAndApps = async (_orgId: string) => {
-      return {
-        organization: ORG1,
-        apps: [APP1, APP2],
-        hasMorePages: false,
-      }
+    const extras = {
+      async orgAndApps(_orgId: string) {
+        return {
+          organization: ORG1,
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
     }
+    const opts = draftExtensionsPushOptions(app, extras)
 
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
@@ -1638,27 +1623,39 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
-    const opts = draftExtensionsPushOptions(app)
+    const extras: Partial<DeveloperPlatformClient> = {
+      organizations: () => Promise.resolve([ORG1]),
+      async orgAndApps(_orgId: string) {
+        return {
+          organization: ORG1,
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
+      async appsForOrg(_orgId: string) {
+        return {
+          apps: [APP1, APP2],
+          hasMorePages: false,
+        }
+      },
+    }
+    const opts = draftExtensionsPushOptions(app, extras)
     opts.reset = true
-
-    const developerPlatformClient = opts.developerPlatformClient!
-    const organizationsSpy = vi.spyOn(developerPlatformClient, 'organizations').mockImplementation(async () => [ORG1])
-    developerPlatformClient.appsForOrg = async () => ({apps: [APP1, APP2], hasMorePages: false})
-    developerPlatformClient.orgAndApps = async () => ({organization: ORG1, apps: [APP1, APP2], hasMorePages: false})
 
     // When
     const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
-    expect(organizationsSpy).toHaveBeenCalledOnce()
+    expect(fetchOrganizations).toHaveBeenCalledOnce()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],
       false,
       ORG1,
-      developerPlatformClient,
+      opts.developerPlatformClient,
       DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(got.remoteApp.id).toEqual(APP1.id)
@@ -1695,7 +1692,7 @@ describe('ensureReleaseContext', () => {
     })
 
     expect(got.app).toEqual(app)
-    expect(got.partnersApp).toEqual(APP2)
+    expect(got.remoteApp).toEqual(APP2)
     expect(got.developerPlatformClient).toEqual(developerPlatformClient)
   })
 })
@@ -1728,7 +1725,7 @@ describe('ensureThemeExtensionDevContext', () => {
     }
 
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: (_appId: string) => Promise.resolve(mockedExtensionRegistrations),
+      appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(mockedExtensionRegistrations),
     })
 
     // When
@@ -1746,9 +1743,6 @@ describe('ensureThemeExtensionDevContext', () => {
     const apiKey = 'apiKey'
     const extension = await testThemeExtensions()
 
-    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
-    })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',
       uuid: 'UUID',
@@ -1768,7 +1762,7 @@ describe('ensureThemeExtensionDevContext', () => {
 })
 
 describe('ensureVersionsListContext', () => {
-  test('returns the partners token and app', async () => {
+  test('returns the developer platform client and the app', async () => {
     // Given
     const app = testApp()
     const developerPlatformClient = buildDeveloperPlatformClient()
@@ -1783,7 +1777,7 @@ describe('ensureVersionsListContext', () => {
 
     // Then
     expect(got).toEqual({
-      partnersApp: APP2,
+      remoteApp: APP2,
       developerPlatformClient,
     })
   })

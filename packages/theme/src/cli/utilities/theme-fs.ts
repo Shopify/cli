@@ -34,6 +34,14 @@ const THEME_DIRECTORY_PATTERNS = [
   'templates/customers/**/*.{liquid,json}',
 ]
 
+const THEME_PARTITION_REGEX = {
+  liquidRegex: /\.liquid$/,
+  configRegex: /^config\/(settings_schema|settings_data)\.json$/,
+  jsonRegex: /^(?!config\/).*\.json$/,
+  contextualizedJsonRegex: /\.context\.[^.]+\.json$/i,
+  staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
+}
+
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
   const filesPaths = await glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
@@ -73,7 +81,7 @@ export async function writeThemeFile(root: string, {key, attachment, value}: The
   }
 }
 
-export async function readThemeFile(root: string, path: Key) {
+export async function readThemeFile(root: string, path: Key): Promise<string | Buffer | undefined> {
   const options: ReadOptions = isTextFile(path) ? {encoding: 'utf8'} : {}
   const absolutePath = joinPath(root, path)
 
@@ -104,6 +112,57 @@ export function isThemeAsset(path: string) {
 
 export function isJson(path: string) {
   return lookupMimeType(path) === 'application/json'
+}
+
+export function partitionThemeFiles(files: ThemeAsset[]) {
+  const liquidFiles: ThemeAsset[] = []
+  const jsonFiles: ThemeAsset[] = []
+  const contextualizedJsonFiles: ThemeAsset[] = []
+  const configFiles: ThemeAsset[] = []
+  const staticAssetFiles: ThemeAsset[] = []
+
+  files.forEach((file) => {
+    const fileKey = file.key
+    if (THEME_PARTITION_REGEX.liquidRegex.test(fileKey)) {
+      liquidFiles.push(file)
+    } else if (THEME_PARTITION_REGEX.configRegex.test(fileKey)) {
+      configFiles.push(file)
+    } else if (THEME_PARTITION_REGEX.jsonRegex.test(fileKey)) {
+      if (THEME_PARTITION_REGEX.contextualizedJsonRegex.test(fileKey)) {
+        contextualizedJsonFiles.push(file)
+      } else {
+        jsonFiles.push(file)
+      }
+    } else if (THEME_PARTITION_REGEX.staticAssetRegex.test(fileKey)) {
+      staticAssetFiles.push(file)
+    }
+  })
+
+  return {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles}
+}
+
+export async function readThemeFilesFromDisk(filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) {
+  outputDebug(`Reading theme files from disk: ${filesToRead.map((file) => file.key).join(', ')}`)
+  await Promise.all(
+    filesToRead.map(async (file) => {
+      const fileKey = file.key
+      const themeAsset = themeFileSystem.files.get(fileKey)
+      if (themeAsset === undefined) {
+        outputDebug(`File ${fileKey} can't be was not found under directory starting with: ${themeFileSystem.root}`)
+        return
+      }
+
+      outputDebug(`Reading theme file: ${fileKey}`)
+      const fileData = await readThemeFile(themeFileSystem.root, fileKey)
+      if (Buffer.isBuffer(fileData)) {
+        themeAsset.attachment = fileData.toString('base64')
+      } else {
+        themeAsset.value = fileData
+      }
+      themeFileSystem.files.set(fileKey, themeAsset)
+    }),
+  )
+  outputDebug('All theme files were read from disk')
 }
 
 export function isTextFile(path: string) {

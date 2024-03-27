@@ -20,7 +20,7 @@ import {ExtensionSpecification, createConfigExtensionSpecification} from '../ext
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {BetaFlag} from '../../services/dev/fetch.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -39,6 +39,8 @@ import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/c
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -103,6 +105,15 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   return {...configuration, path: filepath}
 }
 
+export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
+  let humanReadableError = ''
+  issues.forEach((issue) => {
+    const path = issue.path ? issue?.path.join('.') : 'n/a'
+    humanReadableError += `• [${path}]: ${issue.message}\n`
+  })
+  return humanReadableError
+}
+
 export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -113,9 +124,10 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
 
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
-    const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
-      outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
+      outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
+        filepath,
+      )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
       fallbackOutput,
       filepath,
       parseResult.error.issues,
@@ -158,7 +170,7 @@ interface AppLoaderConstructorArgs {
   mode?: AppLoaderMode
   configName?: string
   specifications?: ExtensionSpecification[]
-  remoteBetas?: BetaFlag[]
+  remoteFlags?: Flag[]
 }
 
 /**
@@ -190,15 +202,15 @@ class AppLoader {
   private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
-  private remoteBetas: BetaFlag[]
+  private remoteFlags: Flag[]
   private allowDynamicallySpecifiedConfigs: boolean
 
-  constructor({directory, configName, mode, specifications, remoteBetas}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications ?? []
     this.configName = configName
-    this.remoteBetas = remoteBetas ?? []
+    this.remoteFlags = remoteFlags ?? []
     this.allowDynamicallySpecifiedConfigs = true
   }
 
@@ -233,6 +245,7 @@ class AppLoader {
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(directory)
+    this.showGlobalCLIWarningIfNeeded(nodeDependencies, packageManager)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -252,7 +265,7 @@ class AppLoader {
       dotenv,
       specifications: this.specifications,
       configSchema,
-      remoteBetaFlags: this.remoteBetas,
+      remoteFlags: this.remoteFlags,
     })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
@@ -263,6 +276,23 @@ class AppLoader {
     })
 
     return appClass
+  }
+
+  showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
+    const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
+    if (currentProcessIsGlobal() && hasLocalCLI) {
+      const warningContent = {
+        headline: 'You are running a global installation of Shopify CLI',
+        body: [
+          `This project has Shopify CLI as a local dependency in package.json. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
+        ],
+        link: {
+          label: 'For more information, see Shopify CLI documentation',
+          url: 'https://shopify.dev/docs/apps/tools/cli',
+        },
+      }
+      renderInfo(warningContent)
+    }
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
@@ -569,7 +599,7 @@ interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
   specifications?: ExtensionSpecification[]
-  remoteBetas?: BetaFlag[]
+  remoteFlags?: Flag[]
   allowDynamicallySpecifiedConfigs?: boolean
 }
 
@@ -598,20 +628,20 @@ class AppConfigurationLoader {
   private directory: string
   private configName?: string
   private specifications?: ExtensionSpecification[]
-  private remoteBetas: BetaFlag[]
+  private remoteFlags: Flag[]
   private allowDynamicallySpecifiedConfigs: boolean
 
   constructor({
     directory,
     configName,
     specifications,
-    remoteBetas,
+    remoteFlags,
     allowDynamicallySpecifiedConfigs,
   }: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
     this.configName = configName
     this.specifications = specifications
-    this.remoteBetas = remoteBetas ?? []
+    this.remoteFlags = remoteFlags ?? []
     this.allowDynamicallySpecifiedConfigs = allowDynamicallySpecifiedConfigs ?? false
   }
 

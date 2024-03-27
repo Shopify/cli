@@ -1,7 +1,7 @@
 import {downloadTheme} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
-import {rejectLiquidChecksums} from '../utilities/asset-checksum.js'
+import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
@@ -36,7 +36,7 @@ export async function pull(theme: Theme, session: AdminSession, options: PullOpt
 
   const remoteChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = await mountThemeFileSystem(path)
-  const themeChecksums = rejectLiquidChecksums(remoteChecksums)
+  const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
 
   const store = session.storeFqdn
   const themeId = theme.id

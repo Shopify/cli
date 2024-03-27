@@ -1,14 +1,13 @@
-import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
+import {findInEnv, findOrganizationApp, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {testPartnersUserSession, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {basename} from '@shopify/cli-kit/node/path'
 
-const aToken = 'A_TOKEN'
 const anApiKey = 'API_KEY'
 
 vi.mock('@shopify/cli-kit/node/fs')
@@ -16,6 +15,8 @@ vi.mock('@shopify/cli-kit/node/dot-env')
 vi.mock('@shopify/cli-kit/node/path')
 vi.mock('../dev/fetch')
 vi.mock('../../prompts/dev')
+
+const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('findInEnv', () => {
   test('.env file not available', async () => {
@@ -54,18 +55,18 @@ describe('findInEnv', () => {
   })
 })
 
-describe('findApiKey', () => {
+describe('findOrganizationApp', () => {
   const anAppName = 'app-name'
   const anotherAppName = 'another-app'
   const anotherApiKey = 'ANOTHER_API_KEY'
-  const anApp = {id: '1', title: anAppName, apiKey: anApiKey}
-  const anotherApp = {id: '2', title: anotherAppName, apiKey: anotherApiKey}
   const org = {
     id: '1',
     businessName: 'org1',
-    betas: {},
+    flags: {},
     website: 'http://example.org',
   }
+  const anApp = {id: '1', title: anAppName, apiKey: anApiKey, organizationId: org.id}
+  const anotherApp = {id: '2', title: anotherAppName, apiKey: anotherApiKey, organizationId: org.id}
 
   beforeEach(async () => {
     vi.mocked(fetchOrganizations).mockResolvedValue([org])
@@ -77,7 +78,7 @@ describe('findApiKey', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(undefined)
@@ -89,7 +90,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -101,7 +102,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -114,7 +115,7 @@ describe('findApiKey', () => {
     vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
 
     // When
-    const apiKey = await findApiKey(testPartnersUserSession)
+    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()
@@ -131,10 +132,15 @@ describe('findApiKey', () => {
 describe('requestAppInfo', () => {
   test('no app found', async () => {
     // Given
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromId: vi.fn().mockResolvedValue(undefined),
+    })
 
     // When
-    const credentials = await requestAppInfo(aToken, anApiKey)
+    const credentials = await requestAppInfo(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      developerPlatformClient,
+    )
 
     // Then
     expect(credentials).toEqual({})
@@ -142,15 +148,19 @@ describe('requestAppInfo', () => {
 
   test('no secrets available', async () => {
     // Given
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
-      testOrganizationApp({
-        apiKey: anApiKey,
-        apiSecretKeys: [],
-      }),
-    )
+    const app = testOrganizationApp({
+      apiKey: anApiKey,
+      apiSecretKeys: [],
+    })
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromId: vi.fn().mockResolvedValue(app),
+    })
 
     // When
-    const credentials = await requestAppInfo(aToken, anApiKey)
+    const credentials = await requestAppInfo(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      developerPlatformClient,
+    )
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey})
@@ -165,7 +175,10 @@ describe('requestAppInfo', () => {
     )
 
     // When
-    const credentials = await requestAppInfo(aToken, anApiKey)
+    const credentials = await requestAppInfo(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      testDeveloperPlatformClient(),
+    )
 
     // Then
     expect(credentials).toEqual({clientId: '1', apiKey: anApiKey, clientSecret: 'api-secret'})

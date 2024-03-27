@@ -1,13 +1,11 @@
 import {
-  ExtensionMigrateToUiExtensionQuery,
-  ExtensionMigrateToUiExtensionSchema,
-  ExtensionMigrateToUiExtensionVariables,
+  MigrateToUiExtensionSchema,
+  MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
@@ -47,8 +45,11 @@ export async function migrateExtensionsToUIExtension(
   extensionsToMigrate: LocalRemoteSource[],
   appId: string,
   remoteExtensions: RemoteSource[],
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
-  await Promise.all(extensionsToMigrate.map(({remote}) => migrateExtensionToUIExtension(appId, remote.id)))
+  await Promise.all(
+    extensionsToMigrate.map(({remote}) => migrateExtensionToUIExtension(appId, remote.id, developerPlatformClient)),
+  )
 
   return remoteExtensions.map((extension) => {
     if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
@@ -62,20 +63,16 @@ export async function migrateExtensionsToUIExtension(
 }
 
 export async function migrateExtensionToUIExtension(
-  apiKey: ExtensionMigrateToUiExtensionVariables['apiKey'],
-  registrationId: ExtensionMigrateToUiExtensionVariables['registrationId'],
+  apiKey: MigrateToUiExtensionVariables['apiKey'],
+  registrationId: MigrateToUiExtensionVariables['registrationId'],
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const token = await ensureAuthenticatedPartners()
-  const variables: ExtensionMigrateToUiExtensionVariables = {
+  const variables: MigrateToUiExtensionVariables = {
     apiKey,
     registrationId,
   }
 
-  const result: ExtensionMigrateToUiExtensionSchema = await partnersRequest(
-    ExtensionMigrateToUiExtensionQuery,
-    token,
-    variables,
-  )
+  const result: MigrateToUiExtensionSchema = await developerPlatformClient.migrateToUiExtension(variables)
 
   if (result?.migrateToUiExtension?.userErrors?.length > 0) {
     const errors = result.migrateToUiExtension.userErrors.map((error) => error.message).join(', ')

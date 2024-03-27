@@ -7,16 +7,19 @@ import {
   validatePartnersURLs,
   FrontendURLOptions,
 } from './urls.js'
-import {DEFAULT_CONFIG, testApp, testAppWithConfig} from '../../models/app/app.test-data.js'
-import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
+import {
+  DEFAULT_CONFIG,
+  testApp,
+  testAppWithConfig,
+  testDeveloperPlatformClient,
+} from '../../models/app/app.test-data.js'
+import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
+import {isSpin, spinFqdn, appPort, appHost, fetchSpinPort} from '@shopify/cli-kit/node/context/spin'
 import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
@@ -24,8 +27,6 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 vi.mock('../local-storage.js')
 vi.mock('../app/write-app-configuration-file.js')
 vi.mock('@shopify/cli-kit/node/tcp')
-vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/spin')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/plugins')
@@ -34,7 +35,6 @@ vi.mock('@shopify/cli-kit/node/system')
 
 beforeEach(() => {
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(isUnitTest).mockReturnValue(true)
   vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
 })
@@ -53,7 +53,6 @@ const defaultOptions: FrontendURLOptions = {
 describe('updateURLs', () => {
   test('sends a request to update the URLs', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -66,20 +65,19 @@ describe('updateURLs', () => {
       apiKey: 'apiKey',
       ...urls,
     }
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    await updateURLs(urls, 'apiKey', 'token')
+    await updateURLs(urls, 'apiKey', developerPlatformClient)
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledWith(UpdateURLsQuery, 'token', expectedVariables)
+    expect(developerPlatformClient.updateURLs).toHaveBeenCalledWith(expectedVariables)
   })
 
   test('when config as code is enabled, the configuration is updated as well', async () => {
     // Given
     const appWithConfig = testAppWithConfig()
     const apiKey = appWithConfig.configuration.client_id as string
-
-    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -90,7 +88,7 @@ describe('updateURLs', () => {
     }
 
     // When
-    await updateURLs(urls, apiKey, 'token', appWithConfig)
+    await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
     expect(writeAppConfigurationFile).toHaveBeenCalledWith(
@@ -120,14 +118,18 @@ describe('updateURLs', () => {
 
   test('throws an error if requests has a user error', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
+    const developerPlatformClient = testDeveloperPlatformClient({
+      updateURLs: (_input: UpdateURLsVariables) =>
+        Promise.resolve({appUpdate: {userErrors: [{field: [], message: 'Boom!'}]}}),
+    })
+    // vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [],
     }
 
     // When
-    const got = updateURLs(urls, 'apiKey', 'token')
+    const got = updateURLs(urls, 'apiKey', developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrow(new AbortError(`Boom!`))
@@ -135,7 +137,6 @@ describe('updateURLs', () => {
 
   test('includes app proxy fields if passed in', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -149,17 +150,17 @@ describe('updateURLs', () => {
         proxySubPathPrefix: 'prefix',
       },
     }
-
+    const developerPlatformClient = testDeveloperPlatformClient()
     const expectedVariables = {
       apiKey: 'apiKey',
       ...urls,
     }
 
     // When
-    await updateURLs(urls, 'apiKey', 'token')
+    await updateURLs(urls, 'apiKey', developerPlatformClient)
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledWith(UpdateURLsQuery, 'token', expectedVariables)
+    expect(developerPlatformClient.updateURLs).toHaveBeenCalledWith(expectedVariables)
   })
 
   test('also updates app proxy url when config as code is enabled', async () => {
@@ -167,7 +168,6 @@ describe('updateURLs', () => {
     const appWithConfig = testAppWithConfig()
     const apiKey = appWithConfig.configuration.client_id as string
 
-    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -183,7 +183,7 @@ describe('updateURLs', () => {
     }
 
     // When
-    await updateURLs(urls, apiKey, 'token', appWithConfig)
+    await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
     expect(writeAppConfigurationFile).toHaveBeenCalledWith(
@@ -467,12 +467,12 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  test('Returns a cli spin url if we are in a spin environment running a non 1p app', async () => {
+  test('Returns a cli spin url if we are in a spin environment running the cli manually', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     vi.mocked(appPort).mockReturnValue(undefined)
-    vi.mocked(appHost).mockReturnValue(undefined)
+    vi.mocked(fetchSpinPort).mockResolvedValue(4040)
 
     // When
     const got = await generateFrontendURL(defaultOptions)
@@ -487,7 +487,7 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  test('Returns a 1p app spin url if we are in a spin environment running a 1p app', async () => {
+  test('Returns a 1p app spin url if we are in a spin environment running the cli as service', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(appPort).mockReturnValue(1234)
@@ -507,12 +507,13 @@ describe('generateFrontendURL', () => {
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
-  test('Returns a cli spin url if we are in a spin environment but a 1p app backend is running without the cli', async () => {
+  test('Returns a cli spin url if we are in a spin environment running the cli manually with a 1p app backend running as service', async () => {
     // Given
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(appPort).mockReturnValue(1234)
     vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
     vi.mocked(checkPortAvailability).mockResolvedValue(false)
+    vi.mocked(fetchSpinPort).mockResolvedValue(4040)
 
     // When
     const got = await generateFrontendURL(defaultOptions)
@@ -525,6 +526,23 @@ describe('generateFrontendURL', () => {
     })
     expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
+  })
+
+  test('Returns an error if we are in a spin environment with a 1p app backend is running as service and the partners port is not configured', async () => {
+    // Given
+    vi.mocked(isSpin).mockReturnValue(true)
+    vi.mocked(appPort).mockReturnValue(1234)
+    vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(checkPortAvailability).mockResolvedValue(false)
+    vi.mocked(fetchSpinPort).mockResolvedValue(undefined)
+
+    // When
+    const got = generateFrontendURL(defaultOptions)
+
+    // Then
+    await expect(got).rejects.toThrow(
+      'Error building cli url in spin, cli as service port: 1234, manual cli port: undefined',
+    )
   })
 
   test('Returns a custom tunnel url if we are in a spin environment but a custom tunnel option is active', async () => {

@@ -13,7 +13,7 @@ export const FindAppQuery = gql`
       appType
       grantedScopes
       developmentStorePreviewEnabled
-      disabledBetas
+      disabledFlags
     }
   }
 `
@@ -30,6 +30,6 @@ export interface FindAppQuerySchema {
     appType: string
     grantedScopes: string[]
     developmentStorePreviewEnabled: boolean
-    disabledBetas: string[]
+    disabledFlags: string[]
   }
 }

@@ -51,14 +51,14 @@ interface TasksContext {
 export async function deploy(options: DeployOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, release} = await ensureDeployContext({...options, developerPlatformClient})
-  const apiKey = identifiers.app
+  let {app, identifiers, remoteApp, release} = await ensureDeployContext({...options, developerPlatformClient})
+  const apiKey = identifiers?.app ?? remoteApp.apiKey
 
   outputNewline()
   if (release) {
-    outputInfo(`Releasing a new app version as part of ${partnersApp.title}`)
+    outputInfo(`Releasing a new app version as part of ${remoteApp.title}`)
   } else {
-    outputInfo(`Creating a new app version as part of ${partnersApp.title}`)
+    outputInfo(`Creating a new app version as part of ${remoteApp.title}`)
   }
 
   outputNewline()

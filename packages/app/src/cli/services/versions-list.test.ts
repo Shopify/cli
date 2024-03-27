@@ -20,22 +20,24 @@ const ORG1: Organization = {
   website: '',
 }
 
-const developerPlatformClient = testDeveloperPlatformClient({
-  orgFromId: (_orgId: string) => Promise.resolve(ORG1),
-})
+function buildDeveloperPlatformClient(): DeveloperPlatformClient {
+  return testDeveloperPlatformClient({
+    orgFromId: (_orgId: string) => Promise.resolve(ORG1),
+  })
+}
 
 describe('versions-list', () => {
   beforeEach(() => {
     vi.mocked(ensureVersionsListContext).mockResolvedValue({
-      developerPlatformClient,
-      partnersApp: {
+      developerPlatformClient: buildDeveloperPlatformClient(),
+      remoteApp: {
         id: 'app-id',
         apiKey: 'app-api-key',
         title: 'app-title',
         organizationId: ORG1.id,
         apiSecretKeys: [],
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
     })
     // vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)

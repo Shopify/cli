@@ -6,7 +6,7 @@ import appWebhooksSpec, {WebhooksSpecIdentifier} from './specifications/app_conf
 import appBrandingSpec, {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
 import appPrivacyComplienceSpec, {
-  PrivacyComplianceWebbhooksSpecIdentifier,
+  PrivacyComplianceWebhooksSpecIdentifier,
 } from './specifications/app_config_privacy_compliance_webhooks.js'
 import checkoutPostPurchaseSpec from './specifications/checkout_post_purchase.js'
 import checkoutSpec from './specifications/checkout_ui_extension.js'
@@ -21,12 +21,13 @@ import taxCalculationSpec from './specifications/tax_calculation.js'
 import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
+import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
   AppAccessSpecIdentifier,
   WebhooksSpecIdentifier,
-  PrivacyComplianceWebbhooksSpecIdentifier,
+  PrivacyComplianceWebhooksSpecIdentifier,
   AppProxySpecIdentifier,
   PosSpecIdentifier,
   AppHomeSpecIdentifier,
@@ -66,6 +67,7 @@ function loadSpecifications() {
     themeSpec,
     uiExtensionSpec,
     webPixelSpec,
+    editorExtensionCollectionSpecification,
   ] as ExtensionSpecification[]
 
   return [...configModuleSpecs, ...moduleSpecs]

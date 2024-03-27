@@ -17,7 +17,6 @@ describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
   const moduleId = 'module_id'
   const apiKey = 'app-key'
-  const token = 'app-token'
   const inputQuery = 'query { f }'
 
   const config = {

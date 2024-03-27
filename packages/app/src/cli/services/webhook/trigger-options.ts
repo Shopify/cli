@@ -1,4 +1,4 @@
-import {AppCredentials, findApiKey, findInEnv, requestAppInfo} from './find-app-info.js'
+import {AppCredentials, findOrganizationApp, findInEnv, requestAppInfo} from './find-app-info.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {DELIVERY_METHOD, parseAddressFlag, parseTopicFlag} from './trigger-flags.js'
@@ -10,7 +10,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
-import {PartnersSession} from '../context/partner-account-info.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -24,12 +24,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
  *    - Get from Partners (possible prompts for organization and app)
  *    - prompt and use
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param secret - secret flag
  * @returns a pair with client-secret, api-key (possibly empty)
  */
 export async function collectCredentials(
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   secret: string | undefined,
 ): Promise<AppCredentials> {
   if (isValueSet(secret)) {
@@ -55,14 +55,14 @@ export async function collectCredentials(
     return localCredentials
   }
 
-  const apiKey = await findApiKey(partnersSession)
-  if (apiKey === undefined) {
+  const {id, apiKey, organizationId} = await findOrganizationApp(developerPlatformClient)
+  if (id === undefined || apiKey === undefined) {
     const manualSecret = await clientSecretPrompt()
     const credentials: AppCredentials = {clientSecret: manualSecret}
     return credentials
   }
 
-  const appCredentials = await requestAppInfo(partnersSession.token, apiKey)
+  const appCredentials = await requestAppInfo({id, apiKey, organizationId}, developerPlatformClient)
   if (isValueSet(appCredentials.clientSecret)) {
     outputInfo('Reading client-secret from app settings in Partners')
   } else {
@@ -78,18 +78,18 @@ export async function collectCredentials(
  *  - Get from .env
  *  - Get from Partners (possible prompts for organization and app)
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @returns a api-key
  * @throws AbortError if none found
  */
-export async function collectApiKey(partnersSession: PartnersSession): Promise<string> {
+export async function collectApiKey(developerPlatformClient: DeveloperPlatformClient): Promise<string> {
   const localCredentials = await findInEnv()
   if (isValueSet(localCredentials.apiKey)) {
     outputInfo('Using api-key from .env file')
     return localCredentials.apiKey as string
   }
 
-  const apiKey = await findApiKey(partnersSession)
+  const {apiKey} = await findOrganizationApp(developerPlatformClient)
   if (apiKey === undefined) {
     throw new AbortError(
       'No app configuration found in Partners or .env file',
@@ -104,14 +104,17 @@ export async function collectApiKey(partnersSession: PartnersSession): Promise<s
 /**
  * Returns passed apiVersion or prompts for an existing one
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID or undefined api-version
  * @returns api-version
  */
-export async function collectApiVersion(token: string, apiVersion: string | undefined): Promise<string> {
+export async function collectApiVersion(
+  developerPlatformClient: DeveloperPlatformClient,
+  apiVersion: string | undefined,
+): Promise<string> {
   const selected = isValueSet(apiVersion)
     ? (apiVersion as string)
-    : await apiVersionPrompt(await requestApiVersions(token))
+    : await apiVersionPrompt(await requestApiVersions(developerPlatformClient))
 
   return selected
 }
@@ -119,17 +122,21 @@ export async function collectApiVersion(token: string, apiVersion: string | unde
 /**
  * Returns passed topic if valid or prompts for an existing one
  *
- * @param token - Partners session token
+ * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID api-version
  * @param topic - topic or undefined
  * @returns topic
  */
-export async function collectTopic(token: string, apiVersion: string, topic: string | undefined): Promise<string> {
+export async function collectTopic(
+  developerPlatformClient: DeveloperPlatformClient,
+  apiVersion: string,
+  topic: string | undefined,
+): Promise<string> {
   if (isValueSet(topic)) {
-    return parseTopicFlag(topic as string, apiVersion, await requestTopics(token, apiVersion))
+    return parseTopicFlag(topic as string, apiVersion, await requestTopics(developerPlatformClient, apiVersion))
   }
 
-  const selected = await topicPrompt(await requestTopics(token, apiVersion))
+  const selected = await topicPrompt(await requestTopics(developerPlatformClient, apiVersion))
 
   return selected
 }

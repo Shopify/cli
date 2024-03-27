@@ -1,7 +1,6 @@
-import {createRequire} from 'module'
+import lodashUniqBy from 'lodash/uniqBy.js'
+import lodashDifference from 'lodash/difference.js'
 import type {List, ValueIteratee} from 'lodash'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Takes a random value from an array.
@@ -34,6 +33,16 @@ export function getArrayContainsDuplicates<T>(array: T[]): boolean {
 }
 
 /**
+ * Removes duplicated items from an array.
+ *
+ * @param array - The array to inspect.
+ * @returns Returns the new duplicate free array.
+ */
+export function uniq<T>(array: T[]): T[] {
+  return Array.from(new Set(array))
+}
+
+/**
  * This method is like `_.uniq` except that it accepts `iteratee` which is
  * invoked for each element in `array` to generate the criterion by which
  * uniqueness is computed. The iteratee is invoked with one argument: (value).
@@ -43,7 +52,6 @@ export function getArrayContainsDuplicates<T>(array: T[]): boolean {
  * @returns Returns the new duplicate free array.
  */
 export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIteratee<T>): T[] {
-  const lodashUniqBy = require('lodash/uniqBy')
   return lodashUniqBy(array, iteratee)
 }
 
@@ -56,6 +64,5 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
  * @returns Returns the new array of filtered values.
  */
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
-  const lodashDifference = require('lodash/difference')
   return lodashDifference(array, ...values)
 }

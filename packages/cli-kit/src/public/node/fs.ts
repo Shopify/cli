@@ -16,6 +16,7 @@ import {
 import {temporaryDirectoryTask} from 'tempy'
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
+import {minimatch} from 'minimatch'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -508,4 +509,19 @@ export async function findPathUp(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const got = await internalFindUp(matcher as any, options)
   return got ? normalizePath(got) : undefined
+}
+
+export interface MatchGlobOptions {
+  matchBase: boolean
+}
+
+/**
+ * Matches a key against a glob pattern.
+ * @param key - The key to match.
+ * @param pattern - The glob pattern to match against.
+ * @param options - The options to refine the matching approach.
+ * @returns true if the key matches the pattern, false otherwise.
+ */
+export function matchGlob(key: string, pattern: string, options: MatchGlobOptions = {matchBase: true}): boolean {
+  return minimatch(key, pattern, options)
 }

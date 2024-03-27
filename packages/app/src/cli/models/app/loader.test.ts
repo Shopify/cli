@@ -4,6 +4,7 @@ import {
   loadApp,
   loadDotEnv,
   parseConfigurationObject,
+  parseHumanReadableError,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -28,11 +29,14 @@ import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
+vi.mock('@shopify/cli-kit/node/is-global')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -281,6 +285,59 @@ wrong = "property"
     expect(app.usesWorkspaces).toBe(true)
   })
 
+  test('shows warning if using global CLI but app has local dependency', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValueOnce(true)
+    const mockOutput = mockAndCaptureOutput()
+    mockOutput.clear()
+    await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {'@shopify/cli': '1.0.0'},
+      devDependencies: {},
+    })
+
+    // When
+    await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  You are running a global installation of Shopify CLI                        │
+      │                                                                              │
+      │  This project has Shopify CLI as a local dependency in package.json. If you  │
+      │   prefer to use that version, run the command with your package manager      │
+      │  (e.g. npm run shopify).                                                     │
+      │                                                                              │
+      │  For more information, see Shopify CLI documentation [1]                     │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/tools/cli
+      "
+    `)
+    mockOutput.clear()
+  })
+
+  test('doesnt show warning if there is no local dependency', async () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    mockOutput.clear()
+    await writeConfig(appConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+
+    // When
+    await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(mockOutput.warn()).toBe('')
+    mockOutput.clear()
+  })
+
   test('identifies if the app uses pnpm workspaces', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -349,7 +406,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Fix a schema error in/)
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Validation errors in/)
   })
 
   test('throws an error if the extension type is invalid', async () => {
@@ -2256,10 +2313,13 @@ describe('parseConfigurationObject', () => {
         expected: 'boolean',
         received: 'undefined',
         path: ['embedded'],
-        message: 'Required',
+        message: 'Boolean is required',
       },
     ]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      errorObject,
+    )}`
+
     const abortOrReport = vi.fn()
 
     const {schema} = await buildVersionedAppSchema()
@@ -2283,7 +2343,9 @@ describe('parseConfigurationObject', () => {
         message: 'Expected string, received array',
       },
     ]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      errorObject,
+    )}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2330,7 +2392,9 @@ describe('parseConfigurationObject', () => {
         message: 'Invalid input',
       },
     ]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      errorObject,
+    )}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2352,7 +2416,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2380,7 +2444,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2533,7 +2597,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2681,112 +2745,78 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('does not allow identical compliance_topics and uri', async () => {
+  test('throws an error if we have privacy_compliance section and subscriptions with compliance_topics', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
+      privacy_compliance: {
+        customer_data_request_url: 'https://example.com',
+      },
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
+          compliance_topics: ['customers/data_request'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-          compliance_topics: ['shop/redact'],
-        },
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_two',
-          compliance_topics: ['shop/redact'],
         },
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
-      fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'compliance_topics', 0, 'shop/redact'],
+      message: `The privacy_compliance section can't be used if there are subscriptions including compliance_topics`,
+      path: ['webhooks'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
-  test('does not allow identical compliance_topics in same subscription (will get by zod enum validation)', async () => {
+  test('throws an error if neither topics nor compliance_topics are added', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-          compliance_topics: ['shop/redact', 'shop/redact'],
         },
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
-      fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'compliance_topics', 1, 'shop/redact'],
+      message: 'Either topics or compliance_topics must be added to the webhook subscription',
+      path: ['webhooks', 'subscriptions', 0],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
-  test('allows same compliance_topics if uri is different', async () => {
+  test('throws an error when there are duplicated compliance topics', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-          compliance_topics: ['shop/redact'],
+          compliance_topics: ['customers/data_request'],
         },
         {
-          topics: ['products/create'],
-          uri: 'https://example-two.com',
-          sub_topic: 'type:metaobject_two',
-          compliance_topics: ['shop/redact'],
+          uri: 'https://example.com/other',
+          compliance_topics: ['customers/data_request'],
         },
       ],
     }
-
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-  })
-
-  test('allows same compliance_topics across https, pub sub and arn with multiple topics', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['products/create'],
-          uri: 'https://example.com/all_webhooks',
-          compliance_topics: ['shop/redact', 'customers/data_request', 'customers/redact'],
-        },
-        {
-          topics: ['products/create'],
-          uri: 'pubsub://my-project-123:my-topic',
-          compliance_topics: ['customers/data_request', 'customers/redact'],
-        },
-        {
-          topics: ['products/create'],
-          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/compliance',
-          compliance_topics: ['shop/redact', 'customers/redact'],
-        },
-      ],
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have multiple subscriptions with the same compliance topic',
+      fatal: true,
+      path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
-    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(err, null, 2)}`
+    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
+      err,
+    )}`
     const abortOrReport = vi.fn()
 
     const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)

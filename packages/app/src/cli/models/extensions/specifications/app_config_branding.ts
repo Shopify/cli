@@ -2,11 +2,13 @@ import {TransformationConfig, createConfigExtensionSpecification} from '../speci
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const BrandingSchema = zod.object({
-  name: zod.string().max(30),
+  name: zod.string({required_error: 'String is required'}).max(30, {message: 'String must be less than 30 characters'}),
   handle: zod
-    .string()
-    .max(256)
-    .refine((value) => value && /^\w*(?!-)[a-z0-9-]+(?<!-)$/.test(value))
+    .string({required_error: 'String is required'})
+    .max(256, {message: 'String must be less than 256 characters long'})
+    .refine((value) => value && /^\w*(?!-)[a-z0-9-]+(?<!-)$/.test(value), {
+      message: "String can't contain special characters",
+    })
     .optional(),
 })
 

@@ -4,9 +4,8 @@ import {
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
 import {AppInterface} from '../models/app/app.js'
-import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
+import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -28,26 +27,28 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  const {developerPlatformClient, app, partnersApp} = await ensureReleaseContext(options)
-  const partnerSession = await developerPlatformClient.session()
-  const token = partnerSession.token
+  const {developerPlatformClient, app, remoteApp} = await ensureReleaseContext(options)
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
-    token,
-    partnersApp.apiKey,
+    developerPlatformClient,
+    remoteApp.apiKey,
     options.version,
   )
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
     developerPlatformClient,
-    apiKey: partnersApp.apiKey,
+    apiKey: remoteApp.apiKey,
     localApp: app,
-    versionAppModules: versionDetails.appModuleVersions,
+    remoteApp,
+    versionAppModules: versionDetails.appModuleVersions.map((appModuleVersion) => ({
+      ...appModuleVersion,
+      ...(appModuleVersion.config ? {config: JSON.parse(appModuleVersion.config)} : {}),
+    })),
     release: true,
   })
   const confirmed = await deployOrReleaseConfirmationPrompt({
     configExtensionIdentifiersBreakdown,
     extensionIdentifiersBreakdown,
-    appTitle: partnersApp.title,
+    appTitle: remoteApp.title,
     release: true,
     force: options.force,
   })
@@ -57,7 +58,7 @@ export async function release(options: ReleaseOptions) {
   }
 
   const variables: AppReleaseVariables = {
-    apiKey: partnersApp.apiKey,
+    apiKey: remoteApp.apiKey,
     appVersionId: versionDetails.id,
   }
 
@@ -65,7 +66,7 @@ export async function release(options: ReleaseOptions) {
     {
       title: 'Releasing version',
       task: async (context: Context) => {
-        context.appRelease = await partnersRequest(AppRelease, token, variables)
+        context.appRelease = await developerPlatformClient.release(variables)
       },
     },
   ]

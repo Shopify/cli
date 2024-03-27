@@ -1,9 +1,9 @@
 import {AccountInfo} from '../../services/context/partner-account-info.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {gql} from 'graphql-request'
 
-const CurrentAccountInfoQuery = gql`
+export const CurrentAccountInfoQuery = gql`
   query currentAccountInfo {
     currentAccountInfo {
       __typename
@@ -22,12 +22,12 @@ interface AccountInfoSchema {
   orgName?: string
 }
 
-interface CurrentAccountInfoSchema {
+export interface CurrentAccountInfoSchema {
   currentAccountInfo: AccountInfoSchema
 }
 
-export async function geCurrentAccountInfo(token: string) {
-  const {currentAccountInfo} = await partnersRequest<CurrentAccountInfoSchema>(CurrentAccountInfoQuery, token)
+export async function getCurrentAccountInfo(developerPlatformClient: DeveloperPlatformClient) {
+  const {currentAccountInfo} = await developerPlatformClient.currentAccountInfo()
 
   if (!currentAccountInfo) {
     throw new AbortError('Unable to get current user account')

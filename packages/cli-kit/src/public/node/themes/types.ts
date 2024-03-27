@@ -79,28 +79,38 @@ export interface ThemeAsset extends Checksum {
 }
 
 /**
- * Represents a single result returned within the response of a bulk upload operation.
- * Each result includes the unique identifier for the file being uploaded,
- * the status of the upload operation, any errors that occurred, and the asset that was uploaded.
+ * Represents a single result for a upload or delete operation on a single file
+ * Each result includes the unique identifier for the file, the type of the operation,
+ * the sucesss status of the operation, any errors that occurred, and the asset value of the file.
  */
-export interface BulkUploadResult {
+export interface Result {
   /**
    * The unique identifier for the file being uploaded.
    */
   key: string
 
   /**
+   * The operation associated with the result.
+   */
+  operation: Operation
+
+  /* *
    * Indicates whether the upload operation for this file was successful.
    */
   success: boolean
 
   /**
-   * An array of error messages that were generated during the upload operation for this file.
+   * Error message that was generated during the upload operation for this file.
    */
-  errors?: string[]
+  errors?: {asset?: string[]}
 
-  /**
+  /* *
    * The asset that was uploaded as part of the upload operation for this file.
    */
-  asset: ThemeAsset
+  asset?: ThemeAsset
+}
+
+export enum Operation {
+  Delete = 'DELETE',
+  Upload = 'UPLOAD',
 }

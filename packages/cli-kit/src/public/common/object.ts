@@ -1,9 +1,15 @@
 import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
+import lodashPickBy from 'lodash/pickBy.js'
+import lodashMapValues from 'lodash/mapValues.js'
+import lodashIsEqual from 'lodash/isEqual.js'
+import differenceWith from 'lodash/differenceWith.js'
+import fromPairs from 'lodash/fromPairs.js'
+import toPairs from 'lodash/toPairs.js'
+import get from 'lodash/get.js'
+import set from 'lodash/set.js'
+import lodashIsEmpty from 'lodash/isEmpty.js'
 
 /**
  * Deep merges the two objects and returns a new object with the merge result.
@@ -30,12 +36,7 @@ export function deepMergeObjects<T1, T2>(
  * @param predicate - The function invoked per property.
  * @returns Returns the new object.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function pickBy<T, S extends T>(
-  object: Dictionary<T> | null | undefined,
-  predicate?: ValueKeyIteratee<T>,
-): Dictionary<S> {
-  const lodashPickBy = require('lodash/pickBy.js')
+export function pickBy<T>(object: Dictionary<T> | null | undefined, predicate: ValueKeyIteratee<T>): Dictionary<T> {
   return lodashPickBy(object, predicate)
 }
 
@@ -52,7 +53,6 @@ export function mapValues<T extends object, TResult>(
   source: T | null | undefined,
   callback: ObjectIterator<T, TResult>,
 ): {[P in keyof T]: TResult} {
-  const lodashMapValues = require('lodash/mapValues.js')
   return lodashMapValues(source, callback)
 }
 
@@ -64,7 +64,6 @@ export function mapValues<T extends object, TResult>(
  * @returns True if the objects are equal, false otherwise.
  */
 export function deepCompare(one: object, two: object): boolean {
-  const lodashIsEqual = require('lodash/isEqual.js')
   return lodashIsEqual(one, two)
 }
 
@@ -76,9 +75,6 @@ export function deepCompare(one: object, two: object): boolean {
  * @returns Two objects containing the fields that are different, each one with the values of one object.
  */
 export function deepDifference(one: object, two: object): [object, object] {
-  const differenceWith = require('lodash/differenceWith.js')
-  const fromPairs = require('lodash/fromPairs.js')
-  const toPairs = require('lodash/toPairs.js')
   const changes = differenceWith(toPairs(one), toPairs(two), deepCompare)
   const changes2 = differenceWith(toPairs(two), toPairs(one), deepCompare)
   return [fromPairs(changes), fromPairs(changes2)]
@@ -92,8 +88,6 @@ export function deepDifference(one: object, two: object): [object, object] {
  * @returns - Returns the resolved value.
  */
 export function getPathValue<T = object>(object: object, path: string): T | undefined {
-  const get = require('lodash/get.js')
-
   return get(object, path) === undefined ? undefined : (get(object, path) as T)
 }
 
@@ -106,8 +100,6 @@ export function getPathValue<T = object>(object: object, path: string): T | unde
  * @returns - Returns object.
  */
 export function setPathValue(object: object, path: string, value?: unknown): object {
-  const set = require('lodash/set.js')
-
   return set(object, path, value)
 }
 
@@ -118,7 +110,15 @@ export function setPathValue(object: object, path: string, value?: unknown): obj
  * @returns - Returns true if value is empty, else false.
  */
 export function isEmpty(object: object): boolean {
-  const isEmpty = require('lodash/isEmpty.js')
+  return lodashIsEmpty(object)
+}
 
-  return isEmpty(object)
+/**
+ * Removes the undefined elements.
+ *
+ * @param object - The object whose undefined will be deleted.
+ * @returns A copy of the object with the undefined elements deleted.
+ */
+export function compact(object: object): object {
+  return Object.fromEntries(Object.entries(object).filter(([_, value]) => value != null))
 }

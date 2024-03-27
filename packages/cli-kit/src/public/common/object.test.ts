@@ -1,4 +1,13 @@
-import {deepCompare, deepDifference, deepMergeObjects, getPathValue, mapValues, pickBy, setPathValue} from './object.js'
+import {
+  compact,
+  deepCompare,
+  deepDifference,
+  deepMergeObjects,
+  getPathValue,
+  mapValues,
+  pickBy,
+  setPathValue,
+} from './object.js'
 import {describe, expect, test} from 'vitest'
 
 describe('deepMergeObjects', () => {
@@ -231,5 +240,38 @@ describe('setPathValue', () => {
 
     // Then
     expect(getPathValue(result, 'key1')).toEqual({key11: 2})
+  })
+})
+
+describe('compact', () => {
+  test('removes the undefined elements from the object', () => {
+    // Given
+    const obj: object = {
+      key1: '1',
+      key2: undefined,
+      key3: false,
+      key4: null,
+      key5: 0,
+    }
+
+    // When
+    const result = compact(obj)
+
+    // Then
+    expect(Object.keys(result)).toEqual(['key1', 'key3', 'key5'])
+  })
+
+  test('returns an empty object when all the values are undefined', () => {
+    // Given
+    const obj: object = {
+      key1: undefined,
+      key2: null,
+    }
+
+    // When
+    const result = compact(obj)
+
+    // Then
+    expect(result).toEqual({})
   })
 })

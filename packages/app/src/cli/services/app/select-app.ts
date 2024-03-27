@@ -1,42 +1,50 @@
-import {OrganizationApp} from '../../models/organization.js'
+import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {BetaFlag} from '../dev/fetch.js'
+import {Flag, fetchOrganizations} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
-import {buildSpecsAppConfiguration} from '../../models/app/app.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  AppModuleVersion,
+  DeveloperPlatformClient,
+  selectDeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
   const developerPlatformClient = selectDeveloperPlatformClient()
-  const orgs = await developerPlatformClient.organizations()
+  const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
   const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
-  const fullSelectedApp = await developerPlatformClient.appFromId(selectedAppApiKey)
+  const selectedApp = apps.find((app) => app.apiKey === selectedAppApiKey)!
+  const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
 }
 
 export async function fetchAppRemoteConfiguration(
-  apiKey: string,
+  remoteApp: MinimalOrganizationApp,
   developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
-  betas: BetaFlag[],
+  flags: Flag[],
 ) {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
-      (module) => module.specification?.experience === 'configuration',
-    ) || []
-  const remoteAppConfiguration = remoteAppConfigurationExtensionContent(appModuleVersionsConfig, specifications, betas)
-  return buildSpecsAppConfiguration(remoteAppConfiguration) as SpecsAppConfiguration
+    activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
+  const remoteConfiguration = remoteAppConfigurationExtensionContent(
+    appModuleVersionsConfig,
+    specifications,
+    flags,
+  ) as unknown as SpecsAppConfiguration
+  return specifications.reduce(
+    (simplifiedConfiguration, spec) => spec.simplify?.(simplifiedConfiguration) ?? simplifiedConfiguration,
+    remoteConfiguration,
+  )
 }
 
 export function remoteAppConfigurationExtensionContent(
   configRegistrations: AppModuleVersion[],
   specifications: ExtensionSpecification[],
-  betas: BetaFlag[],
+  flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
@@ -45,11 +53,11 @@ export function remoteAppConfigurationExtensionContent(
       (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),
     )
     if (!configSpec) return
-    const configString = module.config
-    if (!configString) return
-    const config = configString ? JSON.parse(configString) : {}
+    const config = module.config
+    if (!config) return
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {betas}) ?? config)
+    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {flags}) ?? config)
   })
+
   return {...remoteAppConfig}
 }

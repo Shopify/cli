@@ -1734,7 +1734,7 @@
       ],
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "shopify app release --version <version>"
+      "usage": "app:release --version <version>"
     },
     "app:scaffold:extension": {
       "aliases": [
@@ -1997,7 +1997,7 @@
       "strict": true,
       "summary": "List deployed versions of your app."
     },
-    "webhook:trigger": {
+    "app:webhook:trigger": {
       "aliases": [
       ],
       "args": {
@@ -2083,6 +2083,109 @@
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
+      "id": "app:webhook:trigger",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "webhook",
+        "trigger.js"
+      ],
+      "strict": true,
+      "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
+    },
+    "webhook:trigger": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+      "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+      "flags": {
+        "address": {
+          "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
+          "env": "SHOPIFY_FLAG_ADDRESS",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "address",
+          "required": false,
+          "type": "option"
+        },
+        "api-version": {
+          "description": "The API Version of the webhook topic.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "api-version",
+          "required": false,
+          "type": "option"
+        },
+        "client-secret": {
+          "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
+          "env": "SHOPIFY_FLAG_CLIENT_SECRET",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-secret",
+          "required": false,
+          "type": "option"
+        },
+        "delivery-method": {
+          "description": "Method chosen to deliver the topic payload. If not passed, it's inferred from the address.",
+          "env": "SHOPIFY_FLAG_DELIVERY_METHOD",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "delivery-method",
+          "options": [
+            "http",
+            "google-pub-sub",
+            "event-bridge"
+          ],
+          "required": false,
+          "type": "option"
+        },
+        "help": {
+          "allowNo": false,
+          "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
+          "env": "SHOPIFY_FLAG_HELP",
+          "hidden": false,
+          "name": "help",
+          "required": false,
+          "type": "boolean"
+        },
+        "shared-secret": {
+          "description": "Deprecated. Please use client-secret.",
+          "env": "SHOPIFY_FLAG_SHARED_SECRET",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "shared-secret",
+          "required": false,
+          "type": "option"
+        },
+        "topic": {
+          "description": "The requested webhook topic.",
+          "env": "SHOPIFY_FLAG_TOPIC",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "topic",
+          "required": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
       "id": "webhook:trigger",
       "isESM": true,
       "pluginAlias": "@shopify/app",
@@ -2095,9 +2198,7 @@
         "webhook",
         "trigger.js"
       ],
-      "strict": true,
-      "summary": "Trigger delivery of a sample webhook topic payload to a designated address.",
-      "usage": "shopify webhook trigger [flags]"
+      "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
   "version": "3.57.0"

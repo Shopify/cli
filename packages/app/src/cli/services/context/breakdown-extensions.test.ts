@@ -15,13 +15,13 @@ import {
   testAppConfigExtensions,
   testDeveloperPlatformClient,
   testUIExtension,
+  testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, MinimalAppIdentifiers} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
@@ -214,7 +214,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
 const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
   configuration: AppConfiguration = APP_CONFIGURATION,
-  betas = [],
+  flags = [],
 ): Promise<AppInterface> => {
   const versionSchema = await buildVersionedAppSchema()
 
@@ -227,14 +227,14 @@ const LOCAL_APP = async (
     configSchema: versionSchema.schema,
   })
 
-  setPathValue(localApp, 'remoteBetaFlags', betas)
+  setPathValue(localApp, 'remoteFlags', flags)
   return localApp
 }
 
 const options = async (params: {
   uiExtensions: ExtensionInstance[]
   identifiers?: any
-  partnersApp?: OrganizationApp
+  remoteApp?: OrganizationApp
   release?: boolean
   developerPlatformClient?: DeveloperPlatformClient
 }) => {
@@ -245,10 +245,12 @@ const options = async (params: {
     appName: 'appName',
     envIdentifiers: {extensions: params.identifiers ?? {}},
     force: false,
-    partnersApp: params.partnersApp ?? undefined,
+    remoteApp: params.remoteApp ?? testOrganizationApp(),
     release: params.release ?? true,
   }
 }
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 let EXTENSION_A: ExtensionInstance
 let EXTENSION_A_2: ExtensionInstance
@@ -340,7 +342,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
       })
 
       // When
@@ -377,7 +379,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         },
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
       })
 
       // When
@@ -414,10 +416,10 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         },
       }
 
-      const activeVersion = {app: {activeAppVersion: {appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A]}}}
+      const activeVersion = {appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A]}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -450,11 +452,11 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         },
       }
       const activeVersion = {
-        app: {activeAppVersion: {appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A]}},
+        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -487,15 +489,11 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A, MODULE_DASHBOARD_MIGRATED_CLI_A],
-          },
-        },
+        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A, MODULE_DASHBOARD_MIGRATED_CLI_A],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -535,22 +533,18 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [
-              MODULE_CONFIG_A,
-              MODULE_DASHBOARD_A,
-              MODULE_CLI_A,
-              MODULE_DASHBOARD_MIGRATED_CLI_A,
-              MODULE_DELETED_DASHBOARD_B,
-              MODULE_DELETED_CLI_B,
-            ],
-          },
-        },
+        appModuleVersions: [
+          MODULE_CONFIG_A,
+          MODULE_DASHBOARD_A,
+          MODULE_CLI_A,
+          MODULE_DASHBOARD_MIGRATED_CLI_A,
+          MODULE_DELETED_DASHBOARD_B,
+          MODULE_DELETED_CLI_B,
+        ],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        appExtensionRegistrations: (_appId: string) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
@@ -598,7 +592,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, 'apiKey', ' 1.0.0')
 
     // Then
     expect(result).toEqual({
@@ -631,7 +625,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, 'apiKey', ' 1.0.0')
 
     // Then
     expect(result).toEqual({
@@ -677,6 +671,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
+        remoteApp: testOrganizationApp(),
         apiKey: 'apiKey',
         localApp: await LOCAL_APP([], configuration),
         release: false,
@@ -712,7 +707,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -727,7 +722,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'branding',
-        config: JSON.stringify({name: 'my app'}),
+        config: {name: 'my app'},
         specification: {
           identifier: 'branding',
           name: 'branding',
@@ -742,7 +737,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_C',
         registrationTitle: 'Registration title',
         type: 'webhooks',
-        config: JSON.stringify({api_version: '2023-04'}),
+        config: {api_version: '2023-04'},
         specification: {
           identifier: 'webhooks',
           name: 'webhooks',
@@ -753,25 +748,22 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [
-              configActiveAppModule,
-              brandingActiveAppModule,
-              webhooksActiveAppModule,
-              MODULE_DASHBOARD_A,
-            ],
-          },
-        },
+        appModuleVersions: [
+          configActiveAppModule,
+          brandingActiveAppModule,
+          webhooksActiveAppModule,
+          MODULE_DASHBOARD_A,
+        ],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -805,7 +797,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp-edited.com', embedded: false}),
+        config: {app_url: 'https://myapp-edited.com', embedded: false},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -820,7 +812,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'branding',
-        config: JSON.stringify({name: 'my app'}),
+        config: {name: 'my app'},
         specification: {
           identifier: 'branding',
           name: 'branding',
@@ -835,7 +827,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_C',
         registrationTitle: 'Registration title',
         type: 'webhooks',
-        config: JSON.stringify({api_version: '2023-04'}),
+        config: {api_version: '2023-04'},
         specification: {
           identifier: 'webhooks',
           name: 'webhooks',
@@ -846,25 +838,22 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [
-              configActiveAppModule,
-              brandingActiveAppModule,
-              webhooksActiveAppModule,
-              MODULE_DASHBOARD_A,
-            ],
-          },
-        },
+        appModuleVersions: [
+          configActiveAppModule,
+          brandingActiveAppModule,
+          webhooksActiveAppModule,
+          MODULE_DASHBOARD_A,
+        ],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -900,7 +889,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -911,20 +900,17 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A],
-          },
-        },
+        appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -957,7 +943,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -972,7 +958,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'branding',
-        config: JSON.stringify({name: 'my app', app_handle: 'handle'}),
+        config: {name: 'my app', app_handle: 'handle'},
         specification: {
           identifier: 'branding',
           name: 'Branding',
@@ -987,7 +973,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_C',
         registrationTitle: 'Registration title',
         type: 'webhooks',
-        config: JSON.stringify({api_version: '2023-04'}),
+        config: {api_version: '2023-04'},
         specification: {
           identifier: 'webhooks',
           name: 'webhooks',
@@ -1002,9 +988,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'point_of_sale',
-        config: JSON.stringify({
-          embedded: false,
-        }),
+        config: {embedded: false},
         specification: {
           identifier: 'point_of_sale',
           name: 'Pos configuration',
@@ -1015,26 +999,23 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [
-              configActiveAppModule,
-              configActivePosConfigurationAppModule,
-              brandingActiveAppModule,
-              webhooksActiveAppModule,
-              MODULE_DASHBOARD_A,
-            ],
-          },
-        },
+        appModuleVersions: [
+          configActiveAppModule,
+          configActivePosConfigurationAppModule,
+          brandingActiveAppModule,
+          webhooksActiveAppModule,
+          MODULE_DASHBOARD_A,
+        ],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -1056,7 +1037,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1071,7 +1052,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1081,15 +1062,16 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
-      const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
+      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1110,7 +1092,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1125,7 +1107,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp-edited.com', embedded: false}),
+        config: {app_url: 'https://myapp-edited.com', embedded: false},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1135,17 +1117,16 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
-      const activeVersion = {
-        app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}},
-      }
+      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1166,10 +1147,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({
-          app_url: 'https://myapp.com',
-          embedded: true,
-        }),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1184,9 +1162,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'point_of_sale',
-        config: JSON.stringify({
-          embedded: false,
-        }),
+        config: {embedded: false},
         specification: {
           identifier: 'point_of_sale',
           name: 'Pos configuration',
@@ -1201,7 +1177,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1211,21 +1187,16 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
-      const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A],
-          },
-        },
-      }
+      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule, configToReleasePosAppModule],
         release: true,
@@ -1246,10 +1217,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({
-          app_url: 'https://myapp.com',
-          embedded: true,
-        }),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1264,7 +1232,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1279,9 +1247,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'point_of_sale',
-        config: JSON.stringify({
-          embedded: false,
-        }),
+        config: {embedded: false},
         specification: {
           identifier: 'point_of_sale',
           name: 'Pos configuration',
@@ -1292,20 +1258,17 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
       const activeVersion = {
-        app: {
-          activeAppVersion: {
-            appModuleVersions: [configActiveAppModule, configActivePosConfigurationAppModule, MODULE_DASHBOARD_A],
-          },
-        },
+        appModuleVersions: [configActiveAppModule, configActivePosConfigurationAppModule, MODULE_DASHBOARD_A],
       }
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1344,7 +1307,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1359,7 +1322,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_A',
         registrationTitle: 'Registration title',
         type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        config: {app_url: 'https://myapp.com', embedded: true},
         specification: {
           identifier: 'app_home',
           name: 'App Ui',
@@ -1369,15 +1332,16 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
-      const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
+      const activeVersion = {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-        activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
       })
 
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
         localApp: await LOCAL_APP([], configuration),
         versionAppModules: [configToReleaseAppModule],
         release: true,

@@ -1,17 +1,8 @@
-import {
-  fetchAllDevStores,
-  fetchOrgAndApps,
-  fetchOrganizations,
-  fetchStoreByDomain,
-  fetchAppExtensionRegistrations,
-  NoOrgError,
-} from './fetch.js'
+import {fetchAllDevStores, fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {AllOrganizationsQuery} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   testPartnersServiceSession,
   testPartnersUserSession,
@@ -81,26 +72,30 @@ afterEach(() => {
 describe('fetchOrganizations', async () => {
   test('returns fetched organizations', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG1, ORG2]),
+    })
 
     // When
-    const got = await fetchOrganizations(testPartnersUserSession)
+    const got = await fetchOrganizations(developerPlatformClient)
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
-    expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
+    expect(developerPlatformClient.organizations).toHaveBeenCalledWith()
   })
 
   test('throws if there are no organizations', async () => {
     // Given
-    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([]),
+    })
 
     // When
-    const got = fetchOrganizations(testPartnersUserSession)
+    const got = fetchOrganizations(developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
-    expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
+    expect(developerPlatformClient.organizations).toHaveBeenCalledWith()
   })
 })
 
@@ -152,46 +147,13 @@ describe('fetchStoreByDomain', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
       storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
     })
-    const {storeByDomain} = developerPlatformClient
-    const storeByDomainSpy = vi.spyOn(developerPlatformClient, 'storeByDomain').mockImplementation(storeByDomain)
 
     // When
     const got = await fetchStoreByDomain(ORG1.id, 'domain1', developerPlatformClient)
 
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
-    expect(storeByDomainSpy).toHaveBeenCalledWith(ORG1.id, 'domain1')
-  })
-})
-
-describe('fetchAppExtensionRegistrations', () => {
-  test('returns fetched extension registrations', async () => {
-    // Given
-    const response = {
-      app: {
-        extensionRegistrations: [
-          {
-            id: '1234',
-            uuid: 'ddb126da-b578-4ce3-a6d4-8ed1cc0703cc',
-            title: 'checkout-post-purchase',
-            type: 'CHECKOUT_POST_PURCHASE',
-          },
-        ],
-      },
-    }
-    vi.mocked(partnersRequest).mockResolvedValue(response)
-
-    // When
-    const got = await fetchAppExtensionRegistrations({
-      apiKey: 'api-key',
-      token: 'token',
-    })
-
-    // Then
-    expect(got).toEqual(response)
-    expect(partnersRequest).toHaveBeenCalledWith(AllAppExtensionRegistrationsQuery, 'token', {
-      apiKey: 'api-key',
-    })
+    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
   })
 })
 

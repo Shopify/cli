@@ -41,8 +41,7 @@ export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExten
   })
 
   if (draftExtensionsPushOptions.enableDeveloperPreview) {
-    const partnersSession = await developerPlatformClient.session()
-    await enableDeveloperPreview({token: partnersSession.token, apiKey: remoteApp.apiKey})
+    await enableDeveloperPreview({developerPlatformClient, apiKey: remoteApp.apiKey})
     outputSuccess(`Enabled dev preview`)
   }
 }

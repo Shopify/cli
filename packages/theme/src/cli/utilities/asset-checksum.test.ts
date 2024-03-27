@@ -1,4 +1,4 @@
-import {checksum, rejectLiquidChecksums} from './asset-checksum.js'
+import {checksum, rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {describe, expect, test} from 'vitest'
 
 describe('asset-checksum', () => {
@@ -44,7 +44,7 @@ describe('asset-checksum', () => {
       ]
 
       // When
-      const result = rejectLiquidChecksums(themeChecksums)
+      const result = rejectGeneratedStaticAssets(themeChecksums)
 
       // Then
       expect(result).toEqual([

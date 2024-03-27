@@ -7,7 +7,7 @@ import {
 } from './trigger-options.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
-import {findApiKey, findInEnv, requestAppInfo} from './find-app-info.js'
+import {findOrganizationApp, findInEnv, requestAppInfo} from './find-app-info.js'
 import {
   addressPrompt,
   apiVersionPrompt,
@@ -15,7 +15,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
-import {testPartnersUserSession} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -28,9 +28,9 @@ vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
 vi.mock('./find-app-info.js')
 
-const aToken = 'token'
 const aSecret = 'A_SECRET'
 const anApiKey = 'AN_API_KEY'
+const developerPlatformClient = testDeveloperPlatformClient()
 
 describe('collectApiVersion', () => {
   test('uses the passed api-version', async () => {
@@ -38,7 +38,7 @@ describe('collectApiVersion', () => {
     vi.mocked(apiVersionPrompt)
 
     // When
-    const version = await collectApiVersion(aToken, '2023-01')
+    const version = await collectApiVersion(developerPlatformClient, '2023-01')
 
     // Then
     expect(version).toEqual('2023-01')
@@ -51,7 +51,7 @@ describe('collectApiVersion', () => {
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
     // When
-    const version = await collectApiVersion(aToken, undefined)
+    const version = await collectApiVersion(developerPlatformClient, undefined)
 
     // Then
     expect(version).toEqual('2023-01')
@@ -67,7 +67,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const method = await collectTopic(aToken, '2023-01', 'shop/redact')
+    const method = await collectTopic(developerPlatformClient, '2023-01', 'shop/redact')
 
     // Then
     expect(method).toEqual('shop/redact')
@@ -80,7 +80,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When then
-    await expect(collectTopic(aToken, '2023-01', 'unknown/topic')).rejects.toThrow(AbortError)
+    await expect(collectTopic(developerPlatformClient, '2023-01', 'unknown/topic')).rejects.toThrow(AbortError)
     expect(topicPrompt).toHaveBeenCalledTimes(0)
   })
 
@@ -90,7 +90,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const topic = await collectTopic(aToken, 'unstable', undefined)
+    const topic = await collectTopic(developerPlatformClient, 'unstable', undefined)
 
     // Then
     expect(topic).toEqual('orders/create')
@@ -152,18 +152,18 @@ describe('collectCredentials', () => {
     vi.mocked(renderConfirmationPrompt)
     vi.mocked(clientSecretPrompt)
     vi.mocked(findInEnv)
-    vi.mocked(findApiKey)
+    vi.mocked(findOrganizationApp)
     vi.mocked(requestAppInfo)
 
     // When
-    const credentials = await collectCredentials(testPartnersUserSession, aSecret)
+    const credentials = await collectCredentials(developerPlatformClient, aSecret)
 
     // Then
     expect(credentials).toEqual({clientSecret: aSecret})
     expect(renderConfirmationPrompt).toHaveBeenCalledTimes(0)
     expect(clientSecretPrompt).toHaveBeenCalledTimes(0)
     expect(findInEnv).toHaveBeenCalledTimes(0)
-    expect(findApiKey).toHaveBeenCalledTimes(0)
+    expect(findOrganizationApp).toHaveBeenCalledTimes(0)
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
   })
 
@@ -172,17 +172,17 @@ describe('collectCredentials', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
     vi.mocked(findInEnv)
-    vi.mocked(findApiKey)
+    vi.mocked(findOrganizationApp)
     vi.mocked(requestAppInfo)
 
     // When
-    const credentials = await collectCredentials(testPartnersUserSession, undefined)
+    const credentials = await collectCredentials(developerPlatformClient, undefined)
 
     // Then
     expect(credentials).toEqual({clientSecret: aSecret})
     expect(clientSecretPrompt).toHaveBeenCalledOnce()
     expect(findInEnv).toHaveBeenCalledTimes(0)
-    expect(findApiKey).toHaveBeenCalledTimes(0)
+    expect(findOrganizationApp).toHaveBeenCalledTimes(0)
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
   })
 
@@ -191,17 +191,17 @@ describe('collectCredentials', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt)
     vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret, apiKey: anApiKey})
-    vi.mocked(findApiKey)
+    vi.mocked(findOrganizationApp)
     vi.mocked(requestAppInfo)
 
     // When
-    const secret = await collectCredentials(testPartnersUserSession, undefined)
+    const secret = await collectCredentials(developerPlatformClient, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret, apiKey: anApiKey})
     expect(clientSecretPrompt).toHaveBeenCalledTimes(0)
     expect(findInEnv).toHaveBeenCalledOnce()
-    expect(findApiKey).toHaveBeenCalledTimes(0)
+    expect(findOrganizationApp).toHaveBeenCalledTimes(0)
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
     expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from .env file')
   })
@@ -211,17 +211,17 @@ describe('collectCredentials', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(undefined)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1'})
     vi.mocked(requestAppInfo)
 
     // When
-    const secret = await collectCredentials(testPartnersUserSession, undefined)
+    const secret = await collectCredentials(developerPlatformClient, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret})
     expect(clientSecretPrompt).toHaveBeenCalledOnce()
     expect(findInEnv).toHaveBeenCalledOnce()
-    expect(findApiKey).toHaveBeenCalledOnce()
+    expect(findOrganizationApp).toHaveBeenCalledOnce()
     expect(requestAppInfo).toHaveBeenCalledTimes(0)
   })
 
@@ -230,18 +230,21 @@ describe('collectCredentials', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt)
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(anApiKey)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1', apiKey: anApiKey, id: anApiKey})
     vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: anApiKey, clientId: 'Id'})
 
     // When
-    const secret = await collectCredentials(testPartnersUserSession, undefined)
+    const secret = await collectCredentials(developerPlatformClient, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret, apiKey: anApiKey, clientId: 'Id'})
     expect(clientSecretPrompt).toHaveBeenCalledTimes(0)
     expect(findInEnv).toHaveBeenCalledOnce()
-    expect(findApiKey).toHaveBeenCalledOnce()
-    expect(requestAppInfo).toHaveBeenCalledWith(aToken, anApiKey)
+    expect(findOrganizationApp).toHaveBeenCalledOnce()
+    expect(requestAppInfo).toHaveBeenCalledWith(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      developerPlatformClient,
+    )
     expect(outputInfo).toHaveBeenCalledWith('Reading client-secret from app settings in Partners')
   })
 
@@ -250,18 +253,21 @@ describe('collectCredentials', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(clientSecretPrompt).mockResolvedValue(aSecret)
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(anApiKey)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1', apiKey: anApiKey, id: anApiKey})
     vi.mocked(requestAppInfo).mockResolvedValue({})
 
     // When
-    const secret = await collectCredentials(testPartnersUserSession, undefined)
+    const secret = await collectCredentials(developerPlatformClient, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret, apiKey: anApiKey})
     expect(clientSecretPrompt).toHaveBeenCalledOnce()
     expect(findInEnv).toHaveBeenCalledOnce()
-    expect(findApiKey).toHaveBeenCalledOnce()
-    expect(requestAppInfo).toHaveBeenCalledWith(aToken, anApiKey)
+    expect(findOrganizationApp).toHaveBeenCalledOnce()
+    expect(requestAppInfo).toHaveBeenCalledWith(
+      {id: anApiKey, apiKey: anApiKey, organizationId: '1'},
+      developerPlatformClient,
+    )
   })
 })
 
@@ -269,39 +275,39 @@ describe('collectApiKey', () => {
   test('uses .env value when present', async () => {
     // Given
     vi.mocked(findInEnv).mockResolvedValue({clientSecret: aSecret, apiKey: anApiKey})
-    vi.mocked(findApiKey)
+    vi.mocked(findOrganizationApp)
 
     // When
-    const apiKey = await collectApiKey(testPartnersUserSession)
+    const apiKey = await collectApiKey(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
     expect(findInEnv).toHaveBeenCalledOnce()
-    expect(findApiKey).toHaveBeenCalledTimes(0)
+    expect(findOrganizationApp).toHaveBeenCalledTimes(0)
     expect(outputInfo).toHaveBeenCalledWith('Using api-key from .env file')
   })
 
   test('uses remote value when no .env', async () => {
     // Given
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(anApiKey)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1', apiKey: anApiKey, id: anApiKey})
 
     // When
-    const apiKey = await collectApiKey(testPartnersUserSession)
+    const apiKey = await collectApiKey(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
     expect(findInEnv).toHaveBeenCalledOnce()
-    expect(findApiKey).toHaveBeenCalledOnce()
+    expect(findOrganizationApp).toHaveBeenCalledOnce()
     expect(outputInfo).toHaveBeenCalledWith('Using api-key from app settings in Partners')
   })
 
   test('fails when no .env, and no app', async () => {
     // Given
     vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findApiKey).mockResolvedValue(undefined)
+    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1'})
 
     // When Then
-    await expect(collectApiKey(testPartnersUserSession)).rejects.toThrow(AbortError)
+    await expect(collectApiKey(developerPlatformClient)).rejects.toThrow(AbortError)
   })
 })

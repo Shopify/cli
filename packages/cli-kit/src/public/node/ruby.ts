@@ -11,8 +11,8 @@ import {outputContent, outputToken} from './output.js'
 import {isTruthy} from './context/utilities.js'
 import {runWithTimer} from './metadata.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {coerce, SemVer} from 'semver'
 import envPaths from 'env-paths'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
@@ -124,10 +124,10 @@ async function validateRubyEnv() {
  * A function that validates if the environment in which the CLI is running is set up with Ruby.
  */
 async function validateRuby() {
-  let version
+  let version: SemVer | null
   try {
     const stdout = await captureOutput(rubyExecutable(), ['-v'])
-    version = coerceSemverVersion(stdout)
+    version = coerce(stdout)
   } catch {
     throw new AbortError(
       'Ruby environment not found',
@@ -141,7 +141,7 @@ async function validateRuby() {
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Ruby version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
+      `Ruby version ${outputContent`${outputToken.yellow(version?.raw ?? 'unknown')}`.value} is not supported`,
       `Make sure you have at least Ruby ${
         outputContent`${outputToken.yellow(MinRubyVersion)}`.value
       } installed on your system. ${
@@ -156,10 +156,10 @@ async function validateRuby() {
  * A function that validates if the environment in which the CLI is running is set up with Bundler.
  */
 async function validateBundler() {
-  let version
+  let version: SemVer | null
   try {
     const stdout = await captureOutput(bundleExecutable(), ['-v'], {env: {BUNDLE_USER_HOME: bundleUserHome()}})
-    version = coerceSemverVersion(stdout)
+    version = coerce(stdout)
   } catch {
     throw new AbortError(
       'Bundler not found',
@@ -172,7 +172,7 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Bundler version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
+      `Bundler version ${outputContent`${outputToken.yellow(version?.raw ?? 'unknown')}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
         outputContent`${outputToken.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,

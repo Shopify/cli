@@ -1,0 +1,1 @@
+shopify app function build [flags]

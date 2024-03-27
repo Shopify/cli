@@ -89,8 +89,12 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
  */
 export async function exchangeCustomPartnerToken(token: string): Promise<ApplicationToken> {
   const appId = applicationId('partners')
-  const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
-  return newToken[appId]!
+  try {
+    const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
+    return newToken[appId]!
+  } catch (error) {
+    throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
+  }
 }
 
 export type IdentityDeviceError =

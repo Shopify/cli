@@ -8,9 +8,9 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 const onNotify = vi.fn()
 
 vi.mock('process')
-vi.mock('../../private/node/error-handler.js', () => {
+vi.mock('@bugsnag/js', () => {
   return {
-    Bugsnag: {
+    default: {
       notify: (reportedError: any, args: any, callback: any) => {
         onNotify(reportedError)
         callback(null)

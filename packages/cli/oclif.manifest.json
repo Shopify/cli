@@ -193,6 +193,32 @@
       ],
       "strict": true
     },
+    "docs:generate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Generate CLI commands documentation",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "docs:generate",
+      "isESM": true,
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "docs",
+        "generate.js"
+      ],
+      "strict": true
+    },
     "hydrogen:init": {
       "aliases": [
       ],
@@ -358,6 +384,9 @@
         }
       },
       "description": "Starts a search on shopify.dev.",
+      "examples": [
+        "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
+      ],
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -374,8 +403,7 @@
         "commands",
         "search.js"
       ],
-      "strict": true,
-      "usage": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search <query>\n\n# search for a phrase on Shopify.dev\nshopify search \"<a search query separated by spaces>\"\n"
+      "strict": true
     },
     "upgrade": {
       "aliases": [

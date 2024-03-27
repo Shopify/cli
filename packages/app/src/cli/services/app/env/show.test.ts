@@ -5,7 +5,6 @@ import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -13,7 +12,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 vi.mock('../../dev/fetch.js')
 vi.mock('../fetch-app-from-config-or-select.js')
 vi.mock('../../../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('env show', () => {
@@ -22,10 +20,9 @@ describe('env show', () => {
     vi.spyOn(file, 'writeFile')
 
     const app = mockApp()
-    const token = 'token'
     const organization = {
       id: '123',
-      betas: {},
+      flags: {},
       businessName: 'test',
       website: '',
       apps: {nodes: []},
@@ -40,7 +37,6 @@ describe('env show', () => {
       apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
     })
     vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
     const result = await showEnv(app)

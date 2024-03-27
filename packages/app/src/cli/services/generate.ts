@@ -1,5 +1,6 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadApp} from '../models/app/loader.js'
@@ -38,17 +39,15 @@ export interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
   const apiKey = await ensureGenerateContext({...options, developerPlatformClient})
-  const specifications = await developerPlatformClient.specifications(apiKey)
+  const specifications = await fetchSpecifications({developerPlatformClient, apiKey})
   const app: AppInterface = await loadApp({
     directory: options.directory,
     configName: options.configName,
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
+  const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, apiKey, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
@@ -169,7 +168,7 @@ function formatSuccessfulRunMessage(
   if (extensionTemplate.types.some((type) => type.type !== 'function')) {
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
-      {command: `${formatPackageManagerCommand(depndencyManager, 'dev')}`},
+      {command: `${formatPackageManagerCommand(depndencyManager, 'shopify app dev')}`},
     ])
   }
 
@@ -196,7 +195,7 @@ async function handleTypeParameter(
   if (!extensionTemplate) {
     const isShopifolk = await isShopify()
     const allExternalTypes = extensionTemplates.map((spec) => spec.identifier)
-    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    const tryMsg = isShopifolk ? 'You might need to enable some flags on your Organization or App' : undefined
     throw new AbortError(
       `Unknown extension type: ${typeFlag}.\nThe following extension types are supported: ${allExternalTypes.join(
         ', ',

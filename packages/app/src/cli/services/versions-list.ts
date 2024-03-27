@@ -1,4 +1,5 @@
 import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
+import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -91,11 +92,11 @@ export default async function versionList(options: VersionListOptions) {
   const result = await ensureVersionsListContext(options)
   const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
 
-  const {id: appId, organizationId, title, apiKey} = result.partnersApp
+  const {id: appId, organizationId, title, apiKey} = result.remoteApp
 
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, apiKey, options.json)
 
-  const {businessName: org} = await developerPlatformClient.orgFromId(organizationId)
+  const {businessName: org} = await fetchOrgFromId(organizationId, developerPlatformClient)
 
   if (options.json) {
     return outputInfo(JSON.stringify(appVersions, null, 2))

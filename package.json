@@ -27,7 +27,8 @@
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
-    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache"
+    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
+    "build-docs": "sh ./bin/docs/build-docs.sh"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",
@@ -41,6 +42,7 @@
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
+    "@shopify/generate-docs": "^0.13.2",
     "@shopify/typescript-configs": "^5.1.0",
     "@types/node": "18.19.3",
     "@types/rimraf": "^3.0.2",
@@ -54,11 +56,11 @@
     "eslint": "^8.48.0",
     "execa": "^7.2.0",
     "fast-glob": "^3.3.1",
-    "json-stringify-deterministic": "1.0.12",
     "find-up": "^6.3.0",
     "fs-extra": "^11.1.0",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
+    "json-stringify-deterministic": "1.0.12",
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
     "nx": "16.8.1",
