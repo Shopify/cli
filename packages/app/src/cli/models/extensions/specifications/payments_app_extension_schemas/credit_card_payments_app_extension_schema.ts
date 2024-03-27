@@ -119,7 +119,7 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     supports_deferred_payments: config.supports_deferred_payments,
     supports_installments: config.supports_installments,
     start_verification_session_url: config.verification_session_url,
-    certificate_fingerprint: config.encryption_certificate_fingerprint,
+    encryption_certificate: config.encryption_certificate_fingerprint,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     ui_extension_handle: config.ui_extension_handle,
   }
