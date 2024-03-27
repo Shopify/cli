@@ -33,4 +33,27 @@ describe('getAvailableTCPPort', () => {
     // When/Then
     await expect(() => getAvailableTCPPort()).rejects.toThrowError(new AbortError(errorMessage))
   })
+
+  test('returns the provided port when it is available', async () => {
+    // Given
+    vi.mocked(port.checkPort).mockResolvedValue(666)
+
+    // When
+    const got = await getAvailableTCPPort(666)
+
+    // Then
+    expect(got).toBe(666)
+  })
+
+  test('returns a random port when the provided one is not available', async () => {
+    // Given
+    vi.mocked(port.checkPort).mockResolvedValue(false)
+    vi.mocked(port.getRandomPort).mockResolvedValue(5)
+
+    // When
+    const got = await getAvailableTCPPort(666)
+
+    // Then
+    expect(got).toBe(5)
+  })
 })

@@ -6,10 +6,15 @@ import * as port from 'get-port-please'
 /**
  * Returns an available port in the current environment.
  *
+ * @param preferredPort - Number of the preferred port to be used if available.
  * @returns A promise that resolves with an availabe port.
  * @example
  */
-export async function getAvailableTCPPort(): Promise<number> {
+export async function getAvailableTCPPort(preferredPort?: number): Promise<number> {
+  if (preferredPort && (await checkPortAvailability(preferredPort))) {
+    outputDebug(outputContent`Port ${preferredPort.toString()} is free`)
+    return preferredPort
+  }
   outputDebug(outputContent`Getting a random port...`)
   const randomPort = await retryOnError(() => port.getRandomPort('localhost'))
   outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
