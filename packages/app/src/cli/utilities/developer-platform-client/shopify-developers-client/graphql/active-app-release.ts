@@ -14,7 +14,6 @@ export const ActiveAppReleaseQuery = gql`
             handle
             config
             specification {
-              identifier
               externalIdentifier
               name
               experience
@@ -31,7 +30,6 @@ export interface ActiveAppReleaseQueryVariables {
 }
 
 export interface AppModuleSpecification {
-  identifier: string
   externalIdentifier: string
   name: string
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'

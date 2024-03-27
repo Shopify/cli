@@ -88,6 +88,10 @@ export interface ActiveAppVersion {
   appModuleVersions: AppModuleVersion[]
 }
 
+export type AppDeployOptions = AppDeployVariables & {
+  organizationId: string
+}
+
 export interface DeveloperPlatformClient {
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
@@ -113,7 +117,7 @@ export interface DeveloperPlatformClient {
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
-  deploy: (input: AppDeployVariables) => Promise<AppDeploySchema>
+  deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>

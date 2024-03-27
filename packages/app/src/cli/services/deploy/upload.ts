@@ -1,13 +1,13 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
-import {AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
+import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppDeployOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
@@ -61,6 +61,9 @@ export async function uploadThemeExtensions(
 interface UploadExtensionsBundleOptions {
   /** The application API key */
   apiKey: string
+
+  /** The ID of the organization owning the application */
+  organizationId: string
 
   /** The path to the bundle file to be uploaded */
   bundlePath?: string
@@ -131,8 +134,9 @@ export async function uploadExtensionsBundle(
     })
   }
 
-  const variables: AppDeployVariables = {
+  const variables: AppDeployOptions = {
     apiKey: options.apiKey,
+    organizationId: options.organizationId,
     skipPublish: !options.release,
     message: options.message,
     versionTag: options.version,

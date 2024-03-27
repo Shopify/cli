@@ -4,7 +4,12 @@ import {
   AllDevStoresByOrganizationQueryVariables,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
-import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AppDeployOptions,
+  DeveloperPlatformClient,
+  Paginateable,
+} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {
@@ -326,8 +331,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ExtensionUpdateDraftMutation, extensionInput)
   }
 
-  async deploy(deployInput: AppDeployVariables): Promise<AppDeploySchema> {
-    return this.request(AppDeploy, deployInput)
+  async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {
+    const {organizationId, ...deployOptions} = deployInput
+    // Enforce the type
+    const variables: AppDeployVariables = deployOptions
+    return this.request(AppDeploy, variables)
   }
 
   async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {
