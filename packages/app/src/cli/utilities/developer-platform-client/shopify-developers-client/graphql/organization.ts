@@ -20,6 +20,6 @@ export interface OrganizationQuerySchema {
     organization: {
       id: string
       name: string
-    }
+    } | null
   }
 }

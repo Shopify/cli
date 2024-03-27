@@ -182,9 +182,13 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       await this.businessPlatformToken(),
       variables,
     )
+    const org = organizationResult.currentUserAccount.organization
+    if (!org) {
+      return
+    }
     return {
       id: orgId,
-      businessName: organizationResult.currentUserAccount.organization.name,
+      businessName: org.name,
     }
   }
 
