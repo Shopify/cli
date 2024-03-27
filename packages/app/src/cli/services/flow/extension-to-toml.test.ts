@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {describe, expect, test} from 'vitest'
 
 describe('extension-to-toml', () => {
-  test('correctly builds a toml string for a flow_action', () => {
+  test('correctly builds a toml string for a flow_action', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '26237698049',
@@ -17,7 +17,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = await buildTomlObject(extension1)
 
     // Then
     expect(got).toEqual(`[[extensions]]
@@ -54,7 +54,7 @@ required = true
 `)
   })
 
-  test('correctly builds a toml string for a flow_trigger', () => {
+  test('correctly builds a toml string for a flow_trigger', async () => {
     // Given
     const extension2 = {
       id: '26237861889',
@@ -72,7 +72,7 @@ required = true
     }
 
     // When
-    const got = buildTomlObject(extension2)
+    const got = await buildTomlObject(extension2)
 
     // Then
     expect(got).toEqual(`[[extensions]]
