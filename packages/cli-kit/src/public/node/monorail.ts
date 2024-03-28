@@ -222,12 +222,11 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
  * @returns The payload with the api_key sanitized.
  */
 function sanitizePayload<T extends object>(payload: T): T {
-  const result = {...payload}
-  if ('api_key' in result) {
-    result.api_key = '****'
+  if ('api_key' in payload) {
+    payload.api_key = '****'
   }
 
-  return result
+  return payload
 }
 
 const buildHeaders = (currentTime: number) => {

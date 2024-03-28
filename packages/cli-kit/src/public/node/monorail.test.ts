@@ -46,5 +46,6 @@ describe('monorail', () => {
     const res = await publishMonorailEvent('fake_schema/0.0', {api_key: 'some-api-key'}, {baz: 'abc'})
     expect(res.type).toEqual('ok')
     expect(outputMock.debug()).toContain('"api_key": "****"')
+    expect(outputMock.debug()).not.toContain('some-api-key')
   })
 })
