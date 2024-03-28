@@ -21,12 +21,14 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   supports_3ds: false,
   test_mode_available: true,
   supports_deferred_payments: false,
+  multiple_capture: false,
   supports_installments: false,
   targeting: [{target: 'payments.credit-card.render'}],
   api_version: '2022-07',
   description: 'my payments app extension',
   metafields: [],
   ui_extension_handle: 'sample-ui-extension',
+  ui_extension_registration_uuid: 'registration-uuid',
   encryption_certificate_fingerprint: 'fingerprint',
   checkout_payment_method_fields: [{type: 'string', required: false, key: 'sample_key'}],
   input: {
@@ -120,6 +122,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       start_verification_session_url: config.verification_session_url,
       confirmation_callback_url: config.confirmation_callback_url,
       merchant_label: config.merchant_label,
+      multiple_capture: config.multiple_capture,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
       test_mode_available: config.test_mode_available,
@@ -128,7 +131,8 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       supports_installments: config.supports_installments,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       ui_extension_handle: config.ui_extension_handle,
-      encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
+      encryption_certificate: config.encryption_certificate_fingerprint,
+      ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     })
   })
 })

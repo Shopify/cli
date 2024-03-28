@@ -5,7 +5,7 @@ import {buildTomlObject} from './flow/extension-to-toml.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -46,6 +46,11 @@ const flowExtensionB: ExtensionRegistration = {
 }
 
 describe('import-dashboard-extensions', () => {
+  beforeEach(() => {
+    // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
+    vi.clearAllMocks()
+  })
+
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])

@@ -3,6 +3,19 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 const MAX_LABEL_SIZE = 50
 
+export interface BasePaymentsAppExtensionDeployConfigType {
+  api_version: string
+  start_payment_session_url: string
+  start_refund_session_url?: string
+  start_capture_session_url?: string
+  start_void_session_url?: string
+  merchant_label: string
+  supported_countries: string[]
+  supported_payment_methods: string[]
+  test_mode_available: boolean
+  supports_oversell_protection?: boolean
+}
+
 export const BasePaymentsAppExtensionSchema = BaseSchema.extend({
   api_version: zod.string(),
   payment_session_url: zod.string().url(),
@@ -37,6 +50,10 @@ export const BuyerLabelSchema = zod.object({
 export const DeferredPaymentsSchema = zod.object({
   supports_installments: zod.boolean(),
   supports_deferred_payments: zod.boolean(),
+})
+
+export const MultipleCaptureSchema = zod.object({
+  multiple_capture: zod.boolean().optional(),
 })
 
 export const ConfirmationSchema = zod.object({

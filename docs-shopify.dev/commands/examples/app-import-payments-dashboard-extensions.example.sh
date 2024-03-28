@@ -1,0 +1,1 @@
+shopify app import-payments-dashboard-extensions [flags]
