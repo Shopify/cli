@@ -198,7 +198,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const response = await fetch(url, {method: 'POST', body, headers})
 
     if (response.status === 200) {
-      outputDebug(outputContent`Analytics event sent: ${outputToken.json(payload)}`)
+      outputDebug(outputContent`Analytics event sent: ${outputToken.json(sanitizePayload(payload))}`)
       return {type: 'ok'}
     } else {
       outputDebug(`Failed to report usage analytics: ${response.statusText}`)
@@ -213,6 +213,20 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     outputDebug(message)
     return {type: 'error', message}
   }
+}
+
+/**
+ * Sanitizies the api_key from the payload.
+ *
+ * @param payload - The public and sensitive data.
+ * @returns The payload with the api_key sanitized.
+ */
+function sanitizePayload<T extends object>(payload: T): T {
+  if ('api_key' in payload) {
+    payload.api_key = '****'
+  }
+
+  return payload
 }
 
 const buildHeaders = (currentTime: number) => {
