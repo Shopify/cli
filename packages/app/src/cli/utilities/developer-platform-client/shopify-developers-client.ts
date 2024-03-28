@@ -245,7 +245,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {
-    throw new BugError('Not implemented: templateSpecifications')
+    return stubbedExtensionTemplates()
   }
 
   async createApp(
