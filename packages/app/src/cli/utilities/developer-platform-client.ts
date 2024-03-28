@@ -44,6 +44,7 @@ import {
   MigrateToUiExtensionVariables,
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
+import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -126,6 +127,7 @@ export interface DeveloperPlatformClient {
   apiVersions: () => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
   migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
+  migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   currentAccountInfo: () => Promise<CurrentAccountInfoSchema>
   targetSchemaDefinition: (input: TargetSchemaDefinitionQueryVariables) => Promise<string | null>

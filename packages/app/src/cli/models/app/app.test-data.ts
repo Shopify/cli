@@ -45,6 +45,7 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -842,6 +843,13 @@ const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
   },
 }
 
+const migrateAppModuleResponse: MigrateAppModuleSchema = {
+  migrateAppModule: {
+    migratedAppModule: true,
+    userErrors: [],
+  },
+}
+
 const apiVersionsResponse: PublicApiVersionsSchema = {
   publicApiVersions: ['2022', 'unstable', '2023'],
 }
@@ -910,6 +918,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
+    migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
     targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
