@@ -1,4 +1,10 @@
-import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
+import {
+  Organization,
+  MinimalOrganizationApp,
+  OrganizationStore,
+  MinimalAppIdentifiers,
+  MinimalRunEvent,
+} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -14,6 +20,20 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     choices: orgList,
   })
   return organizations.find((org) => org.id === id)!
+}
+
+export async function selectRunPrompt(runs: MinimalRunEvent[]): Promise<MinimalRunEvent> {
+  const toAnswer = (run: MinimalRunEvent) => {
+    return {label: run.payload.invocationId, value: run}
+  }
+
+  const runsList = runs.map(toAnswer)
+
+  const selectedRun = await renderAutocompletePrompt({
+    message: 'Select a run',
+    choices: runsList,
+  })
+  return selectedRun
 }
 
 export async function selectAppPrompt(

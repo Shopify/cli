@@ -23,6 +23,13 @@ export interface MinimalAppIdentifiers {
 export type MinimalOrganizationApp = MinimalAppIdentifiers & {
   title: string
 }
+export interface MinimalRunEvent {
+  type: 'function-run'
+  payload: {
+    input: string
+    invocationId: string
+  }
+}
 
 export type OrganizationApp = MinimalOrganizationApp & {
   apiSecretKeys: {
