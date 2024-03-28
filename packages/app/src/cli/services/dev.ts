@@ -61,7 +61,7 @@ export interface DevOptions {
 }
 
 export async function dev(commandOptions: DevOptions) {
-  console.log('HELLLLO DEV')
+  console.log('[DEV MODE - LOGS]')
   const config = await prepareForDev(commandOptions)
   // this has info on the remoteApp, localApp, storeId, 'real extensions,
 
@@ -285,6 +285,8 @@ async function launchDevProcesses({
     }
     return outputProcess
   })
+
+  console.log('prprocessesForTaskRunner', processesForTaskRunner)
 
   const apiKey = config.remoteApp.apiKey
   const partnersSession = await config.developerPlatformClient.session()

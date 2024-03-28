@@ -178,7 +178,6 @@ export async function fetchFunctionLogs(functionId: string, apiKey: string, toke
   // const query = FindAppFunctionLogsQuerySchema
   try {
     const result: FindAppFunctionLogsQuerySchema = await partnersRequest(FindAppFunctionLogs, token)
-    console.log(`result: ${result}`)
     return result.appEvents
   } catch (e) {
     console.log(`error: ${e}`)

@@ -44,7 +44,7 @@ const Dev: FunctionComponent<DevProps> = ({
   graphiqlUrl = '',
   graphiqlPort,
   app,
-  pollingTime = 5000,
+  pollingTime = 10000,
   developerPreview,
   isEditionWeek,
 }) => {
@@ -95,10 +95,24 @@ const Dev: FunctionComponent<DevProps> = ({
 
   useEffect(() => {
     const pollLogService = async (functionId: string) => {
+      const parseAppEvents = (logs: string) => {
+        const startIndex = logs.indexOf('["{')
+        const endIndex = logs.lastIndexOf('}"]') + 1
+        const appEventsString = logs.substring(startIndex, endIndex)
+        const appEventsArray = appEventsString.split('","').map((event) => event.replace(/"/g, ''))
+        return appEventsArray
+      }
+
       try {
+        console.log('------------------------')
         const logs = await developerPreview.fetchLogs(functionId)
-        console.log('🤖 THE POLING SERVICE HAS POLLED 🤖')
-        console.log(logs)
+        console.log('RETURN FROM fetchLogs()', logs)
+        const events = parseAppEvents(logs as string)
+        console.log('going thru each event.')
+        events.forEach((event) => {
+          console.log(event)
+        })
+        console.log('------------------------')
       } catch (_) {
         setError('Failed to fetch the latest logs, trying again in 5 seconds.')
       }

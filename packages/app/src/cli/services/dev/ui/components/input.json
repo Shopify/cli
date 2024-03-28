@@ -1,0 +1,13 @@
+{
+  "invocation_id": "ef1aed7d-cec8-4fbb-897a-2cd8e8689580",
+  "type": "function-run",
+  "input": "{\"cart\":{\"lines\":[{\"quantity\":11,\"merchandise\":{\"__typename\":\"ProductVariant\",\"id\":\"gid:\\/\\/shopify\\/ProductVariant\\/1\"}}]}}",
+  "input_bytes": 124,
+  "output": null,
+  "output_bytes": null,
+  "logs": "Error while running JS: Uncaught Error: A line item has quantity > 5\n    at run (function.mjs:44)\n    at run_default (function.mjs:35)\n    at run2 (function.mjs:61)\n    at <anonymous> (runtime.mjs:1)\n\n",
+  "function_id": "9bf9c6e9-a58f-40d1-ab60-0e9d49d199af",
+  "fuel_consumed": 342132,
+  "error_message": "Functions::Errors::Module::RuntimeError",
+  "error_type": "Functions::Errors::Module::RuntimeError"
+}
