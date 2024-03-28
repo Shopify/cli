@@ -786,6 +786,99 @@
       "strict": true,
       "summary": "Compile a function to wasm."
     },
+    "app:function:replay": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
+      "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "export": {
+          "char": "e",
+          "default": "_start",
+          "description": "Name of the wasm export to invoke.",
+          "env": "SHOPIFY_FLAG_EXPORT",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "export",
+          "type": "option"
+        },
+        "input": {
+          "char": "i",
+          "description": "The input JSON to pass to the function. This should be a json file read.",
+          "env": "SHOPIFY_FLAG_INPUT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "input",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Log the run result as a JSON object.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:replay",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "function",
+        "replay.js"
+      ],
+      "strict": true,
+      "summary": "Replays a function locally based on a FunctionRunEvent."
+    },
     "app:function:run": {
       "aliases": [
       ],

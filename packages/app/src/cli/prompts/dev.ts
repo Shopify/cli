@@ -1,4 +1,10 @@
-import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
+import {
+  Organization,
+  MinimalOrganizationApp,
+  OrganizationStore,
+  MinimalAppIdentifiers,
+  MinimalRunEvent,
+} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandInfo} from '../services/local-storage.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -15,6 +21,20 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     choices: orgList,
   })
   return organizations.find((org) => org.id === id)!
+}
+
+export async function selectRunPrompt(runs: MinimalRunEvent[]): Promise<MinimalRunEvent> {
+  const toAnswer = (run: MinimalRunEvent) => {
+    return {label: run.payload.invocationId, value: run}
+  }
+
+  const runsList = runs.map(toAnswer)
+
+  const selectedRun = await renderAutocompletePrompt({
+    message: 'Select a run',
+    choices: runsList,
+  })
+  return selectedRun
 }
 
 export async function selectAppPrompt(
