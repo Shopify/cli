@@ -5,7 +5,10 @@ import {describe, expect, test} from 'vitest'
 describe('fetchExtensionSpecifications', () => {
   test('returns the filtered and mapped results including theme', async () => {
     // Given/When
-    const got = await fetchSpecifications({developerPlatformClient: testDeveloperPlatformClient(), app: testOrganizationApp()})
+    const got = await fetchSpecifications({
+      developerPlatformClient: testDeveloperPlatformClient(),
+      app: testOrganizationApp(),
+    })
 
     // Then
     expect(got).toEqual(

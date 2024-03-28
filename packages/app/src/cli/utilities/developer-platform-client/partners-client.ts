@@ -7,6 +7,7 @@ import {
 import {
   ActiveAppVersion,
   AppDeployOptions,
+  AssetUrlSchema,
   DeveloperPlatformClient,
   Paginateable,
 } from '../developer-platform-client.js'
@@ -348,8 +349,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppRelease, input)
   }
 
-  async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
-    return this.request(GenerateSignedUploadUrl, input)
+  async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables: GenerateSignedUploadUrlVariables = {apiKey: app.apiKey, bundleFormat: 1}
+    const result = await this.request<GenerateSignedUploadUrlSchema>(GenerateSignedUploadUrl, variables)
+    return {
+      assetUrl: result.appVersionGenerateSignedUploadUrl.signedUploadUrl,
+      userErrors: result.appVersionGenerateSignedUploadUrl.userErrors,
+    }
   }
 
   async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {

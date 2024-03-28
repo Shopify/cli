@@ -2,8 +2,8 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient

@@ -47,7 +47,11 @@ async function generate(options: GenerateOptions) {
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp.apiKey, availableSpecifications)
+  const extensionTemplates = await fetchExtensionTemplates(
+    developerPlatformClient,
+    remoteApp.apiKey,
+    availableSpecifications,
+  )
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)

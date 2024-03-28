@@ -12,14 +12,15 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AssetUrlSchema,
+  CreateAppOptions,
+  DeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
 import {
@@ -829,11 +830,9 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
-const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
-  appVersionGenerateSignedUploadUrl: {
-    signedUploadUrl: 'signed-upload-url',
-    userErrors: [],
-  },
+const generateSignedUploadUrlResponse: AssetUrlSchema = {
+  assetUrl: 'signed-upload-url',
+  userErrors: [],
 }
 
 const convertedToTestStoreResponse = {
@@ -942,8 +941,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
-    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
-      Promise.resolve(generateSignedUploadUrlResponse),
+    generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
