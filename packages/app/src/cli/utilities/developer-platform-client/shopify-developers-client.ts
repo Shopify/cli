@@ -383,7 +383,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: updateExtension')
   }
 
-  async deploy({apiKey, appModules, organizationId, versionTag}: AppDeployOptions): Promise<AppDeploySchema> {
+  async deploy({apiKey, appModules, organizationId, versionTag, bundleUrl}: AppDeployOptions): Promise<AppDeploySchema> {
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
       appModules: (appModules ?? []).map((mod) => {
@@ -395,6 +395,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         }
       }),
       versionTag,
+      assetsUrl: bundleUrl,
     }
 
     const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
