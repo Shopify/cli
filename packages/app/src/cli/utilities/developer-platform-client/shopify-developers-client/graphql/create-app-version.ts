@@ -30,10 +30,6 @@ export const CreateAppVersionMutation = gql`
         }
         versionTag
       }
-      userErrors {
-        field
-        message
-      }
     }
   }
 `

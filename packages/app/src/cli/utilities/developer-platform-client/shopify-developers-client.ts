@@ -404,6 +404,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
     )
+    console.log(JSON.stringify(result, null, 2))
     const {version, userErrors} = result.versionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
