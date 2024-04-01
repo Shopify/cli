@@ -328,6 +328,9 @@ async function handleBulkUpload(
   session: AdminSession,
   count = 0,
 ): Promise<Result[]> {
+  if (uploadParams.length === 0) {
+    return []
+  }
   if (count > 0) {
     outputDebug(
       `Retry Attempt ${count}/${MAX_UPLOAD_RETRY_COUNT} for the following files:
