@@ -13,7 +13,6 @@ describe('webhooks', () => {
             {
               uri: 'https://example.com/webhooks/orders',
               topics: ['orders/delete', 'orders/create', 'orders/edited'],
-              metafield_namespaces: ['id', 'size'],
             },
             {
               topics: ['products/create'],
@@ -30,7 +29,6 @@ describe('webhooks', () => {
               sub_topic: 'type:metaobject_two',
             },
             {
-              metafield_namespaces: ['size'],
               topics: ['orders/create'],
               uri: 'https://valid-url',
               include_fields: ['variants', 'title'],
@@ -53,17 +51,14 @@ describe('webhooks', () => {
         api_version: '2024-01',
         subscriptions: [
           {
-            metafield_namespaces: ['id', 'size'],
             topic: 'orders/delete',
             uri: 'https://example.com/webhooks/orders',
           },
           {
-            metafield_namespaces: ['id', 'size'],
             topic: 'orders/create',
             uri: 'https://example.com/webhooks/orders',
           },
           {
-            metafield_namespaces: ['id', 'size'],
             topic: 'orders/edited',
             uri: 'https://example.com/webhooks/orders',
           },
@@ -93,7 +88,6 @@ describe('webhooks', () => {
           },
           {
             include_fields: ['variants', 'title'],
-            metafield_namespaces: ['size'],
             topic: 'orders/create',
             uri: 'https://valid-url',
           },
@@ -135,7 +129,6 @@ describe('webhooks', () => {
         api_version: '2024-01',
         subscriptions: [
           {
-            metafield_namespaces: ['id', 'size'],
             topic: 'orders/create',
             uri: 'https://example.com/webhooks/orders',
           },
@@ -150,7 +143,6 @@ describe('webhooks', () => {
           },
           {
             include_fields: ['variants', 'title'],
-            metafield_namespaces: ['size'],
             topic: 'orders/create',
             uri: 'https://valid-url',
           },
@@ -167,7 +159,6 @@ describe('webhooks', () => {
           api_version: '2024-01',
           subscriptions: [
             {
-              metafield_namespaces: ['id', 'size'],
               topics: ['orders/create'],
               uri: 'https://example.com/webhooks/orders',
             },
@@ -182,7 +173,6 @@ describe('webhooks', () => {
             },
             {
               include_fields: ['variants', 'title'],
-              metafield_namespaces: ['size'],
               topics: ['orders/create'],
               uri: 'https://valid-url',
             },
