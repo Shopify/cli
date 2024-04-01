@@ -1,4 +1,4 @@
-import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandInfo} from '../services/local-storage.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -25,7 +25,7 @@ export async function selectAppPrompt(
     directory?: string
     developerPlatformClient?: DeveloperPlatformClient
   },
-): Promise<string> {
+): Promise<MinimalAppIdentifiers> {
   const tomls = await getTomls(options?.directory)
   const developerPlatformClient = options?.developerPlatformClient ?? selectDeveloperPlatformClient()
 
@@ -39,23 +39,25 @@ export async function selectAppPrompt(
     return {label: app.title, value: app.apiKey}
   }
 
-  const appList = apps.map(toAnswer)
+  let currentAppChoices = apps
 
-  return renderAutocompletePrompt({
+  const apiKey = await renderAutocompletePrompt({
     message: 'Which existing app is this for?',
-    choices: appList,
+    choices: currentAppChoices.map(toAnswer),
     hasMorePages,
     search: async (term) => {
       const result = await developerPlatformClient.appsForOrg(orgId, term)
+      currentAppChoices = result.apps
 
       return {
-        data: result.apps.map(toAnswer),
+        data: currentAppChoices.map(toAnswer),
         meta: {
           hasNextPage: result.hasMorePages,
         },
       }
     },
   })
+  return currentAppChoices.find((app) => app.apiKey === apiKey)!
 }
 
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
