@@ -89,13 +89,13 @@ describe('selectApp', () => {
   test('returns app if user selects one', async () => {
     // Given
     const apps = [APP1, APP2]
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(APP2.apiKey)
 
     // When
     const got = await selectAppPrompt(apps, true, ORG1.id, {developerPlatformClient: testDeveloperPlatformClient()})
 
     // Then
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: 'Which existing app is this for?',
       choices: [
@@ -114,14 +114,14 @@ describe('selectApp', () => {
     })
 
     const apps = [APP1, APP2]
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(APP2.apiKey)
 
     const got = await selectAppPrompt(apps, true, ORG1.id, {
       directory: '/',
       developerPlatformClient: testDeveloperPlatformClient(),
     })
 
-    expect(got).toEqual(APP2.apiKey)
+    expect(got).toEqual(APP2)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: 'Which existing app is this for?',
       choices: [

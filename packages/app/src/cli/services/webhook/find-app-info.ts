@@ -52,18 +52,17 @@ export async function findOrganizationApp(
   // Try to infer from current folder
   const currentDir = basename(cwd())
   const appFromDir = apps.nodes.find((elm) => elm.title === currentDir)
-  let apiKey
   if (appFromDir === undefined) {
     if (apps.nodes.length === 1 && apps.nodes[0]?.apiKey) {
-      apiKey = apps.nodes[0].apiKey
+      const apiKey = apps.nodes[0].apiKey
+      return {id: apiKey, apiKey, organizationId: org.id}
     } else {
-      apiKey = await selectAppPrompt(apps.nodes, apps.pageInfo.hasNextPage, org.id)
+      return selectAppPrompt(apps.nodes, apps.pageInfo.hasNextPage, org.id)
     }
   } else {
-    apiKey = appFromDir.apiKey
+    const apiKey = appFromDir.apiKey
+    return {id: apiKey, apiKey, organizationId: org.id}
   }
-
-  return {id: apiKey, apiKey, organizationId: org.id}
 }
 
 /**
