@@ -157,6 +157,8 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     grantedScopes: [],
     disabledFlags: ['5b25141b'],
     flags: [],
+    applicationUrl: 'https://www.example.com',
+    redirectUrlWhitelist: [],
   }
   return {...defaultApp, ...app}
 }

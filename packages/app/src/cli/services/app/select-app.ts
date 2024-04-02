@@ -29,6 +29,7 @@ export async function fetchAppRemoteConfiguration(
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
     activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
+  if (appModuleVersionsConfig.length === 0) return undefined
   const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
     specifications,
