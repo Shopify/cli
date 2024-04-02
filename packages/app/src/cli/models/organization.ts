@@ -25,8 +25,8 @@ export type OrganizationApp = MinimalOrganizationApp & {
   newApp?: boolean
   grantedScopes: string[]
   developmentStorePreviewEnabled?: boolean
-  applicationUrl: string
-  redirectUrlWhitelist: string[]
+  applicationUrl?: string
+  redirectUrlWhitelist?: string[]
   requestedAccessScopes?: string[]
   webhookApiVersion?: string
   embedded?: boolean

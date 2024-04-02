@@ -226,7 +226,7 @@ function buildRemoteApiClientConfiguration(
 
 function addRemoteAppHomeConfig(remoteApp: OrganizationApp) {
   const homeConfig = {
-    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
+    application_url: remoteApp.applicationUrl?.replace(/\/$/, '') || '',
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
   }
   return remoteApp.preferencesUrl
@@ -294,7 +294,7 @@ function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp:
   }
   return {
     auth: {
-      redirect_urls: remoteApp.redirectUrlWhitelist,
+      redirect_urls: remoteApp.redirectUrlWhitelist ?? [],
     },
     access_scopes: accessScopesContent,
   }
