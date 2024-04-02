@@ -119,20 +119,16 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     const {app} = await this.fetchApp(appIdentifiers)
-    const {modules} = app.activeRelease?.version ?? {modules: []}
-    const title =
-      (modules.find((mod) => mod.specification.externalIdentifier === 'branding')?.config.name as string) ?? app.title
-    const grantedScopes =
-      (modules.find((mod) => mod.specification.externalIdentifier === 'app_access')?.config.scopes as string[]) ??
-      app.requestedAccessScopes
+    const {modules} = app.activeRelease.version
+    const brandingModule = modules.find((mod) => mod.specification.externalIdentifier === 'branding')!
+    const appAccessModule = modules.find((mod) => mod.specification.externalIdentifier === 'app_access')!
     return {
-      ...app,
       id: app.id,
-      title,
+      title: brandingModule.config.name as string,
       apiKey: app.id,
       organizationId: appIdentifiers.organizationId,
       apiSecretKeys: [],
-      grantedScopes,
+      grantedScopes: appAccessModule.config.scopes as string[],
       flags: [],
     }
   }
@@ -236,7 +232,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     appIdentifiers: MinimalAppIdentifiers,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const {app} = await this.fetchApp(appIdentifiers)
-    const {modules} = app.activeRelease?.version ?? {modules: []}
+    const {modules} = app.activeRelease.version
     return {
       app: {
         extensionRegistrations: [],
@@ -265,7 +261,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appVersions')
   }
 
-  async activeAppVersion({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {
+  async activeAppVersion({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
     const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
@@ -274,7 +270,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
     )
-    if (!result.app.activeRelease) return
     return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
