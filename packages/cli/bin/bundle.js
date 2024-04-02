@@ -16,12 +16,18 @@ const external = [
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
+// const ymlFiles = glob.sync('../../node_modules/.pnpm/**/configs/*.yml')
+// console.log(ymlFiles)
+
 await esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
   outdir: './dist',
   platform: 'node',
   format: 'esm',
+  define: {
+    'process.env.WEBPACK_MODE': 'true', // Necessary for theme-check-node to work
+  },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
@@ -54,6 +60,10 @@ await esBuild({
         {
           from: [yogafile],
           to: ['./dist/'],
+        },
+        {
+          from: ['../../node_modules/.pnpm/node_modules/@shopify/theme-check-node/configs/*.yml'],
+          to: ['./dist/configs/'],
         }
       ]
     }),
