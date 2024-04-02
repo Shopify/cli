@@ -84,7 +84,7 @@ export interface ActiveAppReleaseQuerySchema {
       subPathPrefix: string
       url: string
     }
-    activeRelease: {
+    activeRelease?: {
       id: string
       version: {
         modules: AppModule[]
