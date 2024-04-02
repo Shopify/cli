@@ -1283,6 +1283,45 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       })
     })
   })
+  describe('deploy with release using local configuration when there is no remote app version', () => {
+    test('all local configuration will be returned in the new list', async () => {
+      // Given
+      const configuration = {
+        path: 'shopify.app.development.toml',
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://myapp.com',
+        embedded: true,
+        webhooks: {
+          api_version: '2023-04',
+        },
+        build: {
+          include_config_on_deploy: true,
+        },
+      }
+
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(undefined),
+      })
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], configuration),
+        release: true,
+      })
+
+      // Then
+      expect(result).toEqual({
+        existingFieldNames: [],
+        existingUpdatedFieldNames: [],
+        newFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        deletedFieldNames: [],
+      })
+    })
+  })
   describe('deploy not including the configuration app modules', () => {
     test('when the include_config_on_deploy is not true the configuration breakdown info is not returned', async () => {
       // Given

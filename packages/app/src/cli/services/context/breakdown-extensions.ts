@@ -45,13 +45,14 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
   let extensionIdentifiersBreakdown = loadLocalExtensionsIdentifiersBreakdown(extensionsToConfirm)
   if (options.release) {
-    extensionIdentifiersBreakdown = await resolveRemoteExtensionIdentifiersBreakdown(
-      options.developerPlatformClient,
-      options.remoteApp,
-      extensionsToConfirm.validMatches,
-      extensionsToConfirm.extensionsToCreate,
-      extensionsToConfirm.dashboardOnlyExtensions,
-    )
+    extensionIdentifiersBreakdown =
+      (await resolveRemoteExtensionIdentifiersBreakdown(
+        options.developerPlatformClient,
+        options.remoteApp,
+        extensionsToConfirm.validMatches,
+        extensionsToConfirm.extensionsToCreate,
+        extensionsToConfirm.dashboardOnlyExtensions,
+      )) ?? extensionIdentifiersBreakdown
   }
   return {
     extensionIdentifiersBreakdown,
@@ -260,8 +261,9 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
-): Promise<ExtensionIdentifiersBreakdown> {
+): Promise<ExtensionIdentifiersBreakdown | undefined> {
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
+  if (!activeAppVersion) return
 
   const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
     activeAppVersion,

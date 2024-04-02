@@ -304,10 +304,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsDiffQuery, input)
   }
 
-  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
+    if (!version) return
     return {
       ...version,
       appModuleVersions: version.appModuleVersions.map((mod) => {
