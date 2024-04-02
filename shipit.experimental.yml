@@ -21,7 +21,8 @@ deploy:
     # will fail.
     - bash -i -c "if [ -f '.changeset/pre.json' ]; then npm_config_loglevel=verbose pnpm changeset pre exit; fi"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot experimental"
-    - bash -i -c "npm_config_loglevel=verbose pnpm refresh-manifests"
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset-manifests"
+    # - bash -i -c "npm_config_loglevel=verbose pnpm refresh-manifests"
     # - bash -i -c "npm_config_loglevel=verbose pnpm nx run cli-kit:build"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
   post:
