@@ -56,7 +56,7 @@ export function buildBulkUploadResults(
   bulkUploadResponse: RemoteBulkUploadResponse[],
   assets: AssetParams[],
 ): Result[] {
-  if (bulkUploadResponse.length === 0 && assets.length !== 0) {
+  if (bulkUploadResponse === undefined) {
     return assets.map((asset) => ({
       key: asset.key,
       success: false,
