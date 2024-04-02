@@ -11,7 +11,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class Init extends Command {
-  static summary?: string | undefined = 'Create a new app project'
+  static summary?: string | undefined = 'Create a new Shopify app project.'
 
   static flags = {
     ...globalFlags,
