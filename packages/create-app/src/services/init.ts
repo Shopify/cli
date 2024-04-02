@@ -154,8 +154,8 @@ async function init(options: InitOptions) {
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
     nextSteps: [
       ['Run', {command: `cd ${hyphenizedName}`}],
-      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'generate extension')}],
-      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'dev')}],
+      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'shopify app generate extension')}],
+      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'shopify app dev')}],
     ],
     reference: [
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
