@@ -112,7 +112,7 @@ describe('findOrganizationApp', () => {
     // Given
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp, anotherApp]))
     vi.mocked(basename).mockResolvedValue(`folder/somewhere-else`)
-    vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
+    vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp)
 
     // When
     const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
