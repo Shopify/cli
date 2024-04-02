@@ -452,8 +452,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       organizationId: remoteApp.organizationId,
       grantedScopes: remoteApp.grantedScopes,
       flags: remoteApp.flags,
-      applicationUrl: remoteApp.applicationUrl,
-      redirectUrlWhitelist: remoteApp.redirectUrlWhitelist,
     },
     identifiers,
     release: !noRelease,
