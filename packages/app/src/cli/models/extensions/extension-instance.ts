@@ -111,7 +111,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
-    const handle = options.specification.identifier === 'webhooks_subscriptions' ? randomUUID() : undefined
+    const handle =
+      options.specification.identifier === 'webhooks_subscriptions'
+        ? this.webhookSubscriptionHandle(options.configuration)
+        : undefined
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath ?? ''
@@ -135,6 +138,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const config = this.configuration as unknown as FunctionConfigType
       this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
+  }
+
+  webhookSubscriptionHandle(configuration: TConfiguration) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const webhookConfig = configuration as unknown as any
+    const subscriptionTopic = webhookConfig?.webhooks?.subscriptions[0]?.topics[0] ?? ''
+    const subscriptionUri = webhookConfig?.webhooks?.subscriptions[0]?.uri ?? ''
+
+    return slugify(subscriptionTopic + subscriptionUri)
   }
 
   isDraftable() {
