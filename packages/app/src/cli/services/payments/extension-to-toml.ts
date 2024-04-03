@@ -28,11 +28,11 @@ function typeToContext(type: string) {
     case DashboardPaymentExtensionType.Offsite:
       return 'offsite'
     case DashboardPaymentExtensionType.CreditCard:
-      return 'credit_card'
+      return 'credit-card'
     case DashboardPaymentExtensionType.CustomCreditCard:
-      return 'custom_credit_card'
+      return 'custom-credit-card'
     case DashboardPaymentExtensionType.CustomOnsite:
-      return 'custom_onsite'
+      return 'custom-onsite'
     case DashboardPaymentExtensionType.Redeemable:
       return 'redeemable'
   }

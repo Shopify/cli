@@ -119,7 +119,7 @@ type = "payments_extension"
 handle = "bogus-pay"
 
 [[targeting]]
-target = "payments.credit_card.render"
+target = "payments.credit-card.render"
 
 [[configuration]]
 payment_session_url = "https://test-domain.com/authorize"
@@ -163,7 +163,7 @@ type = "payments_extension"
 handle = "bogus-pay"
 
 [[targeting]]
-target = "payments.custom_credit_card.render"
+target = "payments.custom-credit-card.render"
 
 [[configuration]]
 ui_extension_registration_uuid = "3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc"
@@ -219,7 +219,7 @@ type = "payments_extension"
 handle = "bogus-pay"
 
 [[targeting]]
-target = "payments.custom_onsite.render"
+target = "payments.custom-onsite.render"
 
 [[configuration]]
 ui_extension_registration_uuid = "7e12d5ac-d602-444b-9122-9278dc98e0c1"
