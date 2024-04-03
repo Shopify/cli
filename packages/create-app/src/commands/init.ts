@@ -9,6 +9,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
+import {inferPackageManagerForGlobalCLI} from '@shopify/cli-kit/node/is-global'
 
 export default class Init extends Command {
   static summary?: string | undefined = 'Create a new Shopify app project.'
@@ -155,6 +156,11 @@ export default class Init extends Command {
       return optionsPackageManager as PackageManager
     }
     const usedPackageManager = packageManagerFromUserAgent()
-    return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
+    if (usedPackageManager !== 'unknown') return usedPackageManager
+
+    const globalPackageManager = inferPackageManagerForGlobalCLI()
+    if (globalPackageManager !== 'unknown') return globalPackageManager
+
+    return 'npm'
   }
 }

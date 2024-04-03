@@ -67,3 +67,16 @@ export async function installGlobalCLIIfNeeded(packageManager: PackageManager): 
   }
   return globalResult === 'yes'
 }
+
+/**
+ * Infers the package manager used by the global CLI.
+ *
+ * @returns The package manager used by the global CLI.
+ */
+export function inferPackageManagerForGlobalCLI(): PackageManager {
+  if (!currentProcessIsGlobal()) return 'unknown'
+  if (process.argv[0]?.includes('yarn')) return 'yarn'
+  if (process.argv[0]?.includes('pnpm')) return 'pnpm'
+  if (process.argv[0]?.includes('bun')) return 'bun'
+  return 'npm'
+}
