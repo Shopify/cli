@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.58.1
+
+### Patch Changes
+
+- 5b70eee4b: Link uses api client config as fallback when the app doesnt have an active app version or the existing one doesn't include any configuration app module
+- 00f873d46: Fix selection of apps beyond the initial result set
+  - @shopify/create-app@3.58.1
+  - @shopify/cli-kit@3.58.1
+  - @shopify/plugin-cloudflare@3.58.1
+
 ## 3.58.0
 
 ### Minor Changes

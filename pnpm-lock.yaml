@@ -164,16 +164,16 @@ importers:
         specifier: 3.19.6
         version: 3.19.6
       '@shopify/cli-kit':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../cli-kit
       '@shopify/create-app':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -294,20 +294,20 @@ importers:
         specifier: 3.9.4
         version: 3.9.4
       '@shopify/cli-kit':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
     devDependencies:
       '@shopify/app':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../app
       '@shopify/theme':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../theme
       '@types/node':
         specifier: 18.19.3
@@ -572,7 +572,7 @@ importers:
         specifier: 3.19.6
         version: 3.19.6
       '@shopify/cli-kit':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -694,7 +694,7 @@ importers:
         specifier: 3.19.6
         version: 3.19.6
       '@shopify/cli-kit':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../cli-kit
     devDependencies:
       vite:
@@ -710,7 +710,7 @@ importers:
         specifier: 3.19.6
         version: 3.19.6
       '@shopify/cli-kit':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -729,7 +729,7 @@ importers:
         specifier: 3.19.6
         version: 3.19.6
       '@shopify/cli-kit':
-        specifier: 3.58.0
+        specifier: 3.58.1
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 2.2.2
