@@ -111,16 +111,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
+    const handle = options.specification.identifier === 'webhooks_subscriptions' ? randomUUID() : undefined
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.handle =
-      this.specification.experience === 'configuration' || this.specification.identifier === 'webhooks_subscriptions'
+    this.handle = handle ??
+      (this.specification.experience === 'configuration'
         ? slugify(this.specification.identifier)
-        : this.configuration.handle ?? slugify(this.configuration.name ?? '')
+        : this.configuration.handle ?? slugify(this.configuration.name ?? ''))
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory

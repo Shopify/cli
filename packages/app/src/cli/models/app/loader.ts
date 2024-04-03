@@ -470,21 +470,21 @@ class AppLoader {
 
         if (Object.keys(specConfiguration).length === 0) return
 
-        // if (specification.identifier === 'webhooks') {
-        //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        //   const webhooksConfig = specConfiguration as unknown as any
-        //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        //   return webhooksConfig?.webhooks?.subscriptions.map((subscription: any) => {
-        //     return this.createExtensionInstance(
-        //       specification.identifier,
-        //       {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
-        //       appConfiguration.path,
-        //       directory,
-        //     ).then((extensionInstance) =>
-        //       this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
-        //     )
-        //   })
-        // }
+        if (specification.identifier === 'webhooks_subscriptions') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const webhooksConfig = specConfiguration as unknown as any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return Promise.all( webhooksConfig?.webhooks?.subscriptions.map((subscription: any) => {
+            return this.createExtensionInstance(
+              specification.identifier,
+              {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
+              appConfiguration.path,
+              directory,
+            ).then((extensionInstance) =>
+              this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+            )
+          }))
+        }
 
         return this.createExtensionInstance(
           specification.identifier,
