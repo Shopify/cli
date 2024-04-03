@@ -20,13 +20,15 @@ interface PushOptions {
 }
 
 interface JsonOutput {
-  id: number
-  name: string
-  role: string
-  shop: string
-  editor_url: string
-  preview_url: string
-  warning?: string
+  theme: {
+    id: number
+    name: string
+    role: string
+    shop: string
+    editor_url: string
+    preview_url: string
+    warning?: string
+  }
 }
 
 export async function push(theme: Theme, session: AdminSession, options: PushOptions) {
@@ -71,17 +73,19 @@ async function handlePushOutput(
 
 function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
   const output: JsonOutput = {
-    id: theme.id,
-    name: theme.name,
-    role: theme.role,
-    shop: session.storeFqdn,
-    editor_url: themeEditorUrl(theme, session),
-    preview_url: themePreviewUrl(theme, session),
+    theme: {
+      id: theme.id,
+      name: theme.name,
+      role: theme.role,
+      shop: session.storeFqdn,
+      editor_url: themeEditorUrl(theme, session),
+      preview_url: themePreviewUrl(theme, session),
+    },
   }
 
   if (hasErrors) {
     const message = `The theme ${themeComponent(theme).join(' ')} was pushed with errors`
-    output.warning = message
+    output.theme.warning = message
   }
   outputInfo(JSON.stringify(output))
 }
