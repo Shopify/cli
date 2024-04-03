@@ -390,7 +390,7 @@ describe('bulkUploadThemeAssets', async () => {
     })
   })
 
-  test('returns an array of results with the same length as the assets array when the server does not respond', async () => {
+  test('throws an error when the server does not respond', async () => {
     const id = 123
     const assets: AssetParams[] = [
       {key: 'snippets/product-variant-picker.liquid', value: 'content'},
@@ -404,21 +404,9 @@ describe('bulkUploadThemeAssets', async () => {
     })
 
     // When
-    const bulkUploadresults = await bulkUploadThemeAssets(id, assets, session)
-
-    // Then
-    expect(bulkUploadresults).toHaveLength(2)
-    expect(bulkUploadresults[0]).toEqual({
-      key: 'snippets/product-variant-picker.liquid',
-      success: false,
-      errors: {asset: ['Server did not respond.']},
-      operation: 'UPLOAD',
-    })
-    expect(bulkUploadresults[1]).toEqual({
-      key: 'templates/404.json',
-      success: false,
-      errors: {asset: ['Server did not respond.']},
-      operation: 'UPLOAD',
-    })
+    await expect(async () => {
+      return bulkUploadThemeAssets(id, assets, session)
+      // Then
+    }).rejects.toThrowError(AbortError)
   })
 })
