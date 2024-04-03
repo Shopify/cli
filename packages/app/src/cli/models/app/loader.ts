@@ -123,6 +123,13 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
+
+  // if (!parseResult.success) {
+  //   console.log("parse result", parseResult.error)
+  //   console.log("schema", schema)
+  //   console.log("config object", configurationObject)
+  // }
+
   if (!parseResult.success) {
     return abortOrReport(
       outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
@@ -457,7 +464,7 @@ class AppLoader {
   async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     return this.specifications
       .filter(
-        (specification) => specification.experience === 'configuration' || specification.experience === 'extension',
+        (specification) => specification.experience === 'configuration' || specification.identifier === 'webhooks_subscriptions',
       )
       .flatMap(async (specification) => {
         const specConfiguration = await parseConfigurationObject(
@@ -469,21 +476,21 @@ class AppLoader {
 
         if (Object.keys(specConfiguration).length === 0) return
 
-        if (specification.identifier === 'webhooks') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const webhooksConfig = specConfiguration as unknown as any
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return webhooksConfig?.webhooks?.subscriptions.map((subscription: any) => {
-            return this.createExtensionInstance(
-              specification.identifier,
-              {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
-              appConfiguration.path,
-              directory,
-            ).then((extensionInstance) =>
-              this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
-            )
-          })
-        }
+        // if (specification.identifier === 'webhooks') {
+        //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        //   const webhooksConfig = specConfiguration as unknown as any
+        //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        //   return webhooksConfig?.webhooks?.subscriptions.map((subscription: any) => {
+        //     return this.createExtensionInstance(
+        //       specification.identifier,
+        //       {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
+        //       appConfiguration.path,
+        //       directory,
+        //     ).then((extensionInstance) =>
+        //       this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+        //     )
+        //   })
+        // }
 
         return this.createExtensionInstance(
           specification.identifier,

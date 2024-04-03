@@ -22,6 +22,7 @@ import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
+import webhookSubscriptionsSpec from './specifications/webhook_subscriptions.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -68,6 +69,7 @@ function loadSpecifications() {
     uiExtensionSpec,
     webPixelSpec,
     editorExtensionCollectionSpecification,
+    webhookSubscriptionsSpec,
   ] as ExtensionSpecification[]
 
   return [...configModuleSpecs, ...moduleSpecs]
