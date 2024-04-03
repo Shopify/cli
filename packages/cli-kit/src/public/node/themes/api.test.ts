@@ -399,7 +399,7 @@ describe('bulkUploadThemeAssets', async () => {
 
     vi.mocked(restRequest).mockResolvedValue({
       json: {},
-      status: 207,
+      status: 404,
       headers: {},
     })
 

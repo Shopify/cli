@@ -1,5 +1,4 @@
 import {AssetParams} from './api.js'
-import {AbortError} from '../error.js'
 import {Result, Checksum, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 
 interface RemoteThemeResponse {
@@ -57,8 +56,8 @@ export function buildBulkUploadResults(
   bulkUploadResponse: RemoteBulkUploadResponse[],
   assets: AssetParams[],
 ): Result[] {
-  if (bulkUploadResponse === undefined) {
-    throw new AbortError('Bulk Upload Error - No response from server.')
+  if (!bulkUploadResponse) {
+    return []
   }
 
   return bulkUploadResponse.map((bulkUpload, index) => {
