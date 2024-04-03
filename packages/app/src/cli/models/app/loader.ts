@@ -124,12 +124,6 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
 
   const parseResult = schema.safeParse(configurationObject)
 
-  // if (!parseResult.success) {
-  //   console.log("parse result", parseResult.error)
-  //   console.log("schema", schema)
-  //   console.log("config object", configurationObject)
-  // }
-
   if (!parseResult.success) {
     return abortOrReport(
       outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(

@@ -4,8 +4,7 @@ import {Flag} from '../../../services/dev/fetch.js'
 import {compact, deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 import { NormalizedWebhookSubscription, WebhooksConfig } from "./types/app_config_webhook.js"
 
-export const WebhookSubscriptionsSpecIdentifier = 'webhook_subscriptions'
-
+export const WebhookSubscriptionsSpecIdentifier = 'webhooks_subscriptions'
 
 export function transformFromWebhookConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
@@ -41,8 +40,8 @@ export function transformToWebhookConfig(content: object) {
 }
 
 const WebhooksSubscriptionsTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformToWebhookConfig(content),
-  reverse: (content: object) => transformFromWebhookConfig(content),
+  forward: (content: object) => transformFromWebhookConfig(content),
+  reverse: (content: object) => transformToWebhookConfig(content),
 }
 
 // Uses the same schema as the webhooks specs because its content is nested under the same webhooks section

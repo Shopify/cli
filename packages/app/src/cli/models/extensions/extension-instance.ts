@@ -118,7 +118,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
     this.handle =
-      this.specification.experience === 'configuration'
+      this.specification.experience === 'configuration' || this.specification.identifier === 'webhooks_subscriptions'
         ? slugify(this.specification.identifier)
         : this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
