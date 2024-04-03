@@ -75,8 +75,11 @@ export async function installGlobalCLIIfNeeded(packageManager: PackageManager): 
  */
 export function inferPackageManagerForGlobalCLI(): PackageManager {
   if (!currentProcessIsGlobal()) return 'unknown'
-  if (process.argv[0]?.includes('yarn')) return 'yarn'
-  if (process.argv[0]?.includes('pnpm')) return 'pnpm'
-  if (process.argv[0]?.includes('bun')) return 'bun'
+
+  // argv[1] contains the path of the executed binary
+  const processArgv = process.argv[1] ?? ''
+  if (processArgv.includes('yarn')) return 'yarn'
+  if (processArgv.includes('pnpm')) return 'pnpm'
+  if (processArgv.includes('bun')) return 'bun'
   return 'npm'
 }
