@@ -794,7 +794,6 @@ export async function getAppContext({
   const {configuration} = await loadAppConfiguration({
     directory,
     configName,
-    allowDynamicallySpecifiedConfigs: true,
   })
 
   let remoteApp

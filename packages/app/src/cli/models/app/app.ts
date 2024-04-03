@@ -246,7 +246,8 @@ export class App implements AppInterface {
   }
 
   get allExtensions() {
-    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension || this.includeConfigOnDeploy)
+    if (this.includeConfigOnDeploy) return this.realExtensions
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
   get draftableExtensions() {

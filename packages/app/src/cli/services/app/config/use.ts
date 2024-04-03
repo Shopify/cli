@@ -71,7 +71,6 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   const {configuration} = await loadAppConfiguration({
     configName: configFileName,
     directory,
-    allowDynamicallySpecifiedConfigs: true,
   })
 
   if (isCurrentAppSchema(configuration) && configuration.client_id) {

@@ -12,7 +12,7 @@ import {
   getAppVersionedSchema,
   isCurrentAppSchema,
 } from './app.js'
-import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
@@ -41,6 +41,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -188,9 +189,43 @@ interface AppLoaderConstructorArgs {
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function loadApp(options: AppLoaderConstructorArgs): Promise<AppInterface> {
-  const loader = new AppLoader(options)
+export async function loadApp(options: AppLoaderConstructorArgs, env = process.env): Promise<AppInterface> {
+  const loader = new AppLoader(options, getDynamicConfigOptionsFromEnvironment(env))
   return loader.loaded()
+}
+
+function getDynamicConfigOptionsFromEnvironment(env = process.env): DynamicallySpecifiedConfigLoading {
+  const dynamicConfigEnabled = env[environmentVariableNames.useDynamicConfigSpecifications]
+
+  // not set at all
+  if (!dynamicConfigEnabled) {
+    return {enabled: false}
+  }
+
+  // set, but no remapping
+  if (isTruthy(dynamicConfigEnabled)) {
+    return {enabled: true, remapToNewParent: undefined}
+  }
+
+  try {
+    // split it by commas
+    const divided = dynamicConfigEnabled
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+
+    // first item is the parent, everything else is the things to remap
+    const [newParentName, ...sectionsToRemap] = divided
+    return {
+      enabled: true,
+      remapToNewParent: {
+        newParentName: newParentName!,
+        sectionsToRemap,
+      },
+    }
+  } catch {
+    throw new AbortError(`Invalid value for ${environmentVariableNames.useDynamicConfigSpecifications}`)
+  }
 }
 
 export function getDotEnvFileName(configurationPath: string) {
@@ -207,6 +242,15 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
+type DynamicallySpecifiedConfigLoading =
+  | {
+      enabled: false
+    }
+  | {
+      enabled: true
+      remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
+    }
+
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
@@ -214,28 +258,38 @@ class AppLoader {
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
   private remoteFlags: Flag[]
-  private allowDynamicallySpecifiedConfigs: boolean
+  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
 
-  constructor({directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs) {
+  constructor(
+    {directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs,
+    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
+  ) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications ?? []
     this.configName = configName
     this.remoteFlags = remoteFlags ?? []
-    this.allowDynamicallySpecifiedConfigs = true
+    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
   }
 
   async loaded() {
-    const configurationLoader = new AppConfigurationLoader({
-      directory: this.directory,
-      configName: this.configName,
-      specifications: this.specifications,
-      allowDynamicallySpecifiedConfigs: this.allowDynamicallySpecifiedConfigs,
-    })
-    const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+    const configurationLoader = new AppConfigurationLoader(
+      {
+        directory: this.directory,
+        configName: this.configName,
+        specifications: this.specifications,
+      },
+      this.dynamicallySpecifiedConfigs,
+    )
+    const result = await configurationLoader.loaded()
+    const {directory, configurationLoadResultMetadata, configSchema} = result
+    let {configuration} = result
+
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(directory, configuration.path)
+
+    configuration = this.remapDynamicConfigToNewParents(configuration)
 
     const extensions = await this.loadExtensions(directory, configuration)
 
@@ -382,7 +436,9 @@ class AppLoader {
         this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
       }
       return extensionInstance
-    } else if (this.allowDynamicallySpecifiedConfigs) {
+    } else if (this.dynamicallySpecifiedConfigs) {
+      // if dynamic configs are enabled, then create an automatically validated specification, with the same
+      // identifier as the type
       const temporarySpecification = createConfigExtensionSpecification({
         identifier: type,
         schema: zod.object({}).passthrough(),
@@ -519,7 +575,7 @@ class AppLoader {
         }),
     )
 
-    if (!this.allowDynamicallySpecifiedConfigs) {
+    if (!this.dynamicallySpecifiedConfigs) {
       return extensionInstancesWithKeys
         .filter(([instance]) => instance)
         .map(([instance]) => instance as ExtensionInstance)
@@ -544,6 +600,36 @@ class AppLoader {
       .filter(([instance]) => instance)
       .map(([instance]) => instance as ExtensionInstance)
     return [...nonNullExtensionInstances, ...unusedExtensionInstances]
+  }
+
+  /**
+   * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
+   * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
+   *
+   * Returns the updated configuration object
+   */
+  private remapDynamicConfigToNewParents(configuration: CurrentAppConfiguration): CurrentAppConfiguration {
+    // remap configuration keys to their new parent, if needed
+    // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
+    if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newConfig = {...configuration} as any
+      const {newParentName, sectionsToRemap} = this.dynamicallySpecifiedConfigs.remapToNewParent
+
+      // get the keys that need to be remapped
+      const remappedKeys = Object.keys(newConfig).filter((key) => sectionsToRemap.includes(key))
+
+      remappedKeys.forEach((key) => {
+        newConfig[newParentName] = newConfig[newParentName] ?? {}
+        newConfig[newParentName] = {
+          ...newConfig[newParentName],
+          [key]: newConfig[key],
+        }
+        delete newConfig[key]
+      })
+      return newConfig
+    }
+    return configuration
   }
 
   private async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
@@ -602,8 +688,9 @@ class AppLoader {
  */
 export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
+  env = process.env,
 ): Promise<AppConfigurationInterface> {
-  const loader = new AppConfigurationLoader(options)
+  const loader = new AppConfigurationLoader(options, getDynamicConfigOptionsFromEnvironment(env))
   const result = await loader.loaded()
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
@@ -614,7 +701,6 @@ interface AppConfigurationLoaderConstructorArgs {
   configName?: string
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
-  allowDynamicallySpecifiedConfigs?: boolean
 }
 
 type LinkedConfigurationSource =
@@ -643,20 +729,17 @@ class AppConfigurationLoader {
   private configName?: string
   private specifications?: ExtensionSpecification[]
   private remoteFlags: Flag[]
-  private allowDynamicallySpecifiedConfigs: boolean
+  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
 
-  constructor({
-    directory,
-    configName,
-    specifications,
-    remoteFlags,
-    allowDynamicallySpecifiedConfigs,
-  }: AppConfigurationLoaderConstructorArgs) {
+  constructor(
+    {directory, configName, specifications, remoteFlags}: AppConfigurationLoaderConstructorArgs,
+    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
+  ) {
     this.directory = directory
     this.configName = configName
     this.specifications = specifications
     this.remoteFlags = remoteFlags ?? []
-    this.allowDynamicallySpecifiedConfigs = allowDynamicallySpecifiedConfigs ?? false
+    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
   }
 
   async loaded() {
@@ -680,12 +763,12 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFileContent(configurationPath)
-    const appVersionedSchema = getAppVersionedSchema(specifications, this.allowDynamicallySpecifiedConfigs)
+    const appVersionedSchema = getAppVersionedSchema(specifications, this.dynamicallySpecifiedConfigs.enabled)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
     const parseStrictSchemaEnabled = specifications.length > 0
 
     let schemaForConfigurationFile = appSchema
-    if (parseStrictSchemaEnabled && !this.allowDynamicallySpecifiedConfigs) {
+    if (parseStrictSchemaEnabled && !this.dynamicallySpecifiedConfigs) {
       schemaForConfigurationFile = deepStrict(appSchema)
     }
 

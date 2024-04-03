@@ -2152,6 +2152,136 @@ wrong = "property"
     await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
   })
 
+  test('loads the app when using dynamically specified config sections with remapping', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [build]
+    include_config_on_deploy = true
+
+    [bar]
+    this_is_unknown = true
+
+    [baz]
+    and_so_is_this = 123
+
+    [xyz]
+    this_isnt_remapped = false
+    `
+    await writeConfig(config)
+
+    // When
+    const app = await loadApp(
+      {
+        directory: tmpDir,
+        specifications,
+      },
+      {
+        SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
+        ...process.env,
+      },
+    )
+    expect((app.configuration as any).foo).toEqual({
+      bar: {
+        this_is_unknown: true,
+      },
+      baz: {
+        and_so_is_this: 123,
+      },
+    })
+
+    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
+      'app_access',
+      'app_home',
+      'branding',
+      'foo',
+      'webhooks',
+      'xyz',
+    ])
+
+    const fooExtension = app.allExtensions.filter((ext) => ext.handle === 'foo')
+    expect(fooExtension.length).toBe(1)
+    expect(fooExtension[0]?.configuration).toEqual({
+      foo: {
+        bar: {
+          this_is_unknown: true,
+        },
+        baz: {
+          and_so_is_this: 123,
+        },
+      },
+    })
+
+    const xyzExtension = app.allExtensions.filter((ext) => ext.handle === 'xyz')
+    expect(xyzExtension.length).toBe(1)
+    expect(xyzExtension[0]?.configuration).toEqual({
+      xyz: {
+        this_isnt_remapped: false,
+      },
+    })
+  })
+
+  test('loads the app when using dynamically specified config sections without remapping', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [build]
+    include_config_on_deploy = true
+
+    [bar]
+    this_is_unknown = true
+
+    [baz]
+    and_so_is_this = 123
+
+    [xyz]
+    this_isnt_remapped = false
+    `
+    await writeConfig(config)
+
+    // When
+    const app = await loadApp(
+      {
+        directory: tmpDir,
+        specifications,
+      },
+      {
+        SHOPIFY_CLI_DYNAMIC_CONFIG: '1',
+        ...process.env,
+      },
+    )
+
+    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
+      'app_access',
+      'app_home',
+      'bar',
+      'baz',
+      'branding',
+      'webhooks',
+      'xyz',
+    ])
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)(
