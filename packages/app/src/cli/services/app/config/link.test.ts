@@ -84,7 +84,7 @@ describe('link', () => {
     })
   })
 
-  test('creates a new shopify.app.toml file when it does not exist', async () => {
+  test('creates a new shopify.app.toml file when it does not exist using existing app version configuration instead of the api client configuration', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -92,7 +92,30 @@ describe('link', () => {
         developerPlatformClient: buildDeveloperPlatformClient(),
       }
       vi.mocked(loadApp).mockRejectedValue('App not found')
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
+      const apiClientConfiguration = {
+        title: 'new-title',
+        applicationUrl: 'https://api-client-config.com',
+        redirectUrlWhitelist: ['https://api-client-config.com/callback'],
+        requestedAccessScopes: ['write_products'],
+        webhookApiVersion: '2023-07',
+        embedded: false,
+        posEmbedded: true,
+        preferencesUrl: 'https://api-client-config.com/preferences',
+        gdprWebhooks: {
+          customerDeletionUrl: 'https://api-client-config.com/customer-deletion',
+          customerDataRequestUrl: 'https://api-client-config.com/customer-data-request',
+          shopDeletionUrl: 'https://api-client-config.com/shop-deletion',
+        },
+        appProxy: {
+          subPath: '/api',
+          subPathPrefix: 'prefix',
+          url: 'https://api-client-config.com/proxy',
+        },
+      }
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...mockRemoteApp(apiClientConfiguration),
+        newApp: true,
+      })
 
       // When
       await link(options)
@@ -126,6 +149,102 @@ embedded = false
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.toml in your local project`],
+          ['To upload your config, run', {command: 'npm run shopify app deploy'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
+      })
+    })
+  })
+
+  test('uses the api client configuration in case there is no configuration app modules', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient: buildDeveloperPlatformClient(),
+      }
+      vi.mocked(loadApp).mockRejectedValue('App not found')
+      const apiClientConfiguration = {
+        title: 'new-title',
+        applicationUrl: 'https://api-client-config.com',
+        redirectUrlWhitelist: ['https://api-client-config.com/callback'],
+        requestedAccessScopes: ['write_products'],
+        webhookApiVersion: '2023-07',
+        embedded: false,
+        posEmbedded: true,
+        preferencesUrl: 'https://api-client-config.com/preferences',
+        gdprWebhooks: {
+          customerDeletionUrl: 'https://api-client-config.com/customer-deletion',
+          customerDataRequestUrl: 'https://api-client-config.com/customer-data-request',
+          shopDeletionUrl: 'https://api-client-config.com/shop-deletion',
+        },
+        appProxy: {
+          subPath: '/api',
+          subPathPrefix: 'prefix',
+          url: 'https://api-client-config.com/proxy',
+        },
+      }
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...mockRemoteApp(apiClientConfiguration),
+        newApp: true,
+      })
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(undefined)
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "new-title"
+application_url = "https://api-client-config.com"
+embedded = false
+
+[build]
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [ "https://api-client-config.com/callback" ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [webhooks.privacy_compliance]
+  customer_deletion_url = "https://api-client-config.com/customer-deletion"
+  customer_data_request_url = "https://api-client-config.com/customer-data-request"
+  shop_deletion_url = "https://api-client-config.com/shop-deletion"
+
+[app_proxy]
+url = "https://api-client-config.com/proxy"
+subpath = "/api"
+prefix = "prefix"
+
+[pos]
+embedded = true
+
+[app_preferences]
+url = "https://api-client-config.com/preferences"
+`
+      expect(content).toEqual(expectedContent)
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'shopify.app.toml is now linked to "new-title" on Shopify',
         body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
@@ -909,8 +1028,8 @@ async function mockApp(
   return localApp
 }
 
-function mockRemoteApp() {
+function mockRemoteApp(extraRemoteAppFields: Partial<OrganizationApp> = {}) {
   const remoteApp = testOrganizationApp()
   remoteApp.apiKey = '12345'
-  return remoteApp
+  return {...remoteApp, ...extraRemoteAppFields}
 }
