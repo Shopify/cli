@@ -48,7 +48,7 @@ export interface AppModuleVersion {
 
 export interface ActiveAppVersionQuerySchema {
   app: {
-    activeAppVersion: {
+    activeAppVersion?: {
       appModuleVersions: AppModuleVersion[]
     }
   }

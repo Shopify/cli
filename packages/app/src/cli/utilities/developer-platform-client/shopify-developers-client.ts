@@ -120,8 +120,8 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
-    const brandingModule = modules.find((mod) => mod.specification.identifier === 'branding')!
-    const appAccessModule = modules.find((mod) => mod.specification.identifier === 'app_access')!
+    const brandingModule = modules.find((mod) => mod.specification.externalIdentifier === 'branding')!
+    const appAccessModule = modules.find((mod) => mod.specification.externalIdentifier === 'app_access')!
     return {
       id: app.id,
       title: brandingModule.config.name as string,
