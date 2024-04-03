@@ -27,11 +27,17 @@ export default class AppImportPaymentsExtension extends Command {
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
-    const paymentsExtensionType = 'payments_extension'
+    const paymentsExtensionTypes = [
+      'payments_app',
+      'payments_app_credit_card',
+      'payments_app_custom_credit_card',
+      'payments_app_custom_onsite',
+      'payments_app_redeemable',
+    ]
     await importDashboardExtensions({
       app,
       apiKey: flags['client-id'],
-      extensionTypes: [paymentsExtensionType],
+      extensionTypes: paymentsExtensionTypes,
       buildTomlObject,
     })
   }
