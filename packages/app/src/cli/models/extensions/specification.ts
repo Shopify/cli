@@ -144,6 +144,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   simplify?: SimplifyConfig
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
+  // TODO webhooks_subscriptions should not have experience: 'configuration'
   return createExtensionSpecification({
     identifier: spec.identifier,
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
