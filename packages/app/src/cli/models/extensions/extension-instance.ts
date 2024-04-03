@@ -118,7 +118,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.handle = handle ??
+    this.handle =
+      handle ??
       (this.specification.experience === 'configuration'
         ? slugify(this.specification.identifier)
         : this.configuration.handle ?? slugify(this.configuration.name ?? ''))
