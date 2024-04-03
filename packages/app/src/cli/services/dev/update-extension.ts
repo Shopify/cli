@@ -1,5 +1,9 @@
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
-import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
+import {
+  loadConfigurationFileContent,
+  parseConfigurationFile,
+  parseConfigurationObject,
+} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -74,7 +78,7 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     throw new AbortError(message)
   }
 
-  let configObject = await loadConfigurationFile(extension.configurationPath)
+  let configObject = await loadConfigurationFileContent(extension.configurationPath)
   const {extensions} = ExtensionsArraySchema.parse(configObject)
 
   if (extensions) {

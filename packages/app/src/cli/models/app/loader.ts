@@ -54,7 +54,10 @@ type AbortOrReport = <T>(
 ) => T
 const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
 
-export async function loadConfigurationFile(
+/**
+ * Loads a configuration file, and returns its content as an unvalidated object.
+ */
+export async function loadConfigurationFileContent(
   filepath: string,
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
@@ -87,6 +90,11 @@ export async function loadConfigurationFile(
   }
 }
 
+/**
+ * Loads a configuration file, validates it against a schema, and returns the parsed object.
+ *
+ * Calls `abortOrReport` if the file is invalid.
+ */
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -97,7 +105,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
-  const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+  const configurationObject = await loadConfigurationFileContent(filepath, abortOrReport, decode)
 
   if (!configurationObject) return fallbackOutput
 
@@ -114,6 +122,9 @@ export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
   return humanReadableError
 }
 
+/**
+ * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
+ */
 export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -136,7 +147,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   return parseResult.data
 }
 
-export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
+function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
   return specifications.find(
     (spec) =>
       spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
@@ -214,19 +225,6 @@ class AppLoader {
     this.allowDynamicallySpecifiedConfigs = true
   }
 
-  findSpecificationForType(type: string) {
-    return findSpecificationForType(this.specifications, type)
-  }
-
-  parseConfigurationFile<TSchema extends zod.ZodType>(
-    schema: TSchema,
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ) {
-    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
-  }
-
   async loaded() {
     const configurationLoader = new AppConfigurationLoader({
       directory: this.directory,
@@ -278,7 +276,20 @@ class AppLoader {
     return appClass
   }
 
-  showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
+  private findSpecificationForType(type: string) {
+    return findSpecificationForType(this.specifications, type)
+  }
+
+  private parseConfigurationFile<TSchema extends zod.ZodType>(
+    schema: TSchema,
+    filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = decodeToml,
+  ) {
+    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
+  }
+
+  private showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
     const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
     if (currentProcessIsGlobal() && hasLocalCLI) {
       const warningContent = {
@@ -295,7 +306,10 @@ class AppLoader {
     }
   }
 
-  async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+  private async loadWebs(
+    appDirectory: string,
+    webDirectories?: string[],
+  ): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const defaultWebDirectory = '**'
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
       return joinPath(appDirectory, webGlob, configurationFileNames.web)
@@ -312,7 +326,7 @@ class AppLoader {
     return {webs, usedCustomLayout}
   }
 
-  validateWebs(webs: Web[]): void {
+  private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
       if (websOfType.length > 1) {
@@ -325,7 +339,7 @@ class AppLoader {
     })
   }
 
-  async loadWeb(WebConfigurationFile: string): Promise<Web> {
+  private async loadWeb(WebConfigurationFile: string): Promise<Web> {
     const config = await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile)
     const roles = new Set('roles' in config ? config.roles : [])
     if ('type' in config) roles.add(config.type)
@@ -337,7 +351,7 @@ class AppLoader {
     }
   }
 
-  async createExtensionInstance(
+  private async createExtensionInstance(
     type: string,
     configurationObject: unknown,
     configurationPath: string,
@@ -398,7 +412,7 @@ class AppLoader {
     }
   }
 
-  async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+  private async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
@@ -430,7 +444,7 @@ class AppLoader {
     return allExtensions
   }
 
-  async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
+  private async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
@@ -439,7 +453,7 @@ class AppLoader {
 
     return configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const obj = await loadConfigurationFile(configurationPath)
+      const obj = await loadConfigurationFileContent(configurationPath)
       const {extensions, type} = ExtensionsArraySchema.parse(obj)
 
       if (extensions) {
@@ -479,7 +493,7 @@ class AppLoader {
     })
   }
 
-  async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+  private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.experience === 'configuration')
@@ -532,14 +546,14 @@ class AppLoader {
     return [...nonNullExtensionInstances, ...unusedExtensionInstances]
   }
 
-  async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
+  private async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
     if (!extensionInstance) return
 
     const configContent = await extensionInstance.commonDeployConfig(apiKey)
     return configContent ? extensionInstance : undefined
   }
 
-  async findEntryPath(directory: string, specification: ExtensionSpecification) {
+  private async findEntryPath(directory: string, specification: ExtensionSpecification) {
     let entryPath
     if (specification.appModuleFeatures().includes('single_js_entry_path')) {
       entryPath = (
@@ -572,7 +586,7 @@ class AppLoader {
     return entryPath
   }
 
-  abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
+  private abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
       throw new AbortError(errorMessage)
     } else {
@@ -583,7 +597,7 @@ class AppLoader {
 }
 
 /**
- * Parse the app configuration file from the given directory.
+ * Parse the app configuration file from the given directory. This doesn't load any extensions.
  * If the app configuration does not match any known schemas, it will throw an error.
  */
 export async function loadAppConfiguration(
@@ -665,7 +679,7 @@ class AppConfigurationLoader {
     this.configName = this.configName ?? cachedCurrentConfig
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
-    const file = await loadConfigurationFile(configurationPath)
+    const file = await loadConfigurationFileContent(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(specifications, this.allowDynamicallySpecifiedConfigs)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
     const parseStrictSchemaEnabled = specifications.length > 0
@@ -707,7 +721,7 @@ class AppConfigurationLoader {
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
   // traverse up the filesystem to find the root app directory.
-  async getAppDirectory() {
+  private async getAppDirectory() {
     if (!(await fileExists(this.directory))) {
       throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
     }
@@ -739,7 +753,7 @@ class AppConfigurationLoader {
     }
   }
 
-  async getConfigurationPath(appDirectory: string) {
+  private async getConfigurationPath(appDirectory: string) {
     const configurationFileName = getAppConfigurationFileName(this.configName)
     const configurationPath = joinPath(appDirectory, configurationFileName)
 
@@ -755,7 +769,7 @@ class AppConfigurationLoader {
   /**
    * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
    */
-  async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
+  private async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
     const configNamesToClientId: {[key: string]: string} = {}
     const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
 
@@ -904,7 +918,7 @@ async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadR
   })
 }
 
-export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
+const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 const appConfigurationFileNameGlob = 'shopify.app*.toml'
 
 export function getAppConfigurationFileName(configName?: string) {
