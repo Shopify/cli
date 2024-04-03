@@ -11,11 +11,10 @@ export function transformFromWebhookConfig(content: object) {
 
   // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
   for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
-    if (topics)
-      webhookSubscriptions.push(topics.map((topic) => ({api_version, subscription: {uri, topic, ...optionalFields}})))
+    if (topics) webhookSubscriptions.push(topics.map((topic) => ({uri, topic, ...optionalFields})))
   }
 
-  return webhookSubscriptions.length > 0 ? webhookSubscriptions.flat() : {}
+  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions.flat(), api_version} : {api_version}
 }
 
 /*

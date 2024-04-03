@@ -456,8 +456,10 @@ class AppLoader {
 
   async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     return this.specifications
-      .filter((specification) => specification.experience === 'configuration')
-      .map(async (specification) => {
+      .filter(
+        (specification) => specification.experience === 'configuration' || specification.experience === 'extension',
+      )
+      .flatMap(async (specification) => {
         const specConfiguration = await parseConfigurationObject(
           specification.schema,
           appConfiguration.path,
@@ -466,6 +468,22 @@ class AppLoader {
         )
 
         if (Object.keys(specConfiguration).length === 0) return
+
+        if (specification.identifier === 'webhooks') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const webhooksConfig = specConfiguration as unknown as any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return webhooksConfig?.webhooks?.subscriptions.map((subscription: any) => {
+            return this.createExtensionInstance(
+              specification.identifier,
+              {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
+              appConfiguration.path,
+              directory,
+            ).then((extensionInstance) =>
+              this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+            )
+          })
+        }
 
         return this.createExtensionInstance(
           specification.identifier,
