@@ -281,15 +281,11 @@ class AppLoader {
       },
       this.dynamicallySpecifiedConfigs,
     )
-    const result = await configurationLoader.loaded()
-    const {directory, configurationLoadResultMetadata, configSchema} = result
-    let {configuration} = result
+    const {configuration, directory, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(directory, configuration.path)
-
-    configuration = this.remapDynamicConfigToNewParents(configuration)
 
     const extensions = await this.loadExtensions(directory, configuration)
 
@@ -602,36 +598,6 @@ class AppLoader {
     return [...nonNullExtensionInstances, ...unusedExtensionInstances]
   }
 
-  /**
-   * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
-   * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
-   *
-   * Returns the updated configuration object
-   */
-  private remapDynamicConfigToNewParents(configuration: CurrentAppConfiguration): CurrentAppConfiguration {
-    // remap configuration keys to their new parent, if needed
-    // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
-    if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newConfig = {...configuration} as any
-      const {newParentName, sectionsToRemap} = this.dynamicallySpecifiedConfigs.remapToNewParent
-
-      // get the keys that need to be remapped
-      const remappedKeys = Object.keys(newConfig).filter((key) => sectionsToRemap.includes(key))
-
-      remappedKeys.forEach((key) => {
-        newConfig[newParentName] = newConfig[newParentName] ?? {}
-        newConfig[newParentName] = {
-          ...newConfig[newParentName],
-          [key]: newConfig[key],
-        }
-        delete newConfig[key]
-      })
-      return newConfig
-    }
-    return configuration
-  }
-
   private async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
     if (!extensionInstance) return
 
@@ -772,7 +738,7 @@ class AppConfigurationLoader {
       schemaForConfigurationFile = deepStrict(appSchema)
     }
 
-    const configuration = await parseConfigurationFile(schemaForConfigurationFile, configurationPath)
+    let configuration = await parseConfigurationFile(schemaForConfigurationFile, configurationPath)
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
@@ -798,6 +764,8 @@ class AppConfigurationLoader {
         usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
       }
     }
+
+    configuration = this.remapDynamicConfigToNewParents(configuration)
 
     return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
   }
@@ -879,6 +847,36 @@ class AppConfigurationLoader {
       )
     ).filter((entry) => entry !== undefined) as [string, string][]
     return Object.fromEntries(entries)
+  }
+
+  /**
+   * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
+   * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
+   *
+   * Returns the updated configuration object
+   */
+  private remapDynamicConfigToNewParents(configuration: CurrentAppConfiguration): CurrentAppConfiguration {
+    // remap configuration keys to their new parent, if needed
+    // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
+    if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newConfig = {...configuration} as any
+      const {newParentName, sectionsToRemap} = this.dynamicallySpecifiedConfigs.remapToNewParent
+
+      // get the keys that need to be remapped
+      const remappedKeys = Object.keys(newConfig).filter((key) => sectionsToRemap.includes(key))
+
+      remappedKeys.forEach((key) => {
+        newConfig[newParentName] = newConfig[newParentName] ?? {}
+        newConfig[newParentName] = {
+          ...newConfig[newParentName],
+          [key]: newConfig[key],
+        }
+        delete newConfig[key]
+      })
+      return newConfig
+    }
+    return configuration
   }
 }
 

@@ -5,6 +5,7 @@ import {
   loadDotEnv,
   parseConfigurationObject,
   parseHumanReadableError,
+  loadAppConfiguration,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -2280,6 +2281,58 @@ wrong = "property"
       'webhooks',
       'xyz',
     ])
+  })
+
+  test('loads the app when using dynamically specified config sections, and only interested in app config', async () => {
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [build]
+    include_config_on_deploy = true
+
+    [bar]
+    this_is_unknown = true
+
+    [baz]
+    and_so_is_this = 123
+
+    [xyz]
+    this_isnt_remapped = false
+    `
+    await writeConfig(config)
+
+    const appConfig = await loadAppConfiguration(
+      {
+        directory: tmpDir,
+        specifications,
+      },
+      {
+        SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
+        ...process.env,
+      },
+    )
+
+    expect((appConfig.configuration as any).foo).toEqual({
+      bar: {
+        this_is_unknown: true,
+      },
+      baz: {
+        and_so_is_this: 123,
+      },
+    })
+
+    expect((appConfig.configuration as any).xyz).toEqual({
+      this_isnt_remapped: false,
+    })
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
