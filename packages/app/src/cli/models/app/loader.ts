@@ -11,6 +11,7 @@ import {
   CurrentAppConfiguration,
   getAppVersionedSchema,
   isCurrentAppSchema,
+  AppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -146,13 +147,6 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
     )
   }
   return parseResult.data
-}
-
-function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
-  return specifications.find(
-    (spec) =>
-      spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
-  )
 }
 
 export class AppErrors {
@@ -327,7 +321,10 @@ class AppLoader {
   }
 
   private findSpecificationForType(type: string) {
-    return findSpecificationForType(this.specifications, type)
+    return this.specifications.find(
+      (spec) =>
+        spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
+    )
   }
 
   private parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -407,54 +404,20 @@ class AppLoader {
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    const specification = findSpecificationForType(this.specifications, type)
+    let specification = this.findSpecificationForType(type)
+    let entryPath
+    let usedKnownSpecification = false
 
     if (specification) {
-      const configuration = await parseConfigurationObject(
-        specification.schema,
-        configurationPath,
-        configurationObject,
-        this.abortOrReport.bind(this),
-      )
-
-      const entryPath = await this.findEntryPath(directory, specification)
-
-      const extensionInstance = new ExtensionInstance({
-        configuration,
-        configurationPath,
-        entryPath,
-        directory,
-        specification,
-      })
-
-      const validateResult = await extensionInstance.validate()
-      if (validateResult.isErr()) {
-        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
-      }
-      return extensionInstance
+      usedKnownSpecification = true
+      entryPath = await this.findEntryPath(directory, specification)
     } else if (this.dynamicallySpecifiedConfigs) {
       // if dynamic configs are enabled, then create an automatically validated specification, with the same
       // identifier as the type
-      const temporarySpecification = createConfigExtensionSpecification({
+      specification = createConfigExtensionSpecification({
         identifier: type,
         schema: zod.object({}).passthrough(),
       })
-
-      const configuration = await parseConfigurationObject(
-        temporarySpecification.schema,
-        configurationPath,
-        configurationObject,
-        this.abortOrReport.bind(this),
-      )
-      const entryPath = undefined
-      const extensionInstance = new ExtensionInstance({
-        configuration,
-        configurationPath,
-        entryPath,
-        directory,
-        specification: temporarySpecification,
-      })
-      return extensionInstance
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -462,6 +425,30 @@ class AppLoader {
         configurationPath,
       )
     }
+
+    const configuration = await parseConfigurationObject(
+      specification.schema,
+      configurationPath,
+      configurationObject,
+      this.abortOrReport.bind(this),
+    )
+
+    const extensionInstance = new ExtensionInstance({
+      configuration,
+      configurationPath,
+      entryPath,
+      directory,
+      specification,
+    })
+
+    if (usedKnownSpecification) {
+      const validateResult = await extensionInstance.validate()
+      if (validateResult.isErr()) {
+        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+      }
+    }
+
+    return extensionInstance
   }
 
   private async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
@@ -581,7 +568,7 @@ class AppLoader {
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        return !['client_id', 'build', 'path'].includes(key)
+        return !Object.keys(AppSchema.shape).includes(key)
       })
 
     // make some extension instances for the unused keys
