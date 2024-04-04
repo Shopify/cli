@@ -24,7 +24,7 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
     ui_extension_registration_uuid: zod.string().optional(),
     verification_session_url: zod.string().url().optional(),
     ui_extension_handle: zod.string().optional(),
-    encryption_certificate_fingerprint: zod.string(),
+    encryption_certificate_fingerprint: zod.string().optional(),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -65,7 +65,10 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
   // CreditCard-specific fields
   start_verification_session_url?: string
   ui_extension_handle?: string
-  encryption_certificate: string
+  encryption_certificate?: {
+    fingerprint: string
+    certificate: string
+  }
   checkout_payment_method_fields?: {
     type: 'string' | 'number' | 'boolean'
     required: boolean
@@ -93,7 +96,7 @@ export function creditCardDeployConfigToCLIConfig(
     supports_deferred_payments: config.supports_deferred_payments,
     supports_installments: config.supports_installments,
     verification_session_url: config.start_verification_session_url,
-    encryption_certificate_fingerprint: config.encryption_certificate,
+    encryption_certificate_fingerprint: config.encryption_certificate?.fingerprint,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     ui_extension_handle: config.ui_extension_handle,
   }
@@ -117,9 +120,9 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
     supports_deferred_payments: config.supports_deferred_payments,
+    encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     supports_installments: config.supports_installments,
     start_verification_session_url: config.verification_session_url,
-    encryption_certificate: config.encryption_certificate_fingerprint,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     ui_extension_handle: config.ui_extension_handle,
   }
