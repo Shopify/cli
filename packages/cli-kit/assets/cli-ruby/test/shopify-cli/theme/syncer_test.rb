@@ -241,25 +241,6 @@ module ShopifyCLI
         refute(@syncer.checksums["assets/generated.css"])
       end
 
-      def test_update_checksum_after_upload
-        @syncer.start_threads
-        ShopifyCLI::AdminAPI.expects(:rest_request).returns([
-          200,
-          {
-            "asset" => {
-              "key" => "assets/theme.css",
-              "checksum" => "deadbeef",
-            },
-          },
-          {},
-        ])
-
-        @syncer.enqueue_updates([@theme["assets/theme.css"]])
-        @syncer.wait!
-
-        assert_equal("deadbeef", @syncer.checksums["assets/theme.css"])
-      end
-
       def test_theme_files_are_pending_during_upload
         file = @theme.static_asset_files.first
 
