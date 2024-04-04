@@ -1,6 +1,7 @@
 export const environmentVariableNames = {
   skipEsbuildReactDedeuplication: 'SHOPIFY_CLI_SKIP_ESBUILD_REACT_DEDUPLICATION',
   disableGraphiQLExplorer: 'SHOPIFY_CLI_DISABLE_GRAPHIQL',
+  useDynamicConfigSpecifications: 'SHOPIFY_CLI_DYNAMIC_CONFIG',
 }
 
 export const configurationFileNames = {
