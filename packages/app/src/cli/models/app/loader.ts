@@ -410,8 +410,7 @@ class AppLoader {
 
     if (specification) {
       usedKnownSpecification = true
-      entryPath = await this.findEntryPath(directory, specification)
-    } else if (this.dynamicallySpecifiedConfigs) {
+    } else if (this.dynamicallySpecifiedConfigs.enabled) {
       // if dynamic configs are enabled, then create an automatically validated specification, with the same
       // identifier as the type
       specification = createConfigExtensionSpecification({
@@ -432,6 +431,10 @@ class AppLoader {
       configurationObject,
       this.abortOrReport.bind(this),
     )
+
+    if (usedKnownSpecification) {
+      entryPath = await this.findEntryPath(directory, specification)
+    }
 
     const extensionInstance = new ExtensionInstance({
       configuration,
@@ -568,7 +571,8 @@ class AppLoader {
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        return !Object.keys(AppSchema.shape).includes(key)
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path']
+        return !configKeysThatAreNeverModules.includes(key)
       })
 
     // make some extension instances for the unused keys
