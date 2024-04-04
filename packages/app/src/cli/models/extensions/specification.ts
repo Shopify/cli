@@ -49,6 +49,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  // TODO don't love this name
+  globalConfig?: boolean
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,
@@ -64,8 +66,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   transform?: (content: object) => object
   reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
   simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
-  // TODO don't love this name
-  globalConfig?: boolean
 }
 
 /**
