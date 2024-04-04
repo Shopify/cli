@@ -18,6 +18,7 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
   if (local) {
     const cliPath = await packagePath('cli')
     const appPath = await packagePath('app')
+    const createAppPath = await packagePath('create-app')
     const cliKitPath = await packagePath('cli-kit')
     const pluginCloudflarePath = await packagePath('plugin-cloudflare')
     const didYouMeanPath = await packagePath('plugin-did-you-mean')
@@ -30,6 +31,7 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
     const dependencyOverrides = {
       '@shopify/cli': cliPath,
       '@shopify/app': appPath,
+      '@shopify/create-app': createAppPath,
       '@shopify/cli-kit': cliKitPath,
       '@shopify/plugin-did-you-mean': didYouMeanPath,
       '@shopify/plugin-cloudflare': pluginCloudflarePath,

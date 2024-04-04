@@ -15,8 +15,7 @@ export async function selectApp(): Promise<OrganizationApp> {
   const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
-  const selectedApp = apps.find((app) => app.apiKey === selectedAppApiKey)!
+  const selectedApp = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
 }
@@ -30,6 +29,7 @@ export async function fetchAppRemoteConfiguration(
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
     activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
+  if (appModuleVersionsConfig.length === 0) return undefined
   const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
     specifications,

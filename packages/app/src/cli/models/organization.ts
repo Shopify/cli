@@ -25,6 +25,23 @@ export type OrganizationApp = MinimalOrganizationApp & {
   newApp?: boolean
   grantedScopes: string[]
   developmentStorePreviewEnabled?: boolean
+  applicationUrl?: string
+  redirectUrlWhitelist?: string[]
+  requestedAccessScopes?: string[]
+  webhookApiVersion?: string
+  embedded?: boolean
+  posEmbedded?: boolean
+  preferencesUrl?: string
+  gdprWebhooks?: {
+    customerDeletionUrl?: string
+    customerDataRequestUrl?: string
+    shopDeletionUrl?: string
+  }
+  appProxy?: {
+    subPath: string
+    subPathPrefix: string
+    url: string
+  }
   configuration?: SpecsAppConfiguration
   flags: Flag[]
 }

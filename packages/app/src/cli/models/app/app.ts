@@ -39,14 +39,18 @@ export const AppSchema = zod.object({
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
-export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
+export function getAppVersionedSchema(specs: ExtensionSpecification[], allowDynamicallySpecifiedConfigs = false) {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.experience === 'configuration'
   const schema = specs
     .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .reduce((schema, spec) => schema.merge(spec.schema), AppSchema as any)
 
-  return specs.length > 0 ? schema.strict() : schema
+  if (allowDynamicallySpecifiedConfigs) {
+    return schema.passthrough()
+  } else {
+    return specs.length > 0 ? schema.strict() : schema
+  }
 }
 
 /**
@@ -242,7 +246,8 @@ export class App implements AppInterface {
   }
 
   get allExtensions() {
-    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension || this.includeConfigOnDeploy)
+    if (this.includeConfigOnDeploy) return this.realExtensions
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
   get draftableExtensions() {

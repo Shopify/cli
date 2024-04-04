@@ -21,7 +21,6 @@ const WebhookSubscriptionSchema = zod.object({
   uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
-  metafield_namespaces: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   compliance_topics: zod
     .array(
       zod.enum([ComplianceTopic.CustomersRedact, ComplianceTopic.CustomersDataRequest, ComplianceTopic.ShopRedact]),
@@ -84,8 +83,7 @@ function mergeWebhooks(subscriptions: WebhookSubscription[]): WebhookSubscriptio
       (sub) =>
         sub.uri === subscription.uri &&
         sub.sub_topic === subscription.sub_topic &&
-        sub.include_fields === subscription.include_fields &&
-        sub.metafield_namespaces === subscription.metafield_namespaces,
+        sub.include_fields === subscription.include_fields,
     )
     if (existingSubscription) {
       if (subscription.compliance_topics) {

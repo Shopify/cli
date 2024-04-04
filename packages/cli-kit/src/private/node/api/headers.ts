@@ -54,7 +54,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
-    const authString = token.match(/^shp(at|ua)/) ? token : `Bearer ${token}`
+    const authString = token.match(/^shp(at|ua|ca)/) ? token : `Bearer ${token}`
     // eslint-disable-next-line dot-notation
     headers['authorization'] = authString
     headers['X-Shopify-Access-Token'] = authString

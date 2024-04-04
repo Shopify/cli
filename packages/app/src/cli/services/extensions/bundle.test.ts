@@ -63,7 +63,7 @@ describe('bundleExtension()', () => {
         stdout,
         stderr,
       },
-      {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID(VAR)': 'invalid_var'},
+      {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID(VAR)': 'invalid_var', '123NUMERIC_VAR': 'invalid_var'},
     )
 
     // Then

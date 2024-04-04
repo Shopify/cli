@@ -93,8 +93,23 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     localApp = await installAppDependencies(localApp)
   }
 
-  const graphiqlPort = commandOptions.graphiqlPort || ports.graphiql
+  const graphiqlPort = commandOptions.graphiqlPort || (await getAvailableTCPPort(ports.graphiql))
   const {graphiqlKey} = commandOptions
+
+  if (graphiqlPort !== (commandOptions.graphiqlPort || ports.graphiql)) {
+    renderWarning({
+      headline: [
+        'A random port will be used for GraphiQL because',
+        {command: `${ports.graphiql}`},
+        'is not available.',
+      ],
+      body: [
+        'If you want to keep your session in GraphiQL, you can choose a different one by setting the',
+        {command: '--graphiql-port'},
+        'flag.',
+      ],
+    })
+  }
 
   const {webs, ...network} = await setupNetworkingOptions(
     localApp.webs,

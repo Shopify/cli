@@ -49,6 +49,19 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
         result = {...result, [key]: value}
       }
     })
+
+    // if dynamic config was enabled, its possible to have more keys in the file than the schema
+    const blockedKeys = ['path', 'scopes']
+
+    Object.entries(confObj)
+      .filter(([key]) => !blockedKeys.includes(key))
+      .sort(([key, _value]) => key.localeCompare(key))
+      .forEach(([key, value]) => {
+        if (!entries.map(([key]) => key).includes(key)) {
+          result = {...result, [key]: value}
+        }
+      })
+
     return result
   }
   return config

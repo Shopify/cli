@@ -1,5 +1,22 @@
 # @shopify/cli
 
+## 3.58.0
+
+### Minor Changes
+
+- d1c4f4bf7: Adds editor extension collection specification [here](https://github.com/Shopify/cli/pull/3551)
+
+### Patch Changes
+
+- 960cdc0a2: Add a new "app init" command
+- 94da7f678: Move webhook commands under app
+- d1c4f4bf7: Renames nested `write_privacy_consent` capability to `customer_privacy` under `collect_buyer_consent`
+- Updated dependencies [ab752de6e]
+- Updated dependencies [3affd6bbe]
+- Updated dependencies [cedd14e6c]
+  - @shopify/cli-kit@3.58.0
+  - @shopify/plugin-did-you-mean@3.58.0
+
 ## 3.57.0
 
 ### Patch Changes

@@ -135,4 +135,22 @@ describe('fetchAppRemoteConfiguration', () => {
       },
     })
   })
+
+  test('when no configuration modules are present undefined is returned ', async () => {
+    // Given
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(undefined),
+    })
+
+    // When
+    const result = await fetchAppRemoteConfiguration(
+      minimalOrganizationApp,
+      developerPlatformClient,
+      await configurationSpecifications(),
+      [],
+    )
+
+    // Then
+    expect(result).toBeUndefined()
+  })
 })

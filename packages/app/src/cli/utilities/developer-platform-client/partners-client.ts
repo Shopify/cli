@@ -4,7 +4,12 @@ import {
   AllDevStoresByOrganizationQueryVariables,
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
-import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AppDeployOptions,
+  DeveloperPlatformClient,
+  Paginateable,
+} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {
@@ -299,10 +304,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsDiffQuery, input)
   }
 
-  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
+    if (!version) return
     return {
       ...version,
       appModuleVersions: version.appModuleVersions.map((mod) => {
@@ -326,8 +332,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ExtensionUpdateDraftMutation, extensionInput)
   }
 
-  async deploy(deployInput: AppDeployVariables): Promise<AppDeploySchema> {
-    return this.request(AppDeploy, deployInput)
+  async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {
+    const {organizationId, ...deployOptions} = deployInput
+    // Enforce the type
+    const variables: AppDeployVariables = deployOptions
+    return this.request(AppDeploy, variables)
   }
 
   async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {

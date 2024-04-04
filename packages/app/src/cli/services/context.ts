@@ -184,7 +184,7 @@ export async function ensureDevContext(
     if (_selectedApp) {
       selectedApp = _selectedApp
     } else {
-      const {apps, hasMorePages} = await developerPlatformClient.orgAndApps(orgId)
+      const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
       // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
@@ -270,7 +270,7 @@ export const appFromId = async ({
 }: AppFromIdOptions): Promise<OrganizationApp> => {
   // eslint-disable-next-line no-param-reassign
   organizationId =
-    organizationId ?? developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0'
+    organizationId ?? (developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0')
   const app = await developerPlatformClient.appFromId({
     id: apiKey,
     apiKey,
@@ -685,7 +685,7 @@ export async function fetchAppAndIdentifiers(
 
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = options.apiKey ?? app.configuration.client_id
-    remoteApp = await appFromId({apiKey, developerPlatformClient})
+    remoteApp = await appFromId({apiKey, organizationId: app.configuration.organization_id, developerPlatformClient})
   } else if (options.apiKey) {
     remoteApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
   } else if (envIdentifiers.app) {
