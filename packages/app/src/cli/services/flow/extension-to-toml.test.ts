@@ -17,7 +17,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = await buildTomlObject(extension1)
+    const got = buildTomlObject(extension1)
 
     // Then
     expect(got).toEqual(`[[extensions]]
@@ -72,7 +72,7 @@ required = true
     }
 
     // When
-    const got = await buildTomlObject(extension2)
+    const got = buildTomlObject(extension2)
 
     // Then
     expect(got).toEqual(`[[extensions]]

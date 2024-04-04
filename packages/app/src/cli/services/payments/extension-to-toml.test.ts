@@ -55,7 +55,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = await buildTomlObject(extension1)
+    const got = buildTomlObject(extension1)
 
     // Then
     expectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
@@ -107,7 +107,7 @@ supports_installments = true
     }
 
     // When
-    const got = await buildTomlObject(extension1)
+    const got = buildTomlObject(extension1)
 
     // Then
     expectIncludesKeys(got, SAMPLE_CREDIT_CARD_CONFIG)
@@ -151,7 +151,7 @@ supports_installments = false
     }
 
     // When
-    const got = await buildTomlObject(extension1)
+    const got = buildTomlObject(extension1)
 
     // Then
     expectIncludesKeys(got, SAMPLE_CUSTOM_CREDIT_CARD_CONFIG)
@@ -207,7 +207,7 @@ TestString=
     }
 
     // When
-    const got = await buildTomlObject(extension1)
+    const got = buildTomlObject(extension1)
 
     // Then
     expectIncludesKeys(got, SAMPLE_CUSTOM_ONSITE_CONFIG)
@@ -259,7 +259,7 @@ buyer_label_translations = [ ]
     }
 
     // When
-    const got = await buildTomlObject(extension1)
+    const got = buildTomlObject(extension1)
 
     // Then
     expectIncludesKeys(got, SAMPLE_REDEEMABLE_CONFIG)

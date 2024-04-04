@@ -46,7 +46,7 @@ export enum DashboardPaymentExtensionType {
   Redeemable = 'payments_app_redeemable',
 }
 
-export async function buildTomlObject(extension: ExtensionRegistration) {
+export function buildTomlObject(extension: ExtensionRegistration): string {
   switch (extension.type) {
     case DashboardPaymentExtensionType.Offsite:
       return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(extension, offsiteDeployConfigToCLIConfig)
@@ -77,7 +77,7 @@ export async function buildTomlObject(extension: ExtensionRegistration) {
 /**
  * Given a dashboard-built payments extension config file, convert it to toml for the CLI extension
  */
-export async function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
+export function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
   serialize: (config: T) => {[key: string]: unknown} | undefined,
 ) {
