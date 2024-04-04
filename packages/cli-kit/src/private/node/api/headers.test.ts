@@ -52,11 +52,11 @@ describe('common API methods', () => {
     })
   })
 
-  test('when using a custom app token, omit Bearer from auth headers', () => {
+  test.each(['shpat', 'shpua', 'shpca'])(`when custom app token starts with %s, do not prepend 'Bearer'`, (prefix) => {
     // Given
     vi.mocked(randomUUID).mockReturnValue('random-uuid')
     vi.mocked(firstPartyDev).mockReturnValue(false)
-    const token = 'shpat_my_token'
+    const token = `${prefix}_my_token`
     // When
     const headers = buildHeaders(token)
 
