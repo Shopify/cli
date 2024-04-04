@@ -216,17 +216,18 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
 }
 
 /**
- * Sanitizies the api_key from the payload.
+ * Sanitizies the api_key from the payload and returns a new hash.
  *
  * @param payload - The public and sensitive data.
- * @returns The payload with the api_key sanitized.
+ * @returns A copy of the payload with the api_key sanitized.
  */
 function sanitizePayload<T extends object>(payload: T): T {
-  if ('api_key' in payload) {
-    payload.api_key = '****'
+  const result = {...payload}
+  if ('api_key' in result) {
+    result.api_key = '****'
   }
 
-  return payload
+  return result
 }
 
 const buildHeaders = (currentTime: number) => {
