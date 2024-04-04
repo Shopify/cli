@@ -459,7 +459,7 @@ class AppLoader {
     return this.specifications
       .filter(
         (specification) =>
-          specification.experience === 'configuration' || specification.identifier === 'webhooks_subscriptions',
+          specification.experience === 'configuration' || specification.globalConfig,
       )
       .flatMap(async (specification) => {
         const specConfiguration = await parseConfigurationObject(

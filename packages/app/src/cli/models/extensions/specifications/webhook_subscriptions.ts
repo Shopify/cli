@@ -1,8 +1,10 @@
-import { CustomTransformationConfig, createConfigExtensionSpecification } from "../specification.js"
+import { CustomTransformationConfig, createExtensionSpecification } from "../specification.js"
 import { WebhookSchema, WebhookSimplifyConfig } from "./app_config_webhook.js"
 import {Flag} from '../../../services/dev/fetch.js'
 import {compact, deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 import { NormalizedWebhookSubscription, WebhooksConfig } from "./types/app_config_webhook.js"
+import { SpecsAppConfiguration } from "./types/app_config.js"
+import { BaseConfigType, ZodSchemaType } from "../schemas.js"
 
 export const WebhookSubscriptionsSpecIdentifier = 'webhooks_subscriptions'
 
@@ -45,11 +47,16 @@ const WebhooksSubscriptionsTransformConfig: CustomTransformationConfig = {
 }
 
 // Uses the same schema as the webhooks specs because its content is nested under the same webhooks section
-const webhookSubscriptionsSpec = createConfigExtensionSpecification({
+const webhookSubscriptionsSpec = createExtensionSpecification({
   identifier: WebhookSubscriptionsSpecIdentifier,
-  schema: WebhookSchema,
-  transformConfig: WebhooksSubscriptionsTransformConfig,
-  simplify: WebhookSimplifyConfig,
+  schema: WebhookSchema as unknown as ZodSchemaType<BaseConfigType>,
+  transform: transformFromWebhookConfig,
+  reverseTransform: transformToWebhookConfig,
+  appModuleFeatures: () => [],
+  simplify: WebhookSimplifyConfig.simplify as (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration,
+  experience: 'extension',
+  globalConfig: true
 })
+
 
 export default webhookSubscriptionsSpec
