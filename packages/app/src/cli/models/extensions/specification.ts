@@ -51,6 +51,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   schema: ZodSchemaType<TConfiguration>
   // TODO don't love this name
   globalConfig?: boolean
+  multipleRootPath?: string
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,

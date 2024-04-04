@@ -471,36 +471,36 @@ class AppLoader {
 
         if (Object.keys(specConfiguration).length === 0) return
 
-        if (specification.identifier === 'webhooks_subscriptions') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const webhooksConfig = specConfiguration as unknown as any
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const subscriptionExtensionInstances: any = []
+        // if (specification.identifier === 'webhooks_subscriptions') {
+        //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        //   const webhooksConfig = specConfiguration as unknown as any
+        //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        //   const subscriptionExtensionInstances: any = []
 
-          for (const {uri, topics, ...optionalFields} of webhooksConfig?.webhooks?.subscriptions ?? []) {
-            if (topics) {
-              topics.map((topic: string) => {
-                const subscription = {
-                  uri,
-                  topics: [topic],
-                  ...optionalFields,
-                }
-                subscriptionExtensionInstances.push(
-                  this.createExtensionInstance(
-                    specification.identifier,
-                    {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
-                    appConfiguration.path,
-                    directory,
-                  ).then((extensionInstance) =>
-                    this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
-                  ),
-                )
-              })
-            }
-          }
+        //   for (const {uri, topics, ...optionalFields} of webhooksConfig?.webhooks?.subscriptions ?? []) {
+        //     if (topics) {
+        //       topics.map((topic: string) => {
+        //         const subscription = {
+        //           uri,
+        //           topics: [topic],
+        //           ...optionalFields,
+        //         }
+        //         subscriptionExtensionInstances.push(
+        //           this.createExtensionInstance(
+        //             specification.identifier,
+        //             {webhooks: {api_version: webhooksConfig?.webhooks?.api_version, subscriptions: [subscription]}},
+        //             appConfiguration.path,
+        //             directory,
+        //           ).then((extensionInstance) =>
+        //             this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+        //           ),
+        //         )
+        //       })
+        //     }
+        //   }
 
-          return Promise.all(subscriptionExtensionInstances)
-        }
+        //   return Promise.all(subscriptionExtensionInstances)
+        // }
 
         return this.createExtensionInstance(
           specification.identifier,

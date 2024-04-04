@@ -55,7 +55,8 @@ const webhookSubscriptionsSpec = createExtensionSpecification({
   appModuleFeatures: () => [],
   simplify: WebhookSimplifyConfig.simplify as (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration,
   experience: 'extension',
-  globalConfig: true
+  globalConfig: true,
+  multipleRootPath: 'webhooks.subscriptions',
 })
 
 
