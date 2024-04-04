@@ -36,4 +36,4 @@ export const ports = {
   graphiql: 3457,
 } as const
 
-export const EsbuildEnvVarRegex = /^([a-zA-Z0-9_])*$/
+export const EsbuildEnvVarRegex = /^([a-zA-Z_$])([a-zA-Z0-9_$])*$/
