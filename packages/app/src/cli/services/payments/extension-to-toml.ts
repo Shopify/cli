@@ -96,11 +96,11 @@ export function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfig
         name: extension.title,
         type: 'payments_extension',
         handle: slugify(extension.title),
-      },
-    ],
-    targeting: [
-      {
-        target: `payments.${typeToContext(extension.type)}.render`,
+        targeting: [
+          {
+            target: `payments.${typeToContext(extension.type)}.render`,
+          },
+        ],
       },
     ],
     configuration: [cliConfig],

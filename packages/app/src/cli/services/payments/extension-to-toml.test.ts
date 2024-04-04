@@ -66,8 +66,8 @@ name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
 
-[[targeting]]
-target = "payments.offsite.render"
+  [[extensions.targeting]]
+  target = "payments.offsite.render"
 
 [[configuration]]
 payment_session_url = "https://bogus-app/payment-sessions/start"
@@ -118,8 +118,8 @@ name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
 
-[[targeting]]
-target = "payments.credit-card.render"
+  [[extensions.targeting]]
+  target = "payments.credit-card.render"
 
 [[configuration]]
 payment_session_url = "https://test-domain.com/authorize"
@@ -162,8 +162,8 @@ name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
 
-[[targeting]]
-target = "payments.custom-credit-card.render"
+  [[extensions.targeting]]
+  target = "payments.custom-credit-card.render"
 
 [[configuration]]
 ui_extension_registration_uuid = "3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc"
@@ -218,8 +218,8 @@ name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
 
-[[targeting]]
-target = "payments.custom-onsite.render"
+  [[extensions.targeting]]
+  target = "payments.custom-onsite.render"
 
 [[configuration]]
 ui_extension_registration_uuid = "7e12d5ac-d602-444b-9122-9278dc98e0c1"
@@ -270,8 +270,8 @@ name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
 
-[[targeting]]
-target = "payments.redeemable.render"
+  [[extensions.targeting]]
+  target = "payments.redeemable.render"
 
 [[configuration]]
 payment_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/payment_sessions"
