@@ -50,9 +50,9 @@ interface CheckoutPaymentMethodField {
   type: 'string' | 'number' | 'boolean'
   required: boolean
 }
-export async function redeemableDeployConfigToCLIConfig(
+export function redeemableDeployConfigToCLIConfig(
   config: RedeemablePaymentsAppExtensionDeployConfigType,
-): Promise<Omit<RedeemablePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined> {
+): Omit<RedeemablePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,

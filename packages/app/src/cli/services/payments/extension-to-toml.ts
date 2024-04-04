@@ -79,14 +79,14 @@ export async function buildTomlObject(extension: ExtensionRegistration) {
  */
 export async function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
-  serialize: (config: T) => Promise<{[key: string]: unknown} | undefined>,
+  serialize: (config: T) => {[key: string]: unknown} | undefined,
 ) {
   const version = extension.activeVersion ?? extension.draftVersion
   const versionConfig = version?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const dashboardConfig: T = JSON.parse(versionConfig)
 
-  const cliConfig = await serialize(dashboardConfig)
+  const cliConfig = serialize(dashboardConfig)
   if (cliConfig) delete cliConfig.api_version
 
   const localExtensionRepresentation = {

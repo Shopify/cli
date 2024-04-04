@@ -64,9 +64,9 @@ export interface CustomOnsitePaymentsAppExtensionDeployConfigType extends BasePa
   }[]
 }
 
-export async function customOnsiteDeployConfigToCLIConfig(
+export function customOnsiteDeployConfigToCLIConfig(
   config: CustomOnsitePaymentsAppExtensionDeployConfigType,
-): Promise<Omit<CustomOnsitePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined> {
+): Omit<CustomOnsitePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
     ui_extension_registration_uuid: config.ui_extension_registration_uuid,

@@ -59,11 +59,9 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
   }[]
 }
 
-export async function customCreditCardDeployConfigToCLIConfig(
+export function customCreditCardDeployConfigToCLIConfig(
   config: CustomCreditCardPaymentsAppExtensionDeployConfigType,
-): Promise<
-  Omit<CustomCreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined
-> {
+): Omit<CustomCreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
     ui_extension_registration_uuid: config.ui_extension_registration_uuid,

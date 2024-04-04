@@ -45,9 +45,9 @@ export interface OffsitePaymentsAppExtensionDeployConfigType extends BasePayment
   supports_3ds: boolean
 }
 
-export async function offsiteDeployConfigToCLIConfig(
+export function offsiteDeployConfigToCLIConfig(
   config: OffsitePaymentsAppExtensionDeployConfigType,
-): Promise<Omit<OffsitePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined> {
+): Omit<OffsitePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,

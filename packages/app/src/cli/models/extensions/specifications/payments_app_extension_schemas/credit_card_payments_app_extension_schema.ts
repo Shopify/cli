@@ -73,9 +73,9 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
   }[]
 }
 
-export async function creditCardDeployConfigToCLIConfig(
+export function creditCardDeployConfigToCLIConfig(
   config: CreditCardPaymentsAppExtensionDeployConfigType,
-): Promise<Omit<CreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined> {
+): Omit<CreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,
