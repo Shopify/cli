@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/create-app"
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/create-app"
   },
   "license": "MIT",
   "type": "module",
