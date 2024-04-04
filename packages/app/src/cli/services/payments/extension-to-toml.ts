@@ -96,6 +96,7 @@ export function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfig
         name: extension.title,
         type: 'payments_extension',
         handle: slugify(extension.title),
+        ...cliConfig,
         targeting: [
           {
             target: `payments.${typeToContext(extension.type)}.render`,
@@ -103,7 +104,6 @@ export function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfig
         ],
       },
     ],
-    configuration: [cliConfig],
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return encodeToml(localExtensionRepresentation as any)

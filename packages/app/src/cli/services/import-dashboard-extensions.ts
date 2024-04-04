@@ -48,7 +48,7 @@ export async function importDashboardExtensions(options: ImportOptions) {
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = await options.buildTomlObject(ext)
+    const tomlObject = options.buildTomlObject(ext)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid

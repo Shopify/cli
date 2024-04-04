@@ -65,11 +65,6 @@ describe('extension-to-toml', () => {
 name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
-
-  [[extensions.targeting]]
-  target = "payments.offsite.render"
-
-[[configuration]]
 payment_session_url = "https://bogus-app/payment-sessions/start"
 refund_session_url = "https://bogus-app/payment-sessions/refund"
 capture_session_url = "https://bogus-app/payment-sessions/capture"
@@ -91,6 +86,9 @@ supports_oversell_protection = false
 supports_3ds = true
 supports_deferred_payments = true
 supports_installments = true
+
+  [[extensions.targeting]]
+  target = "payments.offsite.render"
 `)
   })
 
@@ -117,11 +115,6 @@ supports_installments = true
 name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
-
-  [[extensions.targeting]]
-  target = "payments.credit-card.render"
-
-[[configuration]]
 payment_session_url = "https://test-domain.com/authorize"
 refund_session_url = "https://test-domain.com/refund"
 capture_session_url = "https://test-domain.com/capture"
@@ -135,6 +128,9 @@ test_mode_available = true
 supports_3ds = true
 supports_deferred_payments = false
 supports_installments = false
+
+  [[extensions.targeting]]
+  target = "payments.credit-card.render"
 `)
   })
 
@@ -161,11 +157,6 @@ supports_installments = false
 name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
-
-  [[extensions.targeting]]
-  target = "payments.custom-credit-card.render"
-
-[[configuration]]
 ui_extension_registration_uuid = "3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc"
 payment_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/payment_sessions"
 refund_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/refund_sessions"
@@ -181,10 +172,13 @@ test_mode_available = true
 multiple_capture = false
 checkout_hosted_fields = [ "name", "expiry", "verification_value" ]
 
-  [[configuration.checkout_payment_method_fields]]
+  [[extensions.checkout_payment_method_fields]]
   key = "payment_plan"
   type = "string"
   required = true
+
+  [[extensions.targeting]]
+  target = "payments.custom-credit-card.render"
 `)
   })
 
@@ -211,11 +205,6 @@ checkout_hosted_fields = [ "name", "expiry", "verification_value" ]
 name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
-
-  [[extensions.targeting]]
-  target = "payments.custom-onsite.render"
-
-[[configuration]]
 ui_extension_registration_uuid = "7e12d5ac-d602-444b-9122-9278dc98e0c1"
 payment_session_url = "https://test-domain.com/startsession/bogus-pay"
 refund_session_url = "https://test-domain.com/refund"
@@ -233,10 +222,13 @@ multiple_capture = false
 buyer_label = "Bogus Pay Buyer Label"
 buyer_label_translations = [ ]
 
-  [[configuration.checkout_payment_method_fields]]
+  [[extensions.checkout_payment_method_fields]]
   key = "bogus_customer_document"
   type = "string"
   required = true
+
+  [[extensions.targeting]]
+  target = "payments.custom-onsite.render"
 `)
   })
 
@@ -263,11 +255,6 @@ buyer_label_translations = [ ]
 name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
-
-  [[extensions.targeting]]
-  target = "payments.redeemable.render"
-
-[[configuration]]
 payment_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/payment_sessions"
 refund_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/refund_sessions"
 capture_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/capture_sessions"
@@ -280,15 +267,18 @@ test_mode_available = true
 redeemable_type = "gift_card"
 balance_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/retrieve_balance"
 
-  [[configuration.checkout_payment_method_fields]]
+  [[extensions.checkout_payment_method_fields]]
   key = "card_number"
   type = "string"
   required = true
 
-  [[configuration.checkout_payment_method_fields]]
+  [[extensions.checkout_payment_method_fields]]
   key = "pin"
   type = "string"
   required = true
+
+  [[extensions.targeting]]
+  target = "payments.redeemable.render"
 `)
   })
 })
