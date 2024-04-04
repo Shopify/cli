@@ -100,6 +100,7 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     merchant_label: config.merchant_label,
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
+    encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     supported_payment_methods: config.supported_payment_methods,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,

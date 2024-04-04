@@ -175,17 +175,11 @@ confirmation_callback_url = "https://bogus-payment-sessions.shopifycloud.com/bog
 merchant_label = "Bogus Private Card App"
 supports_3ds = false
 supported_countries = [ "CA", "MX", "US" ]
+encryption_certificate_fingerprint = "Test Certificate"
 supported_payment_methods = [ "visa" ]
 test_mode_available = true
 multiple_capture = false
 checkout_hosted_fields = [ "name", "expiry", "verification_value" ]
-
-  [configuration.encryption_certificate_fingerprint]
-  fingerprint = "Test Certificate"
-  certificate = """
------BEGIN CERTIFICATE-----
-TestString=
------END CERTIFICATE-----"""
 
   [[configuration.checkout_payment_method_fields]]
   key = "payment_plan"

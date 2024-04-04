@@ -131,7 +131,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       supports_installments: config.supports_installments,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       ui_extension_handle: config.ui_extension_handle,
-      encryption_certificate: config.encryption_certificate_fingerprint,
+      encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
       ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     })
   })

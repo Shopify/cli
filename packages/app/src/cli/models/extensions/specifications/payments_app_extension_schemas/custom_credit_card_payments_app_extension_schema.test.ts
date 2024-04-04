@@ -84,7 +84,7 @@ describe('customCreditCardPaymentsAppExtensionDeployConfig', () => {
       supports_3ds: config.supports_3ds,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
-      encryption_certificate: config.encryption_certificate_fingerprint,
+      encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
       test_mode_available: config.test_mode_available,
       multiple_capture: config.multiple_capture,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
