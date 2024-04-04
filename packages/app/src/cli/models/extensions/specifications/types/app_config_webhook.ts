@@ -4,7 +4,6 @@ export interface WebhookSubscription {
   compliance_topics?: string[]
   sub_topic?: string
   include_fields?: string[]
-  metafield_namespaces?: string[]
 }
 
 export interface PrivacyComplianceConfig {
