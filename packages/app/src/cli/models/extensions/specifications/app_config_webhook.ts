@@ -71,7 +71,7 @@ const appWebhooksSpec = createConfigExtensionSpecification({
 
 export default appWebhooksSpec
 
-function simplifyWebhooks(remoteConfig: SpecsAppConfiguration) {
+export function simplifyWebhooks(remoteConfig: SpecsAppConfiguration) {
   if (!remoteConfig.webhooks?.subscriptions) return remoteConfig
 
   remoteConfig.webhooks.subscriptions = mergeWebhooks(remoteConfig.webhooks.subscriptions)

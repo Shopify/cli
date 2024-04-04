@@ -49,6 +49,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  globalConfig?: boolean
+  multipleRootPath?: string
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,
@@ -124,6 +126,8 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.reverseTransform,
     simplify: spec.simplify,
     experience: spec.experience ?? 'extension',
+    globalConfig: spec.globalConfig ?? false,
+    multipleRootPath: spec.multipleRootPath,
   }
   return {...defaults, ...spec}
 }
@@ -142,6 +146,8 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   simplify?: SimplifyConfig
+  globalConfig?: boolean
+  multipleRootPath?: string
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -154,6 +160,8 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     simplify: resolveSimplifyAppConfig(spec.simplify),
     experience: 'configuration',
+    globalConfig: spec.globalConfig,
+    multipleRootPath: spec.multipleRootPath,
   })
 }
 

@@ -318,7 +318,21 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async bundleConfig({identifiers, developerPlatformClient, apiKey}: ExtensionBundleConfigOptions) {
     const configValue = await this.deployConfig({apiKey, developerPlatformClient})
-    if (!configValue) return undefined
+    if (!configValue) return []
+
+    if (this.isUuidManaged()) {
+      return [
+        {
+          config: JSON.stringify(configValue),
+          context: this.contextValue,
+          handle: this.handle,
+          uuid: identifiers.extensions[this.localIdentifier],
+        },
+      ]
+    }
+    const uuid = this.isUuidManaged()
+      ? identifiers.extensions[this.localIdentifier]
+      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
 
     const result = {
       config: JSON.stringify(configValue),
@@ -326,10 +340,30 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
 
-    const uuid = this.isUuidManaged()
-      ? identifiers.extensions[this.localIdentifier]
-      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
-    return {...result, uuid}
+    return this.bundleGlobalConfigExtension(
+      identifiers.extensionsNonUuidManaged[this.localIdentifier] ?? [],
+      configValue,
+    )
+  }
+
+  bundleGlobalConfigExtension(uuids: string[], config: {[key: string]: unknown}) {
+    if (!this.specification.multipleRootPath)
+      return [
+        {
+          config: JSON.stringify(config),
+          context: this.contextValue,
+          handle: this.handle,
+          uuid: uuids[0],
+        },
+      ]
+
+    const multipleRootPathValue = getPathValue<unknown[]>(this.configuration, this.specification.multipleRootPath)
+    return multipleRootPathValue!.map((config, index) => ({
+      config: JSON.stringify(config),
+      context: this.contextValue,
+      handle: this.handle,
+      uuid: uuids[index],
+    }))
   }
 }
 
