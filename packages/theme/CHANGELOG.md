@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.58.2
+
+### Patch Changes
+
+- f41ab0261: - Theme Push: Fix issue with unresponsive server when password flag is provided
+  - Theme Push: Add 'theme' key to root node of JSON output
+  - @shopify/cli-kit@3.58.2
+
 ## 3.58.1
 
 ### Patch Changes
