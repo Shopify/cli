@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'upgrade',
-  description: `If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.`,
-  overviewPreviewDescription: `Upgrade your CLI dependency.`,
+  description: `Shows details on how to upgrade Shopify CLI.`,
+  overviewPreviewDescription: `Shows details on how to upgrade Shopify CLI.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
@@ -20,13 +20,8 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `upgrade` command:',
-    type: 'upgrade',
-  },
   ],
-  category: 'common',
+  category: 'Common commands',
   related: [
   ],
 }

@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appfunctiontypegen',
   },
   ],
-  category: 'app',
+  category: 'app commands',
   related: [
   ],
 }

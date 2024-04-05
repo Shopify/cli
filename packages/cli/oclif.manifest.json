@@ -1387,7 +1387,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new app project"
+      "summary": "Create a new Shopify app project."
     },
     "app:release": {
       "aliases": [
@@ -1848,6 +1848,24 @@
       "hiddenAliases": [
       ],
       "id": "demo:print-ai-prompt",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "docs:generate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Generate CLI commands documentation",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "docs:generate",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -2772,8 +2790,32 @@
       ],
       "args": {
       },
-      "description": "Displays information about your theme environment, including your current store.",
+      "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
       "flags": {
+        "development": {
+          "allowNo": false,
+          "char": "d",
+          "description": "Retrieve info from your development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "type": "boolean"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "environment",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "Output the theme info as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -2781,6 +2823,32 @@
           "hidden": false,
           "name": "no-color",
           "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "theme",
+          "type": "option"
         },
         "verbose": {
           "allowNo": false,

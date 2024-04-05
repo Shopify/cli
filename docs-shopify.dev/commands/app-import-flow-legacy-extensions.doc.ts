@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appimportflowlegacyextensions',
   },
   ],
-  category: 'app',
+  category: 'app commands',
   related: [
   ],
 }

@@ -32,7 +32,7 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
     type: 'themepublish',
   },
   ],
-  category: 'theme',
+  category: 'theme commands',
   related: [
   ],
 }

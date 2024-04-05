@@ -106,7 +106,7 @@ const data: ReferenceEntityTemplateSchema = {
   },
   definitions: [${hasFlags ? flagDoc : ''}
   ],
-  category: ${hasTopic ? `'${topic}'` : `'common'`},
+  category: ${hasTopic ? `'${topic} commands'` : `'Common commands'`},
   related: [
   ],
 }

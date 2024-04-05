@@ -31,7 +31,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appdeploy',
   },
   ],
-  category: 'app',
+  category: 'app commands',
   related: [
   ],
 }

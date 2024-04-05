@@ -31,7 +31,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themeopen',
   },
   ],
-  category: 'theme',
+  category: 'theme commands',
   related: [
   ],
 }

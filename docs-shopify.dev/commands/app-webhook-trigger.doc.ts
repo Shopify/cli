@@ -41,7 +41,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appwebhooktrigger',
   },
   ],
-  category: 'app',
+  category: 'app commands',
   related: [
   ],
 }

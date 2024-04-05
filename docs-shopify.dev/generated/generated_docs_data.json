@@ -82,7 +82,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -160,7 +160,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -230,7 +230,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -356,7 +356,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -514,7 +514,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -592,7 +592,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -662,7 +662,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -732,7 +732,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -826,7 +826,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -912,7 +912,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -982,7 +982,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1100,93 +1100,7 @@
         }
       }
     ],
-    "category": "app",
-    "related": []
-  },
-  {
-    "name": "app generate schema",
-    "description": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
-    "overviewPreviewDescription": "Fetch the latest GraphQL schema for a function.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "app generate schema",
-            "code": "shopify app generate schema [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "app generate schema"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `app generate schema` command:",
-        "type": "appgenerateschema",
-        "typeDefinitions": {
-          "appgenerateschema": {
-            "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-            "name": "appgenerateschema",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--client-id <value>",
-                "value": "string",
-                "description": "The Client ID to fetch the schema with.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your function directory.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--stdout",
-                "value": "\"\"",
-                "description": "Output the schema to stdout instead of writing to a file.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface appgenerateschema {\n  /**\n   * The Client ID to fetch the schema with.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output the schema to stdout instead of writing to a file.\n   */\n  '--stdout'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1264,7 +1178,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1350,13 +1264,13 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
     "name": "app init",
     "description": "undefined",
-    "overviewPreviewDescription": "Create a new app project",
+    "overviewPreviewDescription": "Create a new Shopify app project.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1444,7 +1358,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1545,7 +1459,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1631,7 +1545,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1725,7 +1639,7 @@
         }
       }
     ],
-    "category": "app",
+    "category": "app commands",
     "related": []
   },
   {
@@ -1747,141 +1661,7 @@
       }
     },
     "definitions": [],
-    "category": "auth",
-    "related": []
-  },
-  {
-    "name": "commands",
-    "description": "list all the commands",
-    "overviewPreviewDescription": "list all the commands",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "commands",
-            "code": "shopify commands [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "commands"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `commands` command:",
-        "type": "commands",
-        "typeDefinitions": {
-          "commands": {
-            "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-            "name": "commands",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--json",
-                "value": "\"\"",
-                "description": "Format output as json.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-h, --help",
-                "value": "\"\"",
-                "description": "Show CLI help.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--hidden",
-                "value": "\"\"",
-                "description": "show hidden commands",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--tree",
-                "value": "\"\"",
-                "description": "show tree of commands",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--columns <value>",
-                "value": "string",
-                "description": "only show provided columns (comma-separated)",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--sort <value>",
-                "value": "string",
-                "description": "property to sort by (prepend '-' for descending)",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--filter <value>",
-                "value": "string",
-                "description": "filter property by partial string matching, ex: name=foo",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--csv",
-                "value": "\"\"",
-                "description": "output is csv format [alias: --output=csv]",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--output <value>",
-                "value": "string",
-                "description": "output in a more machine friendly format",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-x, --extended",
-                "value": "\"\"",
-                "description": "show extra columns",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-truncate",
-                "value": "\"\"",
-                "description": "do not truncate output to fit screen",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-header",
-                "value": "\"\"",
-                "description": "hide table header from output",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface commands {\n  /**\n   * Format output as json.\n   */\n  '--json'?: ''\n\n  /**\n   * Show CLI help.\n   */\n  '-h, --help'?: ''\n\n  /**\n   * show hidden commands\n   */\n  '--hidden'?: ''\n\n  /**\n   * show tree of commands\n   */\n  '--tree'?: ''\n\n  /**\n   * only show provided columns (comma-separated)\n   */\n  '--columns <value>'?: string\n\n  /**\n   * property to sort by (prepend '-' for descending)\n   */\n  '--sort <value>'?: string\n\n  /**\n   * filter property by partial string matching, ex: name=foo\n   */\n  '--filter <value>'?: string\n\n  /**\n   * output is csv format [alias: --output=csv]\n   */\n  '--csv'?: ''\n\n  /**\n   * output in a more machine friendly format\n   */\n  '--output <value>'?: string\n\n  /**\n   * show extra columns\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * do not truncate output to fit screen\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * hide table header from output\n   */\n  '--no-header'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "common",
+    "category": "auth commands",
     "related": []
   },
   {
@@ -1903,7 +1683,7 @@
       }
     },
     "definitions": [],
-    "category": "config",
+    "category": "config commands",
     "related": []
   },
   {
@@ -1925,7 +1705,7 @@
       }
     },
     "definitions": [],
-    "category": "config",
+    "category": "config commands",
     "related": []
   },
   {
@@ -1947,53 +1727,29 @@
       }
     },
     "definitions": [],
-    "category": "config",
+    "category": "config commands",
     "related": []
   },
   {
-    "name": "help",
-    "description": "Display help for <%= config.bin %>.",
-    "overviewPreviewDescription": "Display help for <%= config.bin %>.",
+    "name": "hydrogen init",
+    "description": "undefined",
+    "overviewPreviewDescription": "Create a new hydrogen project",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
       "codeblock": {
         "tabs": [
           {
-            "title": "help",
-            "code": "shopify help [flags]",
+            "title": "hydrogen init",
+            "code": "shopify hydrogen init [flags]",
             "language": "bash"
           }
         ],
-        "title": "help"
+        "title": "hydrogen init"
       }
     },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `help` command:",
-        "type": "help",
-        "typeDefinitions": {
-          "help": {
-            "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
-            "name": "help",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-n, --nested-commands",
-                "value": "\"\"",
-                "description": "Include all nested commands in the output.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface help {\n  /**\n   * Include all nested commands in the output.\n   */\n  '-n, --nested-commands'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "common",
+    "definitions": [],
+    "category": "hydrogen commands",
     "related": []
   },
   {
@@ -2015,7 +1771,7 @@
       }
     },
     "definitions": [],
-    "category": "common",
+    "category": "Common commands",
     "related": []
   },
   {
@@ -2149,7 +1905,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2243,7 +1999,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2353,7 +2109,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2527,7 +2283,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2629,7 +2385,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2707,7 +2463,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2761,7 +2517,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2871,7 +2627,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -2981,7 +2737,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -3043,7 +2799,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -3137,7 +2893,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -3271,7 +3027,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -3437,7 +3193,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -3546,7 +3302,7 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
@@ -3632,13 +3388,13 @@
         }
       }
     ],
-    "category": "theme",
+    "category": "theme commands",
     "related": []
   },
   {
     "name": "upgrade",
-    "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
-    "overviewPreviewDescription": "Upgrade your CLI dependency.",
+    "description": "Shows details on how to upgrade Shopify CLI.",
+    "overviewPreviewDescription": "Shows details on how to upgrade Shopify CLI.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3653,32 +3409,8 @@
         "title": "upgrade"
       }
     },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `upgrade` command:",
-        "type": "upgrade",
-        "typeDefinitions": {
-          "upgrade": {
-            "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
-            "name": "upgrade",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your project directory.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface upgrade {\n  /**\n   * The path to your project directory.\n   */\n  '--path <value>'?: string\n}"
-          }
-        }
-      }
-    ],
-    "category": "common",
+    "definitions": [],
+    "category": "Common commands",
     "related": []
   },
   {
@@ -3700,7 +3432,7 @@
       }
     },
     "definitions": [],
-    "category": "common",
+    "category": "Common commands",
     "related": []
   }
 ]

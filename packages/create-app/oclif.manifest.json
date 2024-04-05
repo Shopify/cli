@@ -95,7 +95,7 @@
         "init.js"
       ],
       "strict": true,
-      "summary": "Create a new app project"
+      "summary": "Create a new Shopify app project."
     }
   },
   "version": "3.58.0"

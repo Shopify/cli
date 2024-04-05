@@ -28,7 +28,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themeshare',
   },
   ],
-  category: 'theme',
+  category: 'theme commands',
   related: [
   ],
 }

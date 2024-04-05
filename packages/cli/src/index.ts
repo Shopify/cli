@@ -11,6 +11,7 @@ import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import HydrogenInit from './cli/commands/hydrogen/init.js'
+import DocsGenerate from './cli/commands/docs/generate.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
 import {commands as PluginCommands} from '@oclif/plugin-plugins'
@@ -87,6 +88,7 @@ export const COMMANDS: any = {
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
   'hydrogen:init': HydrogenInit,
+  'docs:generate': DocsGenerate,
 }
 
 export default runShopifyCLI

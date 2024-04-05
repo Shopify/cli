@@ -4,7 +4,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app init',
   description: `undefined`,
-  overviewPreviewDescription: `Create a new app project`,
+  overviewPreviewDescription: `Create a new Shopify app project.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appinit',
   },
   ],
-  category: 'app',
+  category: 'app commands',
   related: [
   ],
 }
