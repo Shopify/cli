@@ -2,28 +2,28 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'hydrogen init',
-  description: `Creates a new Hydrogen storefront.`,
-  overviewPreviewDescription: `Creates a new Hydrogen storefront.`,
+  name: 'hydrogen generate route',
+  description: `Generates a standard Shopify route.`,
+  overviewPreviewDescription: `Generates a standard Shopify route.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
     codeblock: {
       tabs: [
         {
-          title: 'hydrogen init',
-          code: './examples/hydrogen-init.example.sh',
+          title: 'hydrogen generate route',
+          code: './examples/hydrogen-generate-route.example.sh',
           language: 'bash',
         },
       ],
-      title: 'hydrogen init',
+      title: 'hydrogen generate route',
     },
   },
   definitions: [
   {
     title: 'Flags',
-    description: 'The following flags are available for the `hydrogen init` command:',
-    type: 'hydrogeninit',
+    description: 'The following flags are available for the `hydrogen generate route` command:',
+    type: 'hydrogengenerateroute',
   },
   ],
   category: 'hydrogen commands',

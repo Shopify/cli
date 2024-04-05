@@ -2,29 +2,24 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'hydrogen init',
-  description: `Creates a new Hydrogen storefront.`,
-  overviewPreviewDescription: `Creates a new Hydrogen storefront.`,
+  name: 'hydrogen shortcut',
+  description: `Creates a global \`h2\` shortcut for the Hydrogen CLI`,
+  overviewPreviewDescription: `Creates a global \`h2\` shortcut for the Hydrogen CLI`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
     codeblock: {
       tabs: [
         {
-          title: 'hydrogen init',
-          code: './examples/hydrogen-init.example.sh',
+          title: 'hydrogen shortcut',
+          code: './examples/hydrogen-shortcut.example.sh',
           language: 'bash',
         },
       ],
-      title: 'hydrogen init',
+      title: 'hydrogen shortcut',
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `hydrogen init` command:',
-    type: 'hydrogeninit',
-  },
   ],
   category: 'hydrogen commands',
   related: [

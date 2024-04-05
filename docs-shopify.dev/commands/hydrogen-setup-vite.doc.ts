@@ -2,28 +2,28 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'hydrogen init',
-  description: `Creates a new Hydrogen storefront.`,
-  overviewPreviewDescription: `Creates a new Hydrogen storefront.`,
+  name: 'hydrogen setup vite',
+  description: `EXPERIMENTAL: Upgrades the project to use Vite.`,
+  overviewPreviewDescription: `EXPERIMENTAL: Upgrades the project to use Vite.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
     codeblock: {
       tabs: [
         {
-          title: 'hydrogen init',
-          code: './examples/hydrogen-init.example.sh',
+          title: 'hydrogen setup vite',
+          code: './examples/hydrogen-setup-vite.example.sh',
           language: 'bash',
         },
       ],
-      title: 'hydrogen init',
+      title: 'hydrogen setup vite',
     },
   },
   definitions: [
   {
     title: 'Flags',
-    description: 'The following flags are available for the `hydrogen init` command:',
-    type: 'hydrogeninit',
+    description: 'The following flags are available for the `hydrogen setup vite` command:',
+    type: 'hydrogensetupvite',
   },
   ],
   category: 'hydrogen commands',

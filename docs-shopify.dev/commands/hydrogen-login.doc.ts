@@ -2,28 +2,28 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'hydrogen init',
-  description: `Creates a new Hydrogen storefront.`,
-  overviewPreviewDescription: `Creates a new Hydrogen storefront.`,
+  name: 'hydrogen login',
+  description: `Login to your Shopify account.`,
+  overviewPreviewDescription: `Login to your Shopify account.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
     codeblock: {
       tabs: [
         {
-          title: 'hydrogen init',
-          code: './examples/hydrogen-init.example.sh',
+          title: 'hydrogen login',
+          code: './examples/hydrogen-login.example.sh',
           language: 'bash',
         },
       ],
-      title: 'hydrogen init',
+      title: 'hydrogen login',
     },
   },
   definitions: [
   {
     title: 'Flags',
-    description: 'The following flags are available for the `hydrogen init` command:',
-    type: 'hydrogeninit',
+    description: 'The following flags are available for the `hydrogen login` command:',
+    type: 'hydrogenlogin',
   },
   ],
   category: 'hydrogen commands',

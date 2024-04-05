@@ -45,7 +45,7 @@ If using linux and themes, follow the instructions on the side to install the re
       anchorLink: 'installation',
       title: 'Installation',
       sectionContent:
-        'This installs Shopify CLI globally, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.\n\nFor app development you can also install the CLI locally to your project, find out more about that [Here](/docs/apps/getting-started/installation).',
+        'This installs Shopify CLI globally on your system, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.',
       codeblock: {
         title: '',
         tabs: [
@@ -78,7 +78,7 @@ If using linux and themes, follow the instructions on the side to install the re
       title: 'Commands',
       sectionContent: `
 Shopify CLI groups commands into topics and this is the syntax to run them: \`shopify [topic] [command]\`.
-Check out the [Commands](/docs/api/shopify-cli/commands) section to see the list of commands available for each topic.
+Check out the Commands section in the sidebar to see the list of commands available for each topic.
 
 Or run the \`help\` command to get this information right in your terminal
 `,
