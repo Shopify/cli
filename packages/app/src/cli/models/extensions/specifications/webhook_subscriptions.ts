@@ -41,17 +41,20 @@ function transformFromWebhookSubscriptionsConfig(content: object) {
 }
 
 function transformToWebhookSubscriptionsConfig(content: object) {
-  const serverWebhooks = getPathValue(content, 'subscriptions') as NormalizedWebhookSubscription[]
-  if (!serverWebhooks) return {}
+  const subscription = content as NormalizedWebhookSubscription
+  if (!subscription) return {}
 
-  const webhooksSubscriptions: WebhooksConfig['subscriptions'] = []
-
-  for (const {topic, ...otherFields} of serverWebhooks) {
-    webhooksSubscriptions.push({topics: [topic], ...otherFields})
+  const {topic, ...otherFields} = subscription
+  return {
+    webhooks: {
+      subscriptions: [
+        {
+          topics: [topic],
+          ...otherFields,
+        },
+      ],
+    },
   }
-
-  const webhooksSubscriptionsObject = webhooksSubscriptions.length > 0 ? {subscriptions: webhooksSubscriptions} : {}
-  return {webhooks: webhooksSubscriptionsObject}
 }
 
 const WebhookTransformConfig: CustomTransformationConfig = {
