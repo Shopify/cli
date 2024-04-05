@@ -30,7 +30,7 @@ export {hooks as PluginHook} from '@oclif/plugin-plugins'
 // the error stack and manually call exit so that the cleanup code is called. This
 // makes sure that there are no lingering tunnel processes.
 process.on('uncaughtException', (err) => {
-  fs.writeSync(process.stderr.fd, `${err.stack}\n`)
+  fs.writeSync(process.stderr.fd, `${err.stack || err.message || err}\n`)
   process.exit(1)
 })
 const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']

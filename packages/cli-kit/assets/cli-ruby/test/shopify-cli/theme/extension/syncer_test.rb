@@ -24,36 +24,6 @@ module ShopifyCLI
             specification_handler: @specification_handler)
         end
 
-        def test_logs_success_when_draft_syncs_successfully
-          # We need to have this return a time over the PUSH_INTERVAL
-          @syncer.expects(:latest_sync).returns(frozen_time - Syncer::ExtensionServeJob::PUSH_INTERVAL)
-          file_paths = %w[blocks/block1.liquid blocks/block2.liquid assets/block1.css]
-          files = file_paths.map { |f| @extension[f] }
-
-          graphql_success = {
-            "data" => {
-              "extensionUpdateDraft" => {
-                "userErrors" => nil,
-              },
-            },
-          }
-          ShopifyCLI::PartnersAPI.expects(:query).returns(graphql_success)
-          ::Extension::Tasks::Converters::VersionConverter.stubs(:from_hash).returns({})
-          @ctx.expects(:puts)
-            .with("{{green:Pushed}} {{>}} {{blue:'#{@extension_title}'}} to a draft").once
-
-          files.each do |f|
-            @ctx.expects(:puts)
-              .with("{{blue:- #{f.relative_path}}}").once
-          end
-
-          @syncer.start
-          time_freeze do
-            @syncer.enqueue_updates(files)
-            @syncer.shutdown
-          end
-        end
-
         def test_logs_errors_when_draft_sync_fails
           # We need to have this return a time over the PUSH_INTERVAL
           @syncer.expects(:latest_sync).returns(frozen_time - Syncer::ExtensionServeJob::PUSH_INTERVAL)

@@ -62,7 +62,7 @@ describe('findOrganizationApp', () => {
   const org = {
     id: '1',
     businessName: 'org1',
-    betas: {},
+    flags: {},
     website: 'http://example.org',
   }
   const anApp = {id: '1', title: anAppName, apiKey: anApiKey, organizationId: org.id}
@@ -112,7 +112,7 @@ describe('findOrganizationApp', () => {
     // Given
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp, anotherApp]))
     vi.mocked(basename).mockResolvedValue(`folder/somewhere-else`)
-    vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
+    vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp)
 
     // When
     const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())

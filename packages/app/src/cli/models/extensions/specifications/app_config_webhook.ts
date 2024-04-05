@@ -1,24 +1,34 @@
-import {transformToWebhookConfig, transformWebhookConfig} from './transform/app_config_webhook.js'
+import {transformToWebhookConfig, transformFromWebhookConfig} from './transform/app_config_webhook.js'
 import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {webhookValidator} from './validation/app_config_webhook.js'
-import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {WebhookSubscription} from './types/app_config_webhook.js'
+import {SpecsAppConfiguration} from './types/app_config.js'
+import {CustomTransformationConfig, SimplifyConfig, createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+
+export enum ComplianceTopic {
+  CustomersRedact = 'customers/redact',
+  CustomersDataRequest = 'customers/data_request',
+  ShopRedact = 'shop/redact',
+}
 
 const WebhookSubscriptionSchema = zod.object({
   topics: zod
     .array(zod.string({invalid_type_error: 'Values within array must be a string'}), {
       invalid_type_error: 'Value must be string[]',
     })
-    .nonempty({message: "Value can't be empty"}),
+    .optional(),
   uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
-  metafield_namespaces: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   compliance_topics: zod
-    .array(zod.enum(['customers/redact', 'customers/data_request', 'shop/redact']), {
-      invalid_type_error:
-        'Value must be an array containing values: customers/redact, customers/data_request or shop/redact',
-    })
+    .array(
+      zod.enum([ComplianceTopic.CustomersRedact, ComplianceTopic.CustomersDataRequest, ComplianceTopic.ShopRedact]),
+      {
+        invalid_type_error:
+          'Value must be an array containing values: customers/redact, customers/data_request or shop/redact',
+      },
+    )
     .optional(),
 })
 
@@ -43,14 +53,50 @@ export const WebhookSchema = zod.object({
 export const WebhooksSpecIdentifier = 'webhooks'
 
 const WebhookTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformWebhookConfig(content),
+  forward: (content: object) => transformFromWebhookConfig(content),
   reverse: (content: object) => transformToWebhookConfig(content),
+}
+
+export const WebhookSimplifyConfig: SimplifyConfig = {
+  simplify: (remoteConfig: SpecsAppConfiguration) => simplifyWebhooks(remoteConfig),
 }
 
 const appWebhooksSpec = createConfigExtensionSpecification({
   identifier: WebhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: WebhookTransformConfig,
+  simplify: WebhookSimplifyConfig,
 })
 
 export default appWebhooksSpec
+
+function simplifyWebhooks(remoteConfig: SpecsAppConfiguration) {
+  if (!remoteConfig.webhooks?.subscriptions) return remoteConfig
+
+  remoteConfig.webhooks.subscriptions = mergeWebhooks(remoteConfig.webhooks.subscriptions)
+  return remoteConfig
+}
+
+function mergeWebhooks(subscriptions: WebhookSubscription[]): WebhookSubscription[] {
+  return subscriptions.reduce((accumulator, subscription) => {
+    const existingSubscription = accumulator.find(
+      (sub) =>
+        sub.uri === subscription.uri &&
+        sub.sub_topic === subscription.sub_topic &&
+        sub.include_fields === subscription.include_fields,
+    )
+    if (existingSubscription) {
+      if (subscription.compliance_topics) {
+        existingSubscription.compliance_topics ??= []
+        existingSubscription.compliance_topics.push(...subscription.compliance_topics)
+      }
+      if (subscription.topics) {
+        existingSubscription.topics ??= []
+        existingSubscription.topics.push(...subscription.topics)
+      }
+    } else {
+      accumulator.push(subscription)
+    }
+    return accumulator
+  }, [] as WebhookSubscription[])
+}

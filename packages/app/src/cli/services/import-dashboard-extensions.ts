@@ -1,7 +1,6 @@
 import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
-import {buildTomlObject} from './flow/extension-to-toml.js'
-import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
+import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -11,42 +10,45 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
-interface ImportFlowOptions {
+interface ImportOptions {
   app: AppInterface
   apiKey?: string
   developerPlatformClient?: DeveloperPlatformClient
+  extensionTypes: string[]
+  buildTomlObject: (ext: ExtensionRegistration) => string
 }
 
-export async function importFlowExtensions(options: ImportFlowOptions) {
+export async function importDashboardExtensions(options: ImportOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
   await logMetadataForLoadedContext(remoteApp)
 
-  const flowExtensions = await getActiveDashboardExtensions({
+  const extensions = await getActiveDashboardExtensions({
     developerPlatformClient,
     apiKey: remoteApp.apiKey,
     organizationId: remoteApp.organizationId,
+    extensionTypes: options.extensionTypes,
   })
 
-  if (flowExtensions.length === 0) {
+  if (extensions.length === 0) {
     renderSuccess({headline: ['No extensions to migrate.']})
     return
   }
 
-  const choices = flowExtensions.map((ext) => {
+  const choices = extensions.map((ext) => {
     return {label: ext.title, value: ext.uuid}
   })
   choices.push({label: 'All', value: 'All'})
   const promptAnswer = await renderSelectPrompt({message: 'Extensions to migrate', choices})
 
   const extensionsToMigrate =
-    promptAnswer === 'All' ? flowExtensions : [flowExtensions.find((ext) => ext?.uuid === promptAnswer)!]
+    promptAnswer === 'All' ? extensions : [extensions.find((ext) => ext?.uuid === promptAnswer)!]
 
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = buildTomlObject(ext)
+    const tomlObject = options.buildTomlObject(ext)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid

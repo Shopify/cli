@@ -184,7 +184,7 @@ export async function ensureDevContext(
     if (_selectedApp) {
       selectedApp = _selectedApp
     } else {
-      const {apps, hasMorePages} = await developerPlatformClient.orgAndApps(orgId)
+      const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
       // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
@@ -206,7 +206,7 @@ export async function ensureDevContext(
       selectedApp,
       developerPlatformClient,
       specifications,
-      selectedApp.betas,
+      selectedApp.flags,
     ),
   }
 
@@ -214,7 +214,7 @@ export async function ensureDevContext(
     directory: options.directory,
     specifications,
     configName: getAppConfigurationShorthand(configuration.path),
-    remoteBetas: selectedApp.betas,
+    remoteFlags: selectedApp.flags,
   })
 
   // We only update the cache or config if the current app is the right one
@@ -270,7 +270,7 @@ export const appFromId = async ({
 }: AppFromIdOptions): Promise<OrganizationApp> => {
   // eslint-disable-next-line no-param-reassign
   organizationId =
-    organizationId ?? developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0'
+    organizationId ?? (developerPlatformClient.requiresOrganization ? await selectOrg(developerPlatformClient) : '0')
   const app = await developerPlatformClient.appFromId({
     id: apiKey,
     apiKey,
@@ -418,7 +418,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     specifications,
     directory: options.app.directory,
     configName: getAppConfigurationShorthand(options.app.configuration.path),
-    remoteBetas: remoteApp.betas,
+    remoteFlags: remoteApp.flags,
   })
 
   const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
@@ -451,7 +451,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       appType: remoteApp.appType,
       organizationId: remoteApp.organizationId,
       grantedScopes: remoteApp.grantedScopes,
-      betas: remoteApp.betas,
+      flags: remoteApp.flags,
     },
     identifiers,
     release: !noRelease,
@@ -582,7 +582,6 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
  *
  * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
  * If there is no API key (or is invalid), show prompts to select an org and app.
- * If the app doesn't have the simplified deployments beta enabled, throw an error.
  * Finally, the info is updated in the env file.
  *
  * @param options - Current dev context options
@@ -623,11 +622,9 @@ interface VersionsListContextOutput {
 
 /**
  * Make sure there is a valid context to execute `versions list`
- * That means we have a valid session, organization and app with the simplified deployments beta enabled.
  *
  * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
  * If there is no API key (or is invalid), show prompts to select an org and app.
- * If the app doesn't have the simplified deployments beta enabled, throw an error.
  *
  * @param options - Current dev context options
  * @returns The Developer Platform client and the app
@@ -688,7 +685,7 @@ export async function fetchAppAndIdentifiers(
 
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = options.apiKey ?? app.configuration.client_id
-    remoteApp = await appFromId({apiKey, developerPlatformClient})
+    remoteApp = await appFromId({apiKey, organizationId: app.configuration.organization_id, developerPlatformClient})
   } else if (options.apiKey) {
     remoteApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
   } else if (envIdentifiers.app) {

@@ -31,6 +31,7 @@ describe('Check', () => {
     test('should change config to "theme-check:recommended" when ":default" is inputted', async () => {
       const mockTheme: Theme = []
       const mockConfig: ThemeConfig = {
+        context: 'theme',
         settings: {},
         checks: [],
         root: '',
@@ -48,6 +49,7 @@ describe('Check', () => {
     test('should change config to "theme-check:theme-app-extension" when ":theme_app_extensions" is inputted', async () => {
       const mockTheme: Theme = []
       const mockConfig: ThemeConfig = {
+        context: 'app',
         settings: {},
         checks: [],
         root: '',
@@ -66,6 +68,7 @@ describe('Check', () => {
       const expectedConfig = 'some-config'
       const mockTheme: Theme = []
       const mockConfig: ThemeConfig = {
+        context: 'theme',
         settings: {},
         checks: [],
         root: '',

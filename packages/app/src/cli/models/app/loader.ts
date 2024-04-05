@@ -11,16 +11,17 @@ import {
   CurrentAppConfiguration,
   getAppVersionedSchema,
   isCurrentAppSchema,
+  AppSchema,
 } from './app.js'
-import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, createConfigExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {BetaFlag} from '../../services/dev/fetch.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -41,6 +42,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -54,7 +56,10 @@ type AbortOrReport = <T>(
 ) => T
 const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
 
-export async function loadConfigurationFile(
+/**
+ * Loads a configuration file, and returns its content as an unvalidated object.
+ */
+export async function loadConfigurationFileContent(
   filepath: string,
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
@@ -87,6 +92,11 @@ export async function loadConfigurationFile(
   }
 }
 
+/**
+ * Loads a configuration file, validates it against a schema, and returns the parsed object.
+ *
+ * Calls `abortOrReport` if the file is invalid.
+ */
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -97,7 +107,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
-  const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+  const configurationObject = await loadConfigurationFileContent(filepath, abortOrReport, decode)
 
   if (!configurationObject) return fallbackOutput
 
@@ -114,6 +124,9 @@ export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
   return humanReadableError
 }
 
+/**
+ * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
+ */
 export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -134,13 +147,6 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
     )
   }
   return parseResult.data
-}
-
-export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
-  return specifications.find(
-    (spec) =>
-      spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
-  )
 }
 
 export class AppErrors {
@@ -170,16 +176,50 @@ interface AppLoaderConstructorArgs {
   mode?: AppLoaderMode
   configName?: string
   specifications?: ExtensionSpecification[]
-  remoteBetas?: BetaFlag[]
+  remoteFlags?: Flag[]
 }
 
 /**
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function loadApp(options: AppLoaderConstructorArgs): Promise<AppInterface> {
-  const loader = new AppLoader(options)
+export async function loadApp(options: AppLoaderConstructorArgs, env = process.env): Promise<AppInterface> {
+  const loader = new AppLoader(options, getDynamicConfigOptionsFromEnvironment(env))
   return loader.loaded()
+}
+
+function getDynamicConfigOptionsFromEnvironment(env = process.env): DynamicallySpecifiedConfigLoading {
+  const dynamicConfigEnabled = env[environmentVariableNames.useDynamicConfigSpecifications]
+
+  // not set at all
+  if (!dynamicConfigEnabled) {
+    return {enabled: false}
+  }
+
+  // set, but no remapping
+  if (isTruthy(dynamicConfigEnabled)) {
+    return {enabled: true, remapToNewParent: undefined}
+  }
+
+  try {
+    // split it by commas
+    const divided = dynamicConfigEnabled
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+
+    // first item is the parent, everything else is the things to remap
+    const [newParentName, ...sectionsToRemap] = divided
+    return {
+      enabled: true,
+      remapToNewParent: {
+        newParentName: newParentName!,
+        sectionsToRemap,
+      },
+    }
+  } catch {
+    throw new AbortError(`Invalid value for ${environmentVariableNames.useDynamicConfigSpecifications}`)
+  }
 }
 
 export function getDotEnvFileName(configurationPath: string) {
@@ -196,42 +236,47 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
+type DynamicallySpecifiedConfigLoading =
+  | {
+      enabled: false
+    }
+  | {
+      enabled: true
+      remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
+    }
+
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
-  private remoteBetas: BetaFlag[]
+  private remoteFlags: Flag[]
+  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
 
-  constructor({directory, configName, mode, specifications, remoteBetas}: AppLoaderConstructorArgs) {
+  constructor(
+    {directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs,
+    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
+  ) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications ?? []
     this.configName = configName
-    this.remoteBetas = remoteBetas ?? []
-  }
-
-  findSpecificationForType(type: string) {
-    return findSpecificationForType(this.specifications, type)
-  }
-
-  parseConfigurationFile<TSchema extends zod.ZodType>(
-    schema: TSchema,
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ) {
-    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
+    this.remoteFlags = remoteFlags ?? []
+    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
   }
 
   async loaded() {
-    const configurationLoader = new AppConfigurationLoader({
-      directory: this.directory,
-      configName: this.configName,
-      specifications: this.specifications,
-    })
-    const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+    const configurationLoader = new AppConfigurationLoader(
+      {
+        directory: this.directory,
+        configName: this.configName,
+        specifications: this.specifications,
+      },
+      this.dynamicallySpecifiedConfigs,
+    )
+    const {configuration, directory, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(directory, configuration.path)
@@ -262,7 +307,7 @@ class AppLoader {
       dotenv,
       specifications: this.specifications,
       configSchema,
-      remoteBetaFlags: this.remoteBetas,
+      remoteFlags: this.remoteFlags,
     })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
@@ -275,7 +320,23 @@ class AppLoader {
     return appClass
   }
 
-  showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
+  private findSpecificationForType(type: string) {
+    return this.specifications.find(
+      (spec) =>
+        spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
+    )
+  }
+
+  private parseConfigurationFile<TSchema extends zod.ZodType>(
+    schema: TSchema,
+    filepath: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decode: (input: any) => any = decodeToml,
+  ) {
+    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
+  }
+
+  private showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
     const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
     if (currentProcessIsGlobal() && hasLocalCLI) {
       const warningContent = {
@@ -292,7 +353,10 @@ class AppLoader {
     }
   }
 
-  async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+  private async loadWebs(
+    appDirectory: string,
+    webDirectories?: string[],
+  ): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const defaultWebDirectory = '**'
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
       return joinPath(appDirectory, webGlob, configurationFileNames.web)
@@ -309,7 +373,7 @@ class AppLoader {
     return {webs, usedCustomLayout}
   }
 
-  validateWebs(webs: Web[]): void {
+  private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
       if (websOfType.length > 1) {
@@ -322,7 +386,7 @@ class AppLoader {
     })
   }
 
-  async loadWeb(WebConfigurationFile: string): Promise<Web> {
+  private async loadWeb(WebConfigurationFile: string): Promise<Web> {
     const config = await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile)
     const roles = new Set('roles' in config ? config.roles : [])
     if ('type' in config) roles.add(config.type)
@@ -334,14 +398,26 @@ class AppLoader {
     }
   }
 
-  async createExtensionInstance(
+  private async createExtensionInstance(
     type: string,
     configurationObject: unknown,
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    const specification = findSpecificationForType(this.specifications, type)
-    if (!specification) {
+    let specification = this.findSpecificationForType(type)
+    let entryPath
+    let usedKnownSpecification = false
+
+    if (specification) {
+      usedKnownSpecification = true
+    } else if (this.dynamicallySpecifiedConfigs.enabled) {
+      // if dynamic configs are enabled, then create an automatically validated specification, with the same
+      // identifier as the type
+      specification = createConfigExtensionSpecification({
+        identifier: type,
+        schema: zod.object({}).passthrough(),
+      })
+    } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
         undefined,
@@ -356,7 +432,9 @@ class AppLoader {
       this.abortOrReport.bind(this),
     )
 
-    const entryPath = await this.findEntryPath(directory, specification)
+    if (usedKnownSpecification) {
+      entryPath = await this.findEntryPath(directory, specification)
+    }
 
     const extensionInstance = new ExtensionInstance({
       configuration,
@@ -366,14 +444,17 @@ class AppLoader {
       specification,
     })
 
-    const validateResult = await extensionInstance.validate()
-    if (validateResult.isErr()) {
-      this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+    if (usedKnownSpecification) {
+      const validateResult = await extensionInstance.validate()
+      if (validateResult.isErr()) {
+        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+      }
     }
+
     return extensionInstance
   }
 
-  async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+  private async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
@@ -405,7 +486,7 @@ class AppLoader {
     return allExtensions
   }
 
-  async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
+  private async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
@@ -414,7 +495,7 @@ class AppLoader {
 
     return configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const obj = await loadConfigurationFile(configurationPath)
+      const obj = await loadConfigurationFileContent(configurationPath)
       const {extensions, type} = ExtensionsArraySchema.parse(obj)
 
       if (extensions) {
@@ -454,38 +535,68 @@ class AppLoader {
     })
   }
 
-  async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
-    return this.specifications
-      .filter((specification) => specification.experience === 'configuration')
-      .map(async (specification) => {
-        const specConfiguration = await parseConfigurationObject(
-          specification.schema,
-          appConfiguration.path,
-          appConfiguration,
-          this.abortOrReport.bind(this),
-        )
+  private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+    const extensionInstancesWithKeys = await Promise.all(
+      this.specifications
+        .filter((specification) => specification.experience === 'configuration')
+        .map(async (specification) => {
+          const specConfiguration = await parseConfigurationObject(
+            specification.schema,
+            appConfiguration.path,
+            appConfiguration,
+            this.abortOrReport.bind(this),
+          )
 
-        if (Object.keys(specConfiguration).length === 0) return
+          if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
 
-        return this.createExtensionInstance(
-          specification.identifier,
-          specConfiguration,
-          appConfiguration.path,
-          directory,
-        ).then((extensionInstance) =>
-          this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
-        )
+          const instance = await this.createExtensionInstance(
+            specification.identifier,
+            specConfiguration,
+            appConfiguration.path,
+            directory,
+          ).then((extensionInstance) =>
+            this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+          )
+          return [instance, Object.keys(specConfiguration)] as const
+        }),
+    )
+
+    if (!this.dynamicallySpecifiedConfigs) {
+      return extensionInstancesWithKeys
+        .filter(([instance]) => instance)
+        .map(([instance]) => instance as ExtensionInstance)
+    }
+
+    // get all the keys from appConfiguration that aren't used by any of the results
+    const unusedKeys = Object.keys(appConfiguration)
+      .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
+      .filter((key) => {
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path']
+        return !configKeysThatAreNeverModules.includes(key)
       })
+
+    // make some extension instances for the unused keys
+    const unusedExtensionInstances = unusedKeys.map((key) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const specConfiguration = {[key]: (appConfiguration as any)[key]}
+      return this.createExtensionInstance(key, specConfiguration, appConfiguration.path, directory)
+    })
+
+    // return all the non null extension instances, plus the unused ones
+    const nonNullExtensionInstances: ExtensionInstance[] = extensionInstancesWithKeys
+      .filter(([instance]) => instance)
+      .map(([instance]) => instance as ExtensionInstance)
+    return [...nonNullExtensionInstances, ...unusedExtensionInstances]
   }
 
-  async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
+  private async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
     if (!extensionInstance) return
 
     const configContent = await extensionInstance.commonDeployConfig(apiKey)
     return configContent ? extensionInstance : undefined
   }
 
-  async findEntryPath(directory: string, specification: ExtensionSpecification) {
+  private async findEntryPath(directory: string, specification: ExtensionSpecification) {
     let entryPath
     if (specification.appModuleFeatures().includes('single_js_entry_path')) {
       entryPath = (
@@ -518,7 +629,7 @@ class AppLoader {
     return entryPath
   }
 
-  abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
+  private abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
     if (this.mode === 'strict') {
       throw new AbortError(errorMessage)
     } else {
@@ -529,13 +640,14 @@ class AppLoader {
 }
 
 /**
- * Parse the app configuration file from the given directory.
+ * Parse the app configuration file from the given directory. This doesn't load any extensions.
  * If the app configuration does not match any known schemas, it will throw an error.
  */
 export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
+  env = process.env,
 ): Promise<AppConfigurationInterface> {
-  const loader = new AppConfigurationLoader(options)
+  const loader = new AppConfigurationLoader(options, getDynamicConfigOptionsFromEnvironment(env))
   const result = await loader.loaded()
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
@@ -545,7 +657,7 @@ interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
   specifications?: ExtensionSpecification[]
-  remoteBetas?: BetaFlag[]
+  remoteFlags?: Flag[]
 }
 
 type LinkedConfigurationSource =
@@ -573,13 +685,18 @@ class AppConfigurationLoader {
   private directory: string
   private configName?: string
   private specifications?: ExtensionSpecification[]
-  private remoteBetas: BetaFlag[]
+  private remoteFlags: Flag[]
+  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
 
-  constructor({directory, configName, specifications, remoteBetas}: AppConfigurationLoaderConstructorArgs) {
+  constructor(
+    {directory, configName, specifications, remoteFlags}: AppConfigurationLoaderConstructorArgs,
+    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
+  ) {
     this.directory = directory
     this.configName = configName
     this.specifications = specifications
-    this.remoteBetas = remoteBetas ?? []
+    this.remoteFlags = remoteFlags ?? []
+    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
   }
 
   async loaded() {
@@ -602,14 +719,17 @@ class AppConfigurationLoader {
     this.configName = this.configName ?? cachedCurrentConfig
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
-    const file = await loadConfigurationFile(configurationPath)
-    const appVersionedSchema = getAppVersionedSchema(specifications)
+    const file = await loadConfigurationFileContent(configurationPath)
+    const appVersionedSchema = getAppVersionedSchema(specifications, this.dynamicallySpecifiedConfigs.enabled)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
     const parseStrictSchemaEnabled = specifications.length > 0
-    const configuration = await parseConfigurationFile(
-      parseStrictSchemaEnabled ? deepStrict(appSchema) : appSchema,
-      configurationPath,
-    )
+
+    let schemaForConfigurationFile = appSchema
+    if (parseStrictSchemaEnabled && !this.dynamicallySpecifiedConfigs) {
+      schemaForConfigurationFile = deepStrict(appSchema)
+    }
+
+    let configuration = await parseConfigurationFile(schemaForConfigurationFile, configurationPath)
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
@@ -636,12 +756,14 @@ class AppConfigurationLoader {
       }
     }
 
+    configuration = this.remapDynamicConfigToNewParents(configuration)
+
     return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
   // traverse up the filesystem to find the root app directory.
-  async getAppDirectory() {
+  private async getAppDirectory() {
     if (!(await fileExists(this.directory))) {
       throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
     }
@@ -673,7 +795,7 @@ class AppConfigurationLoader {
     }
   }
 
-  async getConfigurationPath(appDirectory: string) {
+  private async getConfigurationPath(appDirectory: string) {
     const configurationFileName = getAppConfigurationFileName(this.configName)
     const configurationPath = joinPath(appDirectory, configurationFileName)
 
@@ -689,7 +811,7 @@ class AppConfigurationLoader {
   /**
    * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
    */
-  async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
+  private async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
     const configNamesToClientId: {[key: string]: string} = {}
     const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
 
@@ -716,6 +838,36 @@ class AppConfigurationLoader {
       )
     ).filter((entry) => entry !== undefined) as [string, string][]
     return Object.fromEntries(entries)
+  }
+
+  /**
+   * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
+   * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
+   *
+   * Returns the updated configuration object
+   */
+  private remapDynamicConfigToNewParents(configuration: CurrentAppConfiguration): CurrentAppConfiguration {
+    // remap configuration keys to their new parent, if needed
+    // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
+    if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newConfig = {...configuration} as any
+      const {newParentName, sectionsToRemap} = this.dynamicallySpecifiedConfigs.remapToNewParent
+
+      // get the keys that need to be remapped
+      const remappedKeys = Object.keys(newConfig).filter((key) => sectionsToRemap.includes(key))
+
+      remappedKeys.forEach((key) => {
+        newConfig[newParentName] = newConfig[newParentName] ?? {}
+        newConfig[newParentName] = {
+          ...newConfig[newParentName],
+          [key]: newConfig[key],
+        }
+        delete newConfig[key]
+      })
+      return newConfig
+    }
+    return configuration
   }
 }
 
@@ -838,7 +990,7 @@ async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadR
   })
 }
 
-export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
+const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 const appConfigurationFileNameGlob = 'shopify.app*.toml'
 
 export function getAppConfigurationFileName(configName?: string) {

@@ -3,7 +3,7 @@ import {handleDeprecations} from './partners.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 
 /**
- * Executes a GraphQL query against the Business Platform API.
+ * Executes a GraphQL query against the Business Platform Destinations API.
  *
  * @param query - GraphQL query to execute.
  * @param token - Business Platform token.

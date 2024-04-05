@@ -1,6 +1,6 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {BetaFlag, fetchOrganizations} from '../dev/fetch.js'
+import {Flag, fetchOrganizations} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {
@@ -15,8 +15,7 @@ export async function selectApp(): Promise<OrganizationApp> {
   const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
-  const selectedApp = apps.find((app) => app.apiKey === selectedAppApiKey)!
+  const selectedApp = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
 }
@@ -25,22 +24,27 @@ export async function fetchAppRemoteConfiguration(
   remoteApp: MinimalOrganizationApp,
   developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
-  betas: BetaFlag[],
+  flags: Flag[],
 ) {
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
     activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
-  return remoteAppConfigurationExtensionContent(
+  if (appModuleVersionsConfig.length === 0) return undefined
+  const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
     specifications,
-    betas,
+    flags,
   ) as unknown as SpecsAppConfiguration
+  return specifications.reduce(
+    (simplifiedConfiguration, spec) => spec.simplify?.(simplifiedConfiguration) ?? simplifiedConfiguration,
+    remoteConfiguration,
+  )
 }
 
 export function remoteAppConfigurationExtensionContent(
   configRegistrations: AppModuleVersion[],
   specifications: ExtensionSpecification[],
-  betas: BetaFlag[],
+  flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
@@ -52,7 +56,8 @@ export function remoteAppConfigurationExtensionContent(
     const config = module.config
     if (!config) return
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {betas}) ?? config)
+    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {flags}) ?? config)
   })
+
   return {...remoteAppConfig}
 }

@@ -1,6 +1,7 @@
-import {importFlowExtensions} from './import-flow-legacy-extensions.js'
+import {importDashboardExtensions} from './import-dashboard-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
-import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
+import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
+import {buildTomlObject} from './flow/extension-to-toml.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -11,7 +12,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
-vi.mock('./flow/fetch-flow-dashboard-extensions.js')
+vi.mock('./fetch-dashboard-extensions.js')
 vi.mock('./context/partner-account-info.js')
 
 const organizationApp: OrganizationApp = {
@@ -21,7 +22,7 @@ const organizationApp: OrganizationApp = {
   organizationId: 'organizationId',
   apiSecretKeys: [],
   grantedScopes: [],
-  betas: [],
+  flags: [],
 }
 
 const flowExtensionA: ExtensionRegistration = {
@@ -44,7 +45,7 @@ const flowExtensionB: ExtensionRegistration = {
   },
 }
 
-describe('import-flow-legacy-extensions', () => {
+describe('import-dashboard-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
@@ -55,7 +56,12 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, developerPlatformClient: testDeveloperPlatformClient()})
+      await importDashboardExtensions({
+        app,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        buildTomlObject,
+      })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -81,7 +87,12 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, developerPlatformClient: testDeveloperPlatformClient()})
+      await importDashboardExtensions({
+        app,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        buildTomlObject,
+      })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -105,10 +116,11 @@ describe('import-flow-legacy-extensions', () => {
     // When
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
-
-      await importFlowExtensions({
+      await importDashboardExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        buildTomlObject,
       })
 
       // Then

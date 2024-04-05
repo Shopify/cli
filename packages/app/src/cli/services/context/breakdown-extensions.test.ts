@@ -214,7 +214,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
 const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
   configuration: AppConfiguration = APP_CONFIGURATION,
-  betas = [],
+  flags = [],
 ): Promise<AppInterface> => {
   const versionSchema = await buildVersionedAppSchema()
 
@@ -227,7 +227,7 @@ const LOCAL_APP = async (
     configSchema: versionSchema.schema,
   })
 
-  setPathValue(localApp, 'remoteBetaFlags', betas)
+  setPathValue(localApp, 'remoteFlags', flags)
   return localApp
 }
 
@@ -1280,6 +1280,45 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: ['pos'],
+      })
+    })
+  })
+  describe('deploy with release using local configuration when there is no remote app version', () => {
+    test('all local configuration will be returned in the new list', async () => {
+      // Given
+      const configuration = {
+        path: 'shopify.app.development.toml',
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://myapp.com',
+        embedded: true,
+        webhooks: {
+          api_version: '2023-04',
+        },
+        build: {
+          include_config_on_deploy: true,
+        },
+      }
+
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(undefined),
+      })
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], configuration),
+        release: true,
+      })
+
+      // Then
+      expect(result).toEqual({
+        existingFieldNames: [],
+        existingUpdatedFieldNames: [],
+        newFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        deletedFieldNames: [],
       })
     })
   })

@@ -195,7 +195,7 @@ async function handleTypeParameter(
   if (!extensionTemplate) {
     const isShopifolk = await isShopify()
     const allExternalTypes = extensionTemplates.map((spec) => spec.identifier)
-    const tryMsg = isShopifolk ? 'You might need to enable some beta flags on your Organization or App' : undefined
+    const tryMsg = isShopifolk ? 'You might need to enable some flags on your Organization or App' : undefined
     throw new AbortError(
       `Unknown extension type: ${typeFlag}.\nThe following extension types are supported: ${allExternalTypes.join(
         ', ',

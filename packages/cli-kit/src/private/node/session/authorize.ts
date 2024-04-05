@@ -38,7 +38,7 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
     code_challenge: codeChallenge,
   }
 
-  outputInfo('\nTo run this command, log in to Shopify Partners.')
+  outputInfo('\nTo run this command, log in to Shopify.')
   outputInfo('👉 Press any key to open the login page on your browser')
   await keypress()
 

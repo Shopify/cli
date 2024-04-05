@@ -65,7 +65,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: false,
@@ -76,6 +76,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
       extensionIds: {},
@@ -96,7 +97,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         message: 'Deployed from CLI with flag',
@@ -125,7 +126,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         version: '1.1.0',
@@ -154,7 +155,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       developerPlatformClient,
     })
@@ -162,6 +163,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
       extensionIds: {},
@@ -182,6 +184,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle}],
       developerPlatformClient,
@@ -203,6 +206,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {
@@ -252,6 +256,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       appModules: [
         {
           uuid: functionExtension.localIdentifier,
@@ -282,6 +287,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle},
@@ -317,6 +323,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       appModules: [
         {
           uuid: extensionNonUuidManaged.localIdentifier,
@@ -346,6 +353,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
       extensionIds: {},
@@ -371,7 +379,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: false,
@@ -410,7 +418,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: false,
@@ -451,7 +459,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: true,

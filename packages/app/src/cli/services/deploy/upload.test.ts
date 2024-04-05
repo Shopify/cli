@@ -326,6 +326,7 @@ describe('uploadExtensionsBundle', () => {
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
+        organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         developerPlatformClient,
@@ -336,6 +337,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
         apiKey: 'app-id',
+        organizationId: '1',
         bundleUrl: 'signed-upload-url',
         appModules: [
           {
@@ -361,6 +363,7 @@ describe('uploadExtensionsBundle', () => {
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
+        organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         developerPlatformClient,
@@ -373,6 +376,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
         apiKey: 'app-id',
+        organizationId: '1',
         bundleUrl: 'signed-upload-url',
         appModules: [
           {
@@ -396,6 +400,7 @@ describe('uploadExtensionsBundle', () => {
     // When
     await uploadExtensionsBundle({
       apiKey: 'app-id',
+      organizationId: '1',
       bundlePath: undefined,
       appModules: [],
       developerPlatformClient,
@@ -406,6 +411,7 @@ describe('uploadExtensionsBundle', () => {
     // Then
     expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      organizationId: '1',
       skipPublish: false,
       message: undefined,
       versionTag: undefined,
@@ -498,6 +504,7 @@ describe('uploadExtensionsBundle', () => {
       try {
         await uploadExtensionsBundle({
           apiKey: 'app-id',
+          organizationId: '1',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           appModules: [
             {uuid: '123', config: '{}', context: '', handle: 'handle'},
@@ -597,6 +604,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       const result = await uploadExtensionsBundle({
         apiKey: 'app-id',
+        organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [
           {uuid: '123', config: '{}', context: '', handle: 'handle'},

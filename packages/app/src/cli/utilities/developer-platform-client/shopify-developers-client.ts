@@ -19,10 +19,22 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './shopify-developers-client/graphql/release-version.js'
+import {OrganizationsQuery, OrganizationsQuerySchema} from './shopify-developers-client/graphql/organizations.js'
+import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './shopify-developers-client/graphql/apps.js'
+import {
+  OrganizationQuery,
+  OrganizationQuerySchema,
+  OrganizationQueryVariables,
+} from './shopify-developers-client/graphql/organization.js'
+import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
+import {
+  DeveloperPlatformClient,
+  Paginateable,
+  ActiveAppVersion,
+  AppDeployOptions,
+} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -30,13 +42,14 @@ import {
   OrganizationApp,
   OrganizationStore,
 } from '../../models/organization.js'
+import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
-import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
@@ -73,16 +86,15 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
 import {underscore} from '@shopify/cli-kit/common/string'
-
-const ORG1 = {
-  id: '1',
-  businessName: 'Test Org',
-}
+import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined
+  private _businessPlatformToken: string | undefined
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -93,12 +105,17 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('ShopifyDevelopersClient.session() should not be invoked dynamically in a unit test')
       }
-      // Need to replace with actual auth
+      const userInfoResult = await businessPlatformRequest<UserInfoQuerySchema>(
+        UserInfoQuery,
+        await this.businessPlatformToken(),
+      )
+      const email = userInfoResult.currentUserAccount.email
       this._session = {
+        // Need to replace with actual auth token for developer platform
         token: 'token',
         accountInfo: {
           type: 'UserAccount',
-          email: 'mail@example.com',
+          email,
         },
       }
     }
@@ -113,6 +130,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return this.token()
   }
 
+  async businessPlatformToken(): Promise<string> {
+    if (isUnitTest()) {
+      throw new Error(
+        'ShopifyDevelopersClient.businessPlatformToken() should not be invoked dynamically in a unit test',
+      )
+    }
+    if (!this._businessPlatformToken) {
+      this._businessPlatformToken = await ensureAuthenticatedBusinessPlatform()
+    }
+    return this._businessPlatformToken
+  }
+
   async accountInfo(): Promise<PartnersSession['accountInfo']> {
     return (await this.session()).accountInfo
   }
@@ -120,8 +149,8 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
-    const brandingModule = modules.find((mod) => mod.specification.identifier === 'branding')!
-    const appAccessModule = modules.find((mod) => mod.specification.identifier === 'app_access')!
+    const brandingModule = modules.find((mod) => mod.specification.externalIdentifier === 'branding')!
+    const appAccessModule = modules.find((mod) => mod.specification.externalIdentifier === 'app_access')!
     return {
       id: app.id,
       title: brandingModule.config.name as string,
@@ -129,35 +158,65 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       organizationId: appIdentifiers.organizationId,
       apiSecretKeys: [],
       grantedScopes: appAccessModule.config.scopes as string[],
-      betas: [],
+      flags: [],
     }
   }
 
   async organizations(): Promise<Organization[]> {
-    return [ORG1]
+    const organizationsResult = await businessPlatformRequest<OrganizationsQuerySchema>(
+      OrganizationsQuery,
+      await this.businessPlatformToken(),
+    )
+    return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
+      id: idFromEncodedGid(org.id),
+      businessName: org.name,
+    }))
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    if (orgId === '1') return ORG1
-
-    throw new BugError(`Can't fetch organization with id ${orgId}`)
-  }
-
-  async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
-    if (orgId === '1') {
-      return {
-        organization: ORG1,
-        apps: [],
-        hasMorePages: false,
-      }
-    } else {
-      throw new BugError(`Can't fetch organization with id ${orgId}`)
+    const base64Id = encodedGidFromId(orgId)
+    const variables: OrganizationQueryVariables = {organizationId: base64Id}
+    const organizationResult = await businessPlatformRequest<OrganizationQuerySchema>(
+      OrganizationQuery,
+      await this.businessPlatformToken(),
+      variables,
+    )
+    const org = organizationResult.currentUserAccount.organization
+    if (!org) {
+      return
+    }
+    return {
+      id: orgId,
+      businessName: org.name,
     }
   }
 
-  async appsForOrg(_organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+  async orgAndApps(
+    organizationId: string,
+  ): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
+    const [organization, {apps, hasMorePages}] = await Promise.all([
+      this.orgFromId(organizationId),
+      this.appsForOrg(organizationId),
+    ])
+    return {organization: organization!, apps, hasMorePages}
+  }
+
+  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+    const query = AppsQuery
+    const result = await orgScopedShopifyDevelopersRequest<AppsQuerySchema>(organizationId, query, await this.token())
+    const minimalOrganizationApps = result.apps.map((app) => {
+      const brandingConfig = app.activeRelease.version.modules.find(
+        (mod: MinimalAppModule) => mod.specification.externalIdentifier === 'branding',
+      )!.config
+      return {
+        id: app.id,
+        apiKey: app.id,
+        title: brandingConfig.name as string,
+        organizationId,
+      }
+    })
     return {
-      apps: [],
+      apps: minimalOrganizationApps,
       hasMorePages: false,
     }
   }
@@ -210,7 +269,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
 
     // Need to figure this out still
-    const betas = filterDisabledBetas([])
+    const flags = filterDisabledFlags([])
     const createdApp = result.appCreate.app
     return {
       ...createdApp,
@@ -220,7 +279,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       grantedScopes: options?.scopesArray ?? [],
       organizationId: org.id,
       newApp: true,
-      betas,
+      flags,
     }
   }
 
@@ -243,7 +302,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
             id: mod.uid,
             uuid: mod.uid,
             title: mod.specification.name,
-            type: mod.specification.identifier,
+            type: mod.specification.externalIdentifier,
           })),
       },
     }
@@ -276,10 +335,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
           registrationId: mod.gid,
           registrationUid: mod.uid,
           registrationTitle: mod.handle,
-          type: mod.specification.identifier,
+          type: mod.specification.externalIdentifier,
           config: mod.config,
           specification: {
             ...mod.specification,
+            identifier: mod.specification.externalIdentifier,
             options: {managementExperience: 'cli'},
             experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
           },
@@ -301,7 +361,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: updateExtension')
   }
 
-  async deploy({apiKey, appModules, versionTag}: AppDeployVariables): Promise<AppDeploySchema> {
+  async deploy({apiKey, appModules, organizationId, versionTag}: AppDeployOptions): Promise<AppDeploySchema> {
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
       appModules: (appModules ?? []).map((mod) => {
@@ -316,7 +376,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
 
     const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
-      '1',
+      organizationId,
       CreateAppVersionMutation,
       await this.token(),
       variables,
@@ -324,6 +384,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const {version, userErrors} = result.versionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
+    const devDashFqdn = (await shopifyDevelopersFqdn()).replace('app.', 'developers.')
     const versionResult = {
       appDeploy: {
         appVersion: {
@@ -331,7 +392,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.versionTag,
-          location: 'location',
+          location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
           appModuleVersions: version.modules.map((mod) => {
             return {
               uuid: mod.uid,
@@ -540,4 +601,18 @@ async function stubbedExtensionSpecifications(): Promise<RemoteSpecification[]> 
       },
     },
   ]
+}
+
+// Business platform uses base64-encoded GIDs, while Shopify Developers uses
+// just the integer portion of that ID. These functions convert between the two.
+
+// 1234 => gid://organization/Organization/1234 => base64
+function encodedGidFromId(id: string): string {
+  const gid = `gid://organization/Organization/${id}`
+  return Buffer.from(gid).toString('base64')
+}
+
+// base64 => gid://organization/Organization/1234 => 1234
+function idFromEncodedGid(gid: string): string {
+  return Buffer.from(gid, 'base64').toString('ascii').match(/\d+$/)![0]
 }

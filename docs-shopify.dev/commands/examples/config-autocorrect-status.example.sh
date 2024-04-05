@@ -1,1 +1,1 @@
-shopify config autocorrect status
+shopify config autocorrect status [flags]

@@ -5,7 +5,7 @@ import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
-import {BetaFlag} from '../../services/dev/fetch.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -39,14 +39,18 @@ export const AppSchema = zod.object({
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
-export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
+export function getAppVersionedSchema(specs: ExtensionSpecification[], allowDynamicallySpecifiedConfigs = false) {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.experience === 'configuration'
   const schema = specs
     .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .reduce((schema, spec) => schema.merge(spec.schema), AppSchema as any)
 
-  return specs.length > 0 ? schema.strict() : schema
+  if (allowDynamicallySpecifiedConfigs) {
+    return schema.passthrough()
+  } else {
+    return specs.length > 0 ? schema.strict() : schema
+  }
 }
 
 /**
@@ -168,7 +172,7 @@ export interface AppInterface extends AppConfigurationInterface {
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
-  remoteBetaFlags: BetaFlag[]
+  remoteFlags: Flag[]
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -190,7 +194,7 @@ interface AppConstructor {
   errors?: AppErrors
   specifications?: ExtensionSpecification[]
   configSchema?: zod.ZodTypeAny
-  remoteBetaFlags?: BetaFlag[]
+  remoteFlags?: Flag[]
 }
 
 export class App implements AppInterface {
@@ -206,7 +210,7 @@ export class App implements AppInterface {
   errors?: AppErrors
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
-  remoteBetaFlags: BetaFlag[]
+  remoteFlags: Flag[]
   private realExtensions: ExtensionInstance[]
 
   constructor({
@@ -223,7 +227,7 @@ export class App implements AppInterface {
     errors,
     specifications,
     configSchema,
-    remoteBetaFlags,
+    remoteFlags,
   }: AppConstructor) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
@@ -238,11 +242,12 @@ export class App implements AppInterface {
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
-    this.remoteBetaFlags = remoteBetaFlags ?? []
+    this.remoteFlags = remoteFlags ?? []
   }
 
   get allExtensions() {
-    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension || this.includeConfigOnDeploy)
+    if (this.includeConfigOnDeploy) return this.realExtensions
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
   get draftableExtensions() {
@@ -323,7 +328,7 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 }
 
 export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[], betas?: BetaFlag[], clientId?: string) {
+  constructor(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string) {
     const configuration = clientId
       ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
       : {scopes: '', path: ''}
@@ -340,7 +345,7 @@ export class EmptyApp extends App {
       usesWorkspaces: false,
       specifications,
       configSchema,
-      remoteBetaFlags: betas ?? [],
+      remoteFlags: flags ?? [],
     })
   }
 }

@@ -98,7 +98,7 @@ describe('setup-dev-processes', () => {
       title: 'App',
       organizationId: '5678',
       grantedScopes: [],
-      betas: [],
+      flags: [],
     }
 
     const graphiqlKey = 'somekey'
