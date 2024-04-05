@@ -175,7 +175,8 @@
           "**/src/index.tsx!",
           "**/scripts/*.ts!"
         ],
-        "project": "**/*.{ts,tsx}!"
+        "project": "**/*.{ts,tsx}!",
+        "ignoreDependencies": ["@shopify/react-testing"]
       },
       "packages/ui-extensions-test-utils": {
         "entry": [
