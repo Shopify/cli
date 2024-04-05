@@ -303,9 +303,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^0.34.3
         version: 0.34.4(vitest@0.34.4)
-      vite:
-        specifier: 4.4.9
-        version: 4.4.9(@types/node@18.19.3)(sass@1.64.2)
+      espree:
+        specifier: 9.6.1
+        version: 9.6.1
       vitest:
         specifier: ^0.34.3
         version: 0.34.4(jsdom@20.0.3)

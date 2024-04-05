@@ -143,7 +143,11 @@
           "**/bin/*.js!",
           "**/index.ts!"
         ],
-        "project": "**/*.ts!"
+        "project": "**/*.ts!",
+        "ignoreDependencies": ["@oclif/plugin-commands", "@oclif/plugin-help", "@shopify/plugin-did-you-mean", "@shopify/app", "@shopify/theme"],
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/create-app": {
         "entry": "**/{commands,hooks}/**/*.ts!",

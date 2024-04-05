@@ -107,7 +107,7 @@
     "@shopify/theme": "3.58.0",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^0.34.3",
-    "vite": "^4.4.9",
+    "espree": "9.6.1",
     "vitest": "^0.34.3"
   },
   "engines": {
