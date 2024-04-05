@@ -40,4 +40,12 @@ describe('monorail', () => {
       headers: expectedHeaders,
     })
   })
+
+  test('sanitizes the api_key from the debug log', async () => {
+    const outputMock = mockAndCaptureOutput()
+    const res = await publishMonorailEvent('fake_schema/0.0', {api_key: 'some-api-key'}, {baz: 'abc'})
+    expect(res.type).toEqual('ok')
+    expect(outputMock.debug()).toContain('"api_key": "****"')
+    expect(outputMock.debug()).not.toContain('some-api-key')
+  })
 })
