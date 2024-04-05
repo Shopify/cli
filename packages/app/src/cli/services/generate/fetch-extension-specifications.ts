@@ -57,6 +57,5 @@ function mergeLocalAndRemoteSpecs(
     if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
     return undefined
   })
-
   return getArrayRejectingUndefined<ExtensionSpecification>(updated)
 }

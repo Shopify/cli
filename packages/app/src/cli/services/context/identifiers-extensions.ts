@@ -149,7 +149,7 @@ async function ensureNonUuidManagedExtensionsIds(
 
   await Promise.all(
     extensionsInGlobalConfig.map(async (extension) => {
-      const localSources = buildExtensionsInGlobalToCreate(extension)
+      const localSources = await buildExtensionsInGlobalToCreate(extension)
       const extensionRegistrations = await Promise.all(
         localSources.map(async (extension) => {
           const registration = await createExtension(
@@ -163,6 +163,7 @@ async function ensureNonUuidManagedExtensionsIds(
         }),
       )
       validMatches[extension.localIdentifier] = extensionRegistrations.flatMap(([, uuid]) => uuid!)
+      validMatchesById[extension.localIdentifier] = extensionRegistrations.flatMap(([id]) => id!)
     }),
   )
 
@@ -224,14 +225,16 @@ async function createExtensions(
   return result
 }
 
-function buildExtensionsInGlobalToCreate(extension: ExtensionInstance): LocalSource[] {
+async function buildExtensionsInGlobalToCreate(extension: ExtensionInstance): Promise<LocalSource[]> {
   if (!extension.specification.multipleRootPath) return [extension]
 
+  const configContent = await extension.commonDeployConfig('')
+
   const multipleRootPathValue = getPathValue<unknown[]>(
-    extension.configuration,
+    configContent as object,
     extension.specification.multipleRootPath,
   )
-  return Array.from({length: multipleRootPathValue?.length ?? 0}).map(() => extension)
+  return Array.from({length: multipleRootPathValue?.length ?? 0}).map((_value, index) => extension)
 }
 
 function mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged: {[key: string]: string[]}) {

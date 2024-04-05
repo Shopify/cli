@@ -5,6 +5,7 @@ import appPOSSpec, {PosSpecIdentifier} from './specifications/app_config_point_o
 import appWebhooksSpec, {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import appBrandingSpec, {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
+import appWebhookSubscriptionsSpec from './specifications/webhook_subscriptions.js'
 import appPrivacyComplienceSpec, {
   PrivacyComplianceWebhooksSpecIdentifier,
 } from './specifications/app_config_privacy_compliance_webhooks.js'
@@ -68,6 +69,7 @@ function loadSpecifications() {
     uiExtensionSpec,
     webPixelSpec,
     editorExtensionCollectionSpecification,
+    appWebhookSubscriptionsSpec,
   ] as ExtensionSpecification[]
 
   return [...configModuleSpecs, ...moduleSpecs]

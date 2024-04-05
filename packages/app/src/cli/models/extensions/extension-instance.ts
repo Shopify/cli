@@ -118,7 +118,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
     this.handle =
-      this.specification.experience === 'configuration'
+      this.specification.experience === 'configuration' || this.specification.globalConfig
         ? slugify(this.specification.identifier)
         : this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
@@ -150,7 +150,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isUuidManaged() {
-    return !this.isAppConfigExtension
+    return !this.isAppConfigExtension && !this.specification.globalConfig
   }
 
   isSentToMetrics() {
@@ -330,15 +330,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         },
       ]
     }
-    const uuid = this.isUuidManaged()
-      ? identifiers.extensions[this.localIdentifier]
-      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
-
-    const result = {
-      config: JSON.stringify(configValue),
-      context: this.contextValue,
-      handle: this.handle,
-    }
 
     return this.bundleGlobalConfigExtension(
       identifiers.extensionsNonUuidManaged[this.localIdentifier] ?? [],
@@ -357,7 +348,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         },
       ]
 
-    const multipleRootPathValue = getPathValue<unknown[]>(this.configuration, this.specification.multipleRootPath)
+    const multipleRootPathValue = getPathValue<unknown[]>(config, this.specification.multipleRootPath)
     return multipleRootPathValue!.map((config, index) => ({
       config: JSON.stringify(config),
       context: this.contextValue,
