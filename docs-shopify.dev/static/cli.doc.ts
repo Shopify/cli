@@ -12,8 +12,33 @@ const data: LandingTemplateSchema = {
       type: 'Generic',
       anchorLink: 'requirements',
       title: 'Requirements',
-      sectionContent:
-        '- Node.js version 18.12.0 or higher\n- Ruby version 2.7.2 or higher (Only for theme commands)\n- Git version 2.28.0 or higher',
+      sectionContent: `
+- [Node.js](https://nodejs.org/en/download/) version 18.16.0 or higher
+- [Git](https://git-scm.com/downloads) version 2.28.0 or higher
+
+Only for theme commands:
+- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher
+
+Only for theme commands on Windows:
+- Ruby+Devkit 3.0, installed using [RubyInstaller for Windows](https://rubyinstaller.org/downloads/) (select the MSYS2 component and the MSYS2 base installation option)
+
+If using linux and themes, follow the instructions on the side to install the required dependencies. Otherwise you can continue to the installation step.
+`,
+      codeblock: {
+        title: 'Install requirements for themes on linux',
+        tabs: [
+          {
+            title: 'apt',
+            code: 'examples/requirements.apt.example.sh',
+            language: 'bash',
+          },
+          {
+            title: 'yum',
+            code: 'examples/requirements.yum.example.sh',
+            language: 'bash',
+          },
+        ],
+      },
     },
     {
       type: 'Generic',

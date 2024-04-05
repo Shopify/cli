@@ -29,8 +29,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appgenerateextension',
   },
   ],
-  category: 'Commands',
-  subCategory: 'app',
+  category: 'app',
   related: [
   ],
 }

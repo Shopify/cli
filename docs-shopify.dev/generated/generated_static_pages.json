@@ -10,7 +10,22 @@
         "type": "Generic",
         "anchorLink": "requirements",
         "title": "Requirements",
-        "sectionContent": "- Node.js version 18.12.0 or higher\n- Ruby version 2.7.2 or higher (Only for theme commands)\n- Git version 2.28.0 or higher"
+        "sectionContent": "\n- [Node.js](https://nodejs.org/en/download/) version 18.16.0 or higher\n- [Git](https://git-scm.com/downloads) version 2.28.0 or higher\n\nOnly for theme commands:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher\n\nOnly for theme commands on Windows:\n- Ruby+Devkit 3.0, installed using [RubyInstaller for Windows](https://rubyinstaller.org/downloads/) (select the MSYS2 component and the MSYS2 base installation option)\n\nIf using linux and themes, follow the instructions on the side to install the required dependencies. Otherwise you can continue to the installation step.\n",
+        "codeblock": {
+          "title": "Install requirements for themes on linux",
+          "tabs": [
+            {
+              "title": "apt",
+              "code": "\nsudo apt update && sudo apt upgrade\n\nsudo apt install curl gcc g++ make\n\nsudo apt install ruby-full\n\nsudo apt install ruby-dev\n# Ruby development environment\n\nsudo apt install git\n",
+              "language": "bash"
+            },
+            {
+              "title": "yum",
+              "code": "sudo yum install curl\n\nsudo yum group install \"Development Tools\"\n# includes GCC, g++, and Make\n\nsudo yum install ruby\nsudo yum install ruby-devel\n# Ruby development environment\n\nsudo yum install git\n",
+              "language": "bash"
+            }
+          ]
+        }
       },
       {
         "type": "Generic",
@@ -27,7 +42,7 @@
             },
             {
               "title": "yarn",
-              "code": "yarn add global @shopify/cli\n",
+              "code": "yarn global add @shopify/cli\n",
               "language": "bash"
             },
             {
