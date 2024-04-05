@@ -56,9 +56,17 @@ function matchGlob(key: string, pattern: string) {
   // When the the standard match fails and the pattern includes '/*.', we
   // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
   // based on 'File.fnmatch'.
-  if (pattern.includes('/*.')) {
-    outputWarn(`The pattern ${pattern} is unsafe, please use a valid regex or glob.`)
-    return originalMatchGlob(key, pattern.replace('/*.', '/**/*.'))
+  if (pattern.includes('/*.') && !pattern.includes('/**/*.')) {
+    const newPatternMatch = originalMatchGlob(key, pattern.replace('/*.', '/**/*.'))
+    if (newPatternMatch) {
+      outputWarn(
+        `Warning: File ${key} does not match the pattern '${pattern}'. To maintain backwards compatibility, we have modified your pattern to ${pattern.replace(
+          '/*.',
+          '/**/*.',
+        )} to explicitly include subdirectories.`,
+      )
+    }
+    return newPatternMatch
   }
 
   return false
