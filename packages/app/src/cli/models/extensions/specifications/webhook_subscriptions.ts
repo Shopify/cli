@@ -1,10 +1,9 @@
-import { CustomTransformationConfig, createExtensionSpecification } from "../specification.js"
-import { WebhookSchema, WebhookSimplifyConfig } from "./app_config_webhook.js"
-import {Flag} from '../../../services/dev/fetch.js'
-import {compact, deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
-import { NormalizedWebhookSubscription, WebhooksConfig } from "./types/app_config_webhook.js"
-import { SpecsAppConfiguration } from "./types/app_config.js"
-import { BaseConfigType, ZodSchemaType } from "../schemas.js"
+import {WebhookSchema, WebhookSimplifyConfig} from './app_config_webhook.js'
+import {NormalizedWebhookSubscription, WebhooksConfig} from './types/app_config_webhook.js'
+import {SpecsAppConfiguration} from './types/app_config.js'
+import {CustomTransformationConfig, createExtensionSpecification} from '../specification.js'
+import {BaseConfigType, ZodSchemaType} from '../schemas.js'
+import {deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 
 export const WebhookSubscriptionsSpecIdentifier = 'webhooks_subscriptions'
 
@@ -12,16 +11,31 @@ export function transformFromWebhookConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
-  const webhookSubscriptions = []
+  // const webhookSubscriptions = any[]
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const {api_version, subscriptions = []} = webhooks
 
   // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
-  for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
-    if (topics) webhookSubscriptions.push(topics.map((topic) => ({uri, topic, ...optionalFields})))
-  }
+  // for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
+  //   if (topics) topics.map((topic) => webhookSubscriptions.push({uri, topic, ...optionalFields}))
+  // }
 
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions.flat(), api_version} : {api_version}
+  /* this transforms webhooks to individual subscriptions per topic, ie
+  // [
+  { uri: 'https://example.com', topic: 'products/create' },
+  { uri: 'https://example.com', topic: 'products/delete' },
+  { uri: 'https://example-2.com', topic: 'products/update' }
+  ]
+  */
+  const webhookSubscriptions = subscriptions.flatMap((subscription) => {
+    const {uri, topics, ...optionalFields} = subscription
+    if (topics)
+      return topics.map((topic) => {
+        return {uri, topic, ...optionalFields}
+      })
+  })
+
+  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions, api_version} : {api_version}
 }
 
 export function transformToWebhookConfig(content: object) {
@@ -58,6 +72,5 @@ const webhookSubscriptionsSpec = createExtensionSpecification({
   globalConfig: true,
   multipleRootPath: 'webhooks.subscriptions',
 })
-
 
 export default webhookSubscriptionsSpec

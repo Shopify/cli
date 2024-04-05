@@ -111,10 +111,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
-    const handle =
-      options.specification.identifier === 'webhooks_subscriptions'
-        ? this.webhookSubscriptionHandle(options.configuration)
-        : undefined
+    const handle = options.specification.globalConfig ? slugify(options.specification.identifier) : undefined
+
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath ?? ''
@@ -140,14 +138,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  webhookSubscriptionHandle(configuration: TConfiguration) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const webhookConfig = configuration as unknown as any
-    const subscriptionTopic = webhookConfig?.webhooks?.subscriptions[0]?.topics[0] ?? ''
-    const subscriptionUri = webhookConfig?.webhooks?.subscriptions[0]?.uri ?? ''
+  // webhookSubscriptionHandle(configuration: TConfiguration) {
+  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //   const webhookConfig = configuration as unknown as any
+  //   const subscriptionTopic = webhookConfig?.webhooks?.subscriptions[0]?.topics[0] ?? ''
+  //   const subscriptionUri = webhookConfig?.webhooks?.subscriptions[0]?.uri ?? ''
 
-    return slugify(subscriptionTopic + subscriptionUri)
-  }
+  //   return slugify(subscriptionTopic + subscriptionUri)
+  // }
 
   isDraftable() {
     return !this.isThemeExtension
@@ -344,7 +342,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         },
       ]
     }
-     return this.bundleGlobalConfigExtension(
+
+    return this.bundleGlobalConfigExtension(
       identifiers.extensionsNonUuidManaged[this.localIdentifier] ?? [],
       configValue,
     )
@@ -361,13 +360,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         },
       ]
 
-    const multipleRootPathValue = getPathValue<unknown[]>(this.configuration, this.specification.multipleRootPath)
-    return multipleRootPathValue!.map((config, index) => ({
-      config: JSON.stringify(config),
-      context: this.contextValue,
-      handle: this.handle,
-      uuid: uuids[index],
-    }))
+    // const multipleRootPathValue = getPathValue<unknown[]>(this.configuration, this.specification.multipleRootPath)
+
+    // config should be transformed into an array of subscription objects, ie:
+    /* [
+      { uri: 'https://example.com', topic: 'products/create' },
+      { uri: 'https://example.com', topic: 'products/delete' },
+      { uri: 'https://example-2.com', topic: 'products/update' }
+    ]
+    */
+    // add in extra identifier check b/c this is webhooks specific logic - each subscription topic should be its own app module
+    if (this.specification.identifier === 'webhooks_subscriptions' && config.subscriptions) {
+      const subscriptions = config.subscriptions as unknown as object[]
+      return subscriptions.map((subscription, index) => ({
+        config: JSON.stringify(subscription),
+        context: this.contextValue,
+        handle: `${this.handle}-${index.toString()}`,
+        uuid: uuids[index],
+      }))
+    }
   }
 }
 

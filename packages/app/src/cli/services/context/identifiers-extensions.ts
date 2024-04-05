@@ -8,8 +8,10 @@ import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/m
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -141,7 +143,32 @@ async function ensureNonUuidManagedExtensionsIds(
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string[]} = {}
   const validMatchesById: {[key: string]: string[]} = {}
-  localExtensionRegistrations.forEach((local) => {
+
+  const extensionsInGlobalConfig = localExtensionRegistrations.filter((ext) => ext.specification.globalConfig)
+
+  await Promise.all(
+    extensionsInGlobalConfig.map(async (extension) => {
+      const localSources = buildExtensionsInGlobalToCreate(extension)
+
+      const extensionRegistrations = await Promise.all(
+        localSources.map(async (extension) => {
+          const registration = await createExtension(
+            appId,
+            extension.graphQLType,
+            extension.handle,
+            developerPlatformClient,
+            extension.contextValue,
+          )
+          return [registration.id, registration.uuid]
+        }),
+      )
+      validMatches[extension.localIdentifier] = extensionRegistrations.flatMap(([, uuid]) => uuid!)
+    }),
+  )
+
+  const extensionNotInGlobalConfig = localExtensionRegistrations.filter((ext) => !ext.specification.globalConfig)
+
+  extensionNotInGlobalConfig.forEach((local) => {
     const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
       return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
     })
@@ -196,6 +223,31 @@ async function createExtensions(
     }
   }
   return result
+}
+
+function buildExtensionsInGlobalToCreate(extension: ExtensionInstance): LocalSource[] {
+  if (!extension.specification.multipleRootPath) return [extension]
+
+  const multipleRootPathValue = getPathValue<unknown[]>(
+    extension.configuration,
+    extension.specification.multipleRootPath,
+  )
+
+  let extArrLength = multipleRootPathValue?.length ?? 0
+
+  // this lets us get the right number of uuids per subscription
+  if (extension.specification.identifier === 'webhooks_subscriptions') {
+    let topicsCount = 0
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    multipleRootPathValue?.forEach((subscriptionObj: any) => {
+      if (subscriptionObj.topics) {
+        topicsCount += subscriptionObj.topics.length
+      }
+    })
+    extArrLength = topicsCount
+  }
+
+  return Array.from({length: extArrLength}).map(() => extension)
 }
 
 function mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged: {[key: string]: string[]}) {
