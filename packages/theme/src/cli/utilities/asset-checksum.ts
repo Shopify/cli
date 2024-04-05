@@ -30,7 +30,7 @@ export async function checksum(root: string, path: string) {
   return md5(content)
 }
 
-export function normalizeJson(jsonStr: string) {
+function normalizeJson(jsonStr: string) {
   let inStr = false
   let wasBackslash = false
   let formattedStr = ''

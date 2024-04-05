@@ -7,7 +7,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
-export interface Options {
+interface Options {
   role?: Role
   name?: string
   id?: number

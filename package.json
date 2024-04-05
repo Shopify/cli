@@ -165,7 +165,10 @@
       },
       "packages/theme": {
         "entry": "**/{commands,hooks}/**/*.ts!",
-        "project": "**/*.ts!"
+        "project": "**/*.ts!",
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/cli-kit": {
         "entry": [

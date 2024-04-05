@@ -3,7 +3,7 @@ import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
 type DevelopmentThemeId = string
 
-export interface ThemeLocalStorageSchema {
+interface ThemeLocalStorageSchema {
   themeStore: string
 }
 

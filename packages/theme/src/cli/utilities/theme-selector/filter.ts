@@ -52,7 +52,7 @@ function filterArray(
 /**
  * {@link Theme} ID or name
  */
-export type ThemeIdentifier = string
+type ThemeIdentifier = string
 
 export interface FilterProps {
   themes?: ThemeIdentifier[]
