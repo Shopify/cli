@@ -11,7 +11,7 @@ import figures from 'figures'
 
 export type Message = TokenItem<Exclude<InlineToken, LinkToken>>
 
-export interface PromptLayoutProps {
+interface PromptLayoutProps {
   message: Message
   infoTable?: InfoTableProps['table']
   abortSignal?: AbortSignal

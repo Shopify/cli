@@ -7,7 +7,7 @@ import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 import StackTracey from 'stacktracey'
 
-export interface FatalErrorProps {
+interface FatalErrorProps {
   error: Fatal
 }
 

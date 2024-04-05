@@ -7,8 +7,6 @@ import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
 
-export type WritableStream = (process: OutputProcess, index: number) => Writable
-
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortSignal: AbortSignal

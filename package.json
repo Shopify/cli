@@ -118,7 +118,7 @@
       "unlisted": "error",
       "unresolved": "error"
     },
-    "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks", "eslint-plugin-jsx-a11y"],
+    "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks"],
     "ignoreWorkspaces": ["packages/eslint-plugin-cli"],
     "paths": {
       "@shopify/eslint-plugin-cli/configs": ["./packages/eslint-plugin-cli/config.js"]
@@ -160,15 +160,20 @@
       "packages/cli-kit": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
-          "**/public/**/*.ts!"
+          "**/public/**/*.{ts,tsx}!"
         ],
-        "project": "**/*.{ts,tsx}!"
+        "project": "**/*.{ts,tsx}!",
+        "ignoreBinaries": ["bundle", "open"],
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/ui-extensions-dev-console": {
         "entry": [
           "**/src/main.tsx!"
         ],
-        "project": "**/*.{ts,tsx}!"
+        "project": "**/*.{ts,tsx}!",
+        "ignoreDependencies": ["eslint-plugin-jsx-a11y"]
       },
       "packages/ui-extensions-server-kit": {
         "entry": [

@@ -66,10 +66,6 @@ export const pathConstants = {
   },
 }
 
-export const keychainConstants = {
-  service: 'shopify-cli',
-}
-
 export const sessionConstants = {
   expirationTimeMarginInMinutes: 4,
 }

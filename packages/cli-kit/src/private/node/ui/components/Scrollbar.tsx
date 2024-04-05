@@ -2,7 +2,7 @@ import {shouldDisplayColors} from '../../../../public/node/output.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 
-export interface ScrollbarProps {
+interface ScrollbarProps {
   containerHeight: number
   visibleListSectionLength: number
   fullListLength: number

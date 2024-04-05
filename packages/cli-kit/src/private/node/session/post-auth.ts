@@ -66,10 +66,8 @@ export const getFavicon = async (): Promise<string> => {
 
 export const EmptyUrlString = 'We received the authentication redirect but the URL is empty.'
 
-export const AuthErrorString = 'There was an issue while trying to authenticate.'
-
 export const MissingCodeString = "The authentication can't continue because the redirect doesn't include the code."
 
 export const MissingStateString = "The authentication can't continue because the redirect doesn't include the state."
 
-export const RedirectPageAssetNotFoundError = () => new BugError(`Redirect page asset not found`)
+const RedirectPageAssetNotFoundError = () => new BugError(`Redirect page asset not found`)
