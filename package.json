@@ -217,7 +217,9 @@
           "**/steps/*.ts",
           "**/lib/*.ts"
         ],
-        "project": "**/*.ts"
+        "project": "**/*.ts",
+        "ignoreDependencies": ["@cucumber/pretty-formatter", "@cucumber/messages"],
+        "ignoreBinaries": ["ts-node/esm"]
       }
     }
   }

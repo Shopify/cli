@@ -73,7 +73,7 @@ jobs:
         run: pnpm nx run-many --all --skip-nx-cache  --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
       - name: Post the knip results
-        uses: codex-/knip-reporter@v2
+        uses: codex-/knip-reporter@1ccefdf649b847793412fbfba286dc0b05defc1e # pin@v2
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache  --target=lint
@@ -145,7 +145,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Post the knip results
-        uses: codex-/knip-reporter@v2
+        uses: codex-/knip-reporter@1ccefdf649b847793412fbfba286dc0b05defc1e # pin@v2
         with:
           verbose: true
 
