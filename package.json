@@ -131,7 +131,11 @@
         "entry": [
           "**/{commands,hooks}/**/*.ts!"
         ],
-        "project": "**/*.{ts,tsx}!"
+        "project": "**/*.{ts,tsx}!",
+        "ignoreDependencies": ["@shopify/plugin-cloudflare", "@shopify/function-runner"],
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/cli": {
         "entry": [

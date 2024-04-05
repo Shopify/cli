@@ -1,17 +1,8 @@
 import {InfoTable} from './InfoTable.js'
 import {unstyled} from '../../../../../public/node/output.js'
 import {render} from '../../../testing/ui.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import React from 'react'
-
-// Different test environments give different answers to whether hyperlinks are supported -- make it consistent.
-vi.mock('supports-hyperlinks', () => {
-  return {
-    default: {
-      stdout: false,
-    },
-  }
-})
 
 describe('InfoTable', async () => {
   test('renders a horizontal table with bullet points', async () => {

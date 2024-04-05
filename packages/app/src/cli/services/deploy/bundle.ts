@@ -8,7 +8,7 @@ import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
-export interface BundleOptions {
+interface BundleOptions {
   app: AppInterface
   bundlePath?: string
   identifiers: Identifiers

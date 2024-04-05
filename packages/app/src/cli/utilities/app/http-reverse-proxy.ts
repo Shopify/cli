@@ -5,7 +5,7 @@ import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from
 import {Writable} from 'stream'
 import * as http from 'http'
 
-export interface ReverseHTTPProxyTarget {
+interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
    *   [vite] Output coming from Vite
    */

@@ -2,17 +2,8 @@ import {FatalError} from './FatalError.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {AbortError, BugError, ExternalError} from '../../../../public/node/error.js'
 import {render} from '../../testing/ui.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import React from 'react'
-
-// Different test environments give different answers to whether hyperlinks are supported -- make it consistent.
-vi.mock('supports-hyperlinks', () => {
-  return {
-    default: {
-      stdout: false,
-    },
-  }
-})
 
 describe('FatalError', async () => {
   test('renders correctly with a just a message and tryMessage', async () => {

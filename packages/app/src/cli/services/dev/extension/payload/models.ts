@@ -1,7 +1,7 @@
 import {Localization} from '../localization.js'
 import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
 
-export interface ExtensionsPayloadInterface {
+interface ExtensionsPayloadInterface {
   app: {
     apiKey: string
     url: string
@@ -91,6 +91,6 @@ interface Capability {
   [key: string]: boolean | undefined
 }
 
-export interface Capabilities {
+interface Capabilities {
   [key: string]: Capability | boolean | undefined
 }

@@ -4,7 +4,7 @@ import {sendUninstallWebhookToAppServer} from '../../webhook/send-app-uninstalle
 import {Web} from '../../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 
-export interface SendWebhookOptions {
+interface SendWebhookOptions {
   deliveryPort: number
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string

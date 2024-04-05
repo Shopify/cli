@@ -21,7 +21,7 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-export interface AppProxy {
+interface AppProxy {
   proxyUrl: string
   proxySubPath: string
   proxySubPathPrefix: string
@@ -39,7 +39,7 @@ export interface FrontendURLOptions {
   tunnelClient: TunnelClient | undefined
 }
 
-export interface FrontendURLResult {
+interface FrontendURLResult {
   frontendUrl: string
   frontendPort: number
   usingLocalhost: boolean
@@ -241,7 +241,7 @@ export async function getURLs(remoteAppConfig?: SpecsAppConfiguration): Promise<
   return result
 }
 
-export interface ShouldOrPromptUpdateURLsOptions {
+interface ShouldOrPromptUpdateURLsOptions {
   currentURLs: PartnersURLs
   appDirectory: string
   cachedUpdateURLs?: boolean

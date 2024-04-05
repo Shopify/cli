@@ -3,7 +3,7 @@ import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {BugError} from '@shopify/cli-kit/node/error'
 
-export interface GetHTMLOptions {
+interface GetHTMLOptions {
   extensionSurface?: string
   template: Template
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,7 +24,7 @@ export async function getHTML(options: GetHTMLOptions): Promise<string> {
   return renderLiquidTemplate(templateContent, options.data)
 }
 
-export async function getTemplatePath(options: GetHTMLOptions): Promise<string> {
+async function getTemplatePath(options: GetHTMLOptions): Promise<string> {
   const templatesDirectory = await getTemplatesDirectory()
   const globPatterns = []
   if (options.extensionSurface) {

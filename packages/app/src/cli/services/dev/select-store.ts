@@ -126,7 +126,7 @@ export async function convertToTestStoreIfNeeded(
  * @param orgId - Current organization ID
  * @param developerPlatformClient - The client to access the platform API
  */
-export async function convertStoreToTest(
+async function convertStoreToTest(
   store: OrganizationStore,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,

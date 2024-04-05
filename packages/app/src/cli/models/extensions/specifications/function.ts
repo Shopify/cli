@@ -16,7 +16,7 @@ interface UI {
 }
 
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
-export const FunctionExtensionSchema = BaseSchema.extend({
+const FunctionExtensionSchema = BaseSchema.extend({
   build: zod.object({
     command: zod
       .string()

@@ -3,7 +3,7 @@ import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {relativePath, dirname} from '@shopify/cli-kit/node/path'
 
-export interface ThemeExtensionConfig {
+interface ThemeExtensionConfig {
   theme_extension: {
     files: {[key: string]: string}
   }

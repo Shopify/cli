@@ -50,13 +50,13 @@ export interface CreateAppVersionMutationVariables {
   gitUrl?: string
 }
 
-export interface AppModuleSpecification {
+interface AppModuleSpecification {
   identifier: string
   name: string
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
-export interface AppModule {
+interface AppModule {
   gid: string
   uid: string
   handle: string

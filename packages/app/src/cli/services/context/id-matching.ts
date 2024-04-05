@@ -10,7 +10,7 @@ export interface LocalRemoteSource {
   remote: RemoteSource
 }
 
-export interface MatchResult {
+interface MatchResult {
   identifiers: IdentifiersExtensions
   toConfirm: LocalRemoteSource[]
   toCreate: LocalSource[]

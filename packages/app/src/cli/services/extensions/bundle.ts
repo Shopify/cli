@@ -15,7 +15,7 @@ import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
 
 const require = createRequire(import.meta.url)
 
-export interface BundleOptions {
+interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputPath: string

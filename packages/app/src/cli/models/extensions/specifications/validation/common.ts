@@ -1,4 +1,4 @@
-import {httpsRegex, validateUrl} from '../../../app/validation/common.js'
+import {httpsRegex} from '../../../app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 // example PubSub URI - pubsub://{project}:{topic}
@@ -9,11 +9,6 @@ const arnRegex =
 
 export const removeTrailingSlash = (arg: unknown) =>
   typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
-
-export const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
-  httpsOnly: true,
-  message: 'Only https urls are allowed',
-}).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
 export const UriValidation = zod.union(
   [
