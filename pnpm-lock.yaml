@@ -551,9 +551,9 @@ importers:
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
-      vite:
-        specifier: 4.4.9
-        version: 4.4.9(@types/node@18.19.3)(sass@1.64.2)
+      '@vitest/coverage-istanbul':
+        specifier: ^0.34.3
+        version: 0.34.4(vitest@0.34.4)
       vitest:
         specifier: ^0.34.3
         version: 0.34.4(jsdom@20.0.3)

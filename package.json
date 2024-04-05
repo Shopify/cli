@@ -143,7 +143,10 @@
       },
       "packages/create-app": {
         "entry": "**/{commands,hooks}/**/*.ts!",
-        "project": "**/*.ts!"
+        "project": "**/*.ts!",
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/plugin-cloudflare": {
         "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
