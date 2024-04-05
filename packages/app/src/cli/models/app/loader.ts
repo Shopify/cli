@@ -54,7 +54,7 @@ type AbortOrReport = <T>(
   configurationPath: string,
   rawErrors?: zod.ZodIssueBase[],
 ) => T
-const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
+const noopAbortOrReport: AbortOrReport = (_errorMessage, fallback, _configurationPath) => fallback
 
 /**
  * Loads a configuration file, and returns its content as an unvalidated object.

@@ -114,10 +114,10 @@ function matchByUniqueType(
   pending: {local: LocalSource[]; remote: RemoteSource[]}
 } {
   const localGroups = groupBy(localSources, 'graphQLType')
-  const localUnique = Object.values(pickBy(localGroups, (group, key) => group.length === 1)).flat()
+  const localUnique = Object.values(pickBy(localGroups, (group, _key) => group.length === 1)).flat()
 
   const remoteGroups = groupBy(remoteSources, 'type')
-  const remoteUniqueMap = pickBy(remoteGroups, (group, key) => group.length === 1)
+  const remoteUniqueMap = pickBy(remoteGroups, (group, _key) => group.length === 1)
 
   const toConfirm: {local: LocalSource; remote: RemoteSource}[] = []
   const toCreate: LocalSource[] = []

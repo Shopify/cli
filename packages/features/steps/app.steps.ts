@@ -73,7 +73,7 @@ Then(/I have an extension named (.+) of type ([^\s]+)$/, {}, async function (ext
   assert.equal(extension.configuration.type, extType)
 })
 
-Then(/I do not have an extension named (.+) of type ([^\s]+)/, {}, async function (extName: string, extType: string) {
+Then(/I do not have an extension named (.+) of type ([^\s]+)/, {}, async function (extName: string, _extType: string) {
   const appInfo: AppInfo = await this.appInfo()
   const extension = this.findExtension(appInfo, extName)
   assert.equal(extension, undefined)

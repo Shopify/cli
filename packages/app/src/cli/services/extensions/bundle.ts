@@ -193,7 +193,7 @@ function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
   return {
     name: 'shopify:deduplicate-react',
     setup({onResolve}) {
-      onResolve({filter: /^react$/}, (args) => {
+      onResolve({filter: /^react$/}, (_args) => {
         return {
           path: resolvedReactPath,
         }

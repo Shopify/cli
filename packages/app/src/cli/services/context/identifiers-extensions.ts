@@ -68,13 +68,10 @@ export async function ensureExtensionsIds(
     }
   }
 
-  let onlyRemoteExtensions = matchExtensions.toManualMatch.remote ?? []
-
   if (matchExtensions.toManualMatch.local.length > 0) {
     const matchResult = await manualMatchIds(matchExtensions.toManualMatch, 'uuid')
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
-    onlyRemoteExtensions = matchResult.onlyRemote
   }
 
   return {
