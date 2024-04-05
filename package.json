@@ -119,6 +119,7 @@
       "unresolved": "error"
     },
     "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks"],
+    "ignoreWorkspaces": ["packages/eslint-plugin-cli"],
     "paths": {
       "@shopify/eslint-plugin-cli/configs": ["./packages/eslint-plugin-cli/config.js"]
     },
@@ -188,13 +189,6 @@
           "**/world/index.ts",
           "**/steps/*.ts",
           "**/lib/*.ts"
-        ],
-        "project": "**/*.ts"
-      },
-      "packages/eslint-plugin-cli": {
-        "entry": [
-          "**/config.js",
-          "**/rules/*.js"
         ],
         "project": "**/*.ts"
       }
