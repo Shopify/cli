@@ -118,6 +118,10 @@
       "unlisted": "error",
       "unresolved": "error"
     },
+    "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks"],
+    "paths": {
+      "@shopify/eslint-plugin-cli/configs": ["./packages/eslint-plugin-cli/config.js"]
+    },
     "workspaces": {
       ".": {
         "entry": ["bin/*.js", "configurations/vite.config.ts", "docs-shopify.dev/**/*.ts", "vite.config.ts", "docs/api/cli-kit/**/*.js"]
