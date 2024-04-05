@@ -439,6 +439,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -498,6 +499,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -664,6 +666,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -896,6 +899,7 @@ embedded = true
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -945,6 +949,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -989,6 +994,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 handle = "handle"
 application_url = "https://example.com"
