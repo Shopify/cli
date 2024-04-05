@@ -118,7 +118,7 @@
       "unlisted": "error",
       "unresolved": "error"
     },
-    "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks"],
+    "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks", "eslint-plugin-jsx-a11y"],
     "ignoreWorkspaces": ["packages/eslint-plugin-cli"],
     "paths": {
       "@shopify/eslint-plugin-cli/configs": ["./packages/eslint-plugin-cli/config.js"]

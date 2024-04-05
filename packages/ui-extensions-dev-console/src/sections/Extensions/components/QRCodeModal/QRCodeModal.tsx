@@ -17,7 +17,7 @@ interface Code {
   type: Surface | 'home'
 }
 
-export interface QRCodeModalProps extends Pick<ModalProps, 'onClose'> {
+interface QRCodeModalProps extends Pick<ModalProps, 'onClose'> {
   code?: Code
 }
 
@@ -34,7 +34,7 @@ export function QRCodeModal({code, onClose}: QRCodeModalProps) {
   )
 }
 
-export function QRCodeContent({url, type}: Code) {
+function QRCodeContent({url, type}: Code) {
   const [i18n] = useI18n({
     id: 'QRCodeModal',
     fallback: en,

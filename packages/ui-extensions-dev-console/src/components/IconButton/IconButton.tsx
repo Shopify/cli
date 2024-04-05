@@ -3,7 +3,7 @@ import React from 'react'
 import {Icon, IconProps} from '@/components/Icon'
 import {classNames} from '@/utilities/css'
 
-export interface IconButtonProps extends React.HTMLProps<HTMLButtonElement>, IconProps {
+interface IconButtonProps extends React.HTMLProps<HTMLButtonElement>, IconProps {
   type: 'button' | 'submit' | 'reset' | undefined
 }
 

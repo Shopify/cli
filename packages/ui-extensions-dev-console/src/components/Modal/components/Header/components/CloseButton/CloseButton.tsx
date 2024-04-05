@@ -4,7 +4,7 @@ import {XIcon} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 import {IconButton} from '@/components/IconButton/IconButton'
 
-export interface CloseButtonProps {
+interface CloseButtonProps {
   pressed?: boolean
   onClick(): void
 }
