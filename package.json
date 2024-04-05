@@ -32,28 +32,20 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@apollo/client": "^3.7.17",
-    "@babel/core": "^7.23.5",
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
-    "@nrwl/tao": "16.7.4",
     "@nx/eslint-plugin": "16.8.1",
-    "@nx/js": "16.8.1",
     "@nx/workspace": "16.8.1",
     "@octokit/core": "^4.2.4",
-    "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/generate-docs": "^0.13.2",
-    "@shopify/typescript-configs": "^5.1.0",
     "@types/node": "18.19.3",
-    "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/parser": "^5.62.0",
     "ansi-colors": "^4.1.3",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
-    "esbuild": "0.19.8",
     "eslint": "^8.48.0",
     "execa": "^7.2.0",
     "fast-glob": "^3.3.1",
@@ -70,15 +62,10 @@
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^1.8.0",
-    "postinstall-postinstall": "^2.1.0",
-    "prettier": "^2.8.7",
     "react": "17.0.2",
     "rimraf": "^3.0.2",
-    "shx": "^0.3.4",
-    "tempy": "^3.0.0",
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
-    "tslib": "^2.6.2",
     "typescript": "5.2.2"
   },
   "workspaces": {
@@ -118,23 +105,56 @@
       "unlisted": "error",
       "unresolved": "error"
     },
-    "ignoreDependencies": ["eslint-plugin-react", "eslint-plugin-react-hooks"],
-    "ignoreWorkspaces": ["packages/eslint-plugin-cli"],
+    "ignoreDependencies": [
+      "eslint-plugin-react",
+      "eslint-plugin-react-hooks"
+    ],
+    "ignoreWorkspaces": [
+      "packages/eslint-plugin-cli"
+    ],
     "paths": {
-      "@shopify/eslint-plugin-cli/configs": ["./packages/eslint-plugin-cli/config.js"]
+      "@shopify/eslint-plugin-cli/configs": [
+        "./packages/eslint-plugin-cli/config.js"
+      ]
     },
     "workspaces": {
       ".": {
-        "entry": ["bin/*.js", "configurations/vite.config.ts", "docs-shopify.dev/**/*.ts", "vite.config.ts", "docs/api/cli-kit/**/*.js"]
+        "entry": [
+          "bin/*.js",
+          "configurations/vite.config.ts",
+          "docs-shopify.dev/**/*.ts",
+          "vite.config.ts",
+          "docs/api/cli-kit/**/*.js"
+        ],
+        "ignoreBinaries": [
+          "packages/features/snapshots/regenerate.sh",
+          "bin/*",
+          "istanbul-merge"
+        ],
+        "ignoreDependencies": [
+          "@nx/workspace",
+          "graphql",
+          "graphql-tag",
+          "pin-github-action",
+          "react"
+        ],
+        "ignore": [
+          "configurations/vite.config.ts"
+        ]
       },
       "packages/app": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!"
         ],
         "project": "**/*.{ts,tsx}!",
-        "ignoreDependencies": ["@shopify/plugin-cloudflare", "@shopify/function-runner"],
+        "ignoreDependencies": [
+          "@shopify/plugin-cloudflare",
+          "@shopify/function-runner"
+        ],
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/cli": {
@@ -144,38 +164,62 @@
           "**/index.ts!"
         ],
         "project": "**/*.ts!",
-        "ignoreDependencies": ["@oclif/plugin-commands", "@oclif/plugin-help", "@shopify/plugin-did-you-mean", "@shopify/app", "@shopify/theme"],
+        "ignoreDependencies": [
+          "@oclif/plugin-commands",
+          "@oclif/plugin-help",
+          "@shopify/plugin-did-you-mean",
+          "@shopify/app",
+          "@shopify/theme"
+        ],
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/create-app": {
         "entry": "**/{commands,hooks}/**/*.ts!",
         "project": "**/*.ts!",
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/plugin-cloudflare": {
-        "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/src/*.ts!"
+        ],
         "project": "**/*.ts!",
-        "ignoreDependencies": ["@oclif/core"],
+        "ignoreDependencies": [
+          "@oclif/core"
+        ],
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/plugin-did-you-mean": {
-        "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/src/*.ts!"
+        ],
         "project": "**/*.ts!",
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/theme": {
         "entry": "**/{commands,hooks}/**/*.ts!",
         "project": "**/*.ts!",
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/cli-kit": {
@@ -184,9 +228,14 @@
           "**/public/**/*.{ts,tsx}!"
         ],
         "project": "**/*.{ts,tsx}!",
-        "ignoreBinaries": ["bundle", "open"],
+        "ignoreBinaries": [
+          "bundle",
+          "open"
+        ],
         "vite": {
-          "config": ["vite.config.ts"]
+          "config": [
+            "vite.config.ts"
+          ]
         }
       },
       "packages/ui-extensions-dev-console": {
@@ -194,15 +243,20 @@
           "**/src/main.tsx!"
         ],
         "project": "**/*.{ts,tsx}!",
-        "ignoreDependencies": ["eslint-plugin-jsx-a11y"]
+        "ignoreDependencies": [
+          "eslint-plugin-jsx-a11y"
+        ]
       },
       "packages/ui-extensions-server-kit": {
         "entry": [
           "**/src/index.tsx!",
-          "**/scripts/*.ts!"
+          "**/scripts/*.ts!",
+          "**/src/testing/index.ts"
         ],
         "project": "**/*.{ts,tsx}!",
-        "ignoreDependencies": ["@shopify/react-testing"]
+        "ignoreDependencies": [
+          "@shopify/react-testing"
+        ]
       },
       "packages/ui-extensions-test-utils": {
         "entry": [
@@ -218,8 +272,13 @@
           "**/lib/*.ts"
         ],
         "project": "**/*.ts",
-        "ignoreDependencies": ["@cucumber/pretty-formatter", "@cucumber/messages"],
-        "ignoreBinaries": ["ts-node/esm"]
+        "ignoreDependencies": [
+          "@cucumber/pretty-formatter",
+          "@cucumber/messages"
+        ],
+        "ignoreBinaries": [
+          "ts-node/esm"
+        ]
       }
     }
   }
