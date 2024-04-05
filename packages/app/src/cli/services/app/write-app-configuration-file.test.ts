@@ -121,4 +121,26 @@ url = "https://example.com/prefs"
       expect(content).not.toContain('privacy_compliance')
     })
   })
+
+  test('includes empty array entries in config file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const {schema} = await buildVersionedAppSchema()
+
+      // When
+      await writeAppConfigurationFile(
+        {
+          ...FULL_CONFIGURATION,
+          path: filePath,
+          auth: {redirect_urls: []},
+        } as CurrentAppConfiguration,
+        schema,
+      )
+
+      // Then
+      const content = await readFile(filePath)
+      expect(content).toContain('redirect_urls')
+    })
+  })
 })
