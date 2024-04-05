@@ -2,26 +2,27 @@
 
 ## Table of Contents
 
-- [Intro](#intro)
-- [Adding a new `render` function](#adding-a-new-render-function)
-  - [Extending what is already there](#extending-what-is-already-there)
-  - [Creating something in line with the design system](#creating-something-in-line-with-the-design-system)
-  - [Ok ok, but I still want to add a new function](#ok-ok-but-i-still-want-to-add-a-new-function)
-- [Adding a new component](#adding-a-new-component)
-- [Components overview](#components-overview)
-  - [`Text` vs `Box`](#text-vs-box)
-  - [Utility components](#utility-components)
-    - [`TokenizedText`](#tokenizedtext)
-    - [`FullScreen`](#fullscreen)
-    - [`TextAnimation`](#textanimation)
-- [Helpful tips](#helpful-tips)
-  - [Handling user input](#handling-user-input)
-  - [Components that deal with async functions](#components-that-deal-with-async-functions)
-  - [Layout system](#layout-system)
-- [Testing components](#testing-components)
-- [Troubleshooting](#troubleshooting)
-  - [My tests are passing locally but not on CI!](#my-tests-are-passing-locally-but-not-on-ci)
-- [Testing outside of components](#testing-outside-of-components)
+- [Contributing to UI Kit](#contributing-to-ui-kit)
+  - [Table of Contents](#table-of-contents)
+  - [Intro](#intro)
+  - [Adding a new `render` function](#adding-a-new-render-function)
+    - [Extending what is already there](#extending-what-is-already-there)
+    - [Creating something in line with the design system](#creating-something-in-line-with-the-design-system)
+    - [Ok ok, but I still want to add a new function](#ok-ok-but-i-still-want-to-add-a-new-function)
+  - [Adding a new component](#adding-a-new-component)
+  - [Components overview](#components-overview)
+    - [`Text` vs `Box`](#text-vs-box)
+    - [Utility components](#utility-components)
+      - [`TokenizedText`](#tokenizedtext)
+      - [`TextAnimation`](#textanimation)
+  - [Helpful tips](#helpful-tips)
+    - [Handling user input](#handling-user-input)
+    - [Components that deal with async functions](#components-that-deal-with-async-functions)
+    - [Layout system](#layout-system)
+  - [Testing components](#testing-components)
+  - [Troubleshooting](#troubleshooting)
+    - [My tests are passing locally but not on CI!](#my-tests-are-passing-locally-but-not-on-ci)
+  - [Testing outside of components](#testing-outside-of-components)
 
 ## Intro
 
@@ -164,13 +165,6 @@ If you think that you need a new type of style (for example italics) for the tex
 add a new interface named `ItalicToken` in the `TokenizedText` and decide how it's going to be rendered, inline or block.
 In this example we would use `inline`. But before you go ahead and add a new token, consider if all the users of UI kit
 might need this new token or not. If the answer is no, then a simple regular component will suffice.
-
-#### `FullScreen`
-
-This component is useful if you want to clear the terminal and render something full-screen. The benefit is that resizing
-the terminal will cause the interface to refresh and adapt to the new size. `FullScreen` will also create a new buffer
-so once Ink is unmounted the previous terminal history will be restored. This might be useful if you're rendering
-a very tall UI and don't want Ink to [delete the history when it renders](https://github.com/vadimdemedes/ink/issues/382).
 
 #### `TextAnimation`
 
