@@ -147,11 +147,18 @@
       },
       "packages/plugin-cloudflare": {
         "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
-        "project": "**/*.ts!"
+        "project": "**/*.ts!",
+        "ignoreDependencies": ["@oclif/core"],
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/plugin-did-you-mean": {
         "entry": ["**/{commands,hooks}/**/*.ts!", "**/src/*.ts!"],
-        "project": "**/*.ts!"
+        "project": "**/*.ts!",
+        "vite": {
+          "config": ["vite.config.ts"]
+        }
       },
       "packages/theme": {
         "entry": "**/{commands,hooks}/**/*.ts!",
