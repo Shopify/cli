@@ -1,51 +1,51 @@
- app build                                @shopify/app
- app config link                          @shopify/app
- app config use                           @shopify/app
- app deploy                               @shopify/app
- app dev                                  @shopify/app
- app env pull                             @shopify/app
- app env show                             @shopify/app
- app function build                       @shopify/app
- app function run                         @shopify/app
- app function schema                      @shopify/app
- app function typegen                     @shopify/app
- app generate extension                   @shopify/app
- app generate schema                      @shopify/app
- app import-dashboard-extensions          @shopify/app
- app info                                 @shopify/app
- app init                                 @shopify/app
- app release                              @shopify/app
- app versions list                        @shopify/app
- app webhook trigger                      @shopify/app
- auth logout                              @shopify/cli
- commands                                 @oclif/plugin-commands
- config autocorrect off                   @shopify/plugin-did-you-mean
- config autocorrect on                    @shopify/plugin-did-you-mean
- config autocorrect status                @shopify/plugin-did-you-mean
- help                                     @oclif/plugin-help
- plugins add                              @oclif/plugin-plugins
- plugins inspect                          @oclif/plugin-plugins
- plugins install                          @oclif/plugin-plugins
- plugins link                             @oclif/plugin-plugins
- plugins remove                           @oclif/plugin-plugins
- plugins uninstall                        @oclif/plugin-plugins
- plugins unlink                           @oclif/plugin-plugins
- plugins update                           @oclif/plugin-plugins
- search                                   @shopify/cli
- theme check                              @shopify/theme
- theme console                            @shopify/theme
- theme delete                             @shopify/theme
- theme dev                                @shopify/theme
- theme info                               @shopify/theme
- theme init                               @shopify/theme
- theme language-server                    @shopify/theme
- theme list                               @shopify/theme
- theme open                               @shopify/theme
- theme package                            @shopify/theme
- theme publish                            @shopify/theme
- theme pull                               @shopify/theme
- theme push                               @shopify/theme
- theme rename                             @shopify/theme
- theme share                              @shopify/theme
- upgrade                                  @shopify/cli
- version                                  @shopify/cli
+ app build                       @shopify/app                 
+ app config link                 @shopify/app                 
+ app config use                  @shopify/app                 
+ app deploy                      @shopify/app                 
+ app dev                         @shopify/app                 
+ app env pull                    @shopify/app                 
+ app env show                    @shopify/app                 
+ app function build              @shopify/app                 
+ app function run                @shopify/app                 
+ app function schema             @shopify/app                 
+ app function typegen            @shopify/app                 
+ app generate extension          @shopify/app                 
+ app generate schema             @shopify/app                 
+ app import-dashboard-extensions @shopify/app                 
+ app info                        @shopify/app                 
+ app init                        @shopify/app                 
+ app release                     @shopify/app                 
+ app versions list               @shopify/app                 
+ app webhook trigger             @shopify/app                 
+ auth logout                     @shopify/cli                 
+ commands                        @oclif/plugin-commands       
+ config autocorrect off          @shopify/plugin-did-you-mean 
+ config autocorrect on           @shopify/plugin-did-you-mean 
+ config autocorrect status       @shopify/plugin-did-you-mean 
+ help                            @oclif/plugin-help           
+ plugins add                     @oclif/plugin-plugins        
+ plugins inspect                 @oclif/plugin-plugins        
+ plugins install                 @oclif/plugin-plugins        
+ plugins link                    @oclif/plugin-plugins        
+ plugins remove                  @oclif/plugin-plugins        
+ plugins uninstall               @oclif/plugin-plugins        
+ plugins unlink                  @oclif/plugin-plugins        
+ plugins update                  @oclif/plugin-plugins        
+ search                          @shopify/cli                 
+ theme check                     @shopify/theme               
+ theme console                   @shopify/theme               
+ theme delete                    @shopify/theme               
+ theme dev                       @shopify/theme               
+ theme info                      @shopify/theme               
+ theme init                      @shopify/theme               
+ theme language-server           @shopify/theme               
+ theme list                      @shopify/theme               
+ theme open                      @shopify/theme               
+ theme package                   @shopify/theme               
+ theme publish                   @shopify/theme               
+ theme pull                      @shopify/theme               
+ theme push                      @shopify/theme               
+ theme rename                    @shopify/theme               
+ theme share                     @shopify/theme               
+ upgrade                         @shopify/cli                 
+ version                         @shopify/cli                 
