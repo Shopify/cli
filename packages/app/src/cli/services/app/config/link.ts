@@ -41,7 +41,8 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const developerPlatformClient =
+    options.developerPlatformClient ?? (await selectDeveloperPlatformClient(options.directory))
   const updatedOptions = {...options, developerPlatformClient}
   const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
   const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)

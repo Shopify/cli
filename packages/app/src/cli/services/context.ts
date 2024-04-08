@@ -474,7 +474,9 @@ export interface DraftExtensionsPushOptions {
 }
 
 export async function ensureDraftExtensionsPushContext(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
-  const developerPlatformClient = draftExtensionsPushOptions.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const developerPlatformClient =
+    draftExtensionsPushOptions.developerPlatformClient ??
+    (await selectDeveloperPlatformClient(draftExtensionsPushOptions.directory))
 
   const specifications = await loadLocalExtensionsSpecifications()
 
@@ -588,7 +590,8 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
  * @returns The selected org, app and dev store
  */
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const developerPlatformClient =
+    options.developerPlatformClient ?? (await selectDeveloperPlatformClient(options.app.directory))
   const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient)
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -632,7 +635,8 @@ interface VersionsListContextOutput {
 export async function ensureVersionsListContext(
   options: VersionListContextOptions,
 ): Promise<VersionsListContextOutput> {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const developerPlatformClient =
+    options.developerPlatformClient ?? (await selectDeveloperPlatformClient(options.app.directory))
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})

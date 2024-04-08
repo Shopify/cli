@@ -33,6 +33,9 @@ interface Configurable {
 }
 
 export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+  // eslint-disable-next-line require-atomic-updates
+  options.developerPlatformClient =
+    options.developerPlatformClient ?? (await selectDeveloperPlatformClient(app.directory))
   if (options.webEnv) {
     return infoWeb(app, options)
   } else {
@@ -120,7 +123,7 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const developerPlatformClient = this.options.developerPlatformClient ?? selectDeveloperPlatformClient()
+    const developerPlatformClient = this.options.developerPlatformClient!
     const {cachedInfo} = await getAppContext({
       developerPlatformClient,
       directory: this.app.directory,

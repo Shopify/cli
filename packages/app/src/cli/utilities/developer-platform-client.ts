@@ -45,6 +45,8 @@ import {
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
+import {isCurrentAppSchema} from '../models/app/app.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -52,12 +54,21 @@ export type Paginateable<T> = T & {
   hasMorePages: boolean
 }
 
-export function selectDeveloperPlatformClient(): DeveloperPlatformClient {
+export async function selectDeveloperPlatformClient(
+  directory: string | undefined = undefined,
+): Promise<DeveloperPlatformClient> {
   if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
-    return new ShopifyDevelopersClient()
-  } else {
-    return new PartnersClient()
+    if (!directory) {
+      return new ShopifyDevelopersClient()
+    }
+    // eslint-disable-next-line @shopify/cli/required-fields-when-loading-app
+    const appConfig = await loadAppConfiguration({directory})
+    if (isCurrentAppSchema(appConfig.configuration) && appConfig.configuration.organization_id) {
+      return new ShopifyDevelopersClient()
+    }
   }
+
+  return new PartnersClient()
 }
 
 export interface CreateAppOptions {

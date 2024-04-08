@@ -10,9 +10,11 @@ import {
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AccountInfo, PartnersSession, isServiceAccount, isUserAccount} from '../context/partner-account-info.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
@@ -95,6 +97,10 @@ export interface FetchResponse {
  */
 export async function fetchOrganizations(developerPlatformClient: DeveloperPlatformClient): Promise<Organization[]> {
   const organizations: Organization[] = await developerPlatformClient.organizations()
+  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
+    const partnersOrgs = await new PartnersClient().organizations()
+    organizations.push(...partnersOrgs)
+  }
   if (organizations.length === 0) throw new NoOrgError(await developerPlatformClient.accountInfo())
   return organizations
 }

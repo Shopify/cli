@@ -28,8 +28,11 @@ interface WebhookTriggerOptions {
  * @param flags - Passed flags
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
+  const developerPlatformClient: DeveloperPlatformClient =
+    flags.developerPlatformClient ?? (await selectDeveloperPlatformClient())
+
   // Validation and collection of flags
-  const [developerPlatformClient, validFlags] = await validatedFlags(flags)
+  const validFlags = await validatedFlags(developerPlatformClient, flags)
 
   // Request of prompts for missing flags
   const options: WebhookTriggerOptions = await collectMissingFlags(developerPlatformClient, validFlags)
@@ -37,11 +40,12 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   await sendSample(developerPlatformClient, options)
 }
 
-async function validatedFlags(flags: WebhookTriggerFlags): Promise<[DeveloperPlatformClient, WebhookTriggerFlags]> {
+async function validatedFlags(
+  developerPlatformClient: DeveloperPlatformClient,
+  flags: WebhookTriggerFlags,
+): Promise<WebhookTriggerFlags> {
   const [deliveryMethod, address] = parseAddressAndMethod(flags)
 
-  const developerPlatformClient: DeveloperPlatformClient =
-    flags.developerPlatformClient ?? selectDeveloperPlatformClient()
   const [apiVersion, topic] = await parseVersionAndTopic(developerPlatformClient, flags)
 
   let clientSecret
@@ -50,16 +54,15 @@ async function validatedFlags(flags: WebhookTriggerFlags): Promise<[DeveloperPla
     clientSecret = flags.clientSecret as string
   }
 
-  return [
-    developerPlatformClient,
-    {
-      topic,
-      apiVersion,
-      deliveryMethod,
-      address,
-      clientSecret,
-    },
-  ]
+  const response: WebhookTriggerFlags = {
+    topic,
+    apiVersion,
+    deliveryMethod,
+    address,
+    clientSecret,
+  }
+
+  return response
 }
 
 async function collectMissingFlags(

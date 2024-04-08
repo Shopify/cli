@@ -1,5 +1,5 @@
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
+import {fetchOrganizations} from '../dev/fetch.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
@@ -42,22 +42,21 @@ export async function findOrganizationApp(
 ): Promise<Partial<MinimalAppIdentifiers> & {organizationId: MinimalAppIdentifiers['organizationId']}> {
   const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
-  const partnersSession = await developerPlatformClient.session()
-  const {apps} = await fetchOrgAndApps(org.id, partnersSession)
+  const {apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
 
-  if (apps.nodes.length === 0) {
+  if (apps.length === 0) {
     return {organizationId: org.id}
   }
 
   // Try to infer from current folder
   const currentDir = basename(cwd())
-  const appFromDir = apps.nodes.find((elm) => elm.title === currentDir)
+  const appFromDir = apps.find((elm) => elm.title === currentDir)
   if (appFromDir === undefined) {
-    if (apps.nodes.length === 1 && apps.nodes[0]?.apiKey) {
-      const apiKey = apps.nodes[0].apiKey
+    if (apps.length === 1 && apps[0]?.apiKey) {
+      const apiKey = apps[0].apiKey
       return {id: apiKey, apiKey, organizationId: org.id}
     } else {
-      return selectAppPrompt(apps.nodes, apps.pageInfo.hasNextPage, org.id)
+      return selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id)
     }
   } else {
     const apiKey = appFromDir.apiKey
