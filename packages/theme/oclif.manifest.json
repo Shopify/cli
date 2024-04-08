@@ -1547,7 +1547,7 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "name",
-          "required": true,
+          "required": false,
           "type": "option"
         },
         "no-color": {
