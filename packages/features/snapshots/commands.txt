@@ -11,6 +11,7 @@
  app function typegen                     @shopify/app                 
  app generate extension                   @shopify/app                 
  app generate schema                      @shopify/app                 
+ app import-dashboard-extensions          @shopify/app                 
  app import-flow-legacy-extensions        @shopify/app                 
  app import-payments-dashboard-extensions @shopify/app                 
  app info                                 @shopify/app                 
