@@ -486,7 +486,7 @@ DESCRIPTION
   Import dashboard-managed extensions into your app.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/import-dashboard-extensions.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-dashboard-extensions.js)_
 
 ## `shopify app info`
 
