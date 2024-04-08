@@ -13,6 +13,7 @@
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
 * [`shopify app generate schema`](#shopify-app-generate-schema)
+* [`shopify app import-dashboard-extensions`](#shopify-app-import-dashboard-extensions)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app import-payments-dashboard-extensions`](#shopify-app-import-payments-dashboard-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -467,6 +468,27 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/generate/schema.js)_
+
+## `shopify app import-dashboard-extensions`
+
+Import dashboard-managed extensions into your app.
+
+```
+USAGE
+  $ shopify app import-dashboard-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --verbose            Increase the verbosity of the logs.
+
+DESCRIPTION
+  Import dashboard-managed extensions into your app.
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.57.0/dist/cli/commands/app/import-dashboard-extensions.js)_
 
 ## `shopify app import-flow-legacy-extensions`
 
