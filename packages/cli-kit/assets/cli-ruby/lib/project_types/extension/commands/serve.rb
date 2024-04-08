@@ -38,6 +38,9 @@ module Extension
         parser.on("--extension-type=EXTENSION_TYPE", "The type of the extension") do |extension_type|
           flags[:extension_type] = extension_type.gsub('"', "")
         end
+        parser.on("--draft-update-port=DRAFT_UPDATE_PORT", "The port for POSTing updated extension drafts") do |draft_update_port|
+          flags[:draft_update_port] = draft_update_port.to_i
+        end
         parser.on("-n", "--notify=PATH") { |path| flags[:notify] = path }
       end
 
@@ -55,6 +58,7 @@ module Extension
         property :registration_id, accepts: String, default: nil
         property :extension_title, accepts: String, default: nil
         property :extension_type, accepts: String, default: nil
+        property :draft_update_port, accepts: (1...(2**16)), default: nil
         property :notify, accepts: String, default: nil
       end
 
@@ -72,6 +76,7 @@ module Extension
           registration_id: options.flags[:registration_id],
           extension_title: options.flags[:extension_title],
           extension_type: options.flags[:extension_type],
+          draft_update_port: options.flags[:draft_update_port],
           notify: options.flags[:notify],
         )
 
@@ -156,6 +161,7 @@ module Extension
           resource_url: runtime_configuration.resource_url,
           project: project,
           notify: runtime_configuration.notify,
+          draft_update_port: runtime_configuration.draft_update_port,
         )
         runtime_configuration
       end

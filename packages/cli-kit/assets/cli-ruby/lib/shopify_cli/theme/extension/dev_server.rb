@@ -27,15 +27,16 @@ module ShopifyCLI
         # Extensions
         ScriptInjector = ShopifyCLI::Theme::Extension::DevServer::HotReload::ScriptInjector
 
-        attr_accessor :project, :specification_handler, :generate_tmp_theme
+        attr_accessor :project, :specification_handler, :generate_tmp_theme, :draft_update_port
         attr_reader :notify
 
         class << self
           def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:,
-            notify:)
+            notify:, draft_update_port:)
             instance.project = project
             instance.specification_handler = specification_handler
             instance.generate_tmp_theme = generate_tmp_theme
+            instance.draft_update_port = draft_update_port
 
             super(ctx, root, port: port, theme: theme, notify: notify)
           end
@@ -66,7 +67,8 @@ module ShopifyCLI
             project: project,
             specification_handler: specification_handler,
             ignore_filter: ignore_filter,
-            notify: notify
+            notify: notify,
+            draft_update_port: draft_update_port,
           )
         end
 

@@ -86,7 +86,7 @@ module Extension
           project = options[:project]
           notify = options[:notify]
           properties = options
-            .slice(:port, :theme, :generate_tmp_theme)
+            .slice(:port, :theme, :generate_tmp_theme, :draft_update_port)
             .compact
             .merge({
               project: project,

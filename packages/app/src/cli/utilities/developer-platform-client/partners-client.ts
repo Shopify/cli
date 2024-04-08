@@ -34,6 +34,11 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateSchema,
 } from '../../api/graphql/update_draft.js'
+import {
+  ThemeExtensionUpdateDraftInput,
+  ThemeExtensionUpdateDraftMutation,
+  ThemeExtensionUpdateSchema,
+} from '../../api/graphql/update_theme_extension_draft.js'
 import {AppDeploy, AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {
   GenerateSignedUploadUrl,
@@ -330,6 +335,10 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
     return this.request(ExtensionUpdateDraftMutation, extensionInput)
+  }
+
+  async updateThemeExtension(extensionInput: ThemeExtensionUpdateDraftInput): Promise<ThemeExtensionUpdateSchema> {
+    return this.request(ThemeExtensionUpdateDraftMutation, extensionInput)
   }
 
   async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {

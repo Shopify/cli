@@ -10,6 +10,7 @@ import {
 } from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
+import {ThemeExtensionUpdateDraftInput, ThemeExtensionUpdateSchema} from '../api/graphql/update_theme_extension_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 import {
   GenerateSignedUploadUrlSchema,
@@ -117,6 +118,7 @@ export interface DeveloperPlatformClient {
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
+  updateThemeExtension(extensionInput: ThemeExtensionUpdateDraftInput): Promise<ThemeExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>

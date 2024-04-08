@@ -13,18 +13,19 @@ module ShopifyCLI
           POLL_FREQUENCY = 0.5 # second
           PUSH_INTERVAL = 5 # seconds
 
-          RESPONSE_FIELD = %w(data extensionUpdateDraft)
+          RESPONSE_FIELD = "extensionUpdateDraft"
           VERSION_FIELD = "extensionVersion"
           USER_ERRORS_FIELD = "userErrors"
           ERROR_FILE_REGEX = /\[([^\]\[]*)\]/
 
-          def initialize(ctx, syncer:, extension:, project:, specification_handler:, notify:)
+          def initialize(ctx, syncer:, extension:, project:, specification_handler:, notify:, draft_update_port: nil)
             super(POLL_FREQUENCY)
 
             @ctx = ctx
             @extension = extension
             @project = project
             @specification_handler = specification_handler
+            @draft_update_port = draft_update_port
 
             @notifier = ShopifyCLI::Theme::Notifier.new(ctx, path: notify)
             @syncer = syncer
@@ -49,7 +50,20 @@ module ShopifyCLI
               config: JSON.generate(@specification_handler.config(@ctx)),
               extension_context: @specification_handler.extension_context(@ctx),
             }
-            response = ShopifyCLI::PartnersAPI.query(@ctx, "extension_update_draft", **input).dig(*RESPONSE_FIELD)
+            if (@draft_update_port)
+              begin
+                response = nil
+                Net::HTTP.start('127.0.0.1', @draft_update_port) do |http|
+                  request = Net::HTTP::Post.new('/update')
+                  request.body = input.to_json
+                  response = JSON.parse(http.request(request).body)[RESPONSE_FIELD]
+                end
+              rescue => e
+                @ctx.puts("Error: #{e}")
+              end
+            else
+              response = ShopifyCLI::PartnersAPI.query(@ctx, "extension_update_draft", **input).dig("data", RESPONSE_FIELD)
+            end
             user_errors = response.dig(USER_ERRORS_FIELD)
 
             if user_errors

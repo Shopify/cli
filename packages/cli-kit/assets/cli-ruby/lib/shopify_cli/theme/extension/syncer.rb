@@ -12,15 +12,16 @@ module ShopifyCLI
       class Syncer
         include ShopifyCLI::Theme::Extension::IgnoreHelper
 
-        attr_accessor :pending_operations, :latest_sync, :ignore_filter, :notify
+        attr_accessor :pending_operations, :latest_sync, :ignore_filter, :notify, :draft_update_port
 
-        def initialize(ctx, extension:, project:, specification_handler:, ignore_filter: nil, notify: nil)
+        def initialize(ctx, extension:, project:, specification_handler:, ignore_filter: nil, notify: nil, draft_update_port: nil)
           @ctx = ctx
           @extension = extension
           @project = project
           @specification_handler = specification_handler
           @ignore_filter = ignore_filter
           @notify = notify
+          @draft_update_port = draft_update_port
 
           @pool = ThreadPool.new(pool_size: 1)
           @pending_operations = []
@@ -92,6 +93,7 @@ module ShopifyCLI
             project: @project,
             specification_handler: @specification_handler,
             notify: notify,
+            draft_update_port: draft_update_port,
           )
         end
       end

@@ -49,6 +49,7 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {ThemeExtensionUpdateDraftInput, ThemeExtensionUpdateSchema} from '../../api/graphql/update_theme_extension_draft.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
@@ -359,6 +360,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async updateExtension(_input: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
     throw new BugError('Not implemented: updateExtension')
+  }
+
+  async updateThemeExtension(_input: ThemeExtensionUpdateDraftInput): Promise<ThemeExtensionUpdateSchema> {
+    throw new BugError('Not implemented: updateThemeExtension')
   }
 
   async deploy({apiKey, appModules, organizationId, versionTag}: AppDeployOptions): Promise<AppDeploySchema> {

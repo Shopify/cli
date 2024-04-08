@@ -222,7 +222,7 @@ module ShopifyCLI
           ignore_filter: ignore_filter,
           syncer: syncer,
           poll: poll,
-          delete: !nodelete
+          delete: !nodelete,
         )
       end
 

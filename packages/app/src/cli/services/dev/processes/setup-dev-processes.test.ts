@@ -102,6 +102,7 @@ describe('setup-dev-processes', () => {
     }
 
     const graphiqlKey = 'somekey'
+    const draftUpdatePort = 9999
 
     const res = await setupDevProcesses({
       localApp,
@@ -115,6 +116,7 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
+      draftUpdatePort,
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
@@ -189,12 +191,14 @@ describe('setup-dev-processes', () => {
       prefix: 'extensions',
       function: runThemeAppExtensionsServer,
       options: {
+        apiKey: 'api-key',
         adminSession: {
           storeFqdn: 'store.myshopify.io',
           token: 'admin-token',
         },
+        draftUpdatePort,
         themeExtensionServerArgs:
-          './my-extension --api-key api-key --extension-id extension-id --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
+          './my-extension --api-key api-key --extension-id extension-id --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --draft-update-port 9999 --theme 1'.split(
             ' ',
           ),
         storefrontToken: 'storefront-token',

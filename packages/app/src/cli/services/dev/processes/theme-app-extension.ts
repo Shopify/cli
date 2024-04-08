@@ -3,19 +3,24 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
 import {themeExtensionArgs} from '../theme-extension-args.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {ExtensionUpdateDraftInput} from '../../../api/graphql/update_draft.js'
+import {camelize} from '@shopify/cli-kit/common/string'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
-
-// Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
-const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000
+import {createApp, createRouter, IncomingMessage, send, readBody, readRawBody} from 'h3'
+import {createServer} from 'http'
+import {Writable} from 'stream'
 
 export interface PreviewThemeAppExtensionsOptions {
+  apiKey: string
   adminSession: AdminSession
   themeExtensionServerArgs: string[]
   storefrontToken: string
   developerPlatformClient: DeveloperPlatformClient
+  draftUpdatePort: number
+  handle: string
 }
 
 export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThemeAppExtensionsOptions> {
@@ -24,26 +29,12 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
 
 export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
-  {adminSession, themeExtensionServerArgs: args, storefrontToken, developerPlatformClient},
+  {adminSession, themeExtensionServerArgs: args, storefrontToken, developerPlatformClient, draftUpdatePort, handle},
 ) => {
-  const refreshSequence = (attempt = 0) => {
-    outputDebug(`Refreshing Developer Platform token (attempt ${attempt})...`, stdout)
-    refreshToken(developerPlatformClient)
-      .then(() => {
-        outputDebug('Refreshed Developer Platform token successfully', stdout)
-      })
-      .catch((error) => {
-        outputDebug(`Failed to refresh Developer Platform token: ${error}`, stderr)
-        if (attempt < 3) {
-          // Retry after 30 seconds. Sometimes we see random ECONNREFUSED errors
-          // so let's let the network sort itself out and retry.
-          setTimeout(() => refreshSequence(attempt + 1), 30 * 1000)
-        } else {
-          throw error
-        }
-      })
-  }
-  setInterval(refreshSequence, PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS)
+  const draftUpdateServer = createDraftUpdateServer({draftUpdatePort, developerPlatformClient, handle, stdout})
+  abortSignal.addEventListener('abort', () => {
+    draftUpdateServer.close()
+  })
 
   await refreshToken(developerPlatformClient)
   await execCLI2(['extension', 'serve', ...args], {
@@ -64,6 +55,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   themeExtensionPort,
   notify,
   developerPlatformClient,
+  draftUpdatePort,
 }: Pick<PreviewThemeAppExtensionsOptions, 'developerPlatformClient'> & {
   allExtensions: ExtensionInstance[]
   apiKey: string
@@ -71,7 +63,12 @@ export async function setupPreviewThemeAppExtensionsProcess({
   theme?: string
   notify?: string
   themeExtensionPort?: number
+  draftUpdatePort?: number
 }): Promise<PreviewThemeAppExtensionsProcess | undefined> {
+  if (!draftUpdatePort) {
+    draftUpdatePort = await getAvailableTCPPort()
+  }
+
   const themeExtensions = allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length === 0) {
     return
@@ -89,7 +86,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   }
   const [storefrontToken, args] = await Promise.all([
     ensureAuthenticatedStorefront(),
-    themeExtensionArgs(extension, apiKey, developerPlatformClient, {
+    themeExtensionArgs(extension, apiKey, developerPlatformClient, draftUpdatePort, {
       theme,
       themeExtensionPort,
       notify,
@@ -102,10 +99,13 @@ export async function setupPreviewThemeAppExtensionsProcess({
     prefix: 'extensions',
     function: runThemeAppExtensionsServer,
     options: {
+      apiKey,
       adminSession,
       themeExtensionServerArgs: args,
       storefrontToken,
       developerPlatformClient,
+      draftUpdatePort,
+      handle: extension.handle,
     },
   }
 }
@@ -115,4 +115,36 @@ async function refreshToken(developerPlatformClient: DeveloperPlatformClient) {
   if (useEmbeddedThemeCLI()) {
     await execCLI2(['theme', 'token', '--partners', newToken])
   }
+}
+
+interface CreateDraftUpdateServerOptions {
+  draftUpdatePort: number
+  developerPlatformClient: DeveloperPlatformClient
+  stdout: Writable
+  handle: string
+}
+
+function createDraftUpdateServer({draftUpdatePort, developerPlatformClient, stdout, handle}: CreateDraftUpdateServerOptions) {
+  const httpApp = createApp()
+  const httpRouter = createRouter()
+  httpRouter.use('/update', async (ctx: IncomingMessage) => {
+    const rawBody = await readRawBody(ctx)
+    const parsed = JSON.parse(rawBody.toString())
+    const data = convertObjectKeysSnakeToCamelCase(parsed) as Omit<ExtensionUpdateDraftInput, 'handle'>
+    const result = await developerPlatformClient.updateThemeExtension({handle, ...data})
+    return send(ctx, Buffer.from(JSON.stringify(result)), 'application/json')
+  }, 'post')
+  httpApp.use(httpRouter)
+  const httpServer = createServer(httpApp)
+  httpServer.listen(draftUpdatePort)
+  stdout.write("Listening on port " + draftUpdatePort)
+  return httpServer
+}
+
+function convertObjectKeysSnakeToCamelCase(obj: Record<string, any>) {
+  const newObj: Record<string, any> = {}
+  for (const key in obj) {
+    newObj[camelize(key)] = obj[key]
+  }
+  return newObj
 }

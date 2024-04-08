@@ -54,6 +54,7 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
+  draftUpdatePort?: number
 }
 
 export async function setupDevProcesses({
@@ -67,6 +68,7 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
+  draftUpdatePort,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -127,6 +129,7 @@ export async function setupDevProcesses({
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
       notify: commandOptions.notify,
+      draftUpdatePort,
     }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,

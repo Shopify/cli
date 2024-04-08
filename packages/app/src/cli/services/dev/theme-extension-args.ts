@@ -6,6 +6,7 @@ export async function themeExtensionArgs(
   extension: ExtensionInstance,
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
+  draftUpdatePort: number,
   options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean; notify?: string},
 ) {
   const extensionRegistration = await ensureThemeExtensionDevContext(extension, apiKey, developerPlatformClient)
@@ -24,6 +25,8 @@ export async function themeExtensionArgs(
     extensionTitle,
     '--extension-type',
     extensionType,
+    '--draft-update-port',
+    draftUpdatePort.toString(),
   ]
 
   if (options.theme) {
