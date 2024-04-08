@@ -160,7 +160,7 @@ export default class Push extends ThemeCommand {
         selectedTheme = await developmentThemeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
       } else {
         selectedTheme = await findOrSelectTheme(adminSession, {
-          header: 'Select a theme to open',
+          header: 'Select a theme to push to:',
           filter: {
             live,
             unpublished,
