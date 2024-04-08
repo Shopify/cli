@@ -1,0 +1,1 @@
+shopify app import-dashboard-extensions [flags]
