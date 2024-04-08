@@ -92,6 +92,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     errors: app.errors,
     specifications: app.specifications,
     configSchema: app.configSchema,
+    remoteFlags: app.remoteFlags,
   })
 
   if (app.updateDependencies) {
@@ -265,7 +266,17 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
   return extension
 }
 
-export async function testWebhookExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export function testWebhookExtensions(params?: {
+  emptyConfig?: boolean
+  complianceTopics: false
+}): Promise<ExtensionInstance>
+export function testWebhookExtensions(params?: {
+  emptyConfig?: boolean
+  complianceTopics: true
+}): Promise<ExtensionInstance[]>
+export async function testWebhookExtensions({emptyConfig = false, complianceTopics = false} = {}): Promise<
+  ExtensionInstance | ExtensionInstance[]
+> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -275,21 +286,44 @@ export async function testWebhookExtensions(emptyConfig = false): Promise<Extens
               topics: ['orders/delete'],
               uri: 'https://my-app.com/webhooks',
             },
+            ...(complianceTopics
+              ? [
+                  {
+                    compliance_topics: ['shop/redact'],
+                    uri: 'https://my-app.com/compliance-webhooks',
+                  },
+                ]
+              : []),
           ],
+          ...(complianceTopics && {
+            privacy_compliance: {
+              customer_deletion_url: 'https://my-app.com/compliance/customer-deletion',
+              customer_data_request_url: 'https://my-app.com/compliance/customer-data-deletion',
+              shop_deletion_url: 'https://my-app.com/compliance/shop-deletion',
+            },
+          }),
         },
       } as unknown as BaseConfigType)
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
+  const webhooksSpecification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
+  const privacySpecification = allSpecs.find((spec) => spec.identifier === 'privacy_compliance_webhooks')!
 
-  const extension = new ExtensionInstance({
+  const webhooksExtension = new ExtensionInstance({
     configuration,
     configurationPath: '',
     directory: './',
-    specification,
+    specification: webhooksSpecification,
   })
 
-  return extension
+  const privacyExtension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification: privacySpecification,
+  })
+
+  return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
 }
 
 export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
