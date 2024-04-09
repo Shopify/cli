@@ -23,7 +23,7 @@ const data: ReferenceEntityTemplateSchema = {
     {
       title: 'Flags',
       description: 'The following flags are available for the `app import-extensions` command:',
-      type: 'appimportdashboardextensions',
+      type: 'appimportextensions',
     },
   ],
   category: 'Commands',

@@ -18,7 +18,7 @@ interface ImportOptions {
   buildTomlObject: (ext: ExtensionRegistration) => string
 }
 
-export async function importDashboardExtensions(options: ImportOptions) {
+export async function importextensions(options: ImportOptions) {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 

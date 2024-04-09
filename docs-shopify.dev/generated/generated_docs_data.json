@@ -1224,11 +1224,11 @@
       {
         "title": "Flags",
         "description": "The following flags are available for the `app import-extensions` command:",
-        "type": "appimportdashboardextensions",
+        "type": "appimportextensions",
         "typeDefinitions": {
-          "appimportdashboardextensions": {
+          "appimportextensions": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
-            "name": "appimportdashboardextensions",
+            "name": "appimportextensions",
             "description": "",
             "members": [
               {
@@ -1272,7 +1272,7 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface appimportdashboardextensions {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface appimportextensions {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
