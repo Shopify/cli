@@ -13,7 +13,7 @@
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
 * [`shopify app generate schema`](#shopify-app-generate-schema)
-* [`shopify app import-dashboard-extensions`](#shopify-app-import-dashboard-extensions)
+* [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
@@ -467,13 +467,13 @@ DESCRIPTION
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/generate/schema.js)_
 
-## `shopify app import-dashboard-extensions`
+## `shopify app import-extensions`
 
 Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-dashboard-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -486,7 +486,7 @@ DESCRIPTION
   Import dashboard-managed extensions into your app.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-dashboard-extensions.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-extensions.js)_
 
 ## `shopify app info`
 
@@ -819,7 +819,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins:install myplugin
 
   $ shopify plugins:install https://github.com/someuser/someplugin
 
@@ -884,7 +884,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins:install myplugin
 
   $ shopify plugins:install https://github.com/someuser/someplugin
 

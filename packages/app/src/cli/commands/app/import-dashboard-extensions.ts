@@ -4,7 +4,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
-import {importDashboardExtensions} from '../../services/import-dashboard-extensions.js'
+import {importDashboardExtensions} from '../../services/import-extensions.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'

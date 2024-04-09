@@ -1373,7 +1373,7 @@
       ],
       "summary": "Fetch the latest GraphQL schema for a function."
     },
-    "app:import-dashboard-extensions": {
+    "app:import-extensions": {
       "aliases": [
       ],
       "args": {
@@ -1431,7 +1431,7 @@
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
-      "id": "app:import-dashboard-extensions",
+      "id": "app:import-extensions",
       "isESM": true,
       "pluginAlias": "@shopify/app",
       "pluginName": "@shopify/app",
@@ -1441,7 +1441,7 @@
         "cli",
         "commands",
         "app",
-        "import-dashboard-extensions.js"
+        "import-extensions.js"
       ],
       "strict": true
     },

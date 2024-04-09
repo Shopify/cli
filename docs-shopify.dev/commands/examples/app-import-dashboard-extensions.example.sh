@@ -1,1 +1,1 @@
-shopify app import-dashboard-extensions [flags]
+shopify app import-extensions [flags]

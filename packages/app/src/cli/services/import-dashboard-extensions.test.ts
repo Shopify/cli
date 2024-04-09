@@ -1,4 +1,4 @@
-import {importDashboardExtensions} from './import-dashboard-extensions.js'
+import {importDashboardExtensions} from './import-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
@@ -45,7 +45,7 @@ const flowExtensionB: ExtensionRegistration = {
   },
 }
 
-describe('import-dashboard-extensions', () => {
+describe('import-extensions', () => {
   beforeEach(() => {
     // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
     vi.clearAllMocks()

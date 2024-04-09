@@ -2,7 +2,7 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'app import-dashboard-extensions',
+  name: 'app import-extensions',
   description: `Import dashboard-managed extensions into your app.`,
   overviewPreviewDescription: `Import dashboard-managed extensions into your app.`,
   type: 'command',
@@ -11,25 +11,24 @@ const data: ReferenceEntityTemplateSchema = {
     codeblock: {
       tabs: [
         {
-          title: 'app import-dashboard-extensions',
-          code: './examples/app-import-dashboard-extensions.example.sh',
+          title: 'app import-extensions',
+          code: './examples/app-import-extensions.example.sh',
           language: 'bash',
         },
       ],
-      title: 'app import-dashboard-extensions',
+      title: 'app import-extensions',
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `app import-dashboard-extensions` command:',
-    type: 'appimportdashboardextensions',
-  },
+    {
+      title: 'Flags',
+      description: 'The following flags are available for the `app import-extensions` command:',
+      type: 'appimportdashboardextensions',
+    },
   ],
   category: 'Commands',
   subCategory: 'app',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

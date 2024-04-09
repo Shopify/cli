@@ -1203,7 +1203,7 @@
     "related": []
   },
   {
-    "name": "app import-dashboard-extensions",
+    "name": "app import-extensions",
     "description": "Import dashboard-managed extensions into your app.",
     "overviewPreviewDescription": "Import dashboard-managed extensions into your app.",
     "type": "command",
@@ -1212,27 +1212,27 @@
       "codeblock": {
         "tabs": [
           {
-            "title": "app import-dashboard-extensions",
-            "code": "shopify app import-dashboard-extensions [flags]",
+            "title": "app import-extensions",
+            "code": "shopify app import-extensions [flags]",
             "language": "bash"
           }
         ],
-        "title": "app import-dashboard-extensions"
+        "title": "app import-extensions"
       }
     },
     "definitions": [
       {
         "title": "Flags",
-        "description": "The following flags are available for the `app import-dashboard-extensions` command:",
+        "description": "The following flags are available for the `app import-extensions` command:",
         "type": "appimportdashboardextensions",
         "typeDefinitions": {
           "appimportdashboardextensions": {
-            "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+            "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
             "name": "appimportdashboardextensions",
             "description": "",
             "members": [
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1240,7 +1240,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1248,7 +1248,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1256,7 +1256,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1264,7 +1264,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
