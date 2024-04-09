@@ -135,17 +135,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  isDraftable() {
-    return !this.isThemeExtension
-  }
-
   get draftMessages() {
-    const successMessage =
-      this.isDraftable() && !this.isAppConfigExtension
-        ? `Draft updated successfully for extension: ${this.localIdentifier}`
-        : undefined
-    const errorMessage =
-      this.isDraftable() && !this.isAppConfigExtension ? `Error while deploying updated extension draft` : undefined
+    const successMessage = this.isAppConfigExtension
+      ? undefined
+      : `Draft updated successfully for extension: ${this.localIdentifier}`
+    const errorMessage = this.isAppConfigExtension ? undefined : `Error while deploying updated extension draft`
     return {successMessage, errorMessage}
   }
 
@@ -246,6 +240,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return watchPaths.map((path) => joinPath(this.directory, path))
     } else if (this.isESBuildExtension) {
       return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
+    } else if (this.isThemeExtension) {
+      return [joinPath(this.directory, '*', '*')]
     } else {
       return []
     }

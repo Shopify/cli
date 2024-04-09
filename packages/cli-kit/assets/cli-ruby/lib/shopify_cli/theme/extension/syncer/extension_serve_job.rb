@@ -43,24 +43,8 @@ module ShopifyCLI
 
             job_in_progress!
 
-            input = {
-              api_key: @project.app.api_key,
-              registration_id: @project.registration_id,
-              config: JSON.generate(@specification_handler.config(@ctx)),
-              extension_context: @specification_handler.extension_context(@ctx),
-            }
-            response = ShopifyCLI::PartnersAPI.query(@ctx, "extension_update_draft", **input).dig(*RESPONSE_FIELD)
-            user_errors = response.dig(USER_ERRORS_FIELD)
-
-            if user_errors
-              @ctx.puts(error_message(@project.title))
-              error_files = erroneous_files(user_errors)
-              print_items(error_files)
-            else
-              @ctx.puts(success_message(@project.title))
-              print_items({}.freeze)
-              ::Extension::Tasks::Converters::VersionConverter.from_hash(@ctx, response.dig(VERSION_FIELD))
-            end
+            @ctx.puts(success_message(@project.title))
+            print_items({}.freeze)
 
             files = @syncer.pending_files.map(&:relative_path)
             # Notify changes after the sync is complete
