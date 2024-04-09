@@ -1,5 +1,5 @@
 import {applyIgnoreFilters} from './asset-ignore.js'
-import {ReadOptions, fileExists, matchGlob, readFile} from '@shopify/cli-kit/node/fs'
+import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
@@ -132,15 +132,11 @@ describe('applyIgnoreFilters', () => {
     ])
   })
 
-  test(`does not output warnings when there are no glob pattern modifications required for subdirectories`, async () => {
+  test(`only outputs glob pattern subdirectory warnings for the templates folder`, async () => {
     // Given
-    const options = {only: ['templates/*.json']}
-
-    const filteredChecksums = checksums.filter(({key}) => !matchGlob(key, 'templates/**/*.json'))
-
+    const options = {only: ['assets/*.json', 'config/*.json', 'sections/*.json']}
     // When
-    await applyIgnoreFilters(filteredChecksums, themeFileSystem, options)
-
+    await applyIgnoreFilters(checksums, themeFileSystem, options)
     // Then
     expect(vi.mocked(outputWarn)).not.toHaveBeenCalled()
   })
@@ -148,14 +144,22 @@ describe('applyIgnoreFilters', () => {
   test(`outputs warnings when there are glob pattern modifications required for subdirectories`, async () => {
     // Given
     const options = {only: ['templates/*.json']}
-    const numFilesInSubDirectory = checksums.filter(
-      ({key}) => matchGlob(key, 'templates/**/*.json') && !matchGlob(key, 'templates/*.json'),
-    ).length
 
     // When
     await applyIgnoreFilters(checksums, themeFileSystem, options)
 
     // Then
-    expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(numFilesInSubDirectory)
+    expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
+  })
+
+  test('only outputs a single warning for duplicated glob patterns', async () => {
+    // Given
+    const options = {only: ['templates/*.json'], ignore: ['templates/*.json']}
+
+    // When
+    await applyIgnoreFilters(checksums, themeFileSystem, options)
+
+    // Then
+    expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
   })
 })
