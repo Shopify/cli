@@ -4,7 +4,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
-import {importextensions} from '../../services/import-extensions.js'
+import {importExtensions} from '../../services/import-extensions.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -40,7 +40,7 @@ const migrationChoices: MigrationChoice[] = [
   },
 ]
 
-export default class importextensions extends Command {
+export default class ImportExtensions extends Command {
   static description = 'Import dashboard-managed extensions into your app.'
 
   static flags = {
@@ -55,7 +55,7 @@ export default class importextensions extends Command {
   }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(importextensions)
+    const {flags} = await this.parse(ImportExtensions)
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
@@ -68,7 +68,7 @@ export default class importextensions extends Command {
       renderFatalError(new AbortError('Invalid migration choice'))
       return
     }
-    await importextensions({
+    await importExtensions({
       app,
       apiKey: flags['client-id'],
       extensionTypes: migrationChoice.extensionTypes,

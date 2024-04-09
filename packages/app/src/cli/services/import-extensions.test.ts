@@ -1,4 +1,4 @@
-import {importextensions} from './import-extensions.js'
+import {importExtensions} from './import-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
@@ -61,7 +61,7 @@ describe('import-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importextensions({
+      await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
@@ -92,7 +92,7 @@ describe('import-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importextensions({
+      await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
@@ -121,7 +121,7 @@ describe('import-extensions', () => {
     // When
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
-      await importextensions({
+      await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
