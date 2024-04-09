@@ -1,5 +1,6 @@
 import {applyIgnoreFilters} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
 
@@ -14,6 +15,7 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
 })
 
 vi.mock('@shopify/cli-kit/node/path')
+vi.mock('@shopify/cli-kit/node/output')
 
 describe('applyIgnoreFilters', () => {
   const checksums = [
@@ -128,5 +130,36 @@ describe('applyIgnoreFilters', () => {
       {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
       {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
     ])
+  })
+
+  test(`only outputs glob pattern subdirectory warnings for the templates folder`, async () => {
+    // Given
+    const options = {only: ['assets/*.json', 'config/*.json', 'sections/*.json']}
+    // When
+    await applyIgnoreFilters(checksums, themeFileSystem, options)
+    // Then
+    expect(vi.mocked(outputWarn)).not.toHaveBeenCalled()
+  })
+
+  test(`outputs warnings when there are glob pattern modifications required for subdirectories`, async () => {
+    // Given
+    const options = {only: ['templates/*.json']}
+
+    // When
+    await applyIgnoreFilters(checksums, themeFileSystem, options)
+
+    // Then
+    expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
+  })
+
+  test('only outputs a single warning for duplicated glob patterns', async () => {
+    // Given
+    const options = {only: ['templates/*.json'], ignore: ['templates/*.json']}
+
+    // When
+    await applyIgnoreFilters(checksums, themeFileSystem, options)
+
+    // Then
+    expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
   })
 })
