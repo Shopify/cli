@@ -1269,7 +1269,7 @@
   },
   {
     "name": "app init",
-    "description": "undefined",
+    "description": "Create a new Shopify app project.",
     "overviewPreviewDescription": "Create a new Shopify app project.",
     "type": "command",
     "isVisualComponent": false,
@@ -1653,7 +1653,7 @@
         "tabs": [
           {
             "title": "auth logout",
-            "code": "shopify auth logout [flags]",
+            "code": "shopify auth logout",
             "language": "bash"
           }
         ],
@@ -1675,7 +1675,7 @@
         "tabs": [
           {
             "title": "config autocorrect off",
-            "code": "shopify config autocorrect off [flags]",
+            "code": "shopify config autocorrect off",
             "language": "bash"
           }
         ],
@@ -1697,7 +1697,7 @@
         "tabs": [
           {
             "title": "config autocorrect on",
-            "code": "shopify config autocorrect on [flags]",
+            "code": "shopify config autocorrect on",
             "language": "bash"
           }
         ],
@@ -1719,7 +1719,7 @@
         "tabs": [
           {
             "title": "config autocorrect status",
-            "code": "shopify config autocorrect status [flags]",
+            "code": "shopify config autocorrect status",
             "language": "bash"
           }
         ],
@@ -3409,7 +3409,7 @@
         "tabs": [
           {
             "title": "hydrogen shortcut",
-            "code": "shopify hydrogen shortcut [flags]",
+            "code": "shopify hydrogen shortcut",
             "language": "bash"
           }
         ],
@@ -3539,7 +3539,7 @@
         "tabs": [
           {
             "title": "search",
-            "code": "shopify search [flags]",
+            "code": "shopify search",
             "language": "bash"
           }
         ],
@@ -5178,7 +5178,7 @@
         "tabs": [
           {
             "title": "upgrade",
-            "code": "shopify upgrade [flags]",
+            "code": "shopify upgrade",
             "language": "bash"
           }
         ],
@@ -5200,7 +5200,7 @@
         "tabs": [
           {
             "title": "version",
-            "code": "shopify version [flags]",
+            "code": "shopify version",
             "language": "bash"
           }
         ],

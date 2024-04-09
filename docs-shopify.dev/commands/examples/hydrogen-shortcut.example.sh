@@ -1,1 +1,1 @@
-shopify hydrogen shortcut [flags]
+shopify hydrogen shortcut

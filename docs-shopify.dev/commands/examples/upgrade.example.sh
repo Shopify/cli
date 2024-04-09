@@ -1,1 +1,1 @@
-shopify upgrade [flags]
+shopify upgrade

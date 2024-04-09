@@ -1,1 +1,1 @@
-shopify config autocorrect on [flags]
+shopify config autocorrect on
