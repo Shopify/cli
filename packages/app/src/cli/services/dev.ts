@@ -25,6 +25,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {SpecsAppConfiguration} from '../models/extensions/specifications/types/app_config.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -75,7 +76,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const developerPlatformClient = await selectDeveloperPlatformClient(commandOptions.directory)
+  const {configuration} = await loadAppConfiguration(commandOptions)
+  const developerPlatformClient = selectDeveloperPlatformClient(configuration)
 
   const {
     storeFqdn,

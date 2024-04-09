@@ -29,7 +29,7 @@ interface WebhookTriggerOptions {
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   const developerPlatformClient: DeveloperPlatformClient =
-    flags.developerPlatformClient ?? (await selectDeveloperPlatformClient())
+    flags.developerPlatformClient ?? selectDeveloperPlatformClient()
 
   // Validation and collection of flags
   const validFlags = await validatedFlags(developerPlatformClient, flags)

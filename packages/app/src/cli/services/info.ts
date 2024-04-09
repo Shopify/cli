@@ -33,9 +33,7 @@ interface Configurable {
 }
 
 export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
-  // eslint-disable-next-line require-atomic-updates
-  options.developerPlatformClient =
-    options.developerPlatformClient ?? (await selectDeveloperPlatformClient(app.directory))
+  options.developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient(app.configuration)
   if (options.webEnv) {
     return infoWeb(app, options)
   } else {

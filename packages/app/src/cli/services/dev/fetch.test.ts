@@ -10,6 +10,8 @@ import {
   testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
+import {ShopifyDevelopersClient} from '../../utilities/developer-platform-client/shopify-developers-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -64,38 +66,69 @@ const FETCH_STORE_RESPONSE_VALUE: FindStoreByDomainSchema = {
 }
 
 vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../../utilities/developer-platform-client/partners-client.js')
+vi.mock('../../utilities/developer-platform-client/shopify-developers-client.js')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
+  vi.unstubAllEnvs()
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations', async () => {
+  test('returns fetched organizations from Partners without USE_SHOPIFY_DEVELOPERS_CLIENT', async () => {
     // Given
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG1, ORG2]),
-    })
+    const partnersClient: PartnersClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG1]),
+    }) as PartnersClient
+    const shopifyDevelopersClient: ShopifyDevelopersClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG2]),
+    }) as ShopifyDevelopersClient
+    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
+    vi.mocked(ShopifyDevelopersClient).mockReturnValue(shopifyDevelopersClient)
 
     // When
-    const got = await fetchOrganizations(developerPlatformClient)
+    const got = await fetchOrganizations()
+
+    // Then
+    expect(got).toEqual([ORG1])
+    expect(partnersClient.organizations).toHaveBeenCalled()
+    expect(shopifyDevelopersClient.organizations).not.toHaveBeenCalled()
+  })
+
+  test('returns fetched organizations from Partners and Shopify Developers with USE_SHOPIFY_DEVELOPERS_CLIENT', async () => {
+    // Given
+    vi.stubEnv('USE_SHOPIFY_DEVELOPERS_CLIENT', '1')
+    const partnersClient: PartnersClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG1]),
+    }) as PartnersClient
+    const shopifyDevelopersClient: ShopifyDevelopersClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG2]),
+    }) as ShopifyDevelopersClient
+    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
+    vi.mocked(ShopifyDevelopersClient).mockReturnValue(shopifyDevelopersClient)
+
+    // When
+    const got = await fetchOrganizations()
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
-    expect(developerPlatformClient.organizations).toHaveBeenCalledWith()
+    expect(partnersClient.organizations).toHaveBeenCalled()
+    expect(shopifyDevelopersClient.organizations).toHaveBeenCalled()
   })
 
   test('throws if there are no organizations', async () => {
     // Given
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+    const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
-    })
+    }) as PartnersClient
+    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
 
     // When
-    const got = fetchOrganizations(developerPlatformClient)
+    const got = fetchOrganizations()
 
     // Then
     await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
-    expect(developerPlatformClient.organizations).toHaveBeenCalledWith()
+    expect(partnersClient.organizations).toHaveBeenCalled()
   })
 })
 

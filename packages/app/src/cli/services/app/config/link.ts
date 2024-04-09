@@ -9,7 +9,7 @@ import {
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, loadApp, loadAppConfiguration} from '../../../models/app/loader.js'
 import {
   InvalidApiKeyErrorMessage,
   fetchOrCreateOrganizationApp,
@@ -41,15 +41,15 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const developerPlatformClient =
-    options.developerPlatformClient ?? (await selectDeveloperPlatformClient(options.directory))
+  let {configuration} = await loadAppConfiguration(options)
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient(configuration)
   const updatedOptions = {...options, developerPlatformClient}
   const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
   const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
-  let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration =
     (await fetchAppRemoteConfiguration(
       remoteApp,

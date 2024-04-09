@@ -1124,7 +1124,7 @@ describe('ensureDeployContext', () => {
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(fetchOrganizations).toHaveBeenCalledWith(opts.developerPlatformClient)
+    expect(fetchOrganizations).toHaveBeenCalledWith()
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       [APP1, APP2],

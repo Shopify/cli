@@ -8,9 +8,16 @@ import {
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {AccountInfo, PartnersSession, isServiceAccount, isUserAccount} from '../context/partner-account-info.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  AccountInfo,
+  PartnersSession,
+  fetchCurrentAccountInformation,
+  isServiceAccount,
+  isUserAccount,
+} from '../context/partner-account-info.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
+import {ShopifyDevelopersClient} from '../../utilities/developer-platform-client/shopify-developers-client.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -92,16 +99,18 @@ export interface FetchResponse {
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error
- * @param developerPlatformClient - The client to access the platform API
  * @returns List of organizations
  */
-export async function fetchOrganizations(developerPlatformClient: DeveloperPlatformClient): Promise<Organization[]> {
-  const organizations: Organization[] = await developerPlatformClient.organizations()
+export async function fetchOrganizations(): Promise<Organization[]> {
+  let organizations = await new PartnersClient().organizations()
   if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
-    const partnersOrgs = await new PartnersClient().organizations()
-    organizations.push(...partnersOrgs)
+    organizations = organizations.concat(await new ShopifyDevelopersClient().organizations())
   }
-  if (organizations.length === 0) throw new NoOrgError(await developerPlatformClient.accountInfo())
+  if (organizations.length === 0) {
+    const developerPlatformClient = selectDeveloperPlatformClient()
+    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient)
+    throw new NoOrgError(accountInfo)
+  }
   return organizations
 }
 

@@ -1,7 +1,7 @@
-import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchOrganizations} from '../dev/fetch.js'
+import {selectAppPrompt} from '../../prompts/dev.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {selectOrg} from '../context.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, cwd} from '@shopify/cli-kit/node/path'
@@ -40,8 +40,7 @@ export async function findInEnv(): Promise<AppCredentials> {
 export async function findOrganizationApp(
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<Partial<MinimalAppIdentifiers> & {organizationId: MinimalAppIdentifiers['organizationId']}> {
-  const orgs = await fetchOrganizations(developerPlatformClient)
-  const org = await selectOrganizationPrompt(orgs)
+  const org = await selectOrg()
   const {apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
 
   if (apps.length === 0) {

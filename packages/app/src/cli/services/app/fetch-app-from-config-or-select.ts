@@ -10,7 +10,7 @@ export async function fetchAppFromConfigOrSelect(
   developerPlatformClient?: DeveloperPlatformClient,
 ): Promise<OrganizationApp> {
   let organizationApp
-  const apiClient = developerPlatformClient ?? (await selectDeveloperPlatformClient(app.directory))
+  const apiClient = developerPlatformClient ?? selectDeveloperPlatformClient(app.configuration)
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = app.configuration.client_id
     organizationApp = await apiClient.appFromId({
