@@ -26,7 +26,6 @@ const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   checkout_payment_method_fields: [],
   checkout_hosted_fields: ['fields'],
   ui_extension_handle: 'sample-ui-extension',
-  ui_extension_registration_uuid: 'registration-uuid',
   description: 'Custom credit card extension',
   metafields: [],
   input: {
@@ -90,7 +89,6 @@ describe('customCreditCardPaymentsAppExtensionDeployConfig', () => {
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       checkout_hosted_fields: config.checkout_hosted_fields,
       ui_extension_handle: config.ui_extension_handle,
-      ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     })
   })
 })

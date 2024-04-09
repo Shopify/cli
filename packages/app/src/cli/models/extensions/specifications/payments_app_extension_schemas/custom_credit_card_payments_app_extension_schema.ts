@@ -20,7 +20,6 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CUSTOM_CREDIT_CARD_TARGET)})).length(1),
     api_version: zod.string(),
-    ui_extension_registration_uuid: zod.string().optional(),
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
     ui_extension_handle: zod.string().optional(),
@@ -37,8 +36,6 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
   })
 
 export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
-  ui_extension_registration_uuid?: string
-
   // Following are overwritten as they are required for custom credit card extensions
   start_refund_session_url: string
   start_capture_session_url: string
@@ -67,7 +64,6 @@ export function customCreditCardDeployConfigToCLIConfig(
 ): Omit<CustomCreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     payment_session_url: config.start_payment_session_url,
     refund_session_url: config.start_refund_session_url,
     capture_session_url: config.start_capture_session_url,
@@ -91,7 +87,6 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
 ): Promise<{[key: string]: unknown} | undefined> {
   return {
     api_version: config.api_version,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
     start_capture_session_url: config.capture_session_url,

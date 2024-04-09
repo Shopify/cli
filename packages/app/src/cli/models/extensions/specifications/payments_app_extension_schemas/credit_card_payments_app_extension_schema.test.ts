@@ -28,7 +28,6 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   description: 'my payments app extension',
   metafields: [],
   ui_extension_handle: 'sample-ui-extension',
-  ui_extension_registration_uuid: 'registration-uuid',
   encryption_certificate_fingerprint: 'fingerprint',
   checkout_payment_method_fields: [{type: 'string', required: false, key: 'sample_key'}],
   input: {
@@ -132,7 +131,6 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       ui_extension_handle: config.ui_extension_handle,
       encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
-      ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     })
   })
 })

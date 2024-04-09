@@ -21,7 +21,6 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
   })
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
-    ui_extension_registration_uuid: zod.string().optional(),
     verification_session_url: zod.string().url().optional(),
     ui_extension_handle: zod.string().optional(),
     encryption_certificate_fingerprint: zod.string().optional(),
@@ -44,8 +43,6 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
   })
 
 export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
-  ui_extension_registration_uuid?: string
-
   // Following are overwritten as they are required for credit card extensions
   start_refund_session_url: string
   start_capture_session_url: string
@@ -86,7 +83,6 @@ export function creditCardDeployConfigToCLIConfig(
     capture_session_url: config.start_capture_session_url,
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     multiple_capture: config.multiple_capture,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
@@ -112,7 +108,6 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     start_capture_session_url: config.capture_session_url,
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     multiple_capture: config.multiple_capture,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,

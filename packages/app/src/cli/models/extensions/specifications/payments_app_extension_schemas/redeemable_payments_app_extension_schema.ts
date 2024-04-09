@@ -11,7 +11,6 @@ export const REDEEMABLE_TARGET = 'payments.redeemable.render'
 
 export const RedeemablePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema).extend({
   targeting: zod.array(zod.object({target: zod.literal(REDEEMABLE_TARGET)})).length(1),
-  ui_extension_registration_uuid: zod.string().optional(),
   api_version: zod.string(),
   balance_url: zod.string().url(),
   redeemable_type: zod.literal('gift-card'),
@@ -28,8 +27,6 @@ export const RedeemablePaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
 })
 
 export interface RedeemablePaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
-  ui_extension_registration_uuid?: string
-
   // BuyerLabelSchema
   default_buyer_label?: string
   buyer_label_to_locale?: {locale: string; label: string}[]
@@ -59,7 +56,6 @@ export function redeemableDeployConfigToCLIConfig(
     refund_session_url: config.start_refund_session_url,
     capture_session_url: config.start_capture_session_url,
     void_session_url: config.start_void_session_url,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
@@ -86,7 +82,6 @@ export async function redeemablePaymentsAppExtensionDeployConfig(
     start_refund_session_url: config.refund_session_url,
     start_capture_session_url: config.capture_session_url,
     start_void_session_url: config.void_session_url,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,

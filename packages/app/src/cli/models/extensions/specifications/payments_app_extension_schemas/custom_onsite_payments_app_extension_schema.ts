@@ -16,7 +16,6 @@ export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSc
   .merge(ConfirmationSchema)
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CUSTOM_ONSITE_TARGET)})).length(1),
-    ui_extension_registration_uuid: zod.string().optional(),
     update_payment_session_url: zod.string().url().optional(),
     multiple_capture: zod.boolean().optional(),
     supports_oversell_protection: zod.boolean().optional(),
@@ -37,8 +36,6 @@ export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSc
   })
 
 export interface CustomOnsitePaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
-  ui_extension_registration_uuid?: string
-
   // BuyerLabelSchema
   default_buyer_label?: string
   buyer_label_to_locale?: {locale: string; label: string}[]
@@ -69,7 +66,6 @@ export function customOnsiteDeployConfigToCLIConfig(
 ): Omit<CustomOnsitePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
   return {
     api_version: config.api_version,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     payment_session_url: config.start_payment_session_url,
     refund_session_url: config.start_refund_session_url,
     capture_session_url: config.start_capture_session_url,
@@ -98,7 +94,6 @@ export async function customOnsitePaymentsAppExtensionDeployConfig(
 ): Promise<{[key: string]: unknown} | undefined> {
   return {
     api_version: config.api_version,
-    ui_extension_registration_uuid: config.ui_extension_registration_uuid,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
     start_capture_session_url: config.capture_session_url,
