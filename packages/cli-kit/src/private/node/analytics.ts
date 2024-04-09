@@ -7,6 +7,7 @@ import {platformAndArch} from '../../public/node/os.js'
 import {Command, Interfaces} from '@oclif/core'
 import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/context/local'
 import {cwd} from '@shopify/cli-kit/node/path'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
 interface StartOptions {
   commandContent: CommandContent
@@ -54,6 +55,7 @@ interface EnvironmentData {
   env_device_id: string
   env_cloud: string
   env_package_manager: string
+  env_is_global: boolean
 }
 
 export async function getEnvironmentData(config: Interfaces.Config): Promise<EnvironmentData> {
@@ -75,6 +77,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_device_id: hashString(await macAddress()),
     env_cloud: cloudEnvironment().platform,
     env_package_manager: await getPackageManager(cwd()),
+    env_is_global: currentProcessIsGlobal(),
   }
 }
 
