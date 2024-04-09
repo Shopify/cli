@@ -3,22 +3,27 @@ import {BasePaymentsAppExtensionDeployConfigType} from '../../models/extensions/
 import {
   RedeemablePaymentsAppExtensionDeployConfigType,
   redeemableDeployConfigToCLIConfig,
+  REDEEMABLE_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/redeemable_payments_app_extension_schema.js'
 import {
   OffsitePaymentsAppExtensionDeployConfigType,
   offsiteDeployConfigToCLIConfig,
+  OFFSITE_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
 import {
   CustomCreditCardPaymentsAppExtensionDeployConfigType,
   customCreditCardDeployConfigToCLIConfig,
+  CUSTOM_CREDIT_CARD_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/custom_credit_card_payments_app_extension_schema.js'
 import {
   CreditCardPaymentsAppExtensionDeployConfigType,
   creditCardDeployConfigToCLIConfig,
+  CREDIT_CARD_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/credit_card_payments_app_extension_schema.js'
 import {
   CustomOnsitePaymentsAppExtensionDeployConfigType,
   customOnsiteDeployConfigToCLIConfig,
+  CUSTOM_ONSITE_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -26,18 +31,17 @@ import {slugify} from '@shopify/cli-kit/common/string'
 function typeToContext(type: string) {
   switch (type) {
     case DashboardPaymentExtensionType.Offsite:
-      return 'offsite'
+      return OFFSITE_TARGET
     case DashboardPaymentExtensionType.CreditCard:
-      return 'credit-card'
+      return CREDIT_CARD_TARGET
     case DashboardPaymentExtensionType.CustomCreditCard:
-      return 'custom-credit-card'
+      return CUSTOM_CREDIT_CARD_TARGET
     case DashboardPaymentExtensionType.CustomOnsite:
-      return 'custom-onsite'
+      return CUSTOM_ONSITE_TARGET
     case DashboardPaymentExtensionType.Redeemable:
-      return 'redeemable'
+      return REDEEMABLE_TARGET
   }
 }
-
 export enum DashboardPaymentExtensionType {
   Offsite = 'payments_app',
   CreditCard = 'payments_app_credit_card',
@@ -47,31 +51,32 @@ export enum DashboardPaymentExtensionType {
 }
 
 export function buildTomlObject(extension: ExtensionRegistration): string {
-  switch (extension.type) {
-    case DashboardPaymentExtensionType.Offsite:
+  const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
+  switch (context) {
+    case OFFSITE_TARGET:
       return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(extension, offsiteDeployConfigToCLIConfig)
-    case DashboardPaymentExtensionType.CreditCard:
+    case CREDIT_CARD_TARGET:
       return buildPaymentsToml<CreditCardPaymentsAppExtensionDeployConfigType>(
         extension,
         creditCardDeployConfigToCLIConfig,
       )
-    case DashboardPaymentExtensionType.CustomCreditCard:
+    case CUSTOM_CREDIT_CARD_TARGET:
       return buildPaymentsToml<CustomCreditCardPaymentsAppExtensionDeployConfigType>(
         extension,
         customCreditCardDeployConfigToCLIConfig,
       )
-    case DashboardPaymentExtensionType.CustomOnsite:
+    case CUSTOM_ONSITE_TARGET:
       return buildPaymentsToml<CustomOnsitePaymentsAppExtensionDeployConfigType>(
         extension,
         customOnsiteDeployConfigToCLIConfig,
       )
-    case DashboardPaymentExtensionType.Redeemable:
+    case REDEEMABLE_TARGET:
       return buildPaymentsToml<RedeemablePaymentsAppExtensionDeployConfigType>(
         extension,
         redeemableDeployConfigToCLIConfig,
       )
     default:
-      throw new Error('Unsupported extension type')
+      throw new Error(`Unsupported extension: ${context}`)
   }
 }
 /**
@@ -89,6 +94,8 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   const cliConfig = serialize(dashboardConfig)
   if (cliConfig) delete cliConfig.api_version
 
+  const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
+
   const localExtensionRepresentation = {
     api_version: dashboardConfig.api_version,
     extensions: [
@@ -99,7 +106,7 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
         ...cliConfig,
         targeting: [
           {
-            target: `payments.${typeToContext(extension.type)}.render`,
+            target: `${context}`,
           },
         ],
       },
