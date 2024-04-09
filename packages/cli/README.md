@@ -1439,14 +1439,14 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename -n <value> [-d] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t
+  $ shopify theme rename [-d] [-e <value>] [-l] [-n <value>] [--no-color] [--password <value>] [-s <value>] [-t
     <value>] [--verbose]
 
 FLAGS
   -d, --development          Rename your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Rename your remote live theme.
-  -n, --name=<value>         (required) The new name for the theme.
+  -n, --name=<value>         The new name for the theme.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.

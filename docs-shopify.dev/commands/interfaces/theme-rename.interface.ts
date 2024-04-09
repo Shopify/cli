@@ -18,7 +18,7 @@ export interface themerename {
   /**
    * The new name for the theme.
    */
-  '-n, --name <value>': string
+  '-n, --name <value>'?: string
 
   /**
    * Disable color output.
