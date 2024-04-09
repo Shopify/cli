@@ -2,4 +2,4 @@
 '@shopify/theme': patch
 ---
 
-Update theme selection text for `Theme Push` command
+Update theme selection text for `shopify theme push` command
