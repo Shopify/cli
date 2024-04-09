@@ -151,7 +151,7 @@ export default class Push extends ThemeCommand {
 
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
 
-    if (!flags.stable && !flags.password) {
+    if (!flags.stable) {
       const {live, development, unpublished, path, nodelete, theme, publish, json, force, ignore, only} = flags
 
       let selectedTheme: Theme
