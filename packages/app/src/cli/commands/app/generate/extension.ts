@@ -3,7 +3,7 @@ import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import {loadApp} from '../../../models/app/loader.js'
+import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
@@ -103,8 +103,7 @@ export default class AppGenerateExtension extends Command {
       return
     }
 
-    // Try to load the app before doing anything, to fail early if the directory doesn't contain an app
-    await loadApp({directory: flags.path, configName: flags.config})
+    await checkFolderIsValidApp(flags.path)
 
     await generate({
       directory: flags.path,
