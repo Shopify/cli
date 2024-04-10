@@ -4,6 +4,7 @@ import {AdminSession} from '../session.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../../../public/node/http.js'
 import {test, vi, expect, describe} from 'vitest'
+import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/api/headers.js')
@@ -126,7 +127,7 @@ describe('admin-rest-api', () => {
 
     // Then
     expect(spyFetch).toHaveBeenLastCalledWith(
-      'https://theme-kit-access.shopifyapps.com/cli/admin/api/unstable/themes.json',
+      `https://${defaultThemeKitAccessDomain}/cli/admin/api/unstable/themes.json`,
       {
         headers: {
           'Content-Type': 'application/json',
