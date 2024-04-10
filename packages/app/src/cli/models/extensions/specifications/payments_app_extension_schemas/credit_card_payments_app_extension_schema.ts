@@ -61,6 +61,7 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
 
   // CreditCard-specific fields
   start_verification_session_url?: string
+  ui_extension_registration_uuid?: string
   ui_extension_handle?: string
   encryption_certificate?: {
     fingerprint: string

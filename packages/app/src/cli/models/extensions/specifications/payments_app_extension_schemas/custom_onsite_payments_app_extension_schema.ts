@@ -53,6 +53,7 @@ export interface CustomOnsitePaymentsAppExtensionDeployConfigType extends BasePa
   multiple_capture?: boolean
   supports_oversell_protection?: boolean
   modal_payment_method_fields?: {[key: string]: unknown}[]
+  ui_extension_registration_uuid?: string
   ui_extension_handle?: string
   checkout_payment_method_fields?: {
     type: 'string' | 'number' | 'boolean'

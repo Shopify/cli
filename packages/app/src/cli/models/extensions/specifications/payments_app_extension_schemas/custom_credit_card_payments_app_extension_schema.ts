@@ -47,6 +47,7 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
 
   multiple_capture: boolean
   checkout_hosted_fields?: string[]
+  ui_extension_registration_uuid?: string
   ui_extension_handle?: string
   encryption_certificate?: {
     fingerprint: string

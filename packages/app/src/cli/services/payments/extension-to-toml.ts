@@ -102,8 +102,10 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
 
   const cliConfig = serialize(dashboardConfig)
   if (cliConfig) delete cliConfig.api_version
-  if (cliConfig && !cliConfig.ui_extension_handle) {
-    const uiExtensionTitle = appModules.find((module) => module.uuid === extension.uuid)?.title
+  if (cliConfig && !cliConfig.ui_extension_handle && 'ui_extension_registration_uuid' in dashboardConfig) {
+    const uiExtensionTitle = appModules.find(
+      (module) => module.uuid === dashboardConfig.ui_extension_registration_uuid,
+    )?.title
     if (uiExtensionTitle) {
       cliConfig.ui_extension_handle = slugify(uiExtensionTitle)
     }

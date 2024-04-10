@@ -34,6 +34,7 @@ export interface RedeemablePaymentsAppExtensionDeployConfigType extends BasePaym
   // Redeemable-specific fields
   balance_url: string
   redeemable_type: 'gift-card'
+  ui_extension_registration_uuid?: string
   ui_extension_handle?: string
   checkout_payment_method_fields?: {
     type: 'string' | 'number' | 'boolean'
