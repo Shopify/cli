@@ -24,7 +24,7 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
-* [`shopify help [COMMANDS]`](#shopify-help-commands)
+* [`shopify help [COMMAND]`](#shopify-help-command)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
@@ -768,25 +768,25 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify help [COMMANDS]`
+## `shopify help [COMMAND]`
 
-Display help for shopify.
+Display help for Shopify CLI
 
 ```
 USAGE
-  $ shopify help [COMMANDS] [-n]
+  $ shopify help [COMMAND] [-n]
 
 ARGUMENTS
-  COMMANDS  Command to show help for.
+  COMMAND  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
 
 DESCRIPTION
-  Display help for shopify.
+  Display help for Shopify CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.20/src/commands/help.ts)_
+_See code: [dist/cli/commands/help.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/help.js)_
 
 ## `shopify plugins:install PLUGIN...`
 
