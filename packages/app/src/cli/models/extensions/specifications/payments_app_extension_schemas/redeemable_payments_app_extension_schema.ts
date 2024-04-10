@@ -42,11 +42,6 @@ export interface RedeemablePaymentsAppExtensionDeployConfigType extends BasePaym
   }[]
 }
 
-interface CheckoutPaymentMethodField {
-  key: string
-  type: 'string' | 'number' | 'boolean'
-  required: boolean
-}
 export function redeemableDeployConfigToCLIConfig(
   config: RedeemablePaymentsAppExtensionDeployConfigType,
 ): Omit<RedeemablePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
