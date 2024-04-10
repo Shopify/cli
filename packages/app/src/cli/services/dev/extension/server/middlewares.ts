@@ -7,7 +7,7 @@ import {IncomingMessage, ServerResponse, sendRedirect, send} from 'h3'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-export function corsMiddleware(request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
+export function corsMiddleware(_request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Access-Control-Allow-Origin', '*')
   response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
   response.setHeader(
@@ -17,23 +17,23 @@ export function corsMiddleware(request: IncomingMessage, response: ServerRespons
   next()
 }
 
-export function noCacheMiddleware(request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
+export function noCacheMiddleware(_request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Cache-Control', 'no-cache')
   next()
 }
 
 export async function redirectToDevConsoleMiddleware(
-  request: IncomingMessage,
+  _request: IncomingMessage,
   response: ServerResponse,
-  next: (err?: Error) => unknown,
+  _next: (err?: Error) => unknown,
 ) {
   await sendRedirect(response.event, '/extensions/dev-console', 307)
 }
 
 export async function fileServerMiddleware(
-  request: IncomingMessage,
+  _request: IncomingMessage,
   response: ServerResponse,
-  next: (err?: Error) => unknown,
+  _next: (err?: Error) => unknown,
   options: {filePath: string},
 ) {
   let {filePath} = options
@@ -94,7 +94,7 @@ export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewar
 }
 
 export function getExtensionsPayloadMiddleware({payloadStore}: GetExtensionsMiddlewareOptions) {
-  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
+  return async (_request: IncomingMessage, response: ServerResponse, _next: (err?: Error) => unknown) => {
     response.setHeader('content-type', 'application/json')
     response.end(JSON.stringify(payloadStore.getRawPayload()))
   }
@@ -147,14 +147,14 @@ export async function devConsoleAssetsMiddleware(
 }
 
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, _response: ServerResponse, next: (err?: Error) => unknown) => {
     outputDebug(`UI extensions server received a ${request.method} request to URL ${request.url}`, devOptions.stdout)
     next()
   }
 }
 
 export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
-  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
+  return async (request: IncomingMessage, response: ServerResponse, _next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
     const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
 

@@ -6,7 +6,6 @@ import {AbortController} from '../../../../public/node/abort.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {useStdout} from 'ink'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 vi.mock('ink', async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,8 +160,6 @@ describe('SelectPrompt', async () => {
       "
     `)
   })
-
-  const runningOnWindows = platformAndArch().platform === 'windows'
 
   test('supports an info message', async () => {
     const items = [

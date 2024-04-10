@@ -46,7 +46,7 @@
     "@shopify/cli-kit": "3.58.0"
   },
   "devDependencies": {
-    "vite": "^4.4.9",
+    "@vitest/coverage-istanbul": "^0.34.3",
     "vitest": "^0.34.3"
   },
   "engines": {

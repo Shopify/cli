@@ -45,6 +45,7 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -129,7 +130,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
@@ -139,7 +140,7 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   }
 }
 
-export function testOrganization(): Organization {
+function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
@@ -431,7 +432,7 @@ export async function testPaymentsAppExtension(
   return extension
 }
 
-export const testRemoteSpecifications: RemoteSpecification[] = [
+const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',
@@ -842,6 +843,13 @@ const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
   },
 }
 
+const migrateAppModuleResponse: MigrateAppModuleSchema = {
+  migrateAppModule: {
+    migratedAppModule: true,
+    userErrors: [],
+  },
+}
+
 const apiVersionsResponse: PublicApiVersionsSchema = {
   publicApiVersions: ['2022', 'unstable', '2023'],
 }
@@ -910,6 +918,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
+    migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
     targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),

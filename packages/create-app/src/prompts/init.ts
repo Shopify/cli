@@ -66,9 +66,9 @@ export const templates = {
     visible: false,
   } as Template,
 } as const
-export type PredefinedTemplate = keyof typeof templates
+type PredefinedTemplate = keyof typeof templates
 
-export const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
+const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
 export const visibleTemplates = allTemplates.filter((key) => templates[key].visible) as Readonly<PredefinedTemplate[]>
 
 const templateOptionsInOrder = ['remix', 'none'] as const

@@ -1,6 +1,6 @@
 import {CurrencyCode, I18n, I18nDetails, TranslationDictionary} from '@shopify/react-i18n'
 
-export const defaultI18nDetails = {
+const defaultI18nDetails = {
   locale: 'en',
   currency: CurrencyCode.Usd,
   country: 'CA',

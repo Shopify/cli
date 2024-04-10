@@ -12,15 +12,20 @@ export async function applyIgnoreFilters(
 ) {
   const shopifyIgnore = await shopifyIgnoredPatterns(themeFileSystem)
 
+  const ignoreOptions = options.ignore ?? []
+  const onlyOptions = options.only ?? []
+
+  raiseWarningForNonExplicitGlobPatterns([...shopifyIgnore, ...ignoreOptions, ...onlyOptions])
+
   return themeChecksums
     .filter(filterBy(shopifyIgnore, '.shopifyignore'))
-    .filter(filterBy(options.ignore, '--ignore'))
-    .filter(filterBy(options.only, '--only', true))
+    .filter(filterBy(ignoreOptions, '--ignore'))
+    .filter(filterBy(onlyOptions, '--only', true))
 }
 
-function filterBy(patterns: string[] | undefined, type: string, invertMatch = false) {
+function filterBy(patterns: string[], type: string, invertMatch = false) {
   return ({key}: Checksum) => {
-    if (!patterns) return true
+    if (patterns.length === 0) return true
 
     const match = patterns.some((pattern) => matchGlob(key, pattern) || regexMatch(key, pattern))
     const shouldIgnore = invertMatch ? !match : match
@@ -56,12 +61,29 @@ function matchGlob(key: string, pattern: string) {
   // When the the standard match fails and the pattern includes '/*.', we
   // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
   // based on 'File.fnmatch'.
-  if (pattern.includes('/*.')) {
-    outputWarn(`The pattern ${pattern} is unsafe, please use a valid regex or glob.`)
+  if (shouldReplaceGlobPattern(pattern)) {
     return originalMatchGlob(key, pattern.replace('/*.', '/**/*.'))
   }
 
   return false
+}
+
+function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
+  const allPatterns = new Set(patterns)
+  allPatterns.forEach((pattern) => {
+    if (shouldReplaceGlobPattern(pattern)) {
+      outputWarn(
+        `Warning: The pattern '${pattern}' does not include subdirectories. To maintain backwards compatibility, we have modified your pattern to ${pattern.replace(
+          '/*.',
+          '/**/*.',
+        )} to explicitly include subdirectories.`,
+      )
+    }
+  })
+}
+
+function shouldReplaceGlobPattern(pattern: string): boolean {
+  return pattern.includes('/*.') && !pattern.includes('/**/*.') && pattern.includes('templates/')
 }
 
 function regexMatch(key: string, pattern: string) {

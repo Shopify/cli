@@ -1,6 +1,6 @@
 import {gql} from 'graphql-request'
 
-export interface AllOrganizationsQuerySchemaOrganization {
+interface AllOrganizationsQuerySchemaOrganization {
   id: string
   businessName: string
   website?: string

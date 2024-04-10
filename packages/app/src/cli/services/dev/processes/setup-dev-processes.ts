@@ -17,7 +17,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
-export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
+interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
 }
 

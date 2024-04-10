@@ -285,6 +285,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     await waitForInputsToBeReady()
+
     await sendInputAndWaitForContent(renderInstance, 'No results found', 'a')
     // prompt doesn't change when enter is pressed
     await sendInputAndWait(renderInstance, 100, ENTER)

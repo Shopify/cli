@@ -1104,36 +1104,36 @@
     "related": []
   },
   {
-    "name": "app import-flow-legacy-extensions",
-    "description": "Import dashboard-managed flow extensions into your app.",
-    "overviewPreviewDescription": "Import dashboard-managed flow extensions into your app.",
+    "name": "app import-extensions",
+    "description": "Import dashboard-managed extensions into your app.",
+    "overviewPreviewDescription": "Import dashboard-managed extensions into your app.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
       "codeblock": {
         "tabs": [
           {
-            "title": "app import-flow-legacy-extensions",
-            "code": "shopify app import-flow-legacy-extensions [flags]",
+            "title": "app import-extensions",
+            "code": "shopify app import-extensions [flags]",
             "language": "bash"
           }
         ],
-        "title": "app import-flow-legacy-extensions"
+        "title": "app import-extensions"
       }
     },
     "definitions": [
       {
         "title": "Flags",
-        "description": "The following flags are available for the `app import-flow-legacy-extensions` command:",
-        "type": "appimportflowlegacyextensions",
+        "description": "The following flags are available for the `app import-extensions` command:",
+        "type": "appimportextensions",
         "typeDefinitions": {
-          "appimportflowlegacyextensions": {
-            "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
-            "name": "appimportflowlegacyextensions",
+          "appimportextensions": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+            "name": "appimportextensions",
             "description": "",
             "members": [
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1141,7 +1141,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1149,7 +1149,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1157,7 +1157,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1165,7 +1165,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1173,7 +1173,7 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface appimportflowlegacyextensions {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface appimportextensions {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

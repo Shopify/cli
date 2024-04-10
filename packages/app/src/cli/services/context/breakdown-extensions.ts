@@ -8,6 +8,7 @@ import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {RemoteExtensionRegistrations} from '../../api/graphql/all_app_extension_registrations.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -35,7 +36,15 @@ export interface ExtensionIdentifiersBreakdown {
   toUpdate: ExtensionIdentifierBreakdownInfo[]
 }
 
-export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploymentIdsPresenceOptions) {
+export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploymentIdsPresenceOptions): Promise<{
+  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  extensionsToConfirm: {
+    validMatches: IdentifiersExtensions
+    extensionsToCreate: LocalSource[]
+    dashboardOnlyExtensions: RemoteSource[]
+  }
+  remoteExtensionsRegistrations: RemoteExtensionRegistrations
+}> {
   const remoteExtensionsRegistrations = await options.developerPlatformClient.appExtensionRegistrations({
     id: options.appId,
     apiKey: options.appId,

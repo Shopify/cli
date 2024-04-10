@@ -4,7 +4,7 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
-export interface FetchSpecificationsOptions {
+interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
 }

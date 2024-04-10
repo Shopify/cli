@@ -4,9 +4,9 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 
-export const MANIFEST_VERSION = '3'
+const MANIFEST_VERSION = '3'
 
-export interface PreviewableExtensionOptions {
+interface PreviewableExtensionOptions {
   apiKey: string
   storeFqdn: string
   storeId: string

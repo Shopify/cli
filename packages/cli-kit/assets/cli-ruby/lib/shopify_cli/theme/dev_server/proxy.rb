@@ -249,7 +249,7 @@ module ShopifyCLI
               "X-Shopify-Access-Token" => Environment.admin_auth_token,
               "X-Shopify-Shop" => shop,
             })
-            uri = URI.join("https://#{ThemeAccessAPI::BASE_URL}", "cli/sfr#{path}")
+            uri = URI.join("https://#{ShopifyCLI::Constants::ThemeKitAccess::BASE_URL}", "cli/sfr#{path}")
           end
 
           uri.query = URI.encode_www_form(query + [[:_fd, 0], [:pb, 0]])

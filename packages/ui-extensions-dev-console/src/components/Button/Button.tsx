@@ -3,7 +3,7 @@ import {Icon, IconProps} from '../Icon/Icon.js'
 import React from 'react'
 import {classNames} from '@/utilities/css'
 
-export interface ButtonProps extends React.HTMLProps<HTMLButtonElement> {
+interface ButtonProps extends React.HTMLProps<HTMLButtonElement> {
   icon?: {
     source: IconProps['source']
     position: 'left' | 'right'

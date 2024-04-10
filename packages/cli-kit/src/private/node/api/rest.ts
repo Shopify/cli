@@ -1,4 +1,5 @@
 import {buildHeaders} from './headers.js'
+import {defaultThemeKitAccessDomain, environmentVariables} from '../constants.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export function restRequestBody<T>(requestBody?: T) {
@@ -13,10 +14,12 @@ export function restRequestUrl(
   apiVersion: string,
   path: string,
   searchParams: {[name: string]: string} = {},
+  env = process.env,
 ) {
+  const themeKitAccessDomain = env[environmentVariables.themeKitAccessDomain] || defaultThemeKitAccessDomain
   const url = new URL(
     isThemeAccessSession(session)
-      ? `https://theme-kit-access.shopifyapps.com/cli/admin/api/${apiVersion}${path}.json`
+      ? `https://${themeKitAccessDomain}/cli/admin/api/${apiVersion}${path}.json`
       : `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`,
   )
   Object.entries(searchParams).forEach(([name, value]) => url.searchParams.set(name, value))

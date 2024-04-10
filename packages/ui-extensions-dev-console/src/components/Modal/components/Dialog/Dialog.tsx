@@ -9,7 +9,7 @@ enum Key {
   Escape = 27,
 }
 
-export interface DialogProps {
+interface DialogProps {
   labelledBy?: string
   children?: React.ReactNode
   onClose(): void

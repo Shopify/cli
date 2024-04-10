@@ -25,7 +25,7 @@ function sanitizeVariables(variables: Variables): string {
   return JSON.stringify(result, null, 2)
 }
 
-export function errorHandler<T>(api: string): (error: unknown, requestId?: string) => Error | unknown {
+export function errorHandler(api: string): (error: unknown, requestId?: string) => Error | unknown {
   return (error: unknown, requestId?: string) => {
     if (error instanceof ClientError) {
       const {status} = error.response

@@ -6,6 +6,7 @@ import {
   parseConfigurationObject,
   parseHumanReadableError,
   loadAppConfiguration,
+  checkFolderIsValidApp,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -159,7 +160,7 @@ automatically_update_urls_on_dev = true
 
     // When/Then
     await expect(loadApp({directory: currentDir, specifications})).rejects.toThrow(
-      `Couldn't find the configuration file for ${currentDir}`,
+      `Couldn't find an app toml file at ${currentDir}`,
     )
   })
 
@@ -385,7 +386,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -835,7 +836,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the function configuration file is invalid', async () => {
@@ -2472,6 +2473,31 @@ describe('loadDotEnv', () => {
       // Then
       expect(got).toBeDefined()
       expect(got!.variables.FOO).toEqual('bar')
+    })
+  })
+})
+
+describe('checkFolderIsValidApp', () => {
+  test('throws an error if the folder does not contain a shopify.app.toml file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // When
+      const result = checkFolderIsValidApp(tmp)
+
+      // Then
+      await expect(result).rejects.toThrow(/Couldn't find an app toml file at/)
+    })
+  })
+
+  test('doesnt throw an error if the folder does contains a shopify.app.toml file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      await writeFile(joinPath(tmp, 'shopify.app.toml'), '')
+
+      // When
+      const result = checkFolderIsValidApp(tmp)
+
+      // Then
+      await expect(result).resolves.toBeUndefined()
     })
   })
 })

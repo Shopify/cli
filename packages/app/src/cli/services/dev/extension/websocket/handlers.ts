@@ -109,7 +109,7 @@ ${outputToken.json(payload.data)}
   wss.clients.forEach((ws) => ws.send(stringPayload))
 }
 
-export function getOutgoingDispatchMessage(
+function getOutgoingDispatchMessage(
   incomingMessage: IncomingDispatchMessage,
   options: SetupWebSocketConnectionOptions,
 ): OutgoingDispatchMessage {

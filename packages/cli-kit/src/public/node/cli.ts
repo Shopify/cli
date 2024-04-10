@@ -202,5 +202,3 @@ export const globalFlags = {
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
 }
-
-export default runCLI

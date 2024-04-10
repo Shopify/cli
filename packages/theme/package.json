@@ -47,8 +47,8 @@
   },
   "devDependencies": {
     "@types/node": "18.19.3",
+    "@vitest/coverage-istanbul": "^0.34.3",
     "node-stream-zip": "^1.15.0",
-    "vite": "^4.4.9",
     "vitest": "^0.34.3"
   },
   "engines": {

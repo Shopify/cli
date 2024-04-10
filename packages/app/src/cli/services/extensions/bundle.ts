@@ -16,7 +16,7 @@ import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
 
 const require = createRequire(import.meta.url)
 
-export interface BundleOptions {
+interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputPath: string
@@ -187,7 +187,7 @@ function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
   return {
     name: 'shopify:deduplicate-react',
     setup({onResolve}) {
-      onResolve({filter: /^react$/}, (args) => {
+      onResolve({filter: /^react$/}, (_args) => {
         return {
           path: resolvedReactPath,
         }

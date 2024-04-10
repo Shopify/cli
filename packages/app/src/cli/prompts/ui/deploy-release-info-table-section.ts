@@ -1,4 +1,4 @@
-export interface DeployReleaseInfoTableSection<T> {
+interface DeployReleaseInfoTableSection<T> {
   new: T[]
   updated?: T[]
   unchanged: T[]

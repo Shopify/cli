@@ -16,7 +16,7 @@ describe('getAvailableTCPPort', () => {
     const debugError = vi.spyOn(system, 'sleep')
 
     // When
-    const got = await getAvailableTCPPort()
+    const got = await getAvailableTCPPort(undefined, {waitTimeInSeconds: 0})
 
     // Then
     expect(got).toBe(5)

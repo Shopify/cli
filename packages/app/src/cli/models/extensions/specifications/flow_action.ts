@@ -10,7 +10,7 @@ import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {loadSchemaFromPath} from '../../../services/flow/utils.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
+const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_action'),
   runtime_url: zod.string().url().refine(startsWithHttps),
   validation_url: zod.string().url().refine(startsWithHttps).optional(),

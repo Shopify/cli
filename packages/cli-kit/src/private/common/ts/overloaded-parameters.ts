@@ -28,4 +28,3 @@ type OverloadUnion<TOverload extends (...args: any[]) => any> = Exclude<
 
 // Inferring a union of parameter tuples or return types is now possible.
 export type OverloadParameters<T extends (...args: any[]) => any> = Parameters<OverloadUnion<T>>
-export type OverloadReturnType<T extends (...args: any[]) => any> = ReturnType<OverloadUnion<T>>

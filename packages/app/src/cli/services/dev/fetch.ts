@@ -74,7 +74,7 @@ export class NoOrgError extends AbortError {
   }
 }
 
-export interface OrganizationAppsResponse {
+interface OrganizationAppsResponse {
   pageInfo: {
     hasNextPage: boolean
   }

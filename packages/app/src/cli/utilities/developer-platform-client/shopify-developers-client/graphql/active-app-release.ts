@@ -29,13 +29,13 @@ export interface ActiveAppReleaseQueryVariables {
   appId: string
 }
 
-export interface AppModuleSpecification {
+interface AppModuleSpecification {
   externalIdentifier: string
   name: string
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
-export interface AppModule {
+interface AppModule {
   gid: string
   uid: string
   handle: string

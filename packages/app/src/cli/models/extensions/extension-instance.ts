@@ -333,12 +333,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 }
 
-export interface ExtensionDeployConfigOptions {
+interface ExtensionDeployConfigOptions {
   apiKey: string
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export interface ExtensionBundleConfigOptions {
+interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string

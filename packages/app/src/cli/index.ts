@@ -11,7 +11,7 @@ import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
-import AppImportFlowExtension from './commands/app/import-flow-legacy-extensions.js'
+import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import Release from './commands/app/release.js'
@@ -23,7 +23,7 @@ const APP_COMMANDS = {
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,
-  'app:import-flow-legacy-extensions': AppImportFlowExtension,
+  'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
   'app:release': Release,

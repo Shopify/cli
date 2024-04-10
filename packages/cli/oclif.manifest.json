@@ -1164,12 +1164,12 @@
       "strict": true,
       "summary": "Generate a new app Extension."
     },
-    "app:import-flow-legacy-extensions": {
+    "app:import-extensions": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Import dashboard-managed flow extensions into your app.",
+      "description": "Import dashboard-managed extensions into your app.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -1222,7 +1222,7 @@
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
-      "id": "app:import-flow-legacy-extensions",
+      "id": "app:import-extensions",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
