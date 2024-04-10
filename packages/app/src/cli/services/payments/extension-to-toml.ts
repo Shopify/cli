@@ -77,7 +77,7 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
 /**
  * Given a dashboard-built payments extension config file, convert it to toml for the CLI extension
  */
-export function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
+function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
   serialize: (config: T) => {[key: string]: unknown} | undefined,
 ) {
