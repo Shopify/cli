@@ -22,6 +22,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {Flag} from '../../services/dev/fetch.js'
+import {findConfigFiles} from '../../prompts/config.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -67,11 +68,7 @@ export async function loadConfigurationFileContent(
   decode: (input: string) => object = decodeToml,
 ): Promise<unknown> {
   if (!(await fileExists(filepath))) {
-    return abortOrReport(
-      outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
-      '',
-      filepath,
-    )
+    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, '', filepath)
   }
 
   try {
@@ -177,6 +174,14 @@ interface AppLoaderConstructorArgs {
   configName?: string
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
+}
+
+export async function checkFolderIsValidApp(directory: string) {
+  const thereAreConfigFiles = (await findConfigFiles(directory)).length > 0
+  if (thereAreConfigFiles) return
+  throw new AbortError(
+    outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
+  )
 }
 
 /**
@@ -788,9 +793,7 @@ class AppConfigurationLoader {
       return appDirectory
     } else {
       throw new AbortError(
-        outputContent`Couldn't find the configuration file for ${outputToken.path(
-          this.directory,
-        )}, are you in an app directory?`,
+        outputContent`Couldn't find an app toml file at ${outputToken.path(this.directory)}, is this an app directory?`,
       )
     }
   }

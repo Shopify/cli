@@ -1,4 +1,5 @@
 import {appFlags} from '../../../flags.js'
+import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import Command from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
@@ -31,6 +32,9 @@ export default class ConfigLink extends Command {
       directory: flags.path,
       apiKey: flags['client-id'],
     }
+
+    await checkFolderIsValidApp(flags.path)
+
     await link(options)
   }
 }
