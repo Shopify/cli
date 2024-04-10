@@ -6,7 +6,7 @@ export default class HelpCommand extends Command {
     command: Args.string({description: 'Command to show help for.', required: false}),
   }
 
-  static description = 'Display help for <%= config.bin %>.'
+  static description = 'Display help for Shopify CLI'
 
   static flags = {
     'nested-commands': Flags.boolean({

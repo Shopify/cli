@@ -673,7 +673,7 @@ DESCRIPTION
 
 ## `shopify help [COMMAND]`
 
-Display help for shopify.
+Display help for Shopify CLI
 
 ```
 USAGE
@@ -686,7 +686,7 @@ FLAGS
   -n, --nested-commands  Include all nested commands in the output.
 
 DESCRIPTION
-  Display help for shopify.
+  Display help for Shopify CLI
 ```
 
 ## `shopify hydrogen init`

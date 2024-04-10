@@ -1881,7 +1881,7 @@
           "required": false
         }
       },
-      "description": "Display help for <%= config.bin %>.",
+      "description": "Display help for Shopify CLI",
       "flags": {
         "nested-commands": {
           "allowNo": false,
