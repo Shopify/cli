@@ -10,9 +10,11 @@ export const AllAppExtensionRegistrationsQuery = gql`
         type
         draftVersion {
           config
+          context
         }
         activeVersion {
           config
+          context
         }
       }
       configurationRegistrations {
@@ -22,9 +24,11 @@ export const AllAppExtensionRegistrationsQuery = gql`
         type
         draftVersion {
           config
+          context
         }
         activeVersion {
           config
+          context
         }
       }
       dashboardManagedExtensionRegistrations {
@@ -34,9 +38,11 @@ export const AllAppExtensionRegistrationsQuery = gql`
         type
         activeVersion {
           config
+          context
         }
         draftVersion {
           config
+          context
         }
       }
     }
@@ -54,9 +60,11 @@ export interface ExtensionRegistration {
   type: string
   draftVersion?: {
     config: string
+    context?: string
   }
   activeVersion?: {
     config: string
+    context?: string
   }
 }
 
