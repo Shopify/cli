@@ -6,6 +6,7 @@ import {
   parseConfigurationObject,
   parseHumanReadableError,
   loadAppConfiguration,
+  checkFolderIsValidApp,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -2472,6 +2473,31 @@ describe('loadDotEnv', () => {
       // Then
       expect(got).toBeDefined()
       expect(got!.variables.FOO).toEqual('bar')
+    })
+  })
+})
+
+describe('checkFolderIsValidApp', () => {
+  test('throws an error if the folder does not contain a shopify.app.toml file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // When
+      const result = checkFolderIsValidApp(tmp)
+
+      // Then
+      await expect(result).rejects.toThrow(/Couldn't find an app toml file at/)
+    })
+  })
+
+  test('doesnt throw an error if the folder does contains a shopify.app.toml file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      await writeFile(joinPath(tmp, 'shopify.app.toml'), '')
+
+      // When
+      const result = checkFolderIsValidApp(tmp)
+
+      // Then
+      await expect(result).resolves.toBeUndefined()
     })
   })
 })
