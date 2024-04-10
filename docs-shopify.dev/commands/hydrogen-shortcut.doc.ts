@@ -3,8 +3,26 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen shortcut',
-  description: `Creates a global \`h2\` shortcut for the Hydrogen CLI`,
-  overviewPreviewDescription: `Creates a global \`h2\` shortcut for the Hydrogen CLI`,
+  description: `Creates a global h2 shortcut for Shopify CLI using shell aliases.
+
+  The following shells are supported:
+
+  - Bash (using \`~/.bashrc\`)
+  - ZSH (using \`~/.zshrc\`)
+  - Fish (using \`~/.config/fish/functions\`)
+  - PowerShell (added to \`$PROFILE\`)
+
+  After the alias is created, you can call Shopify CLI from anywhere in your project using \`h2 <command>\`.`,
+  overviewPreviewDescription: `Creates a global h2 shortcut for Shopify CLI using shell aliases.
+
+  The following shells are supported:
+
+  - Bash (using \`~/.bashrc\`)
+  - ZSH (using \`~/.zshrc\`)
+  - Fish (using \`~/.config/fish/functions\`)
+  - PowerShell (added to \`$PROFILE\`)
+
+  After the alias is created, you can call Shopify CLI from anywhere in your project using \`h2 <command>\`.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

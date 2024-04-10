@@ -1777,103 +1777,9 @@
     "related": []
   },
   {
-    "name": "hydrogen build-vite",
-    "description": "Builds a Hydrogen storefront for production.",
-    "overviewPreviewDescription": "Builds a Hydrogen storefront for production.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "hydrogen build-vite",
-            "code": "shopify hydrogen build-vite [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "hydrogen build-vite"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `hydrogen build-vite` command:",
-        "type": "hydrogenbuildvite",
-        "typeDefinitions": {
-          "hydrogenbuildvite": {
-            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-            "name": "hydrogenbuildvite",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--entry <value>",
-                "value": "string",
-                "description": "Entry file for the worker. Defaults to `./server`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--sourcemap",
-                "value": "\"\"",
-                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--lockfile-check",
-                "value": "\"\"",
-                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--disable-route-warning",
-                "value": "\"\"",
-                "description": "Disables any warnings about missing standard routes.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--codegen",
-                "value": "\"\"",
-                "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--codegen-config-path <value>",
-                "value": "string",
-                "description": "Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface hydrogenbuildvite {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Disables any warnings about missing standard routes.\n   */\n  '--disable-route-warning'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   */\n  '--codegen-config-path <value>'?: string\n}"
-          }
-        }
-      }
-    ],
-    "category": "hydrogen commands",
-    "related": []
-  },
-  {
     "name": "hydrogen build",
-    "description": "Builds a Hydrogen storefront for production.",
-    "overviewPreviewDescription": "Builds a Hydrogen storefront for production.",
+    "description": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
+    "overviewPreviewDescription": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1966,8 +1872,8 @@
   },
   {
     "name": "hydrogen check",
-    "description": "Returns diagnostic information about a Hydrogen storefront.",
-    "overviewPreviewDescription": "Returns diagnostic information about a Hydrogen storefront.",
+    "description": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
+    "overviewPreviewDescription": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2012,8 +1918,8 @@
   },
   {
     "name": "hydrogen codegen",
-    "description": "Generate types for the Storefront API queries found in your project.",
-    "overviewPreviewDescription": "Generate types for the Storefront API queries found in your project.",
+    "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+    "overviewPreviewDescription": "Automatically generates GraphQL types for your project’s Storefront API queries.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2073,9 +1979,86 @@
     "related": []
   },
   {
+    "name": "hydrogen customer-account push",
+    "description": "Push project configuration to admin",
+    "overviewPreviewDescription": "Push project configuration to admin",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen customer-account push",
+            "code": "shopify hydrogen customer-account push [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen customer-account push"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen customer-account push` command:",
+        "type": "hydrogencustomeraccountpush",
+        "typeDefinitions": {
+          "hydrogencustomeraccountpush": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+            "name": "hydrogencustomeraccountpush",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--storefront-id <value>",
+                "value": "string",
+                "description": "The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--dev-origin <value>",
+                "value": "string",
+                "description": "The development domain of your application."
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--relative-redirect-uri <value>",
+                "value": "string",
+                "description": "The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--relative-logout-uri <value>",
+                "value": "string",
+                "description": "The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogencustomeraccountpush {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'\n   */\n  '--storefront-id <value>'?: string\n\n  /**\n   * The development domain of your application.\n   */\n  '--dev-origin <value>': string\n\n  /**\n   * The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'\n   */\n  '--relative-redirect-uri <value>'?: string\n\n  /**\n   * The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.\n   */\n  '--relative-logout-uri <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen commands",
+    "related": []
+  },
+  {
     "name": "hydrogen debug cpu",
-    "description": "Builds and profiles the server startup time the app.",
-    "overviewPreviewDescription": "Builds and profiles the server startup time the app.",
+    "description": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
+    "overviewPreviewDescription": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2128,8 +2111,8 @@
   },
   {
     "name": "hydrogen deploy",
-    "description": "Builds and deploys a Hydrogen storefront to Oxygen.",
-    "overviewPreviewDescription": "Builds and deploys a Hydrogen storefront to Oxygen.",
+    "description": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
+    "overviewPreviewDescription": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2158,9 +2141,25 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--entry <value>",
+                "value": "string",
+                "description": "Entry file for the worker. Defaults to `./server`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--env-branch <value>",
                 "value": "string",
-                "description": "Environment branch (tag) for environment to deploy to.",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
                 "isOptional": true
               },
               {
@@ -2268,133 +2267,7 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface hydrogendeploy {\n  /**\n   * Environment branch (tag) for environment to deploy to.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Deploys to the Preview environment. Overrides --env-branch and Git metadata.\n   */\n  '--preview'?: ''\n\n  /**\n   * Forces a deployment to proceed if there are uncommited changes in its Git repository.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Skip the routability verification step after deployment.\n   */\n  '--no-verify'?: ''\n\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   */\n  '--json-output'?: ''\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   */\n  '-t, --token <value>'?: string\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   */\n  '--metadata-user <value>'?: string\n}"
-          }
-        }
-      }
-    ],
-    "category": "hydrogen commands",
-    "related": []
-  },
-  {
-    "name": "hydrogen dev-vite",
-    "description": "Runs Hydrogen storefront in an Oxygen worker for development.",
-    "overviewPreviewDescription": "Runs Hydrogen storefront in an Oxygen worker for development.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "hydrogen dev-vite",
-            "code": "shopify hydrogen dev-vite [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "hydrogen dev-vite"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `hydrogen dev-vite` command:",
-        "type": "hydrogendevvite",
-        "typeDefinitions": {
-          "hydrogendevvite": {
-            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-            "name": "hydrogendevvite",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--entry <value>",
-                "value": "string",
-                "description": "Entry file for the worker. Defaults to `./server`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--port <value>",
-                "value": "string",
-                "description": "The port to run the server on. Defaults to 3000.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--codegen",
-                "value": "\"\"",
-                "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--codegen-config-path <value>",
-                "value": "string",
-                "description": "Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--disable-virtual-routes",
-                "value": "\"\"",
-                "description": "Disable rendering fallback routes when a route file doesn't exist.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--debug",
-                "value": "\"\"",
-                "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--inspector-port <value>",
-                "value": "string",
-                "description": "The port where the inspector is available. Defaults to 9229.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--host",
-                "value": "\"\"",
-                "description": "Expose the server to the network",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-e, --env-branch <value>",
-                "value": "string",
-                "description": "Specifies the environment to pull variables from using its Git branch name.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev-vite.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--disable-version-check",
-                "value": "\"\"",
-                "description": "Skip the version check when running `hydrogen dev`",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface hydrogendevvite {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   */\n  '--entry <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Expose the server to the network\n   */\n  '--host'?: ''\n\n  /**\n   * Specifies the environment to pull variables from using its Git branch name.\n   */\n  '-e, --env-branch <value>'?: string\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   */\n  '--disable-version-check'?: ''\n}"
+            "value": "export interface hydrogendeploy {\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Deploys to the Preview environment. Overrides --env-branch and Git metadata.\n   */\n  '--preview'?: ''\n\n  /**\n   * Forces a deployment to proceed if there are uncommited changes in its Git repository.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Skip the routability verification step after deployment.\n   */\n  '--no-verify'?: ''\n\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   */\n  '--json-output'?: ''\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   */\n  '-t, --token <value>'?: string\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   */\n  '--metadata-user <value>'?: string\n}"
           }
         }
       }
@@ -2404,8 +2277,8 @@
   },
   {
     "name": "hydrogen dev",
-    "description": "Runs Hydrogen storefront in an Oxygen worker for development.",
-    "overviewPreviewDescription": "Runs Hydrogen storefront in an Oxygen worker for development.",
+    "description": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
+    "overviewPreviewDescription": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2506,9 +2379,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --env-branch <value>",
+                "name": "--env <value>",
                 "value": "string",
-                "description": "Specifies the environment to pull variables from using its Git branch name.",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
                 "isOptional": true
               },
               {
@@ -2518,9 +2399,17 @@
                 "value": "\"\"",
                 "description": "Skip the version check when running `hydrogen dev`",
                 "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Outputs more information about the command's execution.",
+                "isOptional": true
               }
             ],
-            "value": "export interface hydrogendev {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Specifies the environment to pull variables from using its Git branch name.\n   */\n  '-e, --env-branch <value>'?: string\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   */\n  '--disable-version-check'?: ''\n}"
+            "value": "export interface hydrogendev {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -2530,8 +2419,8 @@
   },
   {
     "name": "hydrogen env list",
-    "description": "List the environments on your linked Hydrogen storefront.",
-    "overviewPreviewDescription": "List the environments on your linked Hydrogen storefront.",
+    "description": "Lists all environments available on the linked Hydrogen storefront.",
+    "overviewPreviewDescription": "Lists all environments available on the linked Hydrogen storefront.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2576,8 +2465,8 @@
   },
   {
     "name": "hydrogen env pull",
-    "description": "Populate your .env with variables from your Hydrogen storefront.",
-    "overviewPreviewDescription": "Populate your .env with variables from your Hydrogen storefront.",
+    "description": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
+    "overviewPreviewDescription": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2606,9 +2495,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --env-branch <value>",
+                "name": "--env <value>",
                 "value": "string",
-                "description": "Specifies the environment to pull variables from using its Git branch name.",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
                 "isOptional": true
               },
               {
@@ -2628,7 +2525,69 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to pull variables from using its Git branch name.\n   */\n  '-e, --env-branch <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n}"
+            "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen commands",
+    "related": []
+  },
+  {
+    "name": "hydrogen env push",
+    "description": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
+    "overviewPreviewDescription": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen env push",
+            "code": "shopify hydrogen env push [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen env push"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen env push` command:",
+        "type": "hydrogenenvpush",
+        "typeDefinitions": {
+          "hydrogenenvpush": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+            "name": "hydrogenenvpush",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenenvpush {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
           }
         }
       }
@@ -2638,8 +2597,8 @@
   },
   {
     "name": "hydrogen generate route",
-    "description": "Generates a standard Shopify route.",
-    "overviewPreviewDescription": "Generates a standard Shopify route.",
+    "description": "Generates a set of default routes from the starter template.",
+    "overviewPreviewDescription": "Generates a set of default routes from the starter template.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2900,9 +2859,17 @@
                 "value": "\"\"",
                 "description": "Init Git and create initial commits.",
                 "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--quickstart",
+                "value": "\"\"",
+                "description": "Scaffolds a new Hydrogen project with a set of sensible defaults.",
+                "isOptional": true
               }
             ],
-            "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   */\n  '--language <value>'?: string\n\n  /**\n   * Scaffolds project based on an existing template or example from the Hydrogen repository.\n   */\n  '--template <value>'?: string\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   */\n  '--git'?: ''\n}"
+            "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   */\n  '--language <value>'?: string\n\n  /**\n   * Scaffolds project based on an existing template or example from the Hydrogen repository.\n   */\n  '--template <value>'?: string\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   */\n  '--git'?: ''\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults.\n   */\n  '--quickstart'?: ''\n}"
           }
         }
       }
@@ -2912,8 +2879,8 @@
   },
   {
     "name": "hydrogen link",
-    "description": "Link a local project to one of your shop's Hydrogen storefronts.",
-    "overviewPreviewDescription": "Link a local project to one of your shop's Hydrogen storefronts.",
+    "description": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-unlink) commands.",
+    "overviewPreviewDescription": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-unlink) commands.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2974,8 +2941,8 @@
   },
   {
     "name": "hydrogen list",
-    "description": "Returns a list of Hydrogen storefronts available on a given shop.",
-    "overviewPreviewDescription": "Returns a list of Hydrogen storefronts available on a given shop.",
+    "description": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
+    "overviewPreviewDescription": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3020,8 +2987,8 @@
   },
   {
     "name": "hydrogen login",
-    "description": "Login to your Shopify account.",
-    "overviewPreviewDescription": "Login to your Shopify account.",
+    "description": "Logs in to the specified shop and saves the shop domain to the project.",
+    "overviewPreviewDescription": "Logs in to the specified shop and saves the shop domain to the project.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3074,8 +3041,8 @@
   },
   {
     "name": "hydrogen logout",
-    "description": "Logout of your local session.",
-    "overviewPreviewDescription": "Logout of your local session.",
+    "description": "Log out from the current shop.",
+    "overviewPreviewDescription": "Log out from the current shop.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3120,8 +3087,8 @@
   },
   {
     "name": "hydrogen preview",
-    "description": "Runs a Hydrogen storefront in an Oxygen worker for production.",
-    "overviewPreviewDescription": "Runs a Hydrogen storefront in an Oxygen worker for production.",
+    "description": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-build) command first.",
+    "overviewPreviewDescription": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen-commands/hydrogen-build) command first.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3174,9 +3141,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --env-branch <value>",
+                "name": "--env <value>",
                 "value": "string",
-                "description": "Specifies the environment to pull variables from using its Git branch name.",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
                 "isOptional": true
               },
               {
@@ -3194,9 +3169,17 @@
                 "value": "\"\"",
                 "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
                 "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Outputs more information about the command's execution.",
+                "isOptional": true
               }
             ],
-            "value": "export interface hydrogenpreview {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * Specifies the environment to pull variables from using its Git branch name.\n   */\n  '-e, --env-branch <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n}"
+            "value": "export interface hydrogenpreview {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -3206,8 +3189,8 @@
   },
   {
     "name": "hydrogen setup css",
-    "description": "Setup CSS strategies for your project.",
-    "overviewPreviewDescription": "Setup CSS strategies for your project.",
+    "description": "Adds support for certain CSS strategies to your project.",
+    "overviewPreviewDescription": "Adds support for certain CSS strategies to your project.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3268,8 +3251,8 @@
   },
   {
     "name": "hydrogen setup markets",
-    "description": "Setup support for multiple markets in your project.",
-    "overviewPreviewDescription": "Setup support for multiple markets in your project.",
+    "description": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
+    "overviewPreviewDescription": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3446,8 +3429,8 @@
   },
   {
     "name": "hydrogen shortcut",
-    "description": "Creates a global `h2` shortcut for the Hydrogen CLI",
-    "overviewPreviewDescription": "Creates a global `h2` shortcut for the Hydrogen CLI",
+    "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
+    "overviewPreviewDescription": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3468,8 +3451,8 @@
   },
   {
     "name": "hydrogen unlink",
-    "description": "Unlink a local project from a Hydrogen storefront.",
-    "overviewPreviewDescription": "Unlink a local project from a Hydrogen storefront.",
+    "description": "Unlinks your local development environment from a remote Hydrogen storefront.",
+    "overviewPreviewDescription": "Unlinks your local development environment from a remote Hydrogen storefront.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3514,8 +3497,8 @@
   },
   {
     "name": "hydrogen upgrade",
-    "description": "Upgrade Remix and Hydrogen npm dependencies.",
-    "overviewPreviewDescription": "Upgrade Remix and Hydrogen npm dependencies.",
+    "description": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
+    "overviewPreviewDescription": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {

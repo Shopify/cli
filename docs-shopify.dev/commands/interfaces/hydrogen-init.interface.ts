@@ -49,4 +49,9 @@ export interface hydrogeninit {
    * Init Git and create initial commits.
    */
   '--git'?: ''
+
+  /**
+   * Scaffolds a new Hydrogen project with a set of sensible defaults.
+   */
+  '--quickstart'?: ''
 }

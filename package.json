@@ -70,7 +70,7 @@
     "typescript": "5.2.2"
   },
   "dependencies": {
-    "@shopify/cli-hydrogen": "^7.1.2"
+    "@shopify/cli-hydrogen": "next"
   },
   "workspaces": {
     "packages": [

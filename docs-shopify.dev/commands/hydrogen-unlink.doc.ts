@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen unlink',
-  description: `Unlink a local project from a Hydrogen storefront.`,
-  overviewPreviewDescription: `Unlink a local project from a Hydrogen storefront.`,
+  description: `Unlinks your local development environment from a remote Hydrogen storefront.`,
+  overviewPreviewDescription: `Unlinks your local development environment from a remote Hydrogen storefront.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

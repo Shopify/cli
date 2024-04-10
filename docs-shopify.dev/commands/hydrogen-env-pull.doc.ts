@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen env pull',
-  description: `Populate your .env with variables from your Hydrogen storefront.`,
-  overviewPreviewDescription: `Populate your .env with variables from your Hydrogen storefront.`,
+  description: `Pulls environment variables from the linked Hydrogen storefront and writes them to an \`.env\` file.`,
+  overviewPreviewDescription: `Pulls environment variables from the linked Hydrogen storefront and writes them to an \`.env\` file.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

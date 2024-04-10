@@ -16,9 +16,14 @@ export interface hydrogenpreview {
   '--legacy-runtime'?: ''
 
   /**
-   * Specifies the environment to pull variables from using its Git branch name.
+   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
    */
-  '-e, --env-branch <value>'?: string
+  '--env <value>'?: string
+
+  /**
+   * Specifies the environment to perform the operation using its Git branch name.
+   */
+  '--env-branch <value>'?: string
 
   /**
    * The port where the inspector is available. Defaults to 9229.
@@ -29,4 +34,9 @@ export interface hydrogenpreview {
    * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.
    */
   '--debug'?: ''
+
+  /**
+   * Outputs more information about the command's execution.
+   */
+  '--verbose'?: ''
 }

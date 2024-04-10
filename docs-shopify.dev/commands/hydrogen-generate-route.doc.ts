@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen generate route',
-  description: `Generates a standard Shopify route.`,
-  overviewPreviewDescription: `Generates a standard Shopify route.`,
+  description: `Generates a set of default routes from the starter template.`,
+  overviewPreviewDescription: `Generates a set of default routes from the starter template.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
