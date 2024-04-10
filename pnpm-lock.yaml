@@ -236,9 +236,6 @@ importers:
       '@oclif/plugin-commands':
         specifier: 2.2.28
         version: 2.2.28
-      '@oclif/plugin-help':
-        specifier: 5.2.20
-        version: 5.2.20
       '@oclif/plugin-plugins':
         specifier: 3.9.4
         version: 3.9.4
@@ -4546,13 +4543,6 @@ packages:
     dependencies:
       '@oclif/core': 3.19.6
       lodash: 4.17.21
-    dev: false
-
-  /@oclif/plugin-help@5.2.20:
-    resolution: {integrity: sha512-u+GXX/KAGL9S10LxAwNUaWdzbEBARJ92ogmM7g3gDVud2HioCmvWQCDohNRVZ9GYV9oKwZ/M8xwd6a1d95rEKQ==}
-    engines: {node: '>=12.0.0'}
-    dependencies:
-      '@oclif/core': 3.19.6
     dev: false
 
   /@oclif/plugin-help@6.0.14:
