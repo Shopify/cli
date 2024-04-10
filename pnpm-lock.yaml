@@ -59,6 +59,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      esbuild:
+        specifier: 0.19.8
+        version: 0.19.8
       eslint:
         specifier: ^8.48.0
         version: 8.49.0
