@@ -92,7 +92,7 @@ module ShopifyCLI
           return @api_uri if @api_uri
 
           uri_address = if Environment.theme_access_password?
-            "https://#{ThemeAccessAPI::BASE_URL}/cli/sfr#{url}"
+            "https://#{ShopifyCLI::Constants::ThemeKitAccess::BASE_URL}/cli/sfr#{url}"
           else
             "https://#{shop}#{url}"
           end
