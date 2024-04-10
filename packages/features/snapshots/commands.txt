@@ -22,7 +22,7 @@
  config autocorrect off    @shopify/plugin-did-you-mean 
  config autocorrect on     @shopify/plugin-did-you-mean 
  config autocorrect status @shopify/plugin-did-you-mean 
- help                      @oclif/plugin-help           
+ help                      @shopify/cli                 
  plugins add               @oclif/plugin-plugins        
  plugins inspect           @oclif/plugin-plugins        
  plugins install           @oclif/plugin-plugins        
