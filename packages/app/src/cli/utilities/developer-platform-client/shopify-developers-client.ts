@@ -240,20 +240,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     )
     return result.specifications
       .filter((spec) => spec.experience !== 'DEPRECATED')
-      .map(
-        (spec): RemoteSpecification => ({
-          name: spec.name,
-          externalName: spec.name,
-          identifier: spec.externalIdentifier,
-          externalIdentifier: spec.externalIdentifier,
-          gated: false,
-          options: {
-            managementExperience: 'cli',
-            registrationLimit: 1,
-          },
-          experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
-        }),
-      )
+      .map((spec): RemoteSpecification => ({
+        name: spec.name,
+        externalName: spec.name,
+        identifier: spec.identifier,
+        externalIdentifier: spec.externalIdentifier,
+        gated: false,
+        options: {
+          managementExperience: 'cli',
+          registrationLimit: 1,
+        },
+        experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
+      }))
   }
 
   async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {

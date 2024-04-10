@@ -23,7 +23,7 @@ export const CreateAppVersionMutation = gql`
           handle
           config
           specification {
-            externalIdentifier
+            identifier
             name
             experience
           }
