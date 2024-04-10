@@ -12,6 +12,7 @@ import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import HydrogenInit from './cli/commands/hydrogen/init.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
+import HelpCommand from './cli/commands/help.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
 import {commands as PluginCommands} from '@oclif/plugin-plugins'
@@ -79,6 +80,7 @@ export const COMMANDS: any = {
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,
+  help: HelpCommand,
   'auth:logout': Logout,
   'debug:command-flags': CommandFlags,
   'demo:catalog': Catalog,

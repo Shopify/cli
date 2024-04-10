@@ -1731,6 +1731,52 @@
     "related": []
   },
   {
+    "name": "help",
+    "description": "Display help for <%= config.bin %>.",
+    "overviewPreviewDescription": "Display help for <%= config.bin %>.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "help",
+            "code": "shopify help [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "help"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `help` command:",
+        "type": "help",
+        "typeDefinitions": {
+          "help": {
+            "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
+            "name": "help",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --nested-commands",
+                "value": "\"\"",
+                "description": "Include all nested commands in the output.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface help {\n  /**\n   * Include all nested commands in the output.\n   */\n  '-n, --nested-commands'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Common commands",
+    "related": []
+  },
+  {
     "name": "hydrogen build-vite",
     "description": "Builds a Hydrogen storefront for production.",
     "overviewPreviewDescription": "Builds a Hydrogen storefront for production.",

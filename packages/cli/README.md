@@ -22,6 +22,7 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+* [`shopify help [COMMAND]`](#shopify-help-command)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -668,6 +669,24 @@ DESCRIPTION
   available.
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
+```
+
+## `shopify help [COMMAND]`
+
+Display help for shopify.
+
+```
+USAGE
+  $ shopify help [COMMAND] [-n]
+
+ARGUMENTS
+  COMMAND  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for shopify.
 ```
 
 ## `shopify hydrogen init`
