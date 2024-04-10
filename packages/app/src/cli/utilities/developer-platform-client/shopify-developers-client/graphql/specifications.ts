@@ -4,6 +4,7 @@ export const SpecificationsQuery = gql`
   query fetchSpecifications($appId: ID!) {
     specifications(appId: $appId) {
       name
+      identifier
       externalIdentifier
       experience
       features
@@ -17,8 +18,8 @@ export interface SpecificationsQueryVariables {
 
 export interface RemoteSpecification {
   name: string
-  externalIdentifier: string
   identifier: string
+  externalIdentifier: string
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
   features?: string[]
 }

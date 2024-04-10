@@ -352,7 +352,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
           config: mod.config,
           specification: {
             ...mod.specification,
-            identifier: mod.specification.externalIdentifier,
+            identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
             experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
           },
