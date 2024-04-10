@@ -125,7 +125,7 @@ jobs:
   pr-platform-agnostic-knip:
     name: '[PR] Run knip with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 30
     strategy:
       matrix:
