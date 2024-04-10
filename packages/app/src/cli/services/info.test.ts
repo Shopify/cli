@@ -18,6 +18,7 @@ import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 vi.mock('./local-storage.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
@@ -90,7 +91,9 @@ describe('info', () => {
       // When
       const result = stringifyMessage(await info(app, infoOptions()))
       // Then
-      expect(unstyled(result)).toMatch('Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run `yarn shopify upgrade`')
+      expect(unstyled(result)).toMatch(
+        `Shopify CLI       ${CLI_KIT_VERSION} 💡 Version 2.2.3 available! Run \`yarn shopify upgrade\``,
+      )
     })
   })
 
@@ -197,7 +200,7 @@ describe('info', () => {
       // When
       const result = stringifyMessage(await info(app, infoOptions()))
       // Then
-      expect(unstyled(result)).toMatch('Shopify CLI       2.2.2')
+      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
       expect(unstyled(result)).not.toMatch('CLI reminder')
     })
   })

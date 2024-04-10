@@ -46,6 +46,7 @@
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
+    "esbuild": "0.19.8",
     "eslint": "^8.48.0",
     "execa": "^7.2.0",
     "fast-glob": "^3.3.1",
@@ -107,7 +108,8 @@
     },
     "ignoreDependencies": [
       "eslint-plugin-react",
-      "eslint-plugin-react-hooks"
+      "eslint-plugin-react-hooks",
+      "esbuild"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
