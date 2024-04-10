@@ -158,7 +158,9 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
  * @returns List of plugins.
  */
 function getPlugins(resolveDir: string | undefined, processEnv = process.env): Plugin[] {
-  const plugins: Plugin[] = [graphqlLoaderPlugin.default()]
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const plugins: Plugin[] = [graphqlLoaderPlugin()]
 
   const skipReactDeduplication = isTruthy(processEnv[environmentVariableNames.skipEsbuildReactDedeuplication])
   if (resolveDir && !skipReactDeduplication) {
