@@ -206,5 +206,12 @@ module ShopifyCLI
         env_variables: env_variables
       )
     end
+
+    def self.theme_kit_access_domain(env_variables: ENV)
+      return env_variables[Constants::EnvironmentVariables::THEME_KIT_ACCESS_DOMAIN] if env_variables.key?(
+        Constants::EnvironmentVariables::THEME_KIT_ACCESS_DOMAIN
+      )
+      Constants::ThemeKitAccess::BASE_URL
+    end
   end
 end
