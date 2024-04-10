@@ -81,6 +81,7 @@ import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -462,6 +463,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
     throw new BugError('Not implemented: migrateFlowExtension')
+  }
+
+  async migrateAppModule(_input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {
+    throw new BugError('Not implemented: migrateAppModule')
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
