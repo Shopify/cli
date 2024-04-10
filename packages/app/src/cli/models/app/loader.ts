@@ -788,7 +788,7 @@ class AppConfigurationLoader {
       return appDirectory
     } else {
       throw new AbortError(
-        outputContent`Couldn't find the configuration file for ${outputToken.path(
+        outputContent`Couldn't find an app toml file at ${outputToken.path(
           this.directory,
         )}, are you in an app directory?`,
       )

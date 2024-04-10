@@ -2,6 +2,7 @@ import {appFlags} from '../../flags.js'
 import {dev} from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
+import {loadApp} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -156,6 +157,9 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     }))
 
     const commandConfig = this.config
+
+    // Try to load the app before doing anything, to fail early if the directory doesn't contain an app
+    await loadApp({directory: flags.path, configName: flags.config})
 
     const devOptions = {
       directory: flags.path,
