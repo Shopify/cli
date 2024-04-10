@@ -14,6 +14,9 @@ import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
+import {createRequire} from 'module'
+
+const require = createRequire(import.meta.url)
 
 class TokenRefreshError extends AbortError {
   constructor() {
