@@ -47,7 +47,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-export type AppLoaderMode = 'strict' | 'report'
+type AppLoaderMode = 'strict' | 'report'
 
 type AbortOrReport = <T>(
   errorMessage: OutputMessage,
@@ -55,7 +55,7 @@ type AbortOrReport = <T>(
   configurationPath: string,
   rawErrors?: zod.ZodIssueBase[],
 ) => T
-const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
+const noopAbortOrReport: AbortOrReport = (_errorMessage, fallback, _configurationPath) => fallback
 
 /**
  * Loads a configuration file, and returns its content as an unvalidated object.

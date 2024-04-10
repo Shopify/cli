@@ -14,7 +14,7 @@ export default class LanguageServer extends ThemeCommand {
   }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(LanguageServer)
+    await this.parse(LanguageServer)
     startServer()
   }
 }

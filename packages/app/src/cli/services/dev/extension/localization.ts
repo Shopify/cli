@@ -6,7 +6,7 @@ import {readFile, glob} from '@shopify/cli-kit/node/fs'
 import {ExtendableError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 
-export type Locale = string
+type Locale = string
 
 export interface Localization {
   // TOOD: Should this be strongly typed?
@@ -17,7 +17,7 @@ export interface Localization {
   lastUpdated: number
 }
 
-export async function getLocalizationFilePaths(extension: ExtensionInstance): Promise<string[]> {
+async function getLocalizationFilePaths(extension: ExtensionInstance): Promise<string[]> {
   const localePath = joinPath(extension.directory, 'locales')
   return glob([joinPath(localePath, '*.json')])
 }

@@ -6,7 +6,7 @@ export interface WebhookSubscription {
   include_fields?: string[]
 }
 
-export interface PrivacyComplianceConfig {
+interface PrivacyComplianceConfig {
   customer_deletion_url?: string
   customer_data_request_url?: string
   shop_deletion_url?: string

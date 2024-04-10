@@ -3,11 +3,6 @@ import {getSession, removeSession, setSession} from '../conf-store.js'
 import type {Session} from './schema.js'
 
 /**
- * The identifier of the session in the secure store.
- */
-export const identifier = 'session'
-
-/**
  * Serializes the session as a JSON and stores it securely in the system.
  * If the secure store is not available, the session is stored in the local config.
  * @param session - the session to store.

@@ -3,7 +3,7 @@ import {TooltipPopover} from './TooltipPopover'
 import React, {useRef, useState} from 'react'
 import {classNames} from '@/utilities/css'
 
-export interface TooltipProps {
+interface TooltipProps {
   children: JSX.Element | string
   text: string
 }

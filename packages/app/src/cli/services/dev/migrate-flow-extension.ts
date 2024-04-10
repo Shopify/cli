@@ -69,7 +69,7 @@ export async function migrateFlowExtensions(
     })
 }
 
-export async function migrateFlowExtension(
+async function migrateFlowExtension(
   apiKey: MigrateFlowExtensionVariables['apiKey'],
   registrationId: MigrateFlowExtensionVariables['registrationId'],
   developerPlatformClient: DeveloperPlatformClient,

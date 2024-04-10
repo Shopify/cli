@@ -68,7 +68,3 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
     },
   }
 }
-
-export function mockExtensions(): ExtensionPayload[] {
-  return [mockExtension()]
-}

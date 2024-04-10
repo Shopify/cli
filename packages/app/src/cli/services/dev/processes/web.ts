@@ -8,7 +8,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {exec} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
-export interface LaunchWebOptions {
+interface LaunchWebOptions {
   port: number
   apiKey: string
   apiSecret?: string

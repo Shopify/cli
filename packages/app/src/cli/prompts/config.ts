@@ -17,11 +17,6 @@ import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export interface DiffContent {
-  baselineContent: string
-  updatedContent: string
-}
-
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
   let configName = slugify(await renderTextPrompt(namePromptOptions))

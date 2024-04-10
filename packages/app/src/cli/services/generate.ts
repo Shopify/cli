@@ -25,7 +25,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
-export interface GenerateOptions {
+interface GenerateOptions {
   directory: string
   reset: boolean
   apiKey?: string

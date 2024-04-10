@@ -39,11 +39,11 @@ export async function info(app: AppInterface, options: InfoOptions): Promise<Out
   }
 }
 
-export async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
+async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
   return outputEnv(app, format)
 }
 
-export async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {

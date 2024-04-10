@@ -61,7 +61,7 @@ export async function clientSecretPrompt(): Promise<string> {
   })
 }
 
-export function deliveryMethodInstructions(method: string): string[] {
+function deliveryMethodInstructions(method: string): string[] {
   if (method === DELIVERY_METHOD.HTTP) {
     return [
       `For remote HTTP testing, use a URL that starts with https://`,

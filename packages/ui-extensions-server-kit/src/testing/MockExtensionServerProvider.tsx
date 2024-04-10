@@ -3,11 +3,11 @@ import {useExtensionServerContext} from '../hooks'
 import React, {useMemo} from 'react'
 import type {ExtensionServerProviderProps, ExtensionServerContext} from '../context'
 
-export interface InternalProviderProps extends Partial<ExtensionServerContext> {
+interface InternalProviderProps extends Partial<ExtensionServerContext> {
   children?: ExtensionServerProviderProps['children']
 }
 
-export function InternalProvider({children, ...mocks}: InternalProviderProps) {
+function InternalProvider({children, ...mocks}: InternalProviderProps) {
   const actual = useExtensionServerContext()
 
   const context = useMemo(
@@ -21,7 +21,7 @@ export function InternalProvider({children, ...mocks}: InternalProviderProps) {
   return <extensionServerContext.Provider value={context}>{children}</extensionServerContext.Provider>
 }
 
-export type MockExtensionServerProviderProps = Partial<ExtensionServerProviderProps> & InternalProviderProps
+type MockExtensionServerProviderProps = Partial<ExtensionServerProviderProps> & InternalProviderProps
 
 export function MockExtensionServerProvider({
   children,

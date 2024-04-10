@@ -130,7 +130,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
@@ -140,7 +140,7 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   }
 }
 
-export function testOrganization(): Organization {
+function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
@@ -432,7 +432,7 @@ export async function testPaymentsAppExtension(
   return extension
 }
 
-export const testRemoteSpecifications: RemoteSpecification[] = [
+const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',

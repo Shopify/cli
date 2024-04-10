@@ -6,7 +6,7 @@ import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
 import {classNames} from '@/utilities/css'
 
-export interface Props {
+interface Props {
   extension: ExtensionPayload
 }
 

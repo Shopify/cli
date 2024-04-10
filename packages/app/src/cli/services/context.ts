@@ -313,7 +313,7 @@ function buildOutput(
   }
 }
 
-export interface ReleaseContextOptions {
+interface ReleaseContextOptions {
   app: AppInterface
   apiKey?: string
   reset: boolean
@@ -750,7 +750,7 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
-export interface AppContext {
+interface AppContext {
   configuration: AppConfiguration
   cachedInfo?: CachedAppInfo
   remoteApp?: OrganizationApp
@@ -829,7 +829,7 @@ export async function getAppContext({
  * @param developerPlatformClient - The client to access the platform API
  * @returns The selected organization ID
  */
-export async function selectOrg(developerPlatformClient: DeveloperPlatformClient): Promise<string> {
+async function selectOrg(developerPlatformClient: DeveloperPlatformClient): Promise<string> {
   const orgs = await fetchOrganizations(developerPlatformClient)
   const org = await selectOrganizationPrompt(orgs)
   return org.id

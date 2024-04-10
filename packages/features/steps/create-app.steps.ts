@@ -54,7 +54,7 @@ When(
 Then(
   /I have an app named (.+) generated from the template with (.+) as package manager/,
   {},
-  async function (appName: string, packageManager: string) {
+  async function (_appName: string, packageManager: string) {
     const {stdout} = await this.execCLI(['app', 'info', '--path', this.appDirectory, '--json'])
     const results = JSON.parse(stdout)
     assert.equal(results.packageManager, packageManager)

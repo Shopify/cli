@@ -359,7 +359,7 @@ export function developerPreviewController(
   }
 }
 
-export async function logMetadataForDev(options: {
+async function logMetadataForDev(options: {
   devOptions: DevOptions
   tunnelUrl: string
   shouldUpdateURLs: boolean
@@ -381,7 +381,7 @@ export async function logMetadataForDev(options: {
   }))
 }
 
-export function scopesMessage(scopes: string[]) {
+function scopesMessage(scopes: string[]) {
   return {
     list: {
       items: scopes.length === 0 ? ['No scopes'] : scopes,
@@ -389,7 +389,7 @@ export function scopesMessage(scopes: string[]) {
   }
 }
 
-export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
+async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
   const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
   if (duplicatedPort) {
@@ -413,6 +413,6 @@ export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: numbe
   ])
 }
 
-export function setPreviousAppId(directory: string, apiKey: string) {
+function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
 }

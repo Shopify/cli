@@ -3,17 +3,17 @@ import {zod} from '@shopify/cli-kit/node/schema'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZodSchemaType<T> = zod.ZodType<T, any, any>
 
-export const MetafieldSchema = zod.object({
+const MetafieldSchema = zod.object({
   namespace: zod.string(),
   key: zod.string(),
 })
 
-export const CollectBuyerConsentCapabilitySchema = zod.object({
+const CollectBuyerConsentCapabilitySchema = zod.object({
   sms_marketing: zod.boolean().optional(),
   customer_privacy: zod.boolean().optional(),
 })
 
-export const CapabilitiesSchema = zod.object({
+const CapabilitiesSchema = zod.object({
   network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
@@ -25,16 +25,14 @@ export const ExtensionsArraySchema = zod.object({
   extensions: zod.array(zod.any()).optional(),
 })
 
-export const NewExtensionPointSchema = zod.object({
+const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
   metafields: zod.array(MetafieldSchema).optional(),
 })
 
-export const OldExtensionPointsSchema = zod.array(zod.string()).default([])
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
-export const ExtensionPointSchema = zod.union([OldExtensionPointsSchema, NewExtensionPointsSchema])
-export const ApiVersionSchema = zod.string()
+const ApiVersionSchema = zod.string()
 
 export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
@@ -47,11 +45,11 @@ export const FieldSchema = zod.object({
   validations: zod.array(zod.any()).optional(),
 })
 
-export const SettingsSchema = zod.object({
+const SettingsSchema = zod.object({
   fields: zod.array(FieldSchema).optional(),
 })
 
-export const HandleSchema = zod
+const HandleSchema = zod
   .string()
   .trim()
   .nonempty("Handle can't be empty")
