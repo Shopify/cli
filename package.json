@@ -66,7 +66,7 @@
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
-    "typescript": "5.2.2"
+    "typescript": "5.4.4"
   },
   "workspaces": {
     "packages": [
