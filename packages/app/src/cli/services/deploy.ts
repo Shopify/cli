@@ -13,6 +13,8 @@ import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/c
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {Task} from '@shopify/cli-kit/node/ui'
+import {underscore} from '@shopify/cli-kit/common/string'
+import {BundleConfig} from '../models/extensions/extension-instance.js'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -46,6 +48,10 @@ interface DeployOptions {
 interface TasksContext {
   bundlePath?: string
   bundle?: boolean
+}
+
+interface BundleConfigWithSpecificationIdentifier extends BundleConfig {
+  specificationIdentifier: string
 }
 
 export async function deploy(options: DeployOptions) {
@@ -94,8 +100,18 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const appModules = await Promise.all(
-              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, developerPlatformClient, apiKey})),
+            const appModules: BundleConfigWithSpecificationIdentifier[] = getArrayRejectingUndefined(
+              await Promise.all(
+                app.allExtensions.flatMap(async (ext): Promise<BundleConfigWithSpecificationIdentifier | undefined> => {
+                  const bundleConfig = await ext.bundleConfig({identifiers, developerPlatformClient, apiKey})
+                  if (bundleConfig) {
+                    return {
+                      ...bundleConfig,
+                      specificationIdentifier: identifiers.extensionSpecificationIdentifiers[ext.localIdentifier] ?? underscore(ext.handle),
+                    }
+                  }
+                }),
+              )
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({

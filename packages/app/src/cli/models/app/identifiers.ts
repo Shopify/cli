@@ -27,6 +27,11 @@ export interface Identifiers {
    * The extensions' unique identifiers which uuid is not managed.
    */
   extensionsNonUuidManaged: IdentifiersExtensions
+
+  /**
+   * The extensions' specifications' canonical identifiers (expressed as a string)
+   */
+  extensionSpecificationIdentifiers: IdentifiersExtensions
 }
 
 export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>

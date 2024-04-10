@@ -315,7 +315,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
             id: mod.uid,
             uuid: mod.uid,
             title: mod.specification.name,
-            type: mod.specification.externalIdentifier,
+            type: mod.specification.identifier,
           })),
       },
     }
