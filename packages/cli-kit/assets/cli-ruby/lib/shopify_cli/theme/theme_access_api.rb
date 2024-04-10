@@ -9,7 +9,6 @@ module ShopifyCLI
     # generated from Shopify Theme Access app to access the Shopify Admin API (for theme operations)
     #
     class ThemeAccessAPI < API
-
       class << self
         ##
         # #### Parameters

@@ -1,7 +1,6 @@
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment.js'
 import {buildHeaders} from './headers.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
 import {defaultThemeKitAccessDomain, environmentVariables} from '../constants.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export function restRequestBody<T>(requestBody?: T) {
   if (!requestBody) {

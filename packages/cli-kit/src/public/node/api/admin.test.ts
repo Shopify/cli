@@ -3,8 +3,8 @@ import {graphqlRequest} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../../../public/node/http.js'
-import {test, vi, expect, describe} from 'vitest'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
+import {test, vi, expect, describe} from 'vitest'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/api/headers.js')
