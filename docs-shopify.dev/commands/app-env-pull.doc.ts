@@ -28,8 +28,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appenvpull',
   },
   ],
-  category: 'Commands',
-  subCategory: 'app',
+  category: 'app commands',
   related: [
   ],
 }

@@ -26,8 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'upgrade',
   },
   ],
-  category: 'Commands',
-  subCategory: 'common',
+  category: 'Common commands',
   related: [
   ],
 }

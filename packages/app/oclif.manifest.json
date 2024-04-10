@@ -1445,6 +1445,78 @@
       ],
       "strict": true
     },
+    "app:import-flow-legacy-extensions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Import dashboard-managed flow extensions into your app.",
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:import-flow-legacy-extensions",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "import-flow-legacy-extensions.js"
+      ],
+      "strict": true
+    },
     "app:info": {
       "aliases": [
       ],

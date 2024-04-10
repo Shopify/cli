@@ -68,6 +68,9 @@
     "ts-node": "^10.9.1",
     "typescript": "5.2.2"
   },
+  "dependencies": {
+    "@shopify/cli-hydrogen": "^7.1.2"
+  },
   "workspaces": {
     "packages": [
       "packages/*",

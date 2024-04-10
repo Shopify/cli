@@ -1,1 +1,1 @@
-shopify version [flags]
+shopify version

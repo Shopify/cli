@@ -28,8 +28,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themeconsole',
   },
   ],
-  category: 'Commands',
-  subCategory: 'theme',
+  category: 'theme commands',
   related: [
   ],
 }
