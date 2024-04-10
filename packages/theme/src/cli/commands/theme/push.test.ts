@@ -48,7 +48,7 @@ describe('Push', () => {
 
       // Then
       expect(findOrSelectTheme).toHaveBeenCalledWith(adminSession, {
-        header: 'Select a theme to open',
+        header: 'Select a theme to push to:',
         filter: {
           live: true,
           development: true,

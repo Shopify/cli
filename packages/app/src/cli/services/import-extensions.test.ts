@@ -1,11 +1,11 @@
-import {importDashboardExtensions} from './import-dashboard-extensions.js'
+import {importExtensions} from './import-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -45,7 +45,12 @@ const flowExtensionB: ExtensionRegistration = {
   },
 }
 
-describe('import-dashboard-extensions', () => {
+describe('import-extensions', () => {
+  beforeEach(() => {
+    // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
+    vi.clearAllMocks()
+  })
+
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
@@ -56,7 +61,7 @@ describe('import-dashboard-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importDashboardExtensions({
+      await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
@@ -87,7 +92,7 @@ describe('import-dashboard-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importDashboardExtensions({
+      await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
@@ -116,7 +121,7 @@ describe('import-dashboard-extensions', () => {
     // When
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
-      await importDashboardExtensions({
+      await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],

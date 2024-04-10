@@ -12,9 +12,8 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {RenderConfirmationPromptOptions, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {getRandomName} from '@shopify/cli-kit/common/string'
+import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
@@ -157,11 +156,11 @@ export default class Push extends ThemeCommand {
 
       let selectedTheme: Theme
       if (unpublished) {
-        const themeName = theme || (await promptThemeName())
+        const themeName = theme || (await promptThemeName('Name of the new theme'))
         selectedTheme = await developmentThemeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
       } else {
         selectedTheme = await findOrSelectTheme(adminSession, {
-          header: 'Select a theme to open',
+          header: 'Select a theme to push to:',
           filter: {
             live,
             unpublished,
@@ -213,14 +212,6 @@ export default class Push extends ThemeCommand {
 
     await execCLI2(command, {store, adminToken: adminSession.token})
   }
-}
-
-async function promptThemeName() {
-  const defaultName = await getRandomName('creative')
-  return renderTextPrompt({
-    message: 'Name of the new theme',
-    defaultValue: defaultName,
-  })
 }
 
 async function confirmPushToLiveTheme(store: string) {

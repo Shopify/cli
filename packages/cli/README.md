@@ -13,7 +13,7 @@
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
 * [`shopify app generate schema`](#shopify-app-generate-schema)
-* [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
+* [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
@@ -467,14 +467,13 @@ DESCRIPTION
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/generate/schema.js)_
 
-## `shopify app import-flow-legacy-extensions`
+## `shopify app import-extensions`
 
-Import dashboard-managed flow extensions into your app.
+Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-flow-legacy-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-  [--verbose]
+  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -484,10 +483,10 @@ FLAGS
       --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
-  Import dashboard-managed flow extensions into your app.
+  Import dashboard-managed extensions into your app.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-flow-legacy-extensions.js)_
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-extensions.js)_
 
 ## `shopify app info`
 
@@ -1557,14 +1556,14 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename -n <value> [-d] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t
+  $ shopify theme rename [-d] [-e <value>] [-l] [-n <value>] [--no-color] [--password <value>] [-s <value>] [-t
     <value>] [--verbose]
 
 FLAGS
   -d, --development          Rename your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Rename your remote live theme.
-  -n, --name=<value>         (required) The new name for the theme.
+  -n, --name=<value>         The new name for the theme.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.

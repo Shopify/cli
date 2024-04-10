@@ -13,7 +13,7 @@ export interface RenameOptions {
 
 export async function renameTheme(adminSession: AdminSession, options: RenameOptions) {
   const theme = await findOrSelectTheme(adminSession, {
-    header: 'Select a theme to open',
+    header: 'Select a theme to rename',
     filter: {
       theme: options.theme,
       development: options.development,
