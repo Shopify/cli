@@ -1,4 +1,5 @@
 import {appFlags} from '../../../flags.js'
+import {loadApp} from '../../../models/app/loader.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import Command from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
@@ -31,6 +32,10 @@ export default class ConfigLink extends Command {
       directory: flags.path,
       apiKey: flags['client-id'],
     }
+
+    // Try to load the app before doing anything, to fail early if the directory doesn't contain an app
+    await loadApp({directory: flags.path, configName: flags.config})
+
     await link(options)
   }
 }
