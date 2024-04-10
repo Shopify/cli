@@ -219,43 +219,6 @@
       ],
       "strict": true
     },
-    "help": {
-      "aliases": [
-      ],
-      "args": {
-        "command": {
-          "description": "Command to show help for.",
-          "name": "command",
-          "required": false
-        }
-      },
-      "description": "Display help for Shopify CLI",
-      "flags": {
-        "nested-commands": {
-          "allowNo": false,
-          "char": "n",
-          "description": "Include all nested commands in the output.",
-          "env": "SHOPIFY_FLAG_CLI_NESTED_COMMANDS",
-          "name": "nested-commands",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
-      "id": "help",
-      "isESM": true,
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "cli",
-        "commands",
-        "help.js"
-      ],
-      "strict": false
-    },
     "hydrogen:init": {
       "aliases": [
       ],

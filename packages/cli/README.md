@@ -14,7 +14,6 @@
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
 * [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
-* [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
@@ -25,7 +24,7 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
-* [`shopify help [COMMAND]`](#shopify-help-command)
+* [`shopify help [COMMANDS]`](#shopify-help-commands)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen build-vite`](#shopify-hydrogen-build-vite)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -513,28 +512,6 @@ DESCRIPTION
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-extensions.js)_
 
-## `shopify app import-flow-legacy-extensions`
-
-Import dashboard-managed flow extensions into your app.
-
-```
-USAGE
-  $ shopify app import-flow-legacy-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-  [--verbose]
-
-FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID of your app.
-      --no-color           Disable color output.
-      --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
-
-DESCRIPTION
-  Import dashboard-managed flow extensions into your app.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-flow-legacy-extensions.js)_
-
 ## `shopify app info`
 
 Print basic information about your app and extensions.
@@ -815,25 +792,25 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify help [COMMAND]`
+## `shopify help [COMMANDS]`
 
-Display help for Shopify CLI
+Display help for shopify.
 
 ```
 USAGE
-  $ shopify help [COMMAND] [-n]
+  $ shopify help [COMMANDS] [-n]
 
 ARGUMENTS
-  COMMAND  Command to show help for.
+  COMMANDS  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
 
 DESCRIPTION
-  Display help for Shopify CLI
+  Display help for shopify.
 ```
 
-_See code: [dist/cli/commands/help.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/help.js)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.20/src/commands/help.ts)_
 
 ## `shopify hydrogen build`
 
