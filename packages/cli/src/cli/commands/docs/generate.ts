@@ -50,6 +50,9 @@ const hiddenTopics: string[] = ['commands', 'help', 'plugins']
 
 function isHidden(command: oclifCommand.Loadable) {
   // Some commands rely on the hidden property of the parent topic, but is not returned in the oclif command object
+  if (command.id.startsWith('hydrogen:build-vite')) {
+    console.log(command)
+  }
   if (command.hidden) {
     hiddenTopics.push(command.id)
     return true

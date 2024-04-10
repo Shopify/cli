@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen logout',
-  description: `Logout of your local session.`,
-  overviewPreviewDescription: `Logout of your local session.`,
+  description: `Log out from the current shop.`,
+  overviewPreviewDescription: `Log out from the current shop.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

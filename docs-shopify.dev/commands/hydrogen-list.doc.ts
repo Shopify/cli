@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen list',
-  description: `Returns a list of Hydrogen storefronts available on a given shop.`,
-  overviewPreviewDescription: `Returns a list of Hydrogen storefronts available on a given shop.`,
+  description: `Lists all remote Hydrogen storefronts available to link to your local development environment.`,
+  overviewPreviewDescription: `Lists all remote Hydrogen storefronts available to link to your local development environment.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

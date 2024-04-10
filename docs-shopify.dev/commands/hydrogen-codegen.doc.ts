@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen codegen',
-  description: `Generate types for the Storefront API queries found in your project.`,
-  overviewPreviewDescription: `Generate types for the Storefront API queries found in your project.`,
+  description: `Automatically generates GraphQL types for your project’s Storefront API queries.`,
+  overviewPreviewDescription: `Automatically generates GraphQL types for your project’s Storefront API queries.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

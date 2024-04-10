@@ -46,12 +46,22 @@ export interface hydrogendev {
   '--inspector-port <value>'?: string
 
   /**
-   * Specifies the environment to pull variables from using its Git branch name.
+   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
    */
-  '-e, --env-branch <value>'?: string
+  '--env <value>'?: string
+
+  /**
+   * Specifies the environment to perform the operation using its Git branch name.
+   */
+  '--env-branch <value>'?: string
 
   /**
    * Skip the version check when running `hydrogen dev`
    */
   '--disable-version-check'?: ''
+
+  /**
+   * Outputs more information about the command's execution.
+   */
+  '--verbose'?: ''
 }

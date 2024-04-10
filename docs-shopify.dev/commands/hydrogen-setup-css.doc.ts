@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen setup css',
-  description: `Setup CSS strategies for your project.`,
-  overviewPreviewDescription: `Setup CSS strategies for your project.`,
+  description: `Adds support for certain CSS strategies to your project.`,
+  overviewPreviewDescription: `Adds support for certain CSS strategies to your project.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
