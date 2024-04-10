@@ -159,7 +159,7 @@ automatically_update_urls_on_dev = true
 
     // When/Then
     await expect(loadApp({directory: currentDir, specifications})).rejects.toThrow(
-      `Couldn't find the configuration file for ${currentDir}`,
+      `Couldn't find an app toml file at ${currentDir}`,
     )
   })
 
@@ -385,7 +385,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -835,7 +835,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find the configuration file/)
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the function configuration file is invalid', async () => {

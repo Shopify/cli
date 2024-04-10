@@ -67,11 +67,7 @@ export async function loadConfigurationFileContent(
   decode: (input: string) => object = decodeToml,
 ): Promise<unknown> {
   if (!(await fileExists(filepath))) {
-    return abortOrReport(
-      outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
-      '',
-      filepath,
-    )
+    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, '', filepath)
   }
 
   try {
