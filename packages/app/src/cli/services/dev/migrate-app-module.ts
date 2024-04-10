@@ -72,7 +72,7 @@ export async function migrateAppModules(
     })
 }
 
-export async function migrateAppModule(
+async function migrateAppModule(
   apiKey: MigrateAppModuleVariables['apiKey'],
   registrationId: MigrateAppModuleVariables['registrationId'],
   type: MigrateAppModuleVariables['type'],
