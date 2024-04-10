@@ -36,7 +36,7 @@ export async function upgrade(
     throw new AbortError(
       outputContent`Couldn't find an app toml file at ${outputToken.path(
         directory,
-      )}, are you in a Shopify project directory?`,
+      )}, is this a Shopify project directory?`,
     )
   } else {
     newestVersion = await upgradeGlobalShopify(currentVersion, {env})
