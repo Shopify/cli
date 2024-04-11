@@ -97,7 +97,6 @@
   "dependencies": {
     "@oclif/core": "3.25.3",
     "@oclif/plugin-commands": "3.2.0",
-    "@oclif/plugin-help": "6.0.18",
     "@oclif/plugin-plugins": "4.3.8",
     "@shopify/app": "3.58.0",
     "@shopify/cli-kit": "3.58.0",

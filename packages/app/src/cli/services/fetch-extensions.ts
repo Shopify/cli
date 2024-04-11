@@ -1,6 +1,6 @@
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
-export async function getActiveDashboardExtensions({
+export async function getExtensions({
   developerPlatformClient,
   apiKey,
   organizationId,
@@ -16,9 +16,9 @@ export async function getActiveDashboardExtensions({
     apiKey,
     organizationId,
   })
-  const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
-  return dashboardManagedExtensionRegistrations.filter((ext) => {
-    const isNeededExtensionType = extensionTypes.includes(ext.type)
+  const {dashboardManagedExtensionRegistrations, extensionRegistrations} = initialRemoteExtensions.app
+  return extensionRegistrations.concat(dashboardManagedExtensionRegistrations).filter((ext) => {
+    const isNeededExtensionType = extensionTypes.includes(ext.type.toLowerCase())
     const hasActiveVersion = ext.activeVersion && ext.activeVersion.config
     const hasDraftVersion = ext.draftVersion && ext.draftVersion.config
     return isNeededExtensionType && (hasActiveVersion || hasDraftVersion)

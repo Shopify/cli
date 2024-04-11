@@ -70,9 +70,6 @@
     "ts-node": "^10.9.1",
     "typescript": "5.2.2"
   },
-  "dependencies": {
-    "@shopify/cli-hydrogen": "next"
-  },
   "workspaces": {
     "packages": [
       "packages/*",
@@ -113,7 +110,6 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
-      "@shopify/cli-hydrogen",
       "esbuild"
     ],
     "ignoreWorkspaces": [

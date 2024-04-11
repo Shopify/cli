@@ -11,10 +11,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
-import {createRequire} from 'module'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
-
-const require = createRequire(import.meta.url)
 
 interface BundleOptions {
   minify: boolean
@@ -161,6 +158,8 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
  * @returns List of plugins.
  */
 function getPlugins(resolveDir: string | undefined, processEnv = process.env): Plugin[] {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const plugins: Plugin[] = [graphqlLoaderPlugin.default()]
 
   const skipReactDeduplication = isTruthy(processEnv[environmentVariableNames.skipEsbuildReactDedeuplication])
@@ -193,22 +192,5 @@ function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
         }
       })
     },
-  }
-}
-
-/**
- * Returns true if the "graphql" and "graphql-tag" packages can be
- * resolved. This information is used to determine whether we should
- * or not include the esbuild-graphql-loader plugin when invoking ESBuild
- * @returns Returns true if the "graphql" and "graphql-tag" can be resolved.
- */
-function isGraphqlPackageAvailable(): boolean {
-  try {
-    // eslint-disable-next-line @babel/no-unused-expressions
-    require.resolve('graphql') && require.resolve('graphql-tag')
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
   }
 }

@@ -29,6 +29,7 @@ const migrationChoices: MigrationChoice[] = [
       'payments_app_custom_credit_card',
       'payments_app_custom_onsite',
       'payments_app_redeemable',
+      'payments_extension',
     ],
     buildTomlObject: buildPaymentsTomlObject,
   },
