@@ -123,7 +123,7 @@
     "workspaces": {
       ".": {
         "entry": [
-          "bin/*.js",
+          "bin/**/*.js",
           "configurations/vite.config.ts",
           "docs-shopify.dev/**/*.ts",
           "vite.config.ts",
@@ -181,7 +181,10 @@
         }
       },
       "packages/create-app": {
-        "entry": "**/{commands,hooks}/**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
         "project": "**/*.ts!",
         "vite": {
           "config": [
@@ -217,8 +220,11 @@
         }
       },
       "packages/theme": {
-        "entry": "**/{commands,hooks}/**/*.ts!",
         "project": "**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"
