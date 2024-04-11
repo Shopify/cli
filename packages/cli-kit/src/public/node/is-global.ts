@@ -22,8 +22,9 @@ export function currentProcessIsGlobal(env = process.env): boolean {
  */
 export async function isGlobalCLIInstalled(): Promise<boolean> {
   try {
-    await captureOutput('shopify', ['--help'])
-    return true
+    const output = await captureOutput('shopify', ['app'])
+    // Installed if `app dev` is available globally
+    return output.includes('app dev')
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
@@ -70,7 +71,7 @@ export async function installGlobalCLIIfNeeded(packageManager: PackageManager): 
 /**
  * Infers the package manager used by the global CLI.
  *
- * @param argv - The arguments passed to the process. Defaults to `process.argv`.
+ * @param argv - The arguments passed to the process.
  * @param env - The environment to check. Defaults to `process.env`.
  * @returns The package manager used by the global CLI.
  */
