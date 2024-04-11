@@ -93,23 +93,15 @@ export function buildTomlObject(extension: ExtensionRegistration, allExtensions:
 function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
   allExtensions: ExtensionRegistration[],
-  serialize: (config: T) => {[key: string]: unknown} | undefined,
+  serialize: (config: T, allExtensions: ExtensionRegistration[]) => {[key: string]: unknown} | undefined,
 ) {
   const version = extension.activeVersion ?? extension.draftVersion
   const versionConfig = version?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const dashboardConfig: T = JSON.parse(versionConfig)
 
-  const cliConfig = serialize(dashboardConfig)
+  const cliConfig = serialize(dashboardConfig, allExtensions)
   if (cliConfig) delete cliConfig.api_version
-  if (cliConfig && !cliConfig.ui_extension_handle && 'ui_extension_registration_uuid' in dashboardConfig) {
-    const uiExtensionTitle = allExtensions.find(
-      (ext) => ext.uuid === dashboardConfig.ui_extension_registration_uuid,
-    )?.title
-    if (uiExtensionTitle) {
-      cliConfig.ui_extension_handle = slugify(uiExtensionTitle)
-    }
-  }
 
   const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
 

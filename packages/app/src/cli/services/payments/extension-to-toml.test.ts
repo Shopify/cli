@@ -35,7 +35,7 @@ const expectIncludesKeys = (got: string, config: string) => {
   const keys = Object.keys(configObj)
   for (const key of keys) {
     if (configObj[key] === null) continue
-    if (key == 'ui_extension_registration_uuid') continue
+    if (key === 'ui_extension_registration_uuid') continue
     if (Array.isArray(configObj[key]) && configObj[key].length === 0) continue
     const translatedKey = translateDeployConfigKeyToCLI(key)
     expect(got).toContain(translatedKey)
@@ -57,7 +57,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1])
 
     // Then
     expectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)

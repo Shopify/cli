@@ -3,6 +3,8 @@ import {
   BasePaymentsAppExtensionDeployConfigType,
   BuyerLabelSchema,
 } from './base_payments_app_extension_schema.js'
+import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
+import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type RedeemablePaymentsAppExtensionConfigType = zod.infer<typeof RedeemablePaymentsAppExtensionSchema>
@@ -45,7 +47,10 @@ export interface RedeemablePaymentsAppExtensionDeployConfigType extends BasePaym
 
 export function redeemableDeployConfigToCLIConfig(
   config: RedeemablePaymentsAppExtensionDeployConfigType,
+  allExtensions: ExtensionRegistration[],
 ): Omit<RedeemablePaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
+  const uiExtensionHandle = extensionUuidToHandle(config, allExtensions)
+
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,
@@ -65,7 +70,7 @@ export function redeemableDeployConfigToCLIConfig(
       type: field.type,
       required: field.required,
     })),
-    ui_extension_handle: config.ui_extension_handle,
+    ui_extension_handle: uiExtensionHandle,
   }
 }
 

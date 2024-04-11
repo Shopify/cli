@@ -5,6 +5,8 @@ import {
   DeferredPaymentsSchema,
   MultipleCaptureSchema,
 } from './base_payments_app_extension_schema.js'
+import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
+import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
@@ -76,7 +78,10 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
 
 export function creditCardDeployConfigToCLIConfig(
   config: CreditCardPaymentsAppExtensionDeployConfigType,
+  allExtensions: ExtensionRegistration[],
 ): Omit<CreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
+  const uiExtensionHandle = extensionUuidToHandle(config, allExtensions)
+
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,
@@ -95,7 +100,7 @@ export function creditCardDeployConfigToCLIConfig(
     verification_session_url: config.start_verification_session_url,
     encryption_certificate_fingerprint: config.encryption_certificate?.fingerprint,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
-    ui_extension_handle: config.ui_extension_handle,
+    ui_extension_handle: uiExtensionHandle,
   }
 }
 
