@@ -242,6 +242,9 @@ importers:
       '@shopify/app':
         specifier: 3.58.0
         version: link:../app
+      '@shopify/cli-hydrogen':
+        specifier: link:/Users/isaac/src/github.com/Shopify/hydrogen/packages/cli
+        version: link:../../../hydrogen/packages/cli
       '@shopify/cli-kit':
         specifier: 3.58.0
         version: link:../cli-kit

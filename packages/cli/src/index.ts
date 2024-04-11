@@ -15,6 +15,7 @@ import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
+import HydrogenCommands from '@shopify/cli-hydrogen'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
@@ -80,6 +81,7 @@ export const COMMANDS: any = {
   ...ThemeCommands,
   ...PluginPluginsCommands,
   ...DidYouMeanCommands,
+  ...HydrogenCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,

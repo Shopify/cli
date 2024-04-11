@@ -13,6 +13,8 @@ const external = [
   'react-devtools-core',
   // esbuild can't be bundled per design
   'esbuild',
+  'postcss-load-config',
+  'vite',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
