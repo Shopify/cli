@@ -7,6 +7,12 @@
     "shopify-cli",
     "shopify-partners"
   ],
+  "exports": {
+    "./hooks/*": {
+      "import": "./dist/*.js",
+      "require": "./dist/*.d.js"
+    }
+  },
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },

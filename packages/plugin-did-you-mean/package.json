@@ -4,6 +4,12 @@
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "license": "MIT",
   "author": "Shopify",
   "type": "module",
