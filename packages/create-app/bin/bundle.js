@@ -1,16 +1,17 @@
-import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
+import {build as esBuild} from 'esbuild'
 import glob from 'fast-glob'
-import { copy } from 'esbuild-plugin-copy'
+import {copy} from 'esbuild-plugin-copy'
 
 const external = [
-  'react-devtools-core',  // react-devtools-core is a dev dependency,  no need to bundle it but throws errors if not included here.
+  // react-devtools-core is a dev dependency,  no need to bundle it but throws errors if not included here.
+  'react-devtools-core',
 ]
 
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
-await esBuild({
+esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
   outdir: './dist',
@@ -30,13 +31,10 @@ await esBuild({
         {
           from: [yogafile],
           to: ['./dist/'],
-        }
-      ]
+        },
+      ],
     }),
   ],
 })
 
-await cleanBundledDependencies(external)
-
-
-
+cleanBundledDependencies(external)

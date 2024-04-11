@@ -147,7 +147,8 @@
       },
       "packages/app": {
         "entry": [
-          "**/{commands,hooks}/**/*.ts!"
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreDependencies": [

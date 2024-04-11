@@ -1,32 +1,32 @@
-import {build as esBuild} from 'esbuild'
+/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
+/* eslint-disable import/no-extraneous-dependencies */
 import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
+import {build as esBuild} from 'esbuild'
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve'
-import { copy } from 'esbuild-plugin-copy'
+import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
-import path from 'path'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
 
 const external = [
-  'react-devtools-core',  // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
-  'esbuild', // esbuild can't be bundled per design
+  // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
+  'react-devtools-core',
+  // esbuild can't be bundled per design
+  'esbuild',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
-// const ymlFiles = glob.sync('../../node_modules/.pnpm/**/configs/*.yml')
-// console.log(ymlFiles)
-
-await esBuild({
+esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
   outdir: './dist',
   platform: 'node',
   format: 'esm',
   define: {
-    'process.env.WEBPACK_MODE': 'true', // Necessary for theme-check-node to work
+    // Necessary for theme-check-node to work
+    'process.env.WEBPACK_MODE': 'true',
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
@@ -35,7 +35,8 @@ await esBuild({
   plugins: [
     ShopifyVSCodePlugin,
     ShopifyStacktraceyPlugin,
-    requireResolvePlugin(), // To allow using require.resolve in esbuild
+    // To allow using require.resolve in esbuild (we use it for graphiql)
+    requireResolvePlugin(),
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
@@ -64,13 +65,10 @@ await esBuild({
         {
           from: ['../../node_modules/.pnpm/node_modules/@shopify/theme-check-node/configs/*.yml'],
           to: ['./dist/configs/'],
-        }
-      ]
+        },
+      ],
     }),
   ],
 })
 
-await cleanBundledDependencies(external)
-
-
-
+cleanBundledDependencies(external)
