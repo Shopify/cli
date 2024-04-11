@@ -283,5 +283,8 @@
         ]
       }
     }
+  },
+  "dependencies": {
+    "@shopify/cli-hydrogen": "0.0.0-next-f0c58e0-20240411140902"
   }
 }

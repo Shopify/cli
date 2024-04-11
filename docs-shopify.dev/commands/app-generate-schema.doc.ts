@@ -28,8 +28,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appgenerateschema',
   },
   ],
-  category: 'Commands',
-  subCategory: 'app',
+  category: 'app',
   related: [
   ],
 }

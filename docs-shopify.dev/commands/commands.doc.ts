@@ -26,8 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'commands',
   },
   ],
-  category: 'Commands',
-  subCategory: 'common',
+  category: 'Universal commands',
   related: [
   ],
 }

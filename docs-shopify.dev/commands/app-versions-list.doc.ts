@@ -26,8 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appversionslist',
   },
   ],
-  category: 'Commands',
-  subCategory: 'app',
+  category: 'app',
   related: [
   ],
 }
