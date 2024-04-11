@@ -8,6 +8,7 @@ export const SpecificationsQuery = gql`
       externalIdentifier
       experience
       features
+      appModuleLimit
     }
   }
 `
@@ -22,6 +23,7 @@ export interface RemoteSpecification {
   externalIdentifier: string
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
   features?: string[]
+  appModuleLimit: number
 }
 
 export interface SpecificationsQuerySchema {

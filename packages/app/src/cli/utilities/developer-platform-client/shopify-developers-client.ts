@@ -248,7 +248,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         gated: false,
         options: {
           managementExperience: 'cli',
-          registrationLimit: 1,
+          registrationLimit: spec.appModuleLimit,
         },
         experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
       }))
