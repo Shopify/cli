@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-f0c58e0-20240411140902
-        version: 0.0.0-next-f0c58e0-20240411140902(react-dom@17.0.2)(react@17.0.2)
+        specifier: 0.0.0-next-72d1271-20240411165757
+        version: 0.0.0-next-72d1271-20240411165757(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@bugsnag/source-maps':
         specifier: ^2.3.1
@@ -5324,15 +5324,15 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-f0c58e0-20240411140902(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-gmZCYa/9feN34tjknz2hdk52DbEkyo8GEuCWnspAf0tte5yUaAgYsaxYL1kGa0Ulx0/0qZn0AgMpl4CtuCR3rQ==}
+  /@shopify/cli-hydrogen@0.0.0-next-72d1271-20240411165757(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-WobYmWTAZMoB2Et2DmEYVghozF3hTgAJ3tTFlRmO8ozNr4snvFNCTB7FNLYJmwBwUIB4qMDEIazkH+57095GKw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-f0c58e0-20240411140902
-      '@shopify/mini-oxygen': 0.0.0-next-f0c58e0-20240411140902
+      '@shopify/hydrogen-codegen': 0.0.0-next-72d1271-20240411165757
+      '@shopify/mini-oxygen': 0.0.0-next-72d1271-20240411165757
       graphql-config: ^5.0.3
       vite: 4.4.9
     peerDependenciesMeta:
@@ -5557,7 +5557,7 @@ packages:
     dependencies:
       '@bugsnag/core': 7.19.0
       '@bugsnag/js': 7.22.4
-      '@bugsnag/node': 7.19.0
+      '@bugsnag/node': 7.22.3
       '@oclif/core': 3.19.6
       '@shopify/cli-kit': 3.58.0
       async: 3.2.5
