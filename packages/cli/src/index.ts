@@ -15,7 +15,7 @@ import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
-import {commands as PluginCommands} from '@oclif/plugin-plugins'
+import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
@@ -69,13 +69,13 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
 }
 
 // Hide plugins command
-PluginCommands.plugins.hidden = true
+PluginPluginsCommands.plugins.hidden = true
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const COMMANDS: any = {
   ...AppCommands,
   ...ThemeCommands,
-  ...PluginCommands,
+  ...PluginPluginsCommands,
   ...DidYouMeanCommands,
   search: Search,
   upgrade: Upgrade,
