@@ -84,7 +84,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
 describe('isGlobalCLIInstalled', () => {
   test('returns true if the global CLI is installed', async () => {
     // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve(''))
+    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app help includes the `app dev` command'))
 
     // When
     const got = await isGlobalCLIInstalled()
@@ -105,13 +105,24 @@ describe('isGlobalCLIInstalled', () => {
     // Then
     expect(got).toBeFalsy()
   })
+
+  test('returns false if the global CLI is installed but doesnt have app dev command', async () => {
+    // Given
+    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app help that includes something else'))
+
+    // When
+    const got = await isGlobalCLIInstalled()
+
+    // Then
+    expect(got).toBeFalsy()
+  })
 })
 
 describe('installGlobalCLIIfNeeded', () => {
   test('returns true if the global CLI is already installed', async () => {
     // Given
     // Global CLI is already installed
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve(''))
+    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app dev'))
 
     // When
     const got = await installGlobalCLIIfNeeded('npm')
