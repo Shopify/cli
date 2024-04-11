@@ -24,14 +24,14 @@
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMAND]`](#shopify-help-command)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
-* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
+* [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
-* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
-* [`shopify plugins:link PLUGIN`](#shopify-pluginslink-plugin)
-* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin)
+* [`shopify plugins install PLUGIN`](#shopify-plugins-install-plugin)
+* [`shopify plugins link PATH`](#shopify-plugins-link-path)
+* [`shopify plugins remove [PLUGIN]`](#shopify-plugins-remove-plugin)
 * [`shopify plugins reset`](#shopify-plugins-reset)
-* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
-* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
+* [`shopify plugins uninstall [PLUGIN]`](#shopify-plugins-uninstall-plugin)
+* [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
@@ -697,46 +697,51 @@ USAGE
   $ shopify hydrogen init
 ```
 
-## `shopify plugins:install PLUGIN...`
+## `shopify plugins add PLUGIN`
 
-Installs a plugin into the CLI.
+Installs a plugin into shopify.
 
 ```
 USAGE
-  $ shopify plugins add plugins:install PLUGIN...
+  $ shopify plugins add PLUGIN [-f] [-h] [--json] [-s | -v]
 
 ARGUMENTS
   PLUGIN  Plugin to install.
 
 FLAGS
-  -f, --force    Run yarn install with force flag.
+  -f, --force    Force npm to fetch remote resources even if a local copy exists on disk.
   -h, --help     Show CLI help.
-  -s, --silent   Silences yarn output.
-  -v, --verbose  Show verbose yarn output.
+  -s, --silent   Silences npm output.
+  -v, --verbose  Show verbose npm output.
 
 GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Installs a plugin into the CLI.
-  Can be installed from npm or a git url.
+  Installs a plugin into shopify.
+
+  Uses bundled npm executable to install plugins into /Users/isaac/.local/share/@shopify/cli
 
   Installation of a user-installed plugin will override a core plugin.
 
-  e.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command
-  will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in
-  the CLI without the need to patch and update the whole CLI.
-
+  Use the SHOPIFY_NPM_LOG_LEVEL environment variable to set the npm loglevel.
+  Use the SHOPIFY_NPM_REGISTRY environment variable to set the npm registry.
 
 ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins add myplugin 
+  Install a plugin from npm registry.
 
-  $ shopify plugins add https://github.com/someuser/someplugin
+    $ shopify plugins add myplugin
 
-  $ shopify plugins add someuser/someplugin
+  Install a plugin from a github url.
+
+    $ shopify plugins add https://github.com/someuser/someplugin
+
+  Install a plugin from a github slug.
+
+    $ shopify plugins add someuser/someplugin
 ```
 
 ## `shopify plugins:inspect PLUGIN...`
@@ -764,55 +769,60 @@ EXAMPLES
   $ shopify plugins inspect myplugin
 ```
 
-## `shopify plugins:install PLUGIN...`
+## `shopify plugins install PLUGIN`
 
-Installs a plugin into the CLI.
+Installs a plugin into shopify.
 
 ```
 USAGE
-  $ shopify plugins install PLUGIN...
+  $ shopify plugins install PLUGIN [-f] [-h] [--json] [-s | -v]
 
 ARGUMENTS
   PLUGIN  Plugin to install.
 
 FLAGS
-  -f, --force    Run yarn install with force flag.
+  -f, --force    Force npm to fetch remote resources even if a local copy exists on disk.
   -h, --help     Show CLI help.
-  -s, --silent   Silences yarn output.
-  -v, --verbose  Show verbose yarn output.
+  -s, --silent   Silences npm output.
+  -v, --verbose  Show verbose npm output.
 
 GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Installs a plugin into the CLI.
-  Can be installed from npm or a git url.
+  Installs a plugin into shopify.
+
+  Uses bundled npm executable to install plugins into /Users/isaac/.local/share/@shopify/cli
 
   Installation of a user-installed plugin will override a core plugin.
 
-  e.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command
-  will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in
-  the CLI without the need to patch and update the whole CLI.
-
+  Use the SHOPIFY_NPM_LOG_LEVEL environment variable to set the npm loglevel.
+  Use the SHOPIFY_NPM_REGISTRY environment variable to set the npm registry.
 
 ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins install myplugin 
+  Install a plugin from npm registry.
 
-  $ shopify plugins install https://github.com/someuser/someplugin
+    $ shopify plugins install myplugin
 
-  $ shopify plugins install someuser/someplugin
+  Install a plugin from a github url.
+
+    $ shopify plugins install https://github.com/someuser/someplugin
+
+  Install a plugin from a github slug.
+
+    $ shopify plugins install someuser/someplugin
 ```
 
-## `shopify plugins:link PLUGIN`
+## `shopify plugins link PATH`
 
 Links a plugin into the CLI for development.
 
 ```
 USAGE
-  $ shopify plugins link PLUGIN
+  $ shopify plugins link PATH [-h] [--install] [-v]
 
 ARGUMENTS
   PATH  [default: .] path to plugin
@@ -834,13 +844,13 @@ EXAMPLES
   $ shopify plugins link myplugin
 ```
 
-## `shopify plugins:uninstall PLUGIN...`
+## `shopify plugins remove [PLUGIN]`
 
 Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins remove plugins:uninstall PLUGIN...
+  $ shopify plugins remove [PLUGIN] [-h] [-v]
 
 ARGUMENTS
   PLUGIN  plugin to uninstall
@@ -873,13 +883,13 @@ FLAGS
   --reinstall  Reinstall all plugins after uninstalling.
 ```
 
-## `shopify plugins:uninstall PLUGIN...`
+## `shopify plugins uninstall [PLUGIN]`
 
 Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins uninstall PLUGIN...
+  $ shopify plugins uninstall [PLUGIN] [-h] [-v]
 
 ARGUMENTS
   PLUGIN  plugin to uninstall
@@ -899,13 +909,13 @@ EXAMPLES
   $ shopify plugins uninstall myplugin
 ```
 
-## `shopify plugins:uninstall PLUGIN...`
+## `shopify plugins unlink [PLUGIN]`
 
 Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins unlink plugins:uninstall PLUGIN...
+  $ shopify plugins unlink [PLUGIN] [-h] [-v]
 
 ARGUMENTS
   PLUGIN  plugin to uninstall
