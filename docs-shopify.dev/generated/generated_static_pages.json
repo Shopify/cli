@@ -1,7 +1,7 @@
 [
   {
     "title": "Shopify CLI",
-    "description": "Shopify CLI is a command-line interface tool that helps you build Shopify apps and themes. It quickly generates Shopify apps, themes, and custom storefronts. You can also use it to automate many common development tasks.",
+    "description": "Shopify CLI is a command-line interface tool that helps you generate and work with Shopify apps, themes and custom storefronts. You can also use it to automate many common development tasks.",
     "id": "Shopify CLI",
     "image": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
     "darkImage": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
@@ -10,13 +10,28 @@
         "type": "Generic",
         "anchorLink": "requirements",
         "title": "Requirements",
-        "sectionContent": "- Node.js version 18.12.0 or higher\n- Ruby version 2.7.2 or higher (Only for theme commands)\n- Git version 2.28.0 or higher"
+        "sectionContent": "\n- [Node.js](https://nodejs.org/en/download/) version 18.16.0 or higher\n- [Git](https://git-scm.com/downloads) version 2.28.0 or higher\n\nOnly for theme commands:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher\n\nOnly for theme commands on Windows:\n- Ruby+Devkit 3.0, installed using [RubyInstaller for Windows](https://rubyinstaller.org/downloads/) (select the MSYS2 component and the MSYS2 base installation option)\n\nIf you're using Linux and themes, then follow the instructions on the side to install the required dependencies. Otherwise, you can continue to the [installation](#installation) step.\n",
+        "codeblock": {
+          "title": "Install requirements for themes on Linux",
+          "tabs": [
+            {
+              "title": "apt",
+              "code": "\nsudo apt update && sudo apt upgrade\n\nsudo apt install curl gcc g++ make\n\nsudo apt install ruby-full\n\nsudo apt install ruby-dev\n# Ruby development environment\n\nsudo apt install git\n",
+              "language": "bash"
+            },
+            {
+              "title": "yum",
+              "code": "sudo yum install curl\n\nsudo yum group install \"Development Tools\"\n# includes GCC, g++, and Make\n\nsudo yum install ruby\nsudo yum install ruby-devel\n# Ruby development environment\n\nsudo yum install git\n",
+              "language": "bash"
+            }
+          ]
+        }
       },
       {
         "type": "Generic",
         "anchorLink": "installation",
         "title": "Installation",
-        "sectionContent": "This installs Shopify CLI globally, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.\n\nFor app development you can also install the CLI locally to your project, find out more about that [Here](/docs/apps/getting-started/installation).",
+        "sectionContent": "This installs Shopify CLI globally on your system, so you can run `shopify` commands from any directory. Find out more about the available commands by running `shopify` in your terminal.",
         "codeblock": {
           "title": "",
           "tabs": [
@@ -27,7 +42,7 @@
             },
             {
               "title": "yarn",
-              "code": "yarn add global @shopify/cli\n",
+              "code": "yarn global add @shopify/cli\n",
               "language": "bash"
             },
             {
@@ -47,7 +62,7 @@
         "type": "Generic",
         "anchorLink": "Commands",
         "title": "Commands",
-        "sectionContent": "\nShopify CLI groups commands into topics and this is the syntax to run them: `shopify [topic] [command]`.\nCheck out the [Commands](/docs/api/shopify-cli/commands) section to see the list of commands available for each topic.\n\nOr run the `help` command to get this information right in your terminal\n",
+        "sectionContent": "\nShopify CLI groups commands into topics. The command syntax is: `shopify [topic] [command]`.\nRefer to the commands sections in the sidebar for the lists of available commands for each topic.\n\nOr, run the `help` command to get this information right in your terminal.\n",
         "codeblock": {
           "title": "terminal",
           "tabs": [
@@ -61,8 +76,8 @@
       {
         "type": "Generic",
         "anchorLink": "upgrade",
-        "sectionContent": "We recommend to always use the latest version of the CLI if possible, run `version` to check the current version and if there are any updates available. Then run the same install command to upgrade to the latest CLI version.",
-        "title": "Upgrade your CLI",
+        "sectionContent": "We recommend that you always use the latest version of Shopify CLI if possible. To upgrade, run `version` to check the current version and determine if there are any updates available. Run the [install](#installation) command to upgrade to the latest CLI version.",
+        "title": "Upgrade Shopify CLI",
         "codeblock": {
           "title": "terminal",
           "tabs": [
@@ -81,15 +96,15 @@
       },
       {
         "type": "Generic",
-        "anchorLink": "contributing",
-        "title": "Contributing to Shopify CLI",
+        "anchorLink": "contribute",
+        "title": "Contribute to Shopify CLI",
         "sectionContent": "Shopify CLI is open source. [Learn how to contribute](https://github.com/Shopify/cli/wiki/Contributors:-Introduction) to our GitHub repository."
       },
       {
         "type": "Generic",
         "anchorLink": "help",
         "title": "Where to get help",
-        "sectionContent": "\n- [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.\n- [Shopify Community Forums](https://community.shopify.com/?shpxid=f84767ac-02DB-40B4-E6CB-AAF9AB7659DA) - Visit our forums to connect with the community and learn more about Shopify CLI development.\n"
+        "sectionContent": "\n- [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.\n- [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.\n"
       },
       {
         "type": "Resource",
@@ -103,7 +118,7 @@
             "type": "component"
           },
           {
-            "name": "Create an app",
+            "name": "Start building an app",
             "subtitle": "Learn how to set up your app development environment and start building",
             "url": "/docs/apps/getting-started/create",
             "type": "tutorial"
