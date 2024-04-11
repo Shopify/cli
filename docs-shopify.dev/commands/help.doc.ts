@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'help',
-  description: `Display help for <%= config.bin %>.`,
-  overviewPreviewDescription: `Display help for <%= config.bin %>.`,
+  description: `Display help for Shopify CLI`,
+  overviewPreviewDescription: `Display help for Shopify CLI`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

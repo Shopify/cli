@@ -1851,6 +1851,7 @@ wrong = "property"
       expect.objectContaining({
         webhooks: {
           api_version: '2023-07',
+          subscriptions: [],
         },
       }),
       expect.objectContaining({

@@ -1,4 +1,4 @@
-import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
+import {getExtensions} from './fetch-extensions.js'
 import {testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {MinimalAppIdentifiers} from '../models/organization.js'
@@ -55,7 +55,7 @@ describe('getActiveDashboardExtensions', (it) => {
     })
 
     // When
-    const got = await getActiveDashboardExtensions({
+    const got = await getExtensions({
       developerPlatformClient,
       apiKey: 'apiKey',
       organizationId: '1',

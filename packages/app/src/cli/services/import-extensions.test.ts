@@ -1,6 +1,6 @@
 import {importExtensions} from './import-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
-import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
+import {getExtensions} from './fetch-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
 import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -12,7 +12,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
-vi.mock('./fetch-dashboard-extensions.js')
+vi.mock('./fetch-extensions.js')
 vi.mock('./context/partner-account-info.js')
 
 const organizationApp: OrganizationApp = {
@@ -54,7 +54,7 @@ describe('import-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
+    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
 
     // When
@@ -85,7 +85,7 @@ describe('import-extensions', () => {
   test('selecting All imports all extensions', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
+    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
 
     // When
@@ -116,7 +116,7 @@ describe('import-extensions', () => {
   test('Show message if there are not extensions to migrate', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getActiveDashboardExtensions).mockResolvedValue([])
+    vi.mocked(getExtensions).mockResolvedValue([])
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {

@@ -1,6 +1,6 @@
 import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
-import {getActiveDashboardExtensions} from './fetch-dashboard-extensions.js'
+import {getExtensions} from './fetch-extensions.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -24,7 +24,7 @@ export async function importExtensions(options: ImportOptions) {
 
   await logMetadataForLoadedContext(remoteApp)
 
-  const extensions = await getActiveDashboardExtensions({
+  const extensions = await getExtensions({
     developerPlatformClient,
     apiKey: remoteApp.apiKey,
     organizationId: remoteApp.organizationId,
