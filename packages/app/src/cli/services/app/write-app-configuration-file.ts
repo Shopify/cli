@@ -43,7 +43,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
     entries.forEach(([key, subSchema]) => {
       if (confObj !== undefined && confObj[key] !== undefined) {
         let value = rewriteConfiguration(subSchema as T, confObj[key])
-        if (value instanceof Object && Object.keys(value as object).length === 0) {
+        if (!(value instanceof Array) && value instanceof Object && Object.keys(value as object).length === 0) {
           value = undefined
         }
         result = {...result, [key]: value}
