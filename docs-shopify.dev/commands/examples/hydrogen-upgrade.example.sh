@@ -1,1 +1,0 @@
-shopify hydrogen upgrade [flags]

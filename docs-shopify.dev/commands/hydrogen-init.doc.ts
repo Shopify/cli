@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen init',
-  description: `Creates a new Hydrogen storefront.`,
-  overviewPreviewDescription: `Creates a new Hydrogen storefront.`,
+  description: `Create a new hydrogen project`,
+  overviewPreviewDescription: `Create a new hydrogen project`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
@@ -20,11 +20,6 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `hydrogen init` command:',
-    type: 'hydrogeninit',
-  },
   ],
   category: 'hydrogen commands',
   related: [

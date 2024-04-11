@@ -1,1 +1,0 @@
-shopify hydrogen env push [flags]
