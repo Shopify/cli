@@ -2066,7 +2066,7 @@
           "required": true
         }
       },
-      "description": "Uses bundled npm executable to install plugins into <%= config.dataDir %>\n\nInstallation of a user-installed plugin will override a core plugin.\n\nUse the <%= config.scopedEnvVarKey('NPM_LOG_LEVEL') %> environment variable to set the npm loglevel.\nUse the <%= config.scopedEnvVarKey('NPM_REGISTRY') %> environment variable to set the npm registry.",
+      "description": "",
       "enableJsonFlag": true,
       "examples": [
         {

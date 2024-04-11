@@ -71,6 +71,9 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
 // Hide plugins command
 PluginPluginsCommands.plugins.hidden = true
 
+// Remove default description because it injects a path from the generating computer, making it fail on CI
+PluginPluginsCommands['plugins:install'].description = ''
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const COMMANDS: any = {
   ...AppCommands,
