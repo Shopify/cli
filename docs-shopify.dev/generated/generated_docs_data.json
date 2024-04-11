@@ -1101,6 +1101,95 @@
       }
     ],
     "category": "app",
+<<<<<<< HEAD
+=======
+    "related": []
+  },
+  {
+    "name": "app generate schema",
+    "description": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
+    "overviewPreviewDescription": "Fetch the latest GraphQL schema for a function.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app generate schema",
+            "code": "shopify app generate schema [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app generate schema"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app generate schema` command:",
+        "type": "appgenerateschema",
+        "typeDefinitions": {
+          "appgenerateschema": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+            "name": "appgenerateschema",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID to fetch the schema with.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--stdout",
+                "value": "\"\"",
+                "description": "Output the schema to stdout instead of writing to a file.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appgenerateschema {\n  /**\n   * The Client ID to fetch the schema with.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output the schema to stdout instead of writing to a file.\n   */\n  '--stdout'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "app",
+>>>>>>> main
     "related": []
   },
   {
@@ -1269,8 +1358,13 @@
   },
   {
     "name": "app init",
+<<<<<<< HEAD
     "description": "Create a new Shopify app project.",
     "overviewPreviewDescription": "Create a new Shopify app project.",
+=======
+    "description": "Create a new app project",
+    "overviewPreviewDescription": "Create a new app project",
+>>>>>>> main
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -5357,7 +5451,35 @@
         "title": "upgrade"
       }
     },
+<<<<<<< HEAD
     "definitions": [],
+=======
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `upgrade` command:",
+        "type": "upgrade",
+        "typeDefinitions": {
+          "upgrade": {
+            "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
+            "name": "upgrade",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your project directory.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface upgrade {\n  /**\n   * The path to your project directory.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+>>>>>>> main
     "category": "Universal commands",
     "related": []
   },

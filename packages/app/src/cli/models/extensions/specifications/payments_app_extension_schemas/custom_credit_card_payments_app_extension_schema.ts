@@ -3,6 +3,8 @@ import {
   BasePaymentsAppExtensionDeployConfigType,
   ConfirmationSchema,
 } from './base_payments_app_extension_schema.js'
+import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
+import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
@@ -47,6 +49,7 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
 
   multiple_capture: boolean
   checkout_hosted_fields?: string[]
+  ui_extension_registration_uuid?: string
   ui_extension_handle?: string
   encryption_certificate?: {
     fingerprint: string
@@ -61,7 +64,10 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
 
 export function customCreditCardDeployConfigToCLIConfig(
   config: CustomCreditCardPaymentsAppExtensionDeployConfigType,
+  allExtensions: ExtensionRegistration[],
 ): Omit<CustomCreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
+  const uiExtensionHandle = extensionUuidToHandle(config, allExtensions)
+
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,
@@ -78,7 +84,7 @@ export function customCreditCardDeployConfigToCLIConfig(
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     checkout_hosted_fields: config.checkout_hosted_fields,
-    ui_extension_handle: config.ui_extension_handle,
+    ui_extension_handle: uiExtensionHandle,
   }
 }
 

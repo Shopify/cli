@@ -110,7 +110,8 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
-      "esbuild"
+      "esbuild",
+      "@shopify/cli-hydrogen"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
@@ -293,6 +294,6 @@
     }
   },
   "dependencies": {
-    "@shopify/cli-hydrogen": "0.0.0-next-42d3c60-20240411155900"
+    "@shopify/cli-hydrogen": "0.0.0-next-72d1271-20240411165757"
   }
 }

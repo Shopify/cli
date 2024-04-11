@@ -123,7 +123,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'topictestcommand',
   },
   ],
-  category: 'topic commands',
+  category: 'topic',
   related: [
   ],
 }
