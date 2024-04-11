@@ -19,6 +19,7 @@
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
+* [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
@@ -611,6 +612,37 @@ USAGE
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
+```
+
+## `shopify commands`
+
+list all the commands
+
+```
+USAGE
+  $ shopify commands [--columns <value> | -x] [--deprecated] [--filter <value>] [-h] [--hidden] [--json]
+    [--no-header | [--csv | --no-truncate]] [--output csv|json|yaml |  | ] [--sort <value>] [--tree]
+
+FLAGS
+  -h, --help             Show CLI help.
+  -x, --extended         show extra columns
+      --columns=<value>  only show provided columns (comma-separated)
+      --csv              output is csv format [alias: --output=csv]
+      --deprecated       show deprecated commands
+      --filter=<value>   filter property by partial string matching, ex: name=foo
+      --hidden           show hidden commands
+      --no-header        hide table header from output
+      --no-truncate      do not truncate output to fit screen
+      --output=<option>  output in a more machine friendly format
+                         <options: csv|json|yaml>
+      --sort=<value>     property to sort by (prepend '-' for descending)
+      --tree             show tree of commands
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  list all the commands
 ```
 
 ## `shopify config autocorrect off`

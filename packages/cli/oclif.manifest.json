@@ -1696,6 +1696,133 @@
       "pluginType": "core",
       "strict": true
     },
+    "commands": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "list all the commands",
+      "enableJsonFlag": true,
+      "flags": {
+        "columns": {
+          "description": "only show provided columns (comma-separated)",
+          "exclusive": [
+            "extended"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "columns",
+          "type": "option"
+        },
+        "csv": {
+          "allowNo": false,
+          "description": "output is csv format [alias: --output=csv]",
+          "exclusive": [
+            "no-truncate"
+          ],
+          "name": "csv",
+          "type": "boolean"
+        },
+        "deprecated": {
+          "allowNo": false,
+          "description": "show deprecated commands",
+          "name": "deprecated",
+          "type": "boolean"
+        },
+        "extended": {
+          "allowNo": false,
+          "char": "x",
+          "description": "show extra columns",
+          "exclusive": [
+            "columns"
+          ],
+          "name": "extended",
+          "type": "boolean"
+        },
+        "filter": {
+          "description": "filter property by partial string matching, ex: name=foo",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "filter",
+          "type": "option"
+        },
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "hidden": {
+          "allowNo": false,
+          "description": "show hidden commands",
+          "name": "hidden",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "Format output as json.",
+          "helpGroup": "GLOBAL",
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-header": {
+          "allowNo": false,
+          "description": "hide table header from output",
+          "exclusive": [
+            "csv"
+          ],
+          "name": "no-header",
+          "type": "boolean"
+        },
+        "no-truncate": {
+          "allowNo": false,
+          "description": "do not truncate output to fit screen",
+          "exclusive": [
+            "csv"
+          ],
+          "name": "no-truncate",
+          "type": "boolean"
+        },
+        "output": {
+          "description": "output in a more machine friendly format",
+          "exclusive": [
+            "no-truncate",
+            "csv"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "output",
+          "options": [
+            "csv",
+            "json",
+            "yaml"
+          ],
+          "type": "option"
+        },
+        "sort": {
+          "description": "property to sort by (prepend '-' for descending)",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "sort",
+          "type": "option"
+        },
+        "tree": {
+          "allowNo": false,
+          "description": "show tree of commands",
+          "name": "tree",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "commands",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "config:autocorrect:off": {
       "aliases": [
       ],
