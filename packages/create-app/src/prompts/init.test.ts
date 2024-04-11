@@ -1,4 +1,4 @@
-import init from './init.js'
+import init, {InitOptions} from './init.js'
 import {describe, expect, vi, test} from 'vitest'
 import {renderSelectPrompt, renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -9,7 +9,7 @@ describe('init', () => {
     const answers = {
       name: 'app',
     }
-    const options = {template: 'template', directory: '/'}
+    const options: InitOptions = {template: 'template', directory: '/', packageManager: 'npm'}
 
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.name)
@@ -33,7 +33,7 @@ describe('init', () => {
     const answers = {
       template: 'https://github.com/Shopify/shopify-app-template-remix',
     }
-    const options = {name: 'app', directory: '/'}
+    const options: InitOptions = {template: 'app', directory: '/', packageManager: 'npm'}
 
     // When
     const got = await init(options)
@@ -51,7 +51,7 @@ describe('init', () => {
       name: 'app',
       template: 'https://github.com/Shopify/shopify-app-template-none',
     }
-    const options = {directory: '/'}
+    const options: InitOptions = {directory: '/', packageManager: 'npm'}
 
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.name)
@@ -77,7 +77,7 @@ describe('init', () => {
       name: 'app',
       template: 'https://github.com/Shopify/shopify-app-template-remix#javascript',
     }
-    const options = {directory: '/'}
+    const options: InitOptions = {directory: '/', packageManager: 'npm'}
 
     // Given
     vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.name)

@@ -3,7 +3,7 @@ import {installGlobalCLIIfNeeded} from '@shopify/cli-kit/node/is-global'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-interface InitOptions {
+export interface InitOptions {
   name?: string
   template?: string
   flavor?: string
