@@ -37,9 +37,7 @@ export async function isGlobalCLIInstalled(): Promise<boolean> {
  */
 async function installGlobalShopifyCLI(packageManager: PackageManager): Promise<void> {
   const args =
-    packageManager === 'yarn'
-      ? ['global', 'add', '@shopify/cli@experimental']
-      : ['install', '-g', '@shopify/cli@experimental']
+    packageManager === 'yarn' ? ['global', 'add', '@shopify/cli@latest'] : ['install', '-g', '@shopify/cli@latest']
   outputInfo(`Running ${packageManager} ${args.join(' ')}...`)
   await exec(packageManager, args, {stdio: 'inherit'})
 }
@@ -71,13 +69,15 @@ export async function installGlobalCLIIfNeeded(packageManager: PackageManager): 
 /**
  * Infers the package manager used by the global CLI.
  *
+ * @param argv - The arguments passed to the process. Defaults to `process.argv`.
+ * @param env - The environment to check. Defaults to `process.env`.
  * @returns The package manager used by the global CLI.
  */
-export function inferPackageManagerForGlobalCLI(): PackageManager {
-  if (!currentProcessIsGlobal()) return 'unknown'
+export function inferPackageManagerForGlobalCLI(argv = process.argv, env = process.env): PackageManager {
+  if (!currentProcessIsGlobal(env)) return 'unknown'
 
   // argv[1] contains the path of the executed binary
-  const processArgv = process.argv[1] ?? ''
+  const processArgv = argv[1] ?? ''
   if (processArgv.includes('yarn')) return 'yarn'
   if (processArgv.includes('pnpm')) return 'pnpm'
   if (processArgv.includes('bun')) return 'bun'
