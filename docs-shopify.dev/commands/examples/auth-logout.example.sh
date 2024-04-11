@@ -1,1 +1,1 @@
-shopify auth logout [flags]
+shopify auth logout
