@@ -15,7 +15,7 @@ interface ImportOptions {
   apiKey?: string
   developerPlatformClient?: DeveloperPlatformClient
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration, appModules: ExtensionRegistration[]) => string
+  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
 }
 
 export async function importExtensions(options: ImportOptions) {

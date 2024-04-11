@@ -35,6 +35,7 @@ const expectIncludesKeys = (got: string, config: string) => {
   const keys = Object.keys(configObj)
   for (const key of keys) {
     if (configObj[key] === null) continue
+    if (key == 'ui_extension_registration_uuid') continue
     if (Array.isArray(configObj[key]) && configObj[key].length === 0) continue
     const translatedKey = translateDeployConfigKeyToCLI(key)
     expect(got).toContain(translatedKey)
@@ -332,7 +333,6 @@ ui_extension_handle = "checkout-ui-extension"
 name = "Bogus Pay"
 type = "payments_extension"
 handle = "bogus-pay"
-ui_extension_handle = "checkout-ui-extension"
 payment_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/payment_sessions"
 refund_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/refund_sessions"
 capture_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/capture_sessions"

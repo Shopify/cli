@@ -92,7 +92,7 @@ export function buildTomlObject(extension: ExtensionRegistration, allExtensions:
  */
 function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
-  appModules: ExtensionRegistration[],
+  allExtensions: ExtensionRegistration[],
   serialize: (config: T) => {[key: string]: unknown} | undefined,
 ) {
   const version = extension.activeVersion ?? extension.draftVersion
@@ -103,8 +103,8 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   const cliConfig = serialize(dashboardConfig)
   if (cliConfig) delete cliConfig.api_version
   if (cliConfig && !cliConfig.ui_extension_handle && 'ui_extension_registration_uuid' in dashboardConfig) {
-    const uiExtensionTitle = appModules.find(
-      (module) => module.uuid === dashboardConfig.ui_extension_registration_uuid,
+    const uiExtensionTitle = allExtensions.find(
+      (ext) => ext.uuid === dashboardConfig.ui_extension_registration_uuid,
     )?.title
     if (uiExtensionTitle) {
       cliConfig.ui_extension_handle = slugify(uiExtensionTitle)

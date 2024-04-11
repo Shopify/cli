@@ -16,7 +16,7 @@ interface MigrationChoice {
   label: string
   value: string
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration, appModules: ExtensionRegistration[]) => string
+  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
 }
 
 const migrationChoices: MigrationChoice[] = [
