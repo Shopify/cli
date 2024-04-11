@@ -109,7 +109,8 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
-      "esbuild"
+      "esbuild",
+      "@shopify/cli-hydrogen"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
