@@ -12,16 +12,11 @@ type Config =
   | RedeemablePaymentsAppExtensionDeployConfigType
 
 export function extensionUuidToHandle(config: Config, allExtensions: ExtensionRegistration[]) {
-  const copyConfig = {...config}
-  let uiExtensionHandle = copyConfig.ui_extension_handle
-
-  if ('ui_extension_registration_uuid' in copyConfig) {
-    const uiExtensionTitle = allExtensions.find((ext) => ext.uuid === copyConfig.ui_extension_registration_uuid)?.title
-
-    if (uiExtensionTitle && !uiExtensionHandle) {
-      uiExtensionHandle = slugify(uiExtensionTitle)
-    }
+  const uiExtensionHandle = config.ui_extension_handle
+  if (uiExtensionHandle || 'ui_extension_registration_uuid' in config === false) {
+    return uiExtensionHandle
   }
 
-  return uiExtensionHandle
+  const uiExtensionTitle = allExtensions.find((ext) => ext.uuid === config.ui_extension_registration_uuid)?.title
+  return uiExtensionTitle ? slugify(uiExtensionTitle) : uiExtensionHandle
 }
