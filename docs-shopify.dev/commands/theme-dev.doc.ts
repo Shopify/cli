@@ -45,7 +45,7 @@ You can run this command only in a directory that matches the [default Shopify t
     type: 'themedev',
   },
   ],
-  category: 'theme commands',
+  category: 'theme',
   related: [
   ],
 }

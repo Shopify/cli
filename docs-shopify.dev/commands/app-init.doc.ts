@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appinit',
   },
   ],
-  category: 'app commands',
+  category: 'app',
   related: [
   ],
 }

@@ -29,7 +29,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appconfiglink',
   },
   ],
-  category: 'app commands',
+  category: 'app',
   related: [
   ],
 }

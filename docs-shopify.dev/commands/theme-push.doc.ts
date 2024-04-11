@@ -53,7 +53,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themepush',
   },
   ],
-  category: 'theme commands',
+  category: 'theme',
   related: [
   ],
 }

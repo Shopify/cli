@@ -50,7 +50,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     type: 'appdev',
   },
   ],
-  category: 'app commands',
+  category: 'app',
   related: [
   ],
 }

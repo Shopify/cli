@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themecheck',
   },
   ],
-  category: 'theme commands',
+  category: 'theme',
   related: [
   ],
 }

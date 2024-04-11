@@ -1,1 +1,1 @@
-shopify hydrogen init
+shopify hydrogen init [flags]
