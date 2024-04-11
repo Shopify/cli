@@ -29,7 +29,7 @@ Given('I have a working directory', async function () {
   // Because of that, the projects that we create from acceptance tests fail to
   // install dependencies because the package manager doesn't know which package registry
   // to resolve the packages from. This line mitigates the issue.
-  const npmrc = '//registry.npmjs.org/'
+  const npmrc = '//registry.npmjs.org/\nengine-strict=false\n'
   await writeFile(path.join(this.temporaryDirectory, '.npmrc'), npmrc)
 })
 

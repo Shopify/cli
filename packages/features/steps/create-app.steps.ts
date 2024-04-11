@@ -48,6 +48,7 @@ When(
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
     // we need to disable this on CI otherwise pnpm will crash complaining that there is no lockfile
     await fs.appendFile(path.join(this.appDirectory, '.npmrc'), 'frozen-lockfile=false\n')
+    await fs.appendFile(path.join(this.appDirectory, '.npmrc'), 'engine-strict=false\n')
   },
 )
 
