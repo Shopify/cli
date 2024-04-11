@@ -50,29 +50,37 @@ export enum DashboardPaymentExtensionType {
   Redeemable = 'payments_app_redeemable',
 }
 
-export function buildTomlObject(extension: ExtensionRegistration): string {
+export function buildTomlObject(extension: ExtensionRegistration, allExtensions: ExtensionRegistration[]): string {
   const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
   switch (context) {
     case OFFSITE_TARGET:
-      return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(extension, offsiteDeployConfigToCLIConfig)
+      return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(
+        extension,
+        allExtensions,
+        offsiteDeployConfigToCLIConfig,
+      )
     case CREDIT_CARD_TARGET:
       return buildPaymentsToml<CreditCardPaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         creditCardDeployConfigToCLIConfig,
       )
     case CUSTOM_CREDIT_CARD_TARGET:
       return buildPaymentsToml<CustomCreditCardPaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         customCreditCardDeployConfigToCLIConfig,
       )
     case CUSTOM_ONSITE_TARGET:
       return buildPaymentsToml<CustomOnsitePaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         customOnsiteDeployConfigToCLIConfig,
       )
     case REDEEMABLE_TARGET:
       return buildPaymentsToml<RedeemablePaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         redeemableDeployConfigToCLIConfig,
       )
     default:
@@ -84,6 +92,7 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
  */
 function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
+  appModules: ExtensionRegistration[],
   serialize: (config: T) => {[key: string]: unknown} | undefined,
 ) {
   const version = extension.activeVersion ?? extension.draftVersion
@@ -93,6 +102,12 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
 
   const cliConfig = serialize(dashboardConfig)
   if (cliConfig) delete cliConfig.api_version
+  if (cliConfig && !cliConfig.ui_extension_handle) {
+    const uiExtensionTitle = appModules.find((module) => module.uuid === extension.uuid)?.title
+    if (uiExtensionTitle) {
+      cliConfig.ui_extension_handle = slugify(uiExtensionTitle)
+    }
+  }
 
   const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
 

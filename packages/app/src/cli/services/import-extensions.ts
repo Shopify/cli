@@ -15,7 +15,7 @@ interface ImportOptions {
   apiKey?: string
   developerPlatformClient?: DeveloperPlatformClient
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration) => string
+  buildTomlObject: (ext: ExtensionRegistration, appModules: ExtensionRegistration[]) => string
 }
 
 export async function importExtensions(options: ImportOptions) {
@@ -48,7 +48,7 @@ export async function importExtensions(options: ImportOptions) {
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = options.buildTomlObject(ext)
+    const tomlObject = options.buildTomlObject(ext, extensions)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid
