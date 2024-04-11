@@ -5,13 +5,13 @@ import {describe, expect, test} from 'vitest'
 const SAMPLE_OFFSITE_CONFIG =
   '{"start_payment_session_url":"https://bogus-app/payment-sessions/start","start_refund_session_url":"https://bogus-app/payment-sessions/refund","start_capture_session_url":"https://bogus-app/payment-sessions/capture","start_void_session_url":"https://bogus-app/payment-sessions/void","confirmation_callback_url":"https://bogus-app/payment-sessions/confirm","supported_payment_methods":["visa","master","american_express","discover","diners_club","jcb"],"supported_countries":["GG","AF","AZ","BH"],"test_mode_available":true,"merchant_label":"Offsite Payments App Extension","default_buyer_label":null,"buyer_label_to_locale":null,"supports_3ds":true,"supports_oversell_protection":false,"api_version":"2023-10","supports_installments":true,"supports_deferred_payments":true,"multiple_capture":false}'
 const SAMPLE_CREDIT_CARD_CONFIG =
-  '{"start_payment_session_url":"https://test-domain.com/authorize","start_refund_session_url":"https://test-domain.com/refund","start_capture_session_url":"https://test-domain.com/capture","start_void_session_url":"https://test-domain.com/void","confirmation_callback_url":"https://test-domain.com/confirm","supported_payment_methods":["master","visa","jcb","american_express","diners_club"],"supported_countries":["JP"],"test_mode_available":true,"merchant_label":"test-label","supports_3ds":true,"encryption_certificate":{"fingerprint": "fingerprint", "certificate": "certificate"},"api_version":"2023-04","supports_installments":false,"supports_deferred_payments":false,"multiple_capture":false}'
+  '{"start_payment_session_url":"https://test-domain.com/authorize","start_refund_session_url":"https://test-domain.com/refund","start_capture_session_url":"https://test-domain.com/capture","start_void_session_url":"https://test-domain.com/void","confirmation_callback_url":"https://test-domain.com/confirm","supported_payment_methods":["master","visa","jcb","american_express","diners_club"],"supported_countries":["JP"],"test_mode_available":true,"merchant_label":"test-label","supports_3ds":true,"encryption_certificate":{"fingerprint": "fingerprint", "certificate": "certificate"},"api_version":"2023-04","ui_extension_registration_uuid":"3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc","supports_installments":false,"supports_deferred_payments":false,"multiple_capture":false}'
 const SAMPLE_CUSTOM_CREDIT_CARD_CONFIG =
-  '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/void_sessions","checkout_payment_method_fields":[{"key":"payment_plan","type":"string","required":true}],"confirmation_callback_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/confirm","supported_payment_methods":["visa"],"supported_countries":["CA","MX","US"],"test_mode_available":true,"merchant_label":"Bogus Private Card App","default_buyer_label":null,"buyer_label_to_locale":null,"supports_3ds":false,"encryption_certificate":{"fingerprint":"Test Certificate","certificate":"-----BEGIN CERTIFICATE-----\\nTestString=\\n-----END CERTIFICATE-----"},"api_version":"unstable","checkout_hosted_fields":["name","expiry","verification_value"],"multiple_capture":false}'
+  '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/void_sessions","checkout_payment_method_fields":[{"key":"payment_plan","type":"string","required":true}],"confirmation_callback_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/custom_card/confirm","supported_payment_methods":["visa"],"supported_countries":["CA","MX","US"],"test_mode_available":true,"merchant_label":"Bogus Private Card App","default_buyer_label":null,"buyer_label_to_locale":null,"supports_3ds":false,"encryption_certificate":{"fingerprint":"Test Certificate","certificate":"-----BEGIN CERTIFICATE-----\\nTestString=\\n-----END CERTIFICATE-----"},"api_version":"unstable","ui_extension_registration_uuid":"3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc","checkout_hosted_fields":["name","expiry","verification_value"],"multiple_capture":false}'
 const SAMPLE_CUSTOM_ONSITE_CONFIG =
-  '{"start_payment_session_url":"https://test-domain.com/startsession/bogus-pay","start_refund_session_url":"https://test-domain.com/refund","start_capture_session_url":"https://test-domain.com/capture","start_void_session_url":"https://test-domain.com/void","confirmation_callback_url":null,"checkout_payment_method_fields":[{"key":"bogus_customer_document","type":"string","required":true}],"supported_payment_methods":["bogus-pay"],"supported_countries":["BR"],"test_mode_available":true,"merchant_label":"Test Label","default_buyer_label": "Bogus Pay Buyer Label","buyer_label_to_locale":[],"supports_3ds":false,"supports_oversell_protection":false,"api_version":"unstable","multiple_capture":false,"supports_installments":false,"supports_deferred_payments":false}'
+  '{"start_payment_session_url":"https://test-domain.com/startsession/bogus-pay","start_refund_session_url":"https://test-domain.com/refund","start_capture_session_url":"https://test-domain.com/capture","start_void_session_url":"https://test-domain.com/void","confirmation_callback_url":null,"checkout_payment_method_fields":[{"key":"bogus_customer_document","type":"string","required":true}],"supported_payment_methods":["bogus-pay"],"supported_countries":["BR"],"test_mode_available":true,"merchant_label":"Test Label","default_buyer_label": "Bogus Pay Buyer Label","buyer_label_to_locale":[],"supports_3ds":false,"supports_oversell_protection":false,"api_version":"unstable","ui_extension_registration_uuid":"3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc","multiple_capture":false,"supports_installments":false,"supports_deferred_payments":false}'
 const SAMPLE_REDEEMABLE_CONFIG =
-  '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/void_sessions","supported_countries":["CA","MX","US"],"test_mode_available":true,"merchant_label":"Bogus Redeemable Payments App","default_buyer_label":null,"buyer_label_to_locale":null,"api_version":"unstable","supported_payment_methods":["gift-card"],"redeemable_type":"gift_card","balance_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/retrieve_balance","checkout_payment_method_fields":[{"key":"card_number","type":"string","required":true},{"key":"pin","type":"string","required":true}]}'
+  '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/void_sessions","supported_countries":["CA","MX","US"],"test_mode_available":true,"merchant_label":"Bogus Redeemable Payments App","default_buyer_label":null,"buyer_label_to_locale":null,"api_version":"unstable","ui_extension_registration_uuid":"3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc","supported_payment_methods":["gift-card"],"redeemable_type":"gift_card","balance_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/retrieve_balance","checkout_payment_method_fields":[{"key":"card_number","type":"string","required":true},{"key":"pin","type":"string","required":true}]}'
 
 const translateDeployConfigKeyToCLI = (deployConfigKey: string): string => {
   switch (deployConfigKey) {
@@ -35,6 +35,7 @@ const expectIncludesKeys = (got: string, config: string) => {
   const keys = Object.keys(configObj)
   for (const key of keys) {
     if (configObj[key] === null) continue
+    if (key === 'ui_extension_registration_uuid') continue
     if (Array.isArray(configObj[key]) && configObj[key].length === 0) continue
     const translatedKey = translateDeployConfigKeyToCLI(key)
     expect(got).toContain(translatedKey)
@@ -56,7 +57,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1])
 
     // Then
     expectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
@@ -106,7 +107,7 @@ supports_installments = true
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1])
 
     // Then
     expectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
@@ -154,9 +155,15 @@ supports_installments = true
         config: SAMPLE_CREDIT_CARD_CONFIG,
       },
     }
+    const extension2: ExtensionRegistration = {
+      id: '40366498817',
+      uuid: '3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc',
+      title: 'Checkout UI Extension',
+      type: 'checkout_ui_extension',
+    }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1, extension2])
 
     // Then
     expectIncludesKeys(got, SAMPLE_CREDIT_CARD_CONFIG)
@@ -180,6 +187,7 @@ supports_3ds = true
 supports_deferred_payments = false
 supports_installments = false
 encryption_certificate_fingerprint = "fingerprint"
+ui_extension_handle = "checkout-ui-extension"
 
   [[extensions.targeting]]
   target = "payments.credit-card.render"
@@ -197,9 +205,15 @@ encryption_certificate_fingerprint = "fingerprint"
         config: SAMPLE_CUSTOM_CREDIT_CARD_CONFIG,
       },
     }
+    const extension2: ExtensionRegistration = {
+      id: '40366498817',
+      uuid: '3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc',
+      title: 'Checkout UI Extension',
+      type: 'checkout_ui_extension',
+    }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1, extension2])
 
     // Then
     expectIncludesKeys(got, SAMPLE_CUSTOM_CREDIT_CARD_CONFIG)
@@ -222,6 +236,7 @@ encryption_certificate_fingerprint = "Test Certificate"
 test_mode_available = true
 multiple_capture = false
 checkout_hosted_fields = [ "name", "expiry", "verification_value" ]
+ui_extension_handle = "checkout-ui-extension"
 
   [[extensions.checkout_payment_method_fields]]
   key = "payment_plan"
@@ -244,9 +259,15 @@ checkout_hosted_fields = [ "name", "expiry", "verification_value" ]
         config: SAMPLE_CUSTOM_ONSITE_CONFIG,
       },
     }
+    const extension2: ExtensionRegistration = {
+      id: '40366498817',
+      uuid: '3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc',
+      title: 'Checkout UI Extension',
+      type: 'checkout_ui_extension',
+    }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1, extension2])
 
     // Then
     expectIncludesKeys(got, SAMPLE_CUSTOM_ONSITE_CONFIG)
@@ -271,6 +292,7 @@ test_mode_available = true
 multiple_capture = false
 buyer_label = "Bogus Pay Buyer Label"
 buyer_label_translations = [ ]
+ui_extension_handle = "checkout-ui-extension"
 
   [[extensions.checkout_payment_method_fields]]
   key = "bogus_customer_document"
@@ -293,9 +315,15 @@ buyer_label_translations = [ ]
         config: SAMPLE_REDEEMABLE_CONFIG,
       },
     }
+    const extension2: ExtensionRegistration = {
+      id: '40366498817',
+      uuid: '3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc',
+      title: 'Checkout UI Extension',
+      type: 'checkout_ui_extension',
+    }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1, extension2])
 
     // Then
     expectIncludesKeys(got, SAMPLE_REDEEMABLE_CONFIG)
@@ -315,6 +343,7 @@ supported_payment_methods = [ "gift-card" ]
 test_mode_available = true
 redeemable_type = "gift_card"
 balance_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/retrieve_balance"
+ui_extension_handle = "checkout-ui-extension"
 
   [[extensions.checkout_payment_method_fields]]
   key = "card_number"
