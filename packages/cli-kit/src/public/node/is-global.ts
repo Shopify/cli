@@ -69,6 +69,8 @@ export async function installGlobalCLIIfNeeded(packageManager: PackageManager): 
 /**
  * Infers the package manager used by the global CLI.
  *
+ * @param argv - The arguments passed to the process.
+ * @param env - The environment to check. Defaults to `process.env`.
  * @returns The package manager used by the global CLI.
  */
 export function inferPackageManagerForGlobalCLI(argv = process.argv, env = process.env): PackageManager {

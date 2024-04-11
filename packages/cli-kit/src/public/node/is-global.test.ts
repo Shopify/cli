@@ -4,9 +4,9 @@ import {
   installGlobalCLIIfNeeded,
   isGlobalCLIInstalled,
 } from './is-global.js'
-import {describe, expect, test, vi} from 'vitest'
 import {captureOutput, exec} from './system.js'
 import {renderSelectPrompt} from './ui.js'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
 vi.mock('./ui.js')
