@@ -107,7 +107,7 @@ export async function deploy(options: DeployOptions) {
                   if (bundleConfig) {
                     return {
                       ...bundleConfig,
-                      specificationIdentifier: identifiers.extensionSpecificationIdentifiers[ext.localIdentifier] ?? underscore(ext.handle),
+                      specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(ext.graphQLType),
                     }
                   }
                 }),
@@ -118,7 +118,7 @@ export async function deploy(options: DeployOptions) {
               apiKey,
               organizationId: remoteApp.organizationId,
               bundlePath,
-              appModules: getArrayRejectingUndefined(appModules),
+              appModules,
               release,
               developerPlatformClient,
               extensionIds: identifiers.extensionIds,

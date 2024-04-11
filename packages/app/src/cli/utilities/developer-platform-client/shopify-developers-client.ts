@@ -387,7 +387,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       appModules: (appModules ?? []).map((mod) => {
         return {
           uid: mod.uuid ?? mod.handle,
-          specificationIdentifier: mod.specificationIdentifier ?? underscore(mod.handle),
+          specificationIdentifier: mod.specificationIdentifier,
           handle: mod.handle,
           config: mod.config,
         }
@@ -396,13 +396,15 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       assetsUrl: bundleUrl,
     }
 
+    console.log(`VARIABLES:\n\n${JSON.stringify(variables, null, 2)}`)
+
     const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
       organizationId,
       CreateAppVersionMutation,
       await this.token(),
       variables,
     )
-    console.log(JSON.stringify(result, null, 2))
+    console.log(`\nRESULT:\n\n${JSON.stringify(result, null, 2)}`)
     const {version, userErrors} = result.versionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
