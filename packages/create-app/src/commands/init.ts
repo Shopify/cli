@@ -79,7 +79,7 @@ export default class Init extends Command {
       template: promptAnswers.template,
       local: flags.local,
       directory: flags.path,
-      useGlobalCI: promptAnswers.globalCLIInstalled,
+      useGlobalCLI: promptAnswers.globalCLIInstalled,
     })
   }
 

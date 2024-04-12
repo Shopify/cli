@@ -32,7 +32,7 @@ interface InitOptions {
   template: string
   packageManager: PackageManager
   local: boolean
-  useGlobalCI: boolean
+  useGlobalCLI: boolean
 }
 
 async function init(options: InitOptions) {
@@ -106,7 +106,7 @@ async function init(options: InitOptions) {
             packageJSON,
             local: options.local,
             directory: templateScaffoldDir,
-            useGlobalCLI: options.useGlobalCI,
+            useGlobalCLI: options.useGlobalCLI,
           })
           await writePackageJSON(templateScaffoldDir, packageJSON)
         },
