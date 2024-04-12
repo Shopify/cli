@@ -66,13 +66,6 @@
         "command": "pnpm tsc --noEmit",
         "cwd": "packages/app"
       }
-    },
-    "refresh-manifests": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm oclif manifest",
-        "cwd": "packages/app"
-      }
     }
   }
 }
