@@ -29,6 +29,7 @@ const THEME_DIRECTORY_PATTERNS = [
   'layout/**/*.liquid',
   'locales/**/*.json',
   'sections/**/*.{liquid,json}',
+  'blocks/**/*.liquid',
   'snippets/**/*.liquid',
   'templates/**/*.{liquid,json}',
   'templates/customers/**/*.{liquid,json}',

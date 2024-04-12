@@ -111,7 +111,8 @@
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
       "esbuild",
-      "@shopify/cli-hydrogen"
+      "@shopify/cli-hydrogen",
+      "@shopify/theme-check-node"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
@@ -171,7 +172,6 @@
         "project": "**/*.ts!",
         "ignoreDependencies": [
           "@oclif/plugin-commands",
-          "@oclif/plugin-help",
           "@shopify/plugin-did-you-mean",
           "@shopify/app",
           "@shopify/theme"
