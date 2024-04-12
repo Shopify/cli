@@ -7,8 +7,8 @@ import {build as esBuild} from 'esbuild'
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {createRequire} from 'module'
-import path from 'path'
 
 const require = createRequire(import.meta.url)
 
@@ -21,8 +21,10 @@ const external = [
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
+
+// Find theme-check-node's config yml files
 const themePath = require.resolve('@shopify/theme-check-node')
-const configYmlPath = path.join(themePath, '..', '..', 'configs/*.yml')
+const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
 
 esBuild({
   bundle: true,
