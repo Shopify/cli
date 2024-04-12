@@ -9,13 +9,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
-import {
-  inferPackageManagerForGlobalCLI,
-  installGlobalCLIPrompt,
-  installGlobalShopifyCLI,
-  isGlobalCLIInstalled,
-} from '@shopify/cli-kit/node/is-global'
-import {prompt} from '@oclif/core/lib/cli-ux/prompt.js'
+import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 
 export default class Init extends Command {
   static summary?: string | undefined = 'Create a new app project'

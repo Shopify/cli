@@ -1,11 +1,10 @@
-import {beforeEach} from 'node:test'
 import {
   currentProcessIsGlobal,
   inferPackageManagerForGlobalCLI,
   installGlobalCLIPrompt,
   isGlobalCLIInstalled,
 } from './is-global.js'
-import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
+import {captureOutput, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {describe, expect, test, vi} from 'vitest'
 

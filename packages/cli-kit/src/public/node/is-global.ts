@@ -50,7 +50,6 @@ export interface InstallGlobalCLIPromptResult {
 /**
  * Prompts the user to install the global CLI.
  *
- * @param packageManager - The package manager to use.
  * @returns `true` if the user has installed the global CLI.
  */
 export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
