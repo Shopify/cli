@@ -8,12 +8,10 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
-import {fileURLToPath} from 'url'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -91,7 +89,7 @@ export function setupGraphiQLServer({
     res.send('pong')
   })
 
-  const faviconPath = joinPath(dirname(fileURLToPath(import.meta.url)), '../../../../../assets/graphiql/favicon.ico')
+  const faviconPath = require.resolve('@shopify/app/assets/graphiql/favicon.ico')
   app.get('/graphiql/favicon.ico', (_req, res) => {
     res.sendFile(faviconPath)
   })

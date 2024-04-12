@@ -18,6 +18,7 @@
       "import": "./dist/cli/index.js",
       "types": "./dist/cli/index.d.ts"
     },
+    "./assets/*": "./assets/*",
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
