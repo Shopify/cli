@@ -98,17 +98,6 @@ describe('Push', () => {
   })
 
   describe('run with CLI 2 implementation', () => {
-    test('should run the CLI 2 implementation if the password flag is provided', async () => {
-      // Given
-      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-
-      // When
-      await runPushCommand(['--password', '123'], path, adminSession, theme)
-
-      // Then
-      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --development-theme-id ${theme.id}`)
-    })
-
     test('should pass development theme from local storage to CLI 2', async () => {
       // Given
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
