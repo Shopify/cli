@@ -21,7 +21,12 @@ vi.mock('@oclif/core', async () => {
 })
 
 beforeEach(() => {
-  vi.spyOn(initPrompt, 'default').mockResolvedValue({name: 'name', template: 'http://test.es', templateType: 'custom'})
+  vi.spyOn(initPrompt, 'default').mockResolvedValue({
+    name: 'name',
+    template: 'http://test.es',
+    templateType: 'custom',
+    globalCLIResult: {install: false, alreadyInstalled: false},
+  })
 })
 
 describe('create app command', () => {

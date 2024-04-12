@@ -10,21 +10,31 @@ vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
 
 describe('updateCLIDependencies', () => {
-  test('updates the @shopify/cli and @shopify/app dependency version', async () => {
+  test('updates @shopify/cli and deletes @shopify/app if not using global CLI', async () => {
     const mockPackageJSON = {} as PackageJson
     const directory = moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory, useGlobalCLI: false})
 
     expect(mockPackageJSON.dependencies!['@shopify/cli']).toBe('1.2.3')
-    expect(mockPackageJSON.dependencies!['@shopify/app']).toBe('1.2.3')
+    expect(mockPackageJSON.dependencies!['@shopify/app']).toBeUndefined()
+  })
+
+  test('removes @shopify/cli and @shopify/app if using global CLI', async () => {
+    const mockPackageJSON = {} as PackageJson
+    const directory = moduleDirectory(import.meta.url)
+
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory, useGlobalCLI: true})
+
+    expect(mockPackageJSON.dependencies!['@shopify/cli']).toBeUndefined()
+    expect(mockPackageJSON.dependencies!['@shopify/app']).toBeUndefined()
   })
 
   test('does not update overrides or resolutions if local is false', async () => {
     const mockPackageJSON = {overrides: {}, resolutions: {}} as PackageJson
     const directory = moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory, useGlobalCLI: false})
 
     expect(mockPackageJSON.overrides!['@shopify/cli']).toBeUndefined()
     expect(mockPackageJSON.overrides!['@shopify/app']).toBeUndefined()
@@ -34,49 +44,43 @@ describe('updateCLIDependencies', () => {
     expect(mockPackageJSON.resolutions!['@shopify/cli-kit']).toBeUndefined()
   })
 
-  test.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
-    'updates overrides for %s if local is true',
-    async (dependency) => {
-      const mockPackageJSON = {} as PackageJson
-      const directory = moduleDirectory(import.meta.url)
-
-      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
-
-      const dependencyOveride = mockPackageJSON.overrides![dependency]!
-      const dependencyPath = joinPath(dependencyOveride.replace('file:', ''), 'package.json')
-      const dependencyJSON = JSON.parse(await readFile(dependencyPath))
-
-      expect(dependencyJSON.name).toBe(dependency)
-    },
-  )
-
-  test.each(['@shopify/cli', '@shopify/app', '@shopify/cli-kit'])(
-    'updates resolutions for %s if local is true',
-    async (dependency) => {
-      const mockPackageJSON = {} as PackageJson
-      const directory = moduleDirectory(import.meta.url)
-
-      await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
-
-      const dependencyResolution = mockPackageJSON.resolutions![dependency]!
-      const dependencyPath = joinPath(dependencyResolution.replace('file:', ''), 'package.json')
-      const dependencyJSON = JSON.parse(await readFile(dependencyPath))
-
-      expect(dependencyJSON.name).toBe(dependency)
-    },
-  )
-
-  test.each(['@shopify/cli', '@shopify/app'])('updates dependency for %s if local is true', async (dependency) => {
+  test('updates overrides for @shopify/cli if local is true', async () => {
     const mockPackageJSON = {} as PackageJson
     const directory = moduleDirectory(import.meta.url)
 
-    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory})
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory, useGlobalCLI: false})
 
-    const dependencyResolution = mockPackageJSON.dependencies![dependency]!
+    const dependencyOveride = mockPackageJSON.overrides!['@shopify/cli']!
+    const dependencyPath = joinPath(dependencyOveride.replace('file:', ''), 'package.json')
+    const dependencyJSON = JSON.parse(await readFile(dependencyPath))
+
+    expect(dependencyJSON.name).toBe('@shopify/cli')
+  })
+
+  test('updates resolutions for @shopify/cli if local is true', async () => {
+    const mockPackageJSON = {} as PackageJson
+    const directory = moduleDirectory(import.meta.url)
+
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory, useGlobalCLI: false})
+
+    const dependencyResolution = mockPackageJSON.resolutions!['@shopify/cli']!
     const dependencyPath = joinPath(dependencyResolution.replace('file:', ''), 'package.json')
     const dependencyJSON = JSON.parse(await readFile(dependencyPath))
 
-    expect(dependencyJSON.name).toBe(dependency)
+    expect(dependencyJSON.name).toBe('@shopify/cli')
+  })
+
+  test('updates dependency for @shopify/cli if local is true', async () => {
+    const mockPackageJSON = {} as PackageJson
+    const directory = moduleDirectory(import.meta.url)
+
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: true, directory, useGlobalCLI: false})
+
+    const dependencyResolution = mockPackageJSON.dependencies!['@shopify/cli']!
+    const dependencyPath = joinPath(dependencyResolution.replace('file:', ''), 'package.json')
+    const dependencyJSON = JSON.parse(await readFile(dependencyPath))
+
+    expect(dependencyJSON.name).toBe('@shopify/cli')
   })
 
   test('does not change existing values', async () => {
@@ -98,7 +102,7 @@ describe('updateCLIDependencies', () => {
       },
     }
     const directory = moduleDirectory(import.meta.url)
-    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory})
+    await updateCLIDependencies({packageJSON: mockPackageJSON, local: false, directory, useGlobalCLI: false})
 
     expect(mockPackageJSON.dependencies.mock).toBe('value')
     expect(mockPackageJSON.overrides.mock).toBe('value')
