@@ -111,7 +111,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ['18.12.0']
-        target: ['build', 'type-check', 'lint', 'bundle']
+        target: ['build', 'type-check', 'lint']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -124,6 +124,28 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
+
+  pr-platform-agnostic-bundle:
+    name: '[PR] Run bundle with Node ${{ matrix.node }} in ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: ['18.12.0']
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 'Bundle'
+        run: pnpm nx run-many --all --skip-nx-cache --target=bundle
 
   pr-platform-agnostic-knip:
     name: '[PR] Run knip with Node ${{ matrix.node }} in ${{ matrix.os }}'
