@@ -78,6 +78,9 @@ jobs:
       - name: Type-check
         run: pnpm nx run-many --all --skip-nx-cache  --target=type-check
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
+      - name: Bundle
+        run: pnpm nx run-many --all --skip-nx-cache  --target=bundle
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
       - name: Unit tests
         run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
@@ -108,7 +111,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ['18.12.0']
-        target: ['build', 'type-check', 'lint']
+        target: ['build', 'type-check', 'lint', 'bundle']
     steps:
       - uses: actions/checkout@v3
         with:
