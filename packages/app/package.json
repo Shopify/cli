@@ -95,16 +95,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": "dist/cli/commands",
-    "hooks": {
-      "init": "./dist/cli/hooks/clear_command_cache",
-      "public_command_metadata": "./dist/cli/hooks/public_metadata",
-      "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
-    },
-    "plugins": [
-      "@shopify/plugin-cloudflare"
-    ]
-  }
+  "engine-strict": true
 }

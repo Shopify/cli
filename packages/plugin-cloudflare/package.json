@@ -61,11 +61,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "hooks": {
-      "tunnel_start": "dist/tunnel",
-      "tunnel_provider": "dist/provider"
-    }
-  }
+  "engine-strict": true
 }

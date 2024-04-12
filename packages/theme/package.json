@@ -63,12 +63,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": {
-      "strategy": "explicit",
-      "target": "./dist/index.js",
-      "identifier": "COMMANDS"
-    }
-  }
+  "engine-strict": true
 }

@@ -56,16 +56,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": "dist/commands",
-    "topics": {
-      "config:autocorrect": {
-        "description": "Configure autocorrect feature."
-      }
-    },
-    "hooks": {
-      "command_not_found": "dist/index"
-    }
-  }
+  "engine-strict": true
 }
