@@ -1,11 +1,14 @@
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {installGlobalCLIIfNeeded} from '@shopify/cli-kit/node/is-global'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-interface InitOptions {
+export interface InitOptions {
   name?: string
   template?: string
   flavor?: string
   directory: string
+  packageManager: PackageManager
 }
 
 interface InitOutput {
@@ -13,6 +16,7 @@ interface InitOutput {
   template: string
   // e.g. 'remix'
   templateType: PredefinedTemplate | 'custom'
+  globalCLIInstalled: boolean
 }
 
 interface TemplateBranch {
@@ -123,6 +127,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     name,
     template,
     templateType: isPredefinedTemplate(template) ? template : 'custom',
+    globalCLIInstalled: false,
   }
 
   let selectedUrl: string | undefined
@@ -151,6 +156,9 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   answers.template = selectedUrl || answers.template || defaults.template
+
+  const installed = await installGlobalCLIIfNeeded(options.packageManager)
+  answers.globalCLIInstalled = installed
 
   return answers
 }
