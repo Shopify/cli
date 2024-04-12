@@ -126,7 +126,7 @@ async function init(options: InitOptions) {
 
     tasks.push(
       {
-        title: 'Installing dependencies',
+        title: `Installing dependencies with ${packageManager}`,
         task: async () => {
           await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
         },
