@@ -3,7 +3,7 @@ import {LandingTemplateSchema} from '@shopify/generate-docs'
 const data: LandingTemplateSchema = {
   title: 'Shopify CLI',
   description:
-    'Shopify CLI is a command-line interface tool that helps you build Shopify apps and themes. It quickly generates Shopify apps, themes, and custom storefronts. You can also use it to automate many common development tasks.',
+    'Shopify CLI is a command-line interface tool that helps you generate and work with Shopify apps, themes and custom storefronts. You can also use it to automate many common development tasks.',
   id: 'Shopify CLI',
   image: '/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png',
   darkImage: '/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png',
@@ -12,15 +12,40 @@ const data: LandingTemplateSchema = {
       type: 'Generic',
       anchorLink: 'requirements',
       title: 'Requirements',
-      sectionContent:
-        '- Node.js version 18.12.0 or higher\n- Ruby version 2.7.2 or higher (Only for theme commands)\n- Git version 2.28.0 or higher',
+      sectionContent: `
+- [Node.js](https://nodejs.org/en/download/) version 18.16.0 or higher
+- [Git](https://git-scm.com/downloads) version 2.28.0 or higher
+
+Only for theme commands:
+- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher
+
+Only for theme commands on Windows:
+- Ruby+Devkit 3.0, installed using [RubyInstaller for Windows](https://rubyinstaller.org/downloads/) (select the MSYS2 component and the MSYS2 base installation option)
+
+If you're using Linux and themes, then follow the instructions on the side to install the required dependencies. Otherwise, you can continue to the [installation](#installation) step.
+`,
+      codeblock: {
+        title: 'Install requirements for themes on Linux',
+        tabs: [
+          {
+            title: 'apt',
+            code: 'examples/requirements.apt.example.sh',
+            language: 'bash',
+          },
+          {
+            title: 'yum',
+            code: 'examples/requirements.yum.example.sh',
+            language: 'bash',
+          },
+        ],
+      },
     },
     {
       type: 'Generic',
       anchorLink: 'installation',
       title: 'Installation',
       sectionContent:
-        'This installs Shopify CLI globally, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.\n\nFor app development you can also install the CLI locally to your project, find out more about that [Here](/docs/apps/getting-started/installation).',
+        'This installs Shopify CLI globally on your system, so you can run `shopify` commands from any directory. Find out more about the available commands by running `shopify` in your terminal.',
       codeblock: {
         title: '',
         tabs: [
@@ -52,10 +77,10 @@ const data: LandingTemplateSchema = {
       anchorLink: 'Commands',
       title: 'Commands',
       sectionContent: `
-Shopify CLI groups commands into topics and this is the syntax to run them: \`shopify [topic] [command]\`.
-Check out the [Commands](/docs/api/shopify-cli/commands) section to see the list of commands available for each topic.
+Shopify CLI groups commands into topics. The command syntax is: \`shopify [topic] [command]\`.
+Refer to the commands sections in the sidebar for the lists of available commands for each topic.
 
-Or run the \`help\` command to get this information right in your terminal
+Or, run the \`help\` command to get this information right in your terminal.
 `,
       codeblock: {
         title: 'terminal',
@@ -71,8 +96,8 @@ Or run the \`help\` command to get this information right in your terminal
       type: 'Generic',
       anchorLink: 'upgrade',
       sectionContent:
-        'We recommend to always use the latest version of the CLI if possible, run `version` to check the current version and if there are any updates available. Then run the same install command to upgrade to the latest CLI version.',
-      title: 'Upgrade your CLI',
+        'We recommend that you always use the latest version of Shopify CLI if possible. To upgrade, run `version` to check the current version and determine if there are any updates available. Run the [install](#installation) command to upgrade to the latest CLI version.',
+      title: 'Upgrade Shopify CLI',
       codeblock: {
         title: 'terminal',
         tabs: [
@@ -91,8 +116,8 @@ Or run the \`help\` command to get this information right in your terminal
     },
     {
       type: 'Generic',
-      anchorLink: 'contributing',
-      title: 'Contributing to Shopify CLI',
+      anchorLink: 'contribute',
+      title: 'Contribute to Shopify CLI',
       sectionContent: `Shopify CLI is open source. [Learn how to contribute](https://github.com/Shopify/cli/wiki/Contributors:-Introduction) to our GitHub repository.`,
     },
     {
@@ -100,8 +125,8 @@ Or run the \`help\` command to get this information right in your terminal
       anchorLink: 'help',
       title: 'Where to get help',
       sectionContent: `
+- [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.
 - [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
-- [Shopify Community Forums](https://community.shopify.com/?shpxid=f84767ac-02DB-40B4-E6CB-AAF9AB7659DA) - Visit our forums to connect with the community and learn more about Shopify CLI development.
 `,
     },
     {
@@ -116,7 +141,7 @@ Or run the \`help\` command to get this information right in your terminal
           type: 'component',
         },
         {
-          name: 'Create an app',
+          name: 'Start building an app',
           subtitle: 'Learn how to set up your app development environment and start building',
           url: '/docs/apps/getting-started/create',
           type: 'tutorial',
