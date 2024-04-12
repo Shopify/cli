@@ -1387,7 +1387,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new Shopify app project."
+      "summary": "Create a new app project."
     },
     "app:release": {
       "aliases": [

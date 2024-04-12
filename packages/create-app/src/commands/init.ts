@@ -12,7 +12,7 @@ import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shop
 import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 
 export default class Init extends Command {
-  static summary?: string | undefined = 'Create a new Shopify app project.'
+  static summary?: string | undefined = 'Create a new app project.'
 
   static flags = {
     ...globalFlags,

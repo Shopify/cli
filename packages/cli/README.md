@@ -466,7 +466,7 @@ DESCRIPTION
 
 ## `shopify app init`
 
-Create a new Shopify app project.
+Create a new app project.
 
 ```
 USAGE
