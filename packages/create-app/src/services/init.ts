@@ -6,7 +6,7 @@ import {
   UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -42,6 +42,16 @@ async function init(options: InitOptions) {
   const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+
+  renderInfo({
+    body: [
+      `Initializing project with`,
+      {command: packageManager},
+      `\nUse the`,
+      {command: `--package-manager`},
+      `flag to select a different package manager.`,
+    ],
+  })
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
