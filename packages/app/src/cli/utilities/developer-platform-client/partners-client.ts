@@ -17,6 +17,7 @@ import {
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
+  OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
 import {
@@ -222,17 +223,25 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    return fetchAppDetailsFromApiKey(apiKey, await this.token())
+    const app = await fetchAppDetailsFromApiKey(apiKey, await this.token())
+    if (app) app.developerPlatformClient = this
+    return app
   }
 
   async organizations(): Promise<Organization[]> {
     const result: AllOrganizationsQuerySchema = await this.request(AllOrganizationsQuery)
-    return result.organizations.nodes
+    return result.organizations.nodes.map((org) => ({
+      id: org.id,
+      businessName: org.businessName,
+      source: OrganizationSource.Partners,
+    }))
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const variables: FindOrganizationBasicVariables = {id: orgId}
     const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
+    const org = result.organizations.nodes[0] as Organization
+    if (org) org.source = OrganizationSource.Partners
     return result.organizations.nodes[0]
   }
 
@@ -282,7 +291,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
 
     const flags = filterDisabledFlags(result.appCreate.app.disabledFlags)
-    return {...result.appCreate.app, organizationId: org.id, newApp: true, flags}
+    return {...result.appCreate.app, organizationId: org.id, newApp: true, flags, developerPlatformClient: this}
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {

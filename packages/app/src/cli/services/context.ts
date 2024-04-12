@@ -57,6 +57,7 @@ export interface DevContextOptions {
   apiKey?: string
   storeFqdn?: string
   reset: boolean
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 interface DevContextOutput {
@@ -66,6 +67,14 @@ interface DevContextOutput {
   storeId: string
   updateURLs: boolean | undefined
   localApp: AppInterface
+}
+
+export interface GenerateContextOptions {
+  apiKey?: string
+  directory: string
+  reset: boolean
+  developerPlatformClient: DeveloperPlatformClient
+  configName?: string
 }
 
 /**
@@ -78,14 +87,9 @@ interface DevContextOutput {
  *
  * The selection is then cached as the "dev" app for the current directory.
  */
-export async function ensureGenerateContext(options: {
-  apiKey?: string
-  directory: string
-  reset: boolean
-  developerPlatformClient: DeveloperPlatformClient
-  configName?: string
-}): Promise<string> {
-  const {apiKey, developerPlatformClient} = options
+export async function ensureGenerateContext(options: GenerateContextOptions): Promise<OrganizationApp> {
+  const {apiKey} = options
+  let developerPlatformClient = options.developerPlatformClient
   if (apiKey) {
     const app = await appFromId({apiKey, developerPlatformClient})
     if (!app) {
@@ -93,19 +97,19 @@ export async function ensureGenerateContext(options: {
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     await logMetadataForLoadedContext(app)
-    return app.apiKey
+    return app
   }
 
   const {cachedInfo, remoteApp} = await getAppContext(options)
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
-    const org = await fetchOrgFromId(cachedInfo.orgId, options.developerPlatformClient)
+    const org = await fetchOrgFromId(cachedInfo.orgId, developerPlatformClient)
     const app =
       remoteApp ||
       (await appFromId({
         apiKey: cachedInfo.appId,
         organizationId: org.id,
-        developerPlatformClient: options.developerPlatformClient,
+        developerPlatformClient,
       }))
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
@@ -116,18 +120,18 @@ export async function ensureGenerateContext(options: {
       organizationId: app.organizationId,
       apiKey: app.apiKey,
     })
-    return app.apiKey
+    return app
   } else {
-    const orgId = cachedInfo?.orgId || (await selectOrg()).id
-    const {organization, apps, hasMorePages} = await options.developerPlatformClient.orgAndApps(orgId)
+    let orgId = cachedInfo?.orgId
+    if (!orgId) {
+      const org = await selectOrg()
+      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+      orgId = org.id
+    }
+
+    const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(orgId)
     const localAppName = await loadAppName(options.directory)
-    const selectedApp = await selectOrCreateApp(
-      localAppName,
-      apps,
-      hasMorePages,
-      organization,
-      options.developerPlatformClient,
-    )
+    const selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
     setCachedAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
@@ -138,7 +142,7 @@ export async function ensureGenerateContext(options: {
       organizationId: selectedApp.organizationId,
       apiKey: selectedApp.apiKey,
     })
-    return selectedApp.apiKey
+    return selectedApp
   }
 }
 
@@ -155,17 +159,19 @@ export async function ensureGenerateContext(options: {
  * @param options - Current dev context options
  * @returns The selected org, app and dev store
  */
-export async function ensureDevContext(
-  options: DevContextOptions,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<DevContextOutput> {
+export async function ensureDevContext(options: DevContextOptions): Promise<DevContextOutput> {
+  let developerPlatformClient = options.developerPlatformClient
   const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,
-    developerPlatformClient,
     promptLinkingApp: !options.apiKey,
   })
 
-  const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg()).id
+  let orgId = getOrganization() || cachedInfo?.orgId
+  if (!orgId) {
+    const org = await selectOrg()
+    developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+    orgId = org.id
+  }
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
   const organization = await fetchOrgFromId(orgId, developerPlatformClient)
@@ -263,19 +269,23 @@ interface AppFromIdOptions {
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export const appFromId = async ({
-  apiKey,
-  organizationId,
-  developerPlatformClient,
-}: AppFromIdOptions): Promise<OrganizationApp> => {
-  // eslint-disable-next-line no-param-reassign
-  organizationId = organizationId ?? (developerPlatformClient.requiresOrganization ? (await selectOrg()).id : '0')
+export const appFromId = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
+  let organizationId = options.organizationId
+  let developerPlatformClient = options.developerPlatformClient
+  if (!organizationId) {
+    organizationId = '0'
+    if (developerPlatformClient.requiresOrganization) {
+      const org = await selectOrg()
+      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+      organizationId = org.id
+    }
+  }
   const app = await developerPlatformClient.appFromId({
-    id: apiKey,
-    apiKey,
+    id: options.apiKey,
+    apiKey: options.apiKey,
     organizationId,
   })
-  if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: apiKey}], resetHelpMessage)
+  if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: options.apiKey}], resetHelpMessage)
   return app
 }
 
@@ -480,7 +490,8 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     configName: draftExtensionsPushOptions.config,
   })
   const developerPlatformClient =
-    draftExtensionsPushOptions.developerPlatformClient ?? selectDeveloperPlatformClient(app.configuration)
+    draftExtensionsPushOptions.developerPlatformClient ??
+    selectDeveloperPlatformClient({configuration: app.configuration})
   const [remoteApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, developerPlatformClient)
 
   const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
@@ -586,7 +597,7 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
  */
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
   const developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient(options.app.configuration)
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient)
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -631,7 +642,7 @@ export async function ensureVersionsListContext(
   options: VersionListContextOptions,
 ): Promise<VersionsListContextOutput> {
   const developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient(options.app.configuration)
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
@@ -641,12 +652,9 @@ export async function ensureVersionsListContext(
   }
 }
 
-export async function fetchOrCreateOrganizationApp(
-  app: AppInterface,
-  developerPlatformClient: DeveloperPlatformClient,
-  directory?: string,
-): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(app: AppInterface, directory?: string): Promise<OrganizationApp> {
   const org = await selectOrg()
+  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
   const isLaunchable = appIsLaunchable(app)
   const scopesArray = getAppScopesArray(app.configuration)
@@ -655,6 +663,7 @@ export async function fetchOrCreateOrganizationApp(
     scopesArray,
     directory,
   })
+  remoteApp.developerPlatformClient = developerPlatformClient
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
 
@@ -694,7 +703,7 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!remoteApp) {
-    remoteApp = await fetchOrCreateOrganizationApp(app, developerPlatformClient)
+    remoteApp = await fetchOrCreateOrganizationApp(app)
   }
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})

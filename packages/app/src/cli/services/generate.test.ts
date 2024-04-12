@@ -9,6 +9,7 @@ import {
   testLocalExtensionTemplates,
   testRemoteExtensionTemplates,
   testThemeExtensions,
+  testOrganizationApp,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
@@ -179,6 +180,7 @@ describe('generate', () => {
 })
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
+  const developerPlatformClient = testDeveloperPlatformClient()
   const appRoot = '/'
   const app = testAppWithConfig({
     app: {
@@ -193,7 +195,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
+  vi.mocked(ensureGenerateContext).mockResolvedValue(testOrganizationApp({developerPlatformClient, apiKey: 'api-key'}))
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
     extensionContent: [

@@ -3,12 +3,17 @@ import {selectAppPrompt} from '../../prompts/dev.js'
 import {Flag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
-import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  AppModuleVersion,
+  DeveloperPlatformClient,
+  selectDeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../context.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
-export async function selectApp(developerPlatformClient: DeveloperPlatformClient): Promise<OrganizationApp> {
+export async function selectApp(): Promise<OrganizationApp> {
   const org = await selectOrg()
+  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
   const selectedApp = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id)
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)

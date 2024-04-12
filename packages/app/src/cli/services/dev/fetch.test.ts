@@ -1,5 +1,5 @@
 import {fetchAllDevStores, fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
-import {Organization, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
@@ -20,10 +20,12 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.Partners,
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
+  source: OrganizationSource.Partners,
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({

@@ -26,6 +26,7 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -231,6 +232,8 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  * @param partnersToken - Partners token.
  */
 async function ensureUserHasPartnerAccount(partnersToken: string) {
+  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) return
+
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken))) {
     outputInfo(`\nA Shopify Partners organization is needed to proceed.`)

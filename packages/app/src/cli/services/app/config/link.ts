@@ -42,9 +42,10 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   let {configuration} = await loadAppConfiguration(options)
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient(configuration)
+  let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
   const updatedOptions = {...options, developerPlatformClient}
   const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
+  developerPlatformClient = remoteApp.developerPlatformClient!
   const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
@@ -132,7 +133,7 @@ async function loadRemoteApp(
   directory?: string,
 ): Promise<OrganizationApp> {
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
+    return fetchOrCreateOrganizationApp(localApp, directory)
   }
   const app = await appFromId({apiKey, developerPlatformClient})
   if (!app) {

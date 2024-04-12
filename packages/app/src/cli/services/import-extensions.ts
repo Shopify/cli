@@ -20,7 +20,7 @@ interface ImportOptions {
 
 export async function importExtensions(options: ImportOptions) {
   const developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient(options.app.configuration)
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
   await logMetadataForLoadedContext(remoteApp)

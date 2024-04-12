@@ -1,4 +1,10 @@
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {
+  MinimalOrganizationApp,
+  Organization,
+  OrganizationApp,
+  OrganizationSource,
+  OrganizationStore,
+} from '../../models/organization.js'
 
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
@@ -90,7 +96,7 @@ interface OrganizationAppsResponse {
   nodes: MinimalOrganizationApp[]
 }
 
-export interface FetchResponse {
+interface FetchResponse {
   organization: Organization
   apps: OrganizationAppsResponse
   stores: OrganizationStore[]
@@ -131,7 +137,7 @@ export async function fetchOrgAndApps(
   const result: FindOrganizationQuerySchema = await partnersRequest(query, partnersSession.token, params)
   const org = result.organizations.nodes[0]
   if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
-  const parsedOrg = {id: org.id, businessName: org.businessName}
+  const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
   const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
   return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
 }
@@ -207,8 +213,10 @@ export async function fetchStoreByDomain(
   if (!org) {
     return undefined
   }
-
-  const parsedOrg = {id: org.id, businessName: org.businessName}
+  const source = developerPlatformClient.requiresOrganization
+    ? OrganizationSource.BusinessPlatform
+    : OrganizationSource.Partners
+  const parsedOrg = {id: org.id, businessName: org.businessName, source}
   const store = org.stores.nodes[0]
 
   return {organization: parsedOrg, store}

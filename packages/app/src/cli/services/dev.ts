@@ -8,7 +8,13 @@ import {
   startTunnelPlugin,
   updateURLs,
 } from './dev/urls.js'
-import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
+import {
+  ensureDevContext,
+  enableDeveloperPreview,
+  disableDeveloperPreview,
+  developerPreviewUpdate,
+  DevContextOptions,
+} from './context.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
@@ -77,8 +83,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const {configuration} = await loadAppConfiguration(commandOptions)
-  const developerPlatformClient = selectDeveloperPlatformClient(configuration)
-
+  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {
     storeFqdn,
     storeId,
@@ -86,7 +92,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     localApp: app,
-  } = await ensureDevContext(commandOptions, developerPlatformClient)
+  } = await ensureDevContext(devContextOptions)
 
   const apiKey = remoteApp.apiKey
   let localApp = app

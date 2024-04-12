@@ -39,8 +39,10 @@ interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const {configuration} = await loadAppConfiguration({directory: options.directory, configName: options.configName})
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient(configuration)
-  const apiKey = await ensureGenerateContext({...options, developerPlatformClient})
+  let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
+  const remoteApp = await ensureGenerateContext({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient!
+  const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({developerPlatformClient, apiKey})
   const app: AppInterface = await loadApp({
     directory: options.directory,

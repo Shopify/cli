@@ -33,7 +33,8 @@ interface Configurable {
 }
 
 export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
-  options.developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient(app.configuration)
+  options.developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (options.webEnv) {
     return infoWeb(app, options)
   } else {

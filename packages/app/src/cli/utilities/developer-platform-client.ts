@@ -6,6 +6,7 @@ import {
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
+  OrganizationSource,
   OrganizationStore,
 } from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
@@ -53,14 +54,30 @@ export type Paginateable<T> = T & {
   hasMorePages: boolean
 }
 
-export function selectDeveloperPlatformClient(
-  appConfig: AppConfiguration | undefined = undefined,
-): DeveloperPlatformClient {
+interface SelectDeveloperPlatformClientOptions {
+  configuration?: AppConfiguration | undefined
+  organization?: Organization
+}
+
+export function selectDeveloperPlatformClient({
+  configuration,
+  organization,
+}: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
-    if (!appConfig || (isCurrentAppSchema(appConfig) && appConfig.organization_id)) {
-      return new ShopifyDevelopersClient()
-    }
+    if (organization) return selectDeveloperPlatformClientByOrg(organization)
+    return selectDeveloperPlatformClientByConfig(configuration)
   }
+  return new PartnersClient()
+}
+
+function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
+  if (organization.source === OrganizationSource.BusinessPlatform) return new ShopifyDevelopersClient()
+  return new PartnersClient()
+}
+
+function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
+  if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
+    return new ShopifyDevelopersClient()
   return new PartnersClient()
 }
 
