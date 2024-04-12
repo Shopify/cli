@@ -1,6 +1,6 @@
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
-import {captureOutput, exec} from './system.js'
+import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 
 /**
@@ -50,6 +50,7 @@ async function installGlobalShopifyCLI(packageManager: PackageManager): Promise<
  * @returns `true` if the user has installed the global CLI.
  */
 export async function installGlobalCLIIfNeeded(packageManager: PackageManager): Promise<boolean> {
+  if (!terminalSupportsRawMode()) return false
   if (await isGlobalCLIInstalled()) {
     return true
   }
