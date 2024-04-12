@@ -7,6 +7,10 @@ import {build as esBuild} from 'esbuild'
 import requireResolvePlugin from '@chialab/esbuild-plugin-require-resolve'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
+import {createRequire} from 'module'
+import path from 'path'
+
+const require = createRequire(import.meta.url)
 
 const external = [
   // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
@@ -17,6 +21,8 @@ const external = [
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
+const themePath = require.resolve('@shopify/theme-check-node')
+const configYmlPath = path.join(themePath, '..', '..', 'configs/*.yml')
 
 esBuild({
   bundle: true,
@@ -63,7 +69,7 @@ esBuild({
           to: ['./dist/'],
         },
         {
-          from: ['../../node_modules/.pnpm/node_modules/@shopify/theme-check-node/configs/*.yml'],
+          from: [configYmlPath],
           to: ['./dist/configs/'],
         },
       ],
