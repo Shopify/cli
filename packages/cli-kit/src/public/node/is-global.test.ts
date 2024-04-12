@@ -1,10 +1,11 @@
+import {beforeEach} from 'node:test'
 import {
   currentProcessIsGlobal,
   inferPackageManagerForGlobalCLI,
   installGlobalCLIIfNeeded,
   isGlobalCLIInstalled,
 } from './is-global.js'
-import {captureOutput, exec} from './system.js'
+import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -123,6 +124,7 @@ describe('installGlobalCLIIfNeeded', () => {
     // Given
     // Global CLI is already installed
     vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app dev'))
+    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
 
     // When
     const got = await installGlobalCLIIfNeeded('npm')
@@ -138,6 +140,7 @@ describe('installGlobalCLIIfNeeded', () => {
     vi.mocked(captureOutput).mockImplementationOnce(() => {
       throw new Error('')
     })
+    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('yes'))
 
     // When
@@ -154,6 +157,7 @@ describe('installGlobalCLIIfNeeded', () => {
     vi.mocked(captureOutput).mockImplementationOnce(() => {
       throw new Error('')
     })
+    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('no'))
 
     // When
