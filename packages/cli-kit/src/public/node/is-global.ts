@@ -36,25 +36,29 @@ export async function isGlobalCLIInstalled(): Promise<boolean> {
  *
  * @param packageManager - The package manager to use.
  */
-async function installGlobalShopifyCLI(packageManager: PackageManager): Promise<void> {
+export async function installGlobalShopifyCLI(packageManager: PackageManager): Promise<void> {
   const args =
     packageManager === 'yarn' ? ['global', 'add', '@shopify/cli@latest'] : ['install', '-g', '@shopify/cli@latest']
   outputInfo(`Running ${packageManager} ${args.join(' ')}...`)
   await exec(packageManager, args, {stdio: 'inherit'})
 }
 
+export interface InstallGlobalCLIPromptResult {
+  install: boolean
+  alreadyInstalled: boolean
+}
 /**
  * Prompts the user to install the global CLI.
  *
  * @param packageManager - The package manager to use.
  * @returns `true` if the user has installed the global CLI.
  */
-export async function installGlobalCLIIfNeeded(packageManager: PackageManager): Promise<boolean> {
-  if (!terminalSupportsRawMode()) return false
+export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
+  if (!terminalSupportsRawMode()) return {install: false, alreadyInstalled: false}
   if (await isGlobalCLIInstalled()) {
-    return true
+    return {install: false, alreadyInstalled: true}
   }
-  const globalResult = await renderSelectPrompt({
+  const result = await renderSelectPrompt({
     message: 'We recommend installing Shopify CLI globally in your system. Would you like to install it now?',
     choices: [
       {value: 'yes', label: 'Yes'},
@@ -62,10 +66,7 @@ export async function installGlobalCLIIfNeeded(packageManager: PackageManager): 
     ],
   })
 
-  if (globalResult === 'yes') {
-    await installGlobalShopifyCLI(packageManager)
-  }
-  return globalResult === 'yes'
+  return {install: result === 'yes', alreadyInstalled: false}
 }
 
 /**

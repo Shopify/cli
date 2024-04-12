@@ -2,7 +2,7 @@ import {beforeEach} from 'node:test'
 import {
   currentProcessIsGlobal,
   inferPackageManagerForGlobalCLI,
-  installGlobalCLIIfNeeded,
+  installGlobalCLIPrompt,
   isGlobalCLIInstalled,
 } from './is-global.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
@@ -119,18 +119,18 @@ describe('isGlobalCLIInstalled', () => {
   })
 })
 
-describe('installGlobalCLIIfNeeded', () => {
-  test('returns true if the global CLI is already installed', async () => {
+describe('installGlobalCLIPrompt', () => {
+  test('if global CLI is already installed', async () => {
     // Given
     // Global CLI is already installed
     vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app dev'))
     vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
 
     // When
-    const got = await installGlobalCLIIfNeeded('npm')
+    const got = await installGlobalCLIPrompt()
 
     // Then
-    expect(got).toBeTruthy()
+    expect(got).toEqual({install: false, alreadyInstalled: true})
     expect(renderSelectPrompt).not.toHaveBeenCalled()
   })
 
@@ -144,11 +144,10 @@ describe('installGlobalCLIIfNeeded', () => {
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('yes'))
 
     // When
-    const got = await installGlobalCLIIfNeeded('npm')
+    const got = await installGlobalCLIPrompt()
 
     // Then
-    expect(got).toBeTruthy()
-    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
+    expect(got).toEqual({install: true, alreadyInstalled: false})
   })
 
   test('returns false if the user does not install the global CLI', async () => {
@@ -161,9 +160,9 @@ describe('installGlobalCLIIfNeeded', () => {
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('no'))
 
     // When
-    const got = await installGlobalCLIIfNeeded('npm')
+    const got = await installGlobalCLIPrompt()
 
     // Then
-    expect(got).toBeFalsy()
+    expect(got).toEqual({install: false, alreadyInstalled: false})
   })
 })

@@ -9,7 +9,13 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
-import {inferPackageManagerForGlobalCLI} from '@shopify/cli-kit/node/is-global'
+import {
+  inferPackageManagerForGlobalCLI,
+  installGlobalCLIPrompt,
+  installGlobalShopifyCLI,
+  isGlobalCLIInstalled,
+} from '@shopify/cli-kit/node/is-global'
+import {prompt} from '@oclif/core/lib/cli-ux/prompt.js'
 
 export default class Init extends Command {
   static summary?: string | undefined = 'Create a new app project'
@@ -65,8 +71,11 @@ export default class Init extends Command {
       template: flags.template,
       flavor: flags.flavor,
       directory: flags.path,
-      packageManager: inferredPackageManager,
     })
+
+    if (promptAnswers.globalCLIResult.install) {
+      await installGlobalShopifyCLI(inferredPackageManager)
+    }
 
     await addPublicMetadata(() => ({
       cmd_create_app_template: promptAnswers.templateType,
@@ -79,7 +88,7 @@ export default class Init extends Command {
       template: promptAnswers.template,
       local: flags.local,
       directory: flags.path,
-      useGlobalCLI: promptAnswers.globalCLIInstalled,
+      useGlobalCLI: promptAnswers.globalCLIResult.alreadyInstalled || promptAnswers.globalCLIResult.install,
     })
   }
 

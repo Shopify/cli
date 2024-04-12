@@ -25,7 +25,7 @@ beforeEach(() => {
     name: 'name',
     template: 'http://test.es',
     templateType: 'custom',
-    globalCLIInstalled: false,
+    globalCLIResult: {install: false, alreadyInstalled: false},
   })
 })
 

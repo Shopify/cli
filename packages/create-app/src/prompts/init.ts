@@ -1,6 +1,5 @@
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {installGlobalCLIIfNeeded} from '@shopify/cli-kit/node/is-global'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
 import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface InitOptions {
@@ -8,7 +7,6 @@ export interface InitOptions {
   template?: string
   flavor?: string
   directory: string
-  packageManager: PackageManager
 }
 
 interface InitOutput {
@@ -16,7 +14,7 @@ interface InitOutput {
   template: string
   // e.g. 'remix'
   templateType: PredefinedTemplate | 'custom'
-  globalCLIInstalled: boolean
+  globalCLIResult: InstallGlobalCLIPromptResult
 }
 
 interface TemplateBranch {
@@ -127,7 +125,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     name,
     template,
     templateType: isPredefinedTemplate(template) ? template : 'custom',
-    globalCLIInstalled: false,
+    globalCLIResult: {install: false, alreadyInstalled: false},
   }
 
   let selectedUrl: string | undefined
@@ -157,8 +155,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
   answers.template = selectedUrl || answers.template || defaults.template
 
-  const installed = await installGlobalCLIIfNeeded(options.packageManager)
-  answers.globalCLIInstalled = installed
+  answers.globalCLIResult = await installGlobalCLIPrompt()
 
   return answers
 }
