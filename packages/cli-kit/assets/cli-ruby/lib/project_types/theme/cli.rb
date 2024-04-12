@@ -12,13 +12,11 @@ module Theme
     subcommand :Pull, "pull", Project.project_filepath("commands/pull")
     subcommand :Push, "push", Project.project_filepath("commands/push")
     subcommand :Delete, "delete", Project.project_filepath("commands/delete")
-    subcommand :Check, "check", Project.project_filepath("commands/check")
     subcommand :Publish, "publish", Project.project_filepath("commands/publish")
     subcommand :Package, "package", Project.project_filepath("commands/package")
     subcommand :Open, "open", Project.project_filepath("commands/open")
     subcommand :List, "list", Project.project_filepath("commands/list")
     subcommand :Share, "share", Project.project_filepath("commands/share")
-    subcommand :LanguageServer, "language-server", Project.project_filepath("commands/language_server")
     subcommand :Console, "console", Project.project_filepath("commands/console")
     subcommand :Token, "token", Project.project_filepath("commands/token")
   end
