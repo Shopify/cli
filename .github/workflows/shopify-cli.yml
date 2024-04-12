@@ -144,6 +144,8 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
+      - name: 'Build'
+          run: pnpm nx run-many --all --skip-nx-cache --target=build
       - name: 'Bundle'
         run: pnpm nx run-many --all --skip-nx-cache --target=bundle
 
