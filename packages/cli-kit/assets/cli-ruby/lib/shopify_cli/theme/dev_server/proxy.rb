@@ -106,6 +106,11 @@ module ShopifyCLI
         private
 
         def clean_sfr_cache(env, query, headers)
+          if env["PATH_INFO"].start_with?("/password")
+            @cache_cleaned = false
+            return
+          end
+
           return if @cache_cleaned
 
           @cache_cleaned = true
