@@ -510,6 +510,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^0.34.3
         version: 0.34.4(vitest@0.34.4)
+      esbuild-plugin-copy:
+        specifier: ^2.1.1
+        version: 2.1.1(esbuild@0.19.8)
       vitest:
         specifier: ^0.34.3
         version: 0.34.4(jsdom@20.0.3)

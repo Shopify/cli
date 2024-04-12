@@ -123,7 +123,7 @@
     "workspaces": {
       ".": {
         "entry": [
-          "bin/*.js",
+          "bin/**/*.js",
           "configurations/vite.config.ts",
           "docs-shopify.dev/**/*.ts",
           "vite.config.ts",
@@ -131,7 +131,7 @@
         ],
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
-          "bin/**/*",
+          "bin/*",
           "istanbul-merge"
         ],
         "ignoreDependencies": [
@@ -169,7 +169,6 @@
         "project": "**/*.ts!",
         "ignoreDependencies": [
           "@oclif/plugin-commands",
-          "@oclif/plugin-help",
           "@shopify/plugin-did-you-mean",
           "@shopify/app",
           "@shopify/theme"
