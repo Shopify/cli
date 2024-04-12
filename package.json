@@ -110,7 +110,8 @@
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
       "esbuild",
-      "@shopify/cli-hydrogen"
+      "@shopify/cli-hydrogen",
+      "@shopify/theme-check-node"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
