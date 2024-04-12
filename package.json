@@ -131,7 +131,7 @@
         ],
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
-          "bin/*",
+          "bin/**/*",
           "istanbul-merge"
         ],
         "ignoreDependencies": [
