@@ -6,7 +6,7 @@ import {
   UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -32,7 +32,7 @@ interface InitOptions {
   template: string
   packageManager: PackageManager
   local: boolean
-  useGlobalCI: boolean
+  useGlobalCLI: boolean
 }
 
 async function init(options: InitOptions) {
@@ -42,6 +42,16 @@ async function init(options: InitOptions) {
   const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+
+  renderInfo({
+    body: [
+      `Initializing project with`,
+      {command: packageManager},
+      `\nUse the`,
+      {command: `--package-manager`},
+      `flag to select a different package manager.`,
+    ],
+  })
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
@@ -106,7 +116,7 @@ async function init(options: InitOptions) {
             packageJSON,
             local: options.local,
             directory: templateScaffoldDir,
-            useGlobalCLI: options.useGlobalCI,
+            useGlobalCLI: options.useGlobalCLI,
           })
           await writePackageJSON(templateScaffoldDir, packageJSON)
         },
@@ -126,7 +136,7 @@ async function init(options: InitOptions) {
 
     tasks.push(
       {
-        title: 'Installing dependencies',
+        title: `Installing dependencies with ${packageManager}`,
         task: async () => {
           await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
         },
