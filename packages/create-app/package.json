@@ -39,6 +39,7 @@
   ],
   "scripts": {
     "build": "nx build",
+    "bundle": "nx bundle",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
