@@ -294,6 +294,6 @@
     }
   },
   "dependencies": {
-    "@shopify/cli-hydrogen": "0.0.0-next-72d1271-20240411165757"
+    "@shopify/cli-hydrogen": "8.0.0"
   }
 }
