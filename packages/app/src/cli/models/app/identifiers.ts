@@ -4,6 +4,8 @@ import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import type {AppInterface} from './app.js'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 export interface IdentifiersExtensions {
   [localIdentifier: string]: string
@@ -51,6 +53,15 @@ export async function updateAppIdentifiers(
   {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
+  await Promise.all(app.realExtensions.map(async (extension) => {
+    if (extension.isUuidManaged() && await fileExists(extension.configurationPath)) {
+      const tomlContents = await readFile(extension.configurationPath)
+      const extensionConfig = decodeToml(tomlContents)
+      if ('uid' in extensionConfig) return
+      await writeFile(extension.configurationPath, `uid = "${extension.uid}"\n${tomlContents}`)
+    }
+  }))
+
   let dotenvFile = app.dotenv
 
   if (!dotenvFile) {

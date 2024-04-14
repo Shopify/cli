@@ -18,9 +18,10 @@ import {
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppInterface
@@ -105,6 +106,11 @@ async function extensionInit(options: ExtensionInitOptions) {
       default:
         await uiExtensionInit(options)
         break
+    }
+    const configFile = joinPath(options.directory, 'shopify.extension.toml')
+    if (await fileExists(configFile)) {
+      const tomlContents = await readFile(configFile)
+      await writeFile(configFile, `uid = "${randomUUID()}\n${tomlContents}"`)
     }
   } catch (error) {
     await removeFile(options.directory)

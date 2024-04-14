@@ -62,6 +62,7 @@ export const BaseSchema = zod.object({
   name: zod.string(),
   type: zod.string(),
   handle: HandleSchema.optional(),
+  uid: zod.string().optional(),
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),

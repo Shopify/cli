@@ -169,6 +169,7 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
@@ -212,7 +213,7 @@ export class App implements AppInterface {
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
   remoteFlags: Flag[]
-  private realExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
 
   constructor({
     name,
