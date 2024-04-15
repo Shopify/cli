@@ -1,48 +1,107 @@
-import {WebhookSimplifyConfig, simplifyWebhooks} from './app_config_webhook.js'
-import {CustomTransformationConfig, SimplifyConfig, createConfigExtensionSpecification} from '../specification.js'
-import {getPathValue} from '@shopify/cli-kit/common/object'
-import {NormalizedWebhookSubscription, WebhooksConfig} from './types/app_config_webhook.js'
+import {WebhookSimplifyConfig} from './app_config_webhook.js'
+import {WebhooksConfig} from './types/app_config_webhook.js'
 import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
+import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
 
+interface TransformedWebhookSubscription {
+  api_version: string
+  uri: string
+  topic: string
+  compliance_topics?: string[]
+  sub_topic?: string
+  include_fields?: string[]
+}
+
+/* this transforms webhooks from the TOML config to be parsed remotely
+ie.
+  given:
+  {
+    webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/delete', 'orders/create'],
+              uri: 'https://example.com/webhooks/orders',
+            },
+            {
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks/products',
+            },
+          ]
+      }
+  }
+  the function should return:
+  {
+    subscriptions: [
+      { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
+      { topic: 'orders/delete', uri: https://example.com/webhooks/orderss'},
+      { topic: 'orders/create', uri: 'https://example.com/webhooks/orders'},
+    ]
+  }
+  */
 function transformFromWebhookSubscriptionConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
-  const {subscriptions = []} = webhooks
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const {api_version, subscriptions = []} = webhooks
 
-  /* this transforms webhooks from subscriptions array to individual subscriptions per topic, ie
-  // [
-  { uri: 'https://example.com', topic: 'products/create' },
-  { uri: 'https://example.com', topic: 'products/delete' },
-  { uri: 'https://example-2.com', topic: 'products/update' }
-  ]
-  */
   const webhookSubscriptions = subscriptions.flatMap((subscription) => {
     const {uri, topics, ...optionalFields} = subscription
     if (topics)
       return topics.map((topic) => {
-        return {uri, topic, ...optionalFields}
+        return {api_version, uri, topic, ...optionalFields}
       })
   })
 
   return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
 }
 
+/* this transforms webhooks remotely to be accepted by the TOML
+ie.
+  given:
+  {
+    subscriptions: [
+      { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
+      { topic: 'orders/delete', uri: https://example.com/webhooks/orderss'},
+      { topic: 'orders/create', uri: 'https://example.com/webhooks/orders'},
+    ]
+  }
+  the function should return:
+  {
+    webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/delete', 'orders/create'],
+              uri: 'https://example.com/webhooks/orders',
+            },
+            {
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks/products',
+            },
+          ]
+      }
+  }
+  */
 function transformToWebhookSubscriptionConfig(content: object) {
-  const subscription = content as NormalizedWebhookSubscription
-  if (!subscription) return {}
+  const subscriptions = getPathValue(content, 'subscriptions') as TransformedWebhookSubscription[]
+  if (!subscriptions) return {}
 
-  const {topic, ...otherFields} = subscription
+  const subscriptionsArray = subscriptions.map((subscription: TransformedWebhookSubscription) => {
+    const {topic, ...otherFields} = subscription
+    return {
+      topics: [topic],
+      ...otherFields,
+    }
+  })
+
   return {
     webhooks: {
-      subscriptions: [
-        {
-          topics: [topic],
-          ...otherFields,
-        },
-      ],
+      subscriptions: subscriptionsArray,
     },
   }
 }
@@ -57,7 +116,7 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   schema: WebhooksSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
-  hasMultipleModuleConfig: true,
+  extensionManagedInToml: true,
   multipleModuleConfigPath: 'subscriptions',
 })
 
