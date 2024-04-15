@@ -87,10 +87,10 @@ program
           }
         } catch (error) {}
 
-        log("Installing @shopify/cli@nightly and @shopify/theme@nightly via npm...")
+        log("Installing @shopify/cli@nightly via npm...")
         await execa(
           "npm",
-          ["install", "-g", "@shopify/cli@nightly", "@shopify/theme@nightly"],
+          ["install", "-g", "@shopify/cli@nightly"],
           defaultOpts
         )
         shopifyExec = (args, path = themePath) => {
@@ -155,10 +155,10 @@ program
           // nothing to do here
           break
         case "npm":
-          log("Uninstalling @shopify/cli and @shopify/theme via npm...")
+          log("Uninstalling @shopify/cli via npm...")
           await execa(
             "npm",
-            ["uninstall", "-g", "@shopify/cli", "@shopify/theme"],
+            ["uninstall", "-g", "@shopify/cli"],
             defaultOpts
           )
           break

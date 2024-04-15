@@ -56,6 +56,7 @@ program
     "-f, --flavor <flavor>",
     "flavor to be used for the template",
   )
+  .option("--global", "install CLI globally or locally", false)
   .option("--cleanup", "delete temp app afterwards", false)
   .option("--deploy", "deploy the app to Shopify", false)
   .option("--config-as-code", "enable config as code", false)
@@ -77,6 +78,25 @@ program
     const template = options.template || "remix";
     const flavor = options.flavor || "javascript";
     const appPath = path.join(homeDir, "Desktop", appName);
+
+      try {
+        const { stdout } = await execa(os.platform() == "win32" ? "where.exe" : "which", ["shopify"])
+        if (stdout !== "") {
+          log(
+            `Found existing global shopify: ${stdout}. Please uninstall and try again.`
+          )
+          process.exit(1)
+        }
+      } catch (error) {}
+
+    if (options.global) {
+      log("Installing @shopify/cli@nightly Globally via npm...")
+      await execa(
+        "npm",
+        ["install", "-g", "@shopify/cli@nightly"],
+        defaultOpts
+      )
+    }
 
     switch (options.packageManager) {
       case "npm":
