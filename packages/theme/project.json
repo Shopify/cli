@@ -57,13 +57,6 @@
         "command": "pnpm tsc --noEmit",
         "cwd": "packages/theme"
       }
-    },
-    "refresh-manifests": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm oclif manifest",
-        "cwd": "packages/theme"
-      }
     }
   }
 }

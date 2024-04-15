@@ -1,7 +1,7 @@
 {
   "name": "@shopify/theme",
   "version": "3.58.0",
-  "private": false,
+  "private": true,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -13,6 +13,12 @@
   },
   "license": "MIT",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "/dist",
     "/oclif.manifest.json"
@@ -33,7 +39,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
+    "@oclif/core": "3.23.0",
     "@shopify/cli-kit": "3.58.0",
     "@shopify/theme-check-node": "2.5.0",
     "@shopify/theme-language-server-node": "1.11.0",
@@ -57,8 +63,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": "dist/cli/commands"
-  }
+  "engine-strict": true
 }

@@ -43,7 +43,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
     "test": "nx run create-app:test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check"
@@ -54,7 +54,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
+    "@oclif/core": "3.23.0",
     "@shopify/cli-kit": "3.58.0"
   },
   "devDependencies": {

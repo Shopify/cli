@@ -1,6 +1,7 @@
 {
   "name": "@shopify/plugin-cloudflare",
   "version": "3.58.0",
+  "private": true,
   "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
@@ -19,6 +20,12 @@
     "/dist",
     "/oclif.manifest.json"
   ],
+  "exports": {
+    "./hooks/*": {
+      "import": "./dist/*.js",
+      "require": "./dist/*.d.js"
+    }
+  },
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
@@ -35,7 +42,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
+    "@oclif/core": "3.23.0",
     "@shopify/cli-kit": "3.58.0"
   },
   "devDependencies": {
@@ -54,11 +61,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "hooks": {
-      "tunnel_start": "dist/tunnel",
-      "tunnel_provider": "dist/provider"
-    }
-  }
+  "engine-strict": true
 }

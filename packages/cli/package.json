@@ -42,7 +42,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
     "test": "nx run cli:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
@@ -95,11 +95,15 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
-    "@oclif/plugin-commands": "2.2.28",
-    "@oclif/plugin-plugins": "3.9.4",
+    "@oclif/core": "3.23.0",
+    "@oclif/plugin-commands": "3.3.0",
+    "@oclif/plugin-plugins": "4.3.8",
+    "@shopify/app": "3.58.0",
     "@shopify/cli-kit": "3.58.0",
+    "@shopify/plugin-cloudflare": "3.58.0",
     "@shopify/plugin-did-you-mean": "3.58.0",
+    "@shopify/theme": "3.58.0",
+    "esbuild": "0.19.8",
     "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
@@ -127,18 +131,17 @@
   "engine-strict": true,
   "oclif": {
     "bin": "shopify",
-    "commands": "dist/cli/commands",
-    "plugins": [
-      "@shopify/app",
-      "@shopify/theme",
-      "@shopify/plugin-did-you-mean",
-      "@shopify/cli-hydrogen",
-      "@oclif/plugin-plugins",
-      "@oclif/plugin-commands"
-    ],
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    },
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
+      "hydrogen": {
+        "description": "Build Hydrogen storefronts."
+      },
       "theme": {
         "description": "Build Liquid themes."
       },
@@ -161,9 +164,6 @@
         "description": "View the available UI kit components.",
         "hidden": true
       },
-      "webhook": {
-        "description": "Manage webhooks."
-      },
       "plugins": {
         "hidden": true
       }
@@ -172,8 +172,25 @@
       "-h"
     ],
     "hooks": {
+      "init": "./dist/hooks/init.js",
       "prerun": "./dist/hooks/prerun.js",
-      "postrun": "./dist/hooks/postrun.js"
+      "postrun": "./dist/hooks/postrun.js",
+      "command_not_found": {
+        "target": "./dist/index.js",
+        "identifier": "DidYouMeanHook"
+      },
+      "tunnel_start": {
+        "target": "./dist/index.js",
+        "identifier": "TunnelStartHook"
+      },
+      "tunnel_provider": {
+        "target": "./dist/index.js",
+        "identifier": "TunnelProviderHook"
+      },
+      "update": {
+        "target": "./dist/index.js",
+        "identifier": "PluginHook"
+      }
     }
   }
 }

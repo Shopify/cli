@@ -1,6 +1,7 @@
 {
   "name": "@shopify/plugin-did-you-mean",
   "version": "3.58.0",
+  "private": true,
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
@@ -13,6 +14,12 @@
     "/dist",
     "/oclif.manifest.json"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
@@ -29,7 +36,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
+    "@oclif/core": "3.23.0",
     "@shopify/cli-kit": "3.58.0",
     "n-gram": "2.0.2"
   },
@@ -49,16 +56,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": "dist/commands",
-    "topics": {
-      "config:autocorrect": {
-        "description": "Configure autocorrect feature."
-      }
-    },
-    "hooks": {
-      "command_not_found": "dist/index"
-    }
-  }
+  "engine-strict": true
 }

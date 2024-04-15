@@ -12,7 +12,6 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
-* [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
@@ -25,35 +24,13 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMAND]`](#shopify-help-command)
-* [`shopify hydrogen build`](#shopify-hydrogen-build)
-* [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
-* [`shopify hydrogen codegen`](#shopify-hydrogen-codegen)
-* [`shopify hydrogen customer-account push`](#shopify-hydrogen-customer-account-push)
-* [`shopify hydrogen debug cpu`](#shopify-hydrogen-debug-cpu)
-* [`shopify hydrogen deploy`](#shopify-hydrogen-deploy)
-* [`shopify hydrogen dev`](#shopify-hydrogen-dev)
-* [`shopify hydrogen env list`](#shopify-hydrogen-env-list)
-* [`shopify hydrogen env pull`](#shopify-hydrogen-env-pull)
-* [`shopify hydrogen env push`](#shopify-hydrogen-env-push)
-* [`shopify hydrogen generate route ROUTENAME`](#shopify-hydrogen-generate-route-routename)
-* [`shopify hydrogen generate routes`](#shopify-hydrogen-generate-routes)
-* [`shopify hydrogen link`](#shopify-hydrogen-link)
-* [`shopify hydrogen list`](#shopify-hydrogen-list)
-* [`shopify hydrogen login`](#shopify-hydrogen-login)
-* [`shopify hydrogen logout`](#shopify-hydrogen-logout)
-* [`shopify hydrogen preview`](#shopify-hydrogen-preview)
-* [`shopify hydrogen setup`](#shopify-hydrogen-setup)
-* [`shopify hydrogen setup css [STRATEGY]`](#shopify-hydrogen-setup-css-strategy)
-* [`shopify hydrogen setup markets [STRATEGY]`](#shopify-hydrogen-setup-markets-strategy)
-* [`shopify hydrogen setup vite`](#shopify-hydrogen-setup-vite)
-* [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
-* [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
-* [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
+* [`shopify hydrogen init`](#shopify-hydrogen-init)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
 * [`shopify plugins:link PLUGIN`](#shopify-pluginslink-plugin)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin)
+* [`shopify plugins reset`](#shopify-plugins-reset)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
 * [`shopify plugins update`](#shopify-plugins-update)
@@ -105,8 +82,6 @@ DESCRIPTION
   extension to ensure that it's valid.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/build.js)_
-
 ## `shopify app config link`
 
 Fetch your app configuration from the Partner Dashboard.
@@ -132,8 +107,6 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/config/link.js)_
-
 ## `shopify app config use [CONFIG]`
 
 Activate an app configuration.
@@ -157,8 +130,6 @@ DESCRIPTION
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/config/use.js)_
 
 ## `shopify app deploy`
 
@@ -196,8 +167,6 @@ DESCRIPTION
   This command doesn't deploy your "web app" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You
   need to "deploy your web app" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/deploy.js)_
 
 ## `shopify app dev`
 
@@ -273,8 +242,6 @@ DESCRIPTION
   account through the Partner Dashboard.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/dev.js)_
-
 ## `shopify app env pull`
 
 Pull app and extensions environment variables.
@@ -299,8 +266,6 @@ DESCRIPTION
   variables and commented variables are preserved.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/env/pull.js)_
-
 ## `shopify app env show`
 
 Display app and extensions environment variables.
@@ -321,8 +286,6 @@ DESCRIPTION
   Displays environment variables that can be used to deploy apps and app extensions.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/env/show.js)_
-
 ## `shopify app function build`
 
 Compile a function to wasm.
@@ -342,8 +305,6 @@ DESCRIPTION
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/function/build.js)_
 
 ## `shopify app function run`
 
@@ -369,8 +330,6 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/function/run.js)_
 
 ## `shopify app function schema`
 
@@ -398,8 +357,6 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/function/schema.js)_
-
 ## `shopify app function typegen`
 
 Generate GraphQL types for a JavaScript function.
@@ -420,8 +377,6 @@ DESCRIPTION
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function written in JavaScript.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/function/typegen.js)_
 
 ## `shopify app generate extension [FILE]`
 
@@ -461,36 +416,6 @@ EXAMPLES
   $ shopify app generate extension
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/generate/extension.js)_
-
-## `shopify app generate schema`
-
-Fetch the latest GraphQL schema for a function.
-
-```
-USAGE
-  $ shopify app generate schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
-
-FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID to fetch the schema with.
-      --no-color           Disable color output.
-      --path=<value>       The path to your function directory.
-      --stdout             Output the schema to stdout instead of writing to a file.
-      --verbose            Increase the verbosity of the logs.
-
-DESCRIPTION
-  Fetch the latest GraphQL schema for a function.
-
-  Generates the latest "GraphQL schema" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
-  function in your app. Run this command from the function directory.
-
-  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
-  latest GraphQL schema. The schema is written to the `schema.graphql` file.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/generate/schema.js)_
-
 ## `shopify app import-extensions`
 
 Import dashboard-managed extensions into your app.
@@ -509,8 +434,6 @@ FLAGS
 DESCRIPTION
   Import dashboard-managed extensions into your app.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/import-extensions.js)_
 
 ## `shopify app info`
 
@@ -541,8 +464,6 @@ DESCRIPTION
   - System information, including the package manager and version of Shopify CLI used in the project.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/info.js)_
-
 ## `shopify app init`
 
 Create a new app project
@@ -564,8 +485,6 @@ FLAGS
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   Increase the verbosity of the logs.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/init.js)_
 
 ## `shopify app:release --version <version>`
 
@@ -590,8 +509,6 @@ DESCRIPTION
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/release.js)_
 
 ## `shopify app versions list [FILE]`
 
@@ -618,8 +535,6 @@ DESCRIPTION
 EXAMPLES
   $ shopify app versions list
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/versions/list.js)_
 
 ## `shopify app webhook trigger`
 
@@ -687,8 +602,6 @@ DESCRIPTION
   - You can't use this method to validate your API webhook subscriptions.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.58.0/dist/cli/commands/app/webhook/trigger.js)_
-
 ## `shopify auth logout`
 
 Logs you out of the Shopify account or Partner account and store.
@@ -701,22 +614,21 @@ DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
 ```
 
-_See code: [dist/cli/commands/auth/logout.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/auth/logout.js)_
-
 ## `shopify commands`
 
 list all the commands
 
 ```
 USAGE
-  $ shopify commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--sort <value>] [--filter
-    <value>] [--output csv|json|yaml |  | [--csv | --no-truncate]] [--no-header | ]
+  $ shopify commands [--columns <value> | -x] [--deprecated] [--filter <value>] [-h] [--hidden] [--json]
+    [--no-header | [--csv | --no-truncate]] [--output csv|json|yaml |  | ] [--sort <value>] [--tree]
 
 FLAGS
   -h, --help             Show CLI help.
   -x, --extended         show extra columns
       --columns=<value>  only show provided columns (comma-separated)
       --csv              output is csv format [alias: --output=csv]
+      --deprecated       show deprecated commands
       --filter=<value>   filter property by partial string matching, ex: name=foo
       --hidden           show hidden commands
       --no-header        hide table header from output
@@ -732,8 +644,6 @@ GLOBAL FLAGS
 DESCRIPTION
   list all the commands
 ```
-
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.28/src/commands/commands.ts)_
 
 ## `shopify config autocorrect off`
 
@@ -810,521 +720,16 @@ DESCRIPTION
   Display help for Shopify CLI
 ```
 
-_See code: [dist/cli/commands/help.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/help.js)_
+## `shopify hydrogen init`
 
-## `shopify hydrogen build`
-
-Builds a Hydrogen storefront for production.
+Create a new hydrogen project
 
 ```
 USAGE
-  $ shopify hydrogen build [--path <value>] [--sourcemap] [--bundle-stats] [--lockfile-check]
-    [--disable-route-warning] [--codegen-config-path <value> --codegen]
-
-FLAGS
-  --[no-]bundle-stats            Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to
-                                 disable.
-  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
-  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
-                                 this file exists.
-  --disable-route-warning        Disables any warnings about missing standard routes.
-  --[no-]lockfile-check          Checks that there is exactly one valid lockfile in the project. Defaults to `true`.
-                                 Deactivate with `--no-lockfile-check`.
-  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                                 where the command is run.
-  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
-                                 `--no-sourcemaps`.
-
-DESCRIPTION
-  Builds a Hydrogen storefront for production.
-```
-
-## `shopify hydrogen check RESOURCE`
-
-Returns diagnostic information about a Hydrogen storefront.
-
-```
-USAGE
-  $ shopify hydrogen check RESOURCE [--path <value>]
-
-ARGUMENTS
-  RESOURCE  (routes) The resource to check. Currently only 'routes' is supported.
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  Returns diagnostic information about a Hydrogen storefront.
-```
-
-## `shopify hydrogen codegen`
-
-Generate types for the Storefront API queries found in your project.
-
-```
-USAGE
-  $ shopify hydrogen codegen [--path <value>] [--codegen-config-path <value>] [--watch]
-
-FLAGS
-  --codegen-config-path=<value>  Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it
-                                 exists.
-  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                                 where the command is run.
-  --watch                        Watch the project for changes to update types on file save.
-
-DESCRIPTION
-  Generate types for the Storefront API queries found in your project.
-```
-
-## `shopify hydrogen customer-account push`
-
-Push project configuration to admin
-
-```
-USAGE
-  $ shopify hydrogen customer-account push --dev-origin <value> [--path <value>] [--storefront-id <value>] [--relative-redirect-uri
-    <value>] [--relative-logout-uri <value>]
-
-FLAGS
-  --dev-origin=<value>             (required) The development domain of your application.
-  --path=<value>                   The path to the directory of the Hydrogen storefront. Defaults to the current
-                                   directory where the command is run.
-  --relative-logout-uri=<value>    The relative url of allowed url that will be redirected to post-logout for Customer
-                                   Account API OAuth flow. Default to nothing.
-  --relative-redirect-uri=<value>  The relative url of allowed callback url for Customer Account API OAuth flow. Default
-                                   is '/account/authorize'
-  --storefront-id=<value>          The id of the storefront the configuration should be pushed to. Must start with
-                                   'gid://shopify/HydrogenStorefront/'
-
-DESCRIPTION
-  Push project configuration to admin
-```
-
-## `shopify hydrogen debug cpu`
-
-Builds and profiles the server startup time the app.
-
-```
-USAGE
-  $ shopify hydrogen debug cpu [--path <value>] [--output <value>]
-
-FLAGS
-  --output=<value>  [default: startup.cpuprofile] Specify a path to generate the profile file. Defaults to
-                    "startup.cpuprofile".
-  --path=<value>    The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                    command is run.
-
-DESCRIPTION
-  Builds and profiles the server startup time the app.
-```
-
-## `shopify hydrogen deploy`
-
-Builds and deploys a Hydrogen storefront to Oxygen.
-
-```
-USAGE
-  $ shopify hydrogen deploy [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [--preview]
-    [-f] [--no-verify] [--auth-bypass-token] [--build-command <value>] [--lockfile-check] [--path <value>] [-s <value>]
-    [--json-output] [-t <value>] [--metadata-description <value>] [--metadata-user <value>]
-
-FLAGS
-  -f, --force                         Forces a deployment to proceed if there are uncommited changes in its Git
-                                      repository.
-  -s, --shop=<value>                  Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL
-                                      (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
-  -t, --token=<value>                 Oxygen deployment token. Defaults to the linked storefront's token if available.
-      --auth-bypass-token             Generate an authentication bypass token, which can be used to perform end-to-end
-                                      tests against the deployment.
-      --build-command=<value>         Specify a build command to run before deploying. If not specified, `shopify
-                                      hydrogen build` will be used.
-      --entry=<value>                 Entry file for the worker. Defaults to `./server`.
-      --env=<value>                   Specifies the environment to perform the operation using its handle. Fetch the
-                                      handle using the `env list` command.
-      --env-branch=<value>            Specifies the environment to perform the operation using its Git branch name.
-      --env-file=<value>              Path to an environment file to override existing environment variables for the
-                                      deployment.
-      --[no-]json-output              Create a JSON file containing the deployment details in CI environments. Defaults
-                                      to true, use `--no-json-output` to disable.
-      --[no-]lockfile-check           Checks that there is exactly one valid lockfile in the project. Defaults to
-                                      `true`. Deactivate with `--no-lockfile-check`.
-      --metadata-description=<value>  Description of the changes in the deployment. Defaults to the commit message of
-                                      the latest commit if there are no uncommited changes.
-      --metadata-user=<value>         User that initiated the deployment. Will be saved and displayed in the Shopify
-                                      admin
-      --no-verify                     Skip the routability verification step after deployment.
-      --path=<value>                  The path to the directory of the Hydrogen storefront. Defaults to the current
-                                      directory where the command is run.
-      --preview                       Deploys to the Preview environment. Overrides --env-branch and Git metadata.
-
-DESCRIPTION
-  Builds and deploys a Hydrogen storefront to Oxygen.
-```
-
-## `shopify hydrogen dev`
-
-Runs Hydrogen storefront in an Oxygen worker for development.
-
-```
-USAGE
-  $ shopify hydrogen dev [--path <value>] [--port <value>] [--legacy-runtime] [--codegen-config-path <value>
-    --codegen] [--sourcemap] [--disable-virtual-routes] [--debug] [--inspector-port <value>] [--env <value> |
-    --env-branch <value>] [--disable-version-check] [--verbose]
-
-FLAGS
-  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
-  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
-                                 this file exists.
-  --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
-                                 or Chrome DevTools.
-  --disable-version-check        Skip the version check when running `hydrogen dev`
-  --disable-virtual-routes       Disable rendering fallback routes when a route file doesn't exist.
-  --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
-                                 using the `env list` command.
-  --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
-  --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
-  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                                 where the command is run.
-  --port=<value>                 The port to run the server on. Defaults to 3000.
-  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
-                                 `--no-sourcemaps`.
-  --verbose                      Outputs more information about the command's execution.
-
-DESCRIPTION
-  Runs Hydrogen storefront in an Oxygen worker for development.
-```
-
-## `shopify hydrogen env list`
-
-List the environments on your linked Hydrogen storefront.
-
-```
-USAGE
-  $ shopify hydrogen env list [--path <value>]
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  List the environments on your linked Hydrogen storefront.
-```
-
-## `shopify hydrogen env pull`
-
-Populate your .env with variables from your Hydrogen storefront.
-
-```
-USAGE
-  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--path <value>] [-f]
-
-FLAGS
-  -f, --force               Overwrites the destination directory and files if they already exist.
-      --env=<value>         Specifies the environment to perform the operation using its handle. Fetch the handle using
-                            the `env list` command.
-      --env-branch=<value>  Specifies the environment to perform the operation using its Git branch name.
-      --path=<value>        The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                            where the command is run.
-
-DESCRIPTION
-  Populate your .env with variables from your Hydrogen storefront.
-```
-
-## `shopify hydrogen env push`
-
-Push environment variables from the local .env file to your linked Hydrogen storefront.
-
-```
-USAGE
-  $ shopify hydrogen env push [--env <value> | ] [--env-file <value>] [--path <value>]
-
-FLAGS
-  --env=<value>       Specifies the environment to perform the operation using its handle. Fetch the handle using the
-                      `env list` command.
-  --env-file=<value>  Path to an environment file to override existing environment variables for the selected
-                      environment. Defaults to the '.env' located in your project path `--path`.
-  --path=<value>      The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                      command is run.
-
-DESCRIPTION
-  Push environment variables from the local .env file to your linked Hydrogen storefront.
-```
-
-## `shopify hydrogen generate route ROUTENAME`
-
-Generates a standard Shopify route.
-
-```
-USAGE
-  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [--typescript] [--locale-param <value>] [-f] [--path
-    <value>]
-
-ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
-             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
-
-FLAGS
-  -f, --force                 Overwrites the destination directory and files if they already exist.
-      --adapter=<value>       Remix adapter used in the route. The default is `@shopify/remix-oxygen`.
-      --locale-param=<value>  The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes
-                              ($locale).
-      --path=<value>          The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                              where the command is run.
-      --typescript            Generate TypeScript files
-
-DESCRIPTION
-  Generates a standard Shopify route.
-```
-
-## `shopify hydrogen generate routes`
-
-Generates all supported standard shopify routes.
-
-```
-USAGE
-  $ shopify hydrogen generate routes [--adapter <value>] [--typescript] [--locale-param <value>] [-f] [--path <value>]
-
-FLAGS
-  -f, --force                 Overwrites the destination directory and files if they already exist.
-      --adapter=<value>       Remix adapter used in the route. The default is `@shopify/remix-oxygen`.
-      --locale-param=<value>  The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes
-                              ($locale).
-      --path=<value>          The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                              where the command is run.
-      --typescript            Generate TypeScript files
-
-DESCRIPTION
-  Generates all supported standard shopify routes.
-```
-
-## `shopify hydrogen link`
-
-Link a local project to one of your shop's Hydrogen storefronts.
-
-```
-USAGE
-  $ shopify hydrogen link [-f] [--path <value>] [--storefront <value>]
-
-FLAGS
-  -f, --force               Overwrites the destination directory and files if they already exist.
-      --path=<value>        The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                            where the command is run.
-      --storefront=<value>  The name of a Hydrogen Storefront (e.g. "Jane's Apparel")
-
-DESCRIPTION
-  Link a local project to one of your shop's Hydrogen storefronts.
-```
-
-## `shopify hydrogen list`
-
-Returns a list of Hydrogen storefronts available on a given shop.
-
-```
-USAGE
-  $ shopify hydrogen list [--path <value>]
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  Returns a list of Hydrogen storefronts available on a given shop.
-```
-
-## `shopify hydrogen login`
-
-Login to your Shopify account.
-
-```
-USAGE
-  $ shopify hydrogen login [--path <value>] [-s <value>]
-
-FLAGS
-  -s, --shop=<value>  Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL
-                      (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
-      --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                      command is run.
-
-DESCRIPTION
-  Login to your Shopify account.
-```
-
-## `shopify hydrogen logout`
-
-Logout of your local session.
-
-```
-USAGE
-  $ shopify hydrogen logout [--path <value>]
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  Logout of your local session.
-```
-
-## `shopify hydrogen preview`
-
-Runs a Hydrogen storefront in an Oxygen worker for production.
-
-```
-USAGE
-  $ shopify hydrogen preview [--path <value>] [--port <value>] [--legacy-runtime] [--env <value> | --env-branch
-    <value>] [--inspector-port <value>] [--debug] [--verbose]
-
-FLAGS
-  --debug                   Enables inspector connections to the server with a debugger such as Visual Studio Code or
-                            Chrome DevTools.
-  --env=<value>             Specifies the environment to perform the operation using its handle. Fetch the handle using
-                            the `env list` command.
-  --env-branch=<value>      Specifies the environment to perform the operation using its Git branch name.
-  --inspector-port=<value>  The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime          Runs the app in a Node.js sandbox instead of an Oxygen worker.
-  --path=<value>            The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                            where the command is run.
-  --port=<value>            The port to run the server on. Defaults to 3000.
-  --verbose                 Outputs more information about the command's execution.
-
-DESCRIPTION
-  Runs a Hydrogen storefront in an Oxygen worker for production.
-```
-
-## `shopify hydrogen setup`
-
-Scaffold routes and core functionality.
-
-```
-USAGE
-  $ shopify hydrogen setup [--path <value>] [-f] [--styling <value>] [--markets <value>] [--shortcut]
-    [--install-deps]
-
-FLAGS
-  -f, --force              Overwrites the destination directory and files if they already exist.
-      --[no-]install-deps  Auto installs dependencies using the active package manager.
-      --markets=<value>    Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`,
-                           `subdomains`, `none`. Example: `--markets subfolders`.
-      --path=<value>       The path to the directory of the Hydrogen storefront. Defaults to the current directory where
-                           the command is run.
-      --[no-]shortcut      Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with
-                           `--no-shortcut`.
-      --styling=<value>    Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`,
-                           `postcss`, `none`.
-
-DESCRIPTION
-  Scaffold routes and core functionality.
-```
-
-## `shopify hydrogen setup css [STRATEGY]`
-
-Setup CSS strategies for your project.
-
-```
-USAGE
-  $ shopify hydrogen setup css [STRATEGY] [--path <value>] [-f] [--install-deps]
-
-ARGUMENTS
-  STRATEGY  (tailwind|css-modules|vanilla-extract|postcss) The CSS strategy to setup. One of
-            tailwind,css-modules,vanilla-extract,postcss
-
-FLAGS
-  -f, --force              Overwrites the destination directory and files if they already exist.
-      --[no-]install-deps  Auto installs dependencies using the active package manager.
-      --path=<value>       The path to the directory of the Hydrogen storefront. Defaults to the current directory where
-                           the command is run.
-
-DESCRIPTION
-  Setup CSS strategies for your project.
-```
-
-## `shopify hydrogen setup markets [STRATEGY]`
-
-Setup support for multiple markets in your project.
-
-```
-USAGE
-  $ shopify hydrogen setup markets [STRATEGY] [--path <value>]
-
-ARGUMENTS
-  STRATEGY  (subfolders|domains|subdomains) The URL structure strategy to setup multiple markets. One of
-            subfolders,domains,subdomains
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  Setup support for multiple markets in your project.
-```
-
-## `shopify hydrogen setup vite`
-
-EXPERIMENTAL: Upgrades the project to use Vite.
-
-```
-USAGE
-  $ shopify hydrogen setup vite [--path <value>]
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  EXPERIMENTAL: Upgrades the project to use Vite.
-```
-
-## `shopify hydrogen shortcut`
-
-Creates a global `h2` shortcut for the Hydrogen CLI
-
-```
-USAGE
-  $ shopify hydrogen shortcut
-
-DESCRIPTION
-  Creates a global `h2` shortcut for the Hydrogen CLI
-```
-
-## `shopify hydrogen unlink`
-
-Unlink a local project from a Hydrogen storefront.
-
-```
-USAGE
-  $ shopify hydrogen unlink [--path <value>]
-
-FLAGS
-  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
-                  command is run.
-
-DESCRIPTION
-  Unlink a local project from a Hydrogen storefront.
-```
-
-## `shopify hydrogen upgrade`
-
-Upgrade Remix and Hydrogen npm dependencies.
-
-```
-USAGE
-  $ shopify hydrogen upgrade [--path <value>] [-v <value>] [-f]
-
-FLAGS
-  -f, --force            Ignore warnings and force the upgrade to the target version
-  -v, --version=<value>  A target hydrogen version to update to
-      --path=<value>     The path to the directory of the Hydrogen storefront. Defaults to the current directory where
-                         the command is run.
-
-DESCRIPTION
-  Upgrade Remix and Hydrogen npm dependencies.
+  $ shopify hydrogen init
 ```
 
 ## `shopify plugins:install PLUGIN...`
-
-Installs a plugin into the CLI.
 
 ```
 USAGE
@@ -1336,28 +741,21 @@ ARGUMENTS
 FLAGS
   -f, --force    Run yarn install with force flag.
   -h, --help     Show CLI help.
-  -v, --verbose
+  -s, --silent   Silences yarn output.
+  -v, --verbose  Show verbose yarn output.
 
-DESCRIPTION
-  Installs a plugin into the CLI.
-  Can be installed from npm or a git url.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  e.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command
-  will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in
-  the CLI without the need to patch and update the whole CLI.
-
+GLOBAL FLAGS
+  --json  Format output as json.
 
 ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins add myplugin 
 
-  $ shopify plugins:install https://github.com/someuser/someplugin
+  $ shopify plugins add https://github.com/someuser/someplugin
 
-  $ shopify plugins:install someuser/someplugin
+  $ shopify plugins add someuser/someplugin
 ```
 
 ## `shopify plugins:inspect PLUGIN...`
@@ -1382,14 +780,10 @@ DESCRIPTION
   Displays installation properties of a plugin.
 
 EXAMPLES
-  $ shopify plugins:inspect myplugin
+  $ shopify plugins inspect myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/inspect.ts)_
-
 ## `shopify plugins:install PLUGIN...`
-
-Installs a plugin into the CLI.
 
 ```
 USAGE
@@ -1401,31 +795,22 @@ ARGUMENTS
 FLAGS
   -f, --force    Run yarn install with force flag.
   -h, --help     Show CLI help.
-  -v, --verbose
+  -s, --silent   Silences yarn output.
+  -v, --verbose  Show verbose yarn output.
 
-DESCRIPTION
-  Installs a plugin into the CLI.
-  Can be installed from npm or a git url.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  e.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command
-  will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in
-  the CLI without the need to patch and update the whole CLI.
-
+GLOBAL FLAGS
+  --json  Format output as json.
 
 ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins install myplugin 
 
-  $ shopify plugins:install https://github.com/someuser/someplugin
+  $ shopify plugins install https://github.com/someuser/someplugin
 
-  $ shopify plugins:install someuser/someplugin
+  $ shopify plugins install someuser/someplugin
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/install.ts)_
 
 ## `shopify plugins:link PLUGIN`
 
@@ -1452,10 +837,8 @@ DESCRIPTION
 
 
 EXAMPLES
-  $ shopify plugins:link myplugin
+  $ shopify plugins link myplugin
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/link.ts)_
 
 ## `shopify plugins:uninstall PLUGIN...`
 
@@ -1478,6 +861,22 @@ DESCRIPTION
 ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
+
+EXAMPLES
+  $ shopify plugins remove myplugin
+```
+
+## `shopify plugins reset`
+
+Remove all user-installed and linked plugins.
+
+```
+USAGE
+  $ shopify plugins reset [--hard] [--reinstall]
+
+FLAGS
+  --hard       Delete node_modules and package manager related files in addition to uninstalling plugins.
+  --reinstall  Reinstall all plugins after uninstalling.
 ```
 
 ## `shopify plugins:uninstall PLUGIN...`
@@ -1501,9 +900,10 @@ DESCRIPTION
 ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
-```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/uninstall.ts)_
+EXAMPLES
+  $ shopify plugins uninstall myplugin
+```
 
 ## `shopify plugins:uninstall PLUGIN...`
 
@@ -1526,6 +926,9 @@ DESCRIPTION
 ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
+
+EXAMPLES
+  $ shopify plugins unlink myplugin
 ```
 
 ## `shopify plugins update`
@@ -1543,8 +946,6 @@ FLAGS
 DESCRIPTION
   Update installed plugins.
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/update.ts)_
 
 ## `shopify search [QUERY]`
 
@@ -1565,8 +966,6 @@ EXAMPLES
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
 ```
-
-_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/search.js)_
 
 ## `shopify theme check`
 
@@ -1604,8 +1003,6 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/check.js)_
-
 ## `shopify theme:console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
@@ -1633,8 +1030,6 @@ DESCRIPTION
 
   You can also provide context to the console using a URL, as some Liquid objects are context-specific
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/console.js)_
 
 ## `shopify theme delete`
 
@@ -1668,8 +1063,6 @@ DESCRIPTION
   You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this
   confirmation using the `--force` flag.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/delete.js)_
 
 ## `shopify theme dev`
 
@@ -1773,8 +1166,6 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/dev.js)_
-
 ## `shopify theme info`
 
 Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
@@ -1799,8 +1190,6 @@ DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/info.js)_
 
 ## `shopify theme:init [name]`
 
@@ -1836,8 +1225,6 @@ DESCRIPTION
   the "ways that you can use Dawn" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/init.js)_
-
 ## `shopify theme language-server`
 
 Start a Language Server Protocol server.
@@ -1855,8 +1242,6 @@ DESCRIPTION
 
   Starts the "Language Server" (https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/language-server.js)_
 
 ## `shopify theme list`
 
@@ -1883,8 +1268,6 @@ FLAGS
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/list.js)_
 
 ## `shopify theme open`
 
@@ -1920,8 +1303,6 @@ DESCRIPTION
   store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/open.js)_
-
 ## `shopify theme package`
 
 Package your theme into a .zip file, ready to upload to the Online Store.
@@ -1946,8 +1327,6 @@ DESCRIPTION
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/package.js)_
 
 ## `shopify theme publish`
 
@@ -1982,8 +1361,6 @@ DESCRIPTION
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/publish.js)_
-
 ## `shopify theme pull`
 
 Download your remote theme files locally.
@@ -2015,8 +1392,6 @@ DESCRIPTION
 
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/pull.js)_
 
 ## `shopify theme:push`
 
@@ -2082,8 +1457,6 @@ DESCRIPTION
   ```
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/push.js)_
-
 ## `shopify theme rename`
 
 Renames an existing theme.
@@ -2114,8 +1487,6 @@ DESCRIPTION
   your store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/rename.js)_
-
 ## `shopify theme share`
 
 Creates a shareable, unpublished, and new theme on your theme library with a randomized name.
@@ -2142,27 +1513,19 @@ DESCRIPTION
   89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.58.0/dist/cli/commands/theme/share.js)_
-
 ## `shopify upgrade`
 
-Upgrade your CLI dependency.
+Shows details on how to upgrade Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--path <value>]
-
-FLAGS
-  --path=<value>  [default: .] The path to your project directory.
+  $ shopify upgrade
 
 DESCRIPTION
-  Upgrade your CLI dependency.
+  Shows details on how to upgrade Shopify CLI.
 
-  If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the
-  "upgrade" (https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
+  Shows details on how to upgrade Shopify CLI.
 ```
-
-_See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/upgrade.js)_
 
 ## `shopify version`
 
@@ -2175,6 +1538,4 @@ USAGE
 DESCRIPTION
   Shopify CLI version currently installed.
 ```
-
-_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.58.0/dist/cli/commands/version.js)_
 <!-- commandsstop -->

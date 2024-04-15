@@ -22,6 +22,7 @@
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
     "type-check:affected": "nx affected --target=type-check",
     "build": "nx run-many --target=build --all --skip-nx-cache",
+    "bundle": "nx run-many --target=bundle --all --skip-nx-cache",
     "build:affected": "nx affected --target=build",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
@@ -59,7 +60,7 @@
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
     "nx": "16.8.1",
-    "oclif": "4.4.18",
+    "oclif": "4.6.1",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^1.8.0",
@@ -87,7 +88,7 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "4.4.9",
-    "@oclif/core": "3.19.6"
+    "@oclif/core": "3.23.0"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
@@ -148,7 +149,8 @@
       },
       "packages/app": {
         "entry": [
-          "**/{commands,hooks}/**/*.ts!"
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreDependencies": [
@@ -181,7 +183,10 @@
         }
       },
       "packages/create-app": {
-        "entry": "**/{commands,hooks}/**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
         "project": "**/*.ts!",
         "vite": {
           "config": [
@@ -217,8 +222,11 @@
         }
       },
       "packages/theme": {
-        "entry": "**/{commands,hooks}/**/*.ts!",
         "project": "**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -286,6 +294,6 @@
     }
   },
   "dependencies": {
-    "@shopify/cli-hydrogen": "0.0.0-next-72d1271-20240411165757"
+    "@shopify/cli-hydrogen": "8.0.0"
   }
 }
