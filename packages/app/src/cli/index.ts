@@ -11,6 +11,7 @@ import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
+import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
@@ -32,6 +33,7 @@ const APP_COMMANDS = {
   'app:draft-extensions:push': DraftExtensionsPush,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
+  'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
