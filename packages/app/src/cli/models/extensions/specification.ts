@@ -64,6 +64,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   transform?: (content: object) => object
   reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
   simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
+  hasMultipleModuleConfig?: boolean
+  multipleModuleConfigPath?: string
 }
 
 /**
@@ -118,6 +120,8 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.reverseTransform,
     simplify: spec.simplify,
     experience: spec.experience ?? 'extension',
+    hasMultipleModuleConfig: spec.hasMultipleModuleConfig ?? false,
+    multipleModuleConfigPath: spec.multipleModuleConfigPath,
   }
   return {...defaults, ...spec}
 }
@@ -136,6 +140,8 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   simplify?: SimplifyConfig
+  hasMultipleModuleConfig?: boolean
+  multipleModuleConfigPath?: string
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -147,6 +153,8 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transform: resolveAppConfigTransform(spec.transformConfig),
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     simplify: resolveSimplifyAppConfig(spec.simplify),
+    hasMultipleModuleConfig: spec.hasMultipleModuleConfig,
+    multipleModuleConfigPath: spec.multipleModuleConfigPath,
     experience: 'configuration',
   })
 }
