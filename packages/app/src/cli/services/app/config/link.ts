@@ -45,7 +45,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
   const updatedOptions = {...options, developerPlatformClient}
   const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
-  developerPlatformClient = remoteApp.developerPlatformClient!
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)

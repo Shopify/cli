@@ -83,7 +83,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const {configuration} = await loadAppConfiguration(commandOptions)
-  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
   const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {
     storeFqdn,
@@ -94,6 +94,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     localApp: app,
   } = await ensureDevContext(devContextOptions)
 
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const apiKey = remoteApp.apiKey
   let localApp = app
 

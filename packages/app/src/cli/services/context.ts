@@ -101,6 +101,7 @@ export async function ensureGenerateContext(options: GenerateContextOptions): Pr
   }
 
   const {cachedInfo, remoteApp} = await getAppContext(options)
+  developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, developerPlatformClient)
@@ -165,6 +166,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     ...options,
     promptLinkingApp: !options.apiKey,
   })
+  developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
   let orgId = getOrganization() || cachedInfo?.orgId
   if (!orgId) {
@@ -359,18 +361,18 @@ async function fetchDevAppAndPrompt(
   const devAppId = cachedInfo?.appId
   if (!devAppId) return undefined
 
-  const partnersResponse = await appFromId({
+  const remoteApp = await appFromId({
     apiKey: devAppId,
     organizationId: cachedInfo.orgId ?? '0',
     developerPlatformClient,
   })
-  if (!partnersResponse) return undefined
+  if (!remoteApp) return undefined
 
-  const org = await fetchOrgFromId(partnersResponse.organizationId, developerPlatformClient)
+  const org = await fetchOrgFromId(remoteApp.organizationId, remoteApp.developerPlatformClient!)
 
-  showDevValues(org.businessName ?? 'unknown', partnersResponse.title)
+  showDevValues(org.businessName ?? 'unknown', remoteApp.title)
   const reuse = await reuseDevConfigPrompt()
-  return reuse ? partnersResponse : undefined
+  return reuse ? remoteApp : undefined
 }
 
 export async function ensureThemeExtensionDevContext(
@@ -419,8 +421,10 @@ export interface DeployContextOptions {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
-  const {reset, force, noRelease, developerPlatformClient} = options
+  const {reset, force, noRelease} = options
+  let developerPlatformClient = options.developerPlatformClient
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
   const specifications = await fetchSpecifications({developerPlatformClient, apiKey: remoteApp.apiKey})
   const app: AppInterface = await loadApp({
@@ -461,6 +465,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       organizationId: remoteApp.organizationId,
       grantedScopes: remoteApp.grantedScopes,
       flags: remoteApp.flags,
+      developerPlatformClient,
     },
     identifiers,
     release: !noRelease,
@@ -489,10 +494,11 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     directory: draftExtensionsPushOptions.directory,
     configName: draftExtensionsPushOptions.config,
   })
-  const developerPlatformClient =
+  let developerPlatformClient =
     draftExtensionsPushOptions.developerPlatformClient ??
     selectDeveloperPlatformClient({configuration: app.configuration})
   const [remoteApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, developerPlatformClient)
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
   const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 
@@ -596,9 +602,10 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
  * @returns The selected org, app and dev store
  */
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
-  const developerPlatformClient =
+  let developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient)
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
   // eslint-disable-next-line no-param-reassign
@@ -641,9 +648,10 @@ interface VersionsListContextOutput {
 export async function ensureVersionsListContext(
   options: VersionListContextOptions,
 ): Promise<VersionsListContextOutput> {
-  const developerPlatformClient =
+  let developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
   return {
