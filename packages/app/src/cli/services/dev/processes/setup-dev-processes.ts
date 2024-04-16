@@ -3,6 +3,7 @@ import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess}
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
+import {AppEventsSubscribeProcess, setupAppEventsSubscribeProcess} from './app-events-process.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {environmentVariableNames} from '../../../constants.js'
@@ -29,6 +30,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | AppEventsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -136,6 +138,10 @@ export async function setupDevProcesses({
       storeFqdn,
       apiSecret,
       remoteAppUpdated,
+    }),
+    // call setupAppEventsSubscribe and we can pass in some stuff
+    setupAppEventsSubscribeProcess({
+      test: 'hello',
     }),
   ].filter(stripUndefineds)
 

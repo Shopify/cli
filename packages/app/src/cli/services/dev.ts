@@ -60,9 +60,16 @@ export interface DevOptions {
 }
 
 export async function dev(commandOptions: DevOptions) {
+  console.log('here we are - at the start')
   const config = await prepareForDev(commandOptions)
+  // connects to the app
+  // asked for config file name
+  //
+  console.log('prepare for dev is done ^ ignore for now - assume this gives us everything we need for app setup')
   await actionsBeforeSettingUpDevProcesses(config)
+  console.log('actions b4 processes ^ ignore for now')
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  // TODO: Unknown - I think I need to add a dev process, that will invoke the a request to partners, to subscribe
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
