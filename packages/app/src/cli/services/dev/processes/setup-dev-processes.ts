@@ -3,6 +3,7 @@ import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess}
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
+import {AppEventsSubscribeProcess, setupAppEventsSubscribeProcess} from './app-events-process.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {environmentVariableNames} from '../../../constants.js'
@@ -29,6 +30,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | AppEventsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -49,6 +51,7 @@ export interface DevConfig {
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
+  streamAppEvents?: boolean
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
@@ -63,6 +66,7 @@ export async function setupDevProcesses({
   remoteApp,
   storeFqdn,
   storeId,
+  streamAppEvents,
   commandOptions,
   network,
   graphiqlPort,
@@ -76,6 +80,16 @@ export async function setupDevProcesses({
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
+
+  // TODO: Probably a better way to do this...
+  const {token: partnersSessionToken} = await developerPlatformClient.session()
+  const functionIds = localApp.allExtensions.filter((ext) => ext.type === 'function').map((ext) => ext.devUUID)
+
+  console.log('functions')
+  console.log('ids: ', functionIds)
+  console.log('apikey: ', apiKey)
+  console.log('[STREAMING APP EVENTS]', streamAppEvents)
+  console.log('storeId: ', storeId)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -137,6 +151,14 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
+    streamAppEvents &&
+      setupAppEventsSubscribeProcess({
+        partnersSessionToken,
+        subscription: {
+          shopId: storeId,
+          apiKey,
+        },
+      }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it

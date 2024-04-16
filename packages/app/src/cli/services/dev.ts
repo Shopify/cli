@@ -76,6 +76,7 @@ export async function dev(commandOptions: DevOptions) {
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   // Be optimistic about tunnel creation and do it as early as possible
+  // console.log('prepareForDev', commandOptions)
   const tunnelPort = await getAvailableTCPPort()
   let tunnelClient: TunnelClient | undefined
   if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
@@ -95,6 +96,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   } = await ensureDevContext(devContextOptions)
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  console.log('storeId', storeId)
+  console.log('apiKey', remoteApp.apiKey)
+
   const apiKey = remoteApp.apiKey
   let localApp = app
 
@@ -143,6 +147,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     developerPlatformClient,
   )
 
+  // TODO: Do this behind a flag.
+  const streamAppEvents = true
+
   return {
     storeFqdn,
     storeId,
@@ -155,6 +162,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
+    streamAppEvents,
   }
 }
 
