@@ -12,6 +12,7 @@ dependencies:
 deploy:
   override:
     - bash -i -c "npm_config_loglevel=verbose pnpm clean"
+    - bash -i -c "npm_config_loglevel=verbose pnpm build"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
     - bash -i -c "./bin/package.js"
   post:
