@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 3.58.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.58.3
+- @shopify/plugin-did-you-mean@3.58.3
+
 ## 3.58.2
 
 ### Patch Changes

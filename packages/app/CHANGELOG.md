@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.58.3
+
+### Patch Changes
+
+- 975bb8909: Fix bug when you deploy an empty array of redirect_urls
+  - @shopify/create-app@3.58.3
+  - @shopify/cli-kit@3.58.3
+  - @shopify/plugin-cloudflare@3.58.3
+
 ## 3.58.2
 
 ### Patch Changes
