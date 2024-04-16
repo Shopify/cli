@@ -2,7 +2,7 @@ import {CategoryTemplateSchema} from '@shopify/generate-docs'
 
 const data: CategoryTemplateSchema = {
   // Name of the category
-  category: 'general commands',
+  category: 'general-commands',
   sections: [
     {
       // The generic section is the most flexible content section for landing pages and can be used for everything except the first and last sections.
