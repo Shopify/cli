@@ -47,6 +47,8 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {vi} from 'vitest'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -442,6 +444,37 @@ export async function testFunctionExtension(
   return extension
 }
 
+interface EditorExtensionCollectionProps {
+  directory?: string
+  configuration: {name: string; handle?: string; includes?: string[]; include?: {handle: string}[]}
+}
+
+export async function testEditorExtensionCollection({
+  directory,
+  configuration: passedConfig,
+}: EditorExtensionCollectionProps) {
+  const resolvedDir = directory ?? '/tmp/project/extensions/editor-extension-collection'
+  const configurationPath = joinPath(
+    resolvedDir ?? '/tmp/project/extensions/editor-extension-collection',
+    'shopify.extension.toml',
+  )
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'editor_extension_collection')!
+  const configuration = {
+    ...passedConfig,
+    type: 'editor_extension_collection',
+    metafields: [],
+  } as EditorExtensionCollectionType
+
+  return new ExtensionInstance({
+    configuration,
+    directory: resolvedDir,
+    specification,
+    configurationPath,
+    entryPath: '',
+  })
+}
+
 interface TestPaymentsAppExtensionOptions {
   dir?: string
   config: PaymentsAppExtensionConfigType
@@ -593,6 +626,18 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       argo: {
         surface: 'checkout',
       },
+    },
+  },
+  {
+    name: 'Editor extension collection',
+    externalName: 'Editor extension collection',
+    identifier: 'editor_extension_collection',
+    externalIdentifier: 'editor_extension_collection_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 100,
     },
   },
 ]
