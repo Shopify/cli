@@ -541,10 +541,14 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-secret <value>] [--delivery-method
-    http|google-pub-sub|event-bridge] [--help] [--shared-secret <value>] [--topic <value>]
+  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
+    [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>]
+    [--shared-secret <value>] [--topic <value>]
 
 FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+
   --address=<value>
       The URL where the webhook payload should be sent.
       You will need a different address type for each delivery-method:
@@ -555,6 +559,9 @@ FLAGS
 
   --api-version=<value>
       The API Version of the webhook topic.
+
+  --client-id=<value>
+      The Client ID of your app.
 
   --client-secret=<value>
       Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate
@@ -567,6 +574,9 @@ FLAGS
   --help
       This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
       flags.
+
+  --path=<value>
+      The path to your app directory.
 
   --shared-secret=<value>
       Deprecated. Please use client-secret.

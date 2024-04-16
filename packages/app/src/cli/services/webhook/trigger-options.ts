@@ -6,7 +6,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
 import {AppInterface} from '../../models/app/app.js'
 
-export interface AppCredentials {
+interface AppCredentials {
   clientSecret: string
   apiKey?: string
   clientId?: string
