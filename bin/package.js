@@ -108,11 +108,10 @@ function getTemplateVersion(version) {
 }
 
 async function getHomebrewVariables(cliVersion) {
-  const [[cliTarball, cliSha], [themeTarball, themeSha]] = await Promise.all([
+  const [[cliTarball, cliSha]] = await Promise.all([
     getTarballAndShaForPackage('@shopify/cli', cliVersion),
-    getTarballAndShaForPackage('@shopify/theme', cliVersion),
   ])
-  return {cliTarball, cliSha, themeTarball, themeSha}
+  return {cliTarball, cliSha}
 }
 
 async function getTarballAndShaForPackage(pkg, cliVersion) {
