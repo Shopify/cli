@@ -1,17 +1,5 @@
 # @shopify/create-app
 
-## 3.59.0
-
-### Minor Changes
-
-- bf2328502: Shopify CLI now defaults to be Global
-
-### Patch Changes
-
-- Updated dependencies [bf2328502]
-- Updated dependencies [8132d5f14]
-  - @shopify/cli-kit@3.59.0
-
 ## 3.58.0
 
 ### Minor Changes

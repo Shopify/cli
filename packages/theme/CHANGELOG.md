@@ -1,37 +1,5 @@
 # @shopify/theme
 
-## 3.59.0
-
-### Minor Changes
-
-- bf2328502: Shopify CLI now defaults to be Global
-- 338697996: Rename: Render text input prompt when 'name' flag not provided
-
-### Patch Changes
-
-- c1b329925: - Theme Push: Fix issue with unresponsive server when password flag is provided
-  - Theme Push: Add 'theme' key to root node of JSON output
-- 1934d4235: Fix `shopify theme dev` issue to avoid previewing the live theme instead of the development one
-- e32854aea: Activate the new implementation of `shopify theme push` in CI/CD workflows to support contextual assets
-- f2584495e: Introduce support to the `blocks/` directory in the `shopify theme push` command
-- 818349bb2: Update theme selection text for `shopify theme push` command
-- 72a46babf: Improve Glob Pattern subdirectory mismatch error handling
-- 05294bf2f: Bump Shopify/theme-tools packages
-
-  - TL;DR
-    - (New) `ValidJson` check - JSON schema validation on `.json` files
-    - (New) Section/block schema `t:` translation completion
-    - (Updated) `MatchingTranslations` check - extend support to `.schema.json` files
-    - (Updated) Translation completion is now fuzzy instead of partial
-    - Dynamic JSON schema management without requiring new releases
-    - Internal API changes
-  - https://github.com/Shopify/theme-tools/blob/main/packages/theme-language-server-node/CHANGELOG.md
-  - https://github.com/Shopify/theme-tools/blob/main/packages/theme-check-common/CHANGELOG.md
-
-- Updated dependencies [bf2328502]
-- Updated dependencies [8132d5f14]
-  - @shopify/cli-kit@3.59.0
-
 ## 3.58.0
 
 ### Minor Changes
