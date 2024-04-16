@@ -39,14 +39,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -74,6 +66,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -125,14 +125,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -152,6 +144,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -273,22 +273,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Deploy without asking for confirmation.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--message <value>",
                 "value": "string",
                 "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
@@ -349,6 +333,22 @@
                 "value": "string",
                 "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
                 "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Deploy without asking for confirmation.",
+                "isOptional": true
               }
             ],
             "value": "export interface appdeploy {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Deploy without asking for confirmation.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Optional message that will be associated with this version. This is for internal use only and won't be available externally.\n   */\n  '--message <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Creates a version but doesn't release it - it's not made available to merchants.\n   */\n  '--no-release'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   */\n  '--reset'?: ''\n\n  /**\n   * URL associated with the new app version.\n   */\n  '--source-control-url <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.\n   */\n  '--version <value>'?: string\n}"
@@ -407,14 +407,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -463,25 +455,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-s, --store <value>",
-                "value": "string",
-                "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--subscription-product-url <value>",
                 "value": "string",
                 "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-t, --theme <value>",
-                "value": "string",
-                "description": "Theme ID or name of the theme app extension host theme.",
                 "isOptional": true
               },
               {
@@ -506,6 +482,30 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the theme app extension host theme.",
                 "isOptional": true
               }
             ],
@@ -549,14 +549,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--env-file <value>",
                 "value": "string",
                 "description": "Specify an environment file to update if the update flag is set",
@@ -584,6 +576,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -627,14 +627,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -654,6 +646,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -697,14 +697,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -724,6 +716,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -767,6 +767,30 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
                 "description": "The name of the app configuration.",
@@ -794,30 +818,6 @@
                 "name": "-j, --json",
                 "value": "\"\"",
                 "description": "Log the run result as a JSON object.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your function directory.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -869,14 +869,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -904,6 +896,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -947,14 +947,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -974,6 +966,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -1025,25 +1025,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--flavor <value>",
                 "value": "string",
                 "description": "Choose a starting template for your extension, where applicable",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-n, --name <value>",
-                "value": "string",
-                "description": "name of your Extension",
                 "isOptional": true
               },
               {
@@ -1073,6 +1057,30 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "name of your Extension",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-t, --template <value>",
                 "value": "string",
                 "description": "Extension template",
@@ -1084,14 +1092,6 @@
                 "name": "-t, --type <value>",
                 "value": "string",
                 "description": "Deprecated. Please use --template",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -1143,14 +1143,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -1170,6 +1162,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -1213,14 +1213,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--json",
                 "value": "\"\"",
                 "description": "format output as JSON",
@@ -1256,6 +1248,14 @@
                 "name": "--web-env",
                 "value": "\"\"",
                 "description": "Outputs environment variables necessary for running and deploying web/.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -1307,33 +1307,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-n, --name <value>",
-                "value": "string",
-                "description": "",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-d, --package-manager <value>",
-                "value": "string",
-                "description": "",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-p, --path <value>",
-                "value": "string",
-                "description": "",
                 "isOptional": true
               },
               {
@@ -1350,6 +1326,30 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --package-manager <value>",
+                "value": "string",
+                "description": "",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-p, --path <value>",
+                "value": "string",
+                "description": "",
                 "isOptional": true
               }
             ],
@@ -1401,22 +1401,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Release without asking for confirmation.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -1452,6 +1436,22 @@
                 "name": "--version <value>",
                 "value": "string",
                 "description": "The name of the app version to release."
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Release without asking for confirmation.",
+                "isOptional": true
               }
             ],
             "value": "export interface apprelease {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Release without asking for confirmation.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The name of the app version to release.\n   */\n  '--version <value>': string\n}"
@@ -1502,14 +1502,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--json",
                 "value": "\"\"",
                 "description": "Output the versions list as JSON.",
@@ -1537,6 +1529,14 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
                 "isOptional": true
               }
             ],
@@ -1661,7 +1661,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -1720,25 +1720,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-x, --extended",
-                "value": "\"\"",
-                "description": "show extra columns",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--filter <value>",
                 "value": "string",
                 "description": "filter property by partial string matching, ex: name=foo",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-h, --help",
-                "value": "\"\"",
-                "description": "Show CLI help.",
                 "isOptional": true
               },
               {
@@ -1796,6 +1780,22 @@
                 "value": "\"\"",
                 "description": "show tree of commands",
                 "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-h, --help",
+                "value": "\"\"",
+                "description": "Show CLI help.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-x, --extended",
+                "value": "\"\"",
+                "description": "show extra columns",
+                "isOptional": true
               }
             ],
             "value": "export interface commands {\n  /**\n   * only show provided columns (comma-separated)\n   */\n  '--columns <value>'?: string\n\n  /**\n   * output is csv format [alias: --output=csv]\n   */\n  '--csv'?: ''\n\n  /**\n   * show deprecated commands\n   */\n  '--deprecated'?: ''\n\n  /**\n   * show extra columns\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * filter property by partial string matching, ex: name=foo\n   */\n  '--filter <value>'?: string\n\n  /**\n   * Show CLI help.\n   */\n  '-h, --help'?: ''\n\n  /**\n   * show hidden commands\n   */\n  '--hidden'?: ''\n\n  /**\n   * Format output as json.\n   */\n  '--json'?: ''\n\n  /**\n   * hide table header from output\n   */\n  '--no-header'?: ''\n\n  /**\n   * do not truncate output to fit screen\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * output in a more machine friendly format\n   */\n  '--output <value>'?: string\n\n  /**\n   * property to sort by (prepend '-' for descending)\n   */\n  '--sort <value>'?: string\n\n  /**\n   * show tree of commands\n   */\n  '--tree'?: ''\n}"
@@ -1803,7 +1803,7 @@
         }
       }
     ],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -1825,7 +1825,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -1847,7 +1847,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -1869,7 +1869,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -1915,7 +1915,7 @@
         }
       }
     ],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -1950,41 +1950,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--sourcemap",
-                "value": "\"\"",
-                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--bundle-stats",
                 "value": "\"\"",
                 "description": "Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--lockfile-check",
-                "value": "\"\"",
-                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--disable-route-warning",
-                "value": "\"\"",
-                "description": "Disables any warnings about missing standard routes.",
                 "isOptional": true
               },
               {
@@ -2001,6 +1969,38 @@
                 "name": "--codegen-config-path <value>",
                 "value": "string",
                 "description": "Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--disable-route-warning",
+                "value": "\"\"",
+                "description": "Disables any warnings about missing standard routes.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--lockfile-check",
+                "value": "\"\"",
+                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--sourcemap",
+                "value": "\"\"",
+                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
                 "isOptional": true
               }
             ],
@@ -2090,17 +2090,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
+                "name": "--codegen-config-path <value>",
                 "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "description": "Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--codegen-config-path <value>",
+                "name": "--path <value>",
                 "value": "string",
-                "description": "Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
                 "isOptional": true
               },
               {
@@ -2152,6 +2152,13 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--dev-origin <value>",
+                "value": "string",
+                "description": "The development domain of your application."
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -2160,17 +2167,10 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--storefront-id <value>",
+                "name": "--relative-logout-uri <value>",
                 "value": "string",
-                "description": "The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'",
+                "description": "The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.",
                 "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--dev-origin <value>",
-                "value": "string",
-                "description": "The development domain of your application."
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
@@ -2183,9 +2183,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--relative-logout-uri <value>",
+                "name": "--storefront-id <value>",
                 "value": "string",
-                "description": "The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.",
+                "description": "The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'",
                 "isOptional": true
               }
             ],
@@ -2229,17 +2229,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
+                "name": "--output <value>",
                 "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "description": "Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--output <value>",
+                "name": "--path <value>",
                 "value": "string",
-                "description": "Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
                 "isOptional": true
               }
             ],
@@ -2283,6 +2283,22 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--auth-bypass-token",
+                "value": "\"\"",
+                "description": "Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--build-command <value>",
+                "value": "string",
+                "description": "Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--entry <value>",
                 "value": "string",
                 "description": "Entry file for the worker. Defaults to `./server`.",
@@ -2315,70 +2331,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--preview",
-                "value": "\"\"",
-                "description": "Deploys to the Preview environment. Overrides --env-branch and Git metadata.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Forces a deployment to proceed if there are uncommited changes in its Git repository.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-verify",
-                "value": "\"\"",
-                "description": "Skip the routability verification step after deployment.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--auth-bypass-token",
-                "value": "\"\"",
-                "description": "Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--build-command <value>",
-                "value": "string",
-                "description": "Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--lockfile-check",
-                "value": "\"\"",
-                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-s, --shop <value>",
-                "value": "string",
-                "description": "Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--json-output",
                 "value": "\"\"",
                 "description": "Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.",
@@ -2387,9 +2339,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-t, --token <value>",
-                "value": "string",
-                "description": "Oxygen deployment token. Defaults to the linked storefront's token if available.",
+                "name": "--lockfile-check",
+                "value": "\"\"",
+                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
                 "isOptional": true
               },
               {
@@ -2406,6 +2358,54 @@
                 "name": "--metadata-user <value>",
                 "value": "string",
                 "description": "User that initiated the deployment. Will be saved and displayed in the Shopify admin",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-verify",
+                "value": "\"\"",
+                "description": "Skip the routability verification step after deployment.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--preview",
+                "value": "\"\"",
+                "description": "Deploys to the Preview environment. Overrides --env-branch and Git metadata.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Forces a deployment to proceed if there are uncommited changes in its Git repository.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --shop <value>",
+                "value": "string",
+                "description": "Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --token <value>",
+                "value": "string",
+                "description": "Oxygen deployment token. Defaults to the linked storefront's token if available.",
                 "isOptional": true
               }
             ],
@@ -2449,30 +2449,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--port <value>",
-                "value": "string",
-                "description": "The port to run the server on. Defaults to 3000.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--legacy-runtime",
-                "value": "\"\"",
-                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--codegen",
                 "value": "\"\"",
                 "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
@@ -2489,22 +2465,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--sourcemap",
-                "value": "\"\"",
-                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--disable-virtual-routes",
-                "value": "\"\"",
-                "description": "Disable rendering fallback routes when a route file doesn't exist.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--debug",
                 "value": "\"\"",
                 "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
@@ -2513,9 +2473,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--inspector-port <value>",
-                "value": "string",
-                "description": "The port where the inspector is available. Defaults to 9229.",
+                "name": "--disable-version-check",
+                "value": "\"\"",
+                "description": "Skip the version check when running `hydrogen dev`",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--disable-virtual-routes",
+                "value": "\"\"",
+                "description": "Disable rendering fallback routes when a route file doesn't exist.",
                 "isOptional": true
               },
               {
@@ -2537,9 +2505,41 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--disable-version-check",
+                "name": "--inspector-port <value>",
+                "value": "string",
+                "description": "The port where the inspector is available. Defaults to 9229.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--legacy-runtime",
                 "value": "\"\"",
-                "description": "Skip the version check when running `hydrogen dev`",
+                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--port <value>",
+                "value": "string",
+                "description": "The port to run the server on. Defaults to 3000.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--sourcemap",
+                "value": "\"\"",
+                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
                 "isOptional": true
               },
               {
@@ -2777,14 +2777,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--typescript",
-                "value": "\"\"",
-                "description": "Generate TypeScript files",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--locale-param <value>",
                 "value": "string",
                 "description": "The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).",
@@ -2793,17 +2785,25 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Overwrites the destination directory and files if they already exist.",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "name": "--typescript",
+                "value": "\"\"",
+                "description": "Generate TypeScript files",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true
               }
             ],
@@ -2855,14 +2855,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--typescript",
-                "value": "\"\"",
-                "description": "Generate TypeScript files",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--locale-param <value>",
                 "value": "string",
                 "description": "The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).",
@@ -2871,17 +2863,25 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Overwrites the destination directory and files if they already exist.",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "name": "--typescript",
+                "value": "\"\"",
+                "description": "Generate TypeScript files",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true
               }
             ],
@@ -2925,33 +2925,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
+                "name": "--git",
                 "value": "\"\"",
-                "description": "Overwrites the destination directory and files if they already exist.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the new Hydrogen storefront.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--language <value>",
-                "value": "string",
-                "description": "Sets the template language to use. One of `js` or `ts`.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--template <value>",
-                "value": "string",
-                "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
+                "description": "Init Git and create initial commits.",
                 "isOptional": true
               },
               {
@@ -2965,17 +2941,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--mock-shop",
-                "value": "\"\"",
-                "description": "Use mock.shop as the data source for the storefront.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--styling <value>",
+                "name": "--language <value>",
                 "value": "string",
-                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
+                "description": "Sets the template language to use. One of `js` or `ts`.",
                 "isOptional": true
               },
               {
@@ -2989,17 +2957,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--shortcut",
+                "name": "--mock-shop",
                 "value": "\"\"",
-                "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
+                "description": "Use mock.shop as the data source for the storefront.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--git",
-                "value": "\"\"",
-                "description": "Init Git and create initial commits.",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the new Hydrogen storefront.",
                 "isOptional": true
               },
               {
@@ -3008,6 +2976,38 @@
                 "name": "--quickstart",
                 "value": "\"\"",
                 "description": "Scaffolds a new Hydrogen project with a set of sensible defaults.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--shortcut",
+                "value": "\"\"",
+                "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--styling <value>",
+                "value": "string",
+                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--template <value>",
+                "value": "string",
+                "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true
               }
             ],
@@ -3051,14 +3051,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Overwrites the destination directory and files if they already exist.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3070,6 +3062,14 @@
                 "name": "--storefront <value>",
                 "value": "string",
                 "description": "The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true
               }
             ],
@@ -3259,25 +3259,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--port <value>",
-                "value": "string",
-                "description": "The port to run the server on. Defaults to 3000.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--legacy-runtime",
+                "name": "--debug",
                 "value": "\"\"",
-                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
+                "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
                 "isOptional": true
               },
               {
@@ -3307,9 +3291,25 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--debug",
+                "name": "--legacy-runtime",
                 "value": "\"\"",
-                "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
+                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--port <value>",
+                "value": "string",
+                "description": "The port to run the server on. Defaults to 3000.",
                 "isOptional": true
               },
               {
@@ -3361,6 +3361,14 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--install-deps",
+                "value": "\"\"",
+                "description": "Auto installs dependencies using the active package manager.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3372,14 +3380,6 @@
                 "name": "-f, --force",
                 "value": "\"\"",
                 "description": "Overwrites the destination directory and files if they already exist.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--install-deps",
-                "value": "\"\"",
-                "description": "Auto installs dependencies using the active package manager.",
                 "isOptional": true
               }
             ],
@@ -3515,25 +3515,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
+                "name": "--install-deps",
                 "value": "\"\"",
-                "description": "Overwrites the destination directory and files if they already exist.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--styling <value>",
-                "value": "string",
-                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
+                "description": "Auto installs dependencies using the active package manager.",
                 "isOptional": true
               },
               {
@@ -3547,6 +3531,14 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--shortcut",
                 "value": "\"\"",
                 "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
@@ -3555,9 +3547,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--install-deps",
+                "name": "--styling <value>",
+                "value": "string",
+                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
                 "value": "\"\"",
-                "description": "Auto installs dependencies using the active package manager.",
+                "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true
               }
             ],
@@ -3677,17 +3677,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-v, --version <value>",
-                "value": "string",
-                "description": "A target hydrogen version to update to",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Ignore warnings and force the upgrade to the target version",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Ignore warnings and force the upgrade to the target version",
+                "name": "-v, --version <value>",
+                "value": "string",
+                "description": "A target hydrogen version to update to",
                 "isOptional": true
               }
             ],
@@ -3718,7 +3718,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -3750,30 +3750,6 @@
             "name": "themecheck",
             "description": "",
             "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-a, --auto-correct",
-                "value": "\"\"",
-                "description": "Automatically fix offenses",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-C, --config <value>",
-                "value": "string",
-                "description": "Use the config provided, overriding .theme-check.yml if present  Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n theme-check:recommended, theme-check:all\n For backwards compatibility, :theme_app_extension is also supported",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
@@ -3809,14 +3785,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-o, --output <value>",
-                "value": "string",
-                "description": "The output format to use",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to your theme directory.",
@@ -3836,6 +3804,38 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-a, --auto-correct",
+                "value": "\"\"",
+                "description": "Automatically fix offenses",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-C, --config <value>",
+                "value": "string",
+                "description": "Use the config provided, overriding .theme-check.yml if present  Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n theme-check:recommended, theme-check:all\n For backwards compatibility, :theme_app_extension is also supported",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --output <value>",
+                "value": "string",
+                "description": "The output format to use",
                 "isOptional": true
               },
               {
@@ -3887,14 +3887,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -3919,14 +3911,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-s, --store <value>",
-                "value": "string",
-                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--url <value>",
                 "value": "string",
                 "description": "The url to be used as context",
@@ -3938,6 +3922,22 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
                 "isOptional": true
               }
             ],
@@ -3981,6 +3981,38 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-a, --show-all",
+                "value": "\"\"",
+                "description": "Include others development themes in theme list.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
                 "description": "Delete your development theme.",
@@ -4005,30 +4037,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--password <value>",
-                "value": "string",
-                "description": "Password generated from the Theme Access app.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-a, --show-all",
-                "value": "\"\"",
-                "description": "Include others development themes in theme list.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -4040,14 +4048,6 @@
                 "name": "-t, --theme <value>",
                 "value": "string",
                 "description": "Theme ID or name of the remote theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -4091,25 +4091,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--host <value>",
                 "value": "string",
                 "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-x, --ignore <value>",
-                "value": "string",
-                "description": "Skip hot reloading any files that match the specified pattern.",
                 "isOptional": true
               },
               {
@@ -4131,25 +4115,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-n, --nodelete",
-                "value": "\"\"",
-                "description": "Runs the dev command without deleting local files.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--notify <value>",
                 "value": "string",
                 "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-o, --only <value>",
-                "value": "string",
-                "description": "Hot reload only files that match the specified pattern.",
                 "isOptional": true
               },
               {
@@ -4195,6 +4163,46 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--theme-editor-sync",
+                "value": "\"\"",
+                "description": "Synchronize Theme Editor updates in the local theme files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --nodelete",
+                "value": "\"\"",
+                "description": "Runs the dev command without deleting local files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --only <value>",
+                "value": "string",
+                "description": "Hot reload only files that match the specified pattern.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -4211,17 +4219,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--theme-editor-sync",
-                "value": "\"\"",
-                "description": "Synchronize Theme Editor updates in the local theme files.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
+                "name": "-x, --ignore <value>",
+                "value": "string",
+                "description": "Skip hot reloading any files that match the specified pattern.",
                 "isOptional": true
               }
             ],
@@ -4265,22 +4265,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-d, --development",
-                "value": "\"\"",
-                "description": "Retrieve info from your development theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--json",
                 "value": "\"\"",
                 "description": "Output the theme info as JSON.",
@@ -4305,6 +4289,30 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Retrieve info from your development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -4316,14 +4324,6 @@
                 "name": "-t, --theme <value>",
                 "value": "string",
                 "description": "Theme ID or name of the remote theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -4367,22 +4367,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-u, --clone-url <value>",
-                "value": "string",
-                "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-l, --latest",
-                "value": "\"\"",
-                "description": "Downloads the latest release of the `clone-url`",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -4402,6 +4386,22 @@
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-l, --latest",
+                "value": "\"\"",
+                "description": "Downloads the latest release of the `clone-url`",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-u, --clone-url <value>",
+                "value": "string",
+                "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
                 "isOptional": true
               }
             ],
@@ -4499,14 +4499,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--id <value>",
                 "value": "string",
                 "description": "Only list theme with the given ID.",
@@ -4555,17 +4547,25 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-s, --store <value>",
-                "value": "string",
-                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
                 "isOptional": true
               }
             ],
@@ -4609,6 +4609,30 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
                 "description": "Open your development theme.",
@@ -4641,22 +4665,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--password <value>",
-                "value": "string",
-                "description": "Password generated from the Theme Access app.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -4668,14 +4676,6 @@
                 "name": "-t, --theme <value>",
                 "value": "string",
                 "description": "Theme ID or name of the remote theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -4781,22 +4781,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-f, --force",
-                "value": "\"\"",
-                "description": "Skip confirmation.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -4813,6 +4797,30 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Skip confirmation.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -4824,14 +4832,6 @@
                 "name": "-t, --theme <value>",
                 "value": "string",
                 "description": "Theme ID or name of the remote theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -4875,57 +4875,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-d, --development",
-                "value": "\"\"",
-                "description": "Pull theme files from your remote development theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-x, --ignore <value>",
-                "value": "string",
-                "description": "Skip downloading the specified files (Multiple flags allowed).",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-l, --live",
-                "value": "\"\"",
-                "description": "Pull theme files from your remote live theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-n, --nodelete",
-                "value": "\"\"",
-                "description": "Runs the pull command without deleting local files.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-o, --only <value>",
-                "value": "string",
-                "description": "Download only the specified files (Multiple flags allowed).",
                 "isOptional": true
               },
               {
@@ -4947,6 +4899,54 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-d, --development",
+                "value": "\"\"",
+                "description": "Pull theme files from your remote development theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-l, --live",
+                "value": "\"\"",
+                "description": "Pull theme files from your remote live theme.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --nodelete",
+                "value": "\"\"",
+                "description": "Runs the pull command without deleting local files.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-o, --only <value>",
+                "value": "string",
+                "description": "Download only the specified files (Multiple flags allowed).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -4963,9 +4963,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
+                "name": "-x, --ignore <value>",
+                "value": "string",
+                "description": "Skip downloading the specified files (Multiple flags allowed).",
                 "isOptional": true
               }
             ],
@@ -5009,6 +5009,38 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-a, --allow-live",
                 "value": "\"\"",
                 "description": "Allow push to a live theme.",
@@ -5033,14 +5065,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-x, --ignore <value>",
-                "value": "string",
-                "description": "Skip downloading the specified files (Multiple flags allowed).",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
                 "value": "\"\"",
                 "description": "Output JSON instead of a UI.",
@@ -5057,14 +5081,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
                 "value": "\"\"",
                 "description": "Runs the push command without deleting local files.",
@@ -5076,22 +5092,6 @@
                 "name": "-o, --only <value>",
                 "value": "string",
                 "description": "Download only the specified files (Multiple flags allowed).",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--password <value>",
-                "value": "string",
-                "description": "Password generated from the Theme Access app.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your theme directory.",
                 "isOptional": true
               },
               {
@@ -5129,9 +5129,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
+                "name": "-x, --ignore <value>",
+                "value": "string",
+                "description": "Skip downloading the specified files (Multiple flags allowed).",
                 "isOptional": true
               }
             ],
@@ -5175,6 +5175,30 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
                 "description": "Rename your development theme.",
@@ -5207,22 +5231,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--password <value>",
-                "value": "string",
-                "description": "Password generated from the Theme Access app.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
                 "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
@@ -5234,14 +5242,6 @@
                 "name": "-t, --theme <value>",
                 "value": "string",
                 "description": "Theme ID or name of the remote theme.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               }
             ],
@@ -5285,14 +5285,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-e, --environment <value>",
-                "value": "string",
-                "description": "The environment to apply to the current command.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -5317,17 +5309,25 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-s, --store <value>",
-                "value": "string",
-                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
                 "isOptional": true
               }
             ],
@@ -5358,7 +5358,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   },
   {
@@ -5380,7 +5380,7 @@
       }
     },
     "definitions": [],
-    "category": "Universal commands",
+    "category": "general commands",
     "related": []
   }
 ]

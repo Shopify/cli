@@ -39,7 +39,7 @@
     "@nx/workspace": "16.8.1",
     "@octokit/core": "^4.2.4",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
-    "@shopify/generate-docs": "^0.13.2",
+    "@shopify/generate-docs": "0.15.3",
     "@types/node": "18.19.3",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/parser": "^5.62.0",

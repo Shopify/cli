@@ -1,0 +1,46 @@
+[
+  {
+    "category": "app",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "app",
+        "title": "Shopify CLI app commands",
+        "sectionContent": "This is the list of commands that you can use to work with Shopify apps."
+      }
+    ]
+  },
+  {
+    "category": "general commands",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "general",
+        "title": "Shopify CLI general commands",
+        "sectionContent": "These commands are not tied to any specific surface area of Shopify."
+      }
+    ]
+  },
+  {
+    "category": "hydrogen",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "hydrogen",
+        "title": "Shopify CLI hydrogen commands",
+        "sectionContent": "This is the list of commands that you can use to work with Shopify custom storefronts."
+      }
+    ]
+  },
+  {
+    "category": "theme",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "theme",
+        "title": "Shopify CLI theme commands",
+        "sectionContent": "This is the list of commands that you can use to work with Shopify themes."
+      }
+    ]
+  }
+]
