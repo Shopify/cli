@@ -79,6 +79,9 @@ export async function setupDevProcesses({
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
 
+  // TODO: Probably a better way to do this...
+  const {token: partnersSessionToken} = await developerPlatformClient.session()
+
   const processes = [
     ...(await setupWebProcesses({
       webs: localApp.webs,
@@ -141,7 +144,7 @@ export async function setupDevProcesses({
     }),
     // call setupAppEventsSubscribe and we can pass in some stuff
     setupAppEventsSubscribeProcess({
-      test: 'hello',
+      partnersSessionToken,
     }),
   ].filter(stripUndefineds)
 

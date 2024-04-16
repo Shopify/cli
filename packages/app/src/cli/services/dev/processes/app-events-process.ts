@@ -1,8 +1,11 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {gql} from 'graphql-request'
 
 export interface AppEventsQueryOptions {
   shopId: number
   appId: number
+  token: string
 }
 
 export interface AppEventsSubscribeProcess extends BaseProcess<AppEventsQueryOptions> {
@@ -10,11 +13,25 @@ export interface AppEventsSubscribeProcess extends BaseProcess<AppEventsQueryOpt
 }
 
 interface Props {
-  test: string
+  partnersSessionToken: string
 }
 
-export function setupAppEventsSubscribeProcess({test}: Props): AppEventsSubscribeProcess | undefined {
-  console.log('[setupAppEventsSubscribeProcess] might need to pass data here evntually....', test)
+const AppEventsSubscribeMutation = gql`
+  mutation AppEventsSubscribe($input: AppEventsSubscribeInput!) {
+    appEventsSubscribe(input: $input) {
+      jwtToken
+      success
+      errors
+    }
+  }
+`
+
+export function setupAppEventsSubscribeProcess({partnersSessionToken}: Props): AppEventsSubscribeProcess | undefined {
+  console.log('[setupAppEventsSubscribeProcess] cliToken:', partnersSessionToken)
+  const result = partnersRequest(AppEventsSubscribeMutation, partnersSessionToken, {
+    input: {shopId: 1, appId: 1},
+  })
+  console.log(result)
   return {
     type: 'app-events-subscribe',
     prefix: 'app-events',
@@ -22,42 +39,35 @@ export function setupAppEventsSubscribeProcess({test}: Props): AppEventsSubscrib
     options: {
       shopId: 1,
       appId: 1,
+      token: partnersSessionToken,
     },
   }
 }
 
 export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = async ({stdout}, options) => {
-  console.log('[subscribeToAppEvents] Querying app events', options.shopId, options.appId)
+  console.log('[subscribeToAppEvents] Subscribing to App Events for', options.shopId, options.appId)
+  console.log('[subscribeToAppEvents] token needed for mutation:', options.token)
 
-  // const result: FindAppFunctionLogsQuerySchema = await fetchFunctionLogs('123', '123', options.token)
-  // console.log('result', result)
+  console.log('ATTEMPTING PARETNERS REQUEST')
+  const result = await partnersRequest(AppEventsSubscribeMutation, options.token, {
+    input: {shopId: options.shopId, appId: options.appId},
+  })
+  console.log(result)
   stdout.write('Subscribed to Log Streaming for App ID 123-456-789 Shop ID 1\n')
-  // const objString = JSON.stringify(result)
-  // stdout.write(`Result: ${objString}\n`)
 }
 
-// export async function fetchFunctionLogs(
-//   functionId: string,
-//   apiKey: string,
-//   token: string,
-// ): Promise<FindAppFunctionLogsQuerySchema> {
-//   try {
-//     const result: FindAppFunctionLogsQuerySchema = await partnersRequest(FindAppFunctionLogs, token)
-//     console.log('result', result)
-//     return result
-//   } catch (e) {
-//     console.error(`error: ${e}`)
-//     // Handle error or return a default value if needed
-//     return {appEvents: []}
-//   }
-// }
+// const result: FindAppFunctionLogsQuerySchema = await fetchFunctionLogs('123', '123', options.token)
+// console.log('result', result)
+// const objString = JSON.stringify(result)
+// stdout.write(`Result: ${objString}\n`)
 
-// interface FindAppFunctionLogsQuerySchema {
-//   appEvents: string[]
+// const subscribeToAppEventsRequest = async (
+//   shopId: number,
+//   appId: number,
+// ): Promise<{
+//   success: boolean
+//   errors: string[]
+//   jwtToken: string
+// }> => {
+//   return await partnersRequest({})
 // }
-
-// const FindAppFunctionLogs = gql`
-//   query FindAppFunctionLogs {
-//     appEvents
-//   }
-// `
