@@ -43,13 +43,13 @@
     "@shopify/cli-kit": "3.58.0",
     "@shopify/theme-check-node": "2.5.0",
     "@shopify/theme-language-server-node": "1.11.0",
-    "yaml": "2.3.2"
+    "yaml": "2.4.1"
   },
   "devDependencies": {
-    "@types/node": "18.19.3",
-    "@vitest/coverage-istanbul": "^0.34.3",
+    "@types/node": "18.19.31",
+    "@vitest/coverage-istanbul": "^0.34.6",
     "node-stream-zip": "^1.15.0",
-    "vitest": "^0.34.3"
+    "vitest": "^0.34.6"
   },
   "engines": {
     "node": ">=18.12.0"
