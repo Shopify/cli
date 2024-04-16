@@ -55,19 +55,6 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
   console.log(result)
   stdout.write('Subscribed to Log Streaming for App ID 123-456-789 Shop ID 1\n')
 }
-
-// const result: FindAppFunctionLogsQuerySchema = await fetchFunctionLogs('123', '123', options.token)
 // console.log('result', result)
 // const objString = JSON.stringify(result)
 // stdout.write(`Result: ${objString}\n`)
-
-// const subscribeToAppEventsRequest = async (
-//   shopId: number,
-//   appId: number,
-// ): Promise<{
-//   success: boolean
-//   errors: string[]
-//   jwtToken: string
-// }> => {
-//   return await partnersRequest({})
-// }
