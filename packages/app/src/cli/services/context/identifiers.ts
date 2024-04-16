@@ -23,6 +23,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
 
 export interface RemoteSource {
   uuid: string
+  uid?: string
   type: string
   id: string
   title: string
@@ -30,6 +31,7 @@ export interface RemoteSource {
 }
 
 export interface LocalSource {
+  uid: string
   localIdentifier: string
   graphQLType: string
   type: string
@@ -65,17 +67,10 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     extensionsToConfirm,
   )
 
-  const extensionSpecificationIdentifiers: {[key: string]: string} = {}
-  for (const extension in result.extensions) {
-    const fullExtensionInfo = options.app.allExtensions.find((ext) => ext.localIdentifier === extension)!
-    extensionSpecificationIdentifiers[extension] = fullExtensionInfo.specification.identifier
-  }
-
   return {
     app: options.appId,
     extensions: result.extensions,
     extensionIds: result.extensionIds,
-    extensionSpecificationIdentifiers,
     extensionsNonUuidManaged: result.extensionsNonUuidManaged,
   }
 }

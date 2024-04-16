@@ -53,7 +53,10 @@ import {
   OrganizationStore,
 } from '../../models/organization.js'
 import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
-import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
+import {
+  AllAppExtensionRegistrationsQuerySchema,
+  ExtensionRegistration,
+} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
@@ -92,7 +95,6 @@ import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partn
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
-import {underscore} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -240,18 +242,20 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     )
     return result.specifications
       .filter((spec) => spec.experience !== 'DEPRECATED')
-      .map((spec): RemoteSpecification => ({
-        name: spec.name,
-        externalName: spec.name,
-        identifier: spec.identifier,
-        externalIdentifier: spec.externalIdentifier,
-        gated: false,
-        options: {
-          managementExperience: 'cli',
-          registrationLimit: spec.appModuleLimit,
-        },
-        experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
-      }))
+      .map(
+        (spec): RemoteSpecification => ({
+          name: spec.name,
+          externalName: spec.name,
+          identifier: spec.identifier,
+          externalIdentifier: spec.externalIdentifier,
+          gated: false,
+          options: {
+            managementExperience: 'cli',
+            registrationLimit: spec.appModuleLimit,
+          },
+          experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
+        }),
+      )
   }
 
   async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {
@@ -304,19 +308,24 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     appIdentifiers: MinimalAppIdentifiers,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const {app} = await this.fetchApp(appIdentifiers)
-    const {modules} = app.activeRelease.version
+    const configurationRegistrations: ExtensionRegistration[] = []
+    const extensionRegistrations: ExtensionRegistration[] = []
+    app.activeRelease.version.modules.forEach((mod) => {
+      const registration = {
+        id: mod.uid,
+        uid: mod.uid,
+        uuid: mod.uid,
+        title: mod.specification.name,
+        type: mod.specification.identifier,
+      }
+      if (mod.specification.experience === 'CONFIGURATION') configurationRegistrations.push(registration)
+      if (mod.specification.experience === 'EXTENSION') extensionRegistrations.push(registration)
+    })
     return {
       app: {
-        extensionRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
-        configurationRegistrations: modules
-          .filter((mod) => mod.specification.experience === 'CONFIGURATION')
-          .map((mod) => ({
-            id: mod.uid,
-            uuid: mod.uid,
-            title: mod.specification.name,
-            type: mod.specification.identifier,
-          })),
+        configurationRegistrations,
+        extensionRegistrations,
       },
     }
   }
@@ -347,6 +356,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         return {
           registrationId: mod.gid,
           registrationUid: mod.uid,
+          registrationUuid: mod.uid,
           registrationTitle: mod.handle,
           type: mod.specification.externalIdentifier,
           config: mod.config,
@@ -381,12 +391,18 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: updateExtension')
   }
 
-  async deploy({apiKey, appModules, organizationId, versionTag, bundleUrl}: AppDeployOptions): Promise<AppDeploySchema> {
+  async deploy({
+    apiKey,
+    appModules,
+    organizationId,
+    versionTag,
+    bundleUrl,
+  }: AppDeployOptions): Promise<AppDeploySchema> {
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
       appModules: (appModules ?? []).map((mod) => {
         return {
-          uid: mod.uuid ?? mod.handle,
+          uid: mod.uid ?? mod.uuid ?? mod.handle,
           specificationIdentifier: mod.specificationIdentifier,
           handle: mod.handle,
           config: mod.config,
@@ -396,15 +412,12 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       assetsUrl: bundleUrl,
     }
 
-    console.log(`VARIABLES:\n\n${JSON.stringify(variables, null, 2)}`)
-
     const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
       organizationId,
       CreateAppVersionMutation,
       await this.token(),
       variables,
     )
-    console.log(`\nRESULT:\n\n${JSON.stringify(result, null, 2)}`)
     const {version, userErrors} = result.versionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 

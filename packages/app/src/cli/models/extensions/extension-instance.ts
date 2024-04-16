@@ -318,7 +318,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return context
   }
 
-  async bundleConfig({identifiers, developerPlatformClient, apiKey}: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
+  async bundleConfig({
+    identifiers,
+    developerPlatformClient,
+    apiKey,
+  }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
     const configValue = await this.deployConfig({apiKey, developerPlatformClient})
     if (!configValue) return undefined
 
@@ -331,7 +335,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const uuid = this.isUuidManaged()
       ? identifiers.extensions[this.localIdentifier]!
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
-    return {...result, uuid}
+    const uid = this.isUuidManaged() ? this.uid : uuid
+
+    return {...result, uid, uuid}
   }
 }
 
@@ -350,5 +356,6 @@ export interface BundleConfig {
   config: string
   context: string
   handle: string
+  uid: string
   uuid: string
 }

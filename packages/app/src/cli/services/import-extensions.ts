@@ -68,7 +68,6 @@ export async function importExtensions(options: ImportOptions) {
     identifiers: {
       extensions: extensionUuids,
       app: remoteApp.apiKey,
-      extensionSpecificationIdentifiers: {},
     },
     command: 'deploy',
   })

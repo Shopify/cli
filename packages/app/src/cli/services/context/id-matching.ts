@@ -1,5 +1,6 @@
 import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -49,6 +50,58 @@ function matchByNameAndType(
     (registration) => !Object.values(validMatches).includes(registration[remoteIdField]),
   )
   return {matched: validMatches, pending: {local: pendingLocal, remote: pendingRemote}}
+}
+
+/**
+ * Automatically match local and remote sources if they have the same type and UID
+ */
+function matchByUID(
+  local: LocalSource[],
+  remote: RemoteSource[],
+  developerPlatformClient: DeveloperPlatformClient,
+): {matched: IdentifiersExtensions; pending: {local: LocalSource[]; remote: RemoteSource[]}} {
+  const validMatches: IdentifiersExtensions = {}
+
+  local.forEach((localSource) => {
+    const possibleMatch = remote.find(
+      (remoteSource) =>
+        remoteSource.uid === localSource.uid &&
+        remoteSource.type === developerPlatformClient.toExtensionGraphQLType(localSource.graphQLType),
+    )
+    if (possibleMatch) validMatches[localSource.localIdentifier] = possibleMatch.id
+  })
+
+  const pendingLocal = local.filter((elem) => !validMatches[elem.localIdentifier])
+  const pendingRemote = remote.filter((registration) => !Object.values(validMatches).includes(registration.id))
+  return {matched: validMatches, pending: {local: pendingLocal, remote: pendingRemote}}
+}
+
+function matchByUIDOnly(
+  local: LocalSource[],
+  remote: RemoteSource[],
+  developerPlatformClient: DeveloperPlatformClient,
+): {
+  toCreate: LocalSource[]
+  toConfirm: {local: LocalSource; remote: RemoteSource}[]
+  pending: {local: LocalSource[]; remote: RemoteSource[]}
+} {
+  const {matched, pending} = matchByUID(local, remote, developerPlatformClient)
+  const toConfirm: {local: LocalSource; remote: RemoteSource}[] = []
+  const toCreate: LocalSource[] = []
+
+  Object.entries(matched).forEach(([localId, remoteId]) => {
+    const localSource = local.find((source) => source.localIdentifier === localId)
+    const remoteSource = remote.find((source) => source.id === remoteId)
+    if (localSource && remoteSource) {
+      toConfirm.push({local: localSource, remote: remoteSource})
+    }
+  })
+
+  pending.local.forEach((localSource) => {
+    toCreate.push(localSource)
+  })
+
+  return {toConfirm, toCreate, pending}
 }
 
 function migrateLegacyFunctions(
@@ -167,14 +220,18 @@ export async function automaticMatchmaking(
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,
   remoteIdField: 'id' | 'uuid',
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<MatchResult> {
   const ids = getExtensionIds(localSources, identifiers)
   const localUUIDs = Object.values(ids)
 
   const existsRemotely = (local: LocalSource) =>
-    remoteSources.some(
-      (remote) => remote[remoteIdField] === ids[local.localIdentifier] && remote.type === local.graphQLType,
-    )
+    remoteSources.some((remote) => {
+      if (remote.type !== developerPlatformClient.toExtensionGraphQLType(local.graphQLType)) return false
+      return (
+        (local.uid && remote.uid && local.uid === remote.uid) || remote[remoteIdField] === ids[local.localIdentifier]
+      )
+    })
 
   const {migrated: migratedFunctions, pending: pendingAfterMigratingFunctions} = migrateLegacyFunctions(
     ids,
@@ -182,20 +239,22 @@ export async function automaticMatchmaking(
     remoteSources.filter((remote) => !localUUIDs.includes(remote[remoteIdField])),
   )
 
+  const useUidMatching = developerPlatformClient.supportsAtomicDeployments
+
   // We try to automatically match sources if they have the same name and type,
   // by considering local sources which are missing on the remote side and
   // remote sources which are not synchronized locally.
-  const {matched: matchedByNameAndType, pending: matchResult} = matchByNameAndType(
-    pendingAfterMigratingFunctions.local,
-    pendingAfterMigratingFunctions.remote,
-    remoteIdField,
-  )
+  const {matched: matchedByNameAndType, pending: matchResult} = useUidMatching
+    ? matchByUID(pendingAfterMigratingFunctions.local, pendingAfterMigratingFunctions.remote, developerPlatformClient)
+    : matchByNameAndType(pendingAfterMigratingFunctions.local, pendingAfterMigratingFunctions.remote, remoteIdField)
 
   // Now we try to find a match between a local source and remote one if they have
   // the same type and they are unique even if they have different names. For example:
   // LOCAL_CHECKOUT_UI_NAMED_APPLE -> REMOTE_CHECKOUT_UI_NAMED_PEAR
   // LOCAL_PROD_SUBSCR_NAMED_ORANGE -> REMOTE_PROD_SUBSCR_NAMED_LEMON
-  const {toConfirm, toCreate, pending} = matchByUniqueType(matchResult.local, matchResult.remote)
+  const {toConfirm, toCreate, pending} = useUidMatching
+    ? matchByUIDOnly(matchResult.local, matchResult.remote, developerPlatformClient)
+    : matchByUniqueType(matchResult.local, matchResult.remote)
 
   return {
     identifiers: {...ids, ...matchedByNameAndType, ...migratedFunctions},

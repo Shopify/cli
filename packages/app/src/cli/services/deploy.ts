@@ -6,6 +6,7 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {BundleConfig} from '../models/extensions/extension-instance.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -13,7 +14,6 @@ import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/c
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {Task} from '@shopify/cli-kit/node/ui'
-import {BundleConfig} from '../models/extensions/extension-instance.js'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -110,7 +110,7 @@ export async function deploy(options: DeployOptions) {
                     }
                   }
                 }),
-              )
+              ),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
