@@ -46,9 +46,9 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
