@@ -1,36 +1,5 @@
 # @shopify/cli
 
-## 3.59.0
-
-### Minor Changes
-
-- bf2328502: Shopify CLI now defaults to be Global
-
-### Patch Changes
-
-- Updated dependencies [bf2328502]
-- Updated dependencies [27ae7f353]
-- Updated dependencies [c1b329925]
-- Updated dependencies [1934d4235]
-- Updated dependencies [8132d5f14]
-- Updated dependencies [838aee359]
-- Updated dependencies [3901eab41]
-- Updated dependencies [338697996]
-- Updated dependencies [e32854aea]
-- Updated dependencies [b58c991a4]
-- Updated dependencies [f2584495e]
-- Updated dependencies [818349bb2]
-- Updated dependencies [f5ebcf5b8]
-- Updated dependencies [8132d5f14]
-- Updated dependencies [c48e20ff7]
-- Updated dependencies [72a46babf]
-- Updated dependencies [05294bf2f]
-  - @shopify/plugin-did-you-mean@3.59.0
-  - @shopify/plugin-cloudflare@3.59.0
-  - @shopify/cli-kit@3.59.0
-  - @shopify/theme@3.59.0
-  - @shopify/app@3.59.0
-
 ## 3.58.0
 
 ### Minor Changes

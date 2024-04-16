@@ -1,11 +1,5 @@
 # @shopify/features
 
-## 0.12.0
-
-### Minor Changes
-
-- bf2328502: Shopify CLI now defaults to be Global
-
 ## 0.11.1
 
 ### Patch Changes
