@@ -13,7 +13,7 @@ const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformCl
 describe('editor_extension_collection', async () => {
   interface EditorExtensionCollectionProps {
     directory: string
-    configuration: {name: string; handle: string; includes?: string[]; include?: {handle: string}[]}
+    configuration: {name: string; handle?: string; includes?: string[]; include?: {handle: string}[]}
   }
 
   async function getTestEditorExtensionCollection({
@@ -201,6 +201,37 @@ describe('editor_extension_collection', async () => {
           err(
             `There must be at least two extensions in editor extension collection ${configuration.handle}\n\nPlease check the configuration in ${extensionCollection.configurationPath}`,
           ),
+        )
+      })
+    })
+
+    test('returns error if there is no handle for the collection', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const localization = {
+          default_locale: 'en',
+          translations: {title: 'Hola!'},
+        }
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue(localization)
+        const configuration = {
+          name: 'Order summary',
+          include: [
+            {
+              handle: 'handle1',
+            },
+            {
+              handle: 'handle2',
+            },
+          ],
+        }
+        const extensionCollection = await getTestEditorExtensionCollection({
+          directory: tmpDir,
+          configuration,
+        })
+
+        const result = await extensionCollection.validate()
+
+        expect(result).toStrictEqual(
+          err(`Editor extension collection with name ${configuration.name} must have a handle`),
         )
       })
     })
