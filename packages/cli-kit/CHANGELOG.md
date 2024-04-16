@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.59.0
+
+### Minor Changes
+
+- bf2328502: Shopify CLI now defaults to be Global
+
+### Patch Changes
+
+- 8132d5f14: Add an optional parameter to getAvailableTCPPort for the preferred port number
+
 ## 3.58.0
 
 ### Minor Changes
