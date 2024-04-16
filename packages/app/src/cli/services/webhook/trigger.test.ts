@@ -4,11 +4,11 @@ import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {findOrganizationApp, findInEnv} from './find-app-info.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
-import {describe, expect, vi, test} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {loadApp} from '../../models/app/loader.js'
+import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
+import {outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
@@ -30,6 +30,8 @@ vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
 vi.mock('./trigger-local-webhook.js')
 vi.mock('./find-app-info.js')
+vi.mock('../app/fetch-app-from-config-or-select.js')
+vi.mock('../../models/app/loader.js')
 
 const emptyJson = '{}'
 const successDirectResponse = {
@@ -46,6 +48,11 @@ const successEmptyResponse = {
 }
 const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 const developerPlatformClient = testDeveloperPlatformClient()
+
+beforeEach(() => {
+  const app = testApp()
+  vi.mocked(loadApp).mockResolvedValue(app)
+})
 
 describe('webhookTriggerService', () => {
   test('notifies about request errors', async () => {
@@ -116,22 +123,41 @@ describe('webhookTriggerService', () => {
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
-  test("won't send to event-bridge if api-key not found", async () => {
+  test('retrieves the api-key when missing for event-bridge', async () => {
     // Given
     mockLists(aVersion, aTopic)
-    vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1'})
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(testOrganizationApp())
+    vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
 
     // When
-    await expect(webhookTriggerService(eventBridgeFlags())).rejects.toThrow(AbortError)
+    await webhookTriggerService(eventBridgeFlags())
+
+    expect(fetchAppFromConfigOrSelect).toHaveBeenCalled()
+  })
+
+  test('uses the passed api-key for event-bridge', async () => {
+    // Given
+    mockLists(aVersion, aTopic)
+    vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
+    const flags = {
+      ...eventBridgeFlags(),
+      clientId: 'clientId',
+    }
+
+    // When
+    await webhookTriggerService(flags)
+
+    expect(fetchAppFromConfigOrSelect).not.toHaveBeenCalled()
   })
 
   test('notifies about real event-bridge delivery being sent', async () => {
     // Given
     mockLists(aVersion, aTopic)
-    vi.mocked(findInEnv).mockResolvedValue({})
-    vi.mocked(findOrganizationApp).mockResolvedValue({organizationId: '1', id: anApiKey, apiKey: anApiKey})
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
+    const flags = {
+      ...eventBridgeFlags(),
+      clientId: 'AN_API_KEY',
+    }
     const expectedSampleWebhookVariables: SendSampleWebhookVariables = {
       topic: aTopic,
       delivery_method: 'event-bridge',
@@ -142,13 +168,12 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    await webhookTriggerService(eventBridgeFlags())
+    await webhookTriggerService(flags)
 
     // Then
     expectCalls(aVersion)
     expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
-    expect(outputInfo).toHaveBeenCalledWith('Using api-key from app settings in Partners')
   })
 
   describe('Localhost delivery', () => {
@@ -217,6 +242,7 @@ describe('webhookTriggerService', () => {
       clientSecret: aSecret,
       address: anAddress,
       developerPlatformClient,
+      path: '.',
     }
 
     return flags
@@ -230,6 +256,7 @@ describe('webhookTriggerService', () => {
       clientSecret: aSecret,
       address: anEventBridgeAddress,
       developerPlatformClient,
+      path: '.',
     }
 
     return flags
@@ -243,6 +270,7 @@ describe('webhookTriggerService', () => {
       clientSecret: aSecret,
       address: aFullLocalAddress,
       developerPlatformClient,
+      path: '.',
     }
 
     return flags
