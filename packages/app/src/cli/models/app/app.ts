@@ -288,7 +288,7 @@ export class App implements AppInterface {
     if (extensionCollections.length > 0) {
       const errors = validateExtensionsHandlesInCollection(extensionCollections, this.allExtensions)
       if (errors) {
-        throw new AbortError('Invalid extension collection configuration', errors.join('\n'))
+        throw new AbortError('Invalid editor extension collection configuration', errors.join('\n'))
       }
     }
 
