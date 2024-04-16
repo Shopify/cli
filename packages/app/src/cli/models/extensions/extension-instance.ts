@@ -96,6 +96,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.identifier.includes('flow')
   }
 
+  get isEditorExtensionCollection() {
+    return this.specification.identifier === 'editor_extension_collection'
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }

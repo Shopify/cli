@@ -1,5 +1,6 @@
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseConfigType, BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -17,17 +18,33 @@ const EditorExtensionCollectionSchema = BaseSchema.extend({
   type: zod.literal('editor_extension_collection'),
 })
 
+export type EditorExtensionCollectionType = zod.infer<typeof EditorExtensionCollectionSchema>
+
 const editorExtensionCollectionSpecification = createExtensionSpecification({
   identifier: 'editor_extension_collection',
   schema: EditorExtensionCollectionSchema,
   appModuleFeatures: (_) => [],
+  validate: async (config, path) => {
+    const errors: string[] = []
+    const inCollection = makeExtensionsInCollection(config)
+
+    if (!config.handle) {
+      return err(`Editor extension collection with name ${config.name} must have a handle`)
+    }
+
+    if (inCollection.length < 2) {
+      errors.push(`There must be at least two extensions in editor extension collection ${config.handle}`)
+    }
+
+    if (errors.length > 0) {
+      errors.push(`Please check the configuration in ${path}`)
+      return err(errors.join('\n\n'))
+    }
+
+    return ok({})
+  },
   deployConfig: async (config, directory) => {
-    const includes =
-      config.includes?.map((handle) => {
-        return {handle}
-      }) ?? []
-    const include = config.include ?? []
-    const inCollection = [...includes, ...include]
+    const inCollection = makeExtensionsInCollection(config)
 
     // eslint-disable-next-line no-warning-comments
     // TODO: Validation to check either one of include or includes was defined
@@ -40,5 +57,14 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
     }
   },
 })
+
+export function makeExtensionsInCollection(config: EditorExtensionCollectionType) {
+  const includes =
+    config.includes?.map((handle) => {
+      return {handle}
+    }) ?? []
+  const include = config.include ?? []
+  return [...includes, ...include]
+}
 
 export default editorExtensionCollectionSpecification

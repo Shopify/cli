@@ -13,6 +13,11 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
+import {
+  EditorExtensionCollectionType,
+  makeExtensionsInCollection,
+} from '../extensions/specifications/editor_extension_collection.js'
+import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 
 export const LegacyAppSchema = zod
   .object({
@@ -276,6 +281,17 @@ export class App implements AppInterface {
       }
     }
 
+    const extensionCollections = this.allExtensions.filter(
+      (ext) => ext.isEditorExtensionCollection,
+    ) as ExtensionInstance<EditorExtensionCollectionType>[]
+
+    if (extensionCollections.length > 0) {
+      const errors = validateExtensionsHandlesInCollection(extensionCollections, this.allExtensions)
+      if (errors) {
+        throw new AbortError('Invalid extension collection configuration', errors.join('\n'))
+      }
+    }
+
     await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
   }
 
@@ -338,6 +354,45 @@ export function validateFunctionExtensionsWithUiHandle(
         `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
       )
     }
+  })
+
+  return errors.length > 0 ? errors : undefined
+}
+
+export type UIExtensionType = zod.infer<typeof UIExtensionSchema>
+
+export function validateExtensionsHandlesInCollection(
+  editorExtensionCollections: ExtensionInstance<EditorExtensionCollectionType>[],
+  allExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+
+  let allowableTypesForExtensionInCollection = ['ui_extension']
+  editorExtensionCollections.forEach((collection) => {
+    const extensionsInCollection = makeExtensionsInCollection(collection.configuration)
+
+    extensionsInCollection.forEach((extension) => {
+      const matchingExtension = findExtensionByHandle(allExtensions, extension.handle)
+
+      if (!matchingExtension) {
+        errors.push(
+          `[${collection.handle}] extension collection - Local app must contain an extension with handle '${extension.handle}'`,
+        )
+      } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.specification.identifier)) {
+        errors.push(
+          `[${collection.handle}] extension collection - The collection can't contain an extension of type '${matchingExtension.specification.identifier}'`,
+        )
+      } else if (matchingExtension.specification.identifier === 'ui_extension') {
+        const uiExtension = matchingExtension as ExtensionInstance<UIExtensionType>
+        uiExtension.configuration.extension_points.forEach((extensionPoint) => {
+          if (extensionPoint.target.startsWith('admin.')) {
+            errors.push(
+              `[${collection.handle}] extension collection - The collection can't contain an extension of type '${matchingExtension.specification.identifier}' with target ${extensionPoint.target}`,
+            )
+          }
+        })
+      }
+    })
   })
 
   return errors.length > 0 ? errors : undefined
