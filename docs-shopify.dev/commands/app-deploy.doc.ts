@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app deploy',
-  description: `[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build), then deploys your app configuration and extensions.
+  description: `[Builds the app](https://shopify.dev/docs/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.
 
   This command creates an app version, which is a snapshot of your app configuration and all extensions, including the app extensions that you manage in the Partner Dashboard. This version is then released to users.
 

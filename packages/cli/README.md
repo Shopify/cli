@@ -158,8 +158,8 @@ FLAGS
 DESCRIPTION
   Deploy your Shopify app.
 
-  "Builds the app" (https://shopify.dev/docs/apps/tools/cli/commands#build), then deploys your app configuration and
-  extensions.
+  "Builds the app" (https://shopify.dev/docs/docs/api/shopify-cli/app/app-build), then deploys your app configuration
+  and extensions.
 
   This command creates an app version, which is a snapshot of your app configuration and all extensions, including the
   app extensions that you manage in the Partner Dashboard. This version is then released to users.
@@ -203,7 +203,7 @@ FLAGS
 DESCRIPTION
   Run the app.
 
-  "Builds the app" (https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a "development
+  "Builds the app" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a "development
   store" (https://shopify.dev/docs/apps/tools/development-stores) or "Plus sandbox store" (https://help.shopify.com/part
   ners/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
 
@@ -406,7 +406,7 @@ DESCRIPTION
 
   Generates a new "app extension" (https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you
   can generate using this command, refer to "Supported extensions"
-  (https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).
+  (https://shopify.dev/docs/apps/structure/app-extensions/list).
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
@@ -457,8 +457,8 @@ DESCRIPTION
   The information returned includes the following:
 
   - The app and development store or Plus sandbox store that's used when you run the "dev"
-  (https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using "dev --reset"
-  (https://shopify.dev/docs/apps/tools/cli/commands#dev).
+  (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using "dev --reset"
+  (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
   - The "structure" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.
@@ -1159,8 +1159,8 @@ DESCRIPTION
   > Note: You can't preview checkout customizations using http://127.0.0.1:9292.
 
   Development themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after
-  you log out, then you should "share" (https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or "push"
-  (https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.
+  you log out, then you should "share" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or "push"
+  (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
