@@ -51,6 +51,10 @@ export interface DevConfig {
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
+  streamAppEvents?: {
+    shopId: string
+    appId: string
+  }
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
@@ -65,6 +69,7 @@ export async function setupDevProcesses({
   remoteApp,
   storeFqdn,
   storeId,
+  streamAppEvents,
   commandOptions,
   network,
   graphiqlPort,
@@ -81,6 +86,11 @@ export async function setupDevProcesses({
 
   // TODO: Probably a better way to do this...
   const {token: partnersSessionToken} = await developerPlatformClient.session()
+  const functionIds = localApp.allExtensions.filter((ext) => ext.type === 'function').map((ext) => ext.devUUID)
+
+  console.log('functions')
+  console.log('ids: ', functionIds)
+  console.log('[STREAMING APP EVENTS]', streamAppEvents)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -142,10 +152,14 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
-    // call setupAppEventsSubscribe and we can pass in some stuff
-    setupAppEventsSubscribeProcess({
-      partnersSessionToken,
-    }),
+    streamAppEvents &&
+      setupAppEventsSubscribeProcess({
+        partnersSessionToken,
+        subscription: {
+          shopId: streamAppEvents.shopId,
+          appId: streamAppEvents.appId,
+        },
+      }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it

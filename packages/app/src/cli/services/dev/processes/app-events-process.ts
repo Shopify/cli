@@ -3,8 +3,8 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {gql} from 'graphql-request'
 
 export interface AppEventsQueryOptions {
-  shopId: number
-  appId: number
+  shopId: string
+  appId: string
   token: string
 }
 
@@ -14,6 +14,10 @@ export interface AppEventsSubscribeProcess extends BaseProcess<AppEventsQueryOpt
 
 interface Props {
   partnersSessionToken: string
+  subscription: {
+    shopId: string
+    appId: string
+  }
 }
 
 const AppEventsSubscribeMutation = gql`
@@ -26,19 +30,17 @@ const AppEventsSubscribeMutation = gql`
   }
 `
 
-export function setupAppEventsSubscribeProcess({partnersSessionToken}: Props): AppEventsSubscribeProcess | undefined {
-  console.log('[setupAppEventsSubscribeProcess] cliToken:', partnersSessionToken)
-  const result = partnersRequest(AppEventsSubscribeMutation, partnersSessionToken, {
-    input: {shopId: 1, appId: 1},
-  })
-  console.log(result)
+export function setupAppEventsSubscribeProcess({
+  partnersSessionToken,
+  subscription: {shopId, appId},
+}: Props): AppEventsSubscribeProcess | undefined {
   return {
     type: 'app-events-subscribe',
     prefix: 'app-events',
     function: subscribeToAppEvents,
     options: {
-      shopId: 1,
-      appId: 1,
+      shopId,
+      appId,
       token: partnersSessionToken,
     },
   }
@@ -48,12 +50,11 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
   console.log('[subscribeToAppEvents] Subscribing to App Events for', options.shopId, options.appId)
   console.log('[subscribeToAppEvents] token needed for mutation:', options.token)
 
-  console.log('ATTEMPTING PARETNERS REQUEST')
   const result = await partnersRequest(AppEventsSubscribeMutation, options.token, {
     input: {shopId: options.shopId, appId: options.appId},
   })
-  console.log(result)
-  stdout.write('Subscribed to Log Streaming for App ID 123-456-789 Shop ID 1\n')
+  console.log('[subscribeToAppEvents] result: ', result)
+  stdout.write(`Subscribed to App Events for SHOP ID ${options.shopId} APP ID ${options.appId}\n`)
 }
 // console.log('result', result)
 // const objString = JSON.stringify(result)

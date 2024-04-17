@@ -134,6 +134,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     developerPlatformClient,
   )
 
+  // TODO: Do this behind a flag.
+  const streamAppEvents = {
+    appId: remoteApp.id,
+    shopId: storeId,
+  }
+
   return {
     storeFqdn,
     storeId,
@@ -146,6 +152,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
+    streamAppEvents,
   }
 }
 
