@@ -713,7 +713,8 @@ describe('includes functions', () => {
     })
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A], [FUNCTION_A]), {
+    const ensureExtensionsIdsOptions = options([EXTENSION_A], [FUNCTION_A])
+    const got = await ensureExtensionsIds(ensureExtensionsIdsOptions, {
       extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
       dashboardManagedExtensionRegistrations: [],
     })
@@ -724,6 +725,7 @@ describe('includes functions', () => {
       [REGISTRATION_A, FUNCTION_REGISTRATION_A],
       {},
       'uuid',
+      ensureExtensionsIdsOptions.developerPlatformClient,
     )
     expect(got).toEqual({
       dashboardOnlyExtensions: [],
@@ -781,7 +783,13 @@ describe('excludes non uuid managed extensions', () => {
     })
 
     // Then
-    expect(automaticMatchmaking).toHaveBeenCalledWith([EXTENSION_A], [REGISTRATION_A], {}, 'uuid')
+    expect(automaticMatchmaking).toHaveBeenCalledWith(
+      [EXTENSION_A],
+      [REGISTRATION_A],
+      {},
+      'uuid',
+      ensureExtensionsIdsOptions.developerPlatformClient,
+    )
   })
 })
 
