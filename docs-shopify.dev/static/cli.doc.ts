@@ -57,7 +57,7 @@ const data: LandingTemplateSchema = {
 To work with themes, your system must meet the following additional requirements:
 - [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher
 
-> Note: Theme requirements are automatically installed on MacOS when using brew to install Shopify CLI.
+> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.
 `,
       codeblock: {
         title: 'Installation requirements for themes',
@@ -91,7 +91,7 @@ To work with themes, your system must meet the following additional requirements
       title: 'Commands',
       sectionContent: `
 Shopify CLI groups commands into topics. The command syntax is: \`shopify [topic] [command]\`.
-Refer to the commands sections in the sidebar for the lists of available commands for each topic.
+Refer to each topic section in the sidebar for a list of available commands.
 
 Or, run the \`help\` command to get this information right in your terminal.
 `,

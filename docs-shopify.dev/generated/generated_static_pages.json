@@ -47,7 +47,7 @@
         "type": "Generic",
         "anchorLink": "requirements-themes",
         "title": "Requirements for themes",
-        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher\n\n> Note: Theme requirements are automatically installed on MacOS when using brew to install Shopify CLI.\n",
+        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
         "codeblock": {
           "title": "Installation requirements for themes",
           "tabs": [
@@ -58,7 +58,7 @@
             },
             {
               "title": "Windows",
-              "code": "Install Ruby+Devkit 3.0 using https://rubyinstaller.org/downloads/\n\n(select the MSYS2 component and the MSYS2 base installation option)\n",
+              "code": "Install Ruby+Devkit 3.0 using https://rubyinstaller.org/downloads/\n\nSelect the MSYS2 component and the MSYS2 base installation option\n",
               "language": "bash"
             },
             {
@@ -68,7 +68,7 @@
             },
             {
               "title": "Linux: yum",
-              "code": "sudo yum install curl\n\nsudo yum group install \"Development Tools\"\n# includes GCC, g++, and Make\n\nsudo yum install ruby\nsudo yum install ruby-devel\n# Ruby development environment\n\nsudo yum install git\n",
+              "code": "sudo yum install curl\n\nsudo yum group install \"Development Tools\"\n# Includes GCC, g++, and Make\n\nsudo yum install ruby\nsudo yum install ruby-devel\n# Ruby development environment\n\nsudo yum install git\n",
               "language": "bash"
             }
           ]
@@ -78,7 +78,7 @@
         "type": "Generic",
         "anchorLink": "commands",
         "title": "Commands",
-        "sectionContent": "\nShopify CLI groups commands into topics. The command syntax is: `shopify [topic] [command]`.\nRefer to the commands sections in the sidebar for the lists of available commands for each topic.\n\nOr, run the `help` command to get this information right in your terminal.\n",
+        "sectionContent": "\nShopify CLI groups commands into topics. The command syntax is: `shopify [topic] [command]`.\nRefer to each topic section in the sidebar for a list of available commands.\n\nOr, run the `help` command to get this information right in your terminal.\n",
         "codeblock": {
           "title": "terminal",
           "tabs": [
