@@ -1,4 +1,9 @@
-import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod, validateAddressMethod} from './trigger-flags.js'
+import {
+  DELIVERY_METHOD,
+  deliveryMethodForAddress,
+  isAddressAllowedForDeliveryMethod,
+  validateAddressMethod,
+} from './trigger-flags.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, vi, test} from 'vitest'
 
@@ -102,5 +107,63 @@ describe('validateAddressMethod', () => {
     expect(() => {
       validateAddressMethod('https://example.org', 'google-pub-sub')
     }).toThrow(AbortError)
+  })
+})
+
+describe('deliveryMethodForAddress', () => {
+  test('detects a Google Pub Sub address', async () => {
+    // When
+    const method = deliveryMethodForAddress(pubsubAddress)
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.PUBSUB)
+  })
+
+  test('detects an Amazon Event Bridge address', async () => {
+    // When
+    const method = deliveryMethodForAddress(eventbridgeAddress)
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.EVENTBRIDGE)
+  })
+
+  test('detects a localhost address', async () => {
+    // When
+    const method = deliveryMethodForAddress(localHttpAddress)
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.LOCALHOST)
+  })
+
+  test('detects a localhost address case insensitive', async () => {
+    // When
+    const method = deliveryMethodForAddress(localHttpAddress.toUpperCase())
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.LOCALHOST)
+  })
+
+  test('detects a remote http address', async () => {
+    // When
+    const method = deliveryMethodForAddress(remoteHttpAddress)
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.HTTP)
+  })
+
+  test('detects a remote http address case insensitive', async () => {
+    // When
+    const method = deliveryMethodForAddress(remoteHttpAddress.toUpperCase())
+
+    // Then
+    expect(method).toEqual(DELIVERY_METHOD.HTTP)
+  })
+
+  test('returns undefined when not able to identify address type', async () => {
+    // When
+    const method = deliveryMethodForAddress(ftpAddress)
+
+    // Then
+    expect(method).toBeUndefined()
   })
 })

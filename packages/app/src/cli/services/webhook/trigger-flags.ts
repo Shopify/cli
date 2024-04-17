@@ -146,3 +146,31 @@ function equivalentTopic(passedTopic: string, availableTopics: string[]): string
 
   return availableTopics.find((elm) => elm.toUpperCase().replace('/', '_') === passedTopic)
 }
+
+/**
+ * Infer the delivery method from address
+ *
+ * @param address - Address
+ * @returns deliveryMethod or undefined
+ */
+export function deliveryMethodForAddress(address: string | undefined): string | undefined {
+  if (!address) return undefined
+
+  if (PROTOCOL.PUBSUB.test(address)) {
+    return DELIVERY_METHOD.PUBSUB
+  }
+
+  if (PROTOCOL.EVENTBRIDGE.test(address)) {
+    return DELIVERY_METHOD.EVENTBRIDGE
+  }
+
+  if (isAnyHttp(address) && isLocal(address)) {
+    return DELIVERY_METHOD.LOCALHOST
+  }
+
+  if (PROTOCOL.HTTP.test(address)) {
+    return DELIVERY_METHOD.HTTP
+  }
+
+  return undefined
+}

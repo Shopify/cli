@@ -1,6 +1,12 @@
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
-import {DELIVERY_METHOD, parseApiVersionFlag, parseTopicFlag, validateAddressMethod} from './trigger-flags.js'
+import {
+  DELIVERY_METHOD,
+  deliveryMethodForAddress,
+  parseApiVersionFlag,
+  parseTopicFlag,
+  validateAddressMethod,
+} from './trigger-flags.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
@@ -103,7 +109,7 @@ export async function collectAddressAndMethod(
   deliveryMethod: string | undefined,
   address: string | undefined,
 ): Promise<[string, string]> {
-  const actualMethod = deliveryMethod || (await deliveryMethodPrompt())
+  const actualMethod = deliveryMethod || deliveryMethodForAddress(address) || (await deliveryMethodPrompt())
   const actualAddress = address || (await addressPrompt(actualMethod))
 
   return validateAddressMethod(actualAddress, actualMethod)

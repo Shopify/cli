@@ -137,6 +137,15 @@ describe('collectAddressAndMethod', () => {
     expect(deliveryMethodPrompt).toHaveBeenCalledOnce()
     expect(addressPrompt).toHaveBeenCalledOnce()
   })
+
+  test('infers the deliveryMethod when only the address is passed', async () => {
+    // Given / When
+    const [address, method] = await collectAddressAndMethod(undefined, 'https://example.org')
+
+    // Then
+    expect(method).toEqual('http')
+    expect(address).toEqual('https://example.org')
+  })
 })
 
 describe('collectCredentials', () => {
