@@ -4,7 +4,9 @@ import {DELIVERY_METHOD, parseApiVersionFlag, parseTopicFlag, validateAddressMet
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {renderCurrentlyUsedConfigInfo} from '../context.js'
+import {basename} from '@shopify/cli-kit/node/path'
 
 interface AppCredentials {
   clientSecret: string
@@ -38,6 +40,12 @@ export async function collectCredentials(
   }
 
   const orgApp = await fetchAppFromConfigOrSelect(app)
+  if (isCurrentAppSchema(app.configuration)) {
+    renderCurrentlyUsedConfigInfo({
+      appName: orgApp.title,
+      configFile: basename(app.configuration.path),
+    })
+  }
   const clientSecret = orgApp.apiSecretKeys.find((elm) => elm.secret)!.secret
   return {
     clientSecret,

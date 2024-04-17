@@ -4,15 +4,13 @@ import {requestTopics} from './request-topics.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {testApp, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, afterEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../prompts/webhook/trigger.js')
 vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
-vi.mock('./find-app-info.js')
 vi.mock('../app/fetch-app-from-config-or-select.js')
 
 const DELIVERY_METHOD = 'http'
@@ -21,6 +19,10 @@ const API_KEY = 'AN_API_KEY'
 const APP = testApp()
 const ORGANIZATION_APP = testOrganizationApp()
 const developerPlatformClient = testDeveloperPlatformClient()
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
+})
 
 describe('collectApiVersion', () => {
   test('uses the passed api-version', async () => {
@@ -162,5 +164,27 @@ describe('collectCredentials', () => {
       developerPlatformClient: undefined,
     })
     expect(fetchAppFromConfigOrSelect).toHaveBeenCalledOnce()
+  })
+
+  test('shows the current config when found', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORGANIZATION_APP)
+    const app = testApp({}, 'current')
+
+    // When
+    await collectCredentials(API_KEY, undefined, app, DELIVERY_METHOD)
+
+    // Then
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Using shopify.app.toml:                                                     │
+      │                                                                              │
+      │    • App:             app1                                                   │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 })
