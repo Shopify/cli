@@ -59,6 +59,12 @@ interface SelectDeveloperPlatformClientOptions {
   organization?: Organization
 }
 
+export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
+  const clients: DeveloperPlatformClient[] = [new PartnersClient()]
+  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) clients.push(new ShopifyDevelopersClient())
+  return clients
+}
+
 export function selectDeveloperPlatformClient({
   configuration,
   organization,

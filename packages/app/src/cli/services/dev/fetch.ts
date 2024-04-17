@@ -21,13 +21,14 @@ import {
   isServiceAccount,
   isUserAccount,
 } from '../context/partner-account-info.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
-import {ShopifyDevelopersClient} from '../../utilities/developer-platform-client/shopify-developers-client.js'
+import {
+  DeveloperPlatformClient,
+  allDeveloperPlatformClients,
+  selectDeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
@@ -108,10 +109,10 @@ interface FetchResponse {
  * @returns List of organizations
  */
 export async function fetchOrganizations(): Promise<Organization[]> {
-  let organizations = await new PartnersClient().organizations()
-  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
-    organizations = organizations.concat(await new ShopifyDevelopersClient().organizations())
-  }
+  const organizations = (
+    await Promise.all(allDeveloperPlatformClients().map((client) => client.organizations()))
+  ).flat()
+
   if (organizations.length === 0) {
     const developerPlatformClient = selectDeveloperPlatformClient()
     const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient)
