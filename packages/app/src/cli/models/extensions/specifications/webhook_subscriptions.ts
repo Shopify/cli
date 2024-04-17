@@ -8,14 +8,14 @@ export const WebhookSchema = zod.object({
   webhooks: WebhooksSchemaWithDeclarative,
 })
 
-export const WebhookSubscriptionsSpecIdentifier = 'webhooks_subscriptions'
+export const WebhookSubscriptionsSpecIdentifier = 'webhook_subscription'
 
 function transformFromWebhookSubscriptionsConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
   // const webhookSubscriptions = any[]
-  const {subscriptions = []} = webhooks
+  const {api_version, subscriptions = []} = webhooks
 
   // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
   // for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
@@ -33,7 +33,7 @@ function transformFromWebhookSubscriptionsConfig(content: object) {
     const {uri, topics, ...optionalFields} = subscription
     if (topics)
       return topics.map((topic) => {
-        return {uri, topic, ...optionalFields}
+        return {api_version, uri, topic, ...optionalFields}
       })
   })
 
