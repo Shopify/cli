@@ -51,10 +51,7 @@ export interface DevConfig {
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
-  streamAppEvents?: {
-    shopId: string
-    appId: string
-  }
+  streamAppEvents?: boolean
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
@@ -90,6 +87,7 @@ export async function setupDevProcesses({
 
   console.log('functions')
   console.log('ids: ', functionIds)
+  console.log('apikey: ', apiKey)
   console.log('[STREAMING APP EVENTS]', streamAppEvents)
 
   const processes = [
@@ -156,8 +154,8 @@ export async function setupDevProcesses({
       setupAppEventsSubscribeProcess({
         partnersSessionToken,
         subscription: {
-          shopId: streamAppEvents.shopId,
-          appId: streamAppEvents.appId,
+          shopId: storeId,
+          apiKey,
         },
       }),
   ].filter(stripUndefineds)

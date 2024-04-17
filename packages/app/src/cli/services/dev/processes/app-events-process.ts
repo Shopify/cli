@@ -4,7 +4,7 @@ import {gql} from 'graphql-request'
 
 export interface AppEventsQueryOptions {
   shopId: string
-  appId: string
+  apiKey: string
   token: string
 }
 
@@ -16,7 +16,7 @@ interface Props {
   partnersSessionToken: string
   subscription: {
     shopId: string
-    appId: string
+    apiKey: string
   }
 }
 
@@ -32,7 +32,7 @@ const AppEventsSubscribeMutation = gql`
 
 export function setupAppEventsSubscribeProcess({
   partnersSessionToken,
-  subscription: {shopId, appId},
+  subscription: {shopId, apiKey},
 }: Props): AppEventsSubscribeProcess | undefined {
   return {
     type: 'app-events-subscribe',
@@ -40,21 +40,19 @@ export function setupAppEventsSubscribeProcess({
     function: subscribeToAppEvents,
     options: {
       shopId,
-      appId,
+      apiKey,
       token: partnersSessionToken,
     },
   }
 }
 
 export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = async ({stdout}, options) => {
-  console.log('[subscribeToAppEvents] Subscribing to App Events for', options.shopId, options.appId)
-  console.log('[subscribeToAppEvents] token needed for mutation:', options.token)
-
   const result = await partnersRequest(AppEventsSubscribeMutation, options.token, {
-    input: {shopId: options.shopId, appId: options.appId},
+    input: {shopId: options.shopId, apiKey: options.apiKey},
   })
-  console.log('[subscribeToAppEvents] result: ', result)
-  stdout.write(`Subscribed to App Events for SHOP ID ${options.shopId} APP ID ${options.appId}\n`)
+  console.log('[subscribeToAppEvents](AppEventsSubscribeMutation) result: ', result)
+
+  stdout.write(`Subscribed to App Events for SHOP ID ${options.shopId} Api Key ${options.apiKey}\n`)
 }
 // console.log('result', result)
 // const objString = JSON.stringify(result)

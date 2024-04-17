@@ -135,10 +135,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   )
 
   // TODO: Do this behind a flag.
-  const streamAppEvents = {
-    appId: remoteApp.id,
-    shopId: storeId,
-  }
+  const streamAppEvents = true
 
   return {
     storeFqdn,
