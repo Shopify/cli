@@ -6,13 +6,24 @@ import {renderSelectPrompt} from './ui.js'
 /**
  * Returns true if the current process is running in a global context.
  *
+ * Package managers define `npm_config_user_agent` when running a script using: `npm run ...`
+ * But that env var is undefined when calling directly a global binary like: `shopify ...`.
+ *
+ * If the env var is undefined: Assume Global CLI
+ * If the env var is defined: We can't be sure, `npm run ...` will use the global CLI if there isn't a local dependency.
+ *
+ * If the env var is defined we need to check the current process path, if the binary is inside a node_modules folder
+ * then we can assume we are using a local dependency.
+ *
  * @param env - The environment to check. Defaults to `process.env`.
  * @returns `true` if the current process is running in a global context.
  */
 export function currentProcessIsGlobal(env = process.env): boolean {
-  // npm, yarn, pnpm and bun define this if run locally.
-  // If undefined, we can assume it's global (But there is no foolproof way to know)
-  return env.npm_config_user_agent === undefined
+  if (env.npm_config_user_agent === undefined) return true
+  // eslint-disable-next-line @shopify/cli/no-process-cwd
+  const currentPath = process.cwd()
+  const shopifyProcessPath = process.argv[1] ?? ''
+  return !shopifyProcessPath.startsWith(currentPath)
 }
 
 /**
