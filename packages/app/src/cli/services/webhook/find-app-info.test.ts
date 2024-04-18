@@ -1,7 +1,6 @@
 import {findInEnv, findOrganizationApp, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
-import {MinimalOrganizationApp} from '../../models/organization.js'
+import {fetchAppDetailsFromApiKey, fetchOrganizations} from '../dev/fetch.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
@@ -75,10 +74,12 @@ describe('findOrganizationApp', () => {
 
   test('no apps available', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
+    const developerPlatformClient = testDeveloperPlatformClient({
+      orgAndApps: (_orgId: string) => Promise.resolve({organization: org, apps: [], hasMorePages: false}),
+    })
 
     // When
-    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(undefined)
@@ -86,11 +87,14 @@ describe('findOrganizationApp', () => {
 
   test('app guessed from directory', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp]))
-    vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      orgAndApps: (_orgId: string) =>
+        Promise.resolve({organization: org, apps: [anApp, anotherApp], hasMorePages: false}),
+    })
+    vi.mocked(basename).mockReturnValue(anAppName)
 
     // When
-    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -98,11 +102,13 @@ describe('findOrganizationApp', () => {
 
   test('app guessed because there is only one', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp]))
-    vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      orgAndApps: (_orgId: string) => Promise.resolve({organization: org, apps: [anApp], hasMorePages: false}),
+    })
+    vi.mocked(basename).mockReturnValue(anotherAppName)
 
     // When
-    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(developerPlatformClient)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -110,23 +116,20 @@ describe('findOrganizationApp', () => {
 
   test('app selected from prompt', async () => {
     // Given
-    vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([anApp, anotherApp]))
-    vi.mocked(basename).mockResolvedValue(`folder/somewhere-else`)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      orgAndApps: (_orgId: string) =>
+        Promise.resolve({organization: org, apps: [anApp, anotherApp], hasMorePages: false}),
+    })
+    vi.mocked(basename).mockReturnValue(`somewhere-else`)
     vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp)
 
     // When
-    const {apiKey} = await findOrganizationApp(testDeveloperPlatformClient())
+    const {apiKey} = await findOrganizationApp(developerPlatformClient)
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()
     expect(apiKey).toEqual(anotherApp.apiKey)
   })
-
-  function buildFetchResponse(apps: MinimalOrganizationApp[]): FetchResponse {
-    const resp: FetchResponse = {organization: org, apps: {pageInfo: {hasNextPage: false}, nodes: apps}, stores: []}
-
-    return resp
-  }
 })
 
 describe('requestAppInfo', () => {

@@ -7,10 +7,10 @@ import {
   testDeveloperPlatformClient,
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadApp} from '../../../models/app/loader.js'
+import {loadApp, loadAppConfiguration} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
+import {AppConfigurationInterface, AppInterface, CurrentAppConfiguration, EmptyApp} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
@@ -28,6 +28,7 @@ vi.mock('../../../models/app/loader.js', async () => {
   return {
     ...loader,
     loadApp: vi.fn(),
+    loadAppConfiguration: vi.fn(),
   }
 })
 vi.mock('../../local-storage')
@@ -51,7 +52,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
     async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
-          return testOrganizationApp()
+          return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
         default:
           return undefined
       }
@@ -60,6 +61,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 beforeEach(async () => {
+  vi.mocked(loadAppConfiguration).mockResolvedValue(new EmptyApp([]))
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
 })
 
@@ -67,13 +69,14 @@ describe('link', () => {
   test('does not ask for a name when it is provided as a flag', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
         configName: 'Default value',
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
       await link(options)
@@ -87,9 +90,10 @@ describe('link', () => {
   test('creates a new shopify.app.toml file when it does not exist using existing app version configuration instead of the api client configuration', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue('App not found')
       const apiClientConfiguration = {
@@ -111,10 +115,12 @@ describe('link', () => {
           subPathPrefix: 'prefix',
           url: 'https://api-client-config.com/proxy',
         },
+        developerPlatformClient,
       }
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...mockRemoteApp(apiClientConfiguration),
         newApp: true,
+        developerPlatformClient,
       })
 
       // When
@@ -169,9 +175,10 @@ embedded = false
   test('uses the api client configuration in case there is no configuration app modules', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue('App not found')
       const apiClientConfiguration = {
@@ -197,6 +204,7 @@ embedded = false
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...mockRemoteApp(apiClientConfiguration),
         newApp: true,
+        developerPlatformClient,
       })
       vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(undefined)
 
@@ -265,9 +273,10 @@ url = "https://api-client-config.com/preferences"
   test('creates a new shopify.app.staging.toml file when shopify.app.toml already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -289,6 +298,7 @@ url = "https://api-client-config.com/preferences"
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
+          developerPlatformClient,
         }),
       )
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -354,9 +364,10 @@ embedded = false
   test('the local configuration is discarded if the client_id is different from the remote one', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -377,6 +388,7 @@ embedded = false
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: 'different-api-key',
+          developerPlatformClient,
         }),
       )
       const remoteConfiguration = {
@@ -424,12 +436,13 @@ embedded = false
       const initialContent = `scopes = ""
       `
       writeFileSync(filePath, initialContent)
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
       await link(options)
@@ -484,12 +497,13 @@ embedded = false
       const initialContent = `scopes = ""
       `
       writeFileSync(filePath, initialContent)
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
       await link(options, false)
@@ -554,10 +568,11 @@ embedded = false
 
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
         apiKey: 'wrong-api-key',
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -573,9 +588,10 @@ embedded = false
   test('skips config name question if re-linking to existing current app schema', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -592,6 +608,7 @@ embedded = false
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
+          developerPlatformClient,
         }),
       )
       vi.mocked(getCachedCommandInfo).mockReturnValue({askConfigName: false, selectedToml: 'shopify.app.foo.toml'})
@@ -607,12 +624,13 @@ embedded = false
   test('generates the file when there is no shopify.app.toml', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
       await link(options)
@@ -646,12 +664,13 @@ embedded = false
   test('uses scopes on platform if defined', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
         access_scopes: {scopes: 'read_products,write_orders'},
@@ -691,6 +710,9 @@ embedded = false
   test('fetches the privacy compliance webhooks from the configuration module', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = testDeveloperPlatformClient({
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+      })
       const remoteExtensionRegistrations = {
         app: {
           extensionRegistrations: [],
@@ -714,13 +736,11 @@ embedded = false
       }
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: testDeveloperPlatformClient({
-          appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-        }),
+        developerPlatformClient,
       }
 
       vi.mocked(loadApp).mockRejectedValue('App not found')
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
         webhooks: {
@@ -788,9 +808,10 @@ embedded = false
   test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -812,6 +833,7 @@ embedded = false
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
+          developerPlatformClient,
         }),
       )
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -884,12 +906,17 @@ embedded = true
       const initialContent = `scopes = ""
     `
       writeFileSync(filePath, initialContent)
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...mockRemoteApp(),
+        newApp: true,
+        developerPlatformClient,
+      })
 
       // When
       await link(options)
@@ -927,12 +954,13 @@ embedded = false
   test('replace arrays content with the remote one', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
         auth: {
@@ -974,12 +1002,13 @@ embedded = false
   test('write in the toml configuration fields not typed', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
-        developerPlatformClient: buildDeveloperPlatformClient(),
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
         handle: 'handle',
@@ -1032,6 +1061,15 @@ async function mockApp(
   localApp.directory = directory
   setPathValue(localApp, 'remoteFlags', flags)
   return localApp
+}
+
+async function mockAppConfiguration(directory = ''): Promise<AppConfigurationInterface> {
+  const {schema: configSchema} = await buildVersionedAppSchema()
+  return {
+    directory,
+    configuration: {scopes: '', path: directory},
+    configSchema,
+  }
 }
 
 function mockRemoteApp(extraRemoteAppFields: Partial<OrganizationApp> = {}) {
