@@ -109,9 +109,13 @@ interface FetchResponse {
  * @returns List of organizations
  */
 export async function fetchOrganizations(): Promise<Organization[]> {
-  const organizations = (
-    await Promise.all(allDeveloperPlatformClients().map((client) => client.organizations()))
-  ).flat()
+  const organizations: Organization[] = []
+  for (const client of allDeveloperPlatformClients()) {
+    // We don't want to run this in parallel because there could be port conflicts
+    // eslint-disable-next-line no-await-in-loop
+    const clientOrganizations = await client.organizations()
+    organizations.push(...clientOrganizations)
+  }
 
   if (organizations.length === 0) {
     const developerPlatformClient = selectDeveloperPlatformClient()

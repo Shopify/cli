@@ -7,13 +7,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function fetchAppFromConfigOrSelect(
   app: AppConfigurationInterface,
-  developerPlatformClient?: DeveloperPlatformClient,
+  developerPlatformClient: DeveloperPlatformClient = selectDeveloperPlatformClient({configuration: app.configuration}),
 ): Promise<OrganizationApp> {
   let organizationApp
-  const apiClient = developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = app.configuration.client_id
-    organizationApp = await apiClient.appFromId({
+    organizationApp = await developerPlatformClient.appFromId({
       id: apiKey,
       apiKey,
       organizationId: app.configuration.organization_id ?? '0',

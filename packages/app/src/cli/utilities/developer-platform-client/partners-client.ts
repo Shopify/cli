@@ -229,20 +229,28 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    const result: AllOrganizationsQuerySchema = await this.request(AllOrganizationsQuery)
-    return result.organizations.nodes.map((org) => ({
-      id: org.id,
-      businessName: org.businessName,
-      source: OrganizationSource.Partners,
-    }))
+    try {
+      const result: AllOrganizationsQuerySchema = await this.request(AllOrganizationsQuery)
+      return result.organizations.nodes.map((org) => ({
+        id: org.id,
+        businessName: org.businessName,
+        source: OrganizationSource.Partners,
+      }))
+    } catch (error: unknown) {
+      if ((error as {statusCode?: number}).statusCode === 404) {
+        return []
+      } else {
+        throw error
+      }
+    }
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const variables: FindOrganizationBasicVariables = {id: orgId}
     const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
-    const org = result.organizations.nodes[0] as Organization
+    const org: Organization | undefined = result.organizations.nodes[0]
     if (org) org.source = OrganizationSource.Partners
-    return result.organizations.nodes[0]
+    return org
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {

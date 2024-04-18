@@ -24,7 +24,6 @@ export async function selectAppPrompt(
   orgId: string,
   options?: {
     directory?: string
-    developerPlatformClient?: DeveloperPlatformClient
   },
 ): Promise<MinimalAppIdentifiers> {
   const tomls = await getTomls(options?.directory)
