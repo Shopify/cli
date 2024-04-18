@@ -4,7 +4,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme dev',
   description: `
-  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
+  Uploads the current theme as the specified theme, or a [development theme](/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
 This command returns the following information:
 

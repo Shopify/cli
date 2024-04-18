@@ -5,10 +5,10 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen dev',
   description: `Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.
 
-  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.`,
+  If your project is [linked](/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.`,
   overviewPreviewDescription: `Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.
 
-  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.`,
+  If your project is [linked](/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

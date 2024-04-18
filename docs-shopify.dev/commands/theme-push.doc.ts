@@ -7,7 +7,7 @@ const data: ReferenceEntityTemplateSchema = {
 
   If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.
 
-  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+  You can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).
 
   This command returns the following information:
 

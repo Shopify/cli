@@ -10,7 +10,7 @@ const data: ReferenceEntityTemplateSchema = {
 
   Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.
 
-  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).
+  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](/docs/apps/webhooks).
 
   ### Limitations
 

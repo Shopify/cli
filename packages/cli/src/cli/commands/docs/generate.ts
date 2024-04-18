@@ -85,8 +85,10 @@ export async function writeCommandDocumentation(
     type: '${interfaceName}',
   },`
 
-  const description = command.descriptionWithMarkdown ?? command.description ?? command.summary
-  const previewDescription = command.summary ?? description
+  const description = command.descriptionWithMarkdown ?? command.description ?? command.summary ?? ''
+  const cleanDescription = description?.replace(/`/g, '\\`').replace('https://shopify.dev', '')
+  const previewDescription = command.summary ?? description ?? ''
+  const cleanPreview = previewDescription.replace(/`/g, '\\`').replace('https://shopify.dev', '')
 
   const category = hasTopic && !generalTopics.includes(topic!) ? topic : 'general commands'
 
@@ -95,8 +97,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: '${commandName}',
-  description: \`${description?.replace(/`/g, '\\`')}\`,
-  overviewPreviewDescription: \`${previewDescription?.replace(/`/g, '\\`')}\`,
+  description: \`${cleanDescription}\`,
+  overviewPreviewDescription: \`${cleanPreview}\`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
