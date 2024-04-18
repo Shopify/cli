@@ -5,9 +5,9 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'app info',
   description: `The information returned includes the following:
 
-  - The app and development store or Plus sandbox store that's used when you run the [dev](/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [dev --reset](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
-  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
-  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.
+  - The app and development store or Plus sandbox store that's used when you run the [dev](/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [dev --reset](/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
+  - The [structure](/docs/apps/tools/cli/structure) of your app project.
+  - The [access scopes](/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.`,
   overviewPreviewDescription: `Print basic information about your app and extensions.`,
   type: 'command',

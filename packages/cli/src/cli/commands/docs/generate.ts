@@ -86,9 +86,9 @@ export async function writeCommandDocumentation(
   },`
 
   const description = command.descriptionWithMarkdown ?? command.description ?? command.summary ?? ''
-  const cleanDescription = description?.replace(/`/g, '\\`').replace('https://shopify.dev', '')
+  const cleanDescription = description?.replace(/`/g, '\\`').replace(/https:\/\/shopify\.dev/g, '')
   const previewDescription = command.summary ?? description ?? ''
-  const cleanPreview = previewDescription.replace(/`/g, '\\`').replace('https://shopify.dev', '')
+  const cleanPreview = previewDescription.replace(/`/g, '\\`').replace(/https:\/\/shopify\.dev/g, '')
 
   const category = hasTopic && !generalTopics.includes(topic!) ? topic : 'general commands'
 

@@ -7,12 +7,12 @@ const data: ReferenceEntityTemplateSchema = {
 
   Linking to a Hydrogen storefront enables you to run [dev](/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.
 
-  After you run the \`link\` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.`,
+  After you run the \`link\` command, you can access the [env list](/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.`,
   overviewPreviewDescription: `Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.
 
   Linking to a Hydrogen storefront enables you to run [dev](/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.
 
-  After you run the \`link\` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.`,
+  After you run the \`link\` command, you can access the [env list](/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

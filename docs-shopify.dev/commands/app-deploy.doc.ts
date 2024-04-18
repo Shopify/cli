@@ -7,7 +7,7 @@ const data: ReferenceEntityTemplateSchema = {
 
   This command creates an app version, which is a snapshot of your app configuration and all extensions, including the app extensions that you manage in the Partner Dashboard. This version is then released to users.
 
-  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
+  This command doesn't deploy your [web app](/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](/docs/apps/deployment/web) to your own hosting solution.
   `,
   overviewPreviewDescription: `Deploy your Shopify app.`,
   type: 'command',
