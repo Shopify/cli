@@ -499,6 +499,7 @@ export function renderTable<T extends ScalarDict>({renderOptions, ...props}: Ren
 
 interface RenderTasksOptions {
   renderOptions?: RenderOptions
+  silent?: boolean
 }
 
 /**
@@ -508,7 +509,7 @@ interface RenderTasksOptions {
  * Installing dependencies ...
  */
 // eslint-disable-next-line max-params
-export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
+export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions, silent}: RenderTasksOptions = {}) {
   recordUIEvent({
     type: 'taskbar',
     properties: {
@@ -522,7 +523,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} />, {
+    render(<Tasks tasks={tasks} onComplete={resolve} silent={silent} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })

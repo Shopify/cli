@@ -12,6 +12,7 @@ interface UploadOptions {
   nodelete?: boolean
   ignore?: string[]
   only?: string[]
+  json?: boolean
 }
 type FileBatch = Checksum[]
 
@@ -33,8 +34,8 @@ export async function uploadTheme(
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
   // The task execution mechanism processes tasks sequentially in the order they are added.
-  await renderTasks(deleteTasks)
-  await renderTasks(uploadTasks)
+  await renderTasks(deleteTasks, options.json)
+  await renderTasks(uploadTasks, options.json)
 
   reportFailedUploads(uploadResults)
   return uploadResults
@@ -321,9 +322,9 @@ async function handleFailedUploads(
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
 }
 
-async function renderTasks(tasks: Task[]) {
+async function renderTasks(tasks: Task[], jsonOutput?: boolean) {
   if (tasks.length > 0) {
-    await renderTaskOriginal(tasks)
+    await renderTaskOriginal(tasks, {silent: jsonOutput})
   }
 }
 
