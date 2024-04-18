@@ -1,5 +1,6 @@
 import {PartnersURLs} from './urls.js'
 import {Dev, DevProps} from './ui/components/Dev.js'
+import {Logs, LogProps} from '../logs/ui/components/Logs.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
@@ -59,6 +60,18 @@ export async function outputUpdateURLsResult(
         ],
       })
     }
+  }
+}
+
+export async function renderLogs({processes, abortController, pollingTime}: LogProps) {
+  if (terminalSupportsRawMode(process.stdin)) {
+    console.log('time to workn on <Log />')
+    return render(<Logs processes={processes} abortController={abortController} pollingTime={pollingTime} />, {
+      exitOnCtrlC: false,
+    })
+  } else {
+    console.log('time to workn on <Log /> non interactive')
+    return <></>
   }
 }
 

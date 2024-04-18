@@ -3,6 +3,7 @@ import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
+import Logs from './commands/app/logs.js'
 import DraftExtensionsPush from './commands/app/draft-extensions/push.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
@@ -23,6 +24,7 @@ import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
 const APP_COMMANDS = {
   'app:build': Build,
   'app:deploy': Deploy,
+  'app:logs': Logs,
   'app:dev': Dev,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,

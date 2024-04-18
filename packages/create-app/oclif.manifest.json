@@ -56,7 +56,7 @@
         },
         "path": {
           "char": "p",
-          "default": ".",
+          "default": "./packages/create-app",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "hidden": false,

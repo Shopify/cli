@@ -579,7 +579,7 @@
           "type": "boolean"
         },
         "path": {
-          "default": ".",
+          "default": "./packages/cli",
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
@@ -1441,7 +1441,7 @@
         },
         "path": {
           "char": "p",
-          "default": ".",
+          "default": "./packages/cli",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -1475,6 +1475,60 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Create a new app project"
+    },
+    "app:logs": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Stream function Logs.",
+      "descriptionWithMarkdown": "Stream function Logs.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:logs",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Streams logs from your app."
     },
     "app:release": {
       "aliases": [
@@ -2028,7 +2082,7 @@
           "type": "option"
         },
         "path": {
-          "default": ".",
+          "default": "./packages/cli",
           "description": "The directory for generating the demo file.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
