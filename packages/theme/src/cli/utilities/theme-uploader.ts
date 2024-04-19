@@ -1,10 +1,11 @@
 import {partitionThemeFiles, readThemeFilesFromDisk} from './theme-fs.js'
 import {applyIgnoreFilters} from './asset-ignore.js'
+import {silenceableRenderTasks} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {fileSize} from '@shopify/cli-kit/node/fs'
-import {Task, renderTasks as renderTaskOriginal} from '@shopify/cli-kit/node/ui'
+import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
@@ -12,6 +13,7 @@ interface UploadOptions {
   nodelete?: boolean
   ignore?: string[]
   only?: string[]
+  json?: boolean
 }
 type FileBatch = Checksum[]
 
@@ -33,8 +35,8 @@ export async function uploadTheme(
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
   // The task execution mechanism processes tasks sequentially in the order they are added.
-  await renderTasks(deleteTasks)
-  await renderTasks(uploadTasks)
+  await silenceableRenderTasks(deleteTasks, options.json)
+  await silenceableRenderTasks(uploadTasks, options.json)
 
   reportFailedUploads(uploadResults)
   return uploadResults
@@ -319,12 +321,6 @@ async function handleFailedUploads(
   }
 
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
-}
-
-async function renderTasks(tasks: Task[]) {
-  if (tasks.length > 0) {
-    await renderTaskOriginal(tasks)
-  }
 }
 
 function reportFailedUploads(uploadResults: Map<string, Result>) {

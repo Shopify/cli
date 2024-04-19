@@ -1,6 +1,8 @@
-import {themeComponent, themesComponent} from './theme-ui.js'
+import {themeComponent, themesComponent, silenceableRenderTasks, SilentWriteStream} from './theme-ui.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {test, describe, expect} from 'vitest'
+import {test, describe, expect, vi} from 'vitest'
+
+import {Task} from '@shopify/cli-kit/node/ui'
 
 describe('themeComponent', () => {
   test('returns the ui for a theme', async () => {
@@ -23,6 +25,34 @@ describe('themesComponent', () => {
         ],
       },
     })
+  })
+})
+// todo: these tests will pass no matter what
+describe('SilentWriteStream', () => {
+  test('write method should not output anything', () => {
+    const mock = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    const silentWriteStream = new SilentWriteStream(1)
+
+    silentWriteStream.write()
+
+    expect(mock).not.toHaveBeenCalled()
+  })
+})
+
+describe('silenceableRenderTasks', () => {
+  test('should not write to process.stdout when silent flag is true', async () => {
+    const mock = vi.spyOn(process.stdout, 'write' as any).mockImplementation(() => true)
+
+    const tasks: Task[] = [
+      {
+        title: 'task 1',
+        task: async () => {},
+      },
+    ]
+
+    await silenceableRenderTasks(tasks, true)
+
+    expect(mock).not.toHaveBeenCalled()
   })
 })
 

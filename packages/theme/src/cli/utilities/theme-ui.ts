@@ -1,5 +1,6 @@
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderWarning, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {WriteStream} from 'tty'
 
 export function themeComponent(theme: Theme) {
   return [
@@ -30,4 +31,17 @@ export async function currentDirectoryConfirmed(force: boolean) {
   return renderConfirmationPrompt({
     message: 'Do you want to proceed?',
   })
+}
+
+export class SilentWriteStream extends WriteStream {
+  write(): boolean {
+    return true
+  }
+}
+
+export async function silenceableRenderTasks(tasks: Task[], silent?: boolean) {
+  if (tasks.length > 0) {
+    const renderOptions = silent ? {stdout: new SilentWriteStream(1)} : undefined
+    await renderTasks(tasks, {renderOptions})
+  }
 }
