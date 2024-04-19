@@ -1,10 +1,17 @@
 import {SpecsAppConfiguration} from './extensions/specifications/types/app_config.js'
 import {Flag} from '../services/dev/fetch.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+
+export enum OrganizationSource {
+  Partners = 'Partners',
+  BusinessPlatform = 'BusinessPlatform',
+}
 
 export interface Organization {
   id: string
   businessName: string
   website?: string
+  source?: OrganizationSource
 }
 
 export interface MinimalAppIdentifiers {
@@ -44,6 +51,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   }
   configuration?: SpecsAppConfiguration
   flags: Flag[]
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export interface OrganizationStore {

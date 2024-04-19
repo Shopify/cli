@@ -33,6 +33,8 @@ interface Configurable {
 }
 
 export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+  options.developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (options.webEnv) {
     return infoWeb(app, options)
   } else {
@@ -118,14 +120,15 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const developerPlatformClient = this.options.developerPlatformClient ?? selectDeveloperPlatformClient()
-    const {cachedInfo} = await getAppContext({
+    let developerPlatformClient = this.options.developerPlatformClient!
+    const {cachedInfo, remoteApp} = await getAppContext({
       developerPlatformClient,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
       promptLinkingApp: false,
     })
+    developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,

@@ -6,6 +6,7 @@ import {
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
+  OrganizationSource,
   OrganizationStore,
 } from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
@@ -42,6 +43,7 @@ import {
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
+import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -49,12 +51,37 @@ export type Paginateable<T> = T & {
   hasMorePages: boolean
 }
 
-export function selectDeveloperPlatformClient(): DeveloperPlatformClient {
+interface SelectDeveloperPlatformClientOptions {
+  configuration?: AppConfiguration | undefined
+  organization?: Organization
+}
+
+export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
+  const clients: DeveloperPlatformClient[] = [new PartnersClient()]
+  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) clients.push(new ShopifyDevelopersClient())
+  return clients
+}
+
+export function selectDeveloperPlatformClient({
+  configuration,
+  organization,
+}: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
-    return new ShopifyDevelopersClient()
-  } else {
-    return new PartnersClient()
+    if (organization) return selectDeveloperPlatformClientByOrg(organization)
+    return selectDeveloperPlatformClientByConfig(configuration)
   }
+  return new PartnersClient()
+}
+
+function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
+  if (organization.source === OrganizationSource.BusinessPlatform) return new ShopifyDevelopersClient()
+  return new PartnersClient()
+}
+
+function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
+  if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
+    return new ShopifyDevelopersClient()
+  return new PartnersClient()
 }
 
 export interface CreateAppOptions {

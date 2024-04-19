@@ -24,4 +24,4 @@ jobs:
             - UI extensions: @shopify/ui-extensions-cli
               - Checkout UI extensions: @shopify/checkout-ui-extensions-api-stewardship
             - Hydrogen: @shopify/hydrogen
-            - Other: @shopify/cli-foundations
+            - Other: @shopify/app-management

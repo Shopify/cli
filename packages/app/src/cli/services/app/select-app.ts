@@ -1,6 +1,6 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
-import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {Flag, fetchOrganizations} from '../dev/fetch.js'
+import {selectAppPrompt} from '../../prompts/dev.js'
+import {Flag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {
@@ -8,14 +8,14 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
+import {selectOrg} from '../context.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
-  const developerPlatformClient = selectDeveloperPlatformClient()
-  const orgs = await fetchOrganizations(developerPlatformClient)
-  const org = await selectOrganizationPrompt(orgs)
+  const org = await selectOrg()
+  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedApp = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
+  const selectedApp = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id)
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
 }

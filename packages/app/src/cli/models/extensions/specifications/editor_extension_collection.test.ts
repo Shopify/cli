@@ -1,10 +1,11 @@
+import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
@@ -39,6 +40,12 @@ describe('editor_extension_collection', async () => {
   describe('deployConfig()', () => {
     test('returns the deploy config when includes and include is passed in', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
+        const localization = {
+          default_locale: 'en',
+          translations: {title: 'Hola!'},
+        }
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue(localization)
+
         const configuration = {
           name: 'Order summary',
           handle: 'order-summary-collection',
@@ -63,12 +70,18 @@ describe('editor_extension_collection', async () => {
           name: extensionCollection.configuration.name,
           handle: extensionCollection.configuration.handle,
           in_collection: [{handle: 'handle1'}, {handle: 'handle2'}],
+          localization,
         })
       })
     })
 
     test('returns the deploy config when only include is passed in', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
+        const localization = {
+          default_locale: 'en',
+          translations: {title: 'Hola!'},
+        }
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue(localization)
         const configuration = {
           name: 'Order summary',
           handle: 'order-summary-collection',
@@ -92,12 +105,18 @@ describe('editor_extension_collection', async () => {
           name: extensionCollection.configuration.name,
           handle: extensionCollection.configuration.handle,
           in_collection: [{handle: 'handle2'}],
+          localization,
         })
       })
     })
 
     test('returns the deploy config when only includes is passed in', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
+        const localization = {
+          default_locale: 'en',
+          translations: {title: 'Hola!'},
+        }
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue(localization)
         const configuration = {
           name: 'Order summary',
           handle: 'order-summary-collection',
@@ -117,6 +136,7 @@ describe('editor_extension_collection', async () => {
           name: extensionCollection.configuration.name,
           handle: extensionCollection.configuration.handle,
           in_collection: [{handle: 'handle1'}],
+          localization,
         })
       })
     })

@@ -43,7 +43,6 @@ describe('use', () => {
       expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
       expect(setCachedAppInfo).not.toHaveBeenCalled()
       expect(loadAppConfiguration).not.toHaveBeenCalled()
-
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Cleared current configuration.',
         body: [
@@ -288,7 +287,7 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, REMOTE_APP)
+      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, {apiKey: REMOTE_APP.apiKey, organizationId: '0'})
     })
   })
 })
