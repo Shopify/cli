@@ -879,8 +879,8 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     expect(developerPlatformClient.createExtension).not.toBeCalled()
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {'point-of-sale': 'C_A'},
-      extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
+      extensionIds: {'point-of-sale': ['C_A']},
+      extensionsNonUuidManaged: {'point-of-sale': ['UUID_C_A']},
     })
   })
   test('when the include config on deploy flag is disabled configuration extensions are not created', async () => {
@@ -933,8 +933,8 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     expect(developerPlatformClient.createExtension).toBeCalledTimes(1)
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {'point-of-sale': 'C_A'},
-      extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
+      extensionIds: {'point-of-sale': ['C_A']},
+      extensionsNonUuidManaged: {'point-of-sale': ['UUID_C_A']},
     })
   })
   test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created with context', async () => {
@@ -999,8 +999,8 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
     expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {'point-of-sale': 'C_A'},
-      extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
+      extensionIds: {'point-of-sale': ['C_A']},
+      extensionsNonUuidManaged: {'point-of-sale': ['UUID_C_A']},
     })
   })
 })

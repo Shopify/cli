@@ -153,23 +153,23 @@ async function ensureNonUuidManagedExtensionsIds(
 
   localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []
-  const validMatches: {[key: string]: string} = {}
-  const validMatchesById: {[key: string]: string} = {}
+  const validMatches: {[key: string]: string[]} = {}
+  const validMatchesById: {[key: string]: string[]} = {}
   localExtensionRegistrations.forEach((local) => {
     const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
       return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
     })
     if (possibleMatch) {
-      validMatches[local.localIdentifier] = possibleMatch.uuid
-      validMatchesById[local.localIdentifier] = possibleMatch.id
+      validMatches[local.localIdentifier] = [possibleMatch.uuid]
+      validMatchesById[local.localIdentifier] = [possibleMatch.id]
     } else extensionsToCreate.push(local)
   })
 
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
-      validMatches[localIdentifier] = registration.uuid
-      validMatchesById[localIdentifier] = registration.id
+      validMatches[localIdentifier] = [registration.uuid]
+      validMatchesById[localIdentifier] = [registration.id]
     }
   }
 
