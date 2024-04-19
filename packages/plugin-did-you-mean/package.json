@@ -5,6 +5,11 @@
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/plugin-did-you-mean"
+  },
   "license": "MIT",
   "author": "Shopify",
   "type": "module",
