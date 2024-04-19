@@ -17,6 +17,7 @@ import {
   stringifyMessage,
   getOutputUpdateCLIReminder,
 } from '@shopify/cli-kit/node/output'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -32,6 +33,8 @@ interface Configurable {
 }
 
 export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+  options.developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (options.webEnv) {
     return infoWeb(app, options)
   } else {
@@ -39,11 +42,11 @@ export async function info(app: AppInterface, options: InfoOptions): Promise<Out
   }
 }
 
-export async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
+async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
   return outputEnv(app, format)
 }
 
-export async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -119,14 +122,15 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const developerPlatformClient = this.options.developerPlatformClient ?? selectDeveloperPlatformClient()
-    const {cachedInfo} = await getAppContext({
+    let developerPlatformClient = this.options.developerPlatformClient!
+    const {cachedInfo, remoteApp} = await getAppContext({
       developerPlatformClient,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
       promptLinkingApp: false,
     })
+    developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,
@@ -263,7 +267,7 @@ class AppInfo {
     const title = 'Tooling and System'
     const {platform, arch} = platformAndArch()
     const versionUpgradeMessage = await this.versionUpgradeMessage()
-    const cliVersionInfo = [this.currentCliVersion(), versionUpgradeMessage].join(' ').trim()
+    const cliVersionInfo = [CLI_KIT_VERSION, versionUpgradeMessage].join(' ').trim()
     const lines: string[][] = [
       ['Shopify CLI', cliVersionInfo],
       ['Package manager', this.app.packageManager],
@@ -274,13 +278,9 @@ class AppInfo {
     return [title, `${linesToColumns(lines)}`]
   }
 
-  currentCliVersion(): string {
-    return this.app.nodeDependencies['@shopify/cli']!
-  }
-
   async versionUpgradeMessage(): Promise<string> {
     const cliDependency = '@shopify/cli'
-    const newestVersion = await checkForNewVersion(cliDependency, this.currentCliVersion())
+    const newestVersion = await checkForNewVersion(cliDependency, CLI_KIT_VERSION)
     if (newestVersion) {
       return getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
     }

@@ -97,12 +97,7 @@ export async function exchangeCustomPartnerToken(token: string): Promise<Applica
   }
 }
 
-export type IdentityDeviceError =
-  | 'authorization_pending'
-  | 'access_denied'
-  | 'expired_token'
-  | 'slow_down'
-  | 'unknown_failure'
+type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
 
 /**
  * Given a deviceCode obtained after starting a device identity flow, request an identity token.

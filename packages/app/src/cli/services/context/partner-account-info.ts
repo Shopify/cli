@@ -31,10 +31,6 @@ export function isServiceAccount(account: AccountInfo): account is ServiceAccoun
   return account.type === 'ServiceAccount'
 }
 
-export function isUnknownAccount(account: AccountInfo): account is UnknownAccountInfo {
-  return account.type === 'UnknownAccount'
-}
-
 export async function fetchCurrentAccountInformation(
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<AccountInfo> {

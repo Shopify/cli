@@ -16,7 +16,7 @@ import {pluralize} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
 
-export interface DeleteOptions {
+interface DeleteOptions {
   selectTheme: boolean
   development: boolean
   force: boolean

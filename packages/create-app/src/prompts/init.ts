@@ -1,7 +1,8 @@
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
 import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-interface InitOptions {
+export interface InitOptions {
   name?: string
   template?: string
   flavor?: string
@@ -13,6 +14,7 @@ interface InitOutput {
   template: string
   // e.g. 'remix'
   templateType: PredefinedTemplate | 'custom'
+  globalCLIResult: InstallGlobalCLIPromptResult
 }
 
 interface TemplateBranch {
@@ -62,9 +64,9 @@ export const templates = {
     visible: false,
   } as Template,
 } as const
-export type PredefinedTemplate = keyof typeof templates
+type PredefinedTemplate = keyof typeof templates
 
-export const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
+const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
 export const visibleTemplates = allTemplates.filter((key) => templates[key].visible) as Readonly<PredefinedTemplate[]>
 
 const templateOptionsInOrder = ['remix', 'none'] as const
@@ -123,6 +125,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     name,
     template,
     templateType: isPredefinedTemplate(template) ? template : 'custom',
+    globalCLIResult: {install: false, alreadyInstalled: false},
   }
 
   let selectedUrl: string | undefined
@@ -151,6 +154,8 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   answers.template = selectedUrl || answers.template || defaults.template
+
+  answers.globalCLIResult = await installGlobalCLIPrompt()
 
   return answers
 }

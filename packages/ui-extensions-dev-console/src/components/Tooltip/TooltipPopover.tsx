@@ -1,12 +1,12 @@
 import styles from './TooltipPopover.module.css'
 import React, {useLayoutEffect, useRef} from 'react'
 
-export interface Position {
+interface Position {
   x: number
   y: number
 }
 
-export interface TooltipPopoverProps {
+interface TooltipPopoverProps {
   text: string
   targetRef: React.RefObject<HTMLElement>
 }

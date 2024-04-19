@@ -31,7 +31,7 @@ export interface SimplifyConfig {
   simplify?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
 }
 
-export type ExtensionExperience = 'extension' | 'configuration'
+type ExtensionExperience = 'extension' | 'configuration'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -71,18 +71,12 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
  * They belong to the ExtensionSpec interface, but the values are obtained from the API
  * and should not be set by us locally
  */
-export type ForbiddenFields =
-  | 'registrationLimit'
-  | 'category'
-  | 'externalIdentifier'
-  | 'externalName'
-  | 'name'
-  | 'surface'
+type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name' | 'surface'
 
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
-export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType>
+interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType>
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]

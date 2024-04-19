@@ -8,7 +8,13 @@ import {
   startTunnelPlugin,
   updateURLs,
 } from './dev/urls.js'
-import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
+import {
+  ensureDevContext,
+  enableDeveloperPreview,
+  disableDeveloperPreview,
+  developerPreviewUpdate,
+  DevContextOptions,
+} from './context.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
@@ -25,6 +31,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {SpecsAppConfiguration} from '../models/extensions/specifications/types/app_config.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -75,8 +82,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const developerPlatformClient = selectDeveloperPlatformClient()
-
+  const {configuration} = await loadAppConfiguration(commandOptions)
+  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {
     storeFqdn,
     storeId,
@@ -84,8 +92,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     localApp: app,
-  } = await ensureDevContext(commandOptions, developerPlatformClient)
+  } = await ensureDevContext(devContextOptions)
 
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const apiKey = remoteApp.apiKey
   let localApp = app
 
@@ -359,7 +368,7 @@ export function developerPreviewController(
   }
 }
 
-export async function logMetadataForDev(options: {
+async function logMetadataForDev(options: {
   devOptions: DevOptions
   tunnelUrl: string
   shouldUpdateURLs: boolean
@@ -381,7 +390,7 @@ export async function logMetadataForDev(options: {
   }))
 }
 
-export function scopesMessage(scopes: string[]) {
+function scopesMessage(scopes: string[]) {
   return {
     list: {
       items: scopes.length === 0 ? ['No scopes'] : scopes,
@@ -389,7 +398,7 @@ export function scopesMessage(scopes: string[]) {
   }
 }
 
-export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
+async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
   const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
   if (duplicatedPort) {
@@ -413,6 +422,6 @@ export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: numbe
   ])
 }
 
-export function setPreviousAppId(directory: string, apiKey: string) {
+function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
 }

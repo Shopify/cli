@@ -49,9 +49,11 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  let developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   // eslint-disable-next-line prefer-const
   let {app, identifiers, remoteApp, release} = await ensureDeployContext({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const apiKey = identifiers?.app ?? remoteApp.apiKey
 
   outputNewline()

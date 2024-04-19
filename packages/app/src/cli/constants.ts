@@ -29,10 +29,6 @@ export const blocks = {
   },
 } as const
 
-export const urlNamespaces = {
-  devTools: '.shopify',
-} as const
-
 export const ports = {
   graphiql: 3457,
 } as const

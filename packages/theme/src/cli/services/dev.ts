@@ -12,7 +12,7 @@ const DEFAULT_PORT = '9292'
 // Tokens are valid for 120 min, better to be safe and refresh every 110 min
 const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
 
-export interface DevOptions {
+interface DevOptions {
   adminSession: AdminSession
   storefrontToken: string
   directory: string
@@ -56,7 +56,7 @@ export async function dev(options: DevOptions) {
   await execCLI2(command, {store: options.store, adminToken, storefrontToken})
 }
 
-export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
+function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
   renderSuccess({
     body: [
       {

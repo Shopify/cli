@@ -77,13 +77,13 @@ interface State<T> {
   value: T | undefined
 }
 
-type Action<T> = SelectNextOptionAction<T> | SelectPreviousOptionAction<T> | SelectOptionAction<T> | ResetAction<T>
+type Action<T> = SelectNextOptionAction | SelectPreviousOptionAction | SelectOptionAction<T> | ResetAction<T>
 
-interface SelectNextOptionAction<T> {
+interface SelectNextOptionAction {
   type: 'select-next-option'
 }
 
-interface SelectPreviousOptionAction<T> {
+interface SelectPreviousOptionAction {
   type: 'select-previous-option'
 }
 

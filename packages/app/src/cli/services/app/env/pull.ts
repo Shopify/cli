@@ -16,7 +16,7 @@ export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Pro
   return updateEnvFile(app, envFile)
 }
 
-export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<OutputMessage> {
+async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<OutputMessage> {
   const orgApp = await fetchAppFromConfigOrSelect(app)
 
   await logMetadataForLoadedContext(orgApp)

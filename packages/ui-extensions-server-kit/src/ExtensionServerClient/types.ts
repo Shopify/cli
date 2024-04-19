@@ -1,4 +1,4 @@
-import type {LocalesOptions} from 'i18n'
+import type {LocalesOptions} from '../i18n'
 
 declare global {
   namespace ExtensionServer {

@@ -10,7 +10,7 @@ const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 type Optional<T> = T | null
 
 // This is the topic name of the main event we log to Monorail, the command tracker
-export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.11' as const
+export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.12' as const
 
 export interface Schemas {
   [MONORAIL_COMMAND_TOPIC]: {
@@ -153,6 +153,7 @@ export interface Schemas {
       env_shell?: Optional<string>
       env_web_ide?: Optional<string>
       env_cloud?: Optional<string>
+      env_is_global?: Optional<boolean>
     }
   }
   [schemaId: string]: {sensitive: JsonMap; public: JsonMap}
@@ -198,7 +199,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const response = await fetch(url, {method: 'POST', body, headers})
 
     if (response.status === 200) {
-      outputDebug(outputContent`Analytics event sent: ${outputToken.json(payload)}`)
+      outputDebug(outputContent`Analytics event sent: ${outputToken.json(sanitizePayload(payload))}`)
       return {type: 'ok'}
     } else {
       outputDebug(`Failed to report usage analytics: ${response.statusText}`)
@@ -213,6 +214,21 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     outputDebug(message)
     return {type: 'error', message}
   }
+}
+
+/**
+ * Sanitizies the api_key from the payload and returns a new hash.
+ *
+ * @param payload - The public and sensitive data.
+ * @returns A copy of the payload with the api_key sanitized.
+ */
+function sanitizePayload<T extends object>(payload: T): T {
+  const result = {...payload}
+  if ('api_key' in result) {
+    result.api_key = '****'
+  }
+
+  return result
 }
 
 const buildHeaders = (currentTime: number) => {

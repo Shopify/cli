@@ -1,4 +1,10 @@
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {
+  MinimalOrganizationApp,
+  Organization,
+  OrganizationApp,
+  OrganizationSource,
+  OrganizationStore,
+} from '../../models/organization.js'
 
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
@@ -8,8 +14,18 @@ import {
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {AccountInfo, PartnersSession, isServiceAccount, isUserAccount} from '../context/partner-account-info.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  AccountInfo,
+  PartnersSession,
+  fetchCurrentAccountInformation,
+  isServiceAccount,
+  isUserAccount,
+} from '../context/partner-account-info.js'
+import {
+  DeveloperPlatformClient,
+  allDeveloperPlatformClients,
+  selectDeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -74,14 +90,14 @@ export class NoOrgError extends AbortError {
   }
 }
 
-export interface OrganizationAppsResponse {
+interface OrganizationAppsResponse {
   pageInfo: {
     hasNextPage: boolean
   }
   nodes: MinimalOrganizationApp[]
 }
 
-export interface FetchResponse {
+interface FetchResponse {
   organization: Organization
   apps: OrganizationAppsResponse
   stores: OrganizationStore[]
@@ -90,12 +106,22 @@ export interface FetchResponse {
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error
- * @param developerPlatformClient - The client to access the platform API
  * @returns List of organizations
  */
-export async function fetchOrganizations(developerPlatformClient: DeveloperPlatformClient): Promise<Organization[]> {
-  const organizations: Organization[] = await developerPlatformClient.organizations()
-  if (organizations.length === 0) throw new NoOrgError(await developerPlatformClient.accountInfo())
+export async function fetchOrganizations(): Promise<Organization[]> {
+  const organizations: Organization[] = []
+  for (const client of allDeveloperPlatformClients()) {
+    // We don't want to run this in parallel because there could be port conflicts
+    // eslint-disable-next-line no-await-in-loop
+    const clientOrganizations = await client.organizations()
+    organizations.push(...clientOrganizations)
+  }
+
+  if (organizations.length === 0) {
+    const developerPlatformClient = selectDeveloperPlatformClient()
+    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient)
+    throw new NoOrgError(accountInfo)
+  }
   return organizations
 }
 
@@ -116,7 +142,7 @@ export async function fetchOrgAndApps(
   const result: FindOrganizationQuerySchema = await partnersRequest(query, partnersSession.token, params)
   const org = result.organizations.nodes[0]
   if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
-  const parsedOrg = {id: org.id, businessName: org.businessName}
+  const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
   const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
   return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
 }
@@ -192,8 +218,10 @@ export async function fetchStoreByDomain(
   if (!org) {
     return undefined
   }
-
-  const parsedOrg = {id: org.id, businessName: org.businessName}
+  const source = developerPlatformClient.requiresOrganization
+    ? OrganizationSource.BusinessPlatform
+    : OrganizationSource.Partners
+  const parsedOrg = {id: org.id, businessName: org.businessName, source}
   const store = org.stores.nodes[0]
 
   return {organization: parsedOrg, store}

@@ -62,7 +62,7 @@ export async function migrateExtensionsToUIExtension(
   })
 }
 
-export async function migrateExtensionToUIExtension(
+async function migrateExtensionToUIExtension(
   apiKey: MigrateToUiExtensionVariables['apiKey'],
   registrationId: MigrateToUiExtensionVariables['registrationId'],
   developerPlatformClient: DeveloperPlatformClient,

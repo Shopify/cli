@@ -1,8 +1,9 @@
 {
   "name": "@shopify/app",
-  "version": "3.58.0",
+  "version": "3.59.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
+  "private": true,
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
   },
@@ -14,6 +15,11 @@
   "license": "MIT",
   "type": "module",
   "exports": {
+    ".": {
+      "import": "./dist/cli/index.js",
+      "types": "./dist/cli/index.d.ts"
+    },
+    "./assets/*": "./assets/*",
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
@@ -43,15 +49,14 @@
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
-    "@oclif/core": "3.19.6",
-    "@shopify/cli-kit": "3.58.0",
-    "@shopify/create-app": "3.58.0",
+    "@oclif/core": "3.23.0",
+    "@shopify/cli-kit": "3.59.0",
+    "@shopify/create-app": "3.59.0",
     "@shopify/function-runner": "4.1.1",
-    "@shopify/plugin-cloudflare": "3.58.0",
+    "@shopify/plugin-cloudflare": "3.59.0",
     "@shopify/polaris": "12.10.0",
     "@shopify/polaris-icons": "8.0.0",
-    "@shopify/theme-check-node": "2.2.2",
-    "abort-controller": "3.0.0",
+    "@shopify/theme-check-node": "2.5.0",
     "body-parser": "1.20.2",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
@@ -63,7 +68,6 @@
     "micromatch": "4.0.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "serve-static": "1.15.0",
     "ws": "8.13.0"
   },
   "devDependencies": {
@@ -71,22 +75,15 @@
     "@types/diff": "^5.0.3",
     "@types/express": "^4.17.17",
     "@types/http-proxy": "^1.17.11",
-    "@types/lodash-es": "^4.17.9",
     "@types/micromatch": "^4.0.5",
     "@types/node": "18.19.3",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
-    "@types/serve-static": "^1.15.2",
     "@types/ws": "^8.5.5",
     "@vitest/coverage-istanbul": "^0.34.3",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
-    "vite": "^4.4.9",
     "vitest": "^0.34.3"
-  },
-  "peerDependencies": {
-    "ink": "4.4.1",
-    "react": "18.2.0"
   },
   "engines": {
     "node": ">=18.12.0"
@@ -100,16 +97,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": "dist/cli/commands",
-    "hooks": {
-      "init": "./dist/cli/hooks/clear_command_cache",
-      "public_command_metadata": "./dist/cli/hooks/public_metadata",
-      "sensitive_command_metadata": "./dist/cli/hooks/sensitive_metadata"
-    },
-    "plugins": [
-      "@shopify/plugin-cloudflare"
-    ]
-  }
+  "engine-strict": true
 }

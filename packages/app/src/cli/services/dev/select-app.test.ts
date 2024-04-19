@@ -62,7 +62,7 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith(APPS, false, ORG1.id, {
+    expect(selectAppPrompt).toHaveBeenCalledWith(developerPlatformClient, APPS, false, ORG1.id, {
       directory: undefined,
     })
   })

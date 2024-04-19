@@ -4,7 +4,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 const uiTypesToTypes = new Map<string, string>(uiTypesMap.map((typeMapping) => [typeMapping[1], typeMapping[0]]))
 
-export const serializeConfigField = (field: SerializedField, type: FlowPartnersExtensionTypes) => {
+const serializeConfigField = (field: SerializedField, type: FlowPartnersExtensionTypes) => {
   const fieldType = uiTypesToTypes.get(field.uiType)
 
   if (!fieldType) {
@@ -25,7 +25,7 @@ export const serializeConfigField = (field: SerializedField, type: FlowPartnersE
   return serializedField
 }
 
-export const serializeCommerceObjectField = (field: SerializedField, type: FlowPartnersExtensionTypes) => {
+const serializeCommerceObjectField = (field: SerializedField, type: FlowPartnersExtensionTypes) => {
   const isAction = type === 'flow_action_definition'
   const fieldType = isAction ? `${field.name.replace('_id', '')}_reference` : `${field.uiType}_reference`
 

@@ -12,6 +12,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -246,6 +247,10 @@ export class App implements AppInterface {
   }
 
   get allExtensions() {
+    if (!this.remoteFlags.includes(Flag.DeclarativeWebhooks)) {
+      this.filterDeclarativeWebhooksConfig()
+    }
+
     if (this.includeConfigOnDeploy) return this.realExtensions
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
@@ -298,6 +303,21 @@ export class App implements AppInterface {
   private configurationTyped(configuration: AppConfiguration) {
     if (isLegacyAppSchema(configuration)) return configuration
     return configuration as CurrentAppConfiguration & SpecsAppConfiguration
+  }
+
+  private filterDeclarativeWebhooksConfig() {
+    const webhooksConfigIndex = this.realExtensions.findIndex((ext) => ext.handle === 'webhooks')
+    const complianceWebhooksConfigIndex = this.realExtensions.findIndex(
+      (ext) => ext.handle === 'privacy-compliance-webhooks',
+    )
+
+    if (webhooksConfigIndex > -1) {
+      setPathValue(this.realExtensions, `${webhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
+    }
+
+    if (complianceWebhooksConfigIndex > -1) {
+      setPathValue(this.realExtensions, `${complianceWebhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
+    }
   }
 }
 

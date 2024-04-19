@@ -47,21 +47,21 @@ const SUPPORTED_LOCALE_EXTS = ['.json']
 const SUPPORTED_EXTS: {[dirname: string]: FilenameValidation} = {
   assets: {
     validator: new RegExp(`${SUPPORTED_ASSET_EXTS.join('|')}$`),
-    failureMessage: (filename: string) =>
+    failureMessage: (_filename: string) =>
       `Only these filetypes are supported in assets: ${SUPPORTED_ASSET_EXTS.join(', ')}`,
   },
   blocks: {
     validator: /.liquid$/,
-    failureMessage: (filename: string) => `Only .liquid files are allowed in blocks.`,
+    failureMessage: (_filename: string) => `Only .liquid files are allowed in blocks.`,
   },
   locales: {
     validator: new RegExp(`${SUPPORTED_LOCALE_EXTS.join('|')}$`),
-    failureMessage: (filename: string) =>
+    failureMessage: (_filename: string) =>
       `Only these filetypes are supported in locales: ${SUPPORTED_LOCALE_EXTS.join(', ')}`,
   },
   snippets: {
     validator: /.liquid$/,
-    failureMessage: (filename: string) => `Only .liquid files are allowed in snippets.`,
+    failureMessage: (_filename: string) => `Only .liquid files are allowed in snippets.`,
   },
 }
 const SUPPORTED_BUCKETS = Object.keys(SUPPORTED_EXTS)

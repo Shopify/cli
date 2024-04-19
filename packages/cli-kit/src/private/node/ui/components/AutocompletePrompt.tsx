@@ -85,32 +85,36 @@ function AutocompletePrompt<T>({
   // disable exhaustive-deps because we want to memoize the debounce function itself
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceSearch = useCallback(
-    debounce((term: string) => {
-      setLoadingWhenSlow.current = setTimeout(() => {
-        setPromptState(PromptState.Loading)
-      }, 100)
-      paginatedSearch(term)
-        .then((result) => {
-          // while we were waiting for the promise to resolve, the user
-          // has emptied the search term, so we want to show the default
-          // choices instead
-          if (searchTermRef.current.length === 0) {
-            setSearchResults(choices)
-            setHasMorePages(initialHasMorePages)
-          } else {
-            setSearchResults(result.data)
-            setHasMorePages(result.meta?.hasNextPage ?? false)
-          }
+    debounce(
+      (term: string) => {
+        setLoadingWhenSlow.current = setTimeout(() => {
+          setPromptState(PromptState.Loading)
+        }, 100)
+        paginatedSearch(term)
+          .then((result) => {
+            // while we were waiting for the promise to resolve, the user
+            // has emptied the search term, so we want to show the default
+            // choices instead
+            if (searchTermRef.current.length === 0) {
+              setSearchResults(choices)
+              setHasMorePages(initialHasMorePages)
+            } else {
+              setSearchResults(result.data)
+              setHasMorePages(result.meta?.hasNextPage ?? false)
+            }
 
-          setPromptState(PromptState.Idle)
-        })
-        .catch(() => {
-          setPromptState(PromptState.Error)
-        })
-        .finally(() => {
-          clearTimeout(setLoadingWhenSlow.current)
-        })
-    }, 300),
+            setPromptState(PromptState.Idle)
+          })
+          .catch(() => {
+            setPromptState(PromptState.Error)
+          })
+          .finally(() => {
+            clearTimeout(setLoadingWhenSlow.current)
+          })
+      },
+      300,
+      {leading: true},
+    ),
     [initialHasMorePages, choices, paginatedSearch, searchResults],
   )
 

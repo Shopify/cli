@@ -1,0 +1,1 @@
+shopify hydrogen generate routes [flags]

@@ -152,20 +152,14 @@ describe('upgrade local CLI', () => {
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
       `)
-      expect(addNPMDependenciesMock).toHaveBeenCalledWith(
-        [
-          {name: '@shopify/cli', version: 'latest'},
-          {name: '@shopify/app', version: 'latest'},
-        ],
-        {
-          packageManager: 'npm',
-          type: 'prod',
-          directory: normalizePath(tmpDir),
-          stdout: process.stdout,
-          stderr: process.stderr,
-          addToRootDirectory: false,
-        },
-      )
+      expect(addNPMDependenciesMock).toHaveBeenCalledWith([{name: '@shopify/cli', version: 'latest'}], {
+        packageManager: 'npm',
+        type: 'prod',
+        directory: normalizePath(tmpDir),
+        stdout: process.stdout,
+        stderr: process.stderr,
+        addToRootDirectory: false,
+      })
       expect(outputMock.success()).toMatchInlineSnapshot(`
         "Upgraded Shopify CLI to version ${currentCliVersion}"
       `)
@@ -196,20 +190,14 @@ describe('upgrade local CLI', () => {
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
       `)
-      expect(addNPMDependenciesMock).toHaveBeenCalledWith(
-        [
-          {name: '@shopify/cli', version: 'latest'},
-          {name: '@shopify/app', version: 'latest'},
-        ],
-        {
-          packageManager: 'npm',
-          type: 'prod',
-          directory: normalizePath(tmpDir),
-          stdout: process.stdout,
-          stderr: process.stderr,
-          addToRootDirectory: false,
-        },
-      )
+      expect(addNPMDependenciesMock).toHaveBeenCalledWith([{name: '@shopify/cli', version: 'latest'}], {
+        packageManager: 'npm',
+        type: 'prod',
+        directory: normalizePath(tmpDir),
+        stdout: process.stdout,
+        stderr: process.stderr,
+        addToRootDirectory: false,
+      })
       expect(outputMock.success()).toMatchInlineSnapshot(`
         "Upgraded Shopify CLI to version ${currentCliVersion}"
       `)

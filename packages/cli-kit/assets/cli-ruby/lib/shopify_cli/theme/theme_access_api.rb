@@ -9,8 +9,6 @@ module ShopifyCLI
     # generated from Shopify Theme Access app to access the Shopify Admin API (for theme operations)
     #
     class ThemeAccessAPI < API
-      BASE_URL = "theme-kit-access.shopifyapps.com"
-
       class << self
         ##
         # #### Parameters
@@ -57,8 +55,10 @@ module ShopifyCLI
         private
 
         def build_url(api_version, path, query = nil)
+          domain = Environment.theme_kit_access_domain
+
           URI::HTTPS.build(
-            host: BASE_URL,
+            host: domain,
             path: "/cli/admin/api/#{api_version}/#{path}",
             query: query
           ).to_s

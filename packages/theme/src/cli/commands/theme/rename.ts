@@ -5,6 +5,7 @@ import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 
 export default class Rename extends ThemeCommand {
   static summary = 'Renames an existing theme.'
@@ -25,7 +26,7 @@ export default class Rename extends ThemeCommand {
       char: 'n',
       description: 'The new name for the theme.',
       env: 'SHOPIFY_FLAG_NEW_NAME',
-      required: true,
+      required: false,
     }),
     development: Flags.boolean({
       char: 'd',
@@ -50,9 +51,10 @@ export default class Rename extends ThemeCommand {
 
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, password)
+    const newName = name || (await promptThemeName('New name for the theme'))
 
     const renameOptions: RenameOptions = {
-      newName: name,
+      newName,
       development,
       theme,
       live,

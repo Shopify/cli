@@ -2,12 +2,12 @@ import {selectApp} from './select-app.js'
 import {AppConfigurationInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {InvalidApiKeyErrorMessage} from '../context.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function fetchAppFromConfigOrSelect(
   app: AppConfigurationInterface,
-  developerPlatformClient = selectDeveloperPlatformClient(),
+  developerPlatformClient: DeveloperPlatformClient = selectDeveloperPlatformClient({configuration: app.configuration}),
 ): Promise<OrganizationApp> {
   let organizationApp
   if (isCurrentAppSchema(app.configuration)) {

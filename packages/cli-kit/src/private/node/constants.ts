@@ -39,7 +39,10 @@ export const environmentVariables = {
   identityToken: 'SHOPIFY_CLI_IDENTITY_TOKEN',
   refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
   otelURL: 'SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT',
+  themeKitAccessDomain: 'SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN',
 }
+
+export const defaultThemeKitAccessDomain = 'theme-kit-access.shopifyapps.com'
 
 export const systemEnvironmentVariables = {
   backendPort: 'BACKEND_PORT',
@@ -64,10 +67,6 @@ export const pathConstants = {
       },
     },
   },
-}
-
-export const keychainConstants = {
-  service: 'shopify-cli',
 }
 
 export const sessionConstants = {

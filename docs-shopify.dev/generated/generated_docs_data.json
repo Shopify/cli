@@ -82,8 +82,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -161,8 +160,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -232,8 +230,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -359,8 +356,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -518,8 +514,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -597,8 +592,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -668,8 +662,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -739,8 +732,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -834,8 +826,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -921,8 +912,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -992,8 +982,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -1111,128 +1100,40 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
-    "name": "app generate schema",
-    "description": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
-    "overviewPreviewDescription": "Fetch the latest GraphQL schema for a function.",
+    "name": "app import-extensions",
+    "description": "Import dashboard-managed extensions into your app.",
+    "overviewPreviewDescription": "Import dashboard-managed extensions into your app.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
       "codeblock": {
         "tabs": [
           {
-            "title": "app generate schema",
-            "code": "shopify app generate schema [flags]",
+            "title": "app import-extensions",
+            "code": "shopify app import-extensions [flags]",
             "language": "bash"
           }
         ],
-        "title": "app generate schema"
+        "title": "app import-extensions"
       }
     },
     "definitions": [
       {
         "title": "Flags",
-        "description": "The following flags are available for the `app generate schema` command:",
-        "type": "appgenerateschema",
+        "description": "The following flags are available for the `app import-extensions` command:",
+        "type": "appimportextensions",
         "typeDefinitions": {
-          "appgenerateschema": {
-            "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-            "name": "appgenerateschema",
+          "appimportextensions": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+            "name": "appimportextensions",
             "description": "",
             "members": [
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--client-id <value>",
-                "value": "string",
-                "description": "The Client ID to fetch the schema with.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your function directory.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--stdout",
-                "value": "\"\"",
-                "description": "Output the schema to stdout instead of writing to a file.",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface appgenerateschema {\n  /**\n   * The Client ID to fetch the schema with.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output the schema to stdout instead of writing to a file.\n   */\n  '--stdout'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "Commands",
-    "subCategory": "app",
-    "related": []
-  },
-  {
-    "name": "app import-flow-legacy-extensions",
-    "description": "Import dashboard-managed flow extensions into your app.",
-    "overviewPreviewDescription": "Import dashboard-managed flow extensions into your app.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "app import-flow-legacy-extensions",
-            "code": "shopify app import-flow-legacy-extensions [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "app import-flow-legacy-extensions"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `app import-flow-legacy-extensions` command:",
-        "type": "appimportflowlegacyextensions",
-        "typeDefinitions": {
-          "appimportflowlegacyextensions": {
-            "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
-            "name": "appimportflowlegacyextensions",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1240,7 +1141,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1248,7 +1149,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1256,7 +1157,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1264,7 +1165,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1272,13 +1173,12 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface appimportflowlegacyextensions {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface appimportextensions {\n  /**\n   * The Client ID of your app.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -1364,13 +1264,12 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
     "name": "app init",
-    "description": "undefined",
+    "description": "Create a new app project",
     "overviewPreviewDescription": "Create a new app project",
     "type": "command",
     "isVisualComponent": false,
@@ -1459,8 +1358,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -1561,8 +1459,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -1648,8 +1545,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -1743,8 +1639,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "app",
+    "category": "app",
     "related": []
   },
   {
@@ -1758,7 +1653,7 @@
         "tabs": [
           {
             "title": "auth logout",
-            "code": "shopify auth logout [flags]",
+            "code": "shopify auth logout",
             "language": "bash"
           }
         ],
@@ -1766,8 +1661,7 @@
       }
     },
     "definitions": [],
-    "category": "Commands",
-    "subCategory": "auth",
+    "category": "Universal commands",
     "related": []
   },
   {
@@ -1802,9 +1696,41 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--json",
+                "name": "--columns <value>",
+                "value": "string",
+                "description": "only show provided columns (comma-separated)",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--csv",
                 "value": "\"\"",
-                "description": "Format output as json.",
+                "description": "output is csv format [alias: --output=csv]",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--deprecated",
+                "value": "\"\"",
+                "description": "show deprecated commands",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-x, --extended",
+                "value": "\"\"",
+                "description": "show extra columns",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--filter <value>",
+                "value": "string",
+                "description": "filter property by partial string matching, ex: name=foo",
                 "isOptional": true
               },
               {
@@ -1826,57 +1752,17 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--tree",
+                "name": "--json",
                 "value": "\"\"",
-                "description": "show tree of commands",
+                "description": "Format output as json.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--columns <value>",
-                "value": "string",
-                "description": "only show provided columns (comma-separated)",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--sort <value>",
-                "value": "string",
-                "description": "property to sort by (prepend '-' for descending)",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--filter <value>",
-                "value": "string",
-                "description": "filter property by partial string matching, ex: name=foo",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--csv",
+                "name": "--no-header",
                 "value": "\"\"",
-                "description": "output is csv format [alias: --output=csv]",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--output <value>",
-                "value": "string",
-                "description": "output in a more machine friendly format",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-x, --extended",
-                "value": "\"\"",
-                "description": "show extra columns",
+                "description": "hide table header from output",
                 "isOptional": true
               },
               {
@@ -1890,19 +1776,34 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--no-header",
+                "name": "--output <value>",
+                "value": "string",
+                "description": "output in a more machine friendly format",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--sort <value>",
+                "value": "string",
+                "description": "property to sort by (prepend '-' for descending)",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--tree",
                 "value": "\"\"",
-                "description": "hide table header from output",
+                "description": "show tree of commands",
                 "isOptional": true
               }
             ],
-            "value": "export interface commands {\n  /**\n   * Format output as json.\n   */\n  '--json'?: ''\n\n  /**\n   * Show CLI help.\n   */\n  '-h, --help'?: ''\n\n  /**\n   * show hidden commands\n   */\n  '--hidden'?: ''\n\n  /**\n   * show tree of commands\n   */\n  '--tree'?: ''\n\n  /**\n   * only show provided columns (comma-separated)\n   */\n  '--columns <value>'?: string\n\n  /**\n   * property to sort by (prepend '-' for descending)\n   */\n  '--sort <value>'?: string\n\n  /**\n   * filter property by partial string matching, ex: name=foo\n   */\n  '--filter <value>'?: string\n\n  /**\n   * output is csv format [alias: --output=csv]\n   */\n  '--csv'?: ''\n\n  /**\n   * output in a more machine friendly format\n   */\n  '--output <value>'?: string\n\n  /**\n   * show extra columns\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * do not truncate output to fit screen\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * hide table header from output\n   */\n  '--no-header'?: ''\n}"
+            "value": "export interface commands {\n  /**\n   * only show provided columns (comma-separated)\n   */\n  '--columns <value>'?: string\n\n  /**\n   * output is csv format [alias: --output=csv]\n   */\n  '--csv'?: ''\n\n  /**\n   * show deprecated commands\n   */\n  '--deprecated'?: ''\n\n  /**\n   * show extra columns\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * filter property by partial string matching, ex: name=foo\n   */\n  '--filter <value>'?: string\n\n  /**\n   * Show CLI help.\n   */\n  '-h, --help'?: ''\n\n  /**\n   * show hidden commands\n   */\n  '--hidden'?: ''\n\n  /**\n   * Format output as json.\n   */\n  '--json'?: ''\n\n  /**\n   * hide table header from output\n   */\n  '--no-header'?: ''\n\n  /**\n   * do not truncate output to fit screen\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * output in a more machine friendly format\n   */\n  '--output <value>'?: string\n\n  /**\n   * property to sort by (prepend '-' for descending)\n   */\n  '--sort <value>'?: string\n\n  /**\n   * show tree of commands\n   */\n  '--tree'?: ''\n}"
           }
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "common",
+    "category": "Universal commands",
     "related": []
   },
   {
@@ -1916,7 +1817,7 @@
         "tabs": [
           {
             "title": "config autocorrect off",
-            "code": "shopify config autocorrect off [flags]",
+            "code": "shopify config autocorrect off",
             "language": "bash"
           }
         ],
@@ -1924,8 +1825,7 @@
       }
     },
     "definitions": [],
-    "category": "Commands",
-    "subCategory": "config",
+    "category": "Universal commands",
     "related": []
   },
   {
@@ -1939,7 +1839,7 @@
         "tabs": [
           {
             "title": "config autocorrect on",
-            "code": "shopify config autocorrect on [flags]",
+            "code": "shopify config autocorrect on",
             "language": "bash"
           }
         ],
@@ -1947,8 +1847,7 @@
       }
     },
     "definitions": [],
-    "category": "Commands",
-    "subCategory": "config",
+    "category": "Universal commands",
     "related": []
   },
   {
@@ -1962,7 +1861,7 @@
         "tabs": [
           {
             "title": "config autocorrect status",
-            "code": "shopify config autocorrect status [flags]",
+            "code": "shopify config autocorrect status",
             "language": "bash"
           }
         ],
@@ -1970,14 +1869,13 @@
       }
     },
     "definitions": [],
-    "category": "Commands",
-    "subCategory": "config",
+    "category": "Universal commands",
     "related": []
   },
   {
     "name": "help",
-    "description": "Display help for <%= config.bin %>.",
-    "overviewPreviewDescription": "Display help for <%= config.bin %>.",
+    "description": "Display help for Shopify CLI",
+    "overviewPreviewDescription": "Display help for Shopify CLI",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2017,8 +1915,1788 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "common",
+    "category": "Universal commands",
+    "related": []
+  },
+  {
+    "name": "hydrogen build",
+    "description": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
+    "overviewPreviewDescription": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen build",
+            "code": "shopify hydrogen build [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen build"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen build` command:",
+        "type": "hydrogenbuild",
+        "typeDefinitions": {
+          "hydrogenbuild": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+            "name": "hydrogenbuild",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--sourcemap",
+                "value": "\"\"",
+                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--bundle-stats",
+                "value": "\"\"",
+                "description": "Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--lockfile-check",
+                "value": "\"\"",
+                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--disable-route-warning",
+                "value": "\"\"",
+                "description": "Disables any warnings about missing standard routes.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--codegen",
+                "value": "\"\"",
+                "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--codegen-config-path <value>",
+                "value": "string",
+                "description": "Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenbuild {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.\n   */\n  '--bundle-stats'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Disables any warnings about missing standard routes.\n   */\n  '--disable-route-warning'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   */\n  '--codegen-config-path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen check",
+    "description": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
+    "overviewPreviewDescription": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen check",
+            "code": "shopify hydrogen check [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen check"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen check` command:",
+        "type": "hydrogencheck",
+        "typeDefinitions": {
+          "hydrogencheck": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
+            "name": "hydrogencheck",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogencheck {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen codegen",
+    "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+    "overviewPreviewDescription": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen codegen",
+            "code": "shopify hydrogen codegen [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen codegen"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen codegen` command:",
+        "type": "hydrogencodegen",
+        "typeDefinitions": {
+          "hydrogencodegen": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+            "name": "hydrogencodegen",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--codegen-config-path <value>",
+                "value": "string",
+                "description": "Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--watch",
+                "value": "\"\"",
+                "description": "Watch the project for changes to update types on file save.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogencodegen {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Watch the project for changes to update types on file save.\n   */\n  '--watch'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen customer-account push",
+    "description": "Push project configuration to admin",
+    "overviewPreviewDescription": "Push project configuration to admin",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen customer-account push",
+            "code": "shopify hydrogen customer-account push [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen customer-account push"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen customer-account push` command:",
+        "type": "hydrogencustomeraccountpush",
+        "typeDefinitions": {
+          "hydrogencustomeraccountpush": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+            "name": "hydrogencustomeraccountpush",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--storefront-id <value>",
+                "value": "string",
+                "description": "The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--dev-origin <value>",
+                "value": "string",
+                "description": "The development domain of your application."
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--relative-redirect-uri <value>",
+                "value": "string",
+                "description": "The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--relative-logout-uri <value>",
+                "value": "string",
+                "description": "The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogencustomeraccountpush {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'\n   */\n  '--storefront-id <value>'?: string\n\n  /**\n   * The development domain of your application.\n   */\n  '--dev-origin <value>': string\n\n  /**\n   * The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'\n   */\n  '--relative-redirect-uri <value>'?: string\n\n  /**\n   * The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.\n   */\n  '--relative-logout-uri <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen debug cpu",
+    "description": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
+    "overviewPreviewDescription": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen debug cpu",
+            "code": "shopify hydrogen debug cpu [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen debug cpu"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen debug cpu` command:",
+        "type": "hydrogendebugcpu",
+        "typeDefinitions": {
+          "hydrogendebugcpu": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
+            "name": "hydrogendebugcpu",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--output <value>",
+                "value": "string",
+                "description": "Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogendebugcpu {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".\n   */\n  '--output <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen deploy",
+    "description": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
+    "overviewPreviewDescription": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen deploy",
+            "code": "shopify hydrogen deploy [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen deploy"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen deploy` command:",
+        "type": "hydrogendeploy",
+        "typeDefinitions": {
+          "hydrogendeploy": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+            "name": "hydrogendeploy",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--entry <value>",
+                "value": "string",
+                "description": "Entry file for the worker. Defaults to `./server`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Path to an environment file to override existing environment variables for the deployment.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--preview",
+                "value": "\"\"",
+                "description": "Deploys to the Preview environment. Overrides --env-branch and Git metadata.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Forces a deployment to proceed if there are uncommited changes in its Git repository.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-verify",
+                "value": "\"\"",
+                "description": "Skip the routability verification step after deployment.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--auth-bypass-token",
+                "value": "\"\"",
+                "description": "Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--build-command <value>",
+                "value": "string",
+                "description": "Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--lockfile-check",
+                "value": "\"\"",
+                "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --shop <value>",
+                "value": "string",
+                "description": "Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--json-output",
+                "value": "\"\"",
+                "description": "Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --token <value>",
+                "value": "string",
+                "description": "Oxygen deployment token. Defaults to the linked storefront's token if available.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--metadata-description <value>",
+                "value": "string",
+                "description": "Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--metadata-user <value>",
+                "value": "string",
+                "description": "User that initiated the deployment. Will be saved and displayed in the Shopify admin",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogendeploy {\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Deploys to the Preview environment. Overrides --env-branch and Git metadata.\n   */\n  '--preview'?: ''\n\n  /**\n   * Forces a deployment to proceed if there are uncommited changes in its Git repository.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Skip the routability verification step after deployment.\n   */\n  '--no-verify'?: ''\n\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   */\n  '--json-output'?: ''\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   */\n  '-t, --token <value>'?: string\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommited changes.\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   */\n  '--metadata-user <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen dev",
+    "description": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
+    "overviewPreviewDescription": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen dev",
+            "code": "shopify hydrogen dev [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen dev"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen dev` command:",
+        "type": "hydrogendev",
+        "typeDefinitions": {
+          "hydrogendev": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+            "name": "hydrogendev",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--port <value>",
+                "value": "string",
+                "description": "The port to run the server on. Defaults to 3000.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--legacy-runtime",
+                "value": "\"\"",
+                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--codegen",
+                "value": "\"\"",
+                "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--codegen-config-path <value>",
+                "value": "string",
+                "description": "Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--sourcemap",
+                "value": "\"\"",
+                "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--disable-virtual-routes",
+                "value": "\"\"",
+                "description": "Disable rendering fallback routes when a route file doesn't exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--debug",
+                "value": "\"\"",
+                "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--inspector-port <value>",
+                "value": "string",
+                "description": "The port where the inspector is available. Defaults to 9229.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--disable-version-check",
+                "value": "\"\"",
+                "description": "Skip the version check when running `hydrogen dev`",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Outputs more information about the command's execution.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogendev {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen env list",
+    "description": "Lists all environments available on the linked Hydrogen storefront.",
+    "overviewPreviewDescription": "Lists all environments available on the linked Hydrogen storefront.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen env list",
+            "code": "shopify hydrogen env list [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen env list"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen env list` command:",
+        "type": "hydrogenenvlist",
+        "typeDefinitions": {
+          "hydrogenenvlist": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
+            "name": "hydrogenenvlist",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenenvlist {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen env pull",
+    "description": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
+    "overviewPreviewDescription": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen env pull",
+            "code": "shopify hydrogen env pull [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen env pull"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen env pull` command:",
+        "type": "hydrogenenvpull",
+        "typeDefinitions": {
+          "hydrogenenvpull": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+            "name": "hydrogenenvpull",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen env push",
+    "description": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
+    "overviewPreviewDescription": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen env push",
+            "code": "shopify hydrogen env push [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen env push"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen env push` command:",
+        "type": "hydrogenenvpush",
+        "typeDefinitions": {
+          "hydrogenenvpush": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+            "name": "hydrogenenvpush",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenenvpush {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen generate route",
+    "description": "Generates a set of default routes from the starter template.",
+    "overviewPreviewDescription": "Generates a set of default routes from the starter template.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen generate route",
+            "code": "shopify hydrogen generate route [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen generate route"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen generate route` command:",
+        "type": "hydrogengenerateroute",
+        "typeDefinitions": {
+          "hydrogengenerateroute": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+            "name": "hydrogengenerateroute",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--adapter <value>",
+                "value": "string",
+                "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--typescript",
+                "value": "\"\"",
+                "description": "Generate TypeScript files",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--locale-param <value>",
+                "value": "string",
+                "description": "The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogengenerateroute {\n  /**\n   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   */\n  '--typescript'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen generate routes",
+    "description": "Generates all supported standard shopify routes.",
+    "overviewPreviewDescription": "Generates all supported standard shopify routes.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen generate routes",
+            "code": "shopify hydrogen generate routes [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen generate routes"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen generate routes` command:",
+        "type": "hydrogengenerateroutes",
+        "typeDefinitions": {
+          "hydrogengenerateroutes": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+            "name": "hydrogengenerateroutes",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--adapter <value>",
+                "value": "string",
+                "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--typescript",
+                "value": "\"\"",
+                "description": "Generate TypeScript files",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--locale-param <value>",
+                "value": "string",
+                "description": "The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogengenerateroutes {\n  /**\n   * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   */\n  '--typescript'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen init",
+    "description": "Creates a new Hydrogen storefront.",
+    "overviewPreviewDescription": "Creates a new Hydrogen storefront.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen init",
+            "code": "shopify hydrogen init [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen init"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen init` command:",
+        "type": "hydrogeninit",
+        "typeDefinitions": {
+          "hydrogeninit": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+            "name": "hydrogeninit",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the new Hydrogen storefront.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--language <value>",
+                "value": "string",
+                "description": "Sets the template language to use. One of `js` or `ts`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--template <value>",
+                "value": "string",
+                "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--install-deps",
+                "value": "\"\"",
+                "description": "Auto installs dependencies using the active package manager.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--mock-shop",
+                "value": "\"\"",
+                "description": "Use mock.shop as the data source for the storefront.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--styling <value>",
+                "value": "string",
+                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--markets <value>",
+                "value": "string",
+                "description": "Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--shortcut",
+                "value": "\"\"",
+                "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--git",
+                "value": "\"\"",
+                "description": "Init Git and create initial commits.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--quickstart",
+                "value": "\"\"",
+                "description": "Scaffolds a new Hydrogen project with a set of sensible defaults.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   */\n  '--language <value>'?: string\n\n  /**\n   * Scaffolds project based on an existing template or example from the Hydrogen repository.\n   */\n  '--template <value>'?: string\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   */\n  '--git'?: ''\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults.\n   */\n  '--quickstart'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen link",
+    "description": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.",
+    "overviewPreviewDescription": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen link",
+            "code": "shopify hydrogen link [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen link"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen link` command:",
+        "type": "hydrogenlink",
+        "typeDefinitions": {
+          "hydrogenlink": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+            "name": "hydrogenlink",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--storefront <value>",
+                "value": "string",
+                "description": "The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenlink {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")\n   */\n  '--storefront <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen list",
+    "description": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
+    "overviewPreviewDescription": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen list",
+            "code": "shopify hydrogen list [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen list"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen list` command:",
+        "type": "hydrogenlist",
+        "typeDefinitions": {
+          "hydrogenlist": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
+            "name": "hydrogenlist",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenlist {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen login",
+    "description": "Logs in to the specified shop and saves the shop domain to the project.",
+    "overviewPreviewDescription": "Logs in to the specified shop and saves the shop domain to the project.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen login",
+            "code": "shopify hydrogen login [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen login"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen login` command:",
+        "type": "hydrogenlogin",
+        "typeDefinitions": {
+          "hydrogenlogin": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+            "name": "hydrogenlogin",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --shop <value>",
+                "value": "string",
+                "description": "Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenlogin {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   */\n  '-s, --shop <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen logout",
+    "description": "Log out from the current shop.",
+    "overviewPreviewDescription": "Log out from the current shop.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen logout",
+            "code": "shopify hydrogen logout [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen logout"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen logout` command:",
+        "type": "hydrogenlogout",
+        "typeDefinitions": {
+          "hydrogenlogout": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
+            "name": "hydrogenlogout",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenlogout {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen preview",
+    "description": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.",
+    "overviewPreviewDescription": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen preview",
+            "code": "shopify hydrogen preview [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen preview"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen preview` command:",
+        "type": "hydrogenpreview",
+        "typeDefinitions": {
+          "hydrogenpreview": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+            "name": "hydrogenpreview",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--port <value>",
+                "value": "string",
+                "description": "The port to run the server on. Defaults to 3000.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--legacy-runtime",
+                "value": "\"\"",
+                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--env-branch <value>",
+                "value": "string",
+                "description": "Specifies the environment to perform the operation using its Git branch name.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--inspector-port <value>",
+                "value": "string",
+                "description": "The port where the inspector is available. Defaults to 9229.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--debug",
+                "value": "\"\"",
+                "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Outputs more information about the command's execution.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenpreview {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   */\n  '--port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   */\n  '--debug'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen setup css",
+    "description": "Adds support for certain CSS strategies to your project.",
+    "overviewPreviewDescription": "Adds support for certain CSS strategies to your project.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen setup css",
+            "code": "shopify hydrogen setup css [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen setup css"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen setup css` command:",
+        "type": "hydrogensetupcss",
+        "typeDefinitions": {
+          "hydrogensetupcss": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+            "name": "hydrogensetupcss",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--install-deps",
+                "value": "\"\"",
+                "description": "Auto installs dependencies using the active package manager.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogensetupcss {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   */\n  '--install-deps'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen setup markets",
+    "description": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
+    "overviewPreviewDescription": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen setup markets",
+            "code": "shopify hydrogen setup markets [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen setup markets"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen setup markets` command:",
+        "type": "hydrogensetupmarkets",
+        "typeDefinitions": {
+          "hydrogensetupmarkets": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
+            "name": "hydrogensetupmarkets",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogensetupmarkets {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen setup vite",
+    "description": "EXPERIMENTAL: Upgrades the project to use Vite.",
+    "overviewPreviewDescription": "EXPERIMENTAL: Upgrades the project to use Vite.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen setup vite",
+            "code": "shopify hydrogen setup vite [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen setup vite"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen setup vite` command:",
+        "type": "hydrogensetupvite",
+        "typeDefinitions": {
+          "hydrogensetupvite": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
+            "name": "hydrogensetupvite",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogensetupvite {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen setup",
+    "description": "Scaffold routes and core functionality.",
+    "overviewPreviewDescription": "Scaffold routes and core functionality.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen setup",
+            "code": "shopify hydrogen setup [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen setup"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen setup` command:",
+        "type": "hydrogensetup",
+        "typeDefinitions": {
+          "hydrogensetup": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+            "name": "hydrogensetup",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Overwrites the destination directory and files if they already exist.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--styling <value>",
+                "value": "string",
+                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--markets <value>",
+                "value": "string",
+                "description": "Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--shortcut",
+                "value": "\"\"",
+                "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--install-deps",
+                "value": "\"\"",
+                "description": "Auto installs dependencies using the active package manager.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogensetup {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   */\n  '--install-deps'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen shortcut",
+    "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
+    "overviewPreviewDescription": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen shortcut",
+            "code": "shopify hydrogen shortcut",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen shortcut"
+      }
+    },
+    "definitions": [],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen unlink",
+    "description": "Unlinks your local development environment from a remote Hydrogen storefront.",
+    "overviewPreviewDescription": "Unlinks your local development environment from a remote Hydrogen storefront.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen unlink",
+            "code": "shopify hydrogen unlink [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen unlink"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen unlink` command:",
+        "type": "hydrogenunlink",
+        "typeDefinitions": {
+          "hydrogenunlink": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
+            "name": "hydrogenunlink",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenunlink {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
+    "related": []
+  },
+  {
+    "name": "hydrogen upgrade",
+    "description": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
+    "overviewPreviewDescription": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "hydrogen upgrade",
+            "code": "shopify hydrogen upgrade [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "hydrogen upgrade"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `hydrogen upgrade` command:",
+        "type": "hydrogenupgrade",
+        "typeDefinitions": {
+          "hydrogenupgrade": {
+            "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+            "name": "hydrogenupgrade",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-v, --version <value>",
+                "value": "string",
+                "description": "A target hydrogen version to update to",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Ignore warnings and force the upgrade to the target version",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface hydrogenupgrade {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   */\n  '--path <value>'?: string\n\n  /**\n   * A target hydrogen version to update to\n   */\n  '-v, --version <value>'?: string\n\n  /**\n   * Ignore warnings and force the upgrade to the target version\n   */\n  '-f, --force'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "hydrogen",
     "related": []
   },
   {
@@ -2032,7 +3710,7 @@
         "tabs": [
           {
             "title": "search",
-            "code": "shopify search [flags]",
+            "code": "shopify search",
             "language": "bash"
           }
         ],
@@ -2040,8 +3718,7 @@
       }
     },
     "definitions": [],
-    "category": "Commands",
-    "subCategory": "common",
+    "category": "Universal commands",
     "related": []
   },
   {
@@ -2175,8 +3852,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2270,8 +3946,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2381,8 +4056,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2556,8 +4230,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2659,8 +4332,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2738,8 +4410,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2793,8 +4464,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -2904,8 +4574,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3015,8 +4684,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3078,8 +4746,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3173,8 +4840,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3308,8 +4974,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3475,8 +5140,7 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3537,7 +5201,8 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --name <value>",
                 "value": "string",
-                "description": "The new name for the theme."
+                "description": "The new name for the theme.",
+                "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
@@ -3580,13 +5245,12 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface themerename {\n  /**\n   * Rename your development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Rename your remote live theme.\n   */\n  '-l, --live'?: ''\n\n  /**\n   * The new name for the theme.\n   */\n  '-n, --name <value>': string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themerename {\n  /**\n   * Rename your development theme.\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Rename your remote live theme.\n   */\n  '-l, --live'?: ''\n\n  /**\n   * The new name for the theme.\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
@@ -3672,14 +5336,13 @@
         }
       }
     ],
-    "category": "Commands",
-    "subCategory": "theme",
+    "category": "theme",
     "related": []
   },
   {
     "name": "upgrade",
-    "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
-    "overviewPreviewDescription": "Upgrade your CLI dependency.",
+    "description": "Shows details on how to upgrade Shopify CLI.",
+    "overviewPreviewDescription": "Shows details on how to upgrade Shopify CLI.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3687,40 +5350,15 @@
         "tabs": [
           {
             "title": "upgrade",
-            "code": "shopify upgrade [flags]",
+            "code": "shopify upgrade",
             "language": "bash"
           }
         ],
         "title": "upgrade"
       }
     },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `upgrade` command:",
-        "type": "upgrade",
-        "typeDefinitions": {
-          "upgrade": {
-            "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
-            "name": "upgrade",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your project directory.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface upgrade {\n  /**\n   * The path to your project directory.\n   */\n  '--path <value>'?: string\n}"
-          }
-        }
-      }
-    ],
-    "category": "Commands",
-    "subCategory": "common",
+    "definitions": [],
+    "category": "Universal commands",
     "related": []
   },
   {
@@ -3734,7 +5372,7 @@
         "tabs": [
           {
             "title": "version",
-            "code": "shopify version [flags]",
+            "code": "shopify version",
             "language": "bash"
           }
         ],
@@ -3742,8 +5380,7 @@
       }
     },
     "definitions": [],
-    "category": "Commands",
-    "subCategory": "common",
+    "category": "Universal commands",
     "related": []
   }
 ]

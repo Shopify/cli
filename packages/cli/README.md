@@ -1,56 +1,54 @@
 # Commands
 <!-- commands -->
-* [`shopify app build`](#shopify-app-build)
-* [`shopify app config link`](#shopify-app-config-link)
-* [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
-* [`shopify app deploy`](#shopify-app-deploy)
-* [`shopify app dev`](#shopify-app-dev)
-* [`shopify app env pull`](#shopify-app-env-pull)
-* [`shopify app env show`](#shopify-app-env-show)
-* [`shopify app function build`](#shopify-app-function-build)
-* [`shopify app function run`](#shopify-app-function-run)
-* [`shopify app function schema`](#shopify-app-function-schema)
-* [`shopify app function typegen`](#shopify-app-function-typegen)
-* [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
-* [`shopify app generate schema`](#shopify-app-generate-schema)
-* [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
-* [`shopify app info`](#shopify-app-info)
-* [`shopify app init`](#shopify-app-init)
-* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
-* [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
-* [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
-* [`shopify auth logout`](#shopify-auth-logout)
-* [`shopify commands`](#shopify-commands)
-* [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
-* [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
-* [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
-* [`shopify help [COMMANDS]`](#shopify-help-commands)
-* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
-* [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
-* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
-* [`shopify plugins:link PLUGIN`](#shopify-pluginslink-plugin)
-* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin)
-* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
-* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
-* [`shopify plugins update`](#shopify-plugins-update)
-* [`shopify search [QUERY]`](#shopify-search-query)
-* [`shopify theme check`](#shopify-theme-check)
-* [`shopify theme:console`](#shopify-themeconsole)
-* [`shopify theme delete`](#shopify-theme-delete)
-* [`shopify theme dev`](#shopify-theme-dev)
-* [`shopify theme info`](#shopify-theme-info)
-* [`shopify theme:init [name]`](#shopify-themeinit-name)
-* [`shopify theme language-server`](#shopify-theme-language-server)
-* [`shopify theme list`](#shopify-theme-list)
-* [`shopify theme open`](#shopify-theme-open)
-* [`shopify theme package`](#shopify-theme-package)
-* [`shopify theme publish`](#shopify-theme-publish)
-* [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify theme:push`](#shopify-themepush)
-* [`shopify theme rename`](#shopify-theme-rename)
-* [`shopify theme share`](#shopify-theme-share)
-* [`shopify upgrade`](#shopify-upgrade)
-* [`shopify version`](#shopify-version)
+- [Commands](#commands)
+  - [`shopify app build`](#shopify-app-build)
+  - [`shopify app config link`](#shopify-app-config-link)
+  - [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
+  - [`shopify app deploy`](#shopify-app-deploy)
+  - [`shopify app dev`](#shopify-app-dev)
+  - [`shopify app env pull`](#shopify-app-env-pull)
+  - [`shopify app env show`](#shopify-app-env-show)
+  - [`shopify app function build`](#shopify-app-function-build)
+  - [`shopify app function run`](#shopify-app-function-run)
+  - [`shopify app function schema`](#shopify-app-function-schema)
+  - [`shopify app function typegen`](#shopify-app-function-typegen)
+  - [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
+  - [`shopify app import-extensions`](#shopify-app-import-extensions)
+  - [`shopify app info`](#shopify-app-info)
+  - [`shopify app init`](#shopify-app-init)
+  - [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
+  - [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
+  - [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
+  - [`shopify auth logout`](#shopify-auth-logout)
+  - [`shopify commands`](#shopify-commands)
+  - [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
+  - [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
+  - [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+  - [`shopify help [COMMAND]`](#shopify-help-command)
+  - [`shopify hydrogen init`](#shopify-hydrogen-init)
+  - [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
+  - [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
+  - [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
+  - [`shopify plugins:link PLUGIN`](#shopify-pluginslink-plugin)
+  - [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin)
+  - [`shopify plugins reset`](#shopify-plugins-reset)
+  - [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
+  - [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
+  - [`shopify plugins update`](#shopify-plugins-update)
+  - [`shopify search [QUERY]`](#shopify-search-query)
+  - [`shopify theme check`](#shopify-theme-check)
+  - [`shopify theme:console`](#shopify-themeconsole)
+  - [`shopify theme delete`](#shopify-theme-delete)
+  - [`shopify theme dev`](#shopify-theme-dev)
+  - [`shopify theme info`](#shopify-theme-info)
+  - [`shopify theme:init [name]`](#shopify-themeinit-name)
+  - [`shopify theme language-server`](#shopify-theme-language-server)
+  - [`shopify theme list`](#shopify-theme-list)
+  - [`shopify theme open`](#shopify-theme-open)
+  - [`shopify theme package`](#shopify-theme-package)
+  - [`shopify theme publish`](#shopify-theme-publish)
+  - [`shopify theme pull`](#shopify-theme-pull)
+  - [`shopify theme:push`](#shopify-themepush)
 
 ## `shopify app build`
 
@@ -81,8 +79,6 @@ DESCRIPTION
   extension to ensure that it's valid.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/build.js)_
-
 ## `shopify app config link`
 
 Fetch your app configuration from the Partner Dashboard.
@@ -108,8 +104,6 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/config/link.js)_
-
 ## `shopify app config use [CONFIG]`
 
 Activate an app configuration.
@@ -133,8 +127,6 @@ DESCRIPTION
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/config/use.js)_
 
 ## `shopify app deploy`
 
@@ -172,8 +164,6 @@ DESCRIPTION
   This command doesn't deploy your "web app" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You
   need to "deploy your web app" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/deploy.js)_
 
 ## `shopify app dev`
 
@@ -249,8 +239,6 @@ DESCRIPTION
   account through the Partner Dashboard.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/dev.js)_
-
 ## `shopify app env pull`
 
 Pull app and extensions environment variables.
@@ -275,8 +263,6 @@ DESCRIPTION
   variables and commented variables are preserved.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/env/pull.js)_
-
 ## `shopify app env show`
 
 Display app and extensions environment variables.
@@ -297,8 +283,6 @@ DESCRIPTION
   Displays environment variables that can be used to deploy apps and app extensions.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/env/show.js)_
-
 ## `shopify app function build`
 
 Compile a function to wasm.
@@ -318,8 +302,6 @@ DESCRIPTION
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/function/build.js)_
 
 ## `shopify app function run`
 
@@ -345,8 +327,6 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/function/run.js)_
 
 ## `shopify app function schema`
 
@@ -374,8 +354,6 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/function/schema.js)_
-
 ## `shopify app function typegen`
 
 Generate GraphQL types for a JavaScript function.
@@ -396,8 +374,6 @@ DESCRIPTION
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function written in JavaScript.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/function/typegen.js)_
 
 ## `shopify app generate extension [FILE]`
 
@@ -437,44 +413,13 @@ EXAMPLES
   $ shopify app generate extension
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/generate/extension.js)_
+## `shopify app import-extensions`
 
-## `shopify app generate schema`
-
-Fetch the latest GraphQL schema for a function.
+Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app generate schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
-
-FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID to fetch the schema with.
-      --no-color           Disable color output.
-      --path=<value>       The path to your function directory.
-      --stdout             Output the schema to stdout instead of writing to a file.
-      --verbose            Increase the verbosity of the logs.
-
-DESCRIPTION
-  Fetch the latest GraphQL schema for a function.
-
-  Generates the latest "GraphQL schema" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
-  function in your app. Run this command from the function directory.
-
-  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
-  latest GraphQL schema. The schema is written to the `schema.graphql` file.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/generate/schema.js)_
-
-## `shopify app import-flow-legacy-extensions`
-
-Import dashboard-managed flow extensions into your app.
-
-```
-USAGE
-  $ shopify app import-flow-legacy-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-  [--verbose]
+  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -484,10 +429,8 @@ FLAGS
       --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
-  Import dashboard-managed flow extensions into your app.
+  Import dashboard-managed extensions into your app.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/import-flow-legacy-extensions.js)_
 
 ## `shopify app info`
 
@@ -518,8 +461,6 @@ DESCRIPTION
   - System information, including the package manager and version of Shopify CLI used in the project.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/info.js)_
-
 ## `shopify app init`
 
 Create a new app project
@@ -541,8 +482,6 @@ FLAGS
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   Increase the verbosity of the logs.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/init.js)_
 
 ## `shopify app:release --version <version>`
 
@@ -567,8 +506,6 @@ DESCRIPTION
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/release.js)_
 
 ## `shopify app versions list [FILE]`
 
@@ -595,8 +532,6 @@ DESCRIPTION
 EXAMPLES
   $ shopify app versions list
 ```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/versions/list.js)_
 
 ## `shopify app webhook trigger`
 
@@ -664,8 +599,6 @@ DESCRIPTION
   - You can't use this method to validate your API webhook subscriptions.
 ```
 
-_See code: [@shopify/app](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/app/webhook/trigger.js)_
-
 ## `shopify auth logout`
 
 Logs you out of the Shopify account or Partner account and store.
@@ -678,22 +611,21 @@ DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
 ```
 
-_See code: [dist/cli/commands/auth/logout.js](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/auth/logout.js)_
-
 ## `shopify commands`
 
 list all the commands
 
 ```
 USAGE
-  $ shopify commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--sort <value>] [--filter
-    <value>] [--output csv|json|yaml |  | [--csv | --no-truncate]] [--no-header | ]
+  $ shopify commands [--columns <value> | -x] [--deprecated] [--filter <value>] [-h] [--hidden] [--json]
+    [--no-header | [--csv | --no-truncate]] [--output csv|json|yaml |  | ] [--sort <value>] [--tree]
 
 FLAGS
   -h, --help             Show CLI help.
   -x, --extended         show extra columns
       --columns=<value>  only show provided columns (comma-separated)
       --csv              output is csv format [alias: --output=csv]
+      --deprecated       show deprecated commands
       --filter=<value>   filter property by partial string matching, ex: name=foo
       --hidden           show hidden commands
       --no-header        hide table header from output
@@ -709,8 +641,6 @@ GLOBAL FLAGS
 DESCRIPTION
   list all the commands
 ```
-
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.28/src/commands/commands.ts)_
 
 ## `shopify config autocorrect off`
 
@@ -773,31 +703,34 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-_See code: [@shopify/plugin-did-you-mean](https://github.com/Shopify/cli/blob/v3.58.0/dist/commands/config/autocorrect/status.js)_
+## `shopify help [COMMAND]`
 
-## `shopify help [COMMANDS]`
-
-Display help for shopify.
+Display help for Shopify CLI
 
 ```
 USAGE
-  $ shopify help [COMMANDS] [-n]
+  $ shopify help [COMMAND] [-n]
 
 ARGUMENTS
-  COMMANDS  Command to show help for.
+  COMMAND  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
 
 DESCRIPTION
-  Display help for shopify.
+  Display help for Shopify CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.20/src/commands/help.ts)_
+## `shopify hydrogen init`
+
+Create a new hydrogen project
+
+```
+USAGE
+  $ shopify hydrogen init
+```
 
 ## `shopify plugins:install PLUGIN...`
-
-Installs a plugin into the CLI.
 
 ```
 USAGE
@@ -809,28 +742,21 @@ ARGUMENTS
 FLAGS
   -f, --force    Run yarn install with force flag.
   -h, --help     Show CLI help.
-  -v, --verbose
+  -s, --silent   Silences yarn output.
+  -v, --verbose  Show verbose yarn output.
 
-DESCRIPTION
-  Installs a plugin into the CLI.
-  Can be installed from npm or a git url.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  e.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command
-  will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in
-  the CLI without the need to patch and update the whole CLI.
-
+GLOBAL FLAGS
+  --json  Format output as json.
 
 ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins add myplugin
 
-  $ shopify plugins:install https://github.com/someuser/someplugin
+  $ shopify plugins add https://github.com/someuser/someplugin
 
-  $ shopify plugins:install someuser/someplugin
+  $ shopify plugins add someuser/someplugin
 ```
 
 ## `shopify plugins:inspect PLUGIN...`
@@ -855,14 +781,10 @@ DESCRIPTION
   Displays installation properties of a plugin.
 
 EXAMPLES
-  $ shopify plugins:inspect myplugin
+  $ shopify plugins inspect myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/inspect.ts)_
-
 ## `shopify plugins:install PLUGIN...`
-
-Installs a plugin into the CLI.
 
 ```
 USAGE
@@ -874,31 +796,22 @@ ARGUMENTS
 FLAGS
   -f, --force    Run yarn install with force flag.
   -h, --help     Show CLI help.
-  -v, --verbose
+  -s, --silent   Silences yarn output.
+  -v, --verbose  Show verbose yarn output.
 
-DESCRIPTION
-  Installs a plugin into the CLI.
-  Can be installed from npm or a git url.
-
-  Installation of a user-installed plugin will override a core plugin.
-
-  e.g. If you have a core plugin that has a 'hello' command, installing a user-installed plugin with a 'hello' command
-  will override the core plugin implementation. This is useful if a user needs to update core plugin functionality in
-  the CLI without the need to patch and update the whole CLI.
-
+GLOBAL FLAGS
+  --json  Format output as json.
 
 ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin 
+  $ shopify plugins install myplugin
 
-  $ shopify plugins:install https://github.com/someuser/someplugin
+  $ shopify plugins install https://github.com/someuser/someplugin
 
-  $ shopify plugins:install someuser/someplugin
+  $ shopify plugins install someuser/someplugin
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/install.ts)_
 
 ## `shopify plugins:link PLUGIN`
 
@@ -925,10 +838,8 @@ DESCRIPTION
 
 
 EXAMPLES
-  $ shopify plugins:link myplugin
+  $ shopify plugins link myplugin
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/link.ts)_
 
 ## `shopify plugins:uninstall PLUGIN...`
 
@@ -951,6 +862,22 @@ DESCRIPTION
 ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
+
+EXAMPLES
+  $ shopify plugins remove myplugin
+```
+
+## `shopify plugins reset`
+
+Remove all user-installed and linked plugins.
+
+```
+USAGE
+  $ shopify plugins reset [--hard] [--reinstall]
+
+FLAGS
+  --hard       Delete node_modules and package manager related files in addition to uninstalling plugins.
+  --reinstall  Reinstall all plugins after uninstalling.
 ```
 
 ## `shopify plugins:uninstall PLUGIN...`
@@ -974,9 +901,10 @@ DESCRIPTION
 ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
-```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/uninstall.ts)_
+EXAMPLES
+  $ shopify plugins uninstall myplugin
+```
 
 ## `shopify plugins:uninstall PLUGIN...`
 
@@ -999,6 +927,9 @@ DESCRIPTION
 ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
+
+EXAMPLES
+  $ shopify plugins unlink myplugin
 ```
 
 ## `shopify plugins update`
@@ -1016,8 +947,6 @@ FLAGS
 DESCRIPTION
   Update installed plugins.
 ```
-
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.9.4/src/commands/plugins/update.ts)_
 
 ## `shopify search [QUERY]`
 
@@ -1038,8 +967,6 @@ EXAMPLES
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
 ```
-
-_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/search.js)_
 
 ## `shopify theme check`
 
@@ -1077,8 +1004,6 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/check.js)_
-
 ## `shopify theme:console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
@@ -1106,8 +1031,6 @@ DESCRIPTION
 
   You can also provide context to the console using a URL, as some Liquid objects are context-specific
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/console.js)_
 
 ## `shopify theme delete`
 
@@ -1141,8 +1064,6 @@ DESCRIPTION
   You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this
   confirmation using the `--force` flag.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/delete.js)_
 
 ## `shopify theme dev`
 
@@ -1246,8 +1167,6 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/dev.js)_
-
 ## `shopify theme info`
 
 Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
@@ -1272,8 +1191,6 @@ DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/info.js)_
 
 ## `shopify theme:init [name]`
 
@@ -1309,8 +1226,6 @@ DESCRIPTION
   the "ways that you can use Dawn" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/init.js)_
-
 ## `shopify theme language-server`
 
 Start a Language Server Protocol server.
@@ -1328,8 +1243,6 @@ DESCRIPTION
 
   Starts the "Language Server" (https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/language-server.js)_
 
 ## `shopify theme list`
 
@@ -1356,8 +1269,6 @@ FLAGS
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/list.js)_
 
 ## `shopify theme open`
 
@@ -1393,8 +1304,6 @@ DESCRIPTION
   store.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/open.js)_
-
 ## `shopify theme package`
 
 Package your theme into a .zip file, ready to upload to the Online Store.
@@ -1419,8 +1328,6 @@ DESCRIPTION
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/package.js)_
 
 ## `shopify theme publish`
 
@@ -1455,8 +1362,6 @@ DESCRIPTION
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/publish.js)_
-
 ## `shopify theme pull`
 
 Download your remote theme files locally.
@@ -1488,8 +1393,6 @@ DESCRIPTION
 
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/pull.js)_
 
 ## `shopify theme:push`
 
@@ -1555,22 +1458,20 @@ DESCRIPTION
   ```
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/push.js)_
-
 ## `shopify theme rename`
 
 Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename -n <value> [-d] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t
+  $ shopify theme rename [-d] [-e <value>] [-l] [-n <value>] [--no-color] [--password <value>] [-s <value>] [-t
     <value>] [--verbose]
 
 FLAGS
   -d, --development          Rename your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Rename your remote live theme.
-  -n, --name=<value>         (required) The new name for the theme.
+  -n, --name=<value>         The new name for the theme.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
@@ -1586,8 +1487,6 @@ DESCRIPTION
   If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in
   your store.
 ```
-
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/rename.js)_
 
 ## `shopify theme share`
 
@@ -1615,27 +1514,19 @@ DESCRIPTION
   89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
 ```
 
-_See code: [@shopify/theme](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/theme/share.js)_
-
 ## `shopify upgrade`
 
-Upgrade your CLI dependency.
+Shows details on how to upgrade Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--path <value>]
-
-FLAGS
-  --path=<value>  [default: .] The path to your project directory.
+  $ shopify upgrade
 
 DESCRIPTION
-  Upgrade your CLI dependency.
+  Shows details on how to upgrade Shopify CLI.
 
-  If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the
-  "upgrade" (https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
+  Shows details on how to upgrade Shopify CLI.
 ```
-
-_See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/upgrade.js)_
 
 ## `shopify version`
 
@@ -1648,6 +1539,4 @@ USAGE
 DESCRIPTION
   Shopify CLI version currently installed.
 ```
-
-_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/blob/v3.58.0/dist/cli/commands/version.js)_
 <!-- commandsstop -->

@@ -3,8 +3,6 @@ source "https://rubygems.org"
 
 gem "bugsnag", "~> 6.22"
 gem "listen", "~> 3.7.0"
-gem "theme-check", "~> 1.15.0"
-gem "nokogiri", "~> 1.14.0"
 
 # None of these can actually be used in a development copy of dev
 # They are all for CI and tests

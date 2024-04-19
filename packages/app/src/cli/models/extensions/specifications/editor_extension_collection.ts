@@ -1,3 +1,4 @@
+import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -10,7 +11,7 @@ const IncludeSchema = zod.object({
   handle: zod.string(),
 })
 
-export const EditorExtensionCollectionSchema = BaseSchema.extend({
+const EditorExtensionCollectionSchema = BaseSchema.extend({
   include: zod.array(IncludeSchema).optional(),
   includes: zod.array(zod.string()).optional(),
   type: zod.literal('editor_extension_collection'),
@@ -20,7 +21,7 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
   identifier: 'editor_extension_collection',
   schema: EditorExtensionCollectionSchema,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config, _) => {
+  deployConfig: async (config, directory) => {
     const includes =
       config.includes?.map((handle) => {
         return {handle}
@@ -35,6 +36,7 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
       name: config.name,
       handle: config.handle,
       in_collection: inCollection,
+      localization: await loadLocalesConfig(directory, config.name),
     }
   },
 })

@@ -2,7 +2,7 @@ import styles from './Header.module.scss'
 import {CloseButton} from './components'
 import React from 'react'
 
-export interface HeaderProps {
+interface HeaderProps {
   id: string
   closing: boolean
   children: React.ReactNode

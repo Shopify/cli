@@ -10,7 +10,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {OutputMessage, formatSection, getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/output'
 
-export interface ThemeInfo {
+interface ThemeInfo {
   theme: {
     id: number
     name: string
@@ -21,7 +21,7 @@ export interface ThemeInfo {
   }
 }
 
-export interface ThemeInfoOptions {
+interface ThemeInfoOptions {
   store?: string
   password?: string
   environment?: string

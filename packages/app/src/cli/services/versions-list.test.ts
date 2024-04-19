@@ -116,7 +116,10 @@ describe('versions-list', () => {
     await expect(output).rejects.toThrow('Invalid API Key: app-api-key')
   })
 
-  test('render table when there are app versions', async () => {
+  // asserting the exact format of the table is hard to do consistently across different environments
+  const terminalWidth = process.stdout.columns
+
+  test.skipIf(terminalWidth !== undefined)('render table when there are app versions', async () => {
     // Given
     const app = testApp({})
     const mockOutput = mockAndCaptureOutput()

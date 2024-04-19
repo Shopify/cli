@@ -9,13 +9,11 @@ import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {pickBy} from '@shopify/cli-kit/common/object'
+import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
-import {createRequire} from 'module'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
 
-const require = createRequire(import.meta.url)
-
-export interface BundleOptions {
+interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputPath: string
@@ -155,19 +153,14 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
   return esbuildOptions
 }
 
-type ESBuildPlugins = Parameters<typeof esContext>[0]['plugins']
-
 /**
  * It returns the plugins that should be used with ESBuild.
  * @returns List of plugins.
  */
-function getPlugins(resolveDir: string | undefined, processEnv = process.env): ESBuildPlugins {
-  const plugins = []
-
-  if (isGraphqlPackageAvailable()) {
-    const {default: graphqlLoader} = require('@luckycatfactory/esbuild-graphql-loader')
-    plugins.push(graphqlLoader())
-  }
+function getPlugins(resolveDir: string | undefined, processEnv = process.env): Plugin[] {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const plugins: Plugin[] = [graphqlLoaderPlugin.default()]
 
   const skipReactDeduplication = isTruthy(processEnv[environmentVariableNames.skipEsbuildReactDedeuplication])
   if (resolveDir && !skipReactDeduplication) {
@@ -193,28 +186,11 @@ function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
   return {
     name: 'shopify:deduplicate-react',
     setup({onResolve}) {
-      onResolve({filter: /^react$/}, (args) => {
+      onResolve({filter: /^react$/}, (_args) => {
         return {
           path: resolvedReactPath,
         }
       })
     },
-  }
-}
-
-/**
- * Returns true if the "graphql" and "graphql-tag" packages can be
- * resolved. This information is used to determine whether we should
- * or not include the esbuild-graphql-loader plugin when invoking ESBuild
- * @returns Returns true if the "graphql" and "graphql-tag" can be resolved.
- */
-function isGraphqlPackageAvailable(): boolean {
-  try {
-    // eslint-disable-next-line @babel/no-unused-expressions
-    require.resolve('graphql') && require.resolve('graphql-tag')
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
   }
 }

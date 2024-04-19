@@ -1,1 +1,1 @@
-shopify search [flags]
+shopify search

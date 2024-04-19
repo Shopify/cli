@@ -3,20 +3,30 @@ import {AbortError} from './error.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import * as port from 'get-port-please'
 
+interface GetTCPPortOptions {
+  waitTimeInSeconds?: number
+  maxTries?: number
+}
+
 /**
  * Returns an available port in the current environment.
  *
  * @param preferredPort - Number of the preferred port to be used if available.
+ * @param options - Extra configuration for getting TCP ports.
  * @returns A promise that resolves with an availabe port.
  * @example
  */
-export async function getAvailableTCPPort(preferredPort?: number): Promise<number> {
+export async function getAvailableTCPPort(preferredPort?: number, options?: GetTCPPortOptions): Promise<number> {
   if (preferredPort && (await checkPortAvailability(preferredPort))) {
     outputDebug(outputContent`Port ${preferredPort.toString()} is free`)
     return preferredPort
   }
   outputDebug(outputContent`Getting a random port...`)
-  const randomPort = await retryOnError(() => port.getRandomPort('localhost'))
+  const randomPort = await retryOnError(
+    () => port.getRandomPort('localhost'),
+    options?.maxTries,
+    options?.waitTimeInSeconds,
+  )
   outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
   return randomPort
 }

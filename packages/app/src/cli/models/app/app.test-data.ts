@@ -45,6 +45,7 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {vi} from 'vitest'
 
 export const DEFAULT_CONFIG = {
@@ -92,6 +93,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     errors: app.errors,
     specifications: app.specifications,
     configSchema: app.configSchema,
+    remoteFlags: app.remoteFlags,
   })
 
   if (app.updateDependencies) {
@@ -129,7 +131,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
@@ -139,7 +141,7 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   }
 }
 
-export function testOrganization(): Organization {
+function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
@@ -265,7 +267,17 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
   return extension
 }
 
-export async function testWebhookExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export function testWebhookExtensions(params?: {
+  emptyConfig?: boolean
+  complianceTopics: false
+}): Promise<ExtensionInstance>
+export function testWebhookExtensions(params?: {
+  emptyConfig?: boolean
+  complianceTopics: true
+}): Promise<ExtensionInstance[]>
+export async function testWebhookExtensions({emptyConfig = false, complianceTopics = false} = {}): Promise<
+  ExtensionInstance | ExtensionInstance[]
+> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -275,21 +287,44 @@ export async function testWebhookExtensions(emptyConfig = false): Promise<Extens
               topics: ['orders/delete'],
               uri: 'https://my-app.com/webhooks',
             },
+            ...(complianceTopics
+              ? [
+                  {
+                    compliance_topics: ['shop/redact'],
+                    uri: 'https://my-app.com/compliance-webhooks',
+                  },
+                ]
+              : []),
           ],
+          ...(complianceTopics && {
+            privacy_compliance: {
+              customer_deletion_url: 'https://my-app.com/compliance/customer-deletion',
+              customer_data_request_url: 'https://my-app.com/compliance/customer-data-deletion',
+              shop_deletion_url: 'https://my-app.com/compliance/shop-deletion',
+            },
+          }),
         },
       } as unknown as BaseConfigType)
 
   const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
+  const webhooksSpecification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
+  const privacySpecification = allSpecs.find((spec) => spec.identifier === 'privacy_compliance_webhooks')!
 
-  const extension = new ExtensionInstance({
+  const webhooksExtension = new ExtensionInstance({
     configuration,
     configurationPath: '',
     directory: './',
-    specification,
+    specification: webhooksSpecification,
   })
 
-  return extension
+  const privacyExtension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification: privacySpecification,
+  })
+
+  return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
 }
 
 export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
@@ -431,7 +466,7 @@ export async function testPaymentsAppExtension(
   return extension
 }
 
-export const testRemoteSpecifications: RemoteSpecification[] = [
+const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',
@@ -842,6 +877,13 @@ const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
   },
 }
 
+const migrateAppModuleResponse: MigrateAppModuleSchema = {
+  migrateAppModule: {
+    migratedAppModule: true,
+    userErrors: [],
+  },
+}
+
 const apiVersionsResponse: PublicApiVersionsSchema = {
   publicApiVersions: ['2022', 'unstable', '2023'],
 }
@@ -910,6 +952,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
+    migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
     targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),

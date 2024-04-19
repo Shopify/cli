@@ -7,7 +7,7 @@ import {
 } from '../services/context/breakdown-extensions.js'
 import {InfoTableSection, renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
-export interface DeployOrReleaseConfirmationPromptOptions {
+interface DeployOrReleaseConfirmationPromptOptions {
   extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
   configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown
   appTitle?: string
@@ -16,7 +16,7 @@ export interface DeployOrReleaseConfirmationPromptOptions {
   showConfig?: boolean
 }
 
-export interface DeployConfirmationPromptOptions {
+interface DeployConfirmationPromptOptions {
   appTitle?: string
   extensionsContentPrompt: {
     extensionsInfoTable?: InfoTableSection

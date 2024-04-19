@@ -56,18 +56,17 @@ export function buildBulkUploadResults(
   bulkUploadResponse: RemoteBulkUploadResponse[],
   assets: AssetParams[],
 ): Result[] {
-  const results: Result[] = []
-  if (!bulkUploadResponse) return results
+  if (!bulkUploadResponse) {
+    return []
+  }
 
-  bulkUploadResponse.forEach((bulkUpload, index) => {
-    const asset = assets[index]
-    results.push({
-      key: asset?.key || '',
+  return bulkUploadResponse.map((bulkUpload, index) => {
+    return {
+      key: assets[index]!.key,
       success: bulkUpload.code === 200,
       errors: bulkUpload.body.errors || {},
       asset: bulkUpload.body.asset,
       operation: Operation.Upload,
-    })
+    }
   })
-  return results
 }

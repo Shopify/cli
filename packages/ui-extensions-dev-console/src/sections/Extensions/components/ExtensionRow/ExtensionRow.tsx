@@ -35,7 +35,7 @@ export function ExtensionRow({uuid}: Props) {
     fallback: en,
   })
 
-  const {focus, unfocus, extension, show, hide} = useExtension(uuid)
+  const {focus, unfocus, extension} = useExtension(uuid)
 
   if (!extension) {
     return null

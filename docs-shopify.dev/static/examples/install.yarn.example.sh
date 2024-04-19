@@ -1,1 +1,1 @@
-yarn add global @shopify/cli
+yarn global add @shopify/cli

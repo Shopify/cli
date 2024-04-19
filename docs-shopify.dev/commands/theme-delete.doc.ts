@@ -30,8 +30,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themedelete',
   },
   ],
-  category: 'Commands',
-  subCategory: 'theme',
+  category: 'theme',
   related: [
   ],
 }

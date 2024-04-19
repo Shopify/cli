@@ -1,5 +1,38 @@
 # @shopify/cli
 
+## 3.59.0
+
+### Minor Changes
+
+- ca218cd31: Shopify CLI now defaults to be Global
+
+### Patch Changes
+
+- a2d6f882d: Fix release scripts
+- 725f2f72b: Fix hydrogen init to always show the package manager selection prompt
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+  - @shopify/plugin-did-you-mean@3.59.0
+  - @shopify/plugin-cloudflare@3.59.0
+  - @shopify/cli-kit@3.59.0
+  - @shopify/theme@3.59.0
+  - @shopify/app@3.59.0
+
 ## 3.58.0
 
 ### Minor Changes

@@ -6,6 +6,9 @@ import * as path from 'pathe'
 import {defineConfig} from 'vitest/config'
 
 export default function config(packagePath: string) {
+  // always treat environment as one that doesn't support hyperlinks -- otherwise assertions are hard to keep consistent
+  process.env['FORCE_HYPERLINK'] = '0'
+
   return defineConfig({
     resolve: {
       alias: aliases(packagePath),

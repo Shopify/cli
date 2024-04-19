@@ -136,6 +136,19 @@ module.exports = {
     'tsdoc/syntax': 'error',
     'jsdoc/require-returns-description': 'error',
     'promise/catch-or-return': ['error', {allowFinally: true}],
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        args: 'all',
+        argsIgnorePattern: '^_',
+        caughtErrors: 'none',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        ignoreRestSiblings: true,
+      },
+    ],
   },
   overrides: [
     {
@@ -145,6 +158,7 @@ module.exports = {
         'no-restricted-syntax': 'off',
         '@shopify/cli/required-fields-when-loading-app': 'off',
         '@typescript-eslint/ban-types': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
       },
     },
   ],

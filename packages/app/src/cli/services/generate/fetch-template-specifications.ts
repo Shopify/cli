@@ -21,6 +21,6 @@ export async function fetchExtensionTemplates(
   )
 }
 
-export function localExtensionTemplates(): ExtensionTemplate[] {
+function localExtensionTemplates(): ExtensionTemplate[] {
   return [themeExtension, productSubscriptionUIExtension, webPixelUIExtension]
 }

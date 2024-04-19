@@ -25,7 +25,7 @@ interface FlowConfig {
  * Given a flow extension config file, convert it to toml
  * Works for both trigger and action because trigger config is a subset of action config
  */
-export function buildTomlObject(extension: ExtensionRegistration) {
+export function buildTomlObject(extension: ExtensionRegistration): string {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const config: FlowConfig = JSON.parse(versionConfig)

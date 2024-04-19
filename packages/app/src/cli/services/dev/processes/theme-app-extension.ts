@@ -11,7 +11,7 @@ import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} f
 // Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
 const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000
 
-export interface PreviewThemeAppExtensionsOptions {
+interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
   themeExtensionServerArgs: string[]
   storefrontToken: string

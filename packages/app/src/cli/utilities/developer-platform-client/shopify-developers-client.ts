@@ -40,6 +40,7 @@ import {
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
+  OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
 import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
@@ -81,6 +82,7 @@ import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -109,14 +111,23 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      const email = userInfoResult.currentUserAccount.email
-      this._session = {
-        // Need to replace with actual auth token for developer platform
-        token: 'token',
-        accountInfo: {
-          type: 'UserAccount',
-          email,
-        },
+      // Need to replace with actual auth token for developer platform
+      const token = 'token'
+      if (userInfoResult.currentUserAccount) {
+        this._session = {
+          token,
+          accountInfo: {
+            type: 'UserAccount',
+            email: userInfoResult.currentUserAccount.email,
+          },
+        }
+      } else {
+        this._session = {
+          token,
+          accountInfo: {
+            type: 'UnknownAccount',
+          },
+        }
       }
     }
     return this._session
@@ -159,6 +170,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       apiSecretKeys: [],
       grantedScopes: appAccessModule.config.scopes as string[],
       flags: [],
+      developerPlatformClient: this,
     }
   }
 
@@ -167,9 +179,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       OrganizationsQuery,
       await this.businessPlatformToken(),
     )
+    if (!organizationsResult.currentUserAccount) return []
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: org.name,
+      source: OrganizationSource.BusinessPlatform,
     }))
   }
 
@@ -188,6 +202,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return {
       id: orgId,
       businessName: org.name,
+      source: OrganizationSource.BusinessPlatform,
     }
   }
 
@@ -280,6 +295,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       organizationId: org.id,
       newApp: true,
       flags,
+      developerPlatformClient: this,
     }
   }
 
@@ -464,6 +480,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: migrateFlowExtension')
   }
 
+  async migrateAppModule(_input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {
+    throw new BugError('Not implemented: migrateAppModule')
+  }
+
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
     throw new BugError('Not implemented: updateURLs')
   }
@@ -476,11 +496,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: targetSchemaDefinition')
   }
 
-  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
+  async apiSchemaDefinition(_input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
     throw new BugError('Not implemented: apiSchemaDefinition')
   }
 
-  async migrateToUiExtension(input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
+  async migrateToUiExtension(_input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
     throw new BugError('Not implemented: migrateToUiExtension')
   }
 

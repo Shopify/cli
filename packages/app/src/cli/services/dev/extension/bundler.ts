@@ -14,18 +14,9 @@ import micromatch from 'micromatch'
 import {deepCompare} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
-export interface WatchEvent {
-  path: string
-  type: 'build' | 'localization'
-}
-
 export interface FileWatcherOptions {
   devOptions: ExtensionDevOptions
   payloadStore: ExtensionsPayloadStore
-}
-
-export interface FileWatcher {
-  close: () => void
 }
 
 export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
@@ -213,11 +204,7 @@ Redeploy Paths:
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
 }
 
-export async function reloadAndbuildIfNecessary(
-  extension: ExtensionInstance,
-  build: boolean,
-  options: ExtensionBuildOptions,
-) {
+async function reloadAndbuildIfNecessary(extension: ExtensionInstance, build: boolean, options: ExtensionBuildOptions) {
   const reloadedConfig = reloadExtensionConfig({extension, stdout: options.stdout})
   if (!build) return reloadedConfig
   return extension.build(options).then(() => reloadedConfig)

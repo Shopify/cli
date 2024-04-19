@@ -2,13 +2,11 @@ import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/n
 import cleanup from '../utils/template/cleanup.js'
 import {
   findUpAndReadPackageJson,
-  packageManager,
   PackageManager,
-  packageManagerFromUserAgent,
   UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -32,17 +30,28 @@ interface InitOptions {
   name: string
   directory: string
   template: string
-  packageManager: string | undefined
+  packageManager: PackageManager
   local: boolean
+  useGlobalCLI: boolean
 }
 
 async function init(options: InitOptions) {
-  const packageManager: PackageManager = inferPackageManager(options.packageManager)
+  const packageManager: PackageManager = options.packageManager
   const hyphenizedName = hyphenate(options.name)
   const outputDirectory = joinPath(options.directory, hyphenizedName)
   const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+
+  renderInfo({
+    body: [
+      `Initializing project with`,
+      {command: packageManager},
+      `\nUse the`,
+      {command: `--package-manager`},
+      `flag to select a different package manager.`,
+    ],
+  })
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
@@ -103,7 +112,12 @@ async function init(options: InitOptions) {
               throw new UnknownPackageManagerError()
           }
 
-          await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
+          await updateCLIDependencies({
+            packageJSON,
+            local: options.local,
+            directory: templateScaffoldDir,
+            useGlobalCLI: options.useGlobalCLI,
+          })
           await writePackageJSON(templateScaffoldDir, packageJSON)
         },
       },
@@ -122,7 +136,7 @@ async function init(options: InitOptions) {
 
     tasks.push(
       {
-        title: 'Installing dependencies',
+        title: `Installing dependencies with ${packageManager}`,
         task: async () => {
           await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
         },
@@ -150,8 +164,8 @@ async function init(options: InitOptions) {
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
     nextSteps: [
       ['Run', {command: `cd ${hyphenizedName}`}],
-      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'generate extension')}],
-      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'dev')}],
+      ['For extensions, run', {command: formatPackageManagerCommand(packageManager, 'shopify app generate extension')}],
+      ['To see your app, run', {command: formatPackageManagerCommand(packageManager, 'shopify app dev')}],
     ],
     reference: [
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
@@ -161,14 +175,6 @@ async function init(options: InitOptions) {
       ],
     ],
   })
-}
-
-function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
-  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
-    return optionsPackageManager as PackageManager
-  }
-  const usedPackageManager = packageManagerFromUserAgent()
-  return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {

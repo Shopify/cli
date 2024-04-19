@@ -44,7 +44,7 @@ const WebhooksSchema = zod.object({
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
-export const WebhooksSchemaWithDeclarative = WebhooksSchema.superRefine(webhookValidator)
+const WebhooksSchemaWithDeclarative = WebhooksSchema.superRefine(webhookValidator)
 
 export const WebhookSchema = zod.object({
   webhooks: WebhooksSchemaWithDeclarative,

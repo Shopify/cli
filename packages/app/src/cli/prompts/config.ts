@@ -17,11 +17,6 @@ import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export interface DiffContent {
-  baselineContent: string
-  updatedContent: string
-}
-
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
   let configName = slugify(await renderTextPrompt(namePromptOptions))
@@ -43,8 +38,12 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   return configName
 }
 
+export async function findConfigFiles(directory: string): Promise<string[]> {
+  return glob(joinPath(directory, 'shopify.app*.toml'))
+}
+
 export async function selectConfigFile(directory: string): Promise<Result<string, string>> {
-  const files = (await glob(joinPath(directory, 'shopify.app*.toml'))).map((path) => basename(path))
+  const files = (await findConfigFiles(directory)).map((path) => basename(path))
 
   if (files.length === 0) return err('Could not find any shopify.app.toml file in the directory.')
   if (files.length === 1) return ok(files[0]!)

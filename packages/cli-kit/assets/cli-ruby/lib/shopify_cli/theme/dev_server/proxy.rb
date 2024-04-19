@@ -106,6 +106,11 @@ module ShopifyCLI
         private
 
         def clean_sfr_cache(env, query, headers)
+          if env["PATH_INFO"].start_with?("/password")
+            @cache_cleaned = false
+            return
+          end
+
           return if @cache_cleaned
 
           @cache_cleaned = true
@@ -249,7 +254,7 @@ module ShopifyCLI
               "X-Shopify-Access-Token" => Environment.admin_auth_token,
               "X-Shopify-Shop" => shop,
             })
-            uri = URI.join("https://#{ThemeAccessAPI::BASE_URL}", "cli/sfr#{path}")
+            uri = URI.join("https://#{ShopifyCLI::Constants::ThemeKitAccess::BASE_URL}", "cli/sfr#{path}")
           end
 
           uri.query = URI.encode_www_form(query + [[:_fd, 0], [:pb, 0]])

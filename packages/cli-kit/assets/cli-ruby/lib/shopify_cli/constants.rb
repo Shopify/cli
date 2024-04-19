@@ -34,6 +34,7 @@ module ShopifyCLI
       RUN_AS_SUBPROCESS = "SHOPIFY_CLI_RUN_AS_SUBPROCESS"
       RUBY_BIN = "SHOPIFY_CLI_RUBY_BIN"
       UNIFIED_DEPLOYMENT = "SHOPIFY_CLI_UNIFIED_DEPLOYMENT"
+      THEME_KIT_ACCESS_DOMAIN = "SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN"
 
       # When true the CLI points to a local instance of
       # the partners dashboard and identity.
@@ -65,6 +66,11 @@ module ShopifyCLI
       MONORAIL_REAL_EVENTS = "MONORAIL_REAL_EVENTS"
 
       STORE = "SHOPIFY_SHOP"
+    end
+
+    module ThemeKitAccess
+      # override with SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN
+      BASE_URL = "theme-kit-access.shopifyapps.com"
     end
 
     module SupportedVersions
