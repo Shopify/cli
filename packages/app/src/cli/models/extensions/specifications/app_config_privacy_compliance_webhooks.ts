@@ -1,5 +1,7 @@
-import {ComplianceTopic, WebhookSchema, WebhookSimplifyConfig} from './app_config_webhook.js'
+import {WebhookSimplifyConfig} from './app_config_webhook.js'
 import {WebhookSubscription, WebhooksConfig} from './types/app_config_webhook.js'
+import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
+import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription_schema.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {Flag} from '../../../services/dev/fetch.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
@@ -15,7 +17,7 @@ export const PrivacyComplianceWebhooksSpecIdentifier = 'privacy_compliance_webho
 // Uses the same schema as the webhooks specs because its content is nested under the same webhooks section
 const appPrivacyComplienceSpec = createConfigExtensionSpecification({
   identifier: PrivacyComplianceWebhooksSpecIdentifier,
-  schema: WebhookSchema,
+  schema: WebhooksSchema,
   transformConfig: PrivacyComplianceWebhooksTransformConfig,
   simplify: WebhookSimplifyConfig,
 })
