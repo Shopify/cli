@@ -154,7 +154,7 @@ describe('collectCredentials', () => {
     const credentials = await collectCredentials(API_KEY, SECRET, APP, DELIVERY_METHOD)
 
     // Then
-    expect(credentials).toEqual({clientId: API_KEY, clientSecret: SECRET})
+    expect(credentials).toEqual({apiKey: API_KEY, clientSecret: SECRET})
     expect(fetchAppFromConfigOrSelect).toHaveBeenCalledTimes(0)
   })
 
@@ -168,7 +168,6 @@ describe('collectCredentials', () => {
     // Then
     expect(credentials).toEqual({
       apiKey: ORGANIZATION_APP.apiKey,
-      clientId: ORGANIZATION_APP.id,
       clientSecret: ORGANIZATION_APP.apiSecretKeys[0]!.secret,
       developerPlatformClient: undefined,
     })

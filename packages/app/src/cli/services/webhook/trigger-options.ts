@@ -17,7 +17,6 @@ import {basename} from '@shopify/cli-kit/node/path'
 interface AppCredentials {
   clientSecret: string
   apiKey?: string
-  clientId?: string
   developerPlatformClient?: DeveloperPlatformClient
 }
 
@@ -41,7 +40,7 @@ export async function collectCredentials(
   deliveryMethod: string,
 ): Promise<AppCredentials> {
   if (secret && (clientId || deliveryMethod !== DELIVERY_METHOD.EVENTBRIDGE)) {
-    const credentials: AppCredentials = {clientSecret: secret, clientId}
+    const credentials: AppCredentials = {clientSecret: secret, apiKey: clientId}
     return credentials
   }
 
@@ -56,7 +55,6 @@ export async function collectCredentials(
   return {
     clientSecret,
     apiKey: orgApp.apiKey,
-    clientId: orgApp.id,
     developerPlatformClient: orgApp.developerPlatformClient,
   }
 }

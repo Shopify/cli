@@ -48,7 +48,7 @@ async function validateAndCollectFlags(
     apiVersion,
     deliveryMethod,
     address,
-    apiKey: clientCredentials.clientId,
+    apiKey: clientCredentials.apiKey,
     clientSecret: clientCredentials.clientSecret,
     developerPlatformClient: clientCredentials.developerPlatformClient ?? developerPlatformClient,
   }
