@@ -33,8 +33,6 @@ export default class ConfigLink extends Command {
       apiKey: flags['client-id'],
     }
 
-    await checkFolderIsValidApp(flags.path)
-
     await link(options)
   }
 }
