@@ -40,6 +40,7 @@ import {
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
+  OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
 import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
@@ -110,14 +111,23 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      const email = userInfoResult.currentUserAccount.email
-      this._session = {
-        // Need to replace with actual auth token for developer platform
-        token: 'token',
-        accountInfo: {
-          type: 'UserAccount',
-          email,
-        },
+      // Need to replace with actual auth token for developer platform
+      const token = 'token'
+      if (userInfoResult.currentUserAccount) {
+        this._session = {
+          token,
+          accountInfo: {
+            type: 'UserAccount',
+            email: userInfoResult.currentUserAccount.email,
+          },
+        }
+      } else {
+        this._session = {
+          token,
+          accountInfo: {
+            type: 'UnknownAccount',
+          },
+        }
       }
     }
     return this._session
@@ -160,6 +170,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       apiSecretKeys: [],
       grantedScopes: appAccessModule.config.scopes as string[],
       flags: [],
+      developerPlatformClient: this,
     }
   }
 
@@ -168,9 +179,11 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       OrganizationsQuery,
       await this.businessPlatformToken(),
     )
+    if (!organizationsResult.currentUserAccount) return []
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: org.name,
+      source: OrganizationSource.BusinessPlatform,
     }))
   }
 
@@ -189,6 +202,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return {
       id: orgId,
       businessName: org.name,
+      source: OrganizationSource.BusinessPlatform,
     }
   }
 
@@ -281,6 +295,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       organizationId: org.id,
       newApp: true,
       flags,
+      developerPlatformClient: this,
     }
   }
 

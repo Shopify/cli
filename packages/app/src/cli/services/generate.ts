@@ -3,7 +3,7 @@ import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
-import {loadApp} from '../models/app/loader.js'
+import {loadApp, loadAppConfiguration} from '../models/app/loader.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
@@ -38,8 +38,11 @@ interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const apiKey = await ensureGenerateContext({...options, developerPlatformClient})
+  const {configuration} = await loadAppConfiguration({directory: options.directory, configName: options.configName})
+  let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
+  const remoteApp = await ensureGenerateContext({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({developerPlatformClient, apiKey})
   const app: AppInterface = await loadApp({
     directory: options.directory,

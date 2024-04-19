@@ -113,6 +113,7 @@ export default class AppGenerateExtension extends Command {
       cloneUrl: flags['clone-url'],
       template: flags.template,
       flavor: flags.flavor,
+      configName: flags.config,
     })
   }
 }
