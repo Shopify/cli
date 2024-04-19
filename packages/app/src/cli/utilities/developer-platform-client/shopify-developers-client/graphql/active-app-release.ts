@@ -30,7 +30,7 @@ export interface ActiveAppReleaseQueryVariables {
   appId: string
 }
 
-export interface AppModuleSpecification {
+interface AppModuleSpecification {
   identifier: string
   externalIdentifier: string
   name: string

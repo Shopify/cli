@@ -17,7 +17,7 @@ export interface SpecificationsQueryVariables {
   appId: string
 }
 
-export interface RemoteSpecification {
+interface RemoteSpecification {
   name: string
   identifier: string
   externalIdentifier: string
