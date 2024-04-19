@@ -2,41 +2,49 @@
 export interface hydrogenpreview {
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * The port to run the server on. Defaults to 3000.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PORT
    */
   '--port <value>'?: string
 
   /**
    * Runs the app in a Node.js sandbox instead of an Oxygen worker.
+   * @environment SHOPIFY_HYDROGEN_FLAG_WORKER
    */
   '--legacy-runtime'?: ''
 
   /**
    * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
+   * 
    */
   '--env <value>'?: string
 
   /**
    * Specifies the environment to perform the operation using its Git branch name.
+   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH
    */
   '--env-branch <value>'?: string
 
   /**
    * The port where the inspector is available. Defaults to 9229.
+   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT
    */
   '--inspector-port <value>'?: string
 
   /**
    * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.
+   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG
    */
   '--debug'?: ''
 
   /**
    * Outputs more information about the command's execution.
+   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

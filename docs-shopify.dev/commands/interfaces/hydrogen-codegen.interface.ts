@@ -2,16 +2,19 @@
 export interface hydrogencodegen {
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.
+   * 
    */
   '--codegen-config-path <value>'?: string
 
   /**
    * Watch the project for changes to update types on file save.
+   * 
    */
   '--watch'?: ''
 }

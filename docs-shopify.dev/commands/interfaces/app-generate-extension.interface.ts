@@ -2,51 +2,61 @@
 export interface appgenerateextension {
   /**
    * The Client ID of your app.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
    */
   '--client-id <value>'?: string
 
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
   /**
    * Choose a starting template for your extension, where applicable
+   * @environment SHOPIFY_FLAG_FLAVOR
    */
   '--flavor <value>'?: string
 
   /**
    * name of your Extension
+   * @environment SHOPIFY_FLAG_NAME
    */
   '-n, --name <value>'?: string
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The path to your app directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Reset all your settings.
+   * @environment SHOPIFY_FLAG_RESET
    */
   '--reset'?: ''
 
   /**
    * Extension template
+   * @environment SHOPIFY_FLAG_EXTENSION_TEMPLATE
    */
   '-t, --template <value>'?: string
 
   /**
    * Deprecated. Please use --template
+   * @environment SHOPIFY_FLAG_EXTENSION_TYPE
    */
   '-t, --type <value>'?: string
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

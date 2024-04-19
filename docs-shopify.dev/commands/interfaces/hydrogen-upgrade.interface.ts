@@ -2,16 +2,19 @@
 export interface hydrogenupgrade {
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * A target hydrogen version to update to
+   * 
    */
   '-v, --version <value>'?: string
 
   /**
    * Ignore warnings and force the upgrade to the target version
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''
 }
