@@ -15,30 +15,7 @@ const data: LandingTemplateSchema = {
       sectionContent: `
 - [Node.js](https://nodejs.org/en/download/) version 18.16.0 or higher
 - [Git](https://git-scm.com/downloads) version 2.28.0 or higher
-
-Only for theme commands:
-- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher
-
-Only for theme commands on Windows:
-- Ruby+Devkit 3.0, installed using [RubyInstaller for Windows](https://rubyinstaller.org/downloads/) (select the MSYS2 component and the MSYS2 base installation option)
-
-If you're using Linux and themes, then follow the instructions on the side to install the required dependencies. Otherwise, you can continue to the [installation](#installation) step.
 `,
-      codeblock: {
-        title: 'Install requirements for themes on Linux',
-        tabs: [
-          {
-            title: 'apt',
-            code: 'examples/requirements.apt.example.sh',
-            language: 'bash',
-          },
-          {
-            title: 'yum',
-            code: 'examples/requirements.yum.example.sh',
-            language: 'bash',
-          },
-        ],
-      },
     },
     {
       type: 'Generic',
@@ -74,11 +51,47 @@ If you're using Linux and themes, then follow the instructions on the side to in
     },
     {
       type: 'Generic',
-      anchorLink: 'Commands',
+      anchorLink: 'requirements-themes',
+      title: 'Requirements for themes',
+      sectionContent: `
+To work with themes, your system must meet the following additional requirements:
+- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher
+
+> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.
+`,
+      codeblock: {
+        title: 'Installation requirements for themes',
+        tabs: [
+          {
+            title: 'macOS: brew',
+            code: 'examples/requirements.brew.example.sh',
+            language: 'bash',
+          },
+          {
+            title: 'Windows',
+            code: 'examples/requirements.win.example.sh',
+            language: 'bash',
+          },
+          {
+            title: 'Linux: apt',
+            code: 'examples/requirements.apt.example.sh',
+            language: 'bash',
+          },
+          {
+            title: 'Linux: yum',
+            code: 'examples/requirements.yum.example.sh',
+            language: 'bash',
+          },
+        ],
+      },
+    },
+    {
+      type: 'Generic',
+      anchorLink: 'commands',
       title: 'Commands',
       sectionContent: `
 Shopify CLI groups commands into topics. The command syntax is: \`shopify [topic] [command]\`.
-Refer to the commands sections in the sidebar for the lists of available commands for each topic.
+Refer to each topic section in the sidebar for a list of available commands.
 
 Or, run the \`help\` command to get this information right in your terminal.
 `,
@@ -131,7 +144,7 @@ Or, run the \`help\` command to get this information right in your terminal.
     },
     {
       type: 'Resource',
-      anchorLink: 'fakeAnchorLink',
+      anchorLink: 'resources',
       title: 'Resources',
       resources: [
         {

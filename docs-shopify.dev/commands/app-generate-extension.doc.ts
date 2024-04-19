@@ -3,9 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app generate extension',
-  description: `Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).
+  description: `Generates a new [app extension](/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](/docs/apps/structure/app-extensions/list).
 
-  Each new app extension is created in a folder under \`extensions/\`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
+  Each new app extension is created in a folder under \`extensions/\`. To learn more about the extensions file structure, refer to [App structure](/docs/apps/tools/cli/structure) and the documentation for your extension.
   `,
   overviewPreviewDescription: `Generate a new app Extension.`,
   type: 'command',

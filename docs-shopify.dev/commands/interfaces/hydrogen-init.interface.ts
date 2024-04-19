@@ -46,12 +46,17 @@ export interface hydrogeninit {
   '--shortcut'?: ''
 
   /**
+   * Generate routes for all pages.
+   */
+  '--routes'?: ''
+
+  /**
    * Init Git and create initial commits.
    */
   '--git'?: ''
 
   /**
-   * Scaffolds a new Hydrogen project with a set of sensible defaults.
+   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`
    */
   '--quickstart'?: ''
 }
