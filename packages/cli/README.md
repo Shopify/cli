@@ -1,54 +1,57 @@
 # Commands
 <!-- commands -->
-- [Commands](#commands)
-  - [`shopify app build`](#shopify-app-build)
-  - [`shopify app config link`](#shopify-app-config-link)
-  - [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
-  - [`shopify app deploy`](#shopify-app-deploy)
-  - [`shopify app dev`](#shopify-app-dev)
-  - [`shopify app env pull`](#shopify-app-env-pull)
-  - [`shopify app env show`](#shopify-app-env-show)
-  - [`shopify app function build`](#shopify-app-function-build)
-  - [`shopify app function run`](#shopify-app-function-run)
-  - [`shopify app function schema`](#shopify-app-function-schema)
-  - [`shopify app function typegen`](#shopify-app-function-typegen)
-  - [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
-  - [`shopify app import-extensions`](#shopify-app-import-extensions)
-  - [`shopify app info`](#shopify-app-info)
-  - [`shopify app init`](#shopify-app-init)
-  - [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
-  - [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
-  - [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
-  - [`shopify auth logout`](#shopify-auth-logout)
-  - [`shopify commands`](#shopify-commands)
-  - [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
-  - [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
-  - [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
-  - [`shopify help [COMMAND]`](#shopify-help-command)
-  - [`shopify hydrogen init`](#shopify-hydrogen-init)
-  - [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
-  - [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
-  - [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
-  - [`shopify plugins:link PLUGIN`](#shopify-pluginslink-plugin)
-  - [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin)
-  - [`shopify plugins reset`](#shopify-plugins-reset)
-  - [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
-  - [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
-  - [`shopify plugins update`](#shopify-plugins-update)
-  - [`shopify search [QUERY]`](#shopify-search-query)
-  - [`shopify theme check`](#shopify-theme-check)
-  - [`shopify theme:console`](#shopify-themeconsole)
-  - [`shopify theme delete`](#shopify-theme-delete)
-  - [`shopify theme dev`](#shopify-theme-dev)
-  - [`shopify theme info`](#shopify-theme-info)
-  - [`shopify theme:init [name]`](#shopify-themeinit-name)
-  - [`shopify theme language-server`](#shopify-theme-language-server)
-  - [`shopify theme list`](#shopify-theme-list)
-  - [`shopify theme open`](#shopify-theme-open)
-  - [`shopify theme package`](#shopify-theme-package)
-  - [`shopify theme publish`](#shopify-theme-publish)
-  - [`shopify theme pull`](#shopify-theme-pull)
-  - [`shopify theme:push`](#shopify-themepush)
+* [`shopify app build`](#shopify-app-build)
+* [`shopify app config link`](#shopify-app-config-link)
+* [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
+* [`shopify app deploy`](#shopify-app-deploy)
+* [`shopify app dev`](#shopify-app-dev)
+* [`shopify app env pull`](#shopify-app-env-pull)
+* [`shopify app env show`](#shopify-app-env-show)
+* [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function run`](#shopify-app-function-run)
+* [`shopify app function schema`](#shopify-app-function-schema)
+* [`shopify app function typegen`](#shopify-app-function-typegen)
+* [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
+* [`shopify app import-extensions`](#shopify-app-import-extensions)
+* [`shopify app info`](#shopify-app-info)
+* [`shopify app init`](#shopify-app-init)
+* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
+* [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
+* [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
+* [`shopify auth logout`](#shopify-auth-logout)
+* [`shopify commands`](#shopify-commands)
+* [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
+* [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
+* [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+* [`shopify help [COMMAND]`](#shopify-help-command)
+* [`shopify hydrogen init`](#shopify-hydrogen-init)
+* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
+* [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
+* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
+* [`shopify plugins:link PLUGIN`](#shopify-pluginslink-plugin)
+* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin)
+* [`shopify plugins reset`](#shopify-plugins-reset)
+* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
+* [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
+* [`shopify plugins update`](#shopify-plugins-update)
+* [`shopify search [QUERY]`](#shopify-search-query)
+* [`shopify theme check`](#shopify-theme-check)
+* [`shopify theme:console`](#shopify-themeconsole)
+* [`shopify theme delete`](#shopify-theme-delete)
+* [`shopify theme dev`](#shopify-theme-dev)
+* [`shopify theme info`](#shopify-theme-info)
+* [`shopify theme:init [name]`](#shopify-themeinit-name)
+* [`shopify theme language-server`](#shopify-theme-language-server)
+* [`shopify theme list`](#shopify-theme-list)
+* [`shopify theme open`](#shopify-theme-open)
+* [`shopify theme package`](#shopify-theme-package)
+* [`shopify theme publish`](#shopify-theme-publish)
+* [`shopify theme pull`](#shopify-theme-pull)
+* [`shopify theme:push`](#shopify-themepush)
+* [`shopify theme rename`](#shopify-theme-rename)
+* [`shopify theme share`](#shopify-theme-share)
+* [`shopify upgrade`](#shopify-upgrade)
+* [`shopify version`](#shopify-version)
 
 ## `shopify app build`
 
@@ -661,8 +664,6 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-_See code: [@shopify/plugin-did-you-mean](https://github.com/Shopify/cli/blob/v3.58.0/dist/commands/config/autocorrect/off.js)_
-
 ## `shopify config autocorrect on`
 
 Enable autocorrect. Off by default.
@@ -681,8 +682,6 @@ DESCRIPTION
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
-
-_See code: [@shopify/plugin-did-you-mean](https://github.com/Shopify/cli/blob/v3.58.0/dist/commands/config/autocorrect/on.js)_
 
 ## `shopify config autocorrect status`
 
@@ -752,7 +751,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins add myplugin
+  $ shopify plugins add myplugin 
 
   $ shopify plugins add https://github.com/someuser/someplugin
 
@@ -806,7 +805,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins install myplugin
+  $ shopify plugins install myplugin 
 
   $ shopify plugins install https://github.com/someuser/someplugin
 
