@@ -9,6 +9,7 @@ import {
   testWebhookExtensions,
   testFlowActionExtension,
   testDeveloperPlatformClient,
+  testWebhookSubscriptionExtensions,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -212,19 +213,22 @@ describe('bundleConfig', async () => {
         extensions: {},
         extensionIds: {},
         app: 'My app',
-        extensionsNonUuidManaged: {'point-of-sale': 'uuid'},
+        extensionsNonUuidManaged: {'point-of-sale': ['uuid']},
       },
       developerPlatformClient,
       apiKey: 'apiKey',
     })
 
     expect(got).toEqual(
-      expect.objectContaining({
-        uuid: 'uuid',
-      }),
+      expect.arrayContaining([
+        expect.objectContaining({
+          uuid: 'uuid',
+        }),
+      ]),
     )
   })
 
+  // TODO: remove this test when we remove subscriptions field from webhooks
   test('returns arrays formatted properly inside the config', async () => {
     const extensionInstance = await testWebhookExtensions()
 
@@ -233,16 +237,68 @@ describe('bundleConfig', async () => {
         extensions: {},
         extensionIds: {},
         app: 'My app',
-        extensionsNonUuidManaged: {webhooks: 'uuid'},
+        extensionsNonUuidManaged: {webhooks: ['uuid']},
       },
       developerPlatformClient,
       apiKey: 'apiKey',
     })
 
     expect(got).toEqual(
-      expect.objectContaining({
-        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}]}',
-      }),
+      expect.arrayContaining([
+        expect.objectContaining({
+          config:
+            '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}],"api_version":"2024-01"}',
+        }),
+      ]),
+    )
+  })
+
+  test('returns an array of modules for each extension with spec.extensionManagedInToml and spec.multipleModuleConfigPath', async () => {
+    const extensionInstance = await testWebhookSubscriptionExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {webhooks: ['uuid1', 'uuid2', 'uuid3', 'uuid4']},
+      },
+      developerPlatformClient,
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toHaveLength(4)
+    expect(got).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          config: JSON.stringify({
+            api_version: '2024-01',
+            uri: 'https://my-app.com/webhooks',
+            topic: 'orders/delete',
+          }),
+        }),
+        expect.objectContaining({
+          config: JSON.stringify({
+            api_version: '2024-01',
+            uri: 'https://my-app.com/webhooks',
+            topic: 'orders/create',
+          }),
+        }),
+        expect.objectContaining({
+          config: JSON.stringify({
+            api_version: '2024-01',
+            uri: 'https://my-app.com/webhooks',
+            topic: 'orders/update',
+          }),
+        }),
+        expect.objectContaining({
+          config: JSON.stringify({
+            api_version: '2024-01',
+            uri: 'https://my-app.com/webhooks/products',
+            topic: 'products/update',
+          }),
+        }),
+      ]),
     )
   })
 })

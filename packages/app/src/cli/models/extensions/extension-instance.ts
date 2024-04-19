@@ -321,9 +321,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async bundleConfig({identifiers, developerPlatformClient, apiKey}: ExtensionBundleConfigOptions) {
     const configValue = await this.deployConfig({apiKey, developerPlatformClient})
     if (!configValue) return undefined
-    const isExtensionsAppModule = this.isUuidManaged()
 
-    if (isExtensionsAppModule) {
+    if (this.isUuidManaged()) {
       return {
         config: JSON.stringify(configValue),
         context: this.contextValue,
@@ -337,7 +336,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   private bundleConfigAppModules(registrationUuids: string[], configValue: {[key: string]: unknown}) {
     if (this.specification.extensionManagedInToml && this.specification.multipleModuleConfigPath) {
-      const multipleConfigValues = getPathValue<any[]>(this.configuration, this.specification.multipleModuleConfigPath)
+      const multipleConfigValues = getPathValue<any[]>(configValue, this.specification.multipleModuleConfigPath)
       return multipleConfigValues!.map((config: {[key: string]: unknown}, index: number) => ({
         config: JSON.stringify(config),
         context: this.contextValue,
