@@ -323,7 +323,7 @@ async function handleFailedUploads(
 
 async function renderTasks(tasks: Task[]) {
   if (tasks.length > 0) {
-    await renderTaskOriginal(tasks)
+    await renderTaskOriginal(tasks, {renderOptions: {stdout: process.stderr}})
   }
 }
 
