@@ -1866,6 +1866,73 @@ wrong = "property"
     ])
   })
 
+  test('loads the app with webhook subscription extension configured inside the toml file', async () => {
+    // Given
+    const appConfigurationWithWebhooks = `
+    name = "for-testing-webhoooks"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [build]
+    include_config_on_deploy = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [[webhooks.subscriptions]]
+      topics = ["orders/create", "orders/delete"]
+      uri = "https://example.com"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+    `
+    await writeConfig(appConfigurationWithWebhooks)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(5)
+    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        name: 'for-testing',
+      }),
+      expect.objectContaining({
+        auth: {
+          redirect_urls: ['https://example.com/api/auth'],
+        },
+      }),
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['products/create', 'products/delete'],
+              uri: 'https://example.com',
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['products/create', 'products/delete'],
+              uri: 'https://example.com',
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      }),
+    ])
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
