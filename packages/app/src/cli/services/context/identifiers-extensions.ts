@@ -11,6 +11,8 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {getPathValue} from '@shopify/cli-kit/common/object'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -137,7 +139,7 @@ export async function deployConfirmed(
 
   return {
     extensions: validMatches,
-    extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged},
+    extensionIds: {...validMatchesById, ...mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged)},
     extensionsNonUuidManaged,
   }
 }
@@ -152,10 +154,96 @@ async function ensureNonUuidManagedExtensionsIds(
   let localExtensionRegistrations = includeDraftExtensions ? app.realExtensions : app.allExtensions
 
   localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
+
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string[]} = {}
   const validMatchesById: {[key: string]: string[]} = {}
-  localExtensionRegistrations.forEach((local) => {
+
+  const extensionsInGlobalConfig = localExtensionRegistrations.filter((ext) => ext.specification.extensionManagedInToml)
+
+  await Promise.all(
+    extensionsInGlobalConfig.map(async (extension) => {
+      // are there any matches for global configs?
+      const possibleMatches = remoteConfigurationRegistrations.filter((remote) => {
+        return remote.type === developerPlatformClient.toExtensionGraphQLType(extension.graphQLType)
+      })
+
+      // if there are existing webhook subscription etension registrations
+      if (possibleMatches.length > 0) {
+        const localConfigContent = await extension.commonDeployConfig('')
+
+        // gets all the subscription objects in an array
+        const localConfigArray = getPathValue<unknown[]>(
+          localConfigContent as object,
+          extension.specification.multipleModuleConfigPath ?? '',
+        )
+        const matchedUuids: string[] = []
+        const matchedIds: string[] = []
+        const newExtensionsToCreate: ExtensionInstance[] = []
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        localConfigArray?.forEach((localConfig: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const hasMatch = possibleMatches?.some((possibleMatch: any) => {
+            const remoteConfigString = possibleMatch.activeVersion?.config
+            const remoteConfigObj = remoteConfigString ? JSON.parse(remoteConfigString) : ''
+            if (localConfig.uri === remoteConfigObj.uri && localConfig.topic === remoteConfigObj.topic) {
+              matchedUuids.push(possibleMatch.uuid)
+              matchedIds.push(possibleMatch.id)
+              return true
+            }
+          })
+          // if there are no matches, add the extension to create new extensions array
+          if (!hasMatch) {
+            newExtensionsToCreate.push(extension)
+          }
+        })
+
+        // creates the new extensions
+        const newExtensionRegistrationIds = await Promise.all(
+          newExtensionsToCreate?.map(async (extension) => {
+            const registration = await createExtension(
+              appId,
+              extension.graphQLType,
+              extension.handle,
+              developerPlatformClient,
+              extension.contextValue,
+            )
+            return [registration.id, registration.uuid]
+          }),
+        )
+        const newUuids = newExtensionRegistrationIds.flatMap(([, uuid]) => uuid!)
+        const newIds = newExtensionRegistrationIds.flatMap(([id]) => id!)
+        validMatches[extension.localIdentifier] = matchedUuids.concat(newUuids)
+        validMatchesById[extension.localIdentifier] = matchedIds.concat(newIds)
+      } else {
+        // creates all new extension instances
+        // this will create new uuids for each webhook subscription modules
+        const localSources = await buildExtensionsInGlobalToCreate(extension)
+        const extensionRegistrations = await Promise.all(
+          localSources.map(async (extension) => {
+            // extension?
+            const registration = await createExtension(
+              appId,
+              extension.graphQLType,
+              extension.handle,
+              developerPlatformClient,
+              extension.contextValue,
+            )
+            return [registration.id, registration.uuid]
+          }),
+        )
+
+        validMatches[extension.localIdentifier] = extensionRegistrations.flatMap(([, uuid]) => uuid!)
+        validMatchesById[extension.localIdentifier] = extensionRegistrations.flatMap(([id]) => id!)
+      }
+    }),
+  )
+
+  const extensionNotInGlobalConfig = localExtensionRegistrations.filter(
+    (ext) => !ext.specification.extensionManagedInToml,
+  )
+  extensionNotInGlobalConfig.forEach((local) => {
     const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
       return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
     })
@@ -207,6 +295,34 @@ async function createExtensions(
       )
       if (output) outputCompleted(`Created extension ${extension.handle}.`)
       result[extension.localIdentifier] = registration
+    }
+  }
+  return result
+}
+
+async function buildExtensionsInGlobalToCreate(extension: ExtensionInstance): Promise<LocalSource[]> {
+  if (!extension.specification.multipleModuleConfigPath) return [extension]
+
+  const configContent = await extension.commonDeployConfig('')
+
+  const multipleRootPathValue = getPathValue<unknown[]>(
+    configContent as object,
+    extension.specification.multipleModuleConfigPath,
+  )
+
+  // [ {topic: ..., uri: ...},  {...}]
+
+  // [ ExtensionInstance, ExtensionInstance ]
+  // ExtensionInstance
+  // config -> {api_version: ..., subscriptions: []}
+  return Array.from({length: multipleRootPathValue?.length ?? 0}).map((_value, index) => extension)
+}
+
+function mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged: {[key: string]: string[]}) {
+  const result: {[key: string]: string} = {}
+  for (const key in extensionsIdsNonUuidManaged) {
+    if (extensionsIdsNonUuidManaged[key]!.length > 0) {
+      result[key] = extensionsIdsNonUuidManaged[key]![0]!
     }
   }
   return result
