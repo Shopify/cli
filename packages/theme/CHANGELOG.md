@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.59.1
+
+### Patch Changes
+
+- c181ebea4: - Fix `shopify theme dev` and `shopify theme console` proxies following session changes
+  - Bring the legacy `shopify theme push` implementation in CI/CD workflows
+  - @shopify/cli-kit@3.59.1
+
 ## 3.59.0
 
 ### Minor Changes
