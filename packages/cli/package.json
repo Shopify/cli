@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/cli"
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/cli"
   },
   "license": "MIT",
   "type": "module",
