@@ -878,8 +878,8 @@ function showReusedDevValues({organization, selectedApp, selectedStore, cachedIn
 }
 
 interface CurrentlyUsedConfigInfoOptions {
-  org: string
   appName: string
+  org?: string
   devStore?: string
   updateURLs?: string
   configFile?: string
@@ -903,8 +903,9 @@ export function renderCurrentlyUsedConfigInfo({
   resetMessage,
   includeConfigOnDeploy,
 }: CurrentlyUsedConfigInfoOptions): void {
-  const items = [`Org:             ${org}`, `App:             ${appName}`]
+  const items = [`App:             ${appName}`]
 
+  if (org) items.unshift(`Org:             ${org}`)
   if (devStore) items.push(`Dev store:       ${devStore}`)
   if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
   if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
