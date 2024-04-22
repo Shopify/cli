@@ -1,5 +1,4 @@
 import {appFlags} from '../../../flags.js'
-import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import Command from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
