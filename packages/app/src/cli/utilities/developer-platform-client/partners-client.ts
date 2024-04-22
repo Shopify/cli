@@ -271,14 +271,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications({id: appId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
-    const variables: ExtensionSpecificationsQueryVariables = {api_key: appId}
+  async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+    const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     return result.extensionSpecifications
   }
 
-  async templateSpecifications(appId: string): Promise<ExtensionTemplate[]> {
-    const variables: RemoteTemplateSpecificationsVariables = {apiKey: appId}
+  async templateSpecifications(apiKey: string): Promise<ExtensionTemplate[]> {
+    const variables: RemoteTemplateSpecificationsVariables = {apiKey}
     const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
     return result.templateSpecifications
   }
