@@ -25,8 +25,8 @@ module ShopifyCLI
       ]
 
       class Proxy
-        SESSION_COOKIE_NAME = "_secure_session_id"
-        SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=(\h+)/
+        SESSION_COOKIE_NAME = "_shopify_essential"
+        SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=([^;]*)(;|$)/
         SESSION_COOKIE_MAX_AGE = 60 * 60 * 23 # 1 day - leeway of 1h
         IGNORED_ENDPOINTS = %w[
           shopify/monorail
@@ -94,9 +94,9 @@ module ShopifyCLI
 
         def secure_session_id
           if secure_session_id_expired?
-            @ctx.debug("Refreshing preview _secure_session_id cookie")
+            @ctx.debug("Refreshing preview _shopify_essential cookie")
             response = request("HEAD", "/", query: [[:preview_theme_id, theme_id]])
-            @secure_session_id = extract_secure_session_id_from_response_headers(response)
+            @secure_session_id = extract_shopify_essential_from_response_headers(response)
             @last_session_cookie_refresh = Time.now
           end
 
@@ -215,7 +215,7 @@ module ShopifyCLI
           Time.now - @last_session_cookie_refresh >= SESSION_COOKIE_MAX_AGE
         end
 
-        def extract_secure_session_id_from_response_headers(headers)
+        def extract_shopify_essential_from_response_headers(headers)
           return unless headers["set-cookie"]
 
           headers["set-cookie"][SESSION_COOKIE_REGEXP, 1]
@@ -235,9 +235,9 @@ module ShopifyCLI
             response_headers["location"].gsub!(%r{(https://#{shop})}, "http://#{host(env)}")
           end
 
-          new_session_id = extract_secure_session_id_from_response_headers(response_headers)
+          new_session_id = extract_shopify_essential_from_response_headers(response_headers)
           if new_session_id
-            @ctx.debug("New _secure_session_id cookie from response")
+            @ctx.debug("New _shopify_essential cookie from response")
             @secure_session_id = new_session_id
             @last_session_cookie_refresh = Time.now
           end
