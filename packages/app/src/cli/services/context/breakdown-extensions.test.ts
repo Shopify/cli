@@ -22,6 +22,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
@@ -62,11 +63,11 @@ const REGISTRATION_DASHBOARD_NEW = {
 const MODULE_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase',
-  type: 'post_purchase_ui_extension',
+  registrationTitle: 'Checkout UI Extension',
+  type: 'checkout_ui_extension',
   specification: {
-    identifier: 'post_purchase_ui_extension',
-    name: 'Post purchase UI extension',
+    identifier: 'checkout_ui_extension',
+    name: 'Checkout UI extension',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -77,11 +78,11 @@ const MODULE_CLI_A: AppModuleVersion = {
 const MODULE_DASHBOARD_MIGRATED_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase',
-  type: 'post_purchase_ui_extension',
+  registrationTitle: 'Checkout UI Extension',
+  type: 'checkout_ui_extension',
   specification: {
-    identifier: 'post_purchase_ui_extension',
-    name: 'Post purchase UI extension',
+    identifier: 'checkout_ui_extension',
+    name: 'Checkout UI extension',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -137,11 +138,11 @@ const MODULE_DELETED_DASHBOARD_B: AppModuleVersion = {
 const MODULE_DELETED_CLI_B: AppModuleVersion = {
   registrationId: 'B',
   registrationUuid: 'UUID_B',
-  registrationTitle: 'Checkout post purchase Deleted B',
-  type: 'post_purchase_ui_extension',
+  registrationTitle: 'Checkout UI Extension Deleted B',
+  type: 'checkout_ui_extension',
   specification: {
-    identifier: 'post_purchase_ui_extension',
-    name: 'Post purchase UI extension',
+    identifier: 'checkout_ui_extension',
+    name: 'Checkout UI extension',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -175,9 +176,9 @@ const VERSION_DIFF_DASH_A: AppVersionsDiffExtensionSchema = {
 
 const VERSION_DIFF_CLI_A: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_B',
-  registrationTitle: 'Checkout post purchase',
+  registrationTitle: 'Checkout UI Extension',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_ui_extension',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -187,9 +188,9 @@ const VERSION_DIFF_CLI_A: AppVersionsDiffExtensionSchema = {
 
 const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase Deleted B',
+  registrationTitle: 'Checkout UI Extension Deleted B',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_ui_extension',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -223,7 +224,7 @@ const LOCAL_APP = async (
     directory: '/app',
     configuration,
     allExtensions: [...uiExtensions, await testAppConfigExtensions()],
-    specifications: versionSchema.configSpecifications,
+    specifications: await loadLocalExtensionsSpecifications(),
     configSchema: versionSchema.schema,
   })
 
@@ -554,7 +555,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [
-            buildExtensionBreakdownInfo('Checkout post purchase Deleted B'),
+            buildExtensionBreakdownInfo('Checkout UI Extension Deleted B'),
             buildDashboardBreakdownInfo('Dashboard Deleted B'),
           ],
           toCreate: [
@@ -630,8 +631,8 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
-        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
-        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout UI Extension Deleted B')],
+        toCreate: [buildExtensionBreakdownInfo('Checkout UI Extension')],
         toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
       },
       versionDetails: versionDiff.versionDetails,

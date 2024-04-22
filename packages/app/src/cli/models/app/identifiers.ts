@@ -9,7 +9,7 @@ export interface IdentifiersExtensions {
   [localIdentifier: string]: string
 }
 
-export interface IndentifiersExtensionsList {
+interface IdentifiersExtensionsList {
   [localIdentifier: string]: string[]
 }
 
@@ -30,7 +30,7 @@ export interface Identifiers {
   /**
    * The extensions' unique identifiers which uuid is not managed.
    */
-  extensionsNonUuidManaged: IndentifiersExtensionsList
+  extensionsNonUuidManaged: IdentifiersExtensionsList
 }
 
 export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>

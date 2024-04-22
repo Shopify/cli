@@ -57,7 +57,7 @@ function transformFromWebhookSubscriptionConfig(content: object) {
       })
   })
 
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
+  return webhookSubscriptions.length > 0 ? webhookSubscriptions : []
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
@@ -106,6 +106,11 @@ function transformToWebhookSubscriptionConfig(content: object) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function matchesRemoteConfig(remoteConfig: any, localConfig: any): boolean {
+  return localConfig.uri === remoteConfig.uri && localConfig.topic === remoteConfig.topic
+}
+
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
   forward: (content: object) => transformFromWebhookSubscriptionConfig(content),
   reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
@@ -117,7 +122,7 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
   extensionManagedInToml: true,
-  multipleModuleConfigPath: 'subscriptions',
+  matchesRemoteConfig,
 })
 
 export default appWebhookSubscriptionSpec

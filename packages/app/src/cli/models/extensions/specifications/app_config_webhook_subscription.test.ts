@@ -46,72 +46,70 @@ describe('webhook_subscription', () => {
       const result = webhookSpec.transform!(object)
 
       // Then
-      expect(result).toEqual({
-        subscriptions: [
-          {
-            api_version: '2024-01',
-            topic: 'orders/delete',
-            uri: 'https://example.com/webhooks/orders',
-          },
-          {
-            api_version: '2024-01',
-            topic: 'orders/create',
-            uri: 'https://example.com/webhooks/orders',
-          },
-          {
-            api_version: '2024-01',
-            topic: 'orders/edited',
-            uri: 'https://example.com/webhooks/orders',
-          },
-          {
-            api_version: '2024-01',
-            topic: 'products/create',
-            uri: 'https://example.com/webhooks/products',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/create',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/update',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_two',
-            topic: 'metaobjects/create',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_two',
-            topic: 'metaobjects/update',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
-            api_version: '2024-01',
-            include_fields: ['variants', 'title'],
-            topic: 'orders/create',
-            uri: 'https://valid-url',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/create',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/delete',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          },
-        ],
-      })
+      expect(result).toEqual([
+        {
+          api_version: '2024-01',
+          topic: 'orders/delete',
+          uri: 'https://example.com/webhooks/orders',
+        },
+        {
+          api_version: '2024-01',
+          topic: 'orders/create',
+          uri: 'https://example.com/webhooks/orders',
+        },
+        {
+          api_version: '2024-01',
+          topic: 'orders/edited',
+          uri: 'https://example.com/webhooks/orders',
+        },
+        {
+          api_version: '2024-01',
+          topic: 'products/create',
+          uri: 'https://example.com/webhooks/products',
+        },
+        {
+          api_version: '2024-01',
+          sub_topic: 'type:metaobject_one',
+          topic: 'metaobjects/create',
+          uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+        },
+        {
+          api_version: '2024-01',
+          sub_topic: 'type:metaobject_one',
+          topic: 'metaobjects/update',
+          uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+        },
+        {
+          api_version: '2024-01',
+          sub_topic: 'type:metaobject_two',
+          topic: 'metaobjects/create',
+          uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+        },
+        {
+          api_version: '2024-01',
+          sub_topic: 'type:metaobject_two',
+          topic: 'metaobjects/update',
+          uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+        },
+        {
+          api_version: '2024-01',
+          include_fields: ['variants', 'title'],
+          topic: 'orders/create',
+          uri: 'https://valid-url',
+        },
+        {
+          api_version: '2024-01',
+          sub_topic: 'type:metaobject_one',
+          topic: 'metaobjects/create',
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+        },
+        {
+          api_version: '2024-01',
+          sub_topic: 'type:metaobject_one',
+          topic: 'metaobjects/delete',
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+        },
+      ])
     })
 
     test('should return an empty object if there are no subscriptions in the TOML', () => {
@@ -128,7 +126,7 @@ describe('webhook_subscription', () => {
       const result = webhookSpec.transform!(object)
 
       // Then
-      expect(result).toEqual({})
+      expect(result).toEqual([])
     })
   })
 

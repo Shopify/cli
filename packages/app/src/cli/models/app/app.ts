@@ -318,6 +318,7 @@ export class App implements AppInterface {
     return configuration as CurrentAppConfiguration & SpecsAppConfiguration
   }
 
+  // karen.xie: do we need to also filter the webhook_subscription modules here?
   private filterDeclarativeWebhooksConfig() {
     const webhooksConfigIndex = this.realExtensions.findIndex((ext) => ext.handle === 'webhooks')
     const complianceWebhooksConfigIndex = this.realExtensions.findIndex(

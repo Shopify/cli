@@ -11,6 +11,7 @@ import {
   testAppConfigExtensions,
   DEFAULT_CONFIG,
   testDeveloperPlatformClient,
+  testWebhookSubscriptionExtensions,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
@@ -341,6 +342,77 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
+  test('pushes a configuration extension that contains multiple modules if include config on deploy', async () => {
+    // Given
+    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const localApp = {
+      allExtensions: [webhookSubscriptionExtension],
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
+    }
+    const app = testApp(localApp)
+    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
+    const uuids = [
+      'webhook-subscription-1',
+      'webhook-subscription-2',
+      'webhook-subscription-3',
+      'webhook-subscription-4',
+    ]
+    const identifiers: {[key: string]: string[]} = {}
+    identifiers[webhookSubscriptionExtension.localIdentifier] = uuids
+
+    // When
+    await testDeployBundle({
+      app,
+      released: false,
+      commitReference,
+      developerPlatformClient,
+      configurationModuleIdentifiers: identifiers,
+    })
+
+    // Then
+    const expectedAppConfigs = [
+      {
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks',
+        topic: 'orders/delete',
+      },
+      {
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks',
+        topic: 'orders/create',
+      },
+      {
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks',
+        topic: 'orders/update',
+      },
+      {
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks/products',
+        topic: 'products/update',
+      },
+    ]
+    const expectedAppModules = expectedAppConfigs.map((config, index) => {
+      return {
+        uuid: uuids[index],
+        config: JSON.stringify(config),
+        context: '',
+        handle: webhookSubscriptionExtension.handle,
+      }
+    })
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      organizationId: 'org-id',
+      appModules: expectedAppModules,
+      developerPlatformClient,
+      extensionIds: {},
+      release: true,
+      commitReference,
+    })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+  })
+
   test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
@@ -363,6 +435,8 @@ describe('deploy', () => {
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
+
+  test('doesnt push a configuration extension that contains multiple modules if include config on deploy is disabled', async () => {})
 
   test('shows a success message', async () => {
     // Given
@@ -504,6 +578,7 @@ interface TestDeployBundleInput {
   commitReference?: string
   appToDeploy?: AppInterface
   developerPlatformClient: DeveloperPlatformClient
+  configurationModuleIdentifiers?: {[key: string]: string[]}
 }
 
 async function testDeployBundle({
@@ -514,6 +589,7 @@ async function testDeployBundle({
   commitReference,
   appToDeploy,
   developerPlatformClient,
+  configurationModuleIdentifiers = {},
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -522,7 +598,8 @@ async function testDeployBundle({
   }
   const extensionsNonUuidPayload: {[key: string]: string[]} = {}
   for (const extension of app.allExtensions.filter((ext) => !ext.isUuidManaged())) {
-    extensionsNonUuidPayload[extension.localIdentifier] = [extension.localIdentifier]
+    const payloadValue = configurationModuleIdentifiers[extension.localIdentifier] ?? [extension.localIdentifier]
+    extensionsNonUuidPayload[extension.localIdentifier] = payloadValue
   }
   const identifiers = {
     app: 'app-id',

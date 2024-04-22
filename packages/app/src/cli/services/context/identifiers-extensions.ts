@@ -9,10 +9,11 @@ import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -114,8 +115,14 @@ export async function deployConfirmed(
     extensionsToCreate: LocalSource[]
   },
 ) {
-  const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
+  const {extensionsNotManagedInConfig, allRegistrationsManagedInConfig} = shiftRegistrationsAround(
+    extensionRegistrations,
     configurationRegistrations,
+    options.app.specifications || [],
+  )
+
+  const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
+    allRegistrationsManagedInConfig,
     options.app,
     options.appId,
     options.includeDraftExtensions,
@@ -133,18 +140,20 @@ export async function deployConfirmed(
 
   // For extensions we also need the match by ID, not only UUID (doesn't apply to functions)
   for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
-    const registration = extensionRegistrations.find((registration) => registration.uuid === uuid)
+    const registration = extensionsNotManagedInConfig.find((registration) => registration.uuid === uuid)
     if (registration) validMatchesById[localIdentifier] = registration.id
   }
 
   return {
     extensions: validMatches,
+    // We neeed to figure out how to handle a extension with a list of registrations
+    // This should only affect the dev command to push the draft content
     extensionIds: {...validMatchesById, ...mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged)},
     extensionsNonUuidManaged,
   }
 }
 
-async function ensureNonUuidManagedExtensionsIds(
+export async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
   appId: string,
@@ -155,113 +164,25 @@ async function ensureNonUuidManagedExtensionsIds(
 
   localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
 
-  const extensionsToCreate: LocalSource[] = []
-  const validMatches: {[key: string]: string[]} = {}
-  const validMatchesById: {[key: string]: string[]} = {}
-
-  const extensionsInGlobalConfig = localExtensionRegistrations.filter((ext) => ext.specification.extensionManagedInToml)
-
-  await Promise.all(
-    extensionsInGlobalConfig.map(async (extension) => {
-      // are there any matches for global configs?
-      const possibleMatches = remoteConfigurationRegistrations.filter((remote) => {
-        return remote.type === developerPlatformClient.toExtensionGraphQLType(extension.graphQLType)
-      })
-
-      // if there are existing webhook subscription etension registrations
-      if (possibleMatches.length > 0) {
-        const localConfigContent = await extension.commonDeployConfig('')
-
-        // gets all the subscription objects in an array
-        const localConfigArray = getPathValue<unknown[]>(
-          localConfigContent as object,
-          extension.specification.multipleModuleConfigPath ?? '',
-        )
-        const matchedUuids: string[] = []
-        const matchedIds: string[] = []
-        const newExtensionsToCreate: ExtensionInstance[] = []
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        localConfigArray?.forEach((localConfig: any) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const hasMatch = possibleMatches?.some((possibleMatch: any) => {
-            const remoteConfigString = possibleMatch.activeVersion?.config
-            const remoteConfigObj = remoteConfigString ? JSON.parse(remoteConfigString) : ''
-            if (localConfig.uri === remoteConfigObj.uri && localConfig.topic === remoteConfigObj.topic) {
-              matchedUuids.push(possibleMatch.uuid)
-              matchedIds.push(possibleMatch.id)
-              return true
-            }
-          })
-          // if there are no matches, add the extension to create new extensions array
-          if (!hasMatch) {
-            newExtensionsToCreate.push(extension)
-          }
-        })
-
-        // creates the new extensions
-        const newExtensionRegistrationIds = await Promise.all(
-          newExtensionsToCreate?.map(async (extension) => {
-            const registration = await createExtension(
-              appId,
-              extension.graphQLType,
-              extension.handle,
-              developerPlatformClient,
-              extension.contextValue,
-            )
-            return [registration.id, registration.uuid]
-          }),
-        )
-        const newUuids = newExtensionRegistrationIds.flatMap(([, uuid]) => uuid!)
-        const newIds = newExtensionRegistrationIds.flatMap(([id]) => id!)
-        validMatches[extension.localIdentifier] = matchedUuids.concat(newUuids)
-        validMatchesById[extension.localIdentifier] = matchedIds.concat(newIds)
-      } else {
-        // creates all new extension instances
-        // this will create new uuids for each webhook subscription modules
-        const localSources = await buildExtensionsInGlobalToCreate(extension)
-        const extensionRegistrations = await Promise.all(
-          localSources.map(async (extension) => {
-            // extension?
-            const registration = await createExtension(
-              appId,
-              extension.graphQLType,
-              extension.handle,
-              developerPlatformClient,
-              extension.contextValue,
-            )
-            return [registration.id, registration.uuid]
-          }),
-        )
-
-        validMatches[extension.localIdentifier] = extensionRegistrations.flatMap(([, uuid]) => uuid!)
-        validMatchesById[extension.localIdentifier] = extensionRegistrations.flatMap(([id]) => id!)
-      }
-    }),
+  const {validMatches, validMatchesById} = await ensureExtensionIdsForExtensionsManagedInToml(
+    localExtensionRegistrations,
+    remoteConfigurationRegistrations,
+    developerPlatformClient,
+    appId,
   )
 
-  const extensionNotInGlobalConfig = localExtensionRegistrations.filter(
-    (ext) => !ext.specification.extensionManagedInToml,
-  )
-  extensionNotInGlobalConfig.forEach((local) => {
-    const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
-      return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
-    })
-    if (possibleMatch) {
-      validMatches[local.localIdentifier] = [possibleMatch.uuid]
-      validMatchesById[local.localIdentifier] = [possibleMatch.id]
-    } else extensionsToCreate.push(local)
-  })
+  const {validMatches: validMatchesForConfigurations, validMatchesById: validMatchesByIdForConfigurations} =
+    await ensureExtensionIdsForConfigurations(
+      localExtensionRegistrations,
+      remoteConfigurationRegistrations,
+      developerPlatformClient,
+      appId,
+    )
 
-  if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
-    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
-      validMatches[localIdentifier] = [registration.uuid]
-      validMatchesById[localIdentifier] = [registration.id]
-    }
+  return {
+    extensionsNonUuidManaged: {...validMatches, ...validMatchesForConfigurations},
+    extensionsIdsNonUuidManaged: {...validMatchesById, ...validMatchesByIdForConfigurations},
   }
-
-  return {extensionsNonUuidManaged: validMatches, extensionsIdsNonUuidManaged: validMatchesById}
 }
 
 async function createExtensions(
@@ -300,22 +221,15 @@ async function createExtensions(
   return result
 }
 
-async function buildExtensionsInGlobalToCreate(extension: ExtensionInstance): Promise<LocalSource[]> {
-  if (!extension.specification.multipleModuleConfigPath) return [extension]
-
+// karen.xie this name sucks too
+async function multipleConfigs(extension: ExtensionInstance): Promise<unknown[]> {
   const configContent = await extension.commonDeployConfig('')
+  return Array.isArray(configContent) ? configContent : [configContent]
+}
 
-  const multipleRootPathValue = getPathValue<unknown[]>(
-    configContent as object,
-    extension.specification.multipleModuleConfigPath,
-  )
-
-  // [ {topic: ..., uri: ...},  {...}]
-
-  // [ ExtensionInstance, ExtensionInstance ]
-  // ExtensionInstance
-  // config -> {api_version: ..., subscriptions: []}
-  return Array.from({length: multipleRootPathValue?.length ?? 0}).map((_value, index) => extension)
+async function buildExtensionsInGlobalToCreate(extension: ExtensionInstance): Promise<LocalSource[]> {
+  const multipleRootPathValue = await multipleConfigs(extension)
+  return Array(multipleRootPathValue?.length ?? 0).fill(extension)
 }
 
 function mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged: {[key: string]: string[]}) {
@@ -326,4 +240,144 @@ function mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged: {[key: stri
     }
   }
   return result
+}
+
+// karen.xie this name is bad
+export function shiftRegistrationsAround(
+  extensionRegistrations: RemoteSource[],
+  configurationRegistrations: RemoteSource[],
+  specifications: ExtensionSpecification[],
+) {
+  const extensionSpecsManagedInToml =
+    specifications
+      ?.filter((specification) => specification.extensionManagedInToml)
+      .map((specification) => specification.identifier) ?? []
+  const extensionsManagedInConfig = extensionRegistrations.filter((registration) => {
+    return extensionSpecsManagedInToml.includes(registration.type.toLowerCase())
+  })
+  const extensionsNotManagedInConfig = extensionRegistrations.filter((registration) => {
+    return !extensionSpecsManagedInToml.includes(registration.type.toLowerCase())
+  })
+  const allRegistrationsManagedInConfig = configurationRegistrations.concat(extensionsManagedInConfig)
+  return {extensionsNotManagedInConfig, allRegistrationsManagedInConfig}
+}
+
+async function ensureExtensionIdsForExtensionsManagedInToml(
+  localExtensionRegistrations: ExtensionInstance[],
+  remoteConfigurationRegistrations: RemoteSource[],
+  developerPlatformClient: DeveloperPlatformClient,
+  appId: string,
+) {
+  const extensionsManagedInToml = localExtensionRegistrations.filter((ext) => ext.specification.extensionManagedInToml)
+
+  const validMatches: {[key: string]: string[]} = {}
+  const validMatchesById: {[key: string]: string[]} = {}
+
+  await Promise.all(
+    extensionsManagedInToml.map(async (extension) => {
+      // are there any matches for global configs?
+      const possibleMatches = remoteConfigurationRegistrations.filter((remote) => {
+        return remote.type === developerPlatformClient.toExtensionGraphQLType(extension.graphQLType)
+      })
+
+      // if there are existing webhook subscription extension registrations
+      if (possibleMatches.length > 0) {
+        const localConfigArray = await multipleConfigs(extension)
+        const matchedUuids: string[] = []
+        const matchedIds: string[] = []
+        const newExtensionsToCreate: ExtensionInstance[] = []
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        localConfigArray?.forEach((localConfig: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const hasMatch = possibleMatches?.some((possibleMatch: any) => {
+            const remoteConfigString = possibleMatch.activeVersion?.config
+            const remoteConfigObj = remoteConfigString ? JSON.parse(remoteConfigString) : ''
+            if (extension.specification.matchesRemoteConfig?.(remoteConfigObj, localConfig)) {
+              matchedUuids.push(possibleMatch.uuid)
+              matchedIds.push(possibleMatch.id)
+              return true
+            }
+          })
+          // if there are no matches, add the extension to create new extensions array
+          if (!hasMatch) {
+            newExtensionsToCreate.push(extension)
+          }
+        })
+
+        // creates the new extensions
+        const newExtensionRegistrationIds = await Promise.all(
+          newExtensionsToCreate?.map(async (extension) => {
+            const registration = await createExtension(
+              appId,
+              extension.graphQLType,
+              extension.handle,
+              developerPlatformClient,
+              extension.contextValue,
+            )
+            return [registration.id, registration.uuid]
+          }),
+        )
+        const newUuids = newExtensionRegistrationIds.flatMap(([, uuid]) => uuid!)
+        const newIds = newExtensionRegistrationIds.flatMap(([id]) => id!)
+        validMatches[extension.localIdentifier] = matchedUuids.concat(newUuids)
+        validMatchesById[extension.localIdentifier] = matchedIds.concat(newIds)
+      } else {
+        // creates all new extension instances
+        // this will create new uuids for each webhook subscription modules
+        const localSources = await buildExtensionsInGlobalToCreate(extension)
+        const extensionRegistrations = await Promise.all(
+          localSources.map(async (extension) => {
+            const createdExtension = await createExtension(
+              appId,
+              extension.graphQLType,
+              extension.handle,
+              developerPlatformClient,
+              extension.contextValue,
+            )
+            return [createdExtension.id, createdExtension.uuid]
+          }),
+        )
+
+        validMatches[extension.localIdentifier] = extensionRegistrations.flatMap(([, uuid]) => uuid!)
+        validMatchesById[extension.localIdentifier] = extensionRegistrations.flatMap(([id]) => id!)
+      }
+    }),
+  )
+  return {validMatches, validMatchesById}
+}
+
+async function ensureExtensionIdsForConfigurations(
+  localExtensionRegistrations: ExtensionInstance[],
+  remoteConfigurationRegistrations: RemoteSource[],
+  developerPlatformClient: DeveloperPlatformClient,
+  appId: string,
+) {
+  const extensionsNotManagedInToml = localExtensionRegistrations.filter(
+    (ext) => !ext.specification.extensionManagedInToml,
+  )
+
+  const validMatches: {[key: string]: string[]} = {}
+  const validMatchesById: {[key: string]: string[]} = {}
+  const extensionsToCreate: LocalSource[] = []
+
+  extensionsNotManagedInToml.forEach((local) => {
+    const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
+      return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
+    })
+    if (possibleMatch) {
+      validMatches[local.localIdentifier] = [possibleMatch.uuid]
+      validMatchesById[local.localIdentifier] = [possibleMatch.id]
+    } else extensionsToCreate.push(local)
+  })
+
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
+    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
+      validMatches[localIdentifier] = [registration.uuid]
+      validMatchesById[localIdentifier] = [registration.id]
+    }
+  }
+
+  return {validMatches, validMatchesById}
 }

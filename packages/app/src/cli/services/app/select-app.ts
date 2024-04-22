@@ -28,7 +28,13 @@ export async function fetchAppRemoteConfiguration(
 ) {
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
-    activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
+    activeAppVersion?.appModuleVersions.filter(
+      (module) =>
+        module.specification?.experience === 'configuration' ||
+        specifications.find(
+          (spec) => spec.identifier === module.specification?.identifier && spec.extensionManagedInToml,
+        ),
+    ) || []
   if (appModuleVersionsConfig.length === 0) return undefined
   const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
@@ -47,7 +53,9 @@ export function remoteAppConfigurationExtensionContent(
   flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
-  const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
+  const configSpecifications = specifications.filter(
+    (spec) => spec.experience === 'configuration' || spec.extensionManagedInToml,
+  )
   configRegistrations.forEach((module) => {
     const configSpec = configSpecifications.find(
       (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),
