@@ -41,13 +41,12 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  let configuration: AppConfiguration | undefined
+  let configuration: AppConfiguration | undefined = undefined
   try {
-    let loadedConfig = await loadAppConfiguration(options)
-    configuration = loadedConfig.configuration
-  } catch (error: any) {
-    configuration = undefined
-  }
+    // This will crash if we aren't in an app folder. But we need to continue in that case.
+    configuration = (await loadAppConfiguration(options)).configuration
+  } catch (error: any) {}
+
   let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
   const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient})
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
