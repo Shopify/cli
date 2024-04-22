@@ -48,19 +48,6 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
   return input.trim()
 }
 
-export async function clientSecretPrompt(): Promise<string> {
-  return renderTextPrompt({
-    message:
-      'Client Secret to encode the webhook payload. If you are using the app template, this can be found in the partners dashboard',
-    defaultValue: 'shopify_test',
-    validate: (value: string) => {
-      if (value.length === 0) {
-        return "Client Secret can't be empty"
-      }
-    },
-  })
-}
-
 function deliveryMethodInstructions(method: string): string[] {
   if (method === DELIVERY_METHOD.HTTP) {
     return [

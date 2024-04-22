@@ -1,4 +1,4 @@
-import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, clientSecretPrompt, topicPrompt} from './trigger.js'
+import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from './trigger.js'
 import {DELIVERY_METHOD} from '../../services/webhook/trigger-flags.js'
 import {describe, expect, vi, test} from 'vitest'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -79,25 +79,6 @@ describe('addressPrompt', () => {
     expect(got).toEqual('https://example.org')
     expect(renderTextPrompt).toHaveBeenCalledWith({
       message: 'Address for delivery',
-      validate: expect.any(Function),
-    })
-  })
-})
-
-describe('clientSecretPrompt', () => {
-  test('asks the user to enter client_secret', async () => {
-    // Given
-    vi.mocked(renderTextPrompt).mockResolvedValue('a_secret')
-
-    // When
-    const got = await clientSecretPrompt()
-
-    // Then
-    expect(got).toEqual('a_secret')
-    expect(renderTextPrompt).toHaveBeenCalledWith({
-      message:
-        'Client Secret to encode the webhook payload. If you are using the app template, this can be found in the partners dashboard',
-      defaultValue: 'shopify_test',
       validate: expect.any(Function),
     })
   })
