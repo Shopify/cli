@@ -16,6 +16,16 @@ const EditorExtensionCollectionSchema = BaseSchema.extend({
   include: zod.array(IncludeSchema).optional(),
   includes: zod.array(zod.string()).optional(),
   type: zod.literal('editor_extension_collection'),
+}).transform((data) => {
+  const includes =
+    data.includes?.map((handle) => {
+      return {handle}
+    }) ?? []
+  const include = data.include ?? []
+  return {
+    ...data,
+    inCollection: [...includes, ...include],
+  }
 })
 
 export type EditorExtensionCollectionType = zod.infer<typeof EditorExtensionCollectionSchema>
@@ -26,9 +36,8 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
   appModuleFeatures: (_) => [],
   validate: async (config, path) => {
     const errors: string[] = []
-    const inCollection = makeExtensionsInCollection(config)
 
-    if (inCollection.length < 2) {
+    if (config.inCollection.length < 2) {
       errors.push(`${config.handle}: This editor extension collection must include at least 2 extensions`)
     }
 
@@ -40,27 +49,13 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
     return ok({})
   },
   deployConfig: async (config, directory) => {
-    const inCollection = makeExtensionsInCollection(config)
-
-    // eslint-disable-next-line no-warning-comments
-    // TODO: Validation to check either one of include or includes was defined
-
     return {
       name: config.name,
       handle: config.handle,
-      in_collection: inCollection,
+      in_collection: config.inCollection,
       localization: await loadLocalesConfig(directory, config.name),
     }
   },
 })
-
-export function makeExtensionsInCollection(config: EditorExtensionCollectionType) {
-  const includes =
-    config.includes?.map((handle) => {
-      return {handle}
-    }) ?? []
-  const include = config.include ?? []
-  return [...includes, ...include]
-}
 
 export default editorExtensionCollectionSpecification

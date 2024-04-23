@@ -5,10 +5,7 @@ import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
-import {
-  EditorExtensionCollectionType,
-  makeExtensionsInCollection,
-} from '../extensions/specifications/editor_extension_collection.js'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -288,7 +285,7 @@ export class App implements AppInterface {
     if (extensionCollections.length > 0) {
       const errors = validateExtensionsHandlesInCollection(extensionCollections, this.allExtensions)
       if (errors) {
-        throw new AbortError('Invalid editor extension collection configuration', errors.join('\n'))
+        throw new AbortError('Invalid editor extension collection configuration', errors.join('\n\n'))
       }
     }
 
@@ -369,25 +366,23 @@ export function validateExtensionsHandlesInCollection(
 
   const allowableTypesForExtensionInCollection = ['ui_extension']
   editorExtensionCollections.forEach((collection) => {
-    const extensionsInCollection = makeExtensionsInCollection(collection.configuration)
-
-    extensionsInCollection.forEach((extension) => {
+    collection.configuration.inCollection.forEach((extension) => {
       const matchingExtension = findExtensionByHandle(allExtensions, extension.handle)
 
       if (!matchingExtension) {
         errors.push(
-          `[${collection.handle}] editor extension collection: Add extension with handle '${extension.handle}' to local app. Local app must include extension with handle '${extension.handle}'`,
+          `[${collection.handle}] editor extension collection: Add extension with handle '${extension.handle}' to local app. Local app must include extension with handle '${extension.handle}'.`,
         )
       } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.specification.identifier)) {
         errors.push(
-          `[${collection.handle}] editor extension collection - The collection can't contain an extension of type '${matchingExtension.specification.identifier}'`,
+          `[${collection.handle}] editor extension collection: Remove extension of type '${matchingExtension.specification.identifier}' from this collection. This extension type is not supported in collections.`,
         )
       } else if (matchingExtension.specification.identifier === 'ui_extension') {
         const uiExtension = matchingExtension as ExtensionInstance<UIExtensionType>
         uiExtension.configuration.extension_points.forEach((extensionPoint) => {
           if (extensionPoint.target.startsWith('admin.')) {
             errors.push(
-              `[${collection.handle}] editor extension collection - The collection can't contain an extension of type '${matchingExtension.specification.identifier}' with target ${extensionPoint.target}`,
+              `[${collection.handle}] editor extension collection: Remove extension '${matchingExtension.configuration.handle}' with target '${extensionPoint.target}' from this collection. This extension target is not supported in collections.`,
             )
           }
         })

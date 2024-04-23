@@ -46,7 +46,6 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -446,7 +445,12 @@ export async function testFunctionExtension(
 
 interface EditorExtensionCollectionProps {
   directory?: string
-  configuration: {name: string; handle?: string; includes?: string[]; include?: {handle: string}[]}
+  configuration: {
+    name: string
+    handle?: string
+    includes?: string[]
+    include?: {handle: string}[]
+  }
 }
 
 export async function testEditorExtensionCollection({
@@ -460,11 +464,11 @@ export async function testEditorExtensionCollection({
   )
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'editor_extension_collection')!
-  const configuration = {
+  const configuration = specification.schema.parse({
     ...passedConfig,
     type: 'editor_extension_collection',
     metafields: [],
-  } as EditorExtensionCollectionType
+  })
 
   return new ExtensionInstance({
     configuration,

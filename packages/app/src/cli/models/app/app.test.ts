@@ -21,6 +21,7 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {Flag} from '../../services/dev/fetch.js'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -279,9 +280,9 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
         handle: 'order-summary-collection',
         includes: ['handle1', 'product-discounts-test', 'admin-extension', 'customer-account-extension'],
       }
-      const editorExtensionCollection = await testEditorExtensionCollection({
+      const editorExtensionCollection = (await testEditorExtensionCollection({
         configuration,
-      })
+      })) as ExtensionInstance<EditorExtensionCollectionType>
 
       const orderDiscountFunction = await testFunctionExtension({
         config: {
@@ -331,9 +332,9 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
 
       // When
       const expectedErrors = [
-        "[order-summary-collection] editor extension collection: Add extension with handle 'handle1' to local app. Local app must include extension with handle 'handle1'",
-        "[order-summary-collection] editor extension collection - The collection can't contain an extension of type 'function'",
-        "[order-summary-collection] editor extension collection - The collection can't contain an extension of type 'ui_extension' with target admin.customers.segmentation-templates.render",
+        "[order-summary-collection] editor extension collection: Add extension with handle 'handle1' to local app. Local app must include extension with handle 'handle1'.",
+        "[order-summary-collection] editor extension collection: Remove extension of type 'function' from this collection. This extension type is not supported in collections.",
+        "[order-summary-collection] editor extension collection: Remove extension 'admin-extension' with target 'admin.customers.segmentation-templates.render' from this collection. This extension target is not supported in collections.",
       ]
       const result = validateExtensionsHandlesInCollection([editorExtensionCollection], app.allExtensions)
 

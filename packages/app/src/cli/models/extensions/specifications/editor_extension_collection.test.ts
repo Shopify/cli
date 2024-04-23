@@ -29,8 +29,10 @@ describe('editor_extension_collection', async () => {
       metafields: [],
     }
 
+    const config = specification.schema.parse(configuration)
+
     return new ExtensionInstance({
-      configuration,
+      configuration: config,
       directory,
       specification,
       configurationPath,
