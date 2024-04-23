@@ -44,7 +44,7 @@ describe('getPaymentsExtensionsToMigrate()', () => {
     // Given
     const localExtension = getLocalExtension({
       type: 'payments_extension',
-      localIdentifier: 'ten-chars-ten-chars-ten-chars-',
+      localIdentifier: 'ten-chars-ten-chars-ten-chars',
     })
     const remoteExtension = getRemoteExtension({
       type: 'payments_app_credit_card',
