@@ -143,6 +143,7 @@ import {
 } from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {gql} from 'graphql-request'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -243,6 +244,35 @@ export class PartnersClient implements DeveloperPlatformClient {
         throw error
       }
     }
+  }
+
+  async appEventsQuery(jwtToken: string): Promise<boolean | undefined> {
+    const variables = {jwtToken}
+    const result = await this.request(
+      gql`
+        query QueryAppEvents($jwtToken: String!) {
+          appEvents(jwtToken: $jwtToken) {
+            type
+            shopId
+            appClientId
+            eventTimestamp
+            payload {
+              functionId
+              input
+              inputBytes
+              output
+              outputBytes
+              invocationId
+              errorMessage
+              errorType
+            }
+          }
+        }
+      `,
+      variables,
+    )
+    console.log(result)
+    return true
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {

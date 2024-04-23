@@ -128,6 +128,7 @@ export interface DeveloperPlatformClient {
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (app: MinimalAppIdentifiers) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
+  appEventsQuery?: (jwtToken: string) => Promise<boolean | undefined>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
