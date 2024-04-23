@@ -59,7 +59,7 @@ jobs:
         version:
           - 3.1.0
         os:
-          - macos-latest
+          - macos-12
     steps:
       - uses: actions/checkout@v3
 
