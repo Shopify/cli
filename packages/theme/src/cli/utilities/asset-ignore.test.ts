@@ -1,4 +1,4 @@
-import {applyIgnoreFilters} from './asset-ignore.js'
+import {applyIgnoreFilters, listMatchedFiles} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -161,5 +161,41 @@ describe('applyIgnoreFilters', () => {
 
     // Then
     expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('listIgnoredFiles', () => {
+  const checksums = [
+    {key: 'assets/basic.css', checksum: '0'},
+    {key: 'assets/complex.css', checksum: '1'},
+    {key: 'assets/image.png', checksum: '2'},
+    {key: 'config/settings_data.json', checksum: '3'},
+    {key: 'config/settings_schema.json', checksum: '4'},
+    {key: 'sections/announcement-bar.liquid', checksum: '5'},
+    {key: 'templates/404.json', checksum: '6'},
+    {key: 'templates/customers/account.json', checksum: '7'},
+  ]
+
+  test('returns an empty array when there are no matches', () => {
+    const ignore = 'no/match/*'
+    const ignoredFiles = listMatchedFiles(checksums, ignore)
+    expect(ignoredFiles).toEqual([])
+  })
+
+  test('returns matches', () => {
+    const ignore = 'assets/*.css'
+    const ignoredFiles = listMatchedFiles(checksums, ignore)
+    expect(ignoredFiles).toEqual(['assets/basic.css', 'assets/complex.css'])
+  })
+
+  test('returns matches for complex glob patterns', () => {
+    const ignore = '**/*.json'
+    const ignoredFiles = listMatchedFiles(checksums, ignore)
+    expect(ignoredFiles).toEqual([
+      'config/settings_data.json',
+      'config/settings_schema.json',
+      'templates/404.json',
+      'templates/customers/account.json',
+    ])
   })
 })

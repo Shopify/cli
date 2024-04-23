@@ -14,6 +14,7 @@ import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
 import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
+import CheckPattern from './cli/commands/theme/check-pattern.js'
 
 const COMMANDS = {
   'theme:init': Init,
@@ -32,6 +33,7 @@ const COMMANDS = {
   'theme:rename': Rename,
   'theme:serve': Serve,
   'theme:share': Share,
+  'theme:check-pattern': CheckPattern,
 }
 
 export default COMMANDS

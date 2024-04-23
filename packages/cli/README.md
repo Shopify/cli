@@ -36,6 +36,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
+* [`shopify theme check-pattern`](#shopify-theme-check-pattern)
 * [`shopify theme:console`](#shopify-themeconsole)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
@@ -1010,6 +1011,27 @@ DESCRIPTION
   Calls and runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
   and to ensure that it follows theme and Liquid best practices. "Learn more about the checks that Theme Check runs."
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
+```
+
+## `shopify theme check-pattern`
+
+Check if a file is ignored by the theme ignore file.
+
+```
+USAGE
+  $ shopify theme check-pattern [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
+
+FLAGS
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --path=<value>         The path to your theme directory.
+      --verbose              Increase the verbosity of the logs.
+
+DESCRIPTION
+  Check if a file is ignored by the theme ignore file.
 ```
 
 ## `shopify theme:console`

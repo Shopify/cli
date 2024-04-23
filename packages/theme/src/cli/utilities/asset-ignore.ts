@@ -23,11 +23,15 @@ export async function applyIgnoreFilters(
     .filter(filterBy(onlyOptions, '--only', true))
 }
 
+export function listMatchedFiles(themeChecksums: Checksum[], pattern: string): string[] {
+  return themeChecksums.filter(filterBy([pattern], '--pattern', true)).map((checksum) => checksum.key)
+}
+
 function filterBy(patterns: string[], type: string, invertMatch = false) {
   return ({key}: Checksum) => {
     if (patterns.length === 0) return true
 
-    const match = patterns.some((pattern) => matchGlob(key, pattern) || regexMatch(key, pattern))
+    const match = patterns.some((pattern) => patternMatch(key, pattern))
     const shouldIgnore = invertMatch ? !match : match
 
     if (shouldIgnore) {
@@ -37,6 +41,10 @@ function filterBy(patterns: string[], type: string, invertMatch = false) {
 
     return true
   }
+}
+
+function patternMatch(key: string, pattern: string): boolean {
+  return matchGlob(key, pattern) || regexMatch(key, pattern)
 }
 
 async function shopifyIgnoredPatterns({root}: ThemeFileSystem) {
@@ -86,9 +94,9 @@ function shouldReplaceGlobPattern(pattern: string): boolean {
   return pattern.includes('/*.') && !pattern.includes('/**/*.') && pattern.includes('templates/')
 }
 
-function regexMatch(key: string, pattern: string) {
+function regexMatch(key: string, pattern: string): boolean {
   try {
-    return key.match(pattern)
+    return Boolean(key.match(pattern))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
