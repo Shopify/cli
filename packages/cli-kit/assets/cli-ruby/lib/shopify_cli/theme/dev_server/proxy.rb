@@ -58,7 +58,8 @@ module ShopifyCLI
           query = URI.decode_www_form(env["QUERY_STRING"])
           replace_templates = build_replacement_param(env)
 
-          clean_sfr_cache(env, query, headers)
+          response = set_preview_theme_id(env, query, headers)
+          return serve_response(response, env) if response
 
           response = if replace_templates.any?
             # Pass to SFR the recently modified templates in `replace_templates` or
@@ -87,9 +88,7 @@ module ShopifyCLI
             @core_endpoints << env["PATH_INFO"]
           end
 
-          body = patch_body(env, response.body)
-          body = [body] unless body.respond_to?(:each)
-          [response.code, headers, body]
+          serve_response(response, env, headers)
         end
 
         def secure_session_id
@@ -105,7 +104,13 @@ module ShopifyCLI
 
         private
 
-        def clean_sfr_cache(env, query, headers)
+        def serve_response(response, env, headers = get_response_headers(response, env))
+          body = patch_body(env, response.body)
+          body = [body] unless body.respond_to?(:each)
+          [response.code, headers, body]
+        end
+
+        def set_preview_theme_id(env, query, headers)
           if env["PATH_INFO"].start_with?("/password")
             @cache_cleaned = false
             return
