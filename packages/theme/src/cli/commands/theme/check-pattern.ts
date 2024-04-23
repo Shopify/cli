@@ -5,6 +5,7 @@ import {listMatchedFiles} from '../../utilities/asset-ignore.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {TokenItem, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class CheckPattern extends ThemeCommand {
@@ -18,6 +19,7 @@ export default class CheckPattern extends ThemeCommand {
       description: 'The glob or regex pattern used for matching your theme files',
       env: 'SHOPIFY_FLAG_IGNORE',
       required: true,
+      multiple: true,
     }),
     json: Flags.boolean({
       hidden: false,
@@ -31,12 +33,35 @@ export default class CheckPattern extends ThemeCommand {
 
     if (flags.path) {
       const themeFileSystem: ThemeFileSystem = await mountThemeFileSystem(flags.path)
-      const fileNames: Checksum[] = Array.from(themeFileSystem.files.values())
-      const matchedFiles = listMatchedFiles(fileNames, flags.pattern)
+      const files: Checksum[] = Array.from(themeFileSystem.files.values())
+
+      const matches: {[key: string]: string[]} = {}
+      flags.pattern.forEach((pattern) => {
+        const matchedFiles = listMatchedFiles(files, pattern)
+        matches[pattern] = matchedFiles
+      })
+
       if (flags.json) {
-        outputInfo(JSON.stringify(matchedFiles))
+        outputInfo(JSON.stringify(matches))
       } else {
-        outputInfo(matchedFiles.map((file) => `- ${file}`).join('\n'))
+        const messageBody: TokenItem = []
+        Object.entries(matches).forEach(([pattern, files], index) => {
+          messageBody.push({
+            list: {
+              title: {
+                bold: `Pattern: ${pattern}`,
+              },
+              items: files,
+            },
+          })
+          if (index < Object.keys(matches).length - 1) {
+            messageBody.push('\n')
+          }
+        })
+        renderSuccess({
+          headline: 'Theme file pattern matching results:',
+          body: messageBody,
+        })
       }
     }
   }
