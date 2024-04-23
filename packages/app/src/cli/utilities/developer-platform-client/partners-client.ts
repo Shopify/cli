@@ -359,6 +359,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     const {organizationId, ...deployOptions} = deployInput
     // Enforce the type
     const variables: AppDeployVariables = deployOptions
+    // Exclude uid
+    variables.appModules = variables.appModules?.map((element) => {
+      const {uid, ...otherFields} = element
+      return otherFields
+    })
     return this.request(AppDeploy, variables)
   }
 
