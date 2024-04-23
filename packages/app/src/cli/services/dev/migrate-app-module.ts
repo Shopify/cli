@@ -6,6 +6,8 @@ import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graph
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+const MAX_HANDLE_LENGTH = 30
+
 export function getPaymentsExtensionsToMigrate(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
@@ -36,7 +38,7 @@ export function getPaymentsExtensionsToMigrate(
   const remoteSourcesMap = new Map<string, RemoteSource>()
   remote.forEach((remoteSource) => {
     remoteSourcesMap.set(remoteSource.uuid, remoteSource)
-    remoteSourcesMap.set(slugify(remoteSource.title), remoteSource)
+    remoteSourcesMap.set(slugify(remoteSource.title).substring(0, MAX_HANDLE_LENGTH), remoteSource)
   })
 
   return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {

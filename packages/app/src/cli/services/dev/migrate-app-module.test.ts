@@ -40,6 +40,25 @@ describe('getPaymentsExtensionsToMigrate()', () => {
     expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
   })
 
+  test('matching my remote title and localIdentifier by truncating the title', () => {
+    // Given
+    const localExtension = getLocalExtension({
+      type: 'payments_extension',
+      localIdentifier: 'ten-chars-ten-chars-ten-chars-',
+    })
+    const remoteExtension = getRemoteExtension({
+      type: 'payments_app_credit_card',
+      title: 'Ten Chars Ten Chars Ten Chars Ten Chars',
+      uuid: 'yy',
+    })
+
+    // When
+    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+
+    // Then
+    expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
+  })
+
   test('matching my local and remote IDs', () => {
     // Given
     const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'my-action'})
