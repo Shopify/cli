@@ -19,6 +19,11 @@ export default class CheckPattern extends ThemeCommand {
       env: 'SHOPIFY_FLAG_IGNORE',
       required: true,
     }),
+    json: Flags.boolean({
+      hidden: false,
+      description: 'format output as JSON',
+      env: 'SHOPIFY_FLAG_JSON',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -28,7 +33,11 @@ export default class CheckPattern extends ThemeCommand {
       const themeFileSystem: ThemeFileSystem = await mountThemeFileSystem(flags.path)
       const fileNames: Checksum[] = Array.from(themeFileSystem.files.values())
       const matchedFiles = listMatchedFiles(fileNames, flags.pattern)
-      outputInfo(matchedFiles.map((file) => `- ${file}`).join('\n'))
+      if (flags.json) {
+        outputInfo(JSON.stringify(matchedFiles))
+      } else {
+        outputInfo(matchedFiles.map((file) => `- ${file}`).join('\n'))
+      }
     }
   }
 }
