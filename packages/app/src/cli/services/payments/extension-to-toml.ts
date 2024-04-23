@@ -28,6 +28,8 @@ import {
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+const MAX_EXTENSION_HANDLE_LENGTH = 30
+
 function typeToContext(type: string) {
   switch (type) {
     case DashboardPaymentExtensionType.Offsite:
@@ -111,7 +113,7 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
       {
         name: extension.title,
         type: 'payments_extension',
-        handle: slugify(extension.title),
+        handle: slugify(extension.title).substring(0, MAX_EXTENSION_HANDLE_LENGTH),
         ...cliConfig,
         targeting: [
           {

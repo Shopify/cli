@@ -4,6 +4,8 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+const MAX_EXTENSION_HANDLE_LENGTH = 30
+
 interface FlowConfig {
   title: string
   description: string
@@ -39,7 +41,7 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
       {
         type: extension.type.replace('_definition', ''),
         name: config.title,
-        handle: slugify(extension.title),
+        handle: slugify(extension.title).substring(0, MAX_EXTENSION_HANDLE_LENGTH),
         description: config.description,
         runtime_url: config.url ?? defaultURL,
         config_page_url: config.custom_configuration_page_url,
