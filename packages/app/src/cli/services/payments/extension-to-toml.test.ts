@@ -115,7 +115,7 @@ supports_installments = true
     expect(got).toEqual(`api_version = "2023-10"
 
 [[extensions]]
-name = "Bogus Pay"
+name = "Bogus Pay Bogus Pay Bogus Pay Bogus"
 type = "payments_extension"
 handle = "bogus-pay-bogus-pay-bogus-pay-"
 payment_session_url = "https://bogus-app/payment-sessions/start"
