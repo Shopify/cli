@@ -376,7 +376,7 @@ export function validateExtensionsHandlesInCollection(
 
       if (!matchingExtension) {
         errors.push(
-          `[${collection.handle}] editor extension collection - Local app must contain an extension with handle '${extension.handle}'`,
+          `[${collection.handle}] editor extension collection: Add extension with handle '${extension.handle}' to local app. Local app must include extension with handle '${extension.handle}'`,
         )
       } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.specification.identifier)) {
         errors.push(

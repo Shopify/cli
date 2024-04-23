@@ -331,7 +331,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
 
       // When
       const expectedErrors = [
-        "[order-summary-collection] editor extension collection - Local app must contain an extension with handle 'handle1'",
+        "[order-summary-collection] editor extension collection: Add extension with handle 'handle1' to local app. Local app must include extension with handle 'handle1'",
         "[order-summary-collection] editor extension collection - The collection can't contain an extension of type 'function'",
         "[order-summary-collection] editor extension collection - The collection can't contain an extension of type 'ui_extension' with target admin.customers.segmentation-templates.render",
       ]

@@ -28,12 +28,8 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
     const errors: string[] = []
     const inCollection = makeExtensionsInCollection(config)
 
-    if (!config.handle) {
-      return err(`Editor extension collection with name ${config.name} must have a handle`)
-    }
-
     if (inCollection.length < 2) {
-      errors.push(`There must be at least two extensions in editor extension collection ${config.handle}`)
+      errors.push(`${config.handle}: This editor extension collection must include at least 2 extensions`)
     }
 
     if (errors.length > 0) {
