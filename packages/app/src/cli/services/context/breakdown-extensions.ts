@@ -342,10 +342,19 @@ function loadExtensionsIdentifiersBreakdown(
 }
 
 function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: ActiveAppVersion) {
+  console.log(
+    JSON.stringify(
+      activeAppVersion.appModuleVersions.filter((mod) => mod.specification?.experience !== 'configuration'),
+      null,
+      2,
+    ),
+  )
   const currentVersions =
     activeAppVersion?.appModuleVersions.filter(
-      (module) => module.specification!.options.managementExperience === 'dashboard',
+      (module) => module.specification?.options.managementExperience === 'dashboard',
     ) || []
+
+  console.log(currentVersions)
 
   const versionsNotIncluded = (version: AppModuleVersion) =>
     !currentRegistrations.map((registration) => registration.uuid).includes(version.registrationUuid!)
@@ -362,6 +371,10 @@ function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[],
   const toUpdate = currentRegistrations
     .filter(registrationIncluded)
     .map((registration) => buildDashboardBreakdownInfo(registration.title))
+
+  console.log('Only Remote: ', onlyRemote)
+  console.log('To Create: ', toCreate)
+  console.log('To Update: ', toUpdate)
 
   return {
     onlyRemote,
