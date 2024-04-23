@@ -20,16 +20,16 @@ const CapabilitiesSchema = zod.object({
   collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
 })
 
-export const ExtensionsArraySchema = zod.object({
-  type: zod.string().optional(),
-  extensions: zod.array(zod.any()).optional(),
-})
-
 const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement_reference: zod.string().optional(),
+})
+
+export const ExtensionsArraySchema = zod.object({
+  type: zod.string().optional(),
+  extensions: zod.array(zod.any()).optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
