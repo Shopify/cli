@@ -15,7 +15,7 @@ import {
   developerPreviewUpdate,
   DevContextOptions,
 } from './context.js'
-import {fetchAppPreviewMode} from './dev/fetch.js'
+import {fetchAppPreviewMode, fakeAppEventsRequest} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
@@ -76,7 +76,6 @@ export async function dev(commandOptions: DevOptions) {
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   // Be optimistic about tunnel creation and do it as early as possible
-  // console.log('prepareForDev', commandOptions)
   const tunnelPort = await getAvailableTCPPort()
   let tunnelClient: TunnelClient | undefined
   if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
@@ -147,7 +146,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     developerPlatformClient,
   )
 
-  // TODO: Do this behind a flag.
   const streamAppEvents = true
 
   return {
@@ -372,6 +370,10 @@ export function developerPreviewController(
     update: async (state: boolean) =>
       withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
         developerPreviewUpdate({apiKey, developerPlatformClient, enabled: state}),
+      ),
+    fetchAppEventsMode: async () =>
+      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
+        Boolean(await fakeAppEventsRequest(apiKey, developerPlatformClient)),
       ),
   }
 }

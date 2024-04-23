@@ -180,6 +180,17 @@ export async function fetchAppPreviewMode(
   return res.app?.developmentStorePreviewEnabled
 }
 
+export async function fakeAppEventsRequest(
+  apiKey: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<boolean | undefined> {
+  await setTimeout(() => {
+    console.log('Fake app events request - waited 1 second')
+    return true
+  }, 1000)
+  return true
+}
+
 export async function fetchOrgFromId(
   id: string,
   developerPlatformClient: DeveloperPlatformClient,

@@ -30,6 +30,30 @@ const AppEventsSubscribeMutation = gql`
   }
 `
 
+const FetchAppEventsAndRefreshTokenTestQuery = gql`
+  query FetchAppEventsAndRefreshToken($jwtToken: String!) {
+    appEvents(jwtToken: $jwtToken) {
+      jwtToken
+      events {
+        type
+        shopId
+        appClientId
+        eventTimestamp
+        payload {
+          functionId
+          input
+          inputBytes
+          output
+          outputBytes
+          invocationId
+          errorMessage
+          errorType
+        }
+      }
+    }
+  }
+`
+
 export function setupAppEventsSubscribeProcess({
   partnersSessionToken,
   subscription: {shopId, apiKey},
@@ -47,13 +71,38 @@ export function setupAppEventsSubscribeProcess({
 }
 
 export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = async ({stdout}, options) => {
-  const result = await partnersRequest(AppEventsSubscribeMutation, options.token, {
+  const result = await partnersRequest<{
+    appEventsSubscribe: {jwtToken: string; success: boolean; errors: string[]}
+  }>(AppEventsSubscribeMutation, options.token, {
     input: {shopId: options.shopId, apiKey: options.apiKey},
   })
-  console.log('[subscribeToAppEvents](AppEventsSubscribeMutation) result: ', result)
 
   stdout.write(`Subscribed to App Events for SHOP ID ${options.shopId} Api Key ${options.apiKey}\n`)
+
+  stdout.write(`Checking for AppEvents logs and refreshing the token\n`)
+
+  const currentJwtToken = result.appEventsSubscribe.jwtToken
+  const fetchLogsResult = await partnersRequest<{
+    appEvents: {
+      jwtToken: string
+      events: {
+        type: string
+        shopId: string
+        appClientId: string
+        eventTimestamp: string
+        payload: {functionId: string}
+      }[]
+    }
+  }>(FetchAppEventsAndRefreshTokenTestQuery, options.token, {
+    jwtToken: currentJwtToken,
+  })
+
+  fetchLogsResult.appEvents.events.forEach((event) => {
+    stdout.write(`Event Streamed\n`)
+    stdout.write(`Event Type: ${event.type}\n`)
+    stdout.write(`Shop ID: ${event.shopId}\n`)
+    stdout.write(`App Client ID: ${event.appClientId}\n`)
+    stdout.write(`Event Timestamp: ${event.eventTimestamp}\n`)
+    stdout.write(`Payload: ${JSON.stringify(event.payload, null, 2)}\n`)
+  })
 }
-// console.log('result', result)
-// const objString = JSON.stringify(result)
-// stdout.write(`Result: ${objString}\n`)

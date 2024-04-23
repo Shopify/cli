@@ -18,6 +18,7 @@ export interface DeveloperPreviewController {
   enable: () => Promise<void>
   disable: () => Promise<void>
   update: (state: boolean) => Promise<boolean>
+  fetchAppEventsMode?: () => Promise<boolean>
 }
 
 export interface DevProps {
@@ -51,6 +52,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
+  const appEventsPollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultStatusMessage = `Preview URL: ${previewUrl}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
@@ -104,6 +106,19 @@ const Dev: FunctionComponent<DevProps> = ({
       }
     }
 
+    const shouldPollAppEvents = true
+    const pollDevAppEventsMode = async () => {
+      if (developerPreview.fetchAppEventsMode === undefined) {
+        return
+      }
+      try {
+        await developerPreview.fetchAppEventsMode()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (_) {
+        setError('Failed to fetch the latest status of the development store preview, trying again in 5 seconds.')
+      }
+    }
+
     const enablePreviewMode = async () => {
       // Enable dev preview on app dev start
       try {
@@ -133,7 +148,20 @@ const Dev: FunctionComponent<DevProps> = ({
       pollingInterval.current = startPolling()
     }
 
+    if (shouldPollAppEvents) {
+      const startPolling = () => {
+        return setInterval(
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          () => pollDevAppEventsMode(),
+          5000,
+        )
+      }
+
+      appEventsPollingInterval.current = startPolling()
+    }
+
     return () => {
+      clearInterval(appEventsPollingInterval.current)
       clearInterval(pollingInterval.current)
     }
   }, [canEnablePreviewMode])
