@@ -38,7 +38,7 @@ export function getPaymentsExtensionsToMigrate(
   const remoteSourcesMap = new Map<string, RemoteSource>()
   remote.forEach((remoteSource) => {
     remoteSourcesMap.set(remoteSource.uuid, remoteSource)
-    remoteSourcesMap.set(slugify(remoteSource.title).substring(0, MAX_HANDLE_LENGTH), remoteSource)
+    remoteSourcesMap.set(slugify(remoteSource.title.substring(0, MAX_HANDLE_LENGTH)), remoteSource)
   })
 
   return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {

@@ -117,7 +117,7 @@ supports_installments = true
 [[extensions]]
 name = "Bogus Pay Bogus Pay Bogus Pay Bogus"
 type = "payments_extension"
-handle = "bogus-pay-bogus-pay-bogus-pay-"
+handle = "bogus-pay-bogus-pay-bogus-pay"
 payment_session_url = "https://bogus-app/payment-sessions/start"
 refund_session_url = "https://bogus-app/payment-sessions/refund"
 capture_session_url = "https://bogus-app/payment-sessions/capture"

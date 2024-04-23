@@ -41,7 +41,7 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
       {
         type: extension.type.replace('_definition', ''),
         name: config.title,
-        handle: slugify(extension.title).substring(0, MAX_EXTENSION_HANDLE_LENGTH),
+        handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
         description: config.description,
         runtime_url: config.url ?? defaultURL,
         config_page_url: config.custom_configuration_page_url,

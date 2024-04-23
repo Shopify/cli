@@ -113,7 +113,7 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
       {
         name: extension.title,
         type: 'payments_extension',
-        handle: slugify(extension.title).substring(0, MAX_EXTENSION_HANDLE_LENGTH),
+        handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
         ...cliConfig,
         targeting: [
           {
