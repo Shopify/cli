@@ -17,7 +17,7 @@ module ShopifyCLI
           @env = env
           @env["PATH_INFO"] = PASSWORD_PAGE_PATH if redirect_to_password?(@env)
 
-          return @app.call(@env) if password_page?(@env)
+          return @app.call(@env) if password_page?(@env) || (storefront_session.nil? || secure_session.nil?)
 
           authenticate!
 
