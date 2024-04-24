@@ -15,7 +15,7 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
-const UIExtensionSchema = BaseSchema.extend({
+export const UIExtensionSchema = BaseSchema.extend({
   extension_points: NewExtensionPointsSchema.optional(),
   targeting: NewExtensionPointsSchema.optional(),
 })
