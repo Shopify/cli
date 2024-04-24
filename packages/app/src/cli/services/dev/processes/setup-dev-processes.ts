@@ -158,6 +158,7 @@ export async function setupDevProcesses({
           shopId: storeId,
           apiKey,
         },
+        prefix: 'app-events',
       }),
   ].filter(stripUndefineds)
 

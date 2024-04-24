@@ -184,21 +184,22 @@ export async function fakeAppEventsRequest(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<boolean | undefined> {
-  // await setTimeout(() => {
-  //   console.log('Fake app events request - waited 1 second')
-  //   return true
-  // }, 1000)
-  console.log('attempting to fetch app events - optional to, from internval set up in Dev')
-  try {
-    const token =
-      'eyJhbGciOiJIUzI1NiJ9.eyJzaG9wX2lkIjoyLCJhcHBfaWQiOjkwNTc0MzM5ODU3NiwiZXhwaXJlc19hdCI6MTcxMzk3Mjg2NX0.Z9jFvE452_taOJkie8pfazakOAwkc0QsPi_z3mbm00o'
-    const result = await developerPlatformClient.appEventsQuery!(token)
-    console.log(result)
+  await setTimeout(() => {
+    // console.log('Fake app events request - waited 1 second')
     return true
-  } catch (error) {
-    console.log('error fetching app events', error)
-    return undefined
-  }
+  }, 1000)
+  // console.log('attempting to fetch app events - optional to, from internval set up in Dev')
+  // try {
+  //   const token =
+  //     'eyJhbGciOiJIUzI1NiJ9.eyJzaG9wX2lkIjoyLCJhcHBfaWQiOjkwNTc0MzM5ODU3NiwiZXhwaXJlc19hdCI6MTcxMzk3Mjg2NX0.Z9jFvE452_taOJkie8pfazakOAwkc0QsPi_z3mbm00o'
+  //   const result = await developerPlatformClient.appEventsQuery!(token)
+  //   console.log(result)
+  //   return true
+  // } catch (error) {
+  //   console.log('error fetching app events', error)
+  //   return undefined
+  // }
+  return undefined
 }
 
 export async function fetchOrgFromId(

@@ -19,6 +19,7 @@ interface Props {
     shopId: string
     apiKey: string
   }
+  prefix: string
 }
 
 const AppEventsSubscribeMutation = gql`
@@ -55,10 +56,11 @@ const FetchAppEventsQuery = gql`
 export function setupAppEventsSubscribeProcess({
   partnersSessionToken,
   subscription: {shopId, apiKey},
+  prefix,
 }: Props): AppEventsSubscribeProcess | undefined {
   return {
     type: 'app-events-subscribe',
-    prefix: 'app-events',
+    prefix,
     function: subscribeToAppEvents,
     options: {
       shopId,
@@ -117,16 +119,21 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
       jwtToken: currentJwtToken,
     })
 
-    console.log(fetchLogsResult)
+    // console.log(fetchLogsResult)
 
     fetchLogsResult.appEvents.forEach((event) => {
+      const data = JSON.stringify(event.payload, null, 2)
       stdout.write(`Option 1: Set Interval from inside the process function\n`)
       stdout.write(`Event Streamed\n`)
+      // stdout.write(`Event for for my-product-discount\n`)
       stdout.write(`Event Type: ${event.type}\n`)
       stdout.write(`Shop ID: ${event.shopId}\n`)
       stdout.write(`App Client ID: ${event.appClientId}\n`)
-      stdout.write(`Event Timestamp: ${event.eventTimestamp}\n`)
-      stdout.write(`Payload: ${JSON.stringify(event.payload, null, 2)}\n`)
+      stdout.write(`Event Payload: ${data}\n`)
+      // stdout.write(`Event Timestamp: ${event.eventTimestamp}\n`)
+      // stdout.write(`Function executed in 9.5678M instructions\n`)
+      // stdout.write(`hello, world from my discount\n`)
+      // stdout.write(`some more custom logging about discounting}\n`)
     })
   }
 
@@ -134,7 +141,7 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
     return setInterval(
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       () => appEventsRequest(),
-      450,
+      500,
     )
   }
   await startPolling()
