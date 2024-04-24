@@ -44,8 +44,6 @@ esBuild({
     ShopifyVSCodePlugin,
     GraphiQLImportsPlugin,
     ShopifyStacktraceyPlugin,
-    // To allow using require.resolve in esbuild (we use it for graphiql)
-    // requireResolvePlugin(),
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.

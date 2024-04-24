@@ -108,7 +108,6 @@
     "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
-    "@chialab/esbuild-plugin-require-resolve": "^0.18.0",
     "@shopify/app": "3.59.0",
     "@shopify/theme": "3.59.0",
     "@types/node": "18.19.3",

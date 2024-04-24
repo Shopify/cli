@@ -3,7 +3,8 @@ import { readFile } from 'fs/promises'
 const GraphiQLImportsPlugin = {
   name: 'GraphiQLImportsPlugin',
   setup(build) {
-    // GraphiQL uses require.resolve with paths that doesn't work well with esbuild
+    // GraphiQL uses require.resolve with paths that won't work with esbuild
+    // We need to replace them with valid paths
     build.onLoad({filter: /.*server\.js/}, async (args) => {
       const contents = await readFile(args.path, 'utf8')
       return {
