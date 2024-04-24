@@ -46,14 +46,19 @@ export default class CheckPattern extends ThemeCommand {
       } else {
         const messageBody: TokenItem = []
         Object.entries(matches).forEach(([pattern, files], index) => {
-          messageBody.push({
-            list: {
-              title: {
-                bold: `Pattern: ${pattern}`,
+          if (files.length === 0) {
+            messageBody.push(`No matches for: ${pattern}`)
+          } else {
+            messageBody.push({
+              list: {
+                title: {
+                  bold: `Matches for: ${pattern}`,
+                },
+                items: files,
               },
-              items: files,
-            },
-          })
+            })
+          }
+
           if (index < Object.keys(matches).length - 1) {
             messageBody.push('\n')
           }
