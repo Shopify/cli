@@ -1,10 +1,9 @@
 import {configFromSerializedFields} from './serialize-partners-fields.js'
 import {FlowPartnersExtensionTypes} from './types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
-
-const MAX_EXTENSION_HANDLE_LENGTH = 30
 
 interface FlowConfig {
   title: string

@@ -25,10 +25,9 @@ import {
   customOnsiteDeployConfigToCLIConfig,
   CUSTOM_ONSITE_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
-
-const MAX_EXTENSION_HANDLE_LENGTH = 30
 
 function typeToContext(type: string) {
   switch (type) {
