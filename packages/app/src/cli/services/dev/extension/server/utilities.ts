@@ -67,6 +67,7 @@ function getCustomerAccountsRedirectUrl(
   rawUrl.searchParams.append('origin', origin)
   rawUrl.searchParams.append('extensionId', extension.devUUID)
   rawUrl.searchParams.append('source', 'CUSTOMER_ACCOUNT_EXTENSION')
+  rawUrl.searchParams.append('appId', options.id ?? '')
   if (requestedTarget !== '') {
     rawUrl.searchParams.append('target', requestedTarget)
   }

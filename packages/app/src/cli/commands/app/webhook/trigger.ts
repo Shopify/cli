@@ -1,6 +1,7 @@
 import {DELIVERY_METHOD, WebhookTriggerFlags} from '../../../services/webhook/trigger-flags.js'
 import {webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
+import {appFlags} from '../../../flags.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
@@ -28,6 +29,7 @@ export default class WebhookTrigger extends Command {
   static description = this.descriptionWithoutMarkdown()
 
   static flags = {
+    ...appFlags,
     help: Flags.help({
       required: false,
       hidden: false,
@@ -52,6 +54,12 @@ export default class WebhookTrigger extends Command {
       options: [DELIVERY_METHOD.HTTP, DELIVERY_METHOD.PUBSUB, DELIVERY_METHOD.EVENTBRIDGE],
       env: 'SHOPIFY_FLAG_DELIVERY_METHOD',
       description: `Method chosen to deliver the topic payload. If not passed, it's inferred from the address.`,
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
     'shared-secret': Flags.string({
       required: false,
@@ -85,7 +93,10 @@ export default class WebhookTrigger extends Command {
       apiVersion: flags['api-version'],
       deliveryMethod: flags['delivery-method'],
       address: flags.address,
+      clientId: flags['client-id'],
       clientSecret: flags['client-secret'] || flags['shared-secret'],
+      path: flags.path,
+      config: flags.config,
     }
     if (flags['shared-secret']) {
       renderWarning({

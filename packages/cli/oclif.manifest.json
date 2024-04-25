@@ -1701,6 +1701,18 @@
           "required": false,
           "type": "option"
         },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "client-secret": {
           "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
           "env": "SHOPIFY_FLAG_CLIENT_SECRET",
@@ -1709,6 +1721,16 @@
           "multiple": false,
           "name": "client-secret",
           "required": false,
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
           "type": "option"
         },
         "delivery-method": {
@@ -1734,6 +1756,15 @@
           "name": "help",
           "required": false,
           "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
         },
         "shared-secret": {
           "description": "Deprecated. Please use client-secret.",
@@ -4309,6 +4340,18 @@
           "required": false,
           "type": "option"
         },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "client-secret": {
           "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
           "env": "SHOPIFY_FLAG_CLIENT_SECRET",
@@ -4317,6 +4360,16 @@
           "multiple": false,
           "name": "client-secret",
           "required": false,
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
           "type": "option"
         },
         "delivery-method": {
@@ -4342,6 +4395,15 @@
           "name": "help",
           "required": false,
           "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
         },
         "shared-secret": {
           "description": "Deprecated. Please use client-secret.",

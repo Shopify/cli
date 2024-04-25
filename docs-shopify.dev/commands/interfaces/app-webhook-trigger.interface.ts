@@ -18,10 +18,20 @@ export interface appwebhooktrigger {
   '--api-version <value>'?: string
 
   /**
+   * The Client ID of your app.
+   */
+  '--client-id <value>'?: string
+
+  /**
    * Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.
    * @environment SHOPIFY_FLAG_CLIENT_SECRET
    */
   '--client-secret <value>'?: string
+
+  /**
+   * The name of the app configuration.
+   */
+  '-c, --config <value>'?: string
 
   /**
    * Method chosen to deliver the topic payload. If not passed, it's inferred from the address.
@@ -34,6 +44,11 @@ export interface appwebhooktrigger {
    * @environment SHOPIFY_FLAG_HELP
    */
   '--help'?: ''
+
+  /**
+   * The path to your app directory.
+   */
+  '--path <value>'?: string
 
   /**
    * Deprecated. Please use client-secret.
