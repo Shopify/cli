@@ -3,6 +3,7 @@ import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {
   ExtensionBuildOptions,
+  buildFlowTemplateExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
@@ -283,6 +284,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return buildFunctionExtension(this, options)
     } else if (this.features.includes('esbuild')) {
       return buildUIExtension(this, options)
+    } else if (this.specification.identifier === 'flow_template') {
+      return buildFlowTemplateExtension(this, options)
     }
 
     // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.

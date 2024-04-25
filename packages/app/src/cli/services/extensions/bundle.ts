@@ -2,6 +2,7 @@ import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
+import {flowTemplateExtensionFiles} from '../../utilities/extensions/flow-template.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
@@ -79,6 +80,22 @@ export async function bundleThemeExtension(
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
   const files = await themeExtensionFiles(extension)
+
+  await Promise.all(
+    files.map(function (filepath) {
+      const relativePathName = relativePath(extension.directory, filepath)
+      const outputFile = joinPath(extension.outputPath, relativePathName)
+      return copyFile(filepath, outputFile)
+    }),
+  )
+}
+
+export async function bundleFlowTemplateExtension(
+  extension: ExtensionInstance,
+  options: ExtensionBuildOptions,
+): Promise<void> {
+  options.stdout.write(`Bundling Flow Template extension ${extension.localIdentifier}...`)
+  const files = await flowTemplateExtensionFiles(extension)
 
   await Promise.all(
     files.map(function (filepath) {

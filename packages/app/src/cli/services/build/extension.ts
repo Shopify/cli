@@ -1,6 +1,6 @@
 import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
-import {bundleExtension} from '../extensions/bundle.js'
+import {bundleExtension, bundleFlowTemplateExtension} from '../extensions/bundle.js'
 import {buildJSFunction} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -59,6 +59,19 @@ export async function buildThemeExtension(extension: ExtensionInstance, options:
   options.stdout.write(`Running theme check on your Theme app extension...`)
   const offenses = await runThemeCheck(extension.directory)
   options.stdout.write(offenses)
+}
+
+/**
+ * It builds the flow template extensions.
+ * @param options - Build options.
+ */
+export async function buildFlowTemplateExtension(
+  extension: ExtensionInstance,
+  options: ExtensionBuildOptions,
+): Promise<void> {
+  options.stdout.write(`Building Flow Template extension ${extension.localIdentifier}...`)
+  await bundleFlowTemplateExtension(extension, options)
+  options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
 /**
