@@ -24,6 +24,8 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMAND]`](#shopify-help-command)
+* [`shopify hydrogen build`](#shopify-hydrogen-build)
+* [`shopify hydrogen dev`](#shopify-hydrogen-dev)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -727,6 +729,67 @@ FLAGS
 
 DESCRIPTION
   Display help for Shopify CLI
+```
+
+## `shopify hydrogen build`
+
+Builds a Hydrogen storefront for production.
+
+```
+USAGE
+  $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
+    [--lockfile-check] [--path <value>] [--sourcemap]
+
+FLAGS
+  --[no-]bundle-stats            Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to
+                                 disable.
+  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
+  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
+                                 this file exists.
+  --disable-route-warning        Disables any warnings about missing standard routes.
+  --[no-]lockfile-check          Checks that there is exactly one valid lockfile in the project. Defaults to `true`.
+                                 Deactivate with `--no-lockfile-check`.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
+                                 `--no-sourcemaps`.
+
+DESCRIPTION
+  Builds a Hydrogen storefront for production.
+```
+
+## `shopify hydrogen dev`
+
+Runs Hydrogen storefront in an Oxygen worker for development.
+
+```
+USAGE
+  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-version-check]
+    [--disable-virtual-routes] [--env <value> | --env-branch <value>] [--inspector-port <value>] [--legacy-runtime]
+    [--path <value>] [--port <value>] [--sourcemap] [--verbose]
+
+FLAGS
+  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
+  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
+                                 this file exists.
+  --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
+                                 or Chrome DevTools.
+  --disable-version-check        Skip the version check when running `hydrogen dev`
+  --disable-virtual-routes       Disable rendering fallback routes when a route file doesn't exist.
+  --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
+                                 using the `env list` command.
+  --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
+  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --port=<value>                 The port to run the server on. Defaults to 3000.
+  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
+                                 `--no-sourcemaps`.
+  --verbose                      Outputs more information about the command's execution.
+
+DESCRIPTION
+  Runs Hydrogen storefront in an Oxygen worker for development.
 ```
 
 ## `shopify hydrogen init`

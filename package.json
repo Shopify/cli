@@ -292,8 +292,5 @@
         ]
       }
     }
-  },
-  "dependencies": {
-    "@shopify/cli-hydrogen": "0.0.0-next-a335afc-20240419084335"
   }
 }
