@@ -100,6 +100,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   const apiKey = remoteApp.apiKey
   let localApp = app
+  // console.log(localApp)
 
   if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)

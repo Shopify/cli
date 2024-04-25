@@ -33,21 +33,23 @@ const AppEventsSubscribeMutation = gql`
 `
 
 const FetchAppEventsQuery = gql`
-  query FetchAppEvents($jwtToken: String!) {
-    appEvents(jwtToken: $jwtToken) {
+  query FetchAppEvents($jwtToken: String!, $oldestMessageRead: String!) {
+    appEvents(jwtToken: $jwtToken, oldestMessageRead: $oldestMessageRead) {
       type
       shopId
       appClientId
       eventTimestamp
       payload {
+        logs
         functionId
         input
         inputBytes
         output
         outputBytes
         invocationId
-        errorMessage
         errorType
+        errorMessage
+        fuelConsumed
       }
     }
   }
@@ -82,6 +84,7 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
   stdout.write(`Checking for AppEvents logs\n`)
 
   const currentJwtToken = result.appEventsSubscribe.jwtToken
+
   const fetchLogsResult = await partnersRequest<{
     appEvents: {
       type: string
@@ -92,9 +95,10 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
     }[]
   }>(FetchAppEventsQuery, options.token, {
     jwtToken: currentJwtToken,
+    oldestMessageRead: new Date().toISOString(),
   })
 
-  console.log(fetchLogsResult)
+  // console.log(fetchLogsResult)
 
   fetchLogsResult.appEvents.forEach((event) => {
     stdout.write(`Event Streamed\n`)
@@ -105,7 +109,8 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
     stdout.write(`Payload: ${JSON.stringify(event.payload, null, 2)}\n`)
   })
 
-  // TODO:
+  let lastReadTime = new Date().toISOString()
+  // TODO: This is a temporary solution to poll for app events
   const appEventsRequest = async () => {
     const fetchLogsResult = await partnersRequest<{
       appEvents: {
@@ -113,27 +118,67 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
         shopId: string
         appClientId: string
         eventTimestamp: string
-        payload: {functionId: string}
+        payload: AppEvent
       }[]
     }>(FetchAppEventsQuery, options.token, {
       jwtToken: currentJwtToken,
+      oldestMessageRead: lastReadTime,
     })
 
     // console.log(fetchLogsResult)
+    const functionErrorOutput = ({
+      event,
+    }: {
+      event: {
+        type: string
+        shopId: string
+        appClientId: string
+        eventTimestamp: string
+        payload: AppEvent
+      }
+    }) => {
+      const part1 = `❌ ${
+        event.type === 'function-run' ? 'Function' : 'other?'
+      } my-product-discount failed to execute: ${event.payload.errorType}`
+      const part2 = event.payload.logs || 'no logs found'
+      const part25 = event.payload.errorMessage
+      const part3 = 'Log: /~/my-product-discount'
+      stdout.write(part1)
+      stdout.write(part2)
+      stdout.write(part25)
+      stdout.write(part3)
+    }
+
+    const functionSuccessOutput = ({
+      event,
+    }: {
+      event: {
+        type: string
+        shopId: string
+        appClientId: string
+        eventTimestamp: string
+        payload: AppEvent
+      }
+    }) => {
+      const part1 = `✅ ${event.type === 'function-run' ? 'Function' : 'other?'} executed in ${
+        event.payload?.fuelConsumed
+      } instructions:`
+      const part2 = event.payload.logs
+      const part3 = 'some more custom logging about discounting'
+      const part4 = 'Log: /~/my-product-discount'
+      stdout.write(part1)
+      stdout.write(part2)
+      stdout.write(part3)
+      stdout.write(part4)
+    }
 
     fetchLogsResult.appEvents.forEach((event) => {
-      const data = JSON.stringify(event.payload, null, 2)
-      stdout.write(`Option 1: Set Interval from inside the process function\n`)
-      stdout.write(`Event Streamed\n`)
-      // stdout.write(`Event for for my-product-discount\n`)
-      stdout.write(`Event Type: ${event.type}\n`)
-      stdout.write(`Shop ID: ${event.shopId}\n`)
-      stdout.write(`App Client ID: ${event.appClientId}\n`)
-      stdout.write(`Event Payload: ${data}\n`)
-      // stdout.write(`Event Timestamp: ${event.eventTimestamp}\n`)
-      // stdout.write(`Function executed in 9.5678M instructions\n`)
-      // stdout.write(`hello, world from my discount\n`)
-      // stdout.write(`some more custom logging about discounting}\n`)
+      if (event.payload.errorMessage) {
+        functionErrorOutput({event})
+      } else {
+        functionSuccessOutput({event})
+      }
+      lastReadTime = new Date().toISOString()
     })
   }
 
@@ -141,8 +186,21 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
     return setInterval(
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       () => appEventsRequest(),
-      500,
+      2000,
     )
   }
   await startPolling()
+}
+
+interface AppEvent {
+  functionId?: string
+  input?: string
+  inputBytes?: number
+  output?: string
+  outputBytes?: number
+  invocationId?: string
+  errorMessage?: string
+  errorType?: string
+  logs?: string
+  fuelConsumed?: number
 }
