@@ -14,7 +14,7 @@ export interface hydrogenbuild {
 
   /**
    * Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.
-   * 
+   *
    */
   '--bundle-stats'?: ''
 
@@ -32,13 +32,13 @@ export interface hydrogenbuild {
 
   /**
    * Automatically generates GraphQL types for your project’s Storefront API queries.
-   * 
+   *
    */
   '--codegen'?: ''
 
   /**
    * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.
-   * 
+   *
    */
   '--codegen-config-path <value>'?: string
 }

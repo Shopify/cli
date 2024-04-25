@@ -8,25 +8,25 @@ export interface hydrogencustomeraccountpush {
 
   /**
    * The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'
-   * 
+   *
    */
   '--storefront-id <value>'?: string
 
   /**
    * The development domain of your application.
-   * 
+   *
    */
   '--dev-origin <value>': string
 
   /**
    * The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'
-   * 
+   *
    */
   '--relative-redirect-uri <value>'?: string
 
   /**
    * The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.
-   * 
+   *
    */
   '--relative-logout-uri <value>'?: string
 }

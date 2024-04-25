@@ -8,7 +8,7 @@ export interface hydrogendebugcpu {
 
   /**
    * Specify a path to generate the profile file. Defaults to "startup.cpuprofile".
-   * 
+   *
    */
   '--output <value>'?: string
 }

@@ -8,13 +8,13 @@ export interface hydrogencodegen {
 
   /**
    * Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.
-   * 
+   *
    */
   '--codegen-config-path <value>'?: string
 
   /**
    * Watch the project for changes to update types on file save.
-   * 
+   *
    */
   '--watch'?: ''
 }

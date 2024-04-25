@@ -2,7 +2,7 @@
 export interface hydrogenenvpull {
   /**
    * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
-   * 
+   *
    */
   '--env <value>'?: string
 

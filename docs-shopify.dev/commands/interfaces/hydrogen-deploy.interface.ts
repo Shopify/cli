@@ -8,7 +8,7 @@ export interface hydrogendeploy {
 
   /**
    * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
-   * 
+   *
    */
   '--env <value>'?: string
 
@@ -20,13 +20,13 @@ export interface hydrogendeploy {
 
   /**
    * Path to an environment file to override existing environment variables for the deployment.
-   * 
+   *
    */
   '--env-file <value>'?: string
 
   /**
    * Deploys to the Preview environment. Overrides --env-branch and Git metadata.
-   * 
+   *
    */
   '--preview'?: ''
 
@@ -38,19 +38,19 @@ export interface hydrogendeploy {
 
   /**
    * Skip the routability verification step after deployment.
-   * 
+   *
    */
   '--no-verify'?: ''
 
   /**
    * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.
-   * 
+   *
    */
   '--auth-bypass-token'?: ''
 
   /**
    * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.
-   * 
+   *
    */
   '--build-command <value>'?: string
 
@@ -74,7 +74,7 @@ export interface hydrogendeploy {
 
   /**
    * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.
-   * 
+   *
    */
   '--json-output'?: ''
 

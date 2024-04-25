@@ -20,13 +20,13 @@ export interface hydrogendev {
 
   /**
    * Automatically generates GraphQL types for your project’s Storefront API queries.
-   * 
+   *
    */
   '--codegen'?: ''
 
   /**
    * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.
-   * 
+   *
    */
   '--codegen-config-path <value>'?: string
 
@@ -56,7 +56,7 @@ export interface hydrogendev {
 
   /**
    * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.
-   * 
+   *
    */
   '--env <value>'?: string
 
@@ -68,7 +68,7 @@ export interface hydrogendev {
 
   /**
    * Skip the version check when running `hydrogen dev`
-   * 
+   *
    */
   '--disable-version-check'?: ''
 

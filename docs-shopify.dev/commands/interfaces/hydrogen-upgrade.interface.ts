@@ -8,7 +8,7 @@ export interface hydrogenupgrade {
 
   /**
    * A target hydrogen version to update to
-   * 
+   *
    */
   '-v, --version <value>'?: string
 
