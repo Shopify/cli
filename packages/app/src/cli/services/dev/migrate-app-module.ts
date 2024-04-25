@@ -3,10 +3,9 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
-
-const MAX_HANDLE_LENGTH = 30
 
 export function getPaymentsExtensionsToMigrate(
   localSources: LocalSource[],
@@ -38,7 +37,7 @@ export function getPaymentsExtensionsToMigrate(
   const remoteSourcesMap = new Map<string, RemoteSource>()
   remote.forEach((remoteSource) => {
     remoteSourcesMap.set(remoteSource.uuid, remoteSource)
-    remoteSourcesMap.set(slugify(remoteSource.title.substring(0, MAX_HANDLE_LENGTH)), remoteSource)
+    remoteSourcesMap.set(slugify(remoteSource.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)), remoteSource)
   })
 
   return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
