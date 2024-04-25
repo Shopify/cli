@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-a335afc-20240419084335
-        version: 0.0.0-next-a335afc-20240419084335(react-dom@17.0.2)(react@17.0.2)
+        specifier: 8.0.1
+        version: 8.0.1(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@bugsnag/source-maps':
         specifier: ^2.3.1
@@ -36,8 +36,8 @@ importers:
         specifier: file:packages/eslint-plugin-cli
         version: file:packages/eslint-plugin-cli(eslint@8.49.0)(prettier@2.8.8)(typescript@5.2.2)(vitest@0.34.4)
       '@shopify/generate-docs':
-        specifier: 0.15.3
-        version: 0.15.3
+        specifier: 0.15.6
+        version: 0.15.6
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
@@ -4967,15 +4967,15 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-a335afc-20240419084335(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-2WfK01AOKKKm1ofyJiz4riSK8+JMESlZZd8ODvoqf0RSPvMGM66jgWqSnMPg16O5+/XpEAJ9MR8yIpwmjpYiOA==}
+  /@shopify/cli-hydrogen@8.0.1(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-FXuPqvKWT0TOacbGC8TU55FlvaoJk5+dhiUl/nPK45q1WJgFNShSXfMsfOKH9OFCrHYp/VbKbR/ZPJ4tWEntbw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-a335afc-20240419084335
-      '@shopify/mini-oxygen': 0.0.0-next-a335afc-20240419084335
+      '@shopify/hydrogen-codegen': ^0.3.0
+      '@shopify/mini-oxygen': ^3.0.1
       graphql-config: ^5.0.3
       vite: 4.4.9
     peerDependenciesMeta:
@@ -5168,8 +5168,8 @@ packages:
       node-fetch: 3.3.1
     dev: false
 
-  /@shopify/generate-docs@0.15.3:
-    resolution: {integrity: sha512-2rNfGS8z3oz2dI6FFDmeTfe12+FwG77O6UGBnaVrHaN244dn2bSl00g6qmjgvoAYS74SRqBcOvMuS2tUTZzYYA==}
+  /@shopify/generate-docs@0.15.6:
+    resolution: {integrity: sha512-4p6c2Xlt5TVAACM/YD6dcEioKeCpHwv5n65TOIGQaFhRUsA3yRFrbD+8G2TSfeW60QIZchzvRQ7xwYjljGajlA==}
     hasBin: true
     dependencies:
       '@types/react': 17.0.2
