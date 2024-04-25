@@ -173,7 +173,6 @@
       "-h"
     ],
     "hooks": {
-      "init": "./dist/hooks/init.js",
       "prerun": "./dist/hooks/prerun.js",
       "postrun": "./dist/hooks/postrun.js",
       "command_not_found": {
