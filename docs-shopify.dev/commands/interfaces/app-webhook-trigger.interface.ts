@@ -19,6 +19,7 @@ export interface appwebhooktrigger {
 
   /**
    * The Client ID of your app.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
    */
   '--client-id <value>'?: string
 
@@ -30,6 +31,7 @@ export interface appwebhooktrigger {
 
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
@@ -47,6 +49,7 @@ export interface appwebhooktrigger {
 
   /**
    * The path to your app directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
