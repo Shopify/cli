@@ -1452,22 +1452,22 @@ DESCRIPTION
 
   If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a
   machine-readable input for scripts or continuous integration.
+```
 
   Sample output:
 
   ```json
-  {
-  "theme": {
-  "id": 108267175958,
-  "name": "MyTheme",
-  "role": "unpublished",
-  "shop": "mystore.myshopify.com",
-  "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
-  "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
-  }
-  }
+    {
+      "theme": {
+        "id": 108267175958,
+        "name": "MyTheme",
+        "role": "unpublished",
+        "shop": "mystore.myshopify.com",
+        "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+        "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+      }
+    }
   ```
-```
 
 ## `shopify theme rename`
 
