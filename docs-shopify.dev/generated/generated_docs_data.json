@@ -3195,15 +3195,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--styling <value>",
-                "value": "string",
-                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_HYDROGEN_FLAG_STYLING"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--template <value>",
                 "value": "string",
                 "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
@@ -3220,7 +3211,7 @@
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
               }
             ],
-            "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Scaffolds project based on an existing template or example from the Hydrogen repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE\n   */\n  '--template <value>'?: string\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Generate routes for all pages.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ROUTES\n   */\n  '--routes'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   * @environment SHOPIFY_HYDROGEN_FLAG_GIT\n   */\n  '--git'?: ''\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`\n   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART\n   */\n  '--quickstart'?: ''\n}"
+            "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Scaffolds project based on an existing template or example from the Hydrogen repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE\n   */\n  '--template <value>'?: string\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Generate routes for all pages.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ROUTES\n   */\n  '--routes'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   * @environment SHOPIFY_HYDROGEN_FLAG_GIT\n   */\n  '--git'?: ''\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`\n   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART\n   */\n  '--quickstart'?: ''\n}"
           }
         }
       }
@@ -3779,15 +3770,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--styling <value>",
-                "value": "string",
-                "description": "Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_HYDROGEN_FLAG_STYLING"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
                 "description": "Overwrites the destination directory and files if they already exist.",
@@ -3795,7 +3777,7 @@
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
               }
             ],
-            "value": "export interface hydrogensetup {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n}"
+            "value": "export interface hydrogensetup {\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n}"
           }
         }
       }

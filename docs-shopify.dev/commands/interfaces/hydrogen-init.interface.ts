@@ -37,12 +37,6 @@ export interface hydrogeninit {
   '--mock-shop'?: ''
 
   /**
-   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING
-   */
-  '--styling <value>'?: string
-
-  /**
    * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.
    * @environment SHOPIFY_HYDROGEN_FLAG_I18N
    */
