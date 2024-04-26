@@ -2,31 +2,37 @@
 export interface appfunctionschema {
   /**
    * The Client ID to fetch the schema with.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
    */
   '--client-id <value>'?: string
 
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The path to your function directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Output the schema to stdout instead of writing to a file.
+   * @environment SHOPIFY_FLAG_STDOUT
    */
   '--stdout'?: ''
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

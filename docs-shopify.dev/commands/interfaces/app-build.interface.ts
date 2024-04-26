@@ -2,31 +2,37 @@
 export interface appbuild {
   /**
    * Application's Client ID that will be exposed at build time.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
    */
   '--client-id <value>'?: string
 
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The path to your app directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Skips the installation of dependencies. Deprecated, use workspaces instead.
+   * @environment SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION
    */
   '--skip-dependencies-installation'?: ''
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

@@ -2,26 +2,31 @@
 export interface appinit {
   /**
    * Which flavor of the given template to use.
+   * @environment SHOPIFY_FLAG_TEMPLATE_FLAVOR
    */
   '--flavor <value>'?: string
 
   /**
    * 
+   * @environment SHOPIFY_FLAG_NAME
    */
   '-n, --name <value>'?: string
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * 
+   * @environment SHOPIFY_FLAG_PACKAGE_MANAGER
    */
   '-d, --package-manager <value>'?: string
 
   /**
    * 
+   * @environment SHOPIFY_FLAG_PATH
    */
   '-p, --path <value>'?: string
 
@@ -29,11 +34,13 @@ export interface appinit {
    * The app template. Accepts one of the following:
        - <remix|none>
        - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]
+   * @environment SHOPIFY_FLAG_TEMPLATE
    */
   '--template <value>'?: string
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

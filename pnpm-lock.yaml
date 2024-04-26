@@ -32,8 +32,8 @@ importers:
         specifier: file:packages/eslint-plugin-cli
         version: file:packages/eslint-plugin-cli(eslint@8.57.0)(prettier@2.8.8)(typescript@5.2.2)(vitest@0.34.6)
       '@shopify/generate-docs':
-        specifier: 0.15.3
-        version: 0.15.3
+        specifier: 0.15.6
+        version: 0.15.6
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
@@ -6418,8 +6418,8 @@ packages:
       node-fetch: 3.3.2
     dev: false
 
-  /@shopify/generate-docs@0.15.3:
-    resolution: {integrity: sha512-2rNfGS8z3oz2dI6FFDmeTfe12+FwG77O6UGBnaVrHaN244dn2bSl00g6qmjgvoAYS74SRqBcOvMuS2tUTZzYYA==}
+  /@shopify/generate-docs@0.15.6:
+    resolution: {integrity: sha512-4p6c2Xlt5TVAACM/YD6dcEioKeCpHwv5n65TOIGQaFhRUsA3yRFrbD+8G2TSfeW60QIZchzvRQ7xwYjljGajlA==}
     hasBin: true
     dependencies:
       '@types/react': 17.0.2
