@@ -31,6 +31,8 @@ const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
 const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/generator-templates/**/*')
 
+const hydrogenRouteTemplates = joinPath(hydrogenPath, 'dist/lib/setups/routes/templates/**/*')
+
 esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
@@ -80,7 +82,11 @@ esBuild({
         },
         {
           from: [hydrogenTemplateAssets],
-          to: ['./dist/generator-templates/'],
+          to: ['./generator-templates/'],
+        },
+        {
+          from: [hydrogenRouteTemplates],
+          to: ['./dist/templates'],
         }
       ],
     }),
