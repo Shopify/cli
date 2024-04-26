@@ -69,9 +69,9 @@ function setupTestProcess(): TestProcess {
     prefix: 'test',
     function: async ({stdout, stderr, abortSignal}, _) => {
       for (let i = 0; i < 10; i++) {
-        let counter = 0;
+        let counter = 0
         setInterval(() => {
-          const prefix = `<::hello-world ${new Array(i).join("0")}${i}::>`;
+          const prefix = `<::hello-world ${new Array(i).join("0")}${i}::>`
           stdout.write(`${prefix} Foo bar ${counter++}`)
           if (counter % 5 == 0) {
             stderr.write(`${prefix} Error foo bar ${counter++}`)

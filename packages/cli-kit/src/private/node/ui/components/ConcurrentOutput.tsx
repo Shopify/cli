@@ -94,7 +94,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     '#800080' /*purple*/,
     '#000080' /*navy*/,
     '#808000' /*olive*/
-  ];
+  ]
   const [prefixColumnSize, setPrefixColumnSize] = useState<number>(12)
 
   const parseLog = (log: string) : ParsedLog => {
@@ -113,15 +113,15 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   }
 
   const addPrefix = (prefix: string, prefixes: string[]) => {
-    const index = prefixes.indexOf(prefix);
+    const index = prefixes.indexOf(prefix)
     if (index != -1) {
-      return index;
+      return index
     }
     prefixes.push(prefix)
     setPrefixColumnSize(previousColumnSize => {
       return Math.max(...prefixes.map((prefix) => prefix.length), previousColumnSize)
     })
-    return prefixes.length-1;
+    return prefixes.length-1
   }
 
   const lineColor = (index: number) => {
