@@ -18,6 +18,7 @@ const external = [
   // esbuild can't be bundled per design
   'esbuild',
   'lightningcss',
+  'vite',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually

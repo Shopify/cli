@@ -244,7 +244,7 @@ importers:
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling
-        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling(react-dom@17.0.2)(react@18.2.0)'
+        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling(react-dom@17.0.2)(react@18.2.0)(vite@4.4.9)'
       '@shopify/cli-kit':
         specifier: 3.59.0
         version: link:../cli-kit
@@ -260,6 +260,9 @@ importers:
       esbuild:
         specifier: 0.19.8
         version: 0.19.8
+      vite:
+        specifier: 4.4.9
+        version: 4.4.9(@types/node@18.19.3)(sass@1.64.2)
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
@@ -5039,7 +5042,7 @@ packages:
       gradient-string: 2.0.2
       graphql: 16.8.1
       graphql-request: 5.2.0(graphql@16.8.1)
-      ink: 4.4.1(react@18.2.0)
+      ink: 4.4.1(@types/react@17.0.2)(react@18.2.0)
       is-interactive: 2.0.0
       js-yaml: 4.1.0
       kill-port-process: 3.1.0
@@ -5113,7 +5116,7 @@ packages:
       gradient-string: 2.0.2
       graphql: 16.8.1
       graphql-request: 5.2.0(graphql@16.8.1)
-      ink: 4.4.1(react@18.2.0)
+      ink: 4.4.1(@types/react@17.0.2)(react@18.2.0)
       is-interactive: 2.0.0
       kill-port-process: 3.1.0
       latest-version: 7.0.0
@@ -9887,50 +9890,6 @@ packages:
       - utf-8-validate
     dev: false
 
-  /ink@4.4.1(react@18.2.0):
-    resolution: {integrity: sha512-rXckvqPBB0Krifk5rn/5LvQGmyXwCUpBfmTwbkQNBY9JY8RSl3b8OftBNEYxg4+SWUhEKcPifgope28uL9inlA==}
-    engines: {node: '>=14.16'}
-    peerDependencies:
-      '@types/react': 17.0.2
-      react: '>=18.0.0'
-      react-devtools-core: ^4.19.1
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      react-devtools-core:
-        optional: true
-    dependencies:
-      '@alcalzone/ansi-tokenize': 0.1.3
-      ansi-escapes: 6.2.0
-      auto-bind: 5.0.1
-      chalk: 5.3.0
-      cli-boxes: 3.0.0
-      cli-cursor: 4.0.0
-      cli-truncate: 3.1.0
-      code-excerpt: 4.0.0
-      indent-string: 5.0.0
-      is-ci: 3.0.1
-      is-lower-case: 2.0.2
-      is-upper-case: 2.0.2
-      lodash: 4.17.21
-      patch-console: 2.0.0
-      react: 18.2.0
-      react-reconciler: 0.29.0(react@18.2.0)
-      scheduler: 0.23.0
-      signal-exit: 3.0.7
-      slice-ansi: 6.0.0
-      stack-utils: 2.0.6
-      string-width: 5.1.2
-      type-fest: 0.12.0
-      widest-line: 4.0.1
-      wrap-ansi: 8.1.0
-      ws: 8.13.0
-      yoga-wasm-web: 0.3.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-    dev: false
-
   /internal-slot@1.0.5:
     resolution: {integrity: sha512-Y+R5hJrzs52QCG2laLn4udYVnxsfny9CpOhNhUvk/SSSVyF6T27FzRbF0sroPidSu3X8oEAkOn2K804mjpt6UQ==}
     engines: {node: '>= 0.4'}
@@ -14395,7 +14354,7 @@ packages:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
     dev: true
 
-  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling(react-dom@17.0.2)(react@18.2.0)':
+  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling(react-dom@17.0.2)(react@18.2.0)(vite@4.4.9)':
     resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling}
     id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling'
     name: '@shopify/cli-hydrogen'
@@ -14442,6 +14401,7 @@ packages:
       tempy: 3.0.0
       ts-morph: 20.0.0
       use-resize-observer: 9.1.0(react-dom@17.0.2)(react@18.2.0)
+      vite: 4.4.9(@types/node@18.19.3)(sass@1.64.2)
     optionalDependencies:
       '@parcel/watcher': 2.4.1
     transitivePeerDependencies:
