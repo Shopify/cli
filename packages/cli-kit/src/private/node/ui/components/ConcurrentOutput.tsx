@@ -1,7 +1,7 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
-import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
+import React, {Fragment, FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, Static, Text, TextProps, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
@@ -18,6 +18,11 @@ interface Chunk {
   color: TextProps['color']
   prefix: string
   lines: string[]
+}
+
+interface ParsedLog {
+  prefix?: string
+  log: string
 }
 
 function addLeadingZero(number: number) {
@@ -77,43 +82,84 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
-  const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-  const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
-  const lineColor = useCallback(
-    (index: number) => {
-      const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-      return concurrentColors[colorIndex]!
-    },
-    [concurrentColors],
-  )
-  const writableStream = useCallback(
-    (process: OutputProcess, index: number) => {
-      return new Writable({
-        write(chunk, _encoding, next) {
-          const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-          addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')})
-          setProcessOutput((previousProcessOutput) => [
-            ...previousProcessOutput,
-            {
-              color: lineColor(index),
-              prefix: process.prefix,
-              lines,
-            },
-          ])
-          next()
-        },
-      })
-    },
-    [lineColor],
-  )
+
+  const concurrentColors = [
+    'yellow',
+    '#008080' /*teal*/,
+    'cyan',
+    '#ff8700' /*orange*/,
+    'magenta',
+    '#ffd787' /*gold*/,
+    '#008000', /*green*/
+    '#800080' /*purple*/,
+    '#000080' /*navy*/,
+    '#808000' /*olive*/
+  ];
+  const [prefixColumnSize, setPrefixColumnSize] = useState<number>(12)
+
+  const parseLog = (log: string) : ParsedLog => {
+    // Example: <::hello-world::> foo bar\nssssada
+    const prefixRegex = /(<::(([^:])+)::>\s)[\s\S]+/g
+    const prefixMatch = prefixRegex.exec(log)
+    if (prefixMatch && prefixMatch[1] && prefixMatch[2]) {
+      return {
+        prefix: prefixMatch[2], // hello-world
+        log: log.substring(prefixMatch[1].length) // To strip off <::hello-world::>
+      }
+    }
+    return {
+      log
+    }
+  }
+
+  const addPrefix = (prefix: string, prefixes: string[]) => {
+    const index = prefixes.indexOf(prefix);
+    if (index != -1) {
+      return index;
+    }
+    prefixes.push(prefix)
+    setPrefixColumnSize(previousColumnSize => {
+      return Math.max(...prefixes.map((prefix) => prefix.length), previousColumnSize)
+    })
+    return prefixes.length-1;
+  }
+
+  const lineColor = (index: number) => {
+    const colorIndex = index % concurrentColors.length
+    return concurrentColors[colorIndex]
+  }
+
+  const writableStream = (process: OutputProcess, prefixes: string[]) => {
+    return new Writable({
+      write(chunk, _encoding, next) {
+        const parsedLog : ParsedLog = parseLog(chunk.toString('utf8'))
+        const prefix = parsedLog.prefix ?? process.prefix
+        const index = addPrefix(prefix, prefixes)
+
+        const lines = stripAnsi(parsedLog.log.replace(/(\n)$/, '')).split(/\n/)
+        addOrUpdateConcurrentUIEventOutput({prefix, index, output: lines.join('\n')})
+        setProcessOutput((previousProcessOutput) => [
+          ...previousProcessOutput,
+          {
+            color: lineColor(index),
+            prefix,
+            lines,
+          },
+        ])
+        next()
+      },
+    })
+  }
 
   useEffect(() => {
     const runProcesses = async () => {
+      const prefixes : string[] = []
+
       try {
         await Promise.all(
           processes.map(async (process, index) => {
-            const stdout = writableStream(process, index)
-            const stderr = writableStream(process, index)
+            const stdout = writableStream(process, prefixes)
+            const stderr = writableStream(process, prefixes)
             await process.action(stdout, stderr, abortSignal)
           }),
         )
@@ -130,28 +176,37 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     runProcesses()
-  }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
+  }, [abortSignal, processes, unmountInk, keepRunningAfterProcessesResolve])
 
   const {lineVertical} = figures
 
   return (
     <Static items={processOutput}>
       {(chunk, index) => {
-        const prefixBuffer = ' '.repeat(prefixColumnSize - chunk.prefix.length)
+        const prefixBuffer = ' '.repeat(chunk.prefix.length > prefixColumnSize ? chunk.prefix.length : prefixColumnSize - chunk.prefix.length)
         return (
           <Box flexDirection="column" key={index}>
             {chunk.lines.map((line, index) => (
               <Box key={index} flexDirection="row">
-                <Text color={chunk.color}>
-                  {showTimestamps ? (
-                    <Text>
-                      {currentTime()} {lineVertical}{' '}
+                {showTimestamps ? (
+                  <Fragment>
+                    <Text color={chunk.color}>
+                      {currentTime()}
                     </Text>
-                  ) : null}
-                  <Text>
-                    {chunk.prefix}
-                    {prefixBuffer} {lineVertical} {line}
-                  </Text>
+                    <Text color={'white'}>
+                      {' '}{lineVertical}{' '}
+                    </Text>
+                  </Fragment>
+                ) : null}
+                <Text color={chunk.color}>
+                  {chunk.prefix}
+                  {prefixBuffer}
+                </Text>
+                <Text color={'white'}>
+                  {' '}{lineVertical}{' '}
+                </Text>
+                <Text color={chunk.color}>
+                  {line}
                 </Text>
               </Box>
             ))}

@@ -16,6 +16,8 @@ import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import { OutputProcess } from '@shopify/cli-kit/node/output'
+import { Writable } from 'stream'
 
 interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -29,6 +31,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | TestProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -54,6 +57,31 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
+}
+
+interface TestProcess extends BaseProcess<undefined> {
+  type: 'test'
+}
+
+function setupTestProcess(): TestProcess {
+  return {
+    type: 'test',
+    prefix: 'test',
+    function: async ({stdout, stderr, abortSignal}, _) => {
+      for (let i = 0; i < 10; i++) {
+        let counter = 0;
+        setInterval(() => {
+          const prefix = `<::hello-world ${new Array(i).join("0")}${i}::>`;
+          stdout.write(`${prefix} Foo bar ${counter++}`)
+          if (counter % 5 == 0) {
+            stderr.write(`${prefix} Error foo bar ${counter++}`)
+            stderr.write(`${prefix} Error foo bar ${counter++}`)
+          }
+        }, Math.random() * 10000)
+      }
+    },
+    options: undefined,
+  }
 }
 
 export async function setupDevProcesses({
@@ -137,6 +165,7 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
+    setupTestProcess()
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
