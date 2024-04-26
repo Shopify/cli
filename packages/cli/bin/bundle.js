@@ -7,7 +7,7 @@ import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -27,6 +27,9 @@ const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 // Find theme-check-node's config yml files
 const themePath = require.resolve('@shopify/theme-check-node')
 const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
+
+const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
+const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/generator-templates/**/*')
 
 esBuild({
   bundle: true,
@@ -75,6 +78,10 @@ esBuild({
           from: [configYmlPath],
           to: ['./dist/configs/'],
         },
+        {
+          from: [hydrogenTemplateAssets],
+          to: ['./dist/generator-templates/'],
+        }
       ],
     }),
   ],
