@@ -2,56 +2,67 @@
 export interface appdeploy {
   /**
    * The Client ID of your app.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
    */
   '--client-id <value>'?: string
 
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
   /**
    * Deploy without asking for confirmation.
+   * @environment SHOPIFY_FLAG_FORCE
    */
   '-f, --force'?: ''
 
   /**
    * Optional message that will be associated with this version. This is for internal use only and won't be available externally.
+   * @environment SHOPIFY_FLAG_MESSAGE
    */
   '--message <value>'?: string
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * Creates a version but doesn't release it - it's not made available to merchants.
+   * @environment SHOPIFY_FLAG_NO_RELEASE
    */
   '--no-release'?: ''
 
   /**
    * The path to your app directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Reset all your settings.
+   * @environment SHOPIFY_FLAG_RESET
    */
   '--reset'?: ''
 
   /**
    * URL associated with the new app version.
+   * @environment SHOPIFY_FLAG_SOURCE_CONTROL_URL
    */
   '--source-control-url <value>'?: string
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 
   /**
    * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.
+   * @environment SHOPIFY_FLAG_VERSION
    */
   '--version <value>'?: string
 }

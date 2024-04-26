@@ -389,4 +389,24 @@ describe('bulkUploadThemeAssets', async () => {
       asset: undefined,
     })
   })
+
+  test('throws an error when the server does not respond', async () => {
+    const id = 123
+    const assets: AssetParams[] = [
+      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
+      {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
+    ]
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {},
+      status: 404,
+      headers: {},
+    })
+
+    // When
+    await expect(async () => {
+      return bulkUploadThemeAssets(id, assets, session)
+      // Then
+    }).rejects.toThrowError(AbortError)
+  })
 })

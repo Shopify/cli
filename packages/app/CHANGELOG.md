@@ -1,5 +1,38 @@
 # @shopify/app
 
+## 3.59.0
+
+### Minor Changes
+
+- ca218cd31: Shopify CLI now defaults to be Global
+
+### Patch Changes
+
+- ca218cd31: Filter env vars to always be valid for ESBuild, nothing beginning with a number
+- ca218cd31: Link uses api client config as fallback when the app doesnt have an active app version or the existing one doesn't include any configuration app module
+- ca218cd31: Fix selection of apps beyond the initial result set
+- ca218cd31: Add SHOPIFY_CLI_DYNAMIC_CONFIG support
+- ca218cd31: Fix bug when you deploy an empty array of redirect_urls
+- ca218cd31: Use a random port for GraphiQL when the default one is not available
+- ca218cd31: Do not show api-key flag deprecation warning when using SHOPIFY_API_KEY
+- ca218cd31: Bump Shopify/theme-tools packages
+
+  - TL;DR
+    - (New) `ValidJson` check - JSON schema validation on `.json` files
+    - (New) Section/block schema `t:` translation completion
+    - (Updated) `MatchingTranslations` check - extend support to `.schema.json` files
+    - (Updated) Translation completion is now fuzzy instead of partial
+    - Dynamic JSON schema management without requiring new releases
+    - Internal API changes
+  - https://github.com/Shopify/theme-tools/blob/main/packages/theme-language-server-node/CHANGELOG.md
+  - https://github.com/Shopify/theme-tools/blob/main/packages/theme-check-common/CHANGELOG.md
+
+- Updated dependencies [ca218cd31]
+- Updated dependencies [ca218cd31]
+  - @shopify/plugin-cloudflare@3.59.0
+  - @shopify/create-app@3.59.0
+  - @shopify/cli-kit@3.59.0
+
 ## 3.58.0
 
 ### Minor Changes

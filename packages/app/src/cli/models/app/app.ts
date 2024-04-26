@@ -5,6 +5,8 @@ import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
+import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -13,12 +15,16 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
+import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 
 export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
     name: zod.string().optional(),
-    scopes: zod.string().default(''),
+    scopes: zod
+      .string()
+      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
+      .default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
@@ -272,6 +278,17 @@ export class App implements AppInterface {
       }
     }
 
+    const extensionCollections = this.allExtensions.filter(
+      (ext) => ext.isEditorExtensionCollection,
+    ) as ExtensionInstance<EditorExtensionCollectionType>[]
+
+    if (extensionCollections.length > 0) {
+      const errors = validateExtensionsHandlesInCollection(extensionCollections, this.allExtensions)
+      if (errors) {
+        throw new AbortError('Invalid editor extension collection configuration', errors.join('\n\n'))
+      }
+    }
+
     await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
   }
 
@@ -334,6 +351,43 @@ export function validateFunctionExtensionsWithUiHandle(
         `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
       )
     }
+  })
+
+  return errors.length > 0 ? errors : undefined
+}
+
+export type UIExtensionType = zod.infer<typeof UIExtensionSchema>
+
+export function validateExtensionsHandlesInCollection(
+  editorExtensionCollections: ExtensionInstance<EditorExtensionCollectionType>[],
+  allExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+
+  const allowableTypesForExtensionInCollection = ['ui_extension']
+  editorExtensionCollections.forEach((collection) => {
+    collection.configuration.inCollection.forEach((extension) => {
+      const matchingExtension = findExtensionByHandle(allExtensions, extension.handle)
+
+      if (!matchingExtension) {
+        errors.push(
+          `[${collection.handle}] editor extension collection: Add extension with handle '${extension.handle}' to local app. Local app must include extension with handle '${extension.handle}'.`,
+        )
+      } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.specification.identifier)) {
+        errors.push(
+          `[${collection.handle}] editor extension collection: Remove extension of type '${matchingExtension.specification.identifier}' from this collection. This extension type is not supported in collections.`,
+        )
+      } else if (matchingExtension.specification.identifier === 'ui_extension') {
+        const uiExtension = matchingExtension as ExtensionInstance<UIExtensionType>
+        uiExtension.configuration.extension_points.forEach((extensionPoint) => {
+          if (extensionPoint.target.startsWith('admin.')) {
+            errors.push(
+              `[${collection.handle}] editor extension collection: Remove extension '${matchingExtension.configuration.handle}' with target '${extensionPoint.target}' from this collection. This extension target is not supported in collections.`,
+            )
+          }
+        })
+      }
+    })
   })
 
   return errors.length > 0 ? errors : undefined

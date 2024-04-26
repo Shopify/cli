@@ -92,7 +92,7 @@ describe('selectApp', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(APP2.apiKey)
 
     // When
-    const got = await selectAppPrompt(apps, true, ORG1.id, {developerPlatformClient: testDeveloperPlatformClient()})
+    const got = await selectAppPrompt(testDeveloperPlatformClient(), apps, true, ORG1.id)
 
     // Then
     expect(got).toEqual(APP2)
@@ -116,9 +116,8 @@ describe('selectApp', () => {
     const apps = [APP1, APP2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(APP2.apiKey)
 
-    const got = await selectAppPrompt(apps, true, ORG1.id, {
+    const got = await selectAppPrompt(testDeveloperPlatformClient(), apps, true, ORG1.id, {
       directory: '/',
-      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     expect(got).toEqual(APP2)

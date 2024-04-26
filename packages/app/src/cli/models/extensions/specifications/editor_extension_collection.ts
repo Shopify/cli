@@ -1,5 +1,7 @@
+import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 interface IncludeSchema {
@@ -14,27 +16,44 @@ const EditorExtensionCollectionSchema = BaseSchema.extend({
   include: zod.array(IncludeSchema).optional(),
   includes: zod.array(zod.string()).optional(),
   type: zod.literal('editor_extension_collection'),
+}).transform((data) => {
+  const includes =
+    data.includes?.map((handle) => {
+      return {handle}
+    }) ?? []
+  const include = data.include ?? []
+  return {
+    ...data,
+    inCollection: [...includes, ...include],
+  }
 })
+
+export type EditorExtensionCollectionType = zod.infer<typeof EditorExtensionCollectionSchema>
 
 const editorExtensionCollectionSpecification = createExtensionSpecification({
   identifier: 'editor_extension_collection',
   schema: EditorExtensionCollectionSchema,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config, _) => {
-    const includes =
-      config.includes?.map((handle) => {
-        return {handle}
-      }) ?? []
-    const include = config.include ?? []
-    const inCollection = [...includes, ...include]
+  validate: async (config, path) => {
+    const errors: string[] = []
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: Validation to check either one of include or includes was defined
+    if (config.inCollection.length < 2) {
+      errors.push(`${config.handle}: This editor extension collection must include at least 2 extensions`)
+    }
 
+    if (errors.length > 0) {
+      errors.push(`Please check the configuration in ${path}`)
+      return err(errors.join('\n\n'))
+    }
+
+    return ok({})
+  },
+  deployConfig: async (config, directory) => {
     return {
       name: config.name,
       handle: config.handle,
-      in_collection: inCollection,
+      in_collection: config.inCollection,
+      localization: await loadLocalesConfig(directory, config.name),
     }
   },
 })

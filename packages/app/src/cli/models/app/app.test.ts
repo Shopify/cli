@@ -6,6 +6,7 @@ import {
   getUIExtensionRendererVersion,
   isCurrentAppSchema,
   isLegacyAppSchema,
+  validateExtensionsHandlesInCollection,
   validateFunctionExtensionsWithUiHandle,
 } from './app.js'
 import {
@@ -14,11 +15,13 @@ import {
   testUIExtension,
   testFunctionExtension,
   testWebhookExtensions,
+  testEditorExtensionCollection,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {Flag} from '../../services/dev/fetch.js'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -265,6 +268,75 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
         "[test function extension] - Local app must contain a ui_extension with handle 'product_discounts-test'",
       ]
       const result = validateFunctionExtensionsWithUiHandle([functionWithUiHandle], app.allExtensions)
+
+      // Then
+      expect(result).toStrictEqual(expectedErrors)
+    })
+
+    test('returns errors for editor extension collection', async () => {
+      // Given
+      const configuration = {
+        name: 'Order summary',
+        handle: 'order-summary-collection',
+        includes: ['handle1', 'product-discounts-test', 'admin-extension', 'customer-account-extension'],
+      }
+      const editorExtensionCollection = (await testEditorExtensionCollection({
+        configuration,
+      })) as ExtensionInstance<EditorExtensionCollectionType>
+
+      const orderDiscountFunction = await testFunctionExtension({
+        config: {
+          ...generateFunctionConfig({type: 'product_discounts'}),
+          handle: 'product-discounts-test',
+        },
+      })
+
+      const adminUiExtension = await testUIExtension({
+        type: 'ui_extension',
+        configuration: {
+          type: 'ui_extension',
+          handle: 'admin-extension',
+          extension_points: [
+            {
+              target: 'admin.customers.segmentation-templates.render',
+              module: './src/ExtensionPointA.js',
+            },
+          ],
+        },
+      })
+
+      const customerAccountUiExtension = await testUIExtension({
+        type: 'ui_extension',
+        configuration: {
+          type: 'ui_extension',
+          handle: 'customer-account-extension',
+          extension_points: [
+            {
+              target: 'customer-account.order-index.block.render',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        },
+      })
+
+      const allExtensions: ExtensionInstance[] = [
+        editorExtensionCollection,
+        orderDiscountFunction,
+        adminUiExtension,
+        customerAccountUiExtension,
+      ]
+
+      const app = await testApp({
+        allExtensions,
+      })
+
+      // When
+      const expectedErrors = [
+        "[order-summary-collection] editor extension collection: Add extension with handle 'handle1' to local app. Local app must include extension with handle 'handle1'.",
+        "[order-summary-collection] editor extension collection: Remove extension of type 'function' from this collection. This extension type is not supported in collections.",
+        "[order-summary-collection] editor extension collection: Remove extension 'admin-extension' with target 'admin.customers.segmentation-templates.render' from this collection. This extension target is not supported in collections.",
+      ]
+      const result = validateExtensionsHandlesInCollection([editorExtensionCollection], app.allExtensions)
 
       // Then
       expect(result).toStrictEqual(expectedErrors)

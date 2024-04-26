@@ -9,7 +9,7 @@ import {
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, loadApp, loadAppConfiguration} from '../../../models/app/loader.js'
 import {
   InvalidApiKeyErrorMessage,
   fetchOrCreateOrganizationApp,
@@ -41,14 +41,25 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const updatedOptions = {...options, developerPlatformClient}
-  const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
+  let configuration: AppConfiguration | undefined
+  try {
+    // This will crash if we aren't in an app folder. But we need to continue in that case.
+    configuration = (await loadAppConfiguration(options)).configuration
+    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
+  } catch (error: unknown) {}
+
+  let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
+  const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(
+    {...options, developerPlatformClient},
+    remoteApp,
+    directory,
+  )
 
   await logMetadataForLoadedContext(remoteApp)
 
-  let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration =
     (await fetchAppRemoteConfiguration(
       remoteApp,
@@ -131,7 +142,7 @@ async function loadRemoteApp(
   directory?: string,
 ): Promise<OrganizationApp> {
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
+    return fetchOrCreateOrganizationApp(localApp, directory)
   }
   const app = await appFromId({apiKey, developerPlatformClient})
   if (!app) {

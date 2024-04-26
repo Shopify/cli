@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.58.0",
+  "version": "3.59.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/cli"
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/cli"
   },
   "license": "MIT",
   "type": "module",
@@ -42,7 +43,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
     "test": "nx run cli:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
@@ -95,19 +96,22 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
-    "@oclif/plugin-commands": "2.2.28",
-    "@oclif/plugin-plugins": "3.9.4",
-    "@shopify/cli-kit": "3.58.0",
-    "@shopify/plugin-did-you-mean": "3.58.0",
+    "@oclif/core": "3.23.0",
+    "@oclif/plugin-commands": "3.3.0",
+    "@oclif/plugin-plugins": "4.3.8",
+    "@shopify/app": "3.59.0",
+    "@shopify/cli-kit": "3.59.0",
+    "@shopify/plugin-cloudflare": "3.59.0",
+    "@shopify/plugin-did-you-mean": "3.59.0",
+    "@shopify/theme": "3.59.0",
+    "esbuild": "0.19.8",
     "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
-    "@shopify/app": "3.58.0",
-    "@shopify/theme": "3.58.0",
+    "@shopify/app": "3.59.0",
+    "@shopify/theme": "3.59.0",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^0.34.3",
-    "@chialab/esbuild-plugin-require-resolve": "^0.18.0",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1",
     "vitest": "^0.34.3"
@@ -127,18 +131,17 @@
   "engine-strict": true,
   "oclif": {
     "bin": "shopify",
-    "commands": "dist/cli/commands",
-    "plugins": [
-      "@shopify/app",
-      "@shopify/theme",
-      "@shopify/plugin-did-you-mean",
-      "@shopify/cli-hydrogen",
-      "@oclif/plugin-plugins",
-      "@oclif/plugin-commands"
-    ],
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    },
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
+      "hydrogen": {
+        "description": "Build Hydrogen storefronts."
+      },
       "theme": {
         "description": "Build Liquid themes."
       },
@@ -161,9 +164,6 @@
         "description": "View the available UI kit components.",
         "hidden": true
       },
-      "webhook": {
-        "description": "Manage webhooks."
-      },
       "plugins": {
         "hidden": true
       }
@@ -172,8 +172,25 @@
       "-h"
     ],
     "hooks": {
+      "init": "./dist/hooks/init.js",
       "prerun": "./dist/hooks/prerun.js",
-      "postrun": "./dist/hooks/postrun.js"
+      "postrun": "./dist/hooks/postrun.js",
+      "command_not_found": {
+        "target": "./dist/index.js",
+        "identifier": "DidYouMeanHook"
+      },
+      "tunnel_start": {
+        "target": "./dist/index.js",
+        "identifier": "TunnelStartHook"
+      },
+      "tunnel_provider": {
+        "target": "./dist/index.js",
+        "identifier": "TunnelProviderHook"
+      },
+      "update": {
+        "target": "./dist/index.js",
+        "identifier": "PluginHook"
+      }
     }
   }
 }

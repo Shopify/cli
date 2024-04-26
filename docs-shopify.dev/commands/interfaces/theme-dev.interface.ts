@@ -2,16 +2,19 @@
 export interface themedev {
   /**
    * The environment to apply to the current command.
+   * @environment SHOPIFY_FLAG_ENVIRONMENT
    */
   '-e, --environment <value>'?: string
 
   /**
    * Set which network interface the web server listens on. The default value is 127.0.0.1.
+   * @environment SHOPIFY_FLAG_HOST
    */
   '--host <value>'?: string
 
   /**
    * Skip hot reloading any files that match the specified pattern.
+   * @environment SHOPIFY_FLAG_IGNORE
    */
   '-x, --ignore <value>'?: string
 
@@ -20,71 +23,85 @@ export interface themedev {
 - hot-reload Hot reloads local changes to CSS and sections (default)
 - full-page  Always refreshes the entire page
 - off        Deactivate live reload
+   * @environment SHOPIFY_FLAG_LIVE_RELOAD
    */
   '--live-reload <value>'?: string
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * Runs the dev command without deleting local files.
+   * @environment SHOPIFY_FLAG_NODELETE
    */
   '-n, --nodelete'?: ''
 
   /**
    * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.
+   * @environment SHOPIFY_FLAG_NOTIFY
    */
   '--notify <value>'?: string
 
   /**
    * Hot reload only files that match the specified pattern.
+   * @environment SHOPIFY_FLAG_ONLY
    */
   '-o, --only <value>'?: string
 
   /**
    * Automatically launch the theme preview in your default web browser.
+   * @environment SHOPIFY_FLAG_OPEN
    */
   '--open'?: ''
 
   /**
    * Password generated from the Theme Access app.
+   * @environment SHOPIFY_CLI_THEME_TOKEN
    */
   '--password <value>'?: string
 
   /**
    * The path to your theme directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Force polling to detect file changes.
+   * @environment SHOPIFY_FLAG_POLL
    */
   '--poll'?: ''
 
   /**
    * Local port to serve theme preview from.
+   * @environment SHOPIFY_FLAG_PORT
    */
   '--port <value>'?: string
 
   /**
    * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+   * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>'?: string
 
   /**
    * Theme ID or name of the remote theme.
+   * @environment SHOPIFY_FLAG_THEME_ID
    */
   '-t, --theme <value>'?: string
 
   /**
    * Synchronize Theme Editor updates in the local theme files.
+   * @environment SHOPIFY_FLAG_THEME_EDITOR_SYNC
    */
   '--theme-editor-sync'?: ''
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

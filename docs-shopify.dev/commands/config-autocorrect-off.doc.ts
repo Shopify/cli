@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
   },
   definitions: [
   ],
-  category: 'Universal commands',
+  category: 'general commands',
   related: [
   ],
 }
