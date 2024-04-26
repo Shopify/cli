@@ -68,10 +68,19 @@ function setupTestProcess(): TestProcess {
     type: 'test',
     prefix: 'test',
     function: async ({stdout, stderr, abortSignal}, _) => {
-      for (let i = 0; i < 10; i++) {
+      const logSources = [
+        'product-discounts',
+        'mix-and-match-bundle',
+        'quantity-validator',
+        'hide-cod-payment-customization',
+        'delivery-customization',
+        'free-shipping',
+        'webhooks',
+      ]
+      for (let i = 0; i < logSources.length; i++) {
         let counter = 0
         setInterval(() => {
-          const prefix = `<::hello-world ${new Array(i).join("0")}${i}::>`
+          const prefix = `<::${logSources[i]}::>`
           stdout.write(`${prefix} Foo bar ${counter++}`)
           if (counter % 5 == 0) {
             stderr.write(`${prefix} Error foo bar ${counter++}`)
