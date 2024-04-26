@@ -94,6 +94,57 @@ supports_installments = true
 `)
   })
 
+  test('truncates the handle if the title has >30 characters', () => {
+    // Given
+    const extension1: ExtensionRegistration = {
+      id: '30366498817',
+      uuid: '626ab61a-e494-4e16-b511-e8721ec011a4',
+      title: 'Bogus Pay Bogus Pay Bogus Pay Bogus',
+      type: 'payments_extension',
+      draftVersion: {
+        context: 'payments.offsite.render',
+        config: SAMPLE_OFFSITE_CONFIG,
+      },
+    }
+
+    // When
+    const got = buildTomlObject(extension1, [extension1])
+
+    // Then
+    expectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
+    expect(got).toEqual(`api_version = "2023-10"
+
+[[extensions]]
+name = "Bogus Pay Bogus Pay Bogus Pay Bogus"
+type = "payments_extension"
+handle = "bogus-pay-bogus-pay-bogus-pay"
+payment_session_url = "https://bogus-app/payment-sessions/start"
+refund_session_url = "https://bogus-app/payment-sessions/refund"
+capture_session_url = "https://bogus-app/payment-sessions/capture"
+void_session_url = "https://bogus-app/payment-sessions/void"
+confirmation_callback_url = "https://bogus-app/payment-sessions/confirm"
+multiple_capture = false
+merchant_label = "Offsite Payments App Extension"
+supported_countries = [ "GG", "AF", "AZ", "BH" ]
+supported_payment_methods = [
+  "visa",
+  "master",
+  "american_express",
+  "discover",
+  "diners_club",
+  "jcb"
+]
+test_mode_available = true
+supports_oversell_protection = false
+supports_3ds = true
+supports_deferred_payments = true
+supports_installments = true
+
+  [[extensions.targeting]]
+  target = "payments.offsite.render"
+`)
+  })
+
   test('correctly builds a toml string for an offsite app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
