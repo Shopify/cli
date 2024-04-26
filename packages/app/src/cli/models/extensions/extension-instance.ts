@@ -108,6 +108,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
+  get logPrefix() {
+    return `<::${this.handle}::>`
+  }
+
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string

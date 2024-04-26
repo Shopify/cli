@@ -54,10 +54,10 @@ export async function updateExtensionDraft({
   const mutationResult: ExtensionUpdateSchema = await developerPlatformClient.updateExtension(extensionInput)
   if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-    stderr.write(`Error while updating drafts: ${errors}`)
+    stderr.write(`${extension.logPrefix} Error while updating drafts: ${errors}`)
   } else {
     const draftUpdateSuccesMessage = extension.draftMessages.successMessage
-    if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
+    if (draftUpdateSuccesMessage) outputInfo(`${extension.logPrefix} ${draftUpdateSuccesMessage}`, stdout)
   }
 }
 

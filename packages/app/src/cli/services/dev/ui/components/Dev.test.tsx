@@ -28,6 +28,7 @@ const testApp = {
   developmentStorePreviewEnabled: false,
   apiKey: '123',
   developerPlatformClient,
+  extensions: [],
 }
 
 const developerPreview = {

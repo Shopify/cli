@@ -9,6 +9,7 @@ import {Writable} from 'stream'
 
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
+  prefixColumnSize?: number
   abortSignal: AbortSignal
   showTimestamps?: boolean
   keepRunningAfterProcessesResolve?: boolean
@@ -76,6 +77,7 @@ function currentTime() {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
+  prefixColumnSize = 12,
   abortSignal,
   showTimestamps = true,
   keepRunningAfterProcessesResolve = false,
@@ -95,7 +97,6 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     '#000080' /*navy*/,
     '#808000' /*olive*/
   ]
-  const [prefixColumnSize, setPrefixColumnSize] = useState<number>(12)
 
   const parseLog = (log: string) : ParsedLog => {
     // Example: <::hello-world::> foo bar\nssssada
@@ -118,9 +119,6 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
       return index
     }
     prefixes.push(prefix)
-    setPrefixColumnSize(previousColumnSize => {
-      return Math.max(...prefixes.map((prefix) => prefix.length), previousColumnSize)
-    })
     return prefixes.length-1
   }
 
@@ -149,6 +147,14 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         next()
       },
     })
+  }
+
+  const formatPrefix = (prefix: string) => {
+    if (prefix.length > prefixColumnSize) {
+      return prefix.substring(0, prefixColumnSize)
+    }
+
+    return `${prefix}${' '.repeat(prefixColumnSize - prefix.length)}`
   }
 
   useEffect(() => {
@@ -183,7 +189,6 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   return (
     <Static items={processOutput}>
       {(chunk, index) => {
-        const prefixBuffer = ' '.repeat(chunk.prefix.length > prefixColumnSize ? chunk.prefix.length : prefixColumnSize - chunk.prefix.length)
         return (
           <Box flexDirection="column" key={index}>
             {chunk.lines.map((line, index) => (
@@ -199,8 +204,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                   </Fragment>
                 ) : null}
                 <Text color={chunk.color}>
-                  {chunk.prefix}
-                  {prefixBuffer}
+                  {formatPrefix(chunk.prefix)}
                 </Text>
                 <Text color={'white'}>
                   {' '}{lineVertical}{' '}

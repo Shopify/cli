@@ -16,8 +16,9 @@ import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import { OutputProcess } from '@shopify/cli-kit/node/output'
-import { Writable } from 'stream'
+import { ExtensionInstance } from '../../../models/extensions/extension-instance.js'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
+
 
 interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -59,37 +60,37 @@ export interface DevConfig {
   graphiqlKey?: string
 }
 
-interface TestProcess extends BaseProcess<undefined> {
+interface TestProcessOptions {
+  extensions: ExtensionInstance[]
+}
+
+interface TestProcess extends BaseProcess<TestProcessOptions> {
   type: 'test'
 }
 
-function setupTestProcess(): TestProcess {
+function setupTestProcess(localApp: AppInterface): TestProcess {
   return {
     type: 'test',
     prefix: 'test',
-    function: async ({stdout, stderr, abortSignal}, _) => {
-      const logSources = [
-        'product-discounts',
-        'mix-and-match-bundle',
-        'quantity-validator',
-        'hide-cod-payment-customization',
-        'delivery-customization',
-        'free-shipping',
-        'webhooks',
-      ]
-      for (let i = 0; i < logSources.length; i++) {
-        let counter = 0
-        setInterval(() => {
-          const prefix = `<::${logSources[i]}::>`
-          stdout.write(`${prefix} Foo bar ${counter++}`)
-          if (counter % 5 == 0) {
-            stderr.write(`${prefix} Error foo bar ${counter++}`)
-            stderr.write(`${prefix} Error foo bar ${counter++}`)
-          }
-        }, Math.random() * 10000)
-      }
+    function: async ({stdout, stderr, abortSignal}, options) => {
+      const logSources = options.extensions.map((extension) => extension.handle)
+      setTimeout(() => {
+        for (let i = 0; i < logSources.length; i++) {
+          let counter = 0
+          setInterval(() => {
+            const prefix = `<::${logSources[i]}::>`
+            stdout.write(`${prefix} Function execution ${randomUUID()} in ${(Math.random()*10).toFixed(2)}M instructions`)
+            if (counter % 5 == 0) {
+              stderr.write(`${prefix} Hello world my custom log ${counter++}`)
+              stderr.write(`${prefix} Some more logging from my function`)
+            }
+          }, (Math.random()+0.2) * 20000)
+        }
+      }, 10000)
     },
-    options: undefined,
+    options: {
+      extensions: localApp.draftableExtensions,
+    },
   }
 }
 
@@ -174,7 +175,7 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
-    setupTestProcess()
+    setupTestProcess(localApp)
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
