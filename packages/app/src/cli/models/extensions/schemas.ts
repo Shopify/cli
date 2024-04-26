@@ -56,7 +56,7 @@ const HandleSchema = zod
   .string()
   .trim()
   .nonempty("Handle can't be empty")
-  .max(MAX_EXTENSION_HANDLE_LENGTH, "Handle can't exceed 30 characters")
+  .max(MAX_EXTENSION_HANDLE_LENGTH, `Handle can't exceed ${MAX_EXTENSION_HANDLE_LENGTH} characters`)
   .regex(/^[a-zA-Z0-9-]*$/, 'Handle can only contain alphanumeric characters and hyphens')
   .refine((handle) => !handle.startsWith('-') && !handle.endsWith('-'), "Handle can't start or end with a hyphen")
   .refine((handle) => [...handle].some((char) => char !== '-'), "Handle can't be all hyphens")
