@@ -108,7 +108,7 @@ supports_installments = true
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [extension1])
 
     // Then
     expectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
