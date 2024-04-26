@@ -1,5 +1,6 @@
 /* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
 /* eslint-disable import/no-extraneous-dependencies */
+import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
 import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
@@ -78,4 +79,4 @@ esBuild({
   ],
 })
 
-// cleanBundledDependencies(external)
+cleanBundledDependencies(external)
