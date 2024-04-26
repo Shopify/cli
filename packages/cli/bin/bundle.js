@@ -18,8 +18,7 @@ const external = [
   // esbuild can't be bundled per design
   'esbuild',
   'lightningcss',
-  'vite',
-  '@ast-grep/napi'
+  '@ast-grep/napi',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -93,7 +92,7 @@ esBuild({
         {
           from: [hydrogenI18nTemplates],
           to: ['./dist/templates'],
-        }
+        },
       ],
     }),
   ],
