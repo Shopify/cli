@@ -29,7 +29,7 @@ const themePath = require.resolve('@shopify/theme-check-node')
 const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
 
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
-const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/generator-templates/**/*')
+const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/lib/generator-templates/**/*')
 
 const hydrogenRouteTemplates = joinPath(hydrogenPath, 'dist/lib/setups/routes/templates/**/*')
 
@@ -82,7 +82,7 @@ esBuild({
         },
         {
           from: [hydrogenTemplateAssets],
-          to: ['./generator-templates/'],
+          to: ['./dist/generator-templates/'],
         },
         {
           from: [hydrogenRouteTemplates],

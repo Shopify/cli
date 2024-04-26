@@ -243,8 +243,8 @@ importers:
         specifier: 3.59.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling-2
-        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling-2(@remix-run/react@2.9.1)(@types/node@18.19.3)(graphql@16.8.1)(react-dom@17.0.2)(react@18.3.0)(ts-node@10.9.2)(typescript@5.2.2)'
+        specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?1694ca0973a869cd097018f59e60178bed81d002
+        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?1694ca0973a869cd097018f59e60178bed81d002(@remix-run/react@2.9.1)(@types/node@18.19.3)(graphql@16.8.1)(react-dom@17.0.2)(react@18.3.0)(ts-node@10.9.2)(typescript@5.2.2)'
       '@shopify/cli-kit':
         specifier: 3.59.0
         version: link:../cli-kit
@@ -11374,7 +11374,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.5
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true
@@ -17985,9 +17985,9 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: false
 
-  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling-2(@remix-run/react@2.9.1)(@types/node@18.19.3)(graphql@16.8.1)(react-dom@17.0.2)(react@18.3.0)(ts-node@10.9.2)(typescript@5.2.2)':
-    resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling-2}
-    id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?prepare-for-bundling-2'
+  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?1694ca0973a869cd097018f59e60178bed81d002(@remix-run/react@2.9.1)(@types/node@18.19.3)(graphql@16.8.1)(react-dom@17.0.2)(react@18.3.0)(ts-node@10.9.2)(typescript@5.2.2)':
+    resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?1694ca0973a869cd097018f59e60178bed81d002}
+    id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?1694ca0973a869cd097018f59e60178bed81d002'
     name: '@shopify/cli-hydrogen'
     version: 8.0.1
     engines: {node: '>=18.0.0'}
