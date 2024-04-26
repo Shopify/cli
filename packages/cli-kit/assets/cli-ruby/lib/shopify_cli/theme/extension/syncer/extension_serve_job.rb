@@ -43,7 +43,6 @@ module ShopifyCLI
 
             job_in_progress!
 
-            @ctx.puts(success_message(@project.title))
             print_items({}.freeze)
 
             files = @syncer.pending_files.map(&:relative_path)
