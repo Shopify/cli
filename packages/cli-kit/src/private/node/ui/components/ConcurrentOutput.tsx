@@ -43,6 +43,31 @@ function currentTime() {
 }
 
 /**
+ * Allows users of ConcurrentOutput to format logs with a prefix column override.
+ *
+ * @param prefix The override value for the prefix column
+ * @param log The log to prefix
+ */
+function prefixLog(prefix: string, log: string) : string {
+  return `${prefix}${log}`
+}
+
+function parseLog(log: string) : ParsedLog {
+  // Example: <::hello-world::> foo bar\nssssada
+  const prefixRegex = /(<::(([^:])+)::>\s?)[\s\S]+/g
+  const prefixMatch = prefixRegex.exec(log)
+  if (prefixMatch && prefixMatch[1] && prefixMatch[2]) {
+    return {
+      prefix: prefixMatch[2], // hello-world
+      log: log.substring(prefixMatch[1].length) // To strip off <::hello-world::>
+    }
+  }
+  return {
+    log
+  }
+}
+
+/**
  * Renders output from concurrent processes to the terminal.
  * Output will be divided in a three column layout
  * with the left column containing the timestamp,
@@ -97,21 +122,6 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     '#000080' /*navy*/,
     '#808000' /*olive*/
   ]
-
-  const parseLog = (log: string) : ParsedLog => {
-    // Example: <::hello-world::> foo bar\nssssada
-    const prefixRegex = /(<::(([^:])+)::>\s)[\s\S]+/g
-    const prefixMatch = prefixRegex.exec(log)
-    if (prefixMatch && prefixMatch[1] && prefixMatch[2]) {
-      return {
-        prefix: prefixMatch[2], // hello-world
-        log: log.substring(prefixMatch[1].length) // To strip off <::hello-world::>
-      }
-    }
-    return {
-      log
-    }
-  }
 
   const addPrefix = (prefix: string, prefixes: string[]) => {
     const index = prefixes.indexOf(prefix)
@@ -220,4 +230,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput}
+export {ConcurrentOutput,prefixLog}

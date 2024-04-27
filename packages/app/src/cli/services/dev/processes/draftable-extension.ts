@@ -37,24 +37,27 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 
   await Promise.all(
     extensions.map(async (extension) => {
-      await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
+      const extensionOut = extension.getPrefixedLogger(stdout);
+      const extensionErr = extension.getPrefixedLogger(stderr);
+
+      await extension.build({app, stdout: extensionOut, stderr: extensionErr, useTasks: false, signal, environment: 'development'})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
       // Initial draft update for each extension
-      await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr})
+      await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout: extensionOut, stderr: extensionErr})
       // Watch for changes
       return setupExtensionWatcher({
         extension,
         app,
         url: proxyUrl,
-        stdout,
-        stderr,
+        stdout: extensionOut,
+        stderr: extensionErr,
         signal,
         onChange: async () => {
           // At this point the extension has already been built and is ready to be updated
           return performActionWithRetryAfterRecovery(
             async () =>
-              updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr}),
+              updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout: extensionOut, stderr: extensionErr}),
             refreshToken,
           )
         },

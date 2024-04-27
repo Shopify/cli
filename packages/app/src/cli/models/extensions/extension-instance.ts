@@ -19,6 +19,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {Writable} from 'stream'
+import {prefixLog} from '@shopify/cli-kit/node/ui/components'
 
 /**
  * Class that represents an instance of a local extension
@@ -228,6 +230,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   hasExtensionPointTarget(target: string): boolean {
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
+  }
+
+  getPrefixedLogger(wrappedWritable: Writable) {
+    const logPrefix = this.logPrefix
+    return new Writable({
+      write(chunk, encoding, callback) {
+        wrappedWritable.write(`${prefixLog(logPrefix, chunk.toString('utf8'))}`, 'utf8', callback)
+      },
+    });
   }
 
   // Functions specific properties

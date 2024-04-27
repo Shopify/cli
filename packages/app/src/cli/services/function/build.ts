@@ -41,20 +41,20 @@ async function buildJSFunctionWithoutTasks(
   builder: JavyBuilder,
 ) {
   if (!options.signal?.aborted) {
-    options.stdout.write(`${fun.logPrefix} Building function ${fun.localIdentifier}...`)
-    options.stdout.write(`${fun.logPrefix} Building GraphQL types...\n`)
+    options.stdout.write(`Building function ${fun.localIdentifier}...`)
+    options.stdout.write(`Building GraphQL types...\n`)
     await buildGraphqlTypes(fun, options)
   }
   if (!options.signal?.aborted) {
-    options.stdout.write(`${fun.logPrefix} Bundling JS function...\n`)
+    options.stdout.write(`Bundling JS function...\n`)
     await builder.bundle(fun, options)
   }
   if (!options.signal?.aborted) {
-    options.stdout.write(`${fun.logPrefix} Running javy...\n`)
+    options.stdout.write(`Running javy...\n`)
     await builder.compile(fun, options)
   }
   if (!options.signal?.aborted) {
-    options.stdout.write(`${fun.logPrefix} Done!\n`)
+    options.stdout.write(`Done!\n`)
   }
 }
 
@@ -236,7 +236,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     }
 
     const contents = this.entrypointContents
-    outputDebug(`${fun.logPrefix} Generating dist/function.js using generated module:`)
+    outputDebug(`Generating dist/function.js using generated module:`)
     outputDebug(contents)
 
     const esbuildOptions: Parameters<typeof esBuild>[0] = {
@@ -252,7 +252,7 @@ export class ExportJavyBuilder implements JavyBuilder {
 
   async compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
     const witContent = this.wit
-    outputDebug(`${fun.logPrefix} Generating world to use with Javy:`)
+    outputDebug(`Generating world to use with Javy:`)
     outputDebug(witContent)
 
     return inTemporaryDirectory(async (dir) => {
