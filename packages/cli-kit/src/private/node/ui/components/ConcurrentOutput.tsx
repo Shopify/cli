@@ -49,7 +49,7 @@ function currentTime() {
  * @param log The log to prefix
  */
 function prefixLog(prefix: string, log: string) : string {
-  return `${prefix}${log}`
+  return `<::${prefix}::>${log}`
 }
 
 function parseLog(log: string) : ParsedLog {

@@ -110,10 +110,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
-  get logPrefix() {
-    return `<::${this.handle}::>`
-  }
-
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -233,10 +229,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   getPrefixedLogger(wrappedWritable: Writable) {
-    const logPrefix = this.logPrefix
+    const handle = this.handle;
     return new Writable({
       write(chunk, encoding, callback) {
-        wrappedWritable.write(`${prefixLog(logPrefix, chunk.toString('utf8'))}`, 'utf8', callback)
+        wrappedWritable.write(`${prefixLog(handle, chunk.toString('utf8'))}`, 'utf8', callback)
       },
     });
   }

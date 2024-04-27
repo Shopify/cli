@@ -120,9 +120,9 @@ async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options
 async function buildOtherFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   if (!extension.buildCommand) {
     options.stderr.write(
-      `${extension.logPrefix} The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
+      `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
     )
-    options.stderr.write(`${extension.logPrefix}
+    options.stderr.write(`
     Edit the shopify.function.extension.toml configuration file and set how to build the extension.
 
     [build]
@@ -137,7 +137,7 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
 
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   const buildCommandComponents = buildCommand.split(' ')
-  options.stdout.write(`${extension.logPrefix} Building function ${extension.localIdentifier}...`)
+  options.stdout.write(`Building function ${extension.localIdentifier}...`)
   await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,
