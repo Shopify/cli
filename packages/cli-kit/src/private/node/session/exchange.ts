@@ -100,10 +100,13 @@ export async function exchangeCustomPartnerToken(token: string): Promise<Applica
 
 export async function exchangeForDevDashToken(token: string): Promise<ApplicationToken> {
   outputDebug(outputContent`EXCHANGING TOKEN: ${token}`)
-  const appId = applicationId('developer-dashboard')
-  const newToken = await requestAppToken('developer-dashboard', token, [
-    'https://api.shopify.com/auth/organization.apps',
-  ])
+  // const appId = applicationId('developer-dashboard')
+  // const newToken = await requestAppToken('developer-dashboard', token, [
+  //   'https://api.shopify.com/auth/organization.apps',
+  // ])
+  const appId = applicationId('admin')
+  const newToken = await requestAppToken('admin', token, ['https://api.shopify.com/auth/organization.apps.manage'])
+
   return newToken[appId]!
 }
 

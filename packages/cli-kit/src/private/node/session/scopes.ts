@@ -57,7 +57,8 @@ function scopeTransform(scope: string): string {
     case 'destinations':
       return 'https://api.shopify.com/auth/destinations.readonly'
     case 'apps':
-      return 'https://api.shopify.com/auth/organization.apps'
+      // return 'https://api.shopify.com/auth/organization.apps'
+      return 'https://api.shopify.com/auth/organization.apps.manage'
     default:
       return scope
   }
