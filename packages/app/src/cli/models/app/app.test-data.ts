@@ -328,34 +328,6 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
 }
 
-export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
-  const configuration = {
-    name: 'web pixel name',
-    type: 'web_pixel' as const,
-    metafields: [],
-    runtime_context: 'strict',
-    customer_privacy: {
-      analytics: false,
-      marketing: true,
-      preferences: false,
-      sale_of_data: 'enabled',
-    },
-    settings: [],
-  }
-
-  const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
-  const parsed = specification.schema.parse(configuration)
-  const extension = new ExtensionInstance({
-    configuration: parsed,
-    configurationPath: '',
-    directory,
-    specification,
-  })
-
-  return extension
-}
-
 export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'tax',

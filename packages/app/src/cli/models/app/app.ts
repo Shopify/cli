@@ -175,7 +175,7 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
-  draftableExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
@@ -218,7 +218,7 @@ export class App implements AppInterface {
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
   remoteFlags: Flag[]
-  private realExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
 
   constructor({
     name,
@@ -259,10 +259,6 @@ export class App implements AppInterface {
 
     if (this.includeConfigOnDeploy) return this.realExtensions
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
-  }
-
-  get draftableExtensions() {
-    return this.realExtensions.filter((ext) => ext.isDraftable())
   }
 
   async updateDependencies() {
