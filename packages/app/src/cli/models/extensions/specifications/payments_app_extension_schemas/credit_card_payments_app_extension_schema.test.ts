@@ -2,6 +2,7 @@ import {
   CreditCardPaymentsAppExtensionConfigType,
   CreditCardPaymentsAppExtensionSchema,
   creditCardPaymentsAppExtensionDeployConfig,
+  MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './credit_card_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -100,6 +101,59 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
           code: zod.ZodIssueCode.custom,
           message: 'supports_installments and supports_deferred_payments must be the same',
           path: [],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if checkout_payment_method_fields has too many fields', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        checkout_payment_method_fields: [
+          {
+            key: 'key1',
+            type: 'string',
+            required: true,
+          },
+          {
+            key: 'key2',
+            type: 'string',
+            required: true,
+          },
+          {
+            key: 'key3',
+            type: 'string',
+            required: true,
+          },
+          {
+            key: 'key4',
+            type: 'string',
+            required: true,
+          },
+          {
+            key: 'key5',
+            type: 'string',
+            required: true,
+          },
+          {
+            key: 'key6',
+            type: 'string',
+            required: true,
+          },
+        ],
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_big,
+          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+          type: 'array',
+          inclusive: true,
+          exact: false,
+          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
+          path: ['checkout_payment_method_fields'],
         },
       ]),
     )

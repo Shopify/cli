@@ -12,6 +12,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
 
 export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
+export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 5
 
 export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
@@ -33,6 +34,10 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
           required: zod.boolean(),
           key: zod.string(),
         }),
+      )
+      .max(
+        MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+        `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
       )
       .optional(),
   })
