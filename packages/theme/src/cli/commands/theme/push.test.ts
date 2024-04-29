@@ -122,12 +122,40 @@ describe('Push', () => {
     test("renders confirmation prompt if 'allow-live' flag is not provided and selected theme role is live", async () => {
       // Given
       const flags: ThemeSelectionOptions = {live: true}
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
       // When
-      await createOrSelectTheme(adminSession, flags)
+      const theme = await createOrSelectTheme(adminSession, flags)
 
       // Then
+      expect(theme?.role).toBe(LIVE_THEME_ROLE)
       expect(renderConfirmationPrompt).toHaveBeenCalled()
+    })
+
+    test("renders confirmation prompt if 'allow-live' flag is not provided and live theme is specified via theme flag", async () => {
+      // Given
+      const flags: ThemeSelectionOptions = {theme: '3'}
+      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 3, name: 'Live Theme', role: LIVE_THEME_ROLE})!)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      // When
+      const theme = await createOrSelectTheme(adminSession, flags)
+
+      // Then
+      expect(theme?.role).toBe(LIVE_THEME_ROLE)
+      expect(renderConfirmationPrompt).toHaveBeenCalled()
+    })
+
+    test('returns undefined if live theme confirmation prompt is not confirmed', async () => {
+      // Given
+      const flags: ThemeSelectionOptions = {live: true}
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+
+      // When
+      const theme = await createOrSelectTheme(adminSession, flags)
+
+      // Then
+      expect(theme).toBeUndefined()
     })
 
     test('renders text prompt if unpublished flag is provided and theme flag is not provided', async () => {

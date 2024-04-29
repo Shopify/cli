@@ -14,7 +14,7 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
+import {LIVE_THEME_ROLE, Role, UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
@@ -220,27 +220,33 @@ export async function createOrSelectTheme(
     const themeManager = new UnpublishedThemeManager(adminSession)
     return themeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
   } else {
-    if (live && !flags['allow-live'] && !(await confirmPushToLiveTheme(adminSession.storeFqdn))) {
-      return
-    }
-    return findOrSelectTheme(adminSession, {
+    const selectedTheme = await findOrSelectTheme(adminSession, {
       header: 'Select a theme to push to:',
       filter: {
         live,
         theme,
       },
     })
+
+    if (await confirmPushToTheme(selectedTheme.role as Role, flags['allow-live'], adminSession.storeFqdn)) {
+      return selectedTheme
+    }
   }
 }
 
-async function confirmPushToLiveTheme(store: string) {
-  const message = `Push theme files to the published theme on ${store}?`
+async function confirmPushToTheme(themeRole: Role, allowLive: boolean | undefined, storeFqdn: string) {
+  if (themeRole === LIVE_THEME_ROLE) {
+    if (allowLive) {
+      return true
+    }
 
-  const options: RenderConfirmationPromptOptions = {
-    message,
-    confirmationMessage: 'Yes, confirm changes',
-    cancellationMessage: 'Cancel',
+    const options: RenderConfirmationPromptOptions = {
+      message: `Push theme files to the ${themeRole} theme on ${storeFqdn}?`,
+      confirmationMessage: 'Yes, confirm changes',
+      cancellationMessage: 'Cancel',
+    }
+
+    return renderConfirmationPrompt(options)
   }
-
-  return renderConfirmationPrompt(options)
+  return true
 }
