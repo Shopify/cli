@@ -24,7 +24,7 @@ describe('UnpublishedThemeManager', () => {
       )
     })
 
-    test('creates an unbpublished theme by default', async () => {
+    test('creates an unpublished theme by default', async () => {
       // Given
       const themeManager = buildThemeManager()
 

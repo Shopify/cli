@@ -83,6 +83,7 @@ describe('Push', () => {
 
       // Then
       expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE})
+      expect(UnpublishedThemeManager.prototype.create).toHaveBeenCalled()
     })
 
     test('creates development theme when development flag is provided', async () => {
@@ -93,6 +94,7 @@ describe('Push', () => {
 
       // Then
       expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE})
+      expect(DevelopmentThemeManager.prototype.findOrCreate).toHaveBeenCalled()
     })
 
     test('returns live theme when live flag is provided', async () => {
