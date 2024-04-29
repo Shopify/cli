@@ -25,6 +25,17 @@ describe('Push', () => {
   const path = '/my-theme'
 
   describe('run with CLI 3 implementation', () => {
+    test('should run the CLI 2 implementation if the password flag is provided', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+
+      // When
+      await runPushCommand(['--password', '123'], path, adminSession, theme)
+
+      // Then
+      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --development-theme-id ${theme.id}`)
+    })
+
     test('should pass call the CLI 3 command', async () => {
       // Given
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!

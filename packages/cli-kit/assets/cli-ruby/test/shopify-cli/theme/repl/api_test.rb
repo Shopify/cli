@@ -2,6 +2,7 @@
 
 require "test_helper"
 
+require "shopify_cli/theme/dev_server/proxy"
 require "shopify_cli/theme/theme_admin_api"
 require "shopify_cli/theme/repl/api"
 
@@ -31,7 +32,7 @@ module ShopifyCLI
               headers: {
                 "Authorization" => "Bearer",
                 "Content-Type" => "application/x-www-form-urlencoded",
-                "Cookie" => "storefront_digest=storefront_session_5678; _secure_session_id=secure_session_id_1234",
+                "Cookie" => "storefront_digest=storefront_session_5678; _shopify_essential=secure_session_id_1234",
                 "User-Agent" => "Shopify CLI",
               },
             )
@@ -57,7 +58,7 @@ module ShopifyCLI
               },
               headers: {
                 "Content-Type" => "application/x-www-form-urlencoded",
-                "Cookie" => "storefront_digest=storefront_session_5678; _secure_session_id=secure_session_id_1234",
+                "Cookie" => "storefront_digest=storefront_session_5678; _shopify_essential=secure_session_id_1234",
                 "X-Shopify-Shop" => "store.myshopify.com",
               },
             )

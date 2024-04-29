@@ -4,6 +4,8 @@ module ShopifyCLI
   module Theme
     class Repl
       class Api
+        SESSION_COOKIE_NAME = DevServer::Proxy::SESSION_COOKIE_NAME
+
         attr_reader :ctx, :url, :repl
 
         def initialize(ctx, url, repl)
@@ -60,7 +62,7 @@ module ShopifyCLI
         end
 
         def cookie
-          @cookie ||= "storefront_digest=#{repl.storefront_digest}; _secure_session_id=#{repl.secure_session_id}"
+          @cookie ||= "storefront_digest=#{repl.storefront_digest}; #{SESSION_COOKIE_NAME}=#{repl.secure_session_id}"
         end
 
         def shop
