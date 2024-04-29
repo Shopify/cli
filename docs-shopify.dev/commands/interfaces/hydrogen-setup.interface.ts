@@ -2,31 +2,31 @@
 export interface hydrogensetup {
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Overwrites the destination directory and files if they already exist.
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''
 
   /**
-   * Sets the styling strategy to use. One of `tailwind`, `css-modules`, `vanilla-extract`, `postcss`, `none`.
-   */
-  '--styling <value>'?: string
-
-  /**
    * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_I18N
    */
   '--markets <value>'?: string
 
   /**
    * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT
    */
   '--shortcut'?: ''
 
   /**
    * Auto installs dependencies using the active package manager.
+   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS
    */
   '--install-deps'?: ''
 }

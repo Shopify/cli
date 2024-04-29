@@ -2,41 +2,49 @@
 export interface apprelease {
   /**
    * The Client ID of your app.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
    */
   '--client-id <value>'?: string
 
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
   /**
    * Release without asking for confirmation.
+   * @environment SHOPIFY_FLAG_FORCE
    */
   '-f, --force'?: ''
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The path to your app directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Reset all your settings.
+   * @environment SHOPIFY_FLAG_RESET
    */
   '--reset'?: ''
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 
   /**
    * The name of the app version to release.
+   * @environment SHOPIFY_FLAG_VERSION
    */
   '--version <value>': string
 }

@@ -6,7 +6,6 @@ import {
   testThemeExtensions,
   testPaymentExtensions,
   testUIExtension,
-  testWebPixelExtension,
   testWebhookExtensions,
   testFlowActionExtension,
   testDeveloperPlatformClient,
@@ -107,48 +106,6 @@ describe('watchPaths', async () => {
     const got = extensionInstance.watchBuildPaths
 
     expect(got).toBeNull()
-  })
-})
-
-describe('isDraftable', () => {
-  test('returns false for theme extensions', async () => {
-    const extensionInstance = await testThemeExtensions()
-
-    const got1 = extensionInstance.isDraftable()
-
-    expect(got1).toBe(false)
-  })
-
-  test('returns false for app config extensions', async () => {
-    const extensionInstance = await testAppConfigExtensions()
-
-    const got1 = extensionInstance.isDraftable()
-
-    expect(got1).toBe(true)
-  })
-
-  test('returns true for web pixel extensions', async () => {
-    const extensionInstance = await testWebPixelExtension()
-
-    const got = extensionInstance.isDraftable()
-
-    expect(got).toBe(true)
-  })
-
-  test('returns true for ui extensions', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable()
-
-    expect(got).toBe(true)
-  })
-
-  test('returns true for functions', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable()
-
-    expect(got).toBe(true)
   })
 })
 

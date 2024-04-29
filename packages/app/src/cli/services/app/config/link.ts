@@ -41,7 +41,13 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  let {configuration} = await loadAppConfiguration(options)
+  let configuration: AppConfiguration | undefined
+  try {
+    // This will crash if we aren't in an app folder. But we need to continue in that case.
+    configuration = (await loadAppConfiguration(options)).configuration
+    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
+  } catch (error: unknown) {}
+
   let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
   const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient})
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient

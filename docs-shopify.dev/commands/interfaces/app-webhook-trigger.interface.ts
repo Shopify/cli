@@ -7,36 +7,61 @@ export interface appwebhooktrigger {
       · For local HTTP testing, use http://localhost:{port}/{url-path}
                           · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}
                           · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:
+   * @environment SHOPIFY_FLAG_ADDRESS
    */
   '--address <value>'?: string
 
   /**
    * The API Version of the webhook topic.
+   * @environment SHOPIFY_FLAG_API_VERSION
    */
   '--api-version <value>'?: string
 
   /**
+   * The Client ID of your app.
+   * @environment SHOPIFY_FLAG_CLIENT_ID
+   */
+  '--client-id <value>'?: string
+
+  /**
    * Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.
+   * @environment SHOPIFY_FLAG_CLIENT_SECRET
    */
   '--client-secret <value>'?: string
 
   /**
+   * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
+   */
+  '-c, --config <value>'?: string
+
+  /**
    * Method chosen to deliver the topic payload. If not passed, it's inferred from the address.
+   * @environment SHOPIFY_FLAG_DELIVERY_METHOD
    */
   '--delivery-method <value>'?: string
 
   /**
    * This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.
+   * @environment SHOPIFY_FLAG_HELP
    */
   '--help'?: ''
 
   /**
+   * The path to your app directory.
+   * @environment SHOPIFY_FLAG_PATH
+   */
+  '--path <value>'?: string
+
+  /**
    * Deprecated. Please use client-secret.
+   * @environment SHOPIFY_FLAG_SHARED_SECRET
    */
   '--shared-secret <value>'?: string
 
   /**
    * The requested webhook topic.
+   * @environment SHOPIFY_FLAG_TOPIC
    */
   '--topic <value>'?: string
 }

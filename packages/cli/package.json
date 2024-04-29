@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Shopify/cli/edit/main/packages/cli"
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/cli"
   },
   "license": "MIT",
   "type": "module",
@@ -111,7 +112,6 @@
     "@shopify/theme": "3.59.0",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^0.34.3",
-    "@chialab/esbuild-plugin-require-resolve": "^0.18.0",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1",
     "vitest": "^0.34.3"

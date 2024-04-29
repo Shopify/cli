@@ -2,6 +2,7 @@
 export interface help {
   /**
    * Include all nested commands in the output.
+   * @environment SHOPIFY_FLAG_CLI_NESTED_COMMANDS
    */
   '-n, --nested-commands'?: ''
 }

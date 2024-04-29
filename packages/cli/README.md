@@ -158,7 +158,7 @@ FLAGS
 DESCRIPTION
   Deploy your Shopify app.
 
-  "Builds the app" (https://shopify.dev/docs/apps/tools/cli/commands#build), then deploys your app configuration and
+  "Builds the app" (https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and
   extensions.
 
   This command creates an app version, which is a snapshot of your app configuration and all extensions, including the
@@ -203,9 +203,9 @@ FLAGS
 DESCRIPTION
   Run the app.
 
-  "Builds the app" (https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a "development
-  store" (https://shopify.dev/docs/apps/tools/development-stores) or "Plus sandbox store" (https://help.shopify.com/part
-  ners/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
+  "Builds the app" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a "development
+  store" (https://shopify.dev/docs/apps/tools/development-stores) or "Plus sandbox store"
+  (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).
 
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps.
   If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these
@@ -236,10 +236,9 @@ DESCRIPTION
   - Ruby: "Set up your Rails app" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
 
   > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have
-  a "staff account"
-  (https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on the
-  store. Staff accounts are created automatically the first time you access a development store with your Partner staff
-  account through the Partner Dashboard.
+  a "staff account" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are
+  created automatically the first time you access a development store with your Partner staff account through the
+  Partner Dashboard.
 ```
 
 ## `shopify app env pull`
@@ -406,7 +405,7 @@ DESCRIPTION
 
   Generates a new "app extension" (https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you
   can generate using this command, refer to "Supported extensions"
-  (https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).
+  (https://shopify.dev/docs/apps/structure/app-extensions/list).
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
@@ -457,8 +456,8 @@ DESCRIPTION
   The information returned includes the following:
 
   - The app and development store or Plus sandbox store that's used when you run the "dev"
-  (https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using "dev --reset"
-  (https://shopify.dev/docs/apps/tools/cli/commands#dev).
+  (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using "`dev
+  --reset`" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
   - The "structure" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.
@@ -542,10 +541,14 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-secret <value>] [--delivery-method
-    http|google-pub-sub|event-bridge] [--help] [--shared-secret <value>] [--topic <value>]
+  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
+    [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>]
+    [--shared-secret <value>] [--topic <value>]
 
 FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+
   --address=<value>
       The URL where the webhook payload should be sent.
       You will need a different address type for each delivery-method:
@@ -556,6 +559,9 @@ FLAGS
 
   --api-version=<value>
       The API Version of the webhook topic.
+
+  --client-id=<value>
+      The Client ID of your app.
 
   --client-secret=<value>
       Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate
@@ -568,6 +574,9 @@ FLAGS
   --help
       This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
       flags.
+
+  --path=<value>
+      The path to your app directory.
 
   --shared-secret=<value>
       Deprecated. Please use client-secret.
@@ -1150,8 +1159,9 @@ DESCRIPTION
 
   - A link to the "editor" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
 
-  - A "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-9
-  1C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+  - A "preview link"
+  (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
+  share with other developers.
 
   If you already have a development theme for your current environment, then this command replaces the development theme
   with your local theme. You can override this using the `--theme-editor-sync` flag.
@@ -1159,8 +1169,8 @@ DESCRIPTION
   > Note: You can't preview checkout customizations using http://127.0.0.1:9292.
 
   Development themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after
-  you log out, then you should "share" (https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or "push"
-  (https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.
+  you log out, then you should "share" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or "push"
+  (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
@@ -1296,8 +1306,9 @@ DESCRIPTION
   Returns links that let you preview the specified theme. The following links are returned:
 
   - A link to the "editor" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
-  - A "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-9
-  1C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+  - A "preview link"
+  (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
+  share with other developers.
 
   If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your
   store.
@@ -1435,8 +1446,9 @@ DESCRIPTION
   This command returns the following information:
 
   - A link to the "editor" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
-  - A "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-9
-  1C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
+  - A "preview link"
+  (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
+  share with others.
 
   If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a
   machine-readable input for scripts or continuous integration.
@@ -1509,8 +1521,9 @@ DESCRIPTION
 
   Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
 
-  This command returns a "preview link" (https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a
-  89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
+  This command returns a "preview link"
+  (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
+  share with others.
 ```
 
 ## `shopify upgrade`
