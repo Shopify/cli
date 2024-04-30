@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.59.2
+
+### Patch Changes
+
+- 4a22b9e49: Fix react version mismatch error
+
 ## 3.59.1
 
 ## 3.59.0

@@ -1,5 +1,16 @@
 # @shopify/theme
 
+## 3.59.2
+
+### Patch Changes
+
+- a5c2d79f4: - Fix the `shopify theme dev` proxy to use the development theme, even when users have a browser session with the live theme loaded
+- bdefb650b: Fix unpublished themes being marked as development themes
+- 4a22b9e49: Fix react version mismatch error
+- ddff21db0: Fix issue that prevents `shopify theme console` from evaluating results when another 'preview_theme_id' is set
+- Updated dependencies [4a22b9e49]
+  - @shopify/cli-kit@3.59.2
+
 ## 3.59.1
 
 ### Patch Changes
