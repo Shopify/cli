@@ -14,6 +14,7 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -257,6 +258,16 @@ export function shiftRegistrationsAround(
   return {extensionsNotManagedInConfig, allRegistrationsManagedInConfig}
 }
 
+// gracejychang how do we like this name?
+function matchesRemoteConfigForWebhookSubscriptions(
+  specificationIdentifier: string,
+  remoteConfigObj: {[key: string]: unknown},
+  localConfig: {[key: string]: unknown},
+) {
+  if (specificationIdentifier !== WebhookSubscriptionSpecIdentifier) return false
+  if (remoteConfigObj.topic == localConfig.topic && remoteConfigObj.uri == localConfig.uri) return true
+}
+
 async function ensureExtensionIdsForExtensionsManagedInToml(
   localExtensionRegistrations: ExtensionInstance[],
   remoteConfigurationRegistrations: RemoteSource[],
@@ -286,7 +297,9 @@ async function ensureExtensionIdsForExtensionsManagedInToml(
         const hasMatch = possibleMatches?.some((possibleMatch: any) => {
           const remoteConfigString = possibleMatch.activeVersion?.config
           const remoteConfigObj = remoteConfigString ? JSON.parse(remoteConfigString) : ''
-          if (extension.specification.matchesRemoteConfig?.(remoteConfigObj, localConfig)) {
+          if (
+            matchesRemoteConfigForWebhookSubscriptions(extension.specification.identifier, remoteConfigObj, localConfig)
+          ) {
             matchedUuids.push(possibleMatch.uuid)
             matchedIds.push(possibleMatch.id)
             return true
