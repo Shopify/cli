@@ -4,8 +4,11 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {cacheRetrieveOrRepopulate, IntrospectionUrlKey} from '../conf-store.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 export async function validateIdentityToken(token: string): Promise<boolean> {
+  if (firstPartyDev()) return true
+
   try {
     return withIntrospectionURL<boolean>(async (introspectionURL: string) => {
       const options = {
