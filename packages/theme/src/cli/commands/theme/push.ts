@@ -7,7 +7,6 @@ import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {push} from '../../services/push.js'
 import {hasRequiredThemeDirectories} from '../../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../../utilities/theme-ui.js'
-import {UnpublishedThemeManager} from '../../utilities/unpublished-theme-manager.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -17,6 +16,7 @@ import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopif
 import {LIVE_THEME_ROLE, Role, UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {createTheme} from '@shopify/cli-kit/node/themes/api'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -217,8 +217,13 @@ export async function createOrSelectTheme(
     return themeManager.findOrCreate()
   } else if (unpublished) {
     const themeName = theme || (await promptThemeName('Name of the new theme'))
-    const themeManager = new UnpublishedThemeManager(adminSession)
-    return themeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
+    return createTheme(
+      {
+        name: themeName,
+        role: UNPUBLISHED_THEME_ROLE,
+      },
+      adminSession,
+    )
   } else {
     const selectedTheme = await findOrSelectTheme(adminSession, {
       header: 'Select a theme to push to:',
