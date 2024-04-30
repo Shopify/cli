@@ -1,12 +1,13 @@
-import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
+import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
+import {ThemeEnvironmentOptions, startDevServer} from '../utilities/theme-environment.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -59,7 +60,13 @@ export async function dev(options: DevOptions) {
 
   if (options['dev-preview']) {
     outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-    throw new AbortSilentError()
+    const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
+    const localThemeFileSystem = await mountThemeFileSystem(options.directory)
+    const themeEnvOptions: ThemeEnvironmentOptions = {
+      themeEditorSync: options['theme-editor-sync'],
+    }
+    await startDevServer(options.theme, options.adminSession, remoteChecksums, localThemeFileSystem, themeEnvOptions)
+    return
   }
 
   await execCLI2(command, {store: options.store, adminToken, storefrontToken})
