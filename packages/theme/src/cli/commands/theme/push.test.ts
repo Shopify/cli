@@ -84,18 +84,6 @@ describe('Push', () => {
       expect(DevelopmentThemeManager.prototype.findOrCreate).toHaveBeenCalled()
     })
 
-    test('returns live theme when live flag is provided', async () => {
-      // Given
-      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 3, name: 'Live Theme', role: LIVE_THEME_ROLE})!)
-      const flags: ThemeSelectionOptions = {live: true, 'allow-live': true}
-
-      // When
-      const theme = await createOrSelectTheme(adminSession, flags)
-
-      // Then
-      expect(theme).toMatchObject({role: LIVE_THEME_ROLE})
-    })
-
     test('creates development theme when development and unpublished flags are provided', async () => {
       // Given
       vi.mocked(DevelopmentThemeManager.prototype.findOrCreate).mockResolvedValue(
@@ -108,6 +96,18 @@ describe('Push', () => {
 
       // Then
       expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE})
+    })
+
+    test('returns live theme when live flag is provided', async () => {
+      // Given
+      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 3, name: 'Live Theme', role: LIVE_THEME_ROLE})!)
+      const flags: ThemeSelectionOptions = {live: true, 'allow-live': true}
+
+      // When
+      const theme = await createOrSelectTheme(adminSession, flags)
+
+      // Then
+      expect(theme).toMatchObject({role: LIVE_THEME_ROLE})
     })
 
     test("renders confirmation prompt if 'allow-live' flag is not provided and selected theme role is live", async () => {
@@ -151,6 +151,19 @@ describe('Push', () => {
       expect(theme).toBeUndefined()
     })
 
+    test('returns undefined if confirmation prompt is rejected', async () => {
+      // Given
+      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 3, name: 'Live Theme', role: LIVE_THEME_ROLE})!)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+      const flags = {live: true}
+
+      // When
+      const theme = await createOrSelectTheme(adminSession, flags)
+
+      // Then
+      expect(theme).toBeUndefined()
+    })
+
     test('renders text prompt if unpublished flag is provided and theme flag is not provided', async () => {
       // Given
       const flags = {unpublished: true}
@@ -163,19 +176,6 @@ describe('Push', () => {
         message: 'Name of the new theme',
         defaultValue: expect.any(String),
       })
-    })
-
-    test('returns undefined if confirmation prompt is rejected', async () => {
-      // Given
-      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 3, name: 'Live Theme', role: LIVE_THEME_ROLE})!)
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
-      const flags = {live: true}
-
-      // When
-      const theme = await createOrSelectTheme(adminSession, flags)
-
-      // Then
-      expect(theme).toBeUndefined()
     })
   })
 
