@@ -11,10 +11,9 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {getPathValue} from '@shopify/cli-kit/common/object'
-import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -264,8 +263,13 @@ function matchesRemoteConfigForWebhookSubscriptions(
   remoteConfigObj: {[key: string]: unknown},
   localConfig: {[key: string]: unknown},
 ) {
-  if (specificationIdentifier !== WebhookSubscriptionSpecIdentifier) return false
-  if (remoteConfigObj.topic == localConfig.topic && remoteConfigObj.uri == localConfig.uri) return true
+  if (
+    specificationIdentifier === WebhookSubscriptionSpecIdentifier &&
+    remoteConfigObj.topic === localConfig.topic &&
+    remoteConfigObj.uri === localConfig.uri
+  )
+    return true
+  return false
 }
 
 async function ensureExtensionIdsForExtensionsManagedInToml(
@@ -294,13 +298,17 @@ async function ensureExtensionIdsForExtensionsManagedInToml(
       const newExtensionsToCreate: ExtensionInstance[] = []
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      localConfigArray?.forEach((localConfig: any) => {
+      localConfigArray?.forEach((localConfigObj: any) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const hasMatch = possibleMatches?.some((possibleMatch: any) => {
           const remoteConfigString = possibleMatch.activeVersion?.config
           const remoteConfigObj = remoteConfigString ? JSON.parse(remoteConfigString) : ''
           if (
-            matchesRemoteConfigForWebhookSubscriptions(extension.specification.identifier, remoteConfigObj, localConfig)
+            matchesRemoteConfigForWebhookSubscriptions(
+              extension.specification.identifier,
+              remoteConfigObj,
+              localConfigObj,
+            )
           ) {
             matchedUuids.push(possibleMatch.uuid)
             matchedIds.push(possibleMatch.id)

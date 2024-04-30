@@ -50,14 +50,15 @@ function transformFromWebhookSubscriptionConfig(content: object) {
   const {api_version, subscriptions = []} = webhooks
 
   const webhookSubscriptions = subscriptions.flatMap((subscription) => {
-    const {uri, topics, ...optionalFields} = subscription
+    // compliance_topics gets handled by privacy_compliance_webhooks
+    const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
     if (topics)
       return topics.map((topic) => {
         return {api_version, uri, topic, ...optionalFields}
       })
   })
 
-  return webhookSubscriptions.length > 0 ? webhookSubscriptions : []
+  return webhookSubscriptions.length > 0 ? webhookSubscriptions.filter(Boolean) : []
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
