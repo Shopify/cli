@@ -26,6 +26,9 @@ module ShopifyCLI
           # from shutting down the server.
           shutdown if index_page?(@env)
 
+          # Set preview_theme_id into the session.
+          @app.call(@env)
+
           [
             200,
             {
