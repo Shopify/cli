@@ -57,15 +57,15 @@ test("writes", async () => {
 })
 ```
 
-> :bulb: **Given/When/Then**
+> 💡 **Given/When/Then**
 >
 > We recommend grouping the test steps following [Gherkin](https://cucumber.io/docs/gherkin/reference/)'s blocks, given, when, and using code comments. That makes the code test easier to parse visually.
 
-> :exclamation: **Tests and promises**
+> ❗ **Tests and promises**
 >
 > If inside your tests you call asynchronous functions and forget to `await` you might end up with false positives. Therefore we recommend that after writing your tests that you always make it fail.
 
-> :exclamation: **Vitest is in beta**
+> ❗ **Vitest is in beta**
 >
 > Vitest is still in beta, so you might encounter issues while using it. If you come across any, check out [our troubleshooting page](/contributors/troubleshooting) or the [list of issues](https://github.com/vitest-dev/vitest/issues) on the project's repository.
 
@@ -96,9 +96,9 @@ Each `.feature` file under `features/` group of scenarios has something in commo
 
 **Note** that we don't need to test all the user scenarios. Unlike unit tests, acceptance tests are slow. Focus on the user journeys that are most common and prefer larger but fewer scenarios over smaller but more.
 
-> :bulb: Try to make them as generic as possible by using regular expressions when defining steps. That way, your steps can easily be reused by other scenarios.
+> 💡 Try to make them as generic as possible by using regular expressions when defining steps. That way, your steps can easily be reused by other scenarios.
 
-> :bulb: If your scenario relies on a global state, for example, storing a file in the user's environment, adjust the implementation to control the state's location from the acceptance tests. This is extremely important to prevent flakiness.
+> 💡 If your scenario relies on a global state, for example, storing a file in the user's environment, adjust the implementation to control the state's location from the acceptance tests. This is extremely important to prevent flakiness.
 
 ## Github Actions
 Before being able to marge a PR, it must pass all CI checks executed in Github Actions.
