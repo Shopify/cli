@@ -1,7 +1,6 @@
 {
   "name": "@shopify/plugin-cloudflare",
   "version": "3.59.1",
-  "private": true,
   "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
