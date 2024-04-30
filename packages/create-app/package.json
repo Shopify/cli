@@ -1,6 +1,6 @@
 {
   "name": "@shopify/create-app",
-  "version": "3.59.1",
+  "version": "3.59.2",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "keywords": [
@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@oclif/core": "3.23.0",
-    "@shopify/cli-kit": "3.59.1"
+    "@shopify/cli-kit": "3.59.2"
   },
   "devDependencies": {
     "@types/node": "18.19.3",

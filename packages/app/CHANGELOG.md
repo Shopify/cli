@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.59.2
+
+### Patch Changes
+
+- 4a22b9e49: Fix react version mismatch error
+- Updated dependencies [4a22b9e49]
+  - @shopify/plugin-cloudflare@3.59.2
+  - @shopify/create-app@3.59.2
+  - @shopify/cli-kit@3.59.2
+
 ## 3.59.1
 
 ### Patch Changes
