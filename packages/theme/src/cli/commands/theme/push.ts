@@ -7,13 +7,14 @@ import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {push} from '../../services/push.js'
 import {hasRequiredThemeDirectories} from '../../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../../utilities/theme-ui.js'
+import {UnpublishedThemeManager} from '../../utilities/unpublished-theme-manager.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
+import {LIVE_THEME_ROLE, Role, UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
@@ -149,31 +150,12 @@ export default class Push extends ThemeCommand {
       return
     }
 
-    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-
     if (!flags.stable && !flags.password) {
-      const {live, development, unpublished, path, nodelete, theme, publish, json, force, ignore, only} = flags
+      const {path, nodelete, publish, json, force, ignore, only} = flags
 
-      let selectedTheme: Theme
-      if (unpublished) {
-        const themeName = theme || (await promptThemeName('Name of the new theme'))
-        selectedTheme = await developmentThemeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
-      } else {
-        selectedTheme = await findOrSelectTheme(adminSession, {
-          header: 'Select a theme to push to:',
-          filter: {
-            live,
-            unpublished,
-            development,
-            theme,
-          },
-        })
-      }
-
-      if (selectedTheme.role === 'live' && !flags['allow-live']) {
-        if (!(await confirmPushToLiveTheme(adminSession.storeFqdn))) {
-          return
-        }
+      const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
+      if (!selectedTheme) {
+        return
       }
 
       await push(selectedTheme, adminSession, {
@@ -190,6 +172,8 @@ export default class Push extends ThemeCommand {
     }
 
     showEmbeddedCLIWarning()
+
+    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
 
     const targetTheme = await (flags.development
       ? developmentThemeManager.findOrCreate()
@@ -214,14 +198,55 @@ export default class Push extends ThemeCommand {
   }
 }
 
-async function confirmPushToLiveTheme(store: string) {
-  const message = `Push theme files to the published theme on ${store}?`
+export interface ThemeSelectionOptions {
+  live?: boolean
+  development?: boolean
+  unpublished?: boolean
+  theme?: string
+  'allow-live'?: boolean
+}
 
-  const options: RenderConfirmationPromptOptions = {
-    message,
-    confirmationMessage: 'Yes, confirm changes',
-    cancellationMessage: 'Cancel',
+export async function createOrSelectTheme(
+  adminSession: AdminSession,
+  flags: ThemeSelectionOptions,
+): Promise<Theme | undefined> {
+  const {live, development, unpublished, theme} = flags
+
+  if (development) {
+    const themeManager = new DevelopmentThemeManager(adminSession)
+    return themeManager.findOrCreate()
+  } else if (unpublished) {
+    const themeName = theme || (await promptThemeName('Name of the new theme'))
+    const themeManager = new UnpublishedThemeManager(adminSession)
+    return themeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
+  } else {
+    const selectedTheme = await findOrSelectTheme(adminSession, {
+      header: 'Select a theme to push to:',
+      filter: {
+        live,
+        theme,
+      },
+    })
+
+    if (await confirmPushToTheme(selectedTheme.role as Role, flags['allow-live'], adminSession.storeFqdn)) {
+      return selectedTheme
+    }
   }
+}
 
-  return renderConfirmationPrompt(options)
+async function confirmPushToTheme(themeRole: Role, allowLive: boolean | undefined, storeFqdn: string) {
+  if (themeRole === LIVE_THEME_ROLE) {
+    if (allowLive) {
+      return true
+    }
+
+    const options: RenderConfirmationPromptOptions = {
+      message: `Push theme files to the ${themeRole} theme on ${storeFqdn}?`,
+      confirmationMessage: 'Yes, confirm changes',
+      cancellationMessage: 'Cancel',
+    }
+
+    return renderConfirmationPrompt(options)
+  }
+  return true
 }
