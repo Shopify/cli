@@ -149,7 +149,7 @@
     "node-fetch": "3.3.2",
     "open": "8.4.2",
     "pathe": "1.1.1",
-    "react": "18.2.0",
+    "react": "^18.2.0",
     "semver": "7.5.4",
     "simple-git": "3.19.1",
     "stacktracey": "2.1.8",
