@@ -124,7 +124,7 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   function throwOnNoPrompt() {
-    if (!noPrompt) return
+    if (!noPrompt || firstPartyDev()) return
     throw new AbortError(
       `The currently available CLI credentials are invalid.
 
