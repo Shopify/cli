@@ -252,7 +252,7 @@ describe('bundleConfig', async () => {
     )
   })
 
-  test('returns an array of modules for each extension with spec.extensionManagedInToml and spec.multipleModuleConfigPath', async () => {
+  test('returns an array of modules for each extension with spec.uidStrategy === dynamic', async () => {
     const extensionInstance = await testWebhookSubscriptionExtensions()
 
     const got = await extensionInstance.bundleConfig({

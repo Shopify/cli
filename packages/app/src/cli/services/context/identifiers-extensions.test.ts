@@ -1076,7 +1076,7 @@ describe('shiftRegistrationsAround', () => {
     )
     // karen.xie: this is 'configuration' because the local webhook-subscription spec is created as a configuration spec
     expect(extensionManagedInTomlSpec?.experience).toEqual('configuration')
-    expect(extensionManagedInTomlSpec?.extensionManagedInToml).toEqual(true)
+    expect(extensionManagedInTomlSpec?.uidStrategy).toEqual('dynamic')
 
     // When
     const {extensionsNotManagedInConfig, allRegistrationsManagedInConfig} = shiftRegistrationsAround(

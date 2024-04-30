@@ -543,7 +543,9 @@ class AppLoader {
   private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
-        .filter((specification) => specification.experience === 'configuration' || specification.extensionManagedInToml)
+        .filter(
+          (specification) => specification.experience === 'configuration' || specification.uidStrategy === 'dynamic',
+        )
         .map(async (specification) => {
           const specConfiguration = await parseConfigurationObject(
             specification.schema,

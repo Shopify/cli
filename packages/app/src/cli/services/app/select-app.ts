@@ -32,7 +32,7 @@ export async function fetchAppRemoteConfiguration(
       (module) =>
         module.specification?.experience === 'configuration' ||
         specifications.find(
-          (spec) => spec.identifier === module.specification?.identifier && spec.extensionManagedInToml,
+          (spec) => spec.identifier === module.specification?.identifier && spec.uidStrategy === 'dynamic',
         ),
     ) || []
   if (appModuleVersionsConfig.length === 0) return undefined
@@ -54,7 +54,7 @@ export function remoteAppConfigurationExtensionContent(
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter(
-    (spec) => spec.experience === 'configuration' || spec.extensionManagedInToml,
+    (spec) => spec.experience === 'configuration' || spec.uidStrategy === 'dynamic',
   )
   configRegistrations.forEach((module) => {
     const configSpec = configSpecifications.find(

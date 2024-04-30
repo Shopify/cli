@@ -246,7 +246,7 @@ export function shiftRegistrationsAround(
 ) {
   const extensionSpecsManagedInToml =
     specifications
-      ?.filter((specification) => specification.extensionManagedInToml)
+      ?.filter((specification) => specification.uidStrategy === 'dynamic')
       .map((specification) => specification.identifier) ?? []
   const extensionsManagedInConfig = extensionRegistrations.filter((registration) => {
     return extensionSpecsManagedInToml.includes(registration.type.toLowerCase())
@@ -274,7 +274,9 @@ async function ensureExtensionIdsForExtensionsManagedInToml(
   developerPlatformClient: DeveloperPlatformClient,
   appId: string,
 ) {
-  const extensionsManagedInToml = localExtensionRegistrations.filter((ext) => ext.specification.extensionManagedInToml)
+  const extensionsManagedInToml = localExtensionRegistrations.filter(
+    (ext) => ext.specification.uidStrategy === 'dynamic',
+  )
 
   const validMatches: {[key: string]: string[]} = {}
   const validMatchesById: {[key: string]: string[]} = {}
@@ -340,7 +342,7 @@ async function ensureExtensionIdsForConfigurations(
   appId: string,
 ) {
   const extensionsNotManagedInToml = localExtensionRegistrations.filter(
-    (ext) => !ext.specification.extensionManagedInToml,
+    (ext) => ext.specification.uidStrategy !== 'dynamic',
   )
 
   const validMatches: {[key: string]: string[]} = {}

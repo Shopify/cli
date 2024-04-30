@@ -123,7 +123,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
     this.handle =
-      this.specification.experience === 'configuration' || this.specification.extensionManagedInToml
+      this.specification.experience === 'configuration' || this.specification.uidStrategy === 'dynamic'
         ? slugify(this.specification.identifier)
         : this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
@@ -148,7 +148,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isUuidManaged() {
-    return !this.isAppConfigExtension && !this.specification.extensionManagedInToml
+    return !this.isAppConfigExtension && this.specification.uidStrategy === 'uuid'
   }
 
   isSentToMetrics() {

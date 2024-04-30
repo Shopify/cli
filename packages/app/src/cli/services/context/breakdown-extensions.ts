@@ -321,7 +321,7 @@ function loadExtensionsIdentifiersBreakdown(
     activeAppVersion?.appModuleVersions
       .filter((module) => !module.specification || module.specification.experience === 'extension')
       .filter((extension) =>
-        specs.find((spec) => spec.identifier === extension.specification?.identifier && !spec.extensionManagedInToml),
+        specs.find((spec) => spec.identifier === extension.specification?.identifier && spec.uidStrategy !== 'dynamic'),
       ) || []
 
   const extensionsToUpdate = Object.entries(localRegistration)
