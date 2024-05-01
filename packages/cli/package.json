@@ -96,9 +96,9 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.23.0",
-    "@oclif/plugin-commands": "3.3.0",
-    "@oclif/plugin-plugins": "4.3.8",
+    "@oclif/core": "3.26.5",
+    "@oclif/plugin-commands": "3.3.1",
+    "@oclif/plugin-plugins": "4.3.10",
     "@shopify/app": "3.59.0",
     "@shopify/cli-kit": "3.59.0",
     "@shopify/plugin-cloudflare": "3.59.0",
