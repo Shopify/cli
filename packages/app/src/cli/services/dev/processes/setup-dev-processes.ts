@@ -155,7 +155,7 @@ export async function setupDevProcesses({
       setupAppEventsSubscribeProcess({
         partnersSessionToken,
         subscription: {
-          shopId: storeId,
+          shopIds: [storeId],
           apiKey,
         },
         prefix: 'app-events',

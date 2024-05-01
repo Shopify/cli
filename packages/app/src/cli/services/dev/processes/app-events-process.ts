@@ -3,7 +3,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {gql} from 'graphql-request'
 
 export interface AppEventsQueryOptions {
-  shopId: string
+  shopIds: [string]
   apiKey: string
   token: string
   jwtToken?: string
@@ -16,15 +16,15 @@ export interface AppEventsSubscribeProcess extends BaseProcess<AppEventsQueryOpt
 interface Props {
   partnersSessionToken: string
   subscription: {
-    shopId: string
+    shopIds: [string]
     apiKey: string
   }
   prefix: string
 }
 
 const AppEventsSubscribeMutation = gql`
-  mutation AppEventsSubscribe($input: AppEventsSubscribeInput!) {
-    appEventsSubscribe(input: $input) {
+  mutation AppEventsSubscribe($input: AppLogsSubscribeInput!) {
+    appLogsSubscribe(input: $input) {
       jwtToken
       success
       errors
@@ -32,9 +32,9 @@ const AppEventsSubscribeMutation = gql`
   }
 `
 
-const FetchAppEventsQuery = gql`
-  query FetchAppEvents($jwtToken: String!, $oldestMessageRead: String!) {
-    appEvents(jwtToken: $jwtToken, oldestMessageRead: $oldestMessageRead) {
+const FetchAppLogsQuery = gql`
+  query FetchLogsEvents($jwtToken: String!, $oldestMessageRead: String!) {
+    appLogs(jwtToken: $jwtToken, oldestMessageRead: $oldestMessageRead) {
       type
       shopId
       appClientId
@@ -57,7 +57,7 @@ const FetchAppEventsQuery = gql`
 
 export function setupAppEventsSubscribeProcess({
   partnersSessionToken,
-  subscription: {shopId, apiKey},
+  subscription: {shopIds, apiKey},
   prefix,
 }: Props): AppEventsSubscribeProcess | undefined {
   return {
@@ -65,7 +65,7 @@ export function setupAppEventsSubscribeProcess({
     prefix,
     function: subscribeToAppEvents,
     options: {
-      shopId,
+      shopIds,
       apiKey,
       token: partnersSessionToken,
     },
@@ -74,36 +74,38 @@ export function setupAppEventsSubscribeProcess({
 
 export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = async ({stdout}, options) => {
   const result = await partnersRequest<{
-    appEventsSubscribe: {jwtToken: string; success: boolean; errors: string[]}
+    appLogsSubscribe: {jwtToken: string; success: boolean; errors: string[]}
   }>(AppEventsSubscribeMutation, options.token, {
-    input: {shopId: options.shopId, apiKey: options.apiKey},
+    input: {shopIds: options.shopIds, apiKey: options.apiKey},
   })
 
-  stdout.write(`Subscribed to App Events for SHOP ID ${options.shopId} Api Key ${options.apiKey}\n`)
+  stdout.write(`Subscribed to App Events for SHOP ID ${options.shopIds} Api Key ${options.apiKey}\n`)
 
   stdout.write(`Checking for AppEvents logs\n`)
 
-  const currentJwtToken = result.appEventsSubscribe.jwtToken
+  console.log(result.appLogsSubscribe)
+
+  const currentJwtToken = result.appLogsSubscribe.jwtToken
 
   const fetchLogsResult = await partnersRequest<{
-    appEvents: {
+    appLogs: {
       type: string
-      shopId: string
+      shopIds: string
       appClientId: string
       eventTimestamp: string
       payload: {functionId: string}
     }[]
-  }>(FetchAppEventsQuery, options.token, {
+  }>(FetchAppLogsQuery, options.token, {
     jwtToken: currentJwtToken,
     oldestMessageRead: new Date().toISOString(),
   })
 
-  // console.log(fetchLogsResult)
+  console.log(currentJwtToken)
 
-  fetchLogsResult.appEvents.forEach((event) => {
+  fetchLogsResult.appLogs.forEach((event) => {
     stdout.write(`Event Streamed\n`)
     stdout.write(`Event Type: ${event.type}\n`)
-    stdout.write(`Shop ID: ${event.shopId}\n`)
+    stdout.write(`Shop ID: ${event.shopIds[0]}\n`)
     stdout.write(`App Client ID: ${event.appClientId}\n`)
     stdout.write(`Event Timestamp: ${event.eventTimestamp}\n`)
     stdout.write(`Payload: ${JSON.stringify(event.payload, null, 2)}\n`)
@@ -113,17 +115,18 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
   // TODO: This is a temporary solution to poll for app events
   const appEventsRequest = async () => {
     const fetchLogsResult = await partnersRequest<{
-      appEvents: {
+      appLogs: {
         type: string
-        shopId: string
+        shopIds: [string]
         appClientId: string
         eventTimestamp: string
-        payload: AppEvent
+        payload: AppLog
       }[]
-    }>(FetchAppEventsQuery, options.token, {
+    }>(FetchAppLogsQuery, options.token, {
       jwtToken: currentJwtToken,
       oldestMessageRead: lastReadTime,
     })
+    // console.log('fetchLogsResult', fetchLogsResult)
 
     // console.log(fetchLogsResult)
     const functionErrorOutput = ({
@@ -131,10 +134,10 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
     }: {
       event: {
         type: string
-        shopId: string
+        shopIds: [string]
         appClientId: string
         eventTimestamp: string
-        payload: AppEvent
+        payload: AppLog
       }
     }) => {
       const part1 = `❌ ${
@@ -154,10 +157,10 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
     }: {
       event: {
         type: string
-        shopId: string
+        shopIds: [string]
         appClientId: string
         eventTimestamp: string
-        payload: AppEvent
+        payload: AppLog
       }
     }) => {
       const part1 = `✅ ${event.type === 'function-run' ? 'Function' : 'other?'} executed in ${
@@ -172,7 +175,7 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
       stdout.write(part4)
     }
 
-    fetchLogsResult.appEvents.forEach((event) => {
+    fetchLogsResult.appLogs.forEach((event) => {
       if (event.payload.errorMessage) {
         functionErrorOutput({event})
       } else {
@@ -192,7 +195,7 @@ export const subscribeToAppEvents: DevProcessFunction<AppEventsQueryOptions> = a
   await startPolling()
 }
 
-interface AppEvent {
+interface AppLog {
   functionId?: string
   input?: string
   inputBytes?: number
