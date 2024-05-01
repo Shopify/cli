@@ -43,10 +43,13 @@ describe('dev', () => {
       // Then
       expect(startDevServer).toHaveBeenCalledWith(
         options.theme,
-        adminSession,
-        [],
-        {root: 'tmp', files: new Map()},
-        {themeEditorSync: true},
+        {
+          session: {...adminSession, storefrontToken: 'my-storefront-token'},
+          remoteChecksums: [],
+          localThemeFileSystem: {root: 'tmp', files: new Map()},
+          themeEditorSync: true,
+        },
+        expect.any(Function),
       )
     })
   })

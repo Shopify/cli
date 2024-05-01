@@ -2,28 +2,25 @@ import {uploadTheme} from './theme-uploader.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
-export interface ThemeEnvironmentOptions {
+export interface DevServerSession extends AdminSession {
+  storefrontToken: string
+}
+
+export interface DevServerContext {
+  session: DevServerSession
+  remoteChecksums: Checksum[]
+  localThemeFileSystem: ThemeFileSystem
   themeEditorSync: boolean
 }
 
-export async function startDevServer(
-  targetTheme: Theme,
-  session: AdminSession,
-  remoteChecksums: Checksum[],
-  localThemeFileSystem: ThemeFileSystem,
-  options: ThemeEnvironmentOptions,
-) {
-  await ensureThemeEnvironmentSetup(targetTheme, session, remoteChecksums, localThemeFileSystem, options)
+export async function startDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
+  await ensureThemeEnvironmentSetup(theme, ctx)
+
+  onReady()
 }
 
-async function ensureThemeEnvironmentSetup(
-  targetTheme: Theme,
-  session: AdminSession,
-  remoteChecksums: Checksum[],
-  localThemeFileSystem: ThemeFileSystem,
-  options: ThemeEnvironmentOptions,
-) {
-  if (!options.themeEditorSync) {
-    await uploadTheme(targetTheme, session, remoteChecksums, localThemeFileSystem, {})
+async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
+  if (!ctx.themeEditorSync) {
+    await uploadTheme(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem, {})
   }
 }
