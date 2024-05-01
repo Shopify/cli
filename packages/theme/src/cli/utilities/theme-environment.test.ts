@@ -1,6 +1,6 @@
 import {DevelopmentThemeManager} from './development-theme-manager.js'
 import {uploadTheme} from './theme-uploader.js'
-import {THEME_DOWNLOAD_INTERVAL, dev} from './theme-environment.js'
+import {THEME_DOWNLOAD_INTERVAL, startDevServer} from './theme-environment.js'
 import {downloadTheme} from './theme-downloader.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi} from 'vitest'
@@ -30,7 +30,7 @@ describe('theme-environment', () => {
     vi.mocked(fetchChecksums).mockResolvedValue([])
 
     // When
-    await dev(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, defaultOptions)
+    await startDevServer(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, defaultOptions)
 
     // Then
     expect(uploadTheme).toHaveBeenCalled()
@@ -42,7 +42,7 @@ describe('theme-environment', () => {
     vi.mocked(fetchChecksums).mockResolvedValue([])
 
     // When
-    await dev(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, {
+    await startDevServer(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, {
       ...defaultOptions,
       themeEditorSync: true,
     })

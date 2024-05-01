@@ -9,7 +9,7 @@ interface ThemeEnvironmentOptions {
   themeEditorSync: boolean
 }
 
-export async function dev(
+export async function startDevServer(
   targetTheme: Theme,
   session: AdminSession,
   remoteChecksums: Checksum[],
