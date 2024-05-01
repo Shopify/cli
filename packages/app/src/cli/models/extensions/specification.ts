@@ -121,7 +121,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.reverseTransform,
     simplify: spec.simplify,
     experience: spec.experience ?? 'extension',
-    uidStrategy: spec.uidStrategy ?? (spec.experience == 'configuration' ? 'single' : 'uuid'),
+    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
   return {...defaults, ...spec}
 }
