@@ -20,6 +20,7 @@ export interface TextPromptProps {
   emptyDisplayedValue?: string
   abortSignal?: AbortSignal
   preview?: (value: string) => TokenItem<InlineToken>
+  initialAnswer?: string
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -32,6 +33,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   emptyDisplayedValue = '(empty)',
   abortSignal,
   preview,
+  initialAnswer = '',
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -52,7 +54,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
 
   const {oneThird} = useLayout()
   const {promptState, setPromptState, answer, setAnswer} = usePrompt<string>({
-    initialAnswer: '',
+    initialAnswer,
   })
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const displayEmptyValue = answerOrDefault === ''

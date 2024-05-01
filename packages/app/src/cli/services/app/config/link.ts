@@ -31,6 +31,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import { getTomls } from '../../../utilities/app/config/getTomls.js'
 
 export interface LinkOptions {
   directory: string
@@ -168,6 +169,10 @@ async function loadConfigurationFileName(
   if (isLegacyAppSchema(localApp.configuration)) {
     return configurationFileNames.app
   }
+
+  const existingTomls = await getTomls(options.directory)
+  const currentToml = existingTomls[remoteApp.apiKey]
+  if (currentToml) return currentToml  
 
   const configName = await selectConfigName(localApp.directory || options.directory, remoteApp.title)
   return `shopify.app.${configName}.toml`
