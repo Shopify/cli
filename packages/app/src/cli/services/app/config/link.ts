@@ -26,12 +26,12 @@ import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../u
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {SpecsAppConfiguration} from '../../../models/extensions/specifications/types/app_config.js'
+import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import { getTomls } from '../../../utilities/app/config/getTomls.js'
 
 export interface LinkOptions {
   directory: string
@@ -172,7 +172,7 @@ async function loadConfigurationFileName(
 
   const existingTomls = await getTomls(options.directory)
   const currentToml = existingTomls[remoteApp.apiKey]
-  if (currentToml) return currentToml  
+  if (currentToml) return currentToml
 
   const configName = await selectConfigName(localApp.directory || options.directory, remoteApp.title)
   return `shopify.app.${configName}.toml`
