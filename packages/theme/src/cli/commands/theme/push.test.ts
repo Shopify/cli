@@ -1,23 +1,22 @@
 import Push, {ThemeSelectionOptions, createOrSelectTheme} from './push.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
-import {UnpublishedThemeManager} from '../../utilities/unpublished-theme-manager.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {push} from '../../services/push.js'
-import {describe, vi, expect, test} from 'vitest'
+import {getDevelopmentTheme, removeDevelopmentTheme, setDevelopmentTheme} from '../../services/local-storage.js'
+import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {DEVELOPMENT_THEME_ROLE, LIVE_THEME_ROLE, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('../../services/push.js')
-vi.mock('../../utilities/development-theme-manager.js')
-vi.mock('../../utilities/unpublished-theme-manager.js')
 vi.mock('../../utilities/theme-store.js')
 vi.mock('../../utilities/theme-selector.js')
+vi.mock('../../services/local-storage.js')
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -27,13 +26,20 @@ describe('Push', () => {
   const adminSession = {token: '', storeFqdn: ''}
   const path = '/my-theme'
 
+  beforeEach(() => {
+    vi.mocked(getDevelopmentTheme).mockImplementation(() => undefined)
+    vi.mocked(setDevelopmentTheme).mockImplementation(() => undefined)
+    vi.mocked(removeDevelopmentTheme).mockImplementation(() => undefined)
+  })
+
   describe('run with CLI 3 implementation', () => {
     test('should run the CLI 2 implementation if the password flag is provided', async () => {
       // Given
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
 
       // When
-      await runPushCommand(['--password', '123'], path, adminSession, theme)
+      await runPushCommand(['--password', '123'], path, adminSession)
 
       // Then
       expectCLI2ToHaveBeenCalledWith(`theme push ${path} --development-theme-id ${theme.id}`)
@@ -56,9 +62,9 @@ describe('Push', () => {
   describe('createOrSelectTheme', async () => {
     test('creates unpublished theme when unpublished flag is provided', async () => {
       // Given
-      vi.mocked(UnpublishedThemeManager.prototype.create).mockResolvedValue(
-        buildTheme({id: 2, name: 'Unpublished Theme', role: UNPUBLISHED_THEME_ROLE})!,
-      )
+      vi.mocked(createTheme).mockResolvedValue(buildTheme({id: 2, name: 'Theme', role: UNPUBLISHED_THEME_ROLE}))
+      vi.mocked(fetchTheme).mockResolvedValue(undefined)
+
       const flags: ThemeSelectionOptions = {unpublished: true}
 
       // When
@@ -66,14 +72,13 @@ describe('Push', () => {
 
       // Then
       expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE})
-      expect(UnpublishedThemeManager.prototype.create).toHaveBeenCalled()
+      expect(setDevelopmentTheme).not.toHaveBeenCalled()
     })
 
     test('creates development theme when development flag is provided', async () => {
       // Given
-      vi.mocked(DevelopmentThemeManager.prototype.findOrCreate).mockResolvedValue(
-        buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!,
-      )
+      vi.mocked(createTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))
+      vi.mocked(fetchTheme).mockResolvedValue(undefined)
       const flags: ThemeSelectionOptions = {development: true}
 
       // When
@@ -81,14 +86,13 @@ describe('Push', () => {
 
       // Then
       expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE})
-      expect(DevelopmentThemeManager.prototype.findOrCreate).toHaveBeenCalled()
+      expect(setDevelopmentTheme).toHaveBeenCalled()
     })
 
     test('creates development theme when development and unpublished flags are provided', async () => {
       // Given
-      vi.mocked(DevelopmentThemeManager.prototype.findOrCreate).mockResolvedValue(
-        buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!,
-      )
+      vi.mocked(createTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))
+      vi.mocked(fetchTheme).mockResolvedValue(undefined)
       const flags: ThemeSelectionOptions = {development: true, unpublished: true}
 
       // When
@@ -183,7 +187,9 @@ describe('Push', () => {
     test('should pass development theme from local storage to CLI 2', async () => {
       // Given
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-      await run([], theme)
+      vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
+      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
+      await run([])
 
       // Then
       expect(DevelopmentThemeManager.prototype.findOrCreate).not.toHaveBeenCalled()
@@ -195,7 +201,9 @@ describe('Push', () => {
       // Given
       const themeId = 2
       const theme = buildTheme({id: 3, name: 'Theme', role: 'development'})!
-      await run([`--theme=${themeId}`], theme)
+      vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
+      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
+      await run([`--theme=${themeId}`])
 
       // Then
       expectCLI2ToHaveBeenCalledWith(
@@ -216,7 +224,9 @@ describe('Push', () => {
     test('should pass theme and development theme to CLI 2', async () => {
       // Given
       const theme = buildTheme({id: 4, name: 'Theme', role: 'development'})!
-      await run(['--development'], theme)
+      vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
+      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
+      await run(['--development'])
 
       // Then
       expect(DevelopmentThemeManager.prototype.findOrCreate).toHaveBeenCalledOnce()
@@ -227,8 +237,8 @@ describe('Push', () => {
     })
   })
 
-  async function run(argv: string[], theme?: Theme) {
-    await runPushCommand(['--stable', ...argv], path, adminSession, theme)
+  async function run(argv: string[]) {
+    await runPushCommand(['--stable', ...argv], path, adminSession)
   }
 
   function expectCLI2ToHaveBeenCalledWith(command: string) {
@@ -238,13 +248,9 @@ describe('Push', () => {
     })
   }
 
-  async function runPushCommand(argv: string[], path: string, adminSession: AdminSession, theme?: Theme) {
+  async function runPushCommand(argv: string[], path: string, adminSession: AdminSession) {
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
-    if (theme) {
-      vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
-    }
-    vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
 
     const config = {} as Config
     const push = new Push([`--path=${path}`, ...argv], config)
