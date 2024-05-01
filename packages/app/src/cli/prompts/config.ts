@@ -47,12 +47,6 @@ function filenameFromName(name: string, highlight = false): string {
   return `shopify.app.${configName}.toml`
 }
 
-export function nameFromFilename(filename: string): string {
-  const match = filename.match(/^shopify\.app\.(.+)\.toml$/)
-  if (!match) return ''
-  return match[1] ? match[1] : ''
-}
-
 export async function findConfigFiles(directory: string): Promise<string[]> {
   return glob(joinPath(directory, 'shopify.app*.toml'))
 }
