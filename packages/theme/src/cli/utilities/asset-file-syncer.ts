@@ -1,9 +1,10 @@
-import {downloadTheme} from './theme-downloader.js'
+import {removeThemeFile} from './theme-fs.js'
 import {uploadTheme} from './theme-uploader.js'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 
 export const LOCAL_STRATEGY = 'local'
 export const REMOTE_STRATEGY = 'remote'
@@ -11,9 +12,10 @@ export const REMOTE_STRATEGY = 'remote'
 type ReconciliationStrategy = typeof LOCAL_STRATEGY | typeof REMOTE_STRATEGY | undefined
 
 interface FilePartitions {
-  filesToDelete: Checksum[]
+  localFilesToDelete: Checksum[]
   filesToDownload: Checksum[]
   filesToUpload: Checksum[]
+  remoteFilesToDelete: Checksum[]
 }
 
 export async function initializeThemeEditorSync(
@@ -118,30 +120,30 @@ async function reconcileThemeFiles(
   localThemeFileSystem: ThemeFileSystem,
   partitionedFiles: FilePartitions,
 ) {
-  const {filesToDelete, filesToDownload, filesToUpload} = partitionedFiles
+  const {localFilesToDelete, filesToUpload, filesToDownload, remoteFilesToDelete} = partitionedFiles
 
-  // the 'only' filter is empty, we want to treat that as a no-op rather than an empty filter
+  const deleteLocalFiles = localFilesToDelete.map((file) => removeThemeFile(localThemeFileSystem.root, file.key))
+  const downloadRemoteFiles = filesToDownload.map((file) => fetchThemeAsset(targetTheme.id, file.key, session))
+  const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
+
+  await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
+
   if (filesToUpload.length > 0) {
-    await uploadTheme(targetTheme, session, remoteChecksums, localThemeFileSystem, {
-      only: filesToUpload.map((file) => file.key),
-    })
+    await uploadTheme(targetTheme, session, remoteChecksums, localThemeFileSystem, {nodelete: true})
   }
-
-  if (filesToDownload.length > 0 || filesToDelete.length > 0) {
-    await downloadTheme(targetTheme, session, remoteChecksums, localThemeFileSystem, {
-      nodelete: false,
-      only: [...filesToDownload.map((file) => file.key), ...filesToDelete.map((file) => file.key)],
-    })
-  }
-  outputInfo('done')
 }
 
 async function partitionFilesByReconciliationStrategy(files: {
   filesOnlyPresentLocally: Checksum[]
   filesOnlyPresentOnRemote: Checksum[]
   filesWithConflictingChecksums: Checksum[]
-}): Promise<{filesToDelete: Checksum[]; filesToDownload: Checksum[]; filesToUpload: Checksum[]}> {
+}): Promise<FilePartitions> {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = files
+
+  const localFilesToDelete: Checksum[] = []
+  const filesToDownload: Checksum[] = []
+  const filesToUpload: Checksum[] = []
+  const remoteFilesToDelete: Checksum[] = []
 
   const localFileReconciliationStrategy = await promptFileReconciliationStrategy(filesOnlyPresentLocally, {
     title: 'The files listed below are only present locally. What would you like to do?',
@@ -149,11 +151,23 @@ async function partitionFilesByReconciliationStrategy(files: {
     localStrategyLabel: 'Upload local files to the remote theme',
   })
 
+  if (localFileReconciliationStrategy === LOCAL_STRATEGY) {
+    filesToUpload.push(...filesOnlyPresentLocally)
+  } else if (localFileReconciliationStrategy === REMOTE_STRATEGY) {
+    localFilesToDelete.push(...filesOnlyPresentLocally)
+  }
+
   const remoteFileReconciliationStrategy = await promptFileReconciliationStrategy(filesOnlyPresentOnRemote, {
     title: 'The files listed below are only present on the remote theme. What would you like to do?',
     remoteStrategyLabel: 'Download remote files to the local directory',
     localStrategyLabel: 'Delete files from the remote theme',
   })
+
+  if (remoteFileReconciliationStrategy === REMOTE_STRATEGY) {
+    filesToDownload.push(...filesOnlyPresentOnRemote)
+  } else if (remoteFileReconciliationStrategy === LOCAL_STRATEGY) {
+    remoteFilesToDelete.push(...filesOnlyPresentOnRemote)
+  }
 
   const conflictingChecksumsReconciliationStrategy = await promptFileReconciliationStrategy(
     filesWithConflictingChecksums,
@@ -164,27 +178,11 @@ async function partitionFilesByReconciliationStrategy(files: {
     },
   )
 
-  const filesToDelete = []
-  const filesToDownload = []
-  const filesToUpload = []
-
-  if (localFileReconciliationStrategy === LOCAL_STRATEGY) {
-    filesToUpload.push(...filesOnlyPresentLocally)
-  } else if (localFileReconciliationStrategy === REMOTE_STRATEGY) {
-    filesToDelete.push(...filesOnlyPresentLocally)
-  }
-
-  if (remoteFileReconciliationStrategy === REMOTE_STRATEGY) {
-    filesToDownload.push(...filesOnlyPresentOnRemote)
-  } else if (remoteFileReconciliationStrategy === LOCAL_STRATEGY) {
-    filesToUpload.push(...filesOnlyPresentOnRemote)
-  }
-
   if (conflictingChecksumsReconciliationStrategy === REMOTE_STRATEGY) {
     filesToDownload.push(...filesWithConflictingChecksums)
   } else {
     filesToUpload.push(...filesWithConflictingChecksums)
   }
 
-  return {filesToDelete, filesToDownload, filesToUpload}
+  return {localFilesToDelete, filesToDownload, filesToUpload, remoteFilesToDelete}
 }

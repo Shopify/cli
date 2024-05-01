@@ -26,7 +26,7 @@ export async function uploadTheme(
   session: AdminSession,
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
-  options: UploadOptions,
+  options: UploadOptions = {},
 ) {
   const uploadResults: Map<string, Result> = new Map()
   const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
