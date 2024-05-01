@@ -332,6 +332,13 @@ export class App implements AppInterface {
     if (complianceWebhooksConfigIndex > -1) {
       setPathValue(this.realExtensions, `${complianceWebhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
     }
+
+    let webhookSubscriptionConfigIndex = this.realExtensions.findIndex((ext) => ext.handle === 'webhook-subscription')
+
+    while (webhookSubscriptionConfigIndex > -1) {
+      this.realExtensions.splice(webhookSubscriptionConfigIndex, 1)
+      webhookSubscriptionConfigIndex = this.realExtensions.findIndex((ext) => ext.handle === 'webhook-subscription')
+    }
   }
 }
 

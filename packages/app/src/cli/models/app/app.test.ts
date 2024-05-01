@@ -16,6 +16,7 @@ import {
   testFunctionExtension,
   testWebhookExtensions,
   testEditorExtensionCollection,
+  testWebhookSubscriptionExtensions,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
@@ -388,6 +389,21 @@ describe('allExtensions', () => {
     expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
   })
 
+  test('filters out webhook_subscription extensions when flag is not enabled', async () => {
+    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const app = await testApp(
+      {
+        configuration: CORRECT_CURRENT_APP_SCHEMA,
+        allExtensions: [webhookSubscriptionExtension],
+      },
+      'current',
+    )
+
+    const webhookSubscriptionConfigs = app.allExtensions.filter((ext) => ext.handle === 'webhook-subscription')
+
+    expect(webhookSubscriptionConfigs.length).toEqual(0)
+  })
+
   test('keeps declarative webhook config when flag is enabled', async () => {
     const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
     const app = await testApp(
@@ -408,6 +424,22 @@ describe('allExtensions', () => {
     expect(webhookConfig.webhooks.privacy_compliance).toBeDefined()
     expect(privacyConfig.webhooks.subscriptions!.length).not.toStrictEqual(0)
     expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
+  })
+
+  test.only('keeps webhook-subscription modules when flag is enabled', async () => {
+    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const app = await testApp(
+      {
+        configuration: CORRECT_CURRENT_APP_SCHEMA,
+        allExtensions: [webhookSubscriptionExtension],
+        remoteFlags: [Flag.DeclarativeWebhooks],
+      },
+      'current',
+    )
+
+    const webhookSubscriptionConfigs = app.allExtensions.filter((ext) => ext.handle === 'webhook-subscription')
+
+    expect(webhookSubscriptionConfigs.length).toEqual(1)
   })
 })
 
