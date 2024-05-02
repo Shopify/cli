@@ -100,7 +100,6 @@
     "@oclif/core": "3.23.0",
     "@oclif/plugin-commands": "3.3.0",
     "@oclif/plugin-plugins": "4.3.8",
-    "@remix-run/dev": "^2.1.0",
     "@shopify/app": "3.59.0",
     "@shopify/cli-hydrogen": "https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe8b89289c0fa09cd5400f852b0d4044560a9fa9",
     "@shopify/cli-kit": "3.59.0",
