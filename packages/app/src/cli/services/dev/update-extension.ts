@@ -7,6 +7,7 @@ import {
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {multipleConfigs} from '../context/identifiers-extensions.js'
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -24,14 +25,10 @@ interface UpdateExtensionDraftOptions {
   stderr: Writable
 }
 
-export async function updateExtensionDraft({
-  extension,
-  developerPlatformClient,
-  apiKey,
-  registrationId,
-  stdout,
-  stderr,
-}: UpdateExtensionDraftOptions) {
+export async function updateExtensionDraft(
+  {extension, developerPlatformClient, apiKey, registrationId, stdout, stderr}: UpdateExtensionDraftOptions,
+  multipleConfigs?: object,
+) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
     const content = await readFile(extension.outputPath)
@@ -44,7 +41,7 @@ export async function updateExtensionDraft({
     // When updating just the theme extension draft, upload the files as part of the config.
     config = await themeExtensionConfig(extension)
   } else {
-    config = (await extension.deployConfig({apiKey, developerPlatformClient})) || {}
+    config = multipleConfigs ?? ((await extension.deployConfig({apiKey, developerPlatformClient})) || {})
   }
 
   const extensionInput: ExtensionUpdateDraftInput = {
@@ -66,6 +63,24 @@ export async function updateExtensionDraft({
     const draftUpdateSuccesMessage = extension.draftMessages.successMessage
     if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
   }
+}
+
+export async function updateMultipleExtensionDrafts({
+  extension,
+  developerPlatformClient,
+  apiKey,
+  registrationId,
+  stdout,
+  stderr,
+}: UpdateExtensionDraftOptions) {
+  const registrationIdArr = registrationId.split(',')
+  const configArr = await multipleConfigs(extension)
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  registrationIdArr.forEach(async (registrationId, index) => {
+    const config = configArr[index] as object
+    await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr}, config)
+  })
 }
 
 interface UpdateExtensionConfigOptions {

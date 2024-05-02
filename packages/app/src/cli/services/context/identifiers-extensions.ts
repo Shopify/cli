@@ -222,7 +222,7 @@ async function createExtensions(
 }
 
 // karen.xie this name sucks too
-async function multipleConfigs(extension: ExtensionInstance): Promise<unknown[]> {
+export async function multipleConfigs(extension: ExtensionInstance): Promise<unknown[]> {
   const configContent = await extension.commonDeployConfig('')
   return Array.isArray(configContent) ? configContent : [configContent]
 }
@@ -230,7 +230,9 @@ async function multipleConfigs(extension: ExtensionInstance): Promise<unknown[]>
 function mapExtensionsIdsNonUuidManaged(extensionsIdsNonUuidManaged: {[key: string]: string[]}) {
   const result: {[key: string]: string} = {}
   for (const key in extensionsIdsNonUuidManaged) {
-    if (extensionsIdsNonUuidManaged[key]!.length > 0) {
+    if (extensionsIdsNonUuidManaged[key]!.length > 1) {
+      result[key] = extensionsIdsNonUuidManaged[key]!.toString()
+    } else {
       result[key] = extensionsIdsNonUuidManaged[key]![0]!
     }
   }
@@ -301,12 +303,19 @@ async function ensureExtensionIdsForExtensionsManagedInToml(
       localConfigArray?.forEach((localConfigObj: any) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const hasMatch = possibleMatches?.some((possibleMatch: any) => {
-          const remoteConfigString = possibleMatch.activeVersion?.config
-          const remoteConfigObj = remoteConfigString ? JSON.parse(remoteConfigString) : ''
+          const remoteActiveVersionConfig = possibleMatch.activeVersion?.config
+          const remoteDraftVersionConfig = possibleMatch.draftVersion?.config
+          const remoteActiveVersionConfigObj = remoteActiveVersionConfig ? JSON.parse(remoteActiveVersionConfig) : ''
+          const remoteDraftVersionConfigObj = remoteDraftVersionConfig ? JSON.parse(remoteDraftVersionConfig) : ''
           if (
             matchesRemoteConfigForWebhookSubscriptions(
               extension.specification.identifier,
-              remoteConfigObj,
+              remoteActiveVersionConfigObj,
+              localConfigObj,
+            ) ||
+            matchesRemoteConfigForWebhookSubscriptions(
+              extension.specification.identifier,
+              remoteDraftVersionConfigObj,
               localConfigObj,
             )
           ) {

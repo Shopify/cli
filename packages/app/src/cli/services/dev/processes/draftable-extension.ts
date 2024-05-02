@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {updateExtensionDraft} from '../update-extension.js'
+import {updateExtensionDraft, updateMultipleExtensionDrafts} from '../update-extension.js'
 import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AppInterface} from '../../../models/app/app.js'
@@ -7,6 +7,7 @@ import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {WebhookSubscriptionSpecIdentifier} from '../../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -40,8 +41,19 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
       await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-      // Initial draft update for each extension
-      await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr})
+      if (extension.specification.externalIdentifier === WebhookSubscriptionSpecIdentifier) {
+        await updateMultipleExtensionDrafts({
+          extension,
+          developerPlatformClient,
+          apiKey,
+          registrationId,
+          stdout,
+          stderr,
+        })
+      } else {
+        await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr})
+      }
+
       // Watch for changes
       return setupExtensionWatcher({
         extension,
