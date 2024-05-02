@@ -23,6 +23,10 @@
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
+    },
+    "./hooks": {
+      "import": "./dist/cli/hooks/*.js",
+      "types": "./dist/cli/hooks/*.d.ts"
     }
   },
   "files": [
