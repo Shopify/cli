@@ -48,7 +48,7 @@ beforeEach(() => {
 describe('theme-uploader', () => {
   const remoteTheme = {id: 1, name: '', createdAtRuntime: false, processing: false, role: ''}
   const adminSession = {token: '', storeFqdn: ''}
-  const uploadOptions = {nodelete: false, path: 'tmp'}
+  const uploadOptions = {nodelete: false}
 
   test("should delete files that don't exist locally from remote theme", async () => {
     // Given
