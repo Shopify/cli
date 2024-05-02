@@ -107,7 +107,8 @@
     "@shopify/plugin-did-you-mean": "3.59.0",
     "@shopify/theme": "3.59.0",
     "esbuild": "0.19.8",
-    "zod-to-json-schema": "3.21.4"
+    "zod-to-json-schema": "3.21.4",
+    "@remix-run/dev": "^2.1.0"
   },
   "devDependencies": {
     "@shopify/app": "3.59.0",
