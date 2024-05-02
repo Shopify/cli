@@ -249,8 +249,8 @@ importers:
         specifier: 3.59.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?01b2c8f83a1880faa1f64bc4b50332e04a8c8480
-        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?01b2c8f83a1880faa1f64bc4b50332e04a8c8480(@remix-run/dev@2.9.1)(react-dom@17.0.2)(react@18.3.1)'
+        specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fce25ad04707e29681b22f92cefc1746bbbf4616
+        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?fce25ad04707e29681b22f92cefc1746bbbf4616(@remix-run/dev@2.9.1)(react-dom@17.0.2)(react@18.3.1)'
       '@shopify/cli-kit':
         specifier: 3.59.0
         version: link:../cli-kit
@@ -16255,9 +16255,9 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: false
 
-  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?01b2c8f83a1880faa1f64bc4b50332e04a8c8480(@remix-run/dev@2.9.1)(react-dom@17.0.2)(react@18.3.1)':
-    resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?01b2c8f83a1880faa1f64bc4b50332e04a8c8480}
-    id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?01b2c8f83a1880faa1f64bc4b50332e04a8c8480'
+  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?fce25ad04707e29681b22f92cefc1746bbbf4616(@remix-run/dev@2.9.1)(react-dom@17.0.2)(react@18.3.1)':
+    resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fce25ad04707e29681b22f92cefc1746bbbf4616}
+    id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?fce25ad04707e29681b22f92cefc1746bbbf4616'
     name: '@shopify/cli-hydrogen'
     version: 8.0.1
     engines: {node: '>=18.0.0'}
