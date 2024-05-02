@@ -4,6 +4,7 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 const hook: Hook<'init'> = async (options) => {
   const pluginList = Array.from(options.config.plugins.keys())
   const hasHydrogenPlugin = pluginList.includes('@shopify/cli-hydrogen')
+
   const isHydrogenCommand = options.id?.startsWith('hydrogen:')
   const isInitCommand = options.id === 'hydrogen:init'
   if (isHydrogenCommand && !hasHydrogenPlugin && !isInitCommand) {
