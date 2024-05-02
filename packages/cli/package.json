@@ -102,7 +102,7 @@
     "@oclif/plugin-plugins": "4.3.8",
     "@remix-run/dev": "^2.1.0",
     "@shopify/app": "3.59.0",
-    "@shopify/cli-hydrogen": "https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fce25ad04707e29681b22f92cefc1746bbbf4616",
+    "@shopify/cli-hydrogen": "https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?6fd694297775bee123523c966b38dcdf40261f03",
     "@shopify/cli-kit": "3.59.0",
     "@shopify/plugin-cloudflare": "3.59.0",
     "@shopify/plugin-did-you-mean": "3.59.0",
