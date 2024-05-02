@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 3.59.3
+
+### Patch Changes
+
+- f22089a3e: Fix app analytics not being correctly tracked
+  - @shopify/app@3.59.3
+  - @shopify/cli-kit@3.59.3
+  - @shopify/theme@3.59.3
+  - @shopify/plugin-cloudflare@3.59.3
+  - @shopify/plugin-did-you-mean@3.59.3
+
 ## 3.59.2
 
 ### Patch Changes
