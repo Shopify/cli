@@ -9,7 +9,6 @@ import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
-  path: string
   nodelete?: boolean
   ignore?: string[]
   only?: string[]
