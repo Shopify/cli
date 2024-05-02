@@ -1,9 +1,9 @@
 /* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
 /* eslint-disable import/no-extraneous-dependencies */
-import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
 import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
+import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
@@ -19,6 +19,8 @@ const external = [
   'esbuild',
   'lightningcss',
   '@ast-grep/napi',
+  'vite',
+  '@remix-run/dev',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
