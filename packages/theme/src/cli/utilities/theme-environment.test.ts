@@ -1,6 +1,6 @@
 import {DevelopmentThemeManager} from './development-theme-manager.js'
 import {uploadTheme} from './theme-uploader.js'
-import {THEME_DOWNLOAD_INTERVAL, startDevServer} from './theme-environment.js'
+import {THEME_DOWNLOAD_INTERVAL, pollRemoteThemeChanges, startDevServer} from './theme-environment.js'
 import {downloadTheme} from './theme-downloader.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi} from 'vitest'
@@ -50,5 +50,33 @@ describe('theme-environment', () => {
 
     // Then
     expect(downloadTheme).toHaveBeenCalled()
+  })
+
+  test.only('should not call downloadTheme if previous sync is still in progress', async () => {
+    // Given
+    vi.mocked(downloadTheme).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          setTimeout(resolve, THEME_DOWNLOAD_INTERVAL + 1000)
+        }),
+    )
+
+    // When
+    const promise = pollRemoteThemeChanges(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+
+    // Then
+    expect(downloadTheme).toHaveBeenCalledTimes(0)
+
+    await vi.advanceTimersByTime(THEME_DOWNLOAD_INTERVAL)
+    expect(downloadTheme).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTime(THEME_DOWNLOAD_INTERVAL)
+    expect(downloadTheme).toHaveBeenCalledTimes(1)
+
+    vi.runAllTimers()
+    vi.runAllTicks()
+
+    vi.advanceTimersByTime(THEME_DOWNLOAD_INTERVAL)
+    expect(downloadTheme).toHaveBeenCalledTimes(2)
   })
 })
