@@ -3,7 +3,3 @@ contact_links:
   - name: Shopify Partners Community 🙌
     url: https://community.shopify.com/c/partners-and-developers/ct-p/appdev
     about: Connect with Shopify and other Shopify Partners through our online communities!
-  - name: Shopify CLI 2.0 issues 📝
-    url: https://www.github.com/Shopify/shopify-cli/issues/new/choose
-    about: |-
-      You're about to open an issue about Shopify CLI 3.0. Are you actually using our previous CLI? If so, please create an issue there instead.

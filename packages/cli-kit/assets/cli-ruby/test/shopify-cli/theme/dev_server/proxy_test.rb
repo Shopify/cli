@@ -104,13 +104,13 @@ module ShopifyCLI
             .with(headers: { "X-Shopify-Shop" => store })
             .to_return(
               status: 200,
-              headers: { "Set-Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}" },
+              headers: { "Set-Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}" },
             )
           stub_request(:get, "https://theme-kit-access.shopifyapps.com/cli/sfr/?_fd=0&pb=0")
             .with(
               headers: {
                 "Content-Length" => "0",
-                "Cookie" => "_secure_session_id=deadbeef",
+                "Cookie" => "_shopify_essential=deadbeef",
                 "X-Shopify-Shop" => store,
               },
             )
@@ -163,20 +163,20 @@ module ShopifyCLI
 
         def test_update_session_cookie_when_returned_from_backend
           stub_session_id_request
-          new_secure_session_id = "#{SECURE_SESSION_ID}2"
+          new_shopify_essential = "#{SECURE_SESSION_ID}2"
 
           # POST response returning a new session cookie (Set-Cookie)
           stub_request(:post, "https://dev-theme-server-store.myshopify.com/account/login?_fd=0&pb=0")
             .with(
               headers: {
-                "Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
+                "Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}",
               },
             )
             .to_return(
               status: 200,
               body: "",
               headers: {
-                "Set-Cookie" => "_secure_session_id=#{new_secure_session_id}",
+                "Set-Cookie" => "_shopify_essential=#{new_shopify_essential}",
               },
             )
 
@@ -184,7 +184,7 @@ module ShopifyCLI
           stub_request(:get, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0")
             .with(
               headers: {
-                "Cookie" => "_secure_session_id=#{new_secure_session_id}",
+                "Cookie" => "_shopify_essential=#{new_shopify_essential}",
               },
             )
             .to_return(status: 200)
@@ -319,24 +319,24 @@ module ShopifyCLI
           end
         end
 
-        def test_replaces_secure_session_id_cookie
+        def test_replaces_shopify_essential_cookie
           stub_request(:get, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0")
             .with(
               headers: {
-                "Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
+                "Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}",
               },
             )
 
           stub_session_id_request
           request.get("/",
-            "HTTP_COOKIE" => "_secure_session_id=a12cef")
+            "HTTP_COOKIE" => "_shopify_essential=a12cef")
         end
 
-        def test_appends_secure_session_id_cookie
+        def test_appends_shopify_essential_cookie
           stub_request(:get, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0")
             .with(
               headers: {
-                "Cookie" => "cart_currency=CAD; secure_customer_sig=; _secure_session_id=#{SECURE_SESSION_ID}",
+                "Cookie" => "cart_currency=CAD; secure_customer_sig=; _shopify_essential=#{SECURE_SESSION_ID}",
               },
             )
 
@@ -373,7 +373,7 @@ module ShopifyCLI
                 "Accept-Encoding" => "none",
                 "Authorization" => "Bearer TOKEN",
                 "Content-Type" => "application/x-www-form-urlencoded",
-                "Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
+                "Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}",
                 "Host" => "dev-theme-server-store.myshopify.com",
                 "X-Forwarded-For" => "",
                 "User-Agent" => "Shopify CLI",
@@ -597,7 +597,7 @@ module ShopifyCLI
         def default_proxy_headers(domain = "myshopify.com")
           {
             "Accept-Encoding" => "none",
-            "Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
+            "Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}",
             "Host" => "dev-theme-server-store.#{domain}",
             "X-Forwarded-For" => "",
             "User-Agent" => "Shopify CLI",
@@ -614,7 +614,7 @@ module ShopifyCLI
             .to_return(
               status: 200,
               headers: {
-                "Set-Cookie" => "_secure_session_id=#{SECURE_SESSION_ID}",
+                "Set-Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}",
               },
             )
         end

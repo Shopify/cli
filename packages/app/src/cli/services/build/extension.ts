@@ -56,6 +56,8 @@ export interface ExtensionBuildOptions {
  * @param options - Build options.
  */
 export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
+  if (options.environment === 'development') return
+
   options.stdout.write(`Running theme check on your Theme app extension...`)
   const offenses = await runThemeCheck(extension.directory)
   options.stdout.write(offenses)

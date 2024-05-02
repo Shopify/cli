@@ -1,5 +1,10 @@
 import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
-import {testDeveloperPlatformClient, testPaymentExtensions, testUIExtension} from '../../models/app/app.test-data.js'
+import {
+  testDeveloperPlatformClient,
+  testPaymentExtensions,
+  testThemeExtensions,
+  testUIExtension,
+} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftInput} from '../../api/graphql/update_draft.js'
@@ -139,6 +144,40 @@ describe('updateExtensionDraft()', () => {
         `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
         stdout,
       )
+    })
+  })
+
+  test('updates draft successfully for theme app extension', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testThemeExtensions(tmpDir)
+
+      const filepath = 'blocks/block1.liquid'
+      const content = 'test content'
+      const base64Content = Buffer.from(content).toString('base64')
+      await mkdir(joinPath(tmpDir, 'blocks'))
+      await writeFile(joinPath(tmpDir, filepath), content)
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+      })
+
+      expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
+        apiKey,
+        context: '',
+        handle: mockExtension.handle,
+        registrationId,
+        config: JSON.stringify({
+          theme_extension: {
+            files: {[filepath]: base64Content},
+          },
+        }),
+      })
     })
   })
 
