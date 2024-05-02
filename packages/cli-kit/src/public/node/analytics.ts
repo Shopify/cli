@@ -41,7 +41,6 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
     const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
     const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
     if (skipMonorailAnalytics || skipMetricAnalytics) {
-      console.log(payload)
       outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
     }
 
