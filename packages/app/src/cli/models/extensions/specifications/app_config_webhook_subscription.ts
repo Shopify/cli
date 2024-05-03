@@ -51,14 +51,15 @@ function transformFromWebhookSubscriptionConfig(content: object) {
   const {api_version, subscriptions = []} = webhooks
 
   const webhookSubscriptions = subscriptions.flatMap((subscription) => {
-    const {uri, topics, ...optionalFields} = subscription
+    const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
     if (topics)
       return topics.map((topic) => {
         return {api_version, uri, topic, ...optionalFields}
       })
   })
 
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
+  // Assume there could only be one because of how we create the instances
+  return webhookSubscriptions[0]!
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
