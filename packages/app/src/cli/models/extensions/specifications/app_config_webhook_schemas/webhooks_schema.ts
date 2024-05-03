@@ -15,6 +15,8 @@ const WebhooksConfigSchema = zod.object({
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
+export type WebhookType = zod.infer<typeof WebhooksSchema>
+
 export const WebhooksSchema = zod.object({
   webhooks: WebhooksConfigSchema.superRefine(webhookValidator),
 })
