@@ -1,8 +1,9 @@
 import {WebhookSimplifyConfig} from './app_config_webhook.js'
-import {WebhooksConfig} from './types/app_config_webhook.js'
-import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
+import {WebhookSubscription} from './types/app_config_webhook.js'
+import {WebhookSubscriptionSchema} from './app_config_webhook_schemas/webhook_subscription_schema.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
 
@@ -43,22 +44,12 @@ ie.
   }
   */
 function transformFromWebhookSubscriptionConfig(content: object) {
-  const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
-  if (!webhooks) return content
+  const subscription = content as WebhookSubscription & {api_version: string}
+  if (!subscription) return content
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  const {api_version, subscriptions = []} = webhooks
-
-  const webhookSubscriptions = subscriptions.flatMap((subscription) => {
-    const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
-    if (topics)
-      return topics.map((topic) => {
-        return {api_version, uri, topic, ...optionalFields}
-      })
-  })
-
-  // Assume there could only be one because of how we create the instances
-  return webhookSubscriptions[0]!
+  const {compliance_topics, ...rest} = subscription
+  return rest
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
@@ -114,7 +105,10 @@ const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
 
 const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
-  schema: WebhooksSchema,
+  schema: WebhookSubscriptionSchema.extend({
+    api_version: zod.string(),
+    topic: zod.string(),
+  }),
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
   extensionManagedInToml: true,

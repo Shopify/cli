@@ -2,7 +2,7 @@
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
-import {WebhookType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {WebhookSubscription} from './specifications/types/app_config_webhook.js'
 import {
   ExtensionBuildOptions,
   buildFlowTemplateExtension,
@@ -354,10 +354,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return this.configuration.handle ?? slugify(this.configuration.name ?? '')
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
-        const config = this.configuration as unknown as WebhookType
-        const firstSubscription = config.webhooks.subscriptions?.[0]
-        if (!firstSubscription || !firstSubscription.topics?.[0]) return randomUUID().substring(0, 30)
-        const handle = firstSubscription.topics[0] + firstSubscription.uri
+        const subscription = this.configuration as unknown as WebhookSubscription
+        if (!subscription.topics?.[0]) return randomUUID().substring(0, 30)
+        const handle = subscription.topics[0] + subscription.uri
         return hashString(handle).substring(0, 30)
     }
   }
