@@ -150,11 +150,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.uidStrategy === 'uuid'
   }
 
-  isSingleStrategyExtension() {
+  get isSingleStrategyExtension() {
     return this.specification.uidStrategy === 'single'
   }
 
-  isDynamicStrategyExtension() {
+  get isDynamicStrategyExtension() {
     return this.specification.uidStrategy === 'dynamic'
   }
 
@@ -338,6 +338,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const uuid = this.isUuidManaged()
       ? identifiers.extensions[this.localIdentifier]
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+
+    if (this.isDynamicStrategyExtension) {
+      result.handle = 'webhook_subscription'
+    }
 
     return {...result, uuid}
   }

@@ -156,7 +156,7 @@ async function ensureDynamicManagedExtensionIds(
   appId: string,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const localExtensionRegistrations = app.realExtensions.filter((ext) => ext.isDynamicStrategyExtension())
+  const localExtensionRegistrations = app.realExtensions.filter((ext) => ext.isDynamicStrategyExtension)
 
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
@@ -216,7 +216,7 @@ async function ensureNonUuidManagedExtensionsIds(
 ) {
   let localExtensionRegistrations = includeDraftExtensions ? app.realExtensions : app.allExtensions
 
-  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => ext.isSingleStrategyExtension())
+  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => ext.isSingleStrategyExtension)
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}
