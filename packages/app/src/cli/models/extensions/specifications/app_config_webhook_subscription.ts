@@ -1,6 +1,5 @@
 import {WebhookSimplifyConfig} from './app_config_webhook.js'
-import {WebhookSubscription} from './types/app_config_webhook.js'
-import {WebhookSubscriptionSchema} from './app_config_webhook_schemas/webhook_subscription_schema.js'
+import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -44,12 +43,7 @@ ie.
   }
   */
 function transformFromWebhookSubscriptionConfig(content: object) {
-  const subscription = content as WebhookSubscription & {api_version: string}
-  if (!subscription) return content
-
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const {compliance_topics, ...rest} = subscription
-  return rest
+  return content
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
@@ -103,12 +97,17 @@ const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
   reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
 }
 
+const WebhookSingleSubscriptionSchema = zod.object({
+  topic: zod.string().optional(),
+  api_version: zod.string(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
+  sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
+})
+
 const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
-  schema: WebhookSubscriptionSchema.extend({
-    api_version: zod.string(),
-    topic: zod.string(),
-  }),
+  schema: WebhookSingleSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
   extensionManagedInToml: true,
