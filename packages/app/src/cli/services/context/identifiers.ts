@@ -27,6 +27,7 @@ export interface RemoteSource {
   id: string
   title: string
   draftVersion?: {config: string}
+  activeVersion?: {config: string}
 }
 
 export interface LocalSource {
@@ -35,6 +36,7 @@ export interface LocalSource {
   type: string
   handle: string
   contextValue: string
+  configuration?: object
 }
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {

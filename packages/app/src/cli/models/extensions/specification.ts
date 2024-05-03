@@ -160,6 +160,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     extensionManagedInToml: spec.extensionManagedInToml,
     multipleModuleConfigPath: spec.multipleModuleConfigPath,
     experience: 'configuration',
+    uidStrategy: spec.uidStrategy ?? 'single',
   })
 }
 
