@@ -3,7 +3,7 @@ import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess}
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
-import {AppEventsSubscribeProcess, setupAppEventsSubscribeProcess} from './app-events-process.js'
+import {setupAppLogsSubscribeProcess, AppLogsSubscribeProcess} from './app-events-process.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {environmentVariableNames} from '../../../constants.js'
@@ -30,7 +30,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
-  | AppEventsSubscribeProcess
+  | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -152,7 +152,7 @@ export async function setupDevProcesses({
       remoteAppUpdated,
     }),
     streamAppEvents &&
-      setupAppEventsSubscribeProcess({
+      setupAppLogsSubscribeProcess({
         partnersSessionToken,
         subscription: {
           shopId: storeId,

@@ -288,6 +288,19 @@ async function setupNetworkingOptions(
   }
 }
 
+interface AppLog {
+  logs?: string
+  error_message?: string
+  error_type?: string
+  fuel_consumed?: number
+  input?: string
+  output?: string
+  input_bytes?: number
+  output_nytes?: number
+  invocation_id?: string
+  function_id?: string
+}
+
 async function launchDevProcesses({
   processes,
   previewUrl,
@@ -356,7 +369,44 @@ export function developerPreviewController(
     }
   }
 
+  const fetchAppLogs = async ({oldestMessageRead}: {oldestMessageRead: string}) => {
+    const token =
+      'eyJhbGciOiJIUzI1NiJ9.eyJzaG9wX2lkcyI6WzJdLCJhcHBfaWQiOjkwNTc0MzM5ODU3NiwiZXhwaXJlc19hdCI6MTcxNDgyOTcxM30.u1c99rvB3q6bbwSExdbEPkiZxZEreoy2U8wNtgWR3RY'
+
+    const generateUrl = (oldestMessageRead: string) => {
+      const url = 'https://partners.script-service-juf8.mehdi-salemi.us.spin.dev/app_logs/poll'
+      return `${url}?oldest_message_read=${oldestMessageRead}`
+    }
+
+    const response = await fetch(generateUrl(oldestMessageRead), {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    const data = (await response.json()) as {
+      app_logs?: {
+        type: string
+        shop_id: number
+        app_id: number
+        event_timestamp: string
+        payload: AppLog
+      }[]
+      success?: boolean
+      errors?: string[]
+    }
+
+    console.log(data, oldestMessageRead)
+
+    return {
+      appLogs: data.app_logs,
+      success: data.success,
+      errors: data.errors,
+    }
+  }
+
   return {
+    fetchAppLog: async ({oldestMessageRead}: {oldestMessageRead: string}) => fetchAppLogs({oldestMessageRead}),
     fetchMode: async () =>
       withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
         Boolean(await fetchAppPreviewMode(apiKey, developerPlatformClient)),

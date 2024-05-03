@@ -13,7 +13,33 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
+interface AppLog {
+  logs?: string
+  error_message?: string
+  error_type?: string
+  fuel_consumed?: number
+  input?: string
+  output?: string
+  input_bytes?: number
+  output_nytes?: number
+  invocation_id?: string
+  function_id?: string
+}
+
 export interface DeveloperPreviewController {
+  fetchAppLog?: ({oldestMessageRead}: {oldestMessageRead: string}) => Promise<{
+    appLogs:
+      | {
+          type: string
+          shop_id: number
+          app_id: number
+          event_timestamp: string
+          payload: AppLog
+        }[]
+      | undefined
+    success: boolean | undefined
+    errors: string[] | undefined
+  }>
   fetchMode: () => Promise<boolean>
   enable: () => Promise<void>
   disable: () => Promise<void>
@@ -51,6 +77,8 @@ const Dev: FunctionComponent<DevProps> = ({
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
+  const logPollingInterval = useRef<NodeJS.Timeout>()
+  const [oldestMessageRead, setOldestMessageRead] = useState(new Date().toISOString())
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultStatusMessage = `Preview URL: ${previewUrl}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
@@ -104,6 +132,21 @@ const Dev: FunctionComponent<DevProps> = ({
       }
     }
 
+    const pollAppLogs = async () => {
+      try {
+        console.log('hello oldestMessageRead', oldestMessageRead)
+        const {appLogs} = await developerPreview.fetchAppLog!({oldestMessageRead})
+        console.log('hello app logs', appLogs?.length)
+        if (appLogs?.length === 0) return
+        appLogs?.forEach((log) => {
+          setOldestMessageRead(new Date().toISOString())
+        })
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (_) {
+        setError('Failed to fetch the latest logs of the development store preview, trying again in 5 seconds.')
+      }
+    }
+
     const enablePreviewMode = async () => {
       // Enable dev preview on app dev start
       try {
@@ -133,8 +176,21 @@ const Dev: FunctionComponent<DevProps> = ({
       pollingInterval.current = startPolling()
     }
 
+    if (developerPreview.fetchAppLog) {
+      const startPolling = () => {
+        return setInterval(
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          () => pollAppLogs(),
+          pollingTime,
+        )
+      }
+
+      logPollingInterval.current = startPolling()
+    }
+
     return () => {
       clearInterval(pollingInterval.current)
+      clearInterval(logPollingInterval.current)
     }
   }, [canEnablePreviewMode])
 
