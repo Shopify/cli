@@ -16,32 +16,24 @@ interface TransformedWebhookSubscription {
   filter?: string
 }
 
-/* this transforms webhooks from the TOML config to be parsed remotely
+/* this transforms webhooks from the extension instance config to be parsed remotely
 ie.
-  given:
+  given (it will only ever have one subscription bc of how we created the extension instance):
   {
     webhooks: {
           api_version: '2024-01',
           subscriptions: [
             {
-              topics: ['orders/delete', 'orders/create'],
+              topics: ['orders/delete'],
               uri: 'https://example.com/webhooks/orders',
-            },
-            {
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks/products',
             },
           ]
       }
   }
   the function should return:
-  {
-    subscriptions: [
-      { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
-      { topic: 'orders/delete', uri: https://example.com/webhooks/orderss'},
-      { topic: 'orders/create', uri: 'https://example.com/webhooks/orders'},
-    ]
-  }
+
+  { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
+
   */
 function transformFromWebhookSubscriptionConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
@@ -59,7 +51,7 @@ function transformFromWebhookSubscriptionConfig(content: object) {
   })
 
   // Assume there could only be one because of how we create the instances
-  return webhookSubscriptions[0]!
+  return webhookSubscriptions[0] ?? {}
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML

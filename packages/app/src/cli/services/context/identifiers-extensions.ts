@@ -9,6 +9,8 @@ import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -112,18 +114,17 @@ export async function deployConfirmed(
     extensionsToCreate: LocalSource[]
   },
 ) {
-  const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
+  const {uuidUidStrategyExtensions, allRegistrationsManagedInConfig} = shiftRegistrationsAround(
+    extensionRegistrations,
     configurationRegistrations,
+    options.app.specifications || [],
+  )
+
+  const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
+    allRegistrationsManagedInConfig,
     options.app,
     options.appId,
     options.includeDraftExtensions,
-    options.developerPlatformClient,
-  )
-
-  const {extensionsDynamicManaged, extensionsIdsDynamicManaged} = await ensureDynamicManagedExtensionIds(
-    configurationRegistrations,
-    options.app,
-    options.appId,
     options.developerPlatformClient,
   )
 
@@ -138,61 +139,64 @@ export async function deployConfirmed(
 
   // For extensions we also need the match by ID, not only UUID (doesn't apply to functions)
   for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
-    const registration = extensionRegistrations.find((registration) => registration.uuid === uuid)
+    const registration = uuidUidStrategyExtensions.find((registration) => registration.uuid === uuid)
     if (registration) validMatchesById[localIdentifier] = registration.id
   }
 
   return {
     extensions: validMatches,
-    extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged, ...extensionsIdsDynamicManaged},
-    extensionsNonUuidManaged: {...extensionsNonUuidManaged, ...extensionsDynamicManaged},
+    extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged},
+    extensionsNonUuidManaged: {...extensionsNonUuidManaged},
   }
 }
 
-async function ensureDynamicManagedExtensionIds(
+function matchWebhooks(remoteConfigObj: {[key: string]: unknown}, extension: ExtensionInstance) {
+  const transformLocalConfig = extension.specification.transform?.(extension.configuration) as unknown as {
+    [key: string]: unknown
+  }
+  if (transformLocalConfig) {
+    return remoteConfigObj.topic === transformLocalConfig.topic && remoteConfigObj.uri === transformLocalConfig.uri
+  } else {
+    return false
+  }
+}
+
+async function loadExtensionIds(
   remoteConfigurationRegistrations: RemoteSource[],
-  app: AppInterface,
-  appId: string,
   developerPlatformClient: DeveloperPlatformClient,
+  localExtensionRegistrations: ExtensionInstance[],
+  extensionsToCreate: LocalSource[],
+  validMatches: {[key: string]: unknown},
+  validMatchesById: {[key: string]: unknown},
 ) {
-  const localExtensionRegistrations = app.realExtensions.filter((ext) => ext.isDynamicStrategyExtension)
-
-  const extensionsToCreate: LocalSource[] = []
-  const validMatches: {[key: string]: string} = {}
-  const validMatchesById: {[key: string]: string} = {}
-
-  localExtensionRegistrations.forEach((extension) => {
+  localExtensionRegistrations.forEach((local) => {
     const possibleMatches = remoteConfigurationRegistrations.filter((remote) => {
-      return remote.type === developerPlatformClient.toExtensionGraphQLType(extension.graphQLType)
+      return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
     })
-    const match = possibleMatches.find((possibleMatch) => {
-      const remoteVersionConfig = possibleMatch.activeVersion?.config ?? possibleMatch.draftVersion?.config
-      const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : undefined
-      return matchWebhooks(remoteVersionConfigObj, extension.configuration)
-    })
-    if (match) {
-      validMatches[extension.localIdentifier] = match.uuid
-      validMatchesById[extension.localIdentifier] = match.id
+
+    if (local.isSingleStrategyExtension && possibleMatches.length === 1) {
+      validMatches[local.localIdentifier] = possibleMatches[0]!.uuid
+      validMatchesById[local.localIdentifier] = possibleMatches[0]!.id
+    } else if (local.isDynamicStrategyExtension) {
+      // can probably move this out to a separate function if we want to clean this further?
+      const match = possibleMatches.find((possibleMatch) => {
+        const remoteVersionConfig = possibleMatch.activeVersion?.config ?? possibleMatch.draftVersion?.config
+        const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : undefined
+        return matchWebhooks(remoteVersionConfigObj, local)
+      })
+      if (match) {
+        validMatches[local.localIdentifier] = match.uuid
+        validMatchesById[local.localIdentifier] = match.id
+      } else {
+        extensionsToCreate.push(local)
+      }
     } else {
-      extensionsToCreate.push(extension)
+      extensionsToCreate.push(local)
     }
   })
-
-  if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
-    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
-      validMatches[localIdentifier] = registration.uuid
-      validMatchesById[localIdentifier] = registration.id
-    }
-  }
-  return {extensionsDynamicManaged: validMatches, extensionsIdsDynamicManaged: validMatchesById}
 }
 
-function matchWebhooks(remoteConfigObj: {[key: string]: unknown}, localConfig: {[key: string]: unknown}) {
-  return remoteConfigObj.topic === localConfig.topic && remoteConfigObj.uri === localConfig.uri
-}
-
-async function ensureNonUuidManagedExtensionsIds(
+export async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
   appId: string,
@@ -201,19 +205,20 @@ async function ensureNonUuidManagedExtensionsIds(
 ) {
   let localExtensionRegistrations = includeDraftExtensions ? app.realExtensions : app.allExtensions
 
-  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => ext.isSingleStrategyExtension)
+  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
+
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}
-  localExtensionRegistrations.forEach((local) => {
-    const possibleMatch = remoteConfigurationRegistrations.find((remote) => {
-      return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
-    })
-    if (possibleMatch) {
-      validMatches[local.localIdentifier] = possibleMatch.uuid
-      validMatchesById[local.localIdentifier] = possibleMatch.id
-    } else extensionsToCreate.push(local)
-  })
+
+  await loadExtensionIds(
+    remoteConfigurationRegistrations,
+    developerPlatformClient,
+    localExtensionRegistrations,
+    extensionsToCreate,
+    validMatches,
+    validMatchesById,
+  )
 
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
@@ -260,4 +265,23 @@ async function createExtensions(
     }
   }
   return result
+}
+
+export function shiftRegistrationsAround(
+  extensionRegistrations: RemoteSource[],
+  configurationRegistrations: RemoteSource[],
+  specifications: ExtensionSpecification[],
+) {
+  const dynamicUidStrategySpecs =
+    specifications
+      ?.filter((specification) => specification.uidStrategy === 'dynamic')
+      .map((specification) => specification.identifier) ?? []
+  const dynamicUidStrategyExtensions = extensionRegistrations.filter((registration) => {
+    return dynamicUidStrategySpecs.includes(registration.type.toLowerCase())
+  })
+  const uuidUidStrategyExtensions = extensionRegistrations.filter((registration) => {
+    return !dynamicUidStrategySpecs.includes(registration.type.toLowerCase())
+  })
+  const allRegistrationsManagedInConfig = configurationRegistrations.concat(dynamicUidStrategyExtensions)
+  return {uuidUidStrategyExtensions, allRegistrationsManagedInConfig}
 }

@@ -32,7 +32,7 @@ export interface SimplifyConfig {
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
-export type UidStrategy = 'single' | 'dynamic' | 'uuid'
+type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

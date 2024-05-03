@@ -18,6 +18,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -1862,6 +1863,87 @@ wrong = "property"
       expect.objectContaining({
         application_url: 'https://example.com/lala',
         embedded: true,
+      }),
+    ])
+  })
+
+  test('loads the app with webhook subscription extensions created individually', async () => {
+    // Given
+    const appConfigurationWithWebhooks = `
+    name = "for-testing-webhooks"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [build]
+    include_config_on_deploy = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [[webhooks.subscriptions]]
+      topics = ["orders/create", "orders/delete"]
+      uri = "https://example.com"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+    `
+    await writeConfig(appConfigurationWithWebhooks)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications, remoteFlags: [Flag.DeclarativeWebhooks]})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(6)
+    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        name: 'for-testing-webhooks',
+      }),
+      expect.objectContaining({
+        auth: {
+          redirect_urls: ['https://example.com/api/auth'],
+        },
+      }),
+      // this is the webhooks extension
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/create', 'orders/delete'],
+              uri: 'https://example.com',
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      }),
+      // this is a webhook subscription extension
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/create'],
+              uri: 'https://example.com',
+            },
+          ],
+        },
+      }),
+      // this is a webhook subscription extension
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/delete'],
+              uri: 'https://example.com',
+            },
+          ],
+        },
       }),
     ])
   })

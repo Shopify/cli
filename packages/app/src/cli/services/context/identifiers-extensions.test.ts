@@ -1,9 +1,14 @@
 /* eslint-disable @shopify/prefer-module-scope-constants */
 import {automaticMatchmaking} from './id-matching.js'
-import {deployConfirmed, ensureExtensionsIds} from './identifiers-extensions.js'
+import {
+  deployConfirmed,
+  ensureExtensionsIds,
+  ensureNonUuidManagedExtensionsIds,
+  shiftRegistrationsAround,
+} from './identifiers-extensions.js'
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
-import {EnsureDeploymentIdsPresenceOptions, LocalSource} from './identifiers.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
 import {AppInterface} from '../../models/app/app.js'
 import {
   testApp,
@@ -13,12 +18,16 @@ import {
   testUIExtension,
   testPaymentsAppExtension,
   testDeveloperPlatformClient,
+  testWebhookSubscriptionExtensions,
 } from '../../models/app/app.test-data.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionCreateSchema} from '../../api/graphql/extension_create.js'
+import appPOSSpec from '../../models/extensions/specifications/app_config_point_of_sale.js'
+import appWebhookSubscriptionSpec from '../../models/extensions/specifications/app_config_webhook_subscription.js'
+import {Flag} from '../dev/fetch.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
@@ -113,7 +122,7 @@ const options = (
     release?: boolean
     includeDeployConfig?: boolean
     configExtensions?: ExtensionInstance[]
-    flags?: string[]
+    flags?: Flag[]
     developerPlatformClient?: DeveloperPlatformClient
   } = {},
 ): EnsureDeploymentIdsPresenceOptions => {
@@ -570,7 +579,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
       },
     })
   })
-  test('ensuredeployConfirmed', async () => {
+  test('deployConfirmed', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {'extension-b': 'UUID_B'}
@@ -620,7 +629,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
       validMatches: {},
     })
   })
-  test('ensuredeployConfirmed: creates non confirmed as new extensions', async () => {
+  test('deployConfirmed: creates non confirmed as new extensions', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = [EXTENSION_B]
     const validMatches = {}
@@ -671,7 +680,7 @@ describe('matchmaking returns ok with nothing pending', () => {
       validMatches: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
     })
   })
-  test('ensuredeployConfirmed: does not create any extension', async () => {
+  test('deployConfirmed: does not create any extension', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'}
@@ -731,7 +740,7 @@ describe('includes functions', () => {
       validMatches: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
     })
   })
-  test('ensuredeployConfirmed: does not create any extension', async () => {
+  test('deployConfirmed: does not create any extension', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'}
@@ -850,7 +859,7 @@ describe('ensureExtensionsIds: Migrates extension', () => {
   })
 })
 
-describe('ensuredeployConfirmed: handle non existent uuid managed extensions', () => {
+describe('deployConfirmed: handle non existent uuid managed extensions', () => {
   test('when include config on deploy flag is enabled configuration extensions are created', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
@@ -969,7 +978,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     })
   })
 })
-describe('ensuredeployConfirmed: handle existent uuid managed extensions', () => {
+describe('deployConfirmed: handle existent uuid managed extensions', () => {
   test('when the include config on deploy flag is enabled configuration extensions are not created but the uuids are returned', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
@@ -1002,5 +1011,198 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
       extensionIds: {'point-of-sale': 'C_A'},
       extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
     })
+  })
+})
+
+describe('deployConfirmed: extensions that should be managed in the TOML', () => {
+  test('are also passed to the `ensureNonUuidManagedExtensionsIds` function', async () => {
+    // Given
+    const extensionsToCreate: LocalSource[] = []
+    const validMatches = {}
+    const REGISTRATION_CONFIG_A = {
+      uuid: 'UUID_C_A',
+      id: 'C_A',
+      title: 'C_A',
+      type: 'POINT_OF_SALE',
+    }
+    const developerPlatformClient = testDeveloperPlatformClient()
+
+    // When
+    const CONFIG_A = await testAppConfigExtensions()
+
+    const ensureExtensionsIdsOptions = options([], [], {
+      includeDeployConfig: true,
+      configExtensions: [CONFIG_A],
+      developerPlatformClient,
+    })
+    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
+      extensionsToCreate,
+      validMatches,
+    })
+
+    // Then
+    expect(developerPlatformClient.createExtension).not.toHaveBeenCalled()
+    expect(got).toEqual({
+      extensions: {},
+      extensionIds: {'point-of-sale': 'C_A'},
+      extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
+    })
+  })
+})
+
+describe('shiftRegistrationsAround', () => {
+  test('extension registrations have dynamic UID strategy should be returned in the same array as configuration registrations', () => {
+    // Given
+    const dynamicUidStrategyExtension = {
+      uuid: 'webhook-subscription-uuid',
+      id: 'webhook-subscription-id',
+      title: 'Webhook Subscription',
+      type: 'WEBHOOK_SUBSCRIPTION',
+    }
+
+    const extensionRegistrations = [REGISTRATION_B, dynamicUidStrategyExtension]
+    const configurationRegistrations = [
+      {
+        uuid: 'UUID_C_A',
+        id: 'C_A',
+        title: 'C_A',
+        type: 'POINT_OF_SALE',
+      },
+    ]
+    const specifications = [appPOSSpec, appWebhookSubscriptionSpec]
+
+    const dynamicUidStrategySpec = specifications.find(
+      (spec) => spec.identifier === dynamicUidStrategyExtension.type.toLowerCase(),
+    )
+    expect(dynamicUidStrategySpec?.experience).toEqual('configuration')
+    expect(dynamicUidStrategySpec?.uidStrategy).toEqual('dynamic')
+
+    // When
+    const {uuidUidStrategyExtensions, allRegistrationsManagedInConfig} = shiftRegistrationsAround(
+      extensionRegistrations,
+      configurationRegistrations,
+      specifications,
+    )
+
+    // Then
+    expect(uuidUidStrategyExtensions).toEqual([REGISTRATION_B])
+    expect(allRegistrationsManagedInConfig).toEqual([configurationRegistrations[0], dynamicUidStrategyExtension])
+  })
+})
+
+describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML', () => {
+  test('creates the extension if no possible matches', async () => {
+    // Given
+    const remoteSources: RemoteSource[] = []
+    const localSources = [
+      await testWebhookSubscriptionExtensions(),
+      await testWebhookSubscriptionExtensions({topic: 'products/create'}),
+      await testWebhookSubscriptionExtensions({topic: 'products/update'}),
+      await testWebhookSubscriptionExtensions({topic: 'products/delete'}),
+    ]
+    const app = options(localSources, [], {
+      includeDeployConfig: true,
+      flags: [Flag.DeclarativeWebhooks],
+    }).app
+    const appId = 'appId'
+
+    let createExtensionCounter = 0
+    const developerPlatformClient = testDeveloperPlatformClient({
+      createExtension: async () => {
+        createExtensionCounter++
+        const registration = {
+          uuid: `webhook-subscription-${createExtensionCounter}`,
+          id: createExtensionCounter.toString(),
+          title: `Webhook Subscription ${createExtensionCounter}`,
+          type: 'WEBHOOK_SUBSCRIPTION',
+          contextValue: '',
+        }
+        return createExtensionResult(registration)
+      },
+    })
+
+    // When
+
+    const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
+      remoteSources,
+      app,
+      appId,
+      false,
+      developerPlatformClient,
+    )
+
+    // Then
+    expect(developerPlatformClient.createExtension).toBeCalledTimes(4)
+    expect(Object.values(extensionsNonUuidManaged)).toEqual([
+      'webhook-subscription-1',
+      'webhook-subscription-2',
+      'webhook-subscription-3',
+      'webhook-subscription-4',
+    ])
+    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(['1', '2', '3', '4'])
+  })
+
+  test('if there are possible matches, creates the extension for those that dont match', async () => {
+    // Given
+    const webhookSubscriptionExtension = {
+      uuid: 'webhook-subscription-uuid',
+      id: 'webhook-subscription-id',
+      title: 'Webhook Subscription',
+      type: 'WEBHOOK_SUBSCRIPTION',
+      activeVersion: {
+        config: JSON.stringify({
+          api_version: '2024-01',
+          topic: 'orders/delete',
+          uri: 'https://my-app.com/webhooks',
+        }),
+      },
+    }
+
+    const localSources = [
+      await testWebhookSubscriptionExtensions(),
+      await testWebhookSubscriptionExtensions({topic: 'products/create'}),
+      await testWebhookSubscriptionExtensions({topic: 'products/update'}),
+      await testWebhookSubscriptionExtensions({topic: 'products/delete'}),
+    ]
+    const remoteSources = [webhookSubscriptionExtension]
+    const app = options(localSources, [], {
+      includeDeployConfig: true,
+      flags: [Flag.DeclarativeWebhooks],
+    }).app
+    const appId = 'appId'
+
+    let createExtensionCounter = 0
+    const developerPlatformClient = testDeveloperPlatformClient({
+      createExtension: async () => {
+        createExtensionCounter++
+        const registration = {
+          uuid: `webhook-subscription-${createExtensionCounter}`,
+          id: createExtensionCounter.toString(),
+          title: `Webhook Subscription ${createExtensionCounter}`,
+          type: 'WEBHOOK_SUBSCRIPTION',
+          contextValue: '',
+        }
+        return createExtensionResult(registration)
+      },
+    })
+
+    // When
+    const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
+      remoteSources,
+      app,
+      appId,
+      false,
+      developerPlatformClient,
+    )
+
+    // Then
+    expect(developerPlatformClient.createExtension).toBeCalledTimes(3)
+    expect(Object.values(extensionsNonUuidManaged)).toEqual([
+      'webhook-subscription-uuid',
+      'webhook-subscription-1',
+      'webhook-subscription-2',
+      'webhook-subscription-3',
+    ])
+    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(['webhook-subscription-id', '1', '2', '3'])
   })
 })

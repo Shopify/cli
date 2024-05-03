@@ -16,12 +16,14 @@ import {
   testFunctionExtension,
   testWebhookExtensions,
   testEditorExtensionCollection,
+  testWebhookSubscriptionExtensions,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
+import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -388,6 +390,23 @@ describe('allExtensions', () => {
     expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
   })
 
+  test('filters out webhook_subscription extensions when flag is not enabled', async () => {
+    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const app = await testApp(
+      {
+        configuration: CORRECT_CURRENT_APP_SCHEMA,
+        allExtensions: [webhookSubscriptionExtension],
+      },
+      'current',
+    )
+
+    const webhookSubscriptionConfigs = app.allExtensions.filter(
+      (ext) => ext.specification.identifier === WebhookSubscriptionSpecIdentifier,
+    )
+
+    expect(webhookSubscriptionConfigs.length).toEqual(0)
+  })
+
   test('keeps declarative webhook config when flag is enabled', async () => {
     const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
     const app = await testApp(
@@ -408,6 +427,24 @@ describe('allExtensions', () => {
     expect(webhookConfig.webhooks.privacy_compliance).toBeDefined()
     expect(privacyConfig.webhooks.subscriptions!.length).not.toStrictEqual(0)
     expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
+  })
+
+  test('keeps webhook-subscription modules when flag is enabled', async () => {
+    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const app = await testApp(
+      {
+        configuration: CORRECT_CURRENT_APP_SCHEMA,
+        allExtensions: [webhookSubscriptionExtension],
+        remoteFlags: [Flag.DeclarativeWebhooks],
+      },
+      'current',
+    )
+
+    const webhookSubscriptionConfigs = app.allExtensions.filter(
+      (ext) => ext.specification.identifier === WebhookSubscriptionSpecIdentifier,
+    )
+
+    expect(webhookSubscriptionConfigs.length).toEqual(1)
   })
 })
 

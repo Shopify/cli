@@ -328,6 +328,39 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
 }
 
+export async function testWebhookSubscriptionExtensions({
+  emptyConfig = false,
+  topic = 'orders/delete',
+} = {}): Promise<ExtensionInstance> {
+  // configuration should only ever have one topic because of how
+  // we create the extension instances in loader
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: [topic],
+              uri: 'https://my-app.com/webhooks',
+            },
+          ],
+        },
+      } as unknown as BaseConfigType)
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const webhookSubscriptionSpecification = allSpecs.find((spec) => spec.identifier === 'webhook_subscription')!
+
+  const webhooksExtension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification: webhookSubscriptionSpecification,
+  })
+
+  return webhooksExtension
+}
+
 export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'tax',

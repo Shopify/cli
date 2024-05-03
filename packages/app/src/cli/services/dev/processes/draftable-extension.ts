@@ -7,6 +7,7 @@ import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {WebhookSubscriptionSpecIdentifier} from '../../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -73,10 +74,16 @@ export async function setupDraftableExtensionsProcess({
   remoteApp: PartnersAppForIdentifierMatching
 }): Promise<DraftableExtensionProcess | undefined> {
   // it would be good if this process didn't require the full local & remote app instances
+  // grace.chang: by filtering out webhook subscription extensions from the localApp,
+  // new draft versions don't get created on getAppIdentifiers
+  localApp.realExtensions = localApp.realExtensions.filter(
+    (extension) => extension.specification.identifier !== WebhookSubscriptionSpecIdentifier,
+  )
   const draftableExtensions = localApp.realExtensions
   if (draftableExtensions.length === 0) {
     return
   }
+
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
 
   const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({
