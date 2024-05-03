@@ -148,7 +148,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isUuidManaged() {
-    return !this.isAppConfigExtension
+    return this.specification.uidStrategy === 'uuid'
   }
 
   isSentToMetrics() {

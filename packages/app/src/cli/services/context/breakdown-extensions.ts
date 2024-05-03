@@ -12,6 +12,7 @@ import {
   AllAppExtensionRegistrationsQuerySchema,
   RemoteExtensionRegistrations,
 } from '../../api/graphql/all_app_extension_registrations.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -64,6 +65,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
         extensionsToConfirm.validMatches,
         extensionsToConfirm.extensionsToCreate,
         extensionsToConfirm.dashboardOnlyExtensions,
+        options.app.specifications ?? [],
       )) ?? extensionIdentifiersBreakdown
   }
   return {
@@ -283,6 +285,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
+  specs: ExtensionSpecification[],
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   if (!activeAppVersion) return
@@ -291,6 +294,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
     activeAppVersion,
     localRegistration,
     toCreate,
+    specs,
   )
 
   const dashboardOnlyFinal = dashboardOnly.filter(
@@ -311,10 +315,11 @@ function loadExtensionsIdentifiersBreakdown(
   activeAppVersion: ActiveAppVersion,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
+  specs: ExtensionSpecification[],
 ) {
   const extensionModules =
-    activeAppVersion?.appModuleVersions.filter(
-      (module) => !module.specification || module.specification.experience === 'extension',
+    activeAppVersion?.appModuleVersions.filter((extension) =>
+      specs.find((spec) => spec.identifier === extension.specification?.identifier && spec.uidStrategy === 'uuid'),
     ) || []
 
   const extensionsToUpdate = Object.entries(localRegistration)

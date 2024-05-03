@@ -32,6 +32,7 @@ export interface SimplifyConfig {
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
+export type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -66,6 +67,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
   extensionManagedInToml?: boolean
   multipleModuleConfigPath?: string
+  uidStrategy: UidStrategy
 }
 
 /**
@@ -122,6 +124,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     extensionManagedInToml: spec.extensionManagedInToml ?? false,
     multipleModuleConfigPath: spec.multipleModuleConfigPath,
+    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
   return {...defaults, ...spec}
 }
@@ -142,6 +145,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   simplify?: SimplifyConfig
   extensionManagedInToml?: boolean
   multipleModuleConfigPath?: string
+  uidStrategy?: UidStrategy
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({

@@ -119,6 +119,7 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   simplify: WebhookSimplifyConfig,
   extensionManagedInToml: true,
   multipleModuleConfigPath: 'subscriptions',
+  uidStrategy: 'dynamic',
 })
 
 export default appWebhookSubscriptionSpec
