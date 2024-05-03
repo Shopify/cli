@@ -9,7 +9,6 @@ import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
-import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -167,15 +166,9 @@ async function ensureDynamicManagedExtensionIds(
       return remote.type === developerPlatformClient.toExtensionGraphQLType(extension.graphQLType)
     })
     const match = possibleMatches.find((possibleMatch) => {
-      const remoteActiveVersionConfig = possibleMatch.activeVersion?.config
-      const remoteDraftVersionConfig = possibleMatch.draftVersion?.config
-      const remoteActiveVersionConfigObj = remoteActiveVersionConfig ? JSON.parse(remoteActiveVersionConfig) : undefined
-      const remoteDraftVersionConfigObj = remoteDraftVersionConfig ? JSON.parse(remoteDraftVersionConfig) : undefined
-      return matchesRemoteConfigForWebhookSubscriptions(
-        extension.specification.identifier,
-        remoteActiveVersionConfigObj ?? remoteDraftVersionConfigObj,
-        extension.configuration,
-      )
+      const removeVersionConfig = possibleMatch.activeVersion?.config ?? possibleMatch.draftVersion?.config
+      const removeVersionConfigObj = removeVersionConfig ? JSON.parse(removeVersionConfig) : undefined
+      return matchWebhooks(removeVersionConfigObj, extension.configuration)
     })
     if (match) {
       validMatches[extension.localIdentifier] = match.uuid
@@ -195,16 +188,8 @@ async function ensureDynamicManagedExtensionIds(
   return {extensionsDynamicManaged: validMatches, extensionsIdsDynamicManaged: validMatchesById}
 }
 
-function matchesRemoteConfigForWebhookSubscriptions(
-  specificationIdentifier: string,
-  remoteConfigObj: {[key: string]: unknown},
-  localConfig: {[key: string]: unknown},
-) {
-  return (
-    specificationIdentifier === WebhookSubscriptionSpecIdentifier &&
-    remoteConfigObj.topic === localConfig.topic &&
-    remoteConfigObj.uri === localConfig.uri
-  )
+function matchWebhooks(remoteConfigObj: {[key: string]: unknown}, localConfig: {[key: string]: unknown}) {
+  return remoteConfigObj.topic === localConfig.topic && remoteConfigObj.uri === localConfig.uri
 }
 
 async function ensureNonUuidManagedExtensionsIds(

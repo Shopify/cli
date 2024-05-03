@@ -560,15 +560,13 @@ class AppLoader {
     // Find all unique subscriptions
     const webhookSubscriptions = getArrayRejectingUndefined(
       subscriptions.flatMap((subscription) => {
-        // compliance_topics gets handled by privacy_compliance_webhooks
-        const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
-        return topics?.map((topic) => {
-          return {api_version, uri, topic, ...optionalFields}
+        return subscription.topics?.map((topic) => {
+          return {topic, api_version, ...subscription}
         })
       }),
     )
 
-    // Recreate the object again to follow the expected schema with just 1 topic per instance
+    // Create 1 instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
       return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
     })
