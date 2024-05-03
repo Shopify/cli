@@ -484,6 +484,7 @@ class AppLoader {
     // Validate that all extensions have a unique handle.
     const handles = new Set()
     allExtensions.forEach((extension) => {
+      console.log(extension.handle)
       if (extension.handle && handles.has(extension.handle)) {
         const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
         const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))

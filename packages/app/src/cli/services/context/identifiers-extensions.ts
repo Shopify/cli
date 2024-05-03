@@ -9,6 +9,7 @@ import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
+import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -120,6 +121,13 @@ export async function deployConfirmed(
     options.developerPlatformClient,
   )
 
+  const {extensionsDynamicManaged, extensionsIdsDynamicManaged} = await ensureDynamicManagedExtensionIds(
+    configurationRegistrations,
+    options.app,
+    options.appId,
+    options.developerPlatformClient,
+  )
+
   const validMatchesById: {[key: string]: string} = {}
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId, options.developerPlatformClient)
@@ -137,9 +145,66 @@ export async function deployConfirmed(
 
   return {
     extensions: validMatches,
-    extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged},
-    extensionsNonUuidManaged,
+    extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged, ...extensionsIdsDynamicManaged},
+    extensionsNonUuidManaged: {...extensionsNonUuidManaged, ...extensionsDynamicManaged},
   }
+}
+
+async function ensureDynamicManagedExtensionIds(
+  remoteConfigurationRegistrations: RemoteSource[],
+  app: AppInterface,
+  appId: string,
+  developerPlatformClient: DeveloperPlatformClient,
+) {
+  const localExtensionRegistrations = app.realExtensions.filter((ext) => ext.isDynamicStrategyExtension())
+
+  const extensionsToCreate: LocalSource[] = []
+  const validMatches: {[key: string]: string} = {}
+  const validMatchesById: {[key: string]: string} = {}
+
+  localExtensionRegistrations.forEach((extension) => {
+    const possibleMatches = remoteConfigurationRegistrations.filter((remote) => {
+      return remote.type === developerPlatformClient.toExtensionGraphQLType(extension.graphQLType)
+    })
+    const match = possibleMatches.find((possibleMatch) => {
+      const remoteActiveVersionConfig = possibleMatch.activeVersion?.config
+      const remoteDraftVersionConfig = possibleMatch.draftVersion?.config
+      const remoteActiveVersionConfigObj = remoteActiveVersionConfig ? JSON.parse(remoteActiveVersionConfig) : undefined
+      const remoteDraftVersionConfigObj = remoteDraftVersionConfig ? JSON.parse(remoteDraftVersionConfig) : undefined
+      return matchesRemoteConfigForWebhookSubscriptions(
+        extension.specification.identifier,
+        remoteActiveVersionConfigObj ?? remoteDraftVersionConfigObj,
+        extension.configuration,
+      )
+    })
+    if (match) {
+      validMatches[extension.localIdentifier] = match.uuid
+      validMatchesById[extension.localIdentifier] = match.id
+    } else {
+      extensionsToCreate.push(extension)
+    }
+  })
+
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
+    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
+      validMatches[localIdentifier] = registration.uuid
+      validMatchesById[localIdentifier] = registration.id
+    }
+  }
+  return {extensionsDynamicManaged: validMatches, extensionsIdsDynamicManaged: validMatchesById}
+}
+
+function matchesRemoteConfigForWebhookSubscriptions(
+  specificationIdentifier: string,
+  remoteConfigObj: {[key: string]: unknown},
+  localConfig: {[key: string]: unknown},
+) {
+  return (
+    specificationIdentifier === WebhookSubscriptionSpecIdentifier &&
+    remoteConfigObj.topic === localConfig.topic &&
+    remoteConfigObj.uri === localConfig.uri
+  )
 }
 
 async function ensureNonUuidManagedExtensionsIds(
@@ -151,7 +216,7 @@ async function ensureNonUuidManagedExtensionsIds(
 ) {
   let localExtensionRegistrations = includeDraftExtensions ? app.realExtensions : app.allExtensions
 
-  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
+  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => ext.isSingleStrategyExtension())
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}

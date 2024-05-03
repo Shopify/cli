@@ -150,6 +150,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.uidStrategy === 'uuid'
   }
 
+  isSingleStrategyExtension() {
+    return this.specification.uidStrategy === 'single'
+  }
+
+  isDynamicStrategyExtension() {
+    return this.specification.uidStrategy === 'dynamic'
+  }
+
   isSentToMetrics() {
     return !this.isAppConfigExtension
   }
@@ -330,6 +338,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const uuid = this.isUuidManaged()
       ? identifiers.extensions[this.localIdentifier]
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+
     return {...result, uuid}
   }
 
