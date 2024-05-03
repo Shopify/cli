@@ -476,15 +476,10 @@ class AppLoader {
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
 
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
-    allExtensions.map((ins) => {
-      console.log(ins.specification.identifier, ins.specification.experience)
-    })
-    // console.log(allExtensions)
 
     // Validate that all extensions have a unique handle.
     const handles = new Set()
     allExtensions.forEach((extension) => {
-      console.log(extension.handle)
       if (extension.handle && handles.has(extension.handle)) {
         const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
         const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
@@ -560,7 +555,6 @@ class AppLoader {
       appConfiguration,
       this.abortOrReport.bind(this),
     )
-    console.log('original: ', specification.identifier, specification.experience)
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const {api_version, subscriptions = []} = specConfiguration.webhooks
     // Find all unique subscriptions

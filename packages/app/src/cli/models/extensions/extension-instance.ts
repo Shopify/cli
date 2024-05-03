@@ -339,10 +339,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       ? identifiers.extensions[this.localIdentifier]
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]
 
-    if (this.isDynamicStrategyExtension) {
-      result.handle = 'webhook_subscription'
-    }
-
     return {...result, uuid}
   }
 
