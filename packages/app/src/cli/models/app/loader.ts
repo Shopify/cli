@@ -23,6 +23,8 @@ import use from '../../services/app/config/use.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {findConfigFiles} from '../../prompts/config.js'
+import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -467,8 +469,17 @@ class AppLoader {
       ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
       : []
 
-    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
+    const webhookPromises = isCurrentAppSchema(appConfiguration)
+      ? await this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
+      : []
+
+    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
+
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
+    allExtensions.map((ins) => {
+      console.log(ins.specification.identifier, ins.specification.experience)
+    })
+    // console.log(allExtensions)
 
     // Validate that all extensions have a unique handle.
     const handles = new Set()
@@ -538,6 +549,38 @@ class AppLoader {
         )
       }
     })
+  }
+
+  private async createWebhookSubscriptionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+    const specification = appWebhookSubscriptionSpec
+    const specConfiguration = await parseConfigurationObject(
+      WebhooksSchema,
+      appConfiguration.path,
+      appConfiguration,
+      this.abortOrReport.bind(this),
+    )
+    console.log('original: ', specification.identifier, specification.experience)
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {api_version, subscriptions = []} = specConfiguration.webhooks
+    // Find all unique subscriptions
+    const webhookSubscriptions = getArrayRejectingUndefined(
+      subscriptions.flatMap((subscription) => {
+        // compliance_topics gets handled by privacy_compliance_webhooks
+        const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
+        return topics?.map((topic) => {
+          return {api_version, uri, topic, ...optionalFields}
+        })
+      }),
+    )
+
+    // Recreate the object again to follow the expected schema with just 1 topic per instance
+    const instances = webhookSubscriptions.map(async (subscription) => {
+      const {topic, ...rest} = subscription
+      const config = {webhooks: {subscriptions: [{topics: [topic], ...rest}], api_version: subscription.api_version}}
+      return this.createExtensionInstance(specification.identifier, config, appConfiguration.path, directory)
+    })
+
+    return Promise.all(instances)
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
