@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.60.0
+
+### Minor Changes
+
+- 0ff96c777: Introduce `.json` support for theme app extensions
+
 ## 3.59.0
 
 ### Minor Changes
