@@ -5,9 +5,10 @@ import {cacheRetrieveOrRepopulate, IntrospectionUrlKey} from '../conf-store.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError} from '../../../public/node/error.js'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {isSpin} from '@shopify/cli-kit/node/context/spin'
 
 export async function validateIdentityToken(token: string): Promise<boolean> {
-  if (firstPartyDev()) return true
+  if (isSpin() && firstPartyDev()) return true
 
   try {
     return withIntrospectionURL<boolean>(async (introspectionURL: string) => {
