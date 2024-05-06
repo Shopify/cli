@@ -2,6 +2,8 @@ import {showDeprecationWarnings, refreshTokens, dev} from './dev.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
 vi.mock('@shopify/cli-kit/node/ruby')
 
@@ -12,74 +14,78 @@ describe('dev', () => {
     storefrontToken: 'my-storefront-token',
     directory: 'my-directory',
     store: 'my-store',
-    theme: '123',
+    theme: buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!,
     force: false,
     open: false,
     flagsToPass: [],
     password: 'my-token',
+    'theme-editor-sync': false,
+    'dev-preview': false,
   }
 
-  test('runs theme serve on CLI2 without passing a token when no password is used', async () => {
-    // Given
-    const devOptions = {...options, password: undefined}
+  describe('execCLI2', async () => {
+    test('runs theme serve on CLI2 without passing a token when no password is used', async () => {
+      // Given
+      const devOptions = {...options, password: undefined}
 
-    // When
-    await dev(devOptions)
+      // When
+      await dev(devOptions)
 
-    // Then
-    const expectedParams = ['theme', 'serve', 'my-directory']
-    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-      store: 'my-store',
-      adminToken: undefined,
-      storefrontToken: undefined,
+      // Then
+      const expectedParams = ['theme', 'serve', 'my-directory']
+      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+        store: 'my-store',
+        adminToken: undefined,
+        storefrontToken: undefined,
+      })
     })
-  })
 
-  test('runs theme serve on CLI2 passing a token when a password is used', async () => {
-    // Given
-    const devOptions = {...options, password: 'my-token'}
+    test('runs theme serve on CLI2 passing a token when a password is used', async () => {
+      // Given
+      const devOptions = {...options, password: 'my-token'}
 
-    // When
-    await dev(devOptions)
+      // When
+      await dev(devOptions)
 
-    // Then
-    const expectedParams = ['theme', 'serve', 'my-directory']
-    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-      store: 'my-store',
-      adminToken: 'my-token',
-      storefrontToken: 'my-storefront-token',
+      // Then
+      const expectedParams = ['theme', 'serve', 'my-directory']
+      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+        store: 'my-store',
+        adminToken: 'my-token',
+        storefrontToken: 'my-storefront-token',
+      })
     })
-  })
 
-  test("runs theme serve on CLI2 passing '--open' flag when it's true", async () => {
-    // Given
-    const devOptions = {...options, open: true}
+    test("runs theme serve on CLI2 passing '--open' flag when it's true", async () => {
+      // Given
+      const devOptions = {...options, open: true}
 
-    // When
-    await dev(devOptions)
+      // When
+      await dev(devOptions)
 
-    // Then
-    const expectedParams = ['theme', 'serve', 'my-directory', '--open']
-    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-      store: 'my-store',
-      adminToken: 'my-token',
-      storefrontToken: 'my-storefront-token',
+      // Then
+      const expectedParams = ['theme', 'serve', 'my-directory', '--open']
+      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+        store: 'my-store',
+        adminToken: 'my-token',
+        storefrontToken: 'my-storefront-token',
+      })
     })
-  })
 
-  test("runs theme serve on CLI2 passing '--open' flag when it's false", async () => {
-    // Given
-    const devOptions = {...options, open: false}
+    test("runs theme serve on CLI2 passing '--open' flag when it's false", async () => {
+      // Given
+      const devOptions = {...options, open: false}
 
-    // When
-    await dev(devOptions)
+      // When
+      await dev(devOptions)
 
-    // Then
-    const expectedParams = ['theme', 'serve', 'my-directory']
-    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-      store: 'my-store',
-      adminToken: 'my-token',
-      storefrontToken: 'my-storefront-token',
+      // Then
+      const expectedParams = ['theme', 'serve', 'my-directory']
+      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+        store: 'my-store',
+        adminToken: 'my-token',
+        storefrontToken: 'my-storefront-token',
+      })
     })
   })
 })
