@@ -261,6 +261,9 @@ importers:
       esbuild:
         specifier: 0.19.8
         version: 0.19.8
+      npm:
+        specifier: 10.7.0
+        version: 10.7.0
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
