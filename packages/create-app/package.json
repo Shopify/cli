@@ -59,10 +59,10 @@
     "@shopify/cli-kit": "3.60.0"
   },
   "devDependencies": {
-    "@types/node": "18.19.3",
+    "@types/node": "18.19.32",
     "esbuild-plugin-copy": "^2.1.1",
-    "@vitest/coverage-istanbul": "^0.34.3",
-    "vitest": "^0.34.3"
+    "@vitest/coverage-istanbul": "^0.34.6",
+    "vitest": "^0.34.6"
   },
   "engines": {
     "node": ">=18.12.0"
