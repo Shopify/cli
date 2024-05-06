@@ -13,12 +13,6 @@ deploy:
   override:
     - bash -i -c "npm_config_loglevel=verbose pnpm clean"
     - bash -i -c "npm_config_loglevel=verbose pnpm build"
-    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
-    # When this is no longer the latest stable version, do 2 things:
-    # 1. Replace the previous line with this, replacing 3.x with the actual version:
-    #    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag stable-3.x"
-    #    This will prevent publishes from being tagged as latest.
-    # 2. Remove the following line, which updates Homebrew
-    - bash -i -c "./bin/package.js"
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag stable-3.60"
   post:
     - bash -i -c "pnpm run update-bugsnag"
