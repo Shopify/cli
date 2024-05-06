@@ -200,7 +200,7 @@ module ShopifyCLI
             +""
           end
 
-          expected_session_cookie = "#{SESSION_COOKIE_NAME}=#{secure_session_id}"
+          expected_session_cookie = "#{SESSION_COOKIE_NAME}=#{secure_session_id};"
 
           unless cookie_header.include?(expected_session_cookie)
             if cookie_header.include?(SESSION_COOKIE_NAME)
