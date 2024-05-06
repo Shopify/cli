@@ -1,6 +1,6 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
-import {ThemeEnvironmentOptions, startDevServer} from '../utilities/theme-environment.js'
+import {DevServerSession, startDevServer} from '../utilities/theme-environment.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -36,10 +36,37 @@ export async function dev(options: DevOptions) {
     return
   }
 
-  renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
+  if (options['dev-preview']) {
+    outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
+    const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
+    const localThemeFileSystem = await mountThemeFileSystem(options.directory)
+    const session: DevServerSession = {
+      ...options.adminSession,
+      storefrontToken: options.storefrontToken,
+    }
+    const ctx = {
+      session,
+      remoteChecksums,
+      localThemeFileSystem,
+      themeEditorSync: options['theme-editor-sync'],
+    }
+
+    await startDevServer(options.theme, ctx, () => {
+      renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
+    })
+
+    return
+  }
+
+  await legacyDev(options)
+}
+
+async function legacyDev(options: DevOptions) {
   let adminToken: string | undefined = options.adminSession.token
   let storefrontToken: string | undefined = options.storefrontToken
+
+  renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
 
   const command = ['theme', 'serve', options.directory, ...options.flagsToPass]
 
@@ -56,17 +83,6 @@ export async function dev(options: DevOptions) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       refreshTokens(options.store, options.password)
     }, THEME_REFRESH_TIMEOUT_IN_MS)
-  }
-
-  if (options['dev-preview']) {
-    outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-    const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
-    const localThemeFileSystem = await mountThemeFileSystem(options.directory)
-    const themeEnvOptions: ThemeEnvironmentOptions = {
-      themeEditorSync: options['theme-editor-sync'],
-    }
-    await startDevServer(options.theme, options.adminSession, remoteChecksums, localThemeFileSystem, themeEnvOptions)
-    return
   }
 
   await execCLI2(command, {store: options.store, adminToken, storefrontToken})
