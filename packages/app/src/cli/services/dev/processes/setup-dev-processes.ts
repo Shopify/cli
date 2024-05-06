@@ -5,6 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {setupAppLogsSubscribeProcess, AppLogsSubscribeProcess} from './app-logs-process.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
@@ -29,6 +30,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -76,6 +78,8 @@ export async function setupDevProcesses({
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
+  const {token: partnersSessionToken} = await developerPlatformClient.session()
+  const flagToStreamLogs = true
 
   const processes = [
     ...(await setupWebProcesses({
@@ -137,6 +141,14 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
+    flagToStreamLogs &&
+      setupAppLogsSubscribeProcess({
+        partnersSessionToken,
+        subscription: {
+          shopIds: [storeId],
+          apiKey,
+        },
+      }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
