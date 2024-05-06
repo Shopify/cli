@@ -2314,15 +2314,24 @@
       "description": "",
       "enableJsonFlag": true,
       "examples": [
-        "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> ",
-        "<%= config.bin %> <%= command.id %> https://github.com/someuser/someplugin",
-        "<%= config.bin %> <%= command.id %> someuser/someplugin"
+        {
+          "command": "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> ",
+          "description": "Install a plugin from npm registry."
+        },
+        {
+          "command": "<%= config.bin %> <%= command.id %> https://github.com/someuser/someplugin",
+          "description": "Install a plugin from a github url."
+        },
+        {
+          "command": "<%= config.bin %> <%= command.id %> someuser/someplugin",
+          "description": "Install a plugin from a github slug."
+        }
       ],
       "flags": {
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Run yarn install with force flag.",
+          "description": "Force npm to fetch remote resources even if a local copy exists on disk.",
           "name": "force",
           "type": "boolean"
         },
@@ -2349,7 +2358,7 @@
         "silent": {
           "allowNo": false,
           "char": "s",
-          "description": "Silences yarn output.",
+          "description": "Silences npm output.",
           "exclusive": [
             "verbose"
           ],
@@ -2359,7 +2368,7 @@
         "verbose": {
           "allowNo": false,
           "char": "v",
-          "description": "Show verbose yarn output.",
+          "description": "Show verbose npm output.",
           "exclusive": [
             "silent"
           ],
@@ -2375,7 +2384,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": false,
-      "usage": "plugins:install PLUGIN..."
+      "summary": "Installs a plugin into <%= config.bin %>."
     },
     "plugins:link": {
       "aliases": [
@@ -2421,8 +2430,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
-      "usage": "plugins:link PLUGIN"
+      "strict": true
     },
     "plugins:reset": {
       "aliases": [
@@ -2492,8 +2500,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
-      "usage": "plugins:uninstall PLUGIN..."
+      "strict": false
     },
     "plugins:update": {
       "aliases": [
