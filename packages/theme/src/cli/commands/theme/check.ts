@@ -15,7 +15,7 @@ import {
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {consoleError, outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, consoleError} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
@@ -133,7 +133,14 @@ export default class Check extends ThemeCommand {
       return
     }
 
-    const {offenses, theme} = await themeCheckRun(path, config, (message) => outputDebug(message, consoleError))
+    const {offenses, theme} = await themeCheckRun(path, config, (message) => {
+      // We should replace this with outputDebug when it logs to STDERR by default.
+      // We need this right now because the --verbose flags pollutes STDOUT
+      // when used with --output=json with the current outputDebug defaults.
+      if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
+        consoleError(message)
+      }
+    })
 
     const offensesByFile = sortOffenses(offenses)
 
