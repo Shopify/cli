@@ -22,6 +22,8 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 
+const CommandConfig = new Config({root: __dirname})
+
 describe('Push', () => {
   const adminSession = {token: '', storeFqdn: ''}
   const path = '/my-theme'
@@ -252,8 +254,8 @@ describe('Push', () => {
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
 
-    const config = {} as Config
-    const push = new Push([`--path=${path}`, ...argv], config)
+    await CommandConfig.load()
+    const push = new Push([`--path=${path}`, ...argv], CommandConfig)
 
     await push.run()
   }

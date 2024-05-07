@@ -19,6 +19,7 @@ const external = [
   'esbuild',
   'lightningcss',
   '@ast-grep/napi',
+  'npm',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually

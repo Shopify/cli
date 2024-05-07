@@ -26,6 +26,7 @@ import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../u
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {SpecsAppConfiguration} from '../../../models/extensions/specifications/types/app_config.js'
+import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -168,6 +169,10 @@ async function loadConfigurationFileName(
   if (isLegacyAppSchema(localApp.configuration)) {
     return configurationFileNames.app
   }
+
+  const existingTomls = await getTomls(options.directory)
+  const currentToml = existingTomls[remoteApp.apiKey]
+  if (currentToml) return currentToml
 
   const configName = await selectConfigName(localApp.directory || options.directory, remoteApp.title)
   return `shopify.app.${configName}.toml`

@@ -12,6 +12,7 @@ export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
 >
 
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
+export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 5
 
 export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(ConfirmationSchema)
   .required({
@@ -33,6 +34,10 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
           required: zod.boolean(),
           key: zod.string(),
         }),
+      )
+      .max(
+        MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+        `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
       )
       .optional(),
   })
