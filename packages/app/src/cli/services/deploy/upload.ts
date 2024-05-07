@@ -147,7 +147,7 @@ export async function uploadExtensionsBundle(
     variables.bundleUrl = signedURL
   }
 
-  if (options.appModules.length > 0) {
+  if (options.appModules.length > 0 && !signedURL) {
     variables.appModules = options.appModules
   }
 
