@@ -1,7 +1,7 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
-import React, {Fragment, FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
+import React, {FunctionComponent, useEffect, useState} from 'react'
 import {Box, Static, Text, TextProps, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
