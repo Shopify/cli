@@ -15,7 +15,7 @@ import {
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {consoleError, outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
@@ -133,7 +133,7 @@ export default class Check extends ThemeCommand {
       return
     }
 
-    const {offenses, theme} = await themeCheckRun(path, config)
+    const {offenses, theme} = await themeCheckRun(path, config, (message) => outputDebug(message, consoleError))
 
     const offensesByFile = sortOffenses(offenses)
 
