@@ -13,6 +13,7 @@ interface TransformedWebhookSubscription {
   compliance_topics?: string[]
   sub_topic?: string
   include_fields?: string[]
+  filter?: string
 }
 
 /* this transforms webhooks from the TOML config to be parsed remotely
