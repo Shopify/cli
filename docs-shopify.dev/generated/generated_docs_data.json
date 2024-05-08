@@ -790,6 +790,107 @@
     "related": []
   },
   {
+    "name": "app function replay",
+    "description": "Runs the function from your current directory for [testing purposes](/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](/docs/api/functions/errors).",
+    "overviewPreviewDescription": "Replays a function locally based on a FunctionRunEvent.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app function replay",
+            "code": "shopify app function replay [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app function replay"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app function replay` command:",
+        "type": "appfunctionreplay",
+        "typeDefinitions": {
+          "appfunctionreplay": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+            "name": "appfunctionreplay",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your function directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the logs.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --export <value>",
+                "value": "string",
+                "description": "Name of the wasm export to invoke.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_EXPORT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-i, --input <value>",
+                "value": "string",
+                "description": "The input JSON to pass to the function. This should be a json file read.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_INPUT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Log the run result as a JSON object.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              }
+            ],
+            "value": "export interface appfunctionreplay {\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Name of the wasm export to invoke.\n   * @environment SHOPIFY_FLAG_EXPORT\n   */\n  '-e, --export <value>'?: string\n\n  /**\n   * The input JSON to pass to the function. This should be a json file read.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Log the run result as a JSON object.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the logs.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "app",
+    "related": []
+  },
+  {
     "name": "app function run",
     "description": "Runs the function from your current directory for [testing purposes](/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](/docs/api/functions/errors).",
     "overviewPreviewDescription": "Run a function locally for testing.",
