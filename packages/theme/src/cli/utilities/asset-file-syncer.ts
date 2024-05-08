@@ -3,8 +3,9 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAsset, fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 
+export const POLLING_INTERVAL = 3000
 export const LOCAL_STRATEGY = 'local'
 export const REMOTE_STRATEGY = 'remote'
 
@@ -24,7 +25,10 @@ export async function initializeThemeEditorSync(
   localThemeFileSystem: ThemeFileSystem,
 ) {
   outputDebug('Initiating theme asset reconciliation process')
-  await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
+  const updatedFileSystem = await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
+
+  pollThemeEditorChanges(targetTheme, session, updatedFileSystem)
+  outputDebug('Theme asset reconciliation process initiated')
 }
 
 async function reconcileThemeFiles(
@@ -32,7 +36,7 @@ async function reconcileThemeFiles(
   session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-) {
+): Promise<ThemeFileSystem> {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
     localThemeFileSystem,
@@ -44,7 +48,7 @@ async function reconcileThemeFiles(
     filesWithConflictingChecksums.length === 0
   ) {
     outputDebug('Local and remote checksums match - no need to reconcile theme assets')
-    return
+    return localThemeFileSystem
   }
 
   const partitionedFiles = await partitionFilesByReconciliationStrategy({
@@ -54,6 +58,7 @@ async function reconcileThemeFiles(
   })
 
   await performFileReconciliation(targetTheme, session, remoteChecksums, localThemeFileSystem, partitionedFiles)
+  return mountThemeFileSystem(localThemeFileSystem.root)
 }
 
 function identifyFilesToReconcile(
@@ -197,4 +202,23 @@ async function partitionFilesByReconciliationStrategy(files: {
   }
 
   return {localFilesToDelete, filesToDownload, filesToUpload, remoteFilesToDelete}
+}
+
+function pollThemeEditorChanges(targetTheme: Theme, session: AdminSession, localThemeFileSystem: ThemeFileSystem) {
+  outputDebug('Checking for changes in the theme editor')
+  const reconcileThemeChanges = async () => {
+    const currentChecksums = await fetchChecksums(targetTheme.id, session)
+    return reconcileThemeFiles(targetTheme, session, currentChecksums, localThemeFileSystem)
+  }
+
+  return setTimeout(() => {
+    reconcileThemeChanges()
+      .then((updatedFileSystem: ThemeFileSystem) => {
+        pollThemeEditorChanges(targetTheme, session, updatedFileSystem)
+      })
+      .catch((error) => {
+        outputDebug(`Error while checking for changes in the theme editor: ${error.message}`)
+        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
+      })
+  }, POLLING_INTERVAL)
 }
