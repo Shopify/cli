@@ -1,6 +1,6 @@
 import {LOCAL_STRATEGY, REMOTE_STRATEGY, initializeThemeEditorSync} from './asset-file-syncer.js'
 import {uploadTheme} from './theme-uploader.js'
-import {removeThemeFile} from './theme-fs.js'
+import {mountThemeFileSystem, removeThemeFile} from './theme-fs.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
@@ -119,5 +119,31 @@ describe('initializeThemeEditorSync', () => {
       expect(uploadTheme).toHaveBeenCalled()
       expect(fetchThemeAsset).not.toHaveBeenCalled()
     })
+  })
+
+  test('should remount the theme file system after reconciling files', async () => {
+    // Given
+    vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
+    const remoteChecksums = [{checksum: '2', key: 'templates/second_asset.json'}]
+
+    // When
+    await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+
+    // Then
+    expect(fetchThemeAsset).toHaveBeenCalled()
+    expect(mountThemeFileSystem).toHaveBeenCalled()
+  })
+
+  test('should not remount the theme file system if no files are reconciled', async () => {
+    // Given
+    vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
+    const remoteChecksums: Checksum[] = []
+
+    // When
+    await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+
+    // Then
+    expect(fetchThemeAsset).not.toHaveBeenCalled()
+    expect(mountThemeFileSystem).not.toHaveBeenCalled()
   })
 })
