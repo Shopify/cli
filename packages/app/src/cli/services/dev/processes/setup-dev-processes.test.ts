@@ -13,6 +13,7 @@ import {
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
+  testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -237,7 +238,7 @@ describe('setup-dev-processes', () => {
     })
   })
 
-  test('pushUpdatesForDraftableExtensions does not include webhook subscription extension', async () => {
+  test('pushUpdatesForDraftableExtensions does not include webhook subscription extension or webhooks extension', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
@@ -267,7 +268,8 @@ describe('setup-dev-processes', () => {
     const previewable = await testUIExtension({type: 'checkout_ui_extension'})
     const draftable = await testTaxCalculationExtension()
     const draftableSingleUidStrategyExtension = await testAppConfigExtensions()
-    const webhookModuleExtension = await testSingleWebhookSubscriptionExtension()
+    const webhookSubscriptionModuleExtension = await testSingleWebhookSubscriptionExtension()
+    const webhooksModuleExtension = await testWebhookExtensions()
     const theme = await testThemeExtensions()
     const localApp = testAppWithConfig({
       config: {},
@@ -285,7 +287,14 @@ describe('setup-dev-processes', () => {
             },
           },
         ],
-        allExtensions: [previewable, draftable, theme, draftableSingleUidStrategyExtension, webhookModuleExtension],
+        allExtensions: [
+          previewable,
+          draftable,
+          theme,
+          draftableSingleUidStrategyExtension,
+          webhookSubscriptionModuleExtension,
+          webhooksModuleExtension,
+        ],
       },
     })
 

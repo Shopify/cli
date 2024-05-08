@@ -77,7 +77,8 @@ export async function setupDraftableExtensionsProcess({
   // grace.chang: by filtering out webhook subscription extensions from the localApp,
   // new draft versions don't get created on getAppIdentifiers
   localApp.realExtensions = localApp.realExtensions.filter(
-    (extension) => extension.specification.identifier !== WebhookSubscriptionSpecIdentifier,
+    (extension) =>
+      extension.specification.identifier !== WebhookSubscriptionSpecIdentifier && extension.handle !== 'webhooks',
   )
   const draftableExtensions = localApp.realExtensions
   if (draftableExtensions.length === 0) {
