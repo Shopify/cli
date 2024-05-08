@@ -24,7 +24,15 @@ export async function initializeThemeEditorSync(
   localThemeFileSystem: ThemeFileSystem,
 ) {
   outputDebug('Initiating theme asset reconciliation process')
+  await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
+}
 
+async function reconcileThemeFiles(
+  targetTheme: Theme,
+  session: AdminSession,
+  remoteChecksums: Checksum[],
+  localThemeFileSystem: ThemeFileSystem,
+) {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
     localThemeFileSystem,
@@ -45,7 +53,7 @@ export async function initializeThemeEditorSync(
     filesWithConflictingChecksums,
   })
 
-  await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem, partitionedFiles)
+  await performFileReconciliation(targetTheme, session, remoteChecksums, localThemeFileSystem, partitionedFiles)
 }
 
 function identifyFilesToReconcile(
@@ -112,7 +120,7 @@ async function promptFileReconciliationStrategy(
   })
 }
 
-async function reconcileThemeFiles(
+async function performFileReconciliation(
   targetTheme: Theme,
   session: AdminSession,
   remoteChecksums: Checksum[],
