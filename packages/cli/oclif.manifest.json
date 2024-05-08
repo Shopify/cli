@@ -864,18 +864,9 @@
       "hiddenAliases": [
       ],
       "id": "app:function:replay",
-      "isESM": true,
-      "pluginAlias": "@shopify/app",
-      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "cli",
-        "commands",
-        "app",
-        "function",
-        "replay.js"
-      ],
       "strict": true,
       "summary": "Replays a function locally based on a FunctionRunEvent."
     },

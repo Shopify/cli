@@ -8,6 +8,7 @@
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
@@ -327,6 +328,31 @@ DESCRIPTION
   Compile a function to wasm.
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
+```
+
+## `shopify app function replay`
+
+Replays a function locally based on a FunctionRunEvent.
+
+```
+USAGE
+  $ shopify app function replay [-c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>  The name of the app configuration.
+  -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
+  -i, --input=<value>   The input JSON to pass to the function. This should be a json file read.
+  -j, --json            Log the run result as a JSON object.
+      --no-color        Disable color output.
+      --path=<value>    The path to your function directory.
+      --verbose         Increase the verbosity of the logs.
+
+DESCRIPTION
+  Replays a function locally based on a FunctionRunEvent.
+
+  Runs the function from your current directory for "testing purposes"
+  (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
+  errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 ```
 
 ## `shopify app function run`
