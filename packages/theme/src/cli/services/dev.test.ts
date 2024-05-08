@@ -1,5 +1,5 @@
 import {showDeprecationWarnings, refreshTokens, dev} from './dev.js'
-import {startDevServer} from '../utilities/theme-environment.js'
+import {startDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -11,7 +11,7 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('../utilities/theme-environment.js')
+vi.mock('../utilities/theme-environment/theme-environment.js')
 vi.mock('../utilities/theme-fs.js')
 
 describe('dev', () => {

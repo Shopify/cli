@@ -1,5 +1,5 @@
-import {uploadTheme} from './theme-uploader.js'
-import {initializeThemeEditorSync} from './asset-file-syncer.js'
+import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {uploadTheme} from '../theme-uploader.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
@@ -22,8 +22,8 @@ export async function startDevServer(theme: Theme, ctx: DevServerContext, onRead
 
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   if (ctx.themeEditorSync) {
-    await initializeThemeEditorSync(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem)
-  } else {
-    await uploadTheme(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem, {})
+    await reconcileAndPollThemeEditorChanges(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem)
   }
+
+  await uploadTheme(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem, {})
 }
