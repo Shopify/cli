@@ -1,13 +1,13 @@
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
 import {runFunctionRunner} from '../../../services/function/build.js'
 import {appFlags} from '../../../flags.js'
+import {selectRunPrompt} from '../../../prompts/dev.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {readFile, writeFile, inTemporaryDirectory, fileExists, touchFile} from '@shopify/cli-kit/node/fs'
+import {readFile, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readdirSync} from 'fs'
-import {selectRunPrompt} from '../../../prompts/dev.js'
 
 export default class FunctionReplay extends Command {
   static summary = 'Replays a function locally based on a FunctionRunEvent.'
@@ -42,13 +42,15 @@ export default class FunctionReplay extends Command {
 
   public async run() {
     const {flags} = await this.parse(FunctionReplay)
-    const appPath = flags.path // TODO: default to current directory if path arg not provided
-    // console.log(appPath)
+
+    const appPath = flags.path
 
     // Determine folder to read for runs
+    // We'll need to update this to use the actual path when they are saved.
     const runsFolder = joinPath(appPath, 'runs')
 
     // Read file names
+    // This might actually be a JSONL file
     const runFileNames = readdirSync(runsFolder)
 
     // full paths to read file
@@ -61,39 +63,19 @@ export default class FunctionReplay extends Command {
       }),
     )
 
-    // console.log('=== runData')
-    // console.log(runData)
-
     // convert promise'd strings to json
     const runs = runData.map((run) => JSON.parse(run))
 
-    // console.log('=== runs')
-    // console.log(runs)
-
-    // read contents into object that can be presented to the autocomplete prompt
-    // const runs = runFilePaths.map((runFile) => {
-    //   const data = await readFile(runFile)
-    //   const run = JSON.parse(data)
-    // })
-
     // Present selector for runs
     const selectedRun = await selectRunPrompt(runs)
-    // console.log('=== after awaiting selectRunPrompt')
-    // console.log(selectedRun)
 
     const input = selectedRun.payload.input
 
     // dump the output to a file
     await inTemporaryDirectory(async (tmpDir) => {
-      // console.log('=== inTmpDir')
-      // console.log(tmpDir)
-
       // create file to pass to runner
-      const input_path = joinPath(tmpDir, 'input_for_runner.json')
-      await writeFile(input_path, input)
-
-      // console.log('=== exists?')
-      // console.log(await fileExists(input_path))
+      const inputPath = joinPath(tmpDir, 'input_for_runner.json')
+      await writeFile(inputPath, input)
 
       // invoke the existing run command with the input from the file
       await inFunctionContext({
@@ -102,7 +84,7 @@ export default class FunctionReplay extends Command {
         callback: async (_app, ourFunction) => {
           await runFunctionRunner(ourFunction, {
             json: true,
-            input: input_path,
+            input: inputPath,
             export: 'run',
           })
         },
