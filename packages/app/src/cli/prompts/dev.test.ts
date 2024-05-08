@@ -4,10 +4,11 @@ import {
   reloadStoreListPrompt,
   selectAppPrompt,
   selectOrganizationPrompt,
+  selectRunPrompt,
   selectStorePrompt,
   updateURLsPrompt,
 } from './dev.js'
-import {Organization, OrganizationStore} from '../models/organization.js'
+import {MinimalRunEvent, Organization, OrganizationStore} from '../models/organization.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
@@ -49,6 +50,23 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
+const RUN1: MinimalRunEvent = {
+  type: 'function-run',
+  payload: {
+    input:
+      '{"cart":{"lines":[{"quantity":1,"merchandise":{"__typename":"ProductVariant","id":"gid:\\/\\/shopify\\/ProductVariant\\/1"}}]}}',
+    invocationId: '11111111-ed53-4377-b30f-14e8f4653cfe',
+  },
+}
+
+const RUN2: MinimalRunEvent = {
+  type: 'function-run',
+  payload: {
+    input:
+      '{"cart":{"lines":[{"quantity":1,"merchandise":{"__typename":"ProductVariant","id":"gid:\\/\\/shopify\\/ProductVariant\\/1"}}]}}',
+    invocationId: '22222222-ed53-4377-b30f-14e8f4653cfe',
+  },
+}
 
 beforeEach(() => {
   vi.mocked(getTomls).mockResolvedValue({})
@@ -83,6 +101,27 @@ describe('selectOrganization', () => {
     // Then
     expect(got).toEqual(ORG2)
     expect(renderAutocompletePrompt).not.toBeCalled()
+  })
+})
+
+describe('selectRun', () => {
+  test('returns run if user selects one', async () => {
+    // Given
+    const runs = [RUN1, RUN2]
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(RUN2)
+
+    // When
+    const got = await selectRunPrompt(runs)
+
+    // Then
+    expect(got).toEqual(RUN2)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which run would you like to replay?',
+      choices: [
+        {label: RUN1.payload.invocationId, value: RUN1},
+        {label: RUN2.payload.invocationId, value: RUN2},
+      ],
+    })
   })
 })
 

@@ -30,7 +30,7 @@ export async function selectRunPrompt(runs: MinimalRunEvent[]): Promise<MinimalR
   const runsList = runs.map(toAnswer)
 
   const selectedRun = await renderAutocompletePrompt({
-    message: 'Select a run',
+    message: 'Which run would you like to replay?',
     choices: runsList,
   })
   return selectedRun
