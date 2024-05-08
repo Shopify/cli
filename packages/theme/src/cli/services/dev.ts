@@ -1,12 +1,13 @@
-import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
+import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
+import {DevServerSession, startDevServer} from '../utilities/theme-environment.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -35,10 +36,37 @@ export async function dev(options: DevOptions) {
     return
   }
 
-  renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
+  if (options['dev-preview']) {
+    outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
+    const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
+    const localThemeFileSystem = await mountThemeFileSystem(options.directory)
+    const session: DevServerSession = {
+      ...options.adminSession,
+      storefrontToken: options.storefrontToken,
+    }
+    const ctx = {
+      session,
+      remoteChecksums,
+      localThemeFileSystem,
+      themeEditorSync: options['theme-editor-sync'],
+    }
+
+    await startDevServer(options.theme, ctx, () => {
+      renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
+    })
+
+    return
+  }
+
+  await legacyDev(options)
+}
+
+async function legacyDev(options: DevOptions) {
   let adminToken: string | undefined = options.adminSession.token
   let storefrontToken: string | undefined = options.storefrontToken
+
+  renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
 
   const command = ['theme', 'serve', options.directory, ...options.flagsToPass]
 
@@ -55,11 +83,6 @@ export async function dev(options: DevOptions) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       refreshTokens(options.store, options.password)
     }, THEME_REFRESH_TIMEOUT_IN_MS)
-  }
-
-  if (options['dev-preview']) {
-    outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-    throw new AbortSilentError()
   }
 
   await execCLI2(command, {store: options.store, adminToken, storefrontToken})
