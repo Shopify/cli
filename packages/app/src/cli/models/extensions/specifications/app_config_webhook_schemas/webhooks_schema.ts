@@ -1,6 +1,7 @@
 import {WebhookSubscriptionSchema} from './webhook_subscription_schema.js'
 import {webhookValidator} from '../validation/app_config_webhook.js'
 import {UriValidation} from '../validation/common.js'
+import {SingleWebhookSubscriptionSchema} from '../app_config_webhook_subscription.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const WebhooksConfigSchema = zod.object({
@@ -15,7 +16,7 @@ const WebhooksConfigSchema = zod.object({
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
-export type WebhookType = zod.infer<typeof WebhooksSchema>
+export type SingleWebhookSubscriptionType = zod.infer<typeof SingleWebhookSubscriptionSchema>
 
 export const WebhooksSchema = zod.object({
   webhooks: WebhooksConfigSchema.superRefine(webhookValidator),

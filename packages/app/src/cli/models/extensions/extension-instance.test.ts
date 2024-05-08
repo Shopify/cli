@@ -1,4 +1,4 @@
-import {WebhookType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -10,7 +10,7 @@ import {
   testWebhookExtensions,
   testFlowActionExtension,
   testDeveloperPlatformClient,
-  testWebhookSubscriptionExtensions,
+  testSingleWebhookSubscriptionExtension,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -363,14 +363,13 @@ describe('draftMessages', async () => {
 
     test('extensions handle is a hashString when specification uidStrategy is dynamic and it is a webhook subscription extension', async () => {
       // Given
-      const extensionInstance = await testWebhookSubscriptionExtensions()
+      const extensionInstance = await testSingleWebhookSubscriptionExtension()
 
       // When
-      const webhookSubscriptionConfiguration = extensionInstance.configuration as unknown as WebhookType
-      const subscription = webhookSubscriptionConfiguration.webhooks.subscriptions?.[0]
+      const subscription = extensionInstance.configuration as unknown as SingleWebhookSubscriptionType
       let result = ''
       if (subscription) {
-        result = hashString(subscription.topics![0] + subscription.uri).substring(0, 30)
+        result = hashString(subscription.topic + subscription.uri).substring(0, 30)
       }
 
       // Then

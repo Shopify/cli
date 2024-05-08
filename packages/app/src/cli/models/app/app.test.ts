@@ -16,7 +16,7 @@ import {
   testFunctionExtension,
   testWebhookExtensions,
   testEditorExtensionCollection,
-  testWebhookSubscriptionExtensions,
+  testSingleWebhookSubscriptionExtension,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
@@ -391,7 +391,7 @@ describe('allExtensions', () => {
   })
 
   test('filters out webhook_subscription extensions when flag is not enabled', async () => {
-    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const webhookSubscriptionExtension = await testSingleWebhookSubscriptionExtension()
     const app = await testApp(
       {
         configuration: CORRECT_CURRENT_APP_SCHEMA,
@@ -430,7 +430,7 @@ describe('allExtensions', () => {
   })
 
   test('keeps webhook-subscription modules when flag is enabled', async () => {
-    const webhookSubscriptionExtension = await testWebhookSubscriptionExtensions()
+    const webhookSubscriptionExtension = await testSingleWebhookSubscriptionExtension()
     const app = await testApp(
       {
         configuration: CORRECT_CURRENT_APP_SCHEMA,

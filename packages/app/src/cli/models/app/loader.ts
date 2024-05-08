@@ -570,9 +570,8 @@ class AppLoader {
 
     // Recreate the object again to follow the expected schema with just 1 topic per instance
     const instances = webhookSubscriptions.map(async (subscription) => {
-      const {topic, ...rest} = subscription
-      const config = {webhooks: {subscriptions: [{topics: [topic], ...rest}], api_version: subscription.api_version}}
-      return this.createExtensionInstance(specification.identifier, config, appConfiguration.path, directory)
+      // const {topic, ...rest} = subscription
+      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
     })
 
     return Promise.all(instances)

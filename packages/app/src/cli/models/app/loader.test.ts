@@ -1923,27 +1923,15 @@ wrong = "property"
       }),
       // this is a webhook subscription extension
       expect.objectContaining({
-        webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['orders/create'],
-              uri: 'https://example.com',
-            },
-          ],
-        },
+        api_version: '2024-01',
+        topic: 'orders/create',
+        uri: 'https://example.com',
       }),
       // this is a webhook subscription extension
       expect.objectContaining({
-        webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['orders/delete'],
-              uri: 'https://example.com',
-            },
-          ],
-        },
+        api_version: '2024-01',
+        topic: 'orders/delete',
+        uri: 'https://example.com',
       }),
     ])
   })

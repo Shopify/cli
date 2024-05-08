@@ -1,8 +1,8 @@
 import {WebhookSimplifyConfig} from './app_config_webhook.js'
-import {WebhooksConfig} from './types/app_config_webhook.js'
-import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
+import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
 
@@ -16,42 +16,49 @@ interface TransformedWebhookSubscription {
   filter?: string
 }
 
+export const SingleWebhookSubscriptionSchema = zod.object({
+  topic: zod.string().optional(),
+  api_version: zod.string(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
+  sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
+})
+
 /* this transforms webhooks from the extension instance config to be parsed remotely
 ie.
-  given (it will only ever have one subscription bc of how we created the extension instance):
+  from the schema, given (it will only ever have one subscription bc of how we created the extension instance):
+
   {
-    webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['orders/delete'],
-              uri: 'https://example.com/webhooks/orders',
-            },
-          ]
-      }
+    api_version: '2024-01'
+    topic: ['orders/delete'],
+    uri: 'https://example.com/webhooks/orders',
   }
   the function should return:
 
-  { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
+  {
+    api_version: '2024-01'
+    topic: 'products/create',
+    uri: 'https://example.com/webhooks/products',
+  }
 
   */
 function transformFromWebhookSubscriptionConfig(content: object) {
-  const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
-  if (!webhooks) return content
+  // const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
+  // if (!webhooks) return content
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const {api_version, subscriptions = []} = webhooks
+  // // eslint-disable-next-line @typescript-eslint/naming-convention
+  // const {api_version, subscriptions = []} = webhooks
 
-  const webhookSubscriptions = subscriptions.flatMap((subscription) => {
-    const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
-    if (topics)
-      return topics.map((topic) => {
-        return {api_version, uri, topic, ...optionalFields}
-      })
-  })
+  // const webhookSubscriptions = subscriptions.flatMap((subscription) => {
+  //   const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
+  //   if (topics)
+  //     return topics.map((topic) => {
+  //       return {api_version, uri, topic, ...optionalFields}
+  //     })
+  // })
 
   // Assume there could only be one because of how we create the instances
-  return webhookSubscriptions[0] ?? {}
+  return content ?? {}
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
@@ -107,7 +114,7 @@ const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
 
 const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
-  schema: WebhooksSchema,
+  schema: SingleWebhookSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
   extensionManagedInToml: true,

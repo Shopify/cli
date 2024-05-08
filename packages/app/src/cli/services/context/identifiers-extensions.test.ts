@@ -18,7 +18,7 @@ import {
   testUIExtension,
   testPaymentsAppExtension,
   testDeveloperPlatformClient,
-  testWebhookSubscriptionExtensions,
+  testSingleWebhookSubscriptionExtension,
 } from '../../models/app/app.test-data.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
@@ -1095,10 +1095,10 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     // Given
     const remoteSources: RemoteSource[] = []
     const localSources = [
-      await testWebhookSubscriptionExtensions(),
-      await testWebhookSubscriptionExtensions({topic: 'products/create'}),
-      await testWebhookSubscriptionExtensions({topic: 'products/update'}),
-      await testWebhookSubscriptionExtensions({topic: 'products/delete'}),
+      await testSingleWebhookSubscriptionExtension(),
+      await testSingleWebhookSubscriptionExtension({topic: 'products/create'}),
+      await testSingleWebhookSubscriptionExtension({topic: 'products/update'}),
+      await testSingleWebhookSubscriptionExtension({topic: 'products/delete'}),
     ]
     const app = options(localSources, [], {
       includeDeployConfig: true,
@@ -1159,10 +1159,10 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     }
 
     const localSources = [
-      await testWebhookSubscriptionExtensions(),
-      await testWebhookSubscriptionExtensions({topic: 'products/create'}),
-      await testWebhookSubscriptionExtensions({topic: 'products/update'}),
-      await testWebhookSubscriptionExtensions({topic: 'products/delete'}),
+      await testSingleWebhookSubscriptionExtension(),
+      await testSingleWebhookSubscriptionExtension({topic: 'products/create'}),
+      await testSingleWebhookSubscriptionExtension({topic: 'products/update'}),
+      await testSingleWebhookSubscriptionExtension({topic: 'products/delete'}),
     ]
     const remoteSources = [webhookSubscriptionExtension]
     const app = options(localSources, [], {

@@ -9,10 +9,10 @@ import {
   testAppConfigExtensions,
   testAppWithConfig,
   testDeveloperPlatformClient,
+  testSingleWebhookSubscriptionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
-  testWebhookSubscriptionExtensions,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -267,7 +267,7 @@ describe('setup-dev-processes', () => {
     const previewable = await testUIExtension({type: 'checkout_ui_extension'})
     const draftable = await testTaxCalculationExtension()
     const draftableSingleUidStrategyExtension = await testAppConfigExtensions()
-    const webhookModuleExtension = await testWebhookSubscriptionExtensions()
+    const webhookModuleExtension = await testSingleWebhookSubscriptionExtension()
     const theme = await testThemeExtensions()
     const localApp = testAppWithConfig({
       config: {},
