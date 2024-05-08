@@ -12,7 +12,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 export type CustomOnsitePaymentsAppExtensionConfigType = zod.infer<typeof CustomOnsitePaymentsAppExtensionSchema>
 
 export const CUSTOM_ONSITE_TARGET = 'payments.custom-onsite.render'
-export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 5
+export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
 export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
