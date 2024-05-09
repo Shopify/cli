@@ -1,4 +1,4 @@
-import {mountThemeFileSystem, removeThemeFile} from './theme-fs.js'
+import {removeThemeFile, writeThemeFile} from './theme-fs.js'
 import {uploadTheme} from './theme-uploader.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -26,10 +26,9 @@ export async function initializeThemeEditorSync(
   localThemeFileSystem: ThemeFileSystem,
 ) {
   outputDebug('Initiating theme asset reconciliation process')
-  const updatedFileSystem = await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
+  await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
 
-  pollThemeEditorChanges(targetTheme, session, updatedFileSystem)
-  outputDebug('Theme asset reconciliation process initiated')
+  pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
 }
 
 async function reconcileThemeFiles(
@@ -37,7 +36,7 @@ async function reconcileThemeFiles(
   session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-): Promise<ThemeFileSystem> {
+) {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
     localThemeFileSystem,
@@ -59,7 +58,6 @@ async function reconcileThemeFiles(
   })
 
   await performFileReconciliation(targetTheme, session, remoteChecksums, localThemeFileSystem, partitionedFiles)
-  return mountThemeFileSystem(localThemeFileSystem.root)
 }
 
 function identifyFilesToReconcile(
@@ -135,8 +133,19 @@ async function performFileReconciliation(
 ) {
   const {localFilesToDelete, filesToUpload, filesToDownload, remoteFilesToDelete} = partitionedFiles
 
-  const deleteLocalFiles = localFilesToDelete.map((file) => removeThemeFile(localThemeFileSystem.root, file.key))
-  const downloadRemoteFiles = filesToDownload.map((file) => fetchThemeAsset(targetTheme.id, file.key, session))
+  const deleteLocalFiles = localFilesToDelete.map((file) => {
+    return removeThemeFile(localThemeFileSystem.root, file.key)?.then(() => {
+      localThemeFileSystem.files.delete(file.key)
+    })
+  })
+  const downloadRemoteFiles = filesToDownload.map((file) => {
+    return fetchThemeAsset(targetTheme.id, file.key, session)?.then(async (asset) => {
+      if (asset) {
+        await writeThemeFile(localThemeFileSystem.root, asset)
+        localThemeFileSystem.files.set(file.key, asset)
+      }
+    })
+  })
   const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
 
   await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
@@ -209,8 +218,8 @@ function pollThemeEditorChanges(targetTheme: Theme, session: AdminSession, local
 
   return setTimeout(() => {
     reconcileThemeChanges()
-      .then((updatedFileSystem: ThemeFileSystem) => {
-        pollThemeEditorChanges(targetTheme, session, updatedFileSystem)
+      .then(() => {
+        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
       })
       .catch((error) => {
         outputDebug(`Error while checking for changes in the theme editor: ${error.message}`)
