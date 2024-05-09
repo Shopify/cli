@@ -1,4 +1,3 @@
-import {removeThemeFile} from './theme-fs.js'
 import {uploadTheme} from './theme-uploader.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -122,8 +121,13 @@ async function reconcileThemeFiles(
 ) {
   const {localFilesToDelete, filesToUpload, filesToDownload, remoteFilesToDelete} = partitionedFiles
 
-  const deleteLocalFiles = localFilesToDelete.map((file) => removeThemeFile(localThemeFileSystem.root, file.key))
-  const downloadRemoteFiles = filesToDownload.map((file) => fetchThemeAsset(targetTheme.id, file.key, session))
+  const deleteLocalFiles = localFilesToDelete.map((file) => localThemeFileSystem.delete(file.key))
+  const downloadRemoteFiles = filesToDownload.map(async (file) => {
+    const asset = await fetchThemeAsset(targetTheme.id, file.key, session)
+    if (asset) {
+      return localThemeFileSystem.write(asset)
+    }
+  })
   const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
 
   await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
