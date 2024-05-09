@@ -26,12 +26,13 @@ export async function initializeThemeEditorSync(
   localThemeFileSystem: ThemeFileSystem,
 ) {
   outputDebug('Initiating theme asset reconciliation process')
+
   await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
 
-  pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
+  pollThemeEditorChanges(targetTheme, session, localThemeFileSystem, setTimeout)
 }
 
-async function reconcileThemeFiles(
+export async function reconcileThemeFiles(
   targetTheme: Theme,
   session: AdminSession,
   remoteChecksums: Checksum[],
@@ -48,7 +49,7 @@ async function reconcileThemeFiles(
     filesWithConflictingChecksums.length === 0
   ) {
     outputDebug('Local and remote checksums match - no need to reconcile theme assets')
-    return localThemeFileSystem
+    // return localThemeFileSystem
   }
 
   const partitionedFiles = await partitionFilesByReconciliationStrategy({
@@ -209,21 +210,30 @@ async function partitionFilesByReconciliationStrategy(files: {
   return {localFilesToDelete, filesToDownload, filesToUpload, remoteFilesToDelete}
 }
 
-function pollThemeEditorChanges(targetTheme: Theme, session: AdminSession, localThemeFileSystem: ThemeFileSystem) {
-  outputDebug('Checking for changes in the theme editor')
-  const reconcileThemeChanges = async () => {
-    const currentChecksums = await fetchChecksums(targetTheme.id, session)
-    return reconcileThemeFiles(targetTheme, session, currentChecksums, localThemeFileSystem)
-  }
-
+export function pollThemeEditorChanges(
+  targetTheme: Theme,
+  session: AdminSession,
+  localThemeFileSystem: ThemeFileSystem,
+  setTimeout: (callback: () => void, ms?: number) => void,
+) {
+  console.log('>>> 1')
   return setTimeout(() => {
+    console.log('>>> 2')
+    outputDebug('Checking for changes in the theme editor')
+
+    const reconcileThemeChanges = async () => {
+      console.log('>>> 3')
+      const currentChecksums = await fetchChecksums(targetTheme.id, session)
+      return reconcileThemeFiles(targetTheme, session, currentChecksums, localThemeFileSystem)
+    }
+
     reconcileThemeChanges()
       .then(() => {
-        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
+        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem, setTimeout)
       })
       .catch((error) => {
         outputDebug(`Error while checking for changes in the theme editor: ${error.message}`)
-        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
+        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem, setTimeout)
       })
   }, POLLING_INTERVAL)
 }
