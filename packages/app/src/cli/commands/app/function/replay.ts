@@ -1,13 +1,13 @@
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
 import {runFunctionRunner} from '../../../services/function/build.js'
+import {readFunctionRunsDirectory} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {selectRunPrompt} from '../../../prompts/dev.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {readFile, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {readdirSync} from 'fs'
 
 export default class FunctionReplay extends Command {
   static summary = 'Replays a function locally based on a FunctionRunEvent.'
@@ -42,31 +42,10 @@ export default class FunctionReplay extends Command {
 
   public async run() {
     const {flags} = await this.parse(FunctionReplay)
+    const functionPath = flags.path
 
-    const appPath = flags.path
+    const runs = await readFunctionRunsDirectory(functionPath)
 
-    // Determine folder to read for runs
-    // We'll need to update this to use the actual path when they are saved.
-    const runsFolder = joinPath(appPath, 'runs')
-
-    // Read file names
-    // This might actually be a JSONL file
-    const runFileNames = readdirSync(runsFolder)
-
-    // full paths to read file
-    const runFilePaths = runFileNames.map((runFile) => joinPath(runsFolder, runFile))
-
-    // read contents
-    const runData = await Promise.all(
-      runFilePaths.map((runFile) => {
-        return readFile(runFile)
-      }),
-    )
-
-    // convert promise'd strings to json
-    const runs = runData.map((run) => JSON.parse(run))
-
-    // Present selector for runs
     const selectedRun = await selectRunPrompt(runs)
 
     const input = selectedRun.payload.input
