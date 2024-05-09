@@ -119,30 +119,4 @@ describe('initializeThemeEditorSync', () => {
       expect(fetchThemeAsset).not.toHaveBeenCalled()
     })
   })
-
-  test('should remount the theme file system after reconciling files', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
-    const remoteChecksums = [{checksum: '2', key: 'templates/second_asset.json'}]
-
-    // When
-    await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
-
-    // Then
-    expect(fetchThemeAsset).toHaveBeenCalled()
-    expect(mountThemeFileSystem).toHaveBeenCalled()
-  })
-
-  test('should not remount the theme file system if no files are reconciled', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
-    const remoteChecksums: Checksum[] = []
-
-    // When
-    await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
-
-    // Then
-    expect(fetchThemeAsset).not.toHaveBeenCalled()
-    expect(mountThemeFileSystem).not.toHaveBeenCalled()
-  })
 })

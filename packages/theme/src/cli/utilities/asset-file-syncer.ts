@@ -5,7 +5,7 @@ import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/nod
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {deleteThemeAsset, fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 
-export const POLLING_INTERVAL = 3000
+const POLLING_INTERVAL = 3000
 export const LOCAL_STRATEGY = 'local'
 export const REMOTE_STRATEGY = 'remote'
 
@@ -25,10 +25,9 @@ export async function initializeThemeEditorSync(
   localThemeFileSystem: ThemeFileSystem,
 ) {
   outputDebug('Initiating theme asset reconciliation process')
-  const updatedFileSystem = await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
+  await reconcileThemeFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
 
-  pollThemeEditorChanges(targetTheme, session, updatedFileSystem)
-  outputDebug('Theme asset reconciliation process initiated')
+  pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
 }
 
 async function reconcileThemeFiles(
@@ -36,7 +35,7 @@ async function reconcileThemeFiles(
   session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-): Promise<ThemeFileSystem> {
+) {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
     localThemeFileSystem,
@@ -58,7 +57,6 @@ async function reconcileThemeFiles(
   })
 
   await performFileReconciliation(targetTheme, session, remoteChecksums, localThemeFileSystem, partitionedFiles)
-  return mountThemeFileSystem(localThemeFileSystem.root)
 }
 
 function identifyFilesToReconcile(
@@ -213,8 +211,8 @@ function pollThemeEditorChanges(targetTheme: Theme, session: AdminSession, local
 
   return setTimeout(() => {
     reconcileThemeChanges()
-      .then((updatedFileSystem: ThemeFileSystem) => {
-        pollThemeEditorChanges(targetTheme, session, updatedFileSystem)
+      .then(() => {
+        pollThemeEditorChanges(targetTheme, session, localThemeFileSystem)
       })
       .catch((error) => {
         outputDebug(`Error while checking for changes in the theme editor: ${error.message}`)
