@@ -8,6 +8,7 @@ import {SpecsAppConfiguration} from '../extensions/specifications/types/app_conf
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
+import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -176,6 +177,7 @@ export interface AppInterface extends AppConfigurationInterface {
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
+  draftableExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
@@ -259,6 +261,12 @@ export class App implements AppInterface {
 
     if (this.includeConfigOnDeploy) return this.realExtensions
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+  }
+
+  get draftableExtensions() {
+    return this.realExtensions.filter(
+      (ext) => ext.isUuidManaged() || ext.specification.identifier === AppAccessSpecIdentifier,
+    )
   }
 
   async updateDependencies() {

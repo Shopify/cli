@@ -248,6 +248,35 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   return extension
 }
 
+export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        access: {
+          admin: {direct_api_mode: 'online'},
+        },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      } as unknown as BaseConfigType)
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'app_access')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: 'shopify.app.toml',
+    directory: './',
+    specification,
+  })
+
+  return extension
+}
+
 export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'Payment Extension Name',

@@ -6,6 +6,7 @@ import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
+  testAppAccessConfigExtension,
   testAppConfigExtensions,
   testAppWithConfig,
   testDeveloperPlatformClient,
@@ -238,7 +239,7 @@ describe('setup-dev-processes', () => {
     })
   })
 
-  test('pushUpdatesForDraftableExtensions does not include webhook subscription extension or webhooks extension', async () => {
+  test('pushUpdatesForDraftableExtensions does not include config extensions except app_access', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
@@ -267,7 +268,8 @@ describe('setup-dev-processes', () => {
     }
     const previewable = await testUIExtension({type: 'checkout_ui_extension'})
     const draftable = await testTaxCalculationExtension()
-    const draftableSingleUidStrategyExtension = await testAppConfigExtensions()
+    const nonDraftableSingleUidStrategyExtension = await testAppConfigExtensions()
+    const draftableSingleUidStrategyExtension = await testAppAccessConfigExtension()
     const webhookSubscriptionModuleExtension = await testSingleWebhookSubscriptionExtension()
     const webhooksModuleExtension = await testWebhookExtensions()
     const theme = await testThemeExtensions()
@@ -291,6 +293,7 @@ describe('setup-dev-processes', () => {
           previewable,
           draftable,
           theme,
+          nonDraftableSingleUidStrategyExtension,
           draftableSingleUidStrategyExtension,
           webhookSubscriptionModuleExtension,
           webhooksModuleExtension,
@@ -332,7 +335,7 @@ describe('setup-dev-processes', () => {
         localApp,
         apiKey: 'api-key',
         developerPlatformClient,
-        extensions: expect.arrayContaining([draftable, draftableSingleUidStrategyExtension]),
+        extensions: expect.arrayContaining([draftable, theme, previewable, draftableSingleUidStrategyExtension]),
         remoteExtensionIds: {},
         proxyUrl: 'https://example.com/proxy',
       },
