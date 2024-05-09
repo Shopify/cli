@@ -1,6 +1,5 @@
 import {LOCAL_STRATEGY, REMOTE_STRATEGY, initializeThemeEditorSync} from './asset-file-syncer.js'
 import {uploadTheme} from './theme-uploader.js'
-import {removeThemeFile} from './theme-fs.js'
 import {mockThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
@@ -36,7 +35,7 @@ describe('initializeThemeEditorSync', () => {
       await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
 
       // Then
-      // expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, assetToBeDownloaded.key, adminSession)
+      expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, assetToBeDownloaded.key, adminSession)
       expect(defaultThemeFileSystem.files.get('templates/second_asset.json')).toEqual(assetToBeDownloaded)
     })
 
@@ -67,7 +66,7 @@ describe('initializeThemeEditorSync', () => {
       await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
 
       // Then
-      expect(spy).toHaveBeenCalled()
+      expect(spy).toHaveBeenCalledWith('templates/asset.json')
       expect(uploadTheme).not.toHaveBeenCalled()
     })
 
@@ -76,13 +75,16 @@ describe('initializeThemeEditorSync', () => {
       vi.mocked(renderSelectPrompt).mockResolvedValue(LOCAL_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
       const localThemeFileSystem = mockThemeFileSystem('tmp', files)
+      const spy = vi.spyOn(localThemeFileSystem, 'delete')
 
       // When
       await initializeThemeEditorSync(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
 
       // Then
-      expect(removeThemeFile).not.toHaveBeenCalled()
-      expect(uploadTheme).toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalled()
+      expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, {
+        nodelete: true,
+      })
     })
   })
 

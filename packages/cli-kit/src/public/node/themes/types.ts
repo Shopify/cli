@@ -20,14 +20,14 @@ export interface ThemeFileSystem {
   /**
    * Removes a file from the theme file system
    *
-   * @param assetKey - the key of the file to remove
+   * @param assetKey - The key of the file to remove
    */
-  delete: (asset: ThemeAsset) => Promise<void>
+  delete: (assetKey: string) => Promise<void>
 
   /**
    * Writes a file to the theme file system
    *
-   * @param asset - the asset to write
+   * @param asset - The ThemeAsset representing the file to write
    */
   write: (asset: ThemeAsset) => Promise<void>
 }

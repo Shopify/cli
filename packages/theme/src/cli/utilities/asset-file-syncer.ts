@@ -121,7 +121,7 @@ async function reconcileThemeFiles(
 ) {
   const {localFilesToDelete, filesToUpload, filesToDownload, remoteFilesToDelete} = partitionedFiles
 
-  const deleteLocalFiles = localFilesToDelete.map((file) => localThemeFileSystem.delete(file))
+  const deleteLocalFiles = localFilesToDelete.map((file) => localThemeFileSystem.delete(file.key))
   const downloadRemoteFiles = filesToDownload.map(async (file) => {
     const asset = await fetchThemeAsset(targetTheme.id, file.key, session)
     if (asset) {
