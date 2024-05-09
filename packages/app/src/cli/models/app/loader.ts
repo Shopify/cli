@@ -568,9 +568,8 @@ class AppLoader {
       }),
     )
 
-    // Recreate the object again to follow the expected schema with just 1 topic per instance
+    // Create 1 extension instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
-      // const {topic, ...rest} = subscription
       return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
     })
 

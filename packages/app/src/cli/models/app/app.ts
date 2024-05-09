@@ -8,7 +8,6 @@ import {SpecsAppConfiguration} from '../extensions/specifications/types/app_conf
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
-import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -331,17 +330,6 @@ export class App implements AppInterface {
 
     if (complianceWebhooksConfigIndex > -1) {
       setPathValue(this.realExtensions, `${complianceWebhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
-    }
-
-    let webhookSubscriptionConfigIndex = this.realExtensions.findIndex(
-      (ext) => ext.specification.identifier === WebhookSubscriptionSpecIdentifier,
-    )
-
-    while (webhookSubscriptionConfigIndex > -1) {
-      this.realExtensions.splice(webhookSubscriptionConfigIndex, 1)
-      webhookSubscriptionConfigIndex = this.realExtensions.findIndex(
-        (ext) => ext.specification.identifier === WebhookSubscriptionSpecIdentifier,
-      )
     }
   }
 }

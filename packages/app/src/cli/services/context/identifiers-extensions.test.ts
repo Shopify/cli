@@ -4,7 +4,7 @@ import {
   deployConfirmed,
   ensureExtensionsIds,
   ensureNonUuidManagedExtensionsIds,
-  shiftRegistrationsAround,
+  groupRegistrationByUidStrategy,
 } from './identifiers-extensions.js'
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
@@ -1078,7 +1078,7 @@ describe('shiftRegistrationsAround', () => {
     expect(dynamicUidStrategySpec?.uidStrategy).toEqual('dynamic')
 
     // When
-    const {uuidUidStrategyExtensions, allRegistrationsManagedInConfig} = shiftRegistrationsAround(
+    const {uuidUidStrategyExtensions, singleAndDynamicStrategyExtensions} = groupRegistrationByUidStrategy(
       extensionRegistrations,
       configurationRegistrations,
       specifications,
@@ -1086,7 +1086,7 @@ describe('shiftRegistrationsAround', () => {
 
     // Then
     expect(uuidUidStrategyExtensions).toEqual([REGISTRATION_B])
-    expect(allRegistrationsManagedInConfig).toEqual([configurationRegistrations[0], dynamicUidStrategyExtension])
+    expect(singleAndDynamicStrategyExtensions).toEqual([configurationRegistrations[0], dynamicUidStrategyExtension])
   })
 })
 

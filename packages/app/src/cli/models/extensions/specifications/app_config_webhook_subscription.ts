@@ -17,48 +17,15 @@ interface TransformedWebhookSubscription {
 }
 
 export const SingleWebhookSubscriptionSchema = zod.object({
-  topic: zod.string().optional(),
+  topic: zod.string(),
   api_version: zod.string(),
   uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
 })
 
-/* this transforms webhooks from the extension instance config to be parsed remotely
-ie.
-  from the schema, given (it will only ever have one subscription bc of how we created the extension instance):
-
-  {
-    api_version: '2024-01'
-    topic: ['orders/delete'],
-    uri: 'https://example.com/webhooks/orders',
-  }
-  the function should return:
-
-  {
-    api_version: '2024-01'
-    topic: 'products/create',
-    uri: 'https://example.com/webhooks/products',
-  }
-
-  */
 function transformFromWebhookSubscriptionConfig(content: object) {
-  // const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
-  // if (!webhooks) return content
-
-  // // eslint-disable-next-line @typescript-eslint/naming-convention
-  // const {api_version, subscriptions = []} = webhooks
-
-  // const webhookSubscriptions = subscriptions.flatMap((subscription) => {
-  //   const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
-  //   if (topics)
-  //     return topics.map((topic) => {
-  //       return {api_version, uri, topic, ...optionalFields}
-  //     })
-  // })
-
-  // Assume there could only be one because of how we create the instances
-  return content ?? {}
+  return content
 }
 
 /* this transforms webhooks remotely to be accepted by the TOML
@@ -117,8 +84,6 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   schema: SingleWebhookSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
-  extensionManagedInToml: true,
-  multipleModuleConfigPath: 'subscriptions',
   uidStrategy: 'dynamic',
 })
 

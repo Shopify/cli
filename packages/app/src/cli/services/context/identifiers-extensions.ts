@@ -11,8 +11,10 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {SingleWebhookSubscriptionType} from '../../models/extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -114,14 +116,14 @@ export async function deployConfirmed(
     extensionsToCreate: LocalSource[]
   },
 ) {
-  const {uuidUidStrategyExtensions, allRegistrationsManagedInConfig} = shiftRegistrationsAround(
+  const {uuidUidStrategyExtensions, singleAndDynamicStrategyExtensions} = groupRegistrationByUidStrategy(
     extensionRegistrations,
     configurationRegistrations,
     options.app.specifications || [],
   )
 
   const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
-    allRegistrationsManagedInConfig,
+    singleAndDynamicStrategyExtensions,
     options.app,
     options.appId,
     options.includeDraftExtensions,
@@ -150,15 +152,11 @@ export async function deployConfirmed(
   }
 }
 
-function matchWebhooks(remoteConfigObj: {[key: string]: unknown}, extension: ExtensionInstance) {
-  const transformLocalConfig = extension.specification.transform?.(extension.configuration) as unknown as {
-    [key: string]: unknown
-  }
-  if (transformLocalConfig) {
-    return remoteConfigObj.topic === transformLocalConfig.topic && remoteConfigObj.uri === transformLocalConfig.uri
-  } else {
-    return false
-  }
+function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance) {
+  const remoteVersionConfig = remoteSource.activeVersion?.config ?? remoteSource.draftVersion?.config
+  const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : undefined
+  const localConfig = extension.configuration as unknown as SingleWebhookSubscriptionType
+  return remoteVersionConfigObj.topic === localConfig.topic && remoteVersionConfigObj.uri === localConfig.uri
 }
 
 async function loadExtensionIds(
@@ -174,22 +172,16 @@ async function loadExtensionIds(
       return remote.type === developerPlatformClient.toExtensionGraphQLType(local.graphQLType)
     })
 
+    let match: RemoteSource | undefined
     if (local.isSingleStrategyExtension && possibleMatches.length === 1) {
-      validMatches[local.localIdentifier] = possibleMatches[0]!.uuid
-      validMatchesById[local.localIdentifier] = possibleMatches[0]!.id
+      match = possibleMatches[0]
     } else if (local.isDynamicStrategyExtension) {
-      // can probably move this out to a separate function if we want to clean this further?
-      const match = possibleMatches.find((possibleMatch) => {
-        const remoteVersionConfig = possibleMatch.activeVersion?.config ?? possibleMatch.draftVersion?.config
-        const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : undefined
-        return matchWebhooks(remoteVersionConfigObj, local)
-      })
-      if (match) {
-        validMatches[local.localIdentifier] = match.uuid
-        validMatchesById[local.localIdentifier] = match.id
-      } else {
-        extensionsToCreate.push(local)
-      }
+      match = possibleMatches.find((possibleMatch) => matchWebhooks(possibleMatch, local))
+    }
+
+    if (match) {
+      validMatches[local.localIdentifier] = match.uuid
+      validMatchesById[local.localIdentifier] = match.id
     } else {
       extensionsToCreate.push(local)
     }
@@ -267,21 +259,18 @@ async function createExtensions(
   return result
 }
 
-export function shiftRegistrationsAround(
+export function groupRegistrationByUidStrategy(
   extensionRegistrations: RemoteSource[],
   configurationRegistrations: RemoteSource[],
   specifications: ExtensionSpecification[],
 ) {
-  const dynamicUidStrategySpecs =
-    specifications
-      ?.filter((specification) => specification.uidStrategy === 'dynamic')
-      .map((specification) => specification.identifier) ?? []
-  const dynamicUidStrategyExtensions = extensionRegistrations.filter((registration) => {
-    return dynamicUidStrategySpecs.includes(registration.type.toLowerCase())
-  })
-  const uuidUidStrategyExtensions = extensionRegistrations.filter((registration) => {
-    return !dynamicUidStrategySpecs.includes(registration.type.toLowerCase())
-  })
-  const allRegistrationsManagedInConfig = configurationRegistrations.concat(dynamicUidStrategyExtensions)
-  return {uuidUidStrategyExtensions, allRegistrationsManagedInConfig}
+  const dynamicUidStrategySpecs = specifications
+    .filter((spec) => spec.uidStrategy === 'dynamic')
+    .map((spec) => spec.identifier)
+
+  const isDynamic = (registration: RemoteSource) => dynamicUidStrategySpecs.includes(registration.type.toLowerCase())
+  const groupedExtensions = groupBy(extensionRegistrations, isDynamic)
+
+  const singleAndDynamicStrategyExtensions = configurationRegistrations.concat(groupedExtensions.true ?? [])
+  return {uuidUidStrategyExtensions: groupedExtensions.false ?? [], singleAndDynamicStrategyExtensions}
 }
