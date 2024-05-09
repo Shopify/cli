@@ -247,7 +247,7 @@ importers:
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe
-        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe(react-dom@17.0.2)(react@18.3.1)'
+        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe(react-dom@17.0.2)(react@17.0.2)'
       '@shopify/cli-kit':
         specifier: 3.60.0
         version: link:../cli-kit
@@ -11844,17 +11844,6 @@ packages:
       react: 17.0.2
       scheduler: 0.20.2
 
-  /react-dom@17.0.2(react@18.3.1):
-    resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
-    peerDependencies:
-      react: 17.0.2
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 18.3.1
-      scheduler: 0.20.2
-    dev: false
-
   /react-dom@18.2.0(react@18.2.0):
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -13546,15 +13535,15 @@ packages:
       querystringify: 2.2.0
       requires-port: 1.0.0
 
-  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@18.3.1):
+  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
       react: 16.8.0 - 18
       react-dom: 16.8.0 - 18
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      react: 18.3.1
-      react-dom: 17.0.2(react@18.3.1)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
     dev: false
 
   /util-arity@1.1.0:
@@ -14221,7 +14210,7 @@ packages:
     resolution: {integrity: sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==}
     dev: true
 
-  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe(react-dom@17.0.2)(react@18.3.1)':
+  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe(react-dom@17.0.2)(react@17.0.2)':
     resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe}
     id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe'
     name: '@shopify/cli-hydrogen'
@@ -14267,7 +14256,7 @@ packages:
       tar-fs: 2.1.1
       tempy: 3.0.0
       ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
     optionalDependencies:
       '@parcel/watcher': 2.4.1
     transitivePeerDependencies:
