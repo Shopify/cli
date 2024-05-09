@@ -4,8 +4,8 @@ export function mockThemeFileSystem(root: string, files: Map<string, ThemeAsset>
   return {
     root,
     files,
-    delete: async (asset: ThemeAsset) => {
-      files.delete(asset.key)
+    delete: async (assetKey: string) => {
+      files.delete(assetKey)
     },
     write: async (asset: ThemeAsset) => {
       files.set(asset.key, asset)

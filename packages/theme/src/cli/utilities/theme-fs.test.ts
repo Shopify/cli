@@ -5,8 +5,6 @@ import {
   isThemeAsset,
   mountThemeFileSystem,
   readThemeFile,
-  removeThemeFile,
-  writeThemeFile,
   partitionThemeFiles,
   readThemeFilesFromDisk,
 } from './theme-fs.js'
@@ -72,13 +70,44 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
-      await themeFileSystem.delete({key: 'assets/base.css', checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17'})
+      await themeFileSystem.delete('assets/base.css')
+
+      // Then
+      expect(removeFile).toBeCalledWith(`${root}/assets/base.css`)
+      expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
+    })
+  })
+
+  describe('themeFileSystem.delete', () => {
+    test('"delete" removes the file from the local disk and updates the file map', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+
+      // When
+      const themeFileSystem = await mountThemeFileSystem(root)
+      expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
+      await themeFileSystem.delete('assets/base.css')
 
       // Then
       expect(removeFile).toBeCalledWith(`${root}/assets/base.css`)
       expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
     })
 
+    test('does nothing when the theme file does not exist on local disk', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+
+      // When
+      const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.delete('assets/nonexistent.css')
+
+      // Then
+      expect(removeFile).not.toBeCalled()
+      expect(themeFileSystem.files.has('assets/nonexistent.css')).toBe(false)
+    })
+  })
+
+  describe('themeFileSystem.write', () => {
     test('"write" creates a file on the local disk and updates the file map', async () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
@@ -95,6 +124,27 @@ describe('theme-fs', () => {
         key: 'assets/new_file.css',
         checksum: '1010',
         value: 'content',
+      })
+    })
+
+    test('"write" creates an image file on the local disk and updates the file map', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+      const attachment = '0x123!'
+      const buffer = Buffer.from(attachment, 'base64')
+
+      // When
+      const themeFileSystem = await mountThemeFileSystem(root)
+      expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
+
+      await themeFileSystem.write({key: 'assets/new_image.gif', checksum: '1010', attachment})
+
+      // Then
+      expect(writeFile).toBeCalledWith(`${root}/assets/new_image.gif`, buffer, {encoding: 'base64'})
+      expect(themeFileSystem.files.get('assets/new_image.gif')).toEqual({
+        key: 'assets/new_image.gif',
+        checksum: '1010',
+        attachment,
       })
     })
   })
@@ -144,60 +194,6 @@ describe('theme-fs', () => {
       // Then
       expect(content).toBeDefined()
       expect(Buffer.isBuffer(content)).toBe(true)
-    })
-  })
-
-  describe('writeThemeFile', () => {
-    test(`writes theme file when it's a text file`, async () => {
-      // Given
-      const root = 'src/cli/utilities/fixtures'
-      const key = 'templates/500.json'
-
-      // When
-      await writeThemeFile(root, {key, value: '{"key": "http://value.com"}', checksum: '123'})
-
-      // Then
-      expect(writeFile).toBeCalledWith('src/cli/utilities/fixtures/templates/500.json', '{"key": "http://value.com"}')
-    })
-
-    test(`writes theme file when it's an image`, async () => {
-      // Given
-      const root = 'src/cli/utilities/fixtures'
-      const key = 'templates/500.json'
-      const attachment = '0x123!'
-      const buffer = Buffer.from(attachment, 'base64')
-
-      // When
-      await writeThemeFile(root, {key, attachment, checksum: '123'})
-
-      // Then
-      expect(writeFile).toBeCalledWith('src/cli/utilities/fixtures/templates/500.json', buffer, {encoding: 'base64'})
-    })
-  })
-
-  describe('removeThemeFile', () => {
-    test('removes theme file when it exists', async () => {
-      // Given
-      const root = 'src/cli/utilities/fixtures'
-      const key = 'templates/404.json'
-
-      // When
-      await removeThemeFile(root, key)
-
-      // Then
-      expect(removeFile).toBeCalledWith('src/cli/utilities/fixtures/templates/404.json')
-    })
-
-    test(`do nothing when theme file doesn't exist`, async () => {
-      // Given
-      const root = 'src/cli/utilities/fixtures'
-      const key = 'templates/401.json'
-
-      // When
-      await removeThemeFile(root, key)
-
-      // Then
-      expect(removeFile).not.toBeCalled()
     })
   })
 

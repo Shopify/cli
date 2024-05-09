@@ -65,9 +65,9 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
   return {
     root,
     files,
-    delete: async (asset: ThemeAsset) => {
-      await removeThemeFile(root, asset.key)
-      files.delete(asset.key)
+    delete: async (assetKey: string) => {
+      await removeThemeFile(root, assetKey)
+      files.delete(assetKey)
     },
     write: async (asset: ThemeAsset) => {
       await writeThemeFile(root, asset)
@@ -76,7 +76,7 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
   }
 }
 
-export async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
+async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
   const absolutePath = joinPath(root, key)
 
   await ensureDirExists(absolutePath)
@@ -103,7 +103,7 @@ export async function readThemeFile(root: string, path: Key): Promise<string | B
   return readFile(absolutePath, options)
 }
 
-export async function removeThemeFile(root: string, path: Key) {
+async function removeThemeFile(root: string, path: Key) {
   const absolutePath = joinPath(root, path)
 
   const themeFileExists = await fileExists(absolutePath)
