@@ -148,7 +148,7 @@ export interface DeveloperPlatformClient {
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (app: MinimalAppIdentifiers) => Promise<AllAppExtensionRegistrationsQuerySchema>
-  appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
+  appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
   appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
   appVersionsDiff: (input: AppVersionsDiffVariables) => Promise<AppVersionsDiffSchema>

@@ -14,6 +14,11 @@ import {
   SpecificationsQuerySchema,
 } from './shopify-developers-client/graphql/specifications.js'
 import {
+  AppVersionsQuery,
+  AppVersionsQueryVariables,
+  AppVersionsQuerySchema,
+} from './shopify-developers-client/graphql/app-versions.js'
+import {
   CreateAppVersionMutation,
   CreateAppVersionMutationSchema,
   CreateAppVersionMutationVariables,
@@ -61,7 +66,7 @@ import {
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
+import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
   ConvertDevToTransferDisabledSchema,
@@ -343,8 +348,38 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
-    throw new BugError('Not implemented: appVersions')
+  async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
+    const query = AppVersionsQuery
+    const variables: AppVersionsQueryVariables = {appId: id}
+    const result = await orgScopedShopifyDevelopersRequest<AppVersionsQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
+    return {
+      app: {
+        id: result.app.id,
+        organizationId,
+        title,
+        appVersions: {
+          nodes: result.app.releases.map((release) => {
+            return {
+              createdAt: release.releaseDate,
+              createdBy: {
+                displayName: release.releasedBy.name,
+              },
+              versionTag: release.version.versionTag,
+              status: '',
+              distributionPercentage: 0,
+            }
+          }),
+          pageInfo: {
+            totalResults: result.app.releases.length,
+          },
+        },
+      },
+    }
   }
 
   async appVersionByTag(_input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
