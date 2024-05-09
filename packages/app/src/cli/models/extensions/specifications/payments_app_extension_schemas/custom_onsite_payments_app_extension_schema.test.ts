@@ -4,6 +4,7 @@ import {
   customOnsitePaymentsAppExtensionDeployConfig,
   MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './custom_onsite_payments_app_extension_schema.js'
+import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -94,38 +95,7 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
     expect(() =>
       CustomOnsitePaymentsAppExtensionSchema.parse({
         ...config,
-        checkout_payment_method_fields: [
-          {
-            key: 'key1',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key2',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key3',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key4',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key5',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key6',
-            type: 'string',
-            required: true,
-          },
-        ],
+        checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
     ).toThrowError(
       new zod.ZodError([
