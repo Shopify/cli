@@ -16,6 +16,20 @@ export interface ThemeFileSystem {
    * Local theme files.
    */
   files: Map<Key, ThemeAsset>
+
+  /**
+   * Removes a file from the theme file system
+   *
+   * @param assetKey - the key of the file to remove
+   */
+  delete: (asset: ThemeAsset) => Promise<void>
+
+  /**
+   * Writes a file to the theme file system
+   *
+   * @param asset - the asset to write
+   */
+  write: (asset: ThemeAsset) => Promise<void>
 }
 
 /**

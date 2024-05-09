@@ -65,6 +65,14 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
   return {
     root,
     files,
+    delete: async (asset: ThemeAsset) => {
+      await removeThemeFile(root, asset.key)
+      files.delete(asset.key)
+    },
+    write: async (asset: ThemeAsset) => {
+      await writeThemeFile(root, asset)
+      files.set(asset.key, asset)
+    },
   }
 }
 

@@ -45,6 +45,8 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
         root,
+        delete: expect.any(Function),
+        write: expect.any(Function),
       })
     })
 
@@ -59,6 +61,40 @@ describe('theme-fs', () => {
       expect(themeFileSystem).toEqual({
         files: new Map([]),
         root,
+        delete: expect.any(Function),
+        write: expect.any(Function),
+      })
+    })
+
+    test('"delete" removes the file from the local disk and updates the file map', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+
+      // When
+      const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.delete({key: 'assets/base.css', checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17'})
+
+      // Then
+      expect(removeFile).toBeCalledWith(`${root}/assets/base.css`)
+      expect(themeFileSystem.files.has('assets/base.css')).toBe(false)
+    })
+
+    test('"write" creates a file on the local disk and updates the file map', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+
+      // When
+      const themeFileSystem = await mountThemeFileSystem(root)
+      expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
+
+      await themeFileSystem.write({key: 'assets/new_file.css', checksum: '1010', value: 'content'})
+
+      // Then
+      expect(writeFile).toBeCalledWith(`${root}/assets/new_file.css`, 'content')
+      expect(themeFileSystem.files.get('assets/new_file.css')).toEqual({
+        key: 'assets/new_file.css',
+        checksum: '1010',
+        value: 'content',
       })
     })
   })
