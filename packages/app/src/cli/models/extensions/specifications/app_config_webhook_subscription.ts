@@ -24,10 +24,6 @@ export const SingleWebhookSubscriptionSchema = zod.object({
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
 })
 
-function transformFromWebhookSubscriptionConfig(content: object) {
-  return content
-}
-
 /* this transforms webhooks remotely to be accepted by the TOML
 ie.
   given:
@@ -75,7 +71,7 @@ function transformToWebhookSubscriptionConfig(content: object) {
 }
 
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformFromWebhookSubscriptionConfig(content),
+  forward: (content: object) => content,
   reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
 }
 

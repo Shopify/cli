@@ -146,7 +146,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return {successMessage, errorMessage}
   }
 
-  isUuidManaged() {
+  get isUUIDStrategyExtension() {
     return this.specification.uidStrategy === 'uuid'
   }
 
@@ -335,7 +335,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
 
-    const uuid = this.isUuidManaged()
+    const uuid = this.isUUIDStrategyExtension
       ? identifiers.extensions[this.localIdentifier]
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]
 
@@ -351,8 +351,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-        if (!subscription || !subscription.topic) return randomUUID().substring(0, 30)
-        const handle = subscription.topic + subscription.uri
+        const handle = `${subscription.topic}${subscription.uri}`
         return hashString(handle).substring(0, 30)
     }
   }

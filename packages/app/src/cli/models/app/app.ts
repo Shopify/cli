@@ -265,7 +265,7 @@ export class App implements AppInterface {
 
   get draftableExtensions() {
     return this.realExtensions.filter(
-      (ext) => ext.isUuidManaged() || ext.specification.identifier === AppAccessSpecIdentifier,
+      (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
     )
   }
 

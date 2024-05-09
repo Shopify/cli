@@ -1050,7 +1050,7 @@ describe('deployConfirmed: extensions that should be managed in the TOML', () =>
   })
 })
 
-describe('shiftRegistrationsAround', () => {
+describe('groupRegistrationByUidStrategy', () => {
   test('extension registrations have dynamic UID strategy should be returned in the same array as configuration registrations', () => {
     // Given
     const dynamicUidStrategyExtension = {
@@ -1108,7 +1108,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
 
     let createExtensionCounter = 0
     const developerPlatformClient = testDeveloperPlatformClient({
-      createExtension: async () => {
+      createExtension: () => {
         createExtensionCounter++
         const registration = {
           uuid: `webhook-subscription-${createExtensionCounter}`,

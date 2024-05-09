@@ -30,7 +30,7 @@ export async function ensureExtensionsIds(
 ) {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const localExtensions = options.app.allExtensions.filter((ext) => ext.isUuidManaged())
+  const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
@@ -148,18 +148,18 @@ export async function deployConfirmed(
   return {
     extensions: validMatches,
     extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged},
-    extensionsNonUuidManaged: {...extensionsNonUuidManaged},
+    extensionsNonUuidManaged,
   }
 }
 
 function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance) {
   const remoteVersionConfig = remoteSource.activeVersion?.config ?? remoteSource.draftVersion?.config
-  const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : undefined
+  const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : {}
   const localConfig = extension.configuration as unknown as SingleWebhookSubscriptionType
   return remoteVersionConfigObj.topic === localConfig.topic && remoteVersionConfigObj.uri === localConfig.uri
 }
 
-async function loadExtensionIds(
+function loadExtensionIds(
   remoteConfigurationRegistrations: RemoteSource[],
   developerPlatformClient: DeveloperPlatformClient,
   localExtensionRegistrations: ExtensionInstance[],
@@ -197,13 +197,13 @@ export async function ensureNonUuidManagedExtensionsIds(
 ) {
   let localExtensionRegistrations = includeDraftExtensions ? app.realExtensions : app.allExtensions
 
-  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
+  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUUIDStrategyExtension)
 
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}
 
-  await loadExtensionIds(
+  loadExtensionIds(
     remoteConfigurationRegistrations,
     developerPlatformClient,
     localExtensionRegistrations,

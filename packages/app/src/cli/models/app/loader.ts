@@ -23,7 +23,7 @@ import use from '../../services/app/config/use.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {findConfigFiles} from '../../prompts/config.js'
-import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
@@ -110,7 +110,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   if (!configurationObject) return fallbackOutput
 
-  const configuration = await parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
   return {...configuration, path: filepath}
 }
 
@@ -126,12 +126,12 @@ export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
 /**
  * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
  */
-export async function parseConfigurationObject<TSchema extends zod.ZodType>(
+export function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema>> {
+): zod.TypeOf<TSchema> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -432,7 +432,7 @@ class AppLoader {
       )
     }
 
-    const configuration = await parseConfigurationObject(
+    const configuration = parseConfigurationObject(
       specification.schema,
       configurationPath,
       configurationObject,
@@ -470,7 +470,7 @@ class AppLoader {
       : []
 
     const webhookPromises = isCurrentAppSchema(appConfiguration)
-      ? await this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
+      ? this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
       : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
@@ -547,9 +547,10 @@ class AppLoader {
     })
   }
 
-  private async createWebhookSubscriptionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
-    const specification = appWebhookSubscriptionSpec
-    const specConfiguration = await parseConfigurationObject(
+  private createWebhookSubscriptionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+    const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
+    if (!specification) return []
+    const specConfiguration = parseConfigurationObject(
       WebhooksSchema,
       appConfiguration.path,
       appConfiguration,
@@ -573,7 +574,7 @@ class AppLoader {
       return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
     })
 
-    return Promise.all(instances)
+    return instances
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
@@ -581,7 +582,7 @@ class AppLoader {
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
-          const specConfiguration = await parseConfigurationObject(
+          const specConfiguration = parseConfigurationObject(
             specification.schema,
             appConfiguration.path,
             appConfiguration,
