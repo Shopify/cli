@@ -3,6 +3,7 @@ import {
   BuyerLabelSchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
+  SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -18,6 +19,11 @@ describe('BasePaymentsAppExtensionSchema', () => {
     merchant_label: 'some-label',
     supported_countries: ['CA'],
     supported_payment_methods: ['PAYMENT_METHOD'],
+    supported_buyer_contexts: [
+      {currency: 'USD'},
+      {currency: 'CAD', countries: ['CA']},
+      {currency: 'EUR', countries: ['DE', 'FR']},
+    ],
     test_mode_available: true,
     api_version: '2022-07',
     description: 'my payments app extension',
@@ -242,5 +248,67 @@ describe('ConfirmationSchema', () => {
         },
       ]),
     )
+  })
+})
+
+describe('SupportedBuyerContextSchema', async () => {
+  test('throws an error if currency is not provided', async () => {
+    expect(() =>
+      SupportedBuyerContextsSchema.parse({
+        supported_buyer_contexts: [{countries: ['US']}],
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'string',
+          received: 'undefined',
+          path: ['supported_buyer_contexts', 0, 'currency'],
+          message: 'Required',
+        },
+      ]),
+    )
+  })
+
+  test('throws an error if countries key provided but its an empty array', async () => {
+    expect(() =>
+      SupportedBuyerContextsSchema.parse({
+        supported_buyer_contexts: [{currency: 'USD', countries: []}],
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_small,
+          minimum: 1,
+          type: 'array',
+          inclusive: true,
+          exact: false,
+          message: 'Array must contain at least 1 element(s)',
+          path: ['supported_buyer_contexts', 0, 'countries'],
+        },
+      ]),
+    )
+  })
+
+  test('is valid if countries are not provided', async () => {
+    const {success} = SupportedBuyerContextsSchema.safeParse({
+      supported_buyer_contexts: [{currency: 'USD'}],
+    })
+
+    expect(success).toBe(true)
+  })
+
+  test('is valid if currrency and countries are provided', async () => {
+    const {success} = SupportedBuyerContextsSchema.safeParse({
+      supported_buyer_contexts: [{currency: 'USD', countries: ['US']}],
+    })
+
+    expect(success).toBe(true)
+  })
+
+  test('is valid supported buyer context omitted', async () => {
+    const {success} = SupportedBuyerContextsSchema.safeParse({})
+
+    expect(success).toBe(true)
   })
 })
