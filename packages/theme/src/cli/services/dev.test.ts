@@ -1,7 +1,7 @@
 import {showDeprecationWarnings, refreshTokens, dev} from './dev.js'
 import {startDevServer} from '../utilities/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {mockThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
+import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -29,7 +29,7 @@ describe('dev', () => {
     'theme-editor-sync': false,
     'dev-preview': false,
   }
-  const localThemeFileSystem = mockThemeFileSystem('tmp', new Map())
+  const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
 
   describe('Dev-Preview Implementation', async () => {
     test('calls startDevServer with the correct arguments when the `dev-preview` option is provided', async () => {

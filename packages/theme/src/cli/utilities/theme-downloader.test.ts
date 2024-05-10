@@ -1,5 +1,5 @@
 import {downloadTheme} from './theme-downloader.js'
-import {mockThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
@@ -21,7 +21,7 @@ describe('theme-downloader', () => {
         ['assets/keepme.css', {key: 'assets/keepme.css', checksum: '1', value: 'content'}],
         ['assets/deleteme.css', {key: 'assets/deleteme.css', checksum: '2', value: 'content'}],
       ])
-      const fileSystem = mockThemeFileSystem(root, files)
+      const fileSystem = fakeThemeFileSystem(root, files)
       const spy = vi.spyOn(fileSystem, 'delete')
 
       // When
@@ -39,7 +39,7 @@ describe('theme-downloader', () => {
       const files = new Map<string, ThemeAsset>([
         ['assets/keepme.css', {key: 'assets/keepme.css', checksum: '1', value: 'content'}],
       ])
-      const fileSystem = mockThemeFileSystem(root, files)
+      const fileSystem = fakeThemeFileSystem(root, files)
       const spy = vi.spyOn(fileSystem, 'delete')
 
       // When
@@ -56,7 +56,7 @@ describe('theme-downloader', () => {
       const files = new Map<string, ThemeAsset>([
         ['release/alreadyexists', {checksum: '2', value: 'content', key: 'release/alreadyexists'}],
       ])
-      const fileSystem = mockThemeFileSystem(root, files)
+      const fileSystem = fakeThemeFileSystem(root, files)
       const remote = [
         fileToDownload,
         {key: 'release/alreadyexists', checksum: '2'},

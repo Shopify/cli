@@ -1,5 +1,5 @@
 import {applyIgnoreFilters} from './asset-ignore.js'
-import {mockThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -30,7 +30,7 @@ describe('applyIgnoreFilters', () => {
     {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
     {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
   ]
-  const themeFileSystem = mockThemeFileSystem('tmp', new Map<string, ThemeAsset>())
+  const themeFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>())
 
   /**
    * Explicitly defining the type of 'readFile' as it returns either

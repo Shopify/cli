@@ -1,6 +1,6 @@
 import {ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
-export function mockThemeFileSystem(root: string, files: Map<string, ThemeAsset>): ThemeFileSystem {
+export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>): ThemeFileSystem {
   return {
     root,
     files,

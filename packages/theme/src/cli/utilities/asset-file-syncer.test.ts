@@ -1,6 +1,6 @@
 import {LOCAL_STRATEGY, REMOTE_STRATEGY, initializeThemeEditorSync} from './asset-file-syncer.js'
 import {uploadTheme} from './theme-uploader.js'
-import {mockThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -19,7 +19,7 @@ describe('initializeThemeEditorSync', () => {
   const adminSession = {token: '', storeFqdn: ''}
   const remoteChecksums: Checksum[] = []
   const files = new Map<string, ThemeAsset>([])
-  const defaultThemeFileSystem = mockThemeFileSystem('tmp', files)
+  const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
 
   describe('files only present on remote developer theme', () => {
     test('should download assets from remote theme if themeEditorSync flag is passed and `remote` source is selected', async () => {
@@ -59,7 +59,7 @@ describe('initializeThemeEditorSync', () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
-      const localThemeFileSystem = mockThemeFileSystem('tmp', files)
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
       const spy = vi.spyOn(localThemeFileSystem, 'delete')
 
       // When
@@ -74,7 +74,7 @@ describe('initializeThemeEditorSync', () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(LOCAL_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
-      const localThemeFileSystem = mockThemeFileSystem('tmp', files)
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
       const spy = vi.spyOn(localThemeFileSystem, 'delete')
 
       // When
@@ -93,7 +93,7 @@ describe('initializeThemeEditorSync', () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
-      const localThemeFileSystem = mockThemeFileSystem('tmp', files)
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
       const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
 
       // When
@@ -108,7 +108,7 @@ describe('initializeThemeEditorSync', () => {
       // Given
       vi.mocked(renderSelectPrompt).mockResolvedValue(LOCAL_STRATEGY)
       const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
-      const localThemeFileSystem = mockThemeFileSystem('tmp', files)
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
       const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
 
       // When
