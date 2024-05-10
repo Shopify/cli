@@ -88,6 +88,49 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
     )
   })
 
+  test('returns an error if encryption certificate fingerprint is blank', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        encryption_certificate_fingerprint: '',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_small,
+          minimum: 1,
+          type: 'string',
+          inclusive: true,
+          exact: false,
+          message: "Encryption certificate fingerprint can't be blank",
+          path: ['encryption_certificate_fingerprint'],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if encryption certificate fingerprint is not present', async () => {
+    // When/Then
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {encryption_certificate_fingerprint, ...rest} = config
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...rest,
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'string',
+          received: 'undefined',
+          path: ['encryption_certificate_fingerprint'],
+          message: 'Required',
+        },
+      ]),
+    )
+  })
+
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
     // When/Then
     expect(() =>
