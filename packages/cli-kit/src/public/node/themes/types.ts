@@ -18,18 +18,27 @@ export interface ThemeFileSystem {
   files: Map<Key, ThemeAsset>
 
   /**
-   * Removes a file from the theme file system
+   * Removes a file from the local disk and updates the themeFileSystem
    *
    * @param assetKey - The key of the file to remove
    */
   delete: (assetKey: string) => Promise<void>
 
   /**
-   * Writes a file to the theme file system
+   * Writes a file to the local disk and updates the themeFileSystem
    *
    * @param asset - The ThemeAsset representing the file to write
    */
   write: (asset: ThemeAsset) => Promise<void>
+
+  /**
+   * Reads a file from the local disk and updates the themeFileSystem
+   * Returns a ThemeAsset representing the file that was read
+   * Returns undefined if the file does not exist
+   *
+   * @param assetKey - The key of the file to read
+   */
+  read: (assetKey: string) => Promise<string | Buffer | undefined>
 }
 
 /**
