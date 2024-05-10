@@ -1,12 +1,14 @@
-import {LOCAL_STRATEGY, REMOTE_STRATEGY, initializeThemeEditorSync} from './asset-file-syncer.js'
+import {LOCAL_STRATEGY, REMOTE_STRATEGY, initializeThemeEditorSync, pollRemoteChanges} from './asset-file-syncer.js'
 import {uploadTheme} from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {readThemeFilesFromDisk} from './theme-fs.js'
+import {deleteThemeAsset, fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {Checksum, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -117,6 +119,100 @@ describe('initializeThemeEditorSync', () => {
       // Then
       expect(uploadTheme).toHaveBeenCalled()
       expect(fetchThemeAsset).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('pollRemoteChanges', async () => {
+    test('should download modified files from the remote theme', async () => {
+      // Given
+      const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+      const updatedRemoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+      vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '2', key: 'templates/asset.json', value: 'content'})
+
+      // When
+      await pollRemoteChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+
+      // Then
+      expect(defaultThemeFileSystem.files.get('templates/asset.json')).toEqual({
+        checksum: '2',
+        key: 'templates/asset.json',
+        value: 'content',
+      })
+    })
+
+    test('should download newly added files from remote theme', async () => {
+      // Given
+      const remoteChecksums: Checksum[] = []
+      const updatedRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+      vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '1', key: 'templates/asset.json', value: 'content'})
+
+      // When
+      await pollRemoteChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+
+      // Then
+      expect(defaultThemeFileSystem.files.get('templates/asset.json')).toEqual({
+        checksum: '1',
+        key: 'templates/asset.json',
+        value: 'content',
+      })
+    })
+
+    test('should delete local file from remote theme when there is a change on remote', async () => {
+      // Given
+      const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+      vi.mocked(fetchChecksums).mockResolvedValue([])
+
+      // When
+      await pollRemoteChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+
+      // Then
+      expect(fetchThemeAsset).not.toHaveBeenCalled()
+      expect(defaultThemeFileSystem.files.get('templates/asset.json')).toBeUndefined()
+    })
+
+    test('should throw an error when there is a change on remote and local', async () => {
+      // Given
+      const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+      const updatedRemoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+      vi.mocked(readThemeFilesFromDisk).mockImplementation(
+        async (_filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) => {
+          themeFileSystem.files.set('templates/asset.json', {checksum: '3', key: 'templates/asset.json'})
+        },
+      )
+
+      // When
+      // Then
+      await expect(() =>
+        pollRemoteChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem),
+      ).rejects.toThrow(
+        new AbortError(
+          `Detected changes to the file 'templates/asset.json' on both local and remote sources. Aborting...`,
+        ),
+      )
+    })
+
+    test('should do nothing when there is a change on local only', async () => {
+      // Given
+      const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+      const updatedRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+      const spy = vi.spyOn(defaultThemeFileSystem, 'delete')
+
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+      vi.mocked(readThemeFilesFromDisk).mockImplementation(
+        async (_filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) => {
+          themeFileSystem.files.set('templates/asset.json', {checksum: '3', key: 'templates/asset.json'})
+        },
+      )
+
+      // When
+      await pollRemoteChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+
+      // Then
+      expect(fetchThemeAsset).not.toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalled()
     })
   })
 })
