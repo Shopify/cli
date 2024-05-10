@@ -279,7 +279,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return buildFunctionExtension(this, options)
     } else if (this.features.includes('esbuild')) {
       return buildUIExtension(this, options)
-    } else if (this.specification.identifier === 'flow_template') {
+    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
       return buildFlowTemplateExtension(this, options)
     }
 
