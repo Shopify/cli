@@ -6,7 +6,11 @@ import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
+import {
+  extensionTypeStrategy,
+  fetchAppRemoteConfiguration,
+  remoteAppConfigurationExtensionContent,
+} from '../app/select-app.js'
 import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
@@ -317,10 +321,9 @@ function loadExtensionsIdentifiersBreakdown(
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
 ) {
-  const extensionModules =
-    activeAppVersion?.appModuleVersions.filter((extension) =>
-      specs.find((spec) => spec.identifier === extension.specification?.identifier && spec.uidStrategy === 'uuid'),
-    ) || []
+  const extensionModules = activeAppVersion?.appModuleVersions.filter(
+    (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
+  )
 
   const extensionsToUpdate = Object.entries(localRegistration)
     .filter(([_identifier, uuid]) => extensionModules.map((module) => module.registrationUuid!).includes(uuid))
