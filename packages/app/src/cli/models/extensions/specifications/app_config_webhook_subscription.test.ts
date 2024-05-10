@@ -37,6 +37,11 @@ describe('webhook_subscription', () => {
               uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
               sub_topic: 'type:metaobject_one',
             },
+            {
+              topics: ['products/update'],
+              uri: 'https://example.com/webhooks/products',
+              filter: 'title:shoes',
+            },
           ],
         },
       }
@@ -110,6 +115,12 @@ describe('webhook_subscription', () => {
             topic: 'metaobjects/delete',
             uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
+          {
+            api_version: '2024-01',
+            filter: 'title:shoes',
+            topic: 'products/update',
+            uri: 'https://example.com/webhooks/products',
+          },
         ],
       })
     })
@@ -160,6 +171,12 @@ describe('webhook_subscription', () => {
             topic: 'orders/create',
             uri: 'https://valid-url',
           },
+          {
+            api_version: '2024-01',
+            filter: 'title:shoes',
+            topic: 'products/update',
+            uri: 'https://example.com/webhooks/products',
+          },
         ],
       }
       const webhookSpec = spec
@@ -188,6 +205,11 @@ describe('webhook_subscription', () => {
               include_fields: ['variants', 'title'],
               topics: ['orders/create'],
               uri: 'https://valid-url',
+            },
+            {
+              filter: 'title:shoes',
+              topics: ['products/update'],
+              uri: 'https://example.com/webhooks/products',
             },
           ],
         },

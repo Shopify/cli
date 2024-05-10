@@ -2734,7 +2734,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
@@ -2753,7 +2753,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2847,7 +2847,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2872,7 +2872,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2897,7 +2897,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2924,7 +2924,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'metaobjects/create'],
     }
@@ -2946,6 +2946,51 @@ describe('WebhooksSchema', () => {
           topics: ['products/create'],
           uri: 'https://example.com',
           sub_topic: 'type:metaobject_two',
+        },
+      ],
+    }
+  })
+
+  test('does not allow identical topic and uri and filter in different subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/update'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+  })
+
+  test('allows identical topic and uri if filter is different', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shirts',
         },
       ],
     }
