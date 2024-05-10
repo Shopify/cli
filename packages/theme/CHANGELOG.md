@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.60.1
+
+### Patch Changes
+
+- f060015b0: Fix theme check failing when there is a network issue
+  - @shopify/cli-kit@3.60.1
+
 ## 3.60.0
 
 ### Minor Changes
