@@ -194,9 +194,9 @@ async function createExtensions(
       // Just pretend to create the extension, as it's not necessary to do anything
       // in this case.
       result[extension.localIdentifier] = {
-        id: extension.uid,
+        id: extension.uid!,
         uid: extension.uid,
-        uuid: extension.uid,
+        uuid: extension.uid!,
         type: extension.type,
         title: extension.handle,
       }

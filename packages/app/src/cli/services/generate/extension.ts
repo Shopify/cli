@@ -8,6 +8,7 @@ import {
   ensureExtensionDirectoryExists,
   ensureLocalExtensionFlavorExists,
 } from '../extensions/common.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -18,16 +19,7 @@ import {
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {
-  fileExists,
-  inTemporaryDirectory,
-  mkdir,
-  moveFile,
-  removeFile,
-  glob,
-  readFile,
-  writeFile,
-} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -37,6 +29,7 @@ export interface GenerateExtensionTemplateOptions {
   cloneUrl?: string
   extensionChoices: GenerateExtensionContentOutput[]
   extensionTemplate: ExtensionTemplate
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export type ExtensionFlavorValue =
@@ -77,6 +70,7 @@ interface ExtensionInitOptions {
   type: string
   name: string
   extensionFlavor: ExtensionFlavor | undefined
+  uid: string | undefined
 }
 
 export async function generateExtensionTemplate(
@@ -89,6 +83,7 @@ export async function generateExtensionTemplate(
       const extensionFlavor = spec.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
       const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
       const url = options.cloneUrl || spec.url
+      const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
       const initOptions: ExtensionInitOptions = {
         directory,
         url,
@@ -96,6 +91,7 @@ export async function generateExtensionTemplate(
         type: spec.type,
         name: extensionName,
         extensionFlavor,
+        uid,
       }
       await extensionInit(initOptions)
       return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
@@ -116,21 +112,16 @@ async function extensionInit(options: ExtensionInitOptions) {
         await uiExtensionInit(options)
         break
     }
-    const configFile = joinPath(options.directory, 'shopify.extension.toml')
-    if (await fileExists(configFile)) {
-      const tomlContents = await readFile(configFile)
-      await writeFile(configFile, `uid = "${randomUUID()}"\n${tomlContents}`)
-    }
   } catch (error) {
     await removeFile(options.directory)
     throw error
   }
 }
 
-async function themeExtensionInit({directory, url, type, name, extensionFlavor}: ExtensionInitOptions) {
+async function themeExtensionInit({directory, url, type, name, extensionFlavor, uid}: ExtensionInitOptions) {
   return inTemporaryDirectory(async (tmpDir) => {
     const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type})
+    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type, uid})
   })
 }
 

@@ -1,5 +1,5 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
-import {testApp, testAppWithConfig, testUIExtension} from './app.test-data.js'
+import {testApp, testAppWithConfig, testDeveloperPlatformClient, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -25,6 +25,7 @@ describe('updateAppIdentifiers', () => {
           },
         },
         command: 'deploy',
+        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then
@@ -60,6 +61,7 @@ describe('updateAppIdentifiers', () => {
           },
         },
         command: 'deploy',
+        developerPlatformClient: testDeveloperPlatformClient(),
       })
 
       // Then
@@ -91,6 +93,7 @@ describe('updateAppIdentifiers', () => {
             },
           },
           command: 'deploy',
+          developerPlatformClient: testDeveloperPlatformClient(),
         },
         {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
       )

@@ -60,7 +60,7 @@ async function generate(options: GenerateOptions) {
 
   await saveAnalyticsMetadata(promptAnswers, options.template)
 
-  const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
+  const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtensions = await generateExtensionTemplate(generateExtensionOptions)
 
   renderSuccessMessages(generatedExtensions, app.packageManager)
@@ -124,12 +124,14 @@ function buildGenerateOptions(
   promptAnswers: GenerateExtensionPromptOutput,
   app: AppInterface,
   options: GenerateOptions,
+  developerPlatformClient: DeveloperPlatformClient,
 ): GenerateExtensionTemplateOptions {
   return {
     app,
     cloneUrl: options.cloneUrl,
     extensionChoices: promptAnswers.extensionContent,
     extensionTemplate: promptAnswers.extensionTemplate,
+    developerPlatformClient,
   }
 }
 

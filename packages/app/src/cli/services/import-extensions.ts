@@ -71,6 +71,7 @@ export async function importExtensions(options: ImportOptions) {
       app: remoteApp.apiKey,
     },
     command: 'deploy',
+    developerPlatformClient,
   })
 }
 

@@ -452,7 +452,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app, identifiers, command: 'deploy'}),
+    app: await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient}),
   }
 
   const result: DeployContextOutput = {
@@ -611,7 +611,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release'}),
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release', developerPlatformClient}),
   }
   const result = {
     app: options.app,
