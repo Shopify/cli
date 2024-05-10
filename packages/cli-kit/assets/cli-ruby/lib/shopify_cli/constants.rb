@@ -91,7 +91,7 @@ module ShopifyCLI
     end
 
     module Links
-      NEW_ISSUE = "https://github.com/Shopify/shopify-cli/issues/new"
+      NEW_ISSUE = "https://github.com/Shopify/cli/issues/new"
     end
 
     module Extension
