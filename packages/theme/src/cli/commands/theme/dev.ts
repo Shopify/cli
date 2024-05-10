@@ -8,6 +8,8 @@ import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {render} from '../../utilities/remote-renderer.js'
+import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -139,11 +141,30 @@ You can run this command only in a directory that matches the [default Shopify t
    * Every 110 minutes, it will refresh the session token.
    */
   async run(): Promise<void> {
-    showEmbeddedCLIWarning()
-    showDeprecationWarnings(this.argv)
-
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
+
+    const themeAccessPassword = flags.password
+
+    // TOOD: Currently, this doesn't work for development stores (I need to slighly change the platform to make this happen)
+    await render(
+      // Auth ctx
+      {
+        storeFqdn: store,
+        storefrontPassword: 'snow',
+        themeAccessPassword: flags.password, // This is only necessary if you're using the theme access app
+      },
+      // Rendering ctx
+      {
+        themeId: '163213869078',
+        templates: {},
+        section_id: 'sections--21614098907158__announcement-bar',
+      },
+    )
+
+    return
+    showEmbeddedCLIWarning()
+    showDeprecationWarnings(this.argv)
 
     const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
 

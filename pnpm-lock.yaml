@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -1700,23 +1700,21 @@ packages:
     dependencies:
       '@babel/types': 7.23.9
       '@jridgewell/gen-mapping': 0.3.3
-      '@jridgewell/trace-mapping': 0.3.20
+      '@jridgewell/trace-mapping': 0.3.18
       jsesc: 2.5.2
-    dev: false
-    optional: true
 
   /@babel/helper-annotate-as-pure@7.22.5:
     resolution: {integrity: sha512-LvBTxu8bQSQkcyKOU+a1btnNFQ1dMAd0R6PyW3arXes06F6QLWLIrd681bxRPIXlrMGR3XYnW9JyML7dP3qgxg==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
     dev: true
 
   /@babel/helper-builder-binary-assignment-operator-visitor@7.22.5:
     resolution: {integrity: sha512-m1EP3lVOPptR+2DwD125gziZNcmoNSHGmJROKoy87loWUQyJaVXDgpmruWqDARZSmtYQ+Dl25okU8+qhVzuykw==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
     dev: true
 
   /@babel/helper-compilation-targets@7.22.15:
@@ -1782,27 +1780,27 @@ packages:
     resolution: {integrity: sha512-OErEqsrxjZTJciZ4Oo+eoZqeW9UIiOcuYKRJA4ZAgV9myA+pOXhhmpfNCKjEH/auVfEYVFJ6y1Tc4r0eIApqiw==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/template': 7.22.15
-      '@babel/types': 7.23.5
+      '@babel/template': 7.23.9
+      '@babel/types': 7.23.9
 
   /@babel/helper-hoist-variables@7.22.5:
     resolution: {integrity: sha512-wGjk9QZVzvknA6yKIUURb8zY3grXCcOZt+/7Wcy8O2uctxhplmUPkOdlgoNhmdVee2c92JXbf1xpMtVNbfoxRw==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
 
   /@babel/helper-member-expression-to-functions@7.22.5:
     resolution: {integrity: sha512-aBiH1NKMG0H2cGZqspNvsaBe6wNGjbJjuLy29aU+eDZjSbbN53BaxlpB02xm9v34pLTZ1nIQPFYn2qMZoa5BQQ==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
     dev: true
 
   /@babel/helper-module-imports@7.22.15:
     resolution: {integrity: sha512-0pYVBnDKZO2fnSPCrgM/6WMc7eS20Fbok+0r88fp+YtWVLZrp4CkafFGIp+W0VKw4a22sgebPT99y+FDNMdP4w==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
 
   /@babel/helper-module-transforms@7.23.3(@babel/core@7.23.5):
     resolution: {integrity: sha512-7bBs4ED9OmswdfDzpz4MpWgSrV7FXlc3zIagvLFjS5H+Mk7Snr21vQ6QwrsoCGMfNC4e4LQPdoULEt4ykz0SRQ==}
@@ -1821,7 +1819,7 @@ packages:
     resolution: {integrity: sha512-HBwaojN0xFRx4yIvpwGqxiV2tUfl7401jlok564NgB9EHS1y6QT17FmKWm4ztqjeVdXLuC4fSvHc5ePpQjoTbw==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
     dev: true
 
   /@babel/helper-plugin-utils@7.21.5:
@@ -1862,20 +1860,20 @@ packages:
     resolution: {integrity: sha512-n0H99E/K+Bika3++WNL17POvo4rKWZ7lZEp1Q+fStVbUi8nxPQEBOlTmCOxW/0JsS56SKKQ+ojAe2pHKJHN35w==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
 
   /@babel/helper-skip-transparent-expression-wrappers@7.22.5:
     resolution: {integrity: sha512-tK14r66JZKiC43p8Ki33yLBVJKlQDFoA8GYN67lWCDCqoL6EMMSuM9b+Iff2jHaM/RRFYl7K+iiru7hbRqNx8Q==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
     dev: true
 
   /@babel/helper-split-export-declaration@7.22.6:
     resolution: {integrity: sha512-AsUnxuLhRYsisFiaJwvp1QF+I3KjD5FOxut14q/GzovUe6orHLesW2C7d754kRm53h5gqrz6sFl6sxc4BVtE/g==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
 
   /@babel/helper-string-parser@7.23.4:
     resolution: {integrity: sha512-803gmbQdqwdf4olxrX4AJyFBV/RTr3rSmOj0rKwesmzlfhYNDEs+/iOcznzpNWlJlIlTJC2QfPFcHB6DlzdVLQ==}
@@ -1894,17 +1892,17 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-function-name': 7.23.0
-      '@babel/template': 7.22.15
-      '@babel/types': 7.23.5
+      '@babel/template': 7.23.9
+      '@babel/types': 7.23.9
     dev: true
 
   /@babel/helpers@7.23.5:
     resolution: {integrity: sha512-oO7us8FzTEsG3U6ag9MfdF1iA/7Z6dz+MtFhifZk8C8o453rGJFFWUP1t+ULM9TUIAzC9uxXEiXjOiVMyd7QPg==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/template': 7.22.15
-      '@babel/traverse': 7.23.5
-      '@babel/types': 7.23.5
+      '@babel/template': 7.23.9
+      '@babel/traverse': 7.23.9
+      '@babel/types': 7.23.9
     transitivePeerDependencies:
       - supports-color
 
@@ -1930,8 +1928,6 @@ packages:
     requiresBuild: true
     dependencies:
       '@babel/types': 7.23.9
-    dev: false
-    optional: true
 
   /@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@7.22.5(@babel/core@7.23.5):
     resolution: {integrity: sha512-NP1M5Rf+u2Gw9qfSO4ihjcTGW5zXTi36ITLd4/EoAcEhIZ0yjMqmftDNl3QC19CX7olhrjpyU454g/2W7X0jvQ==}
@@ -2305,7 +2301,7 @@ packages:
     dependencies:
       '@babel/core': 7.23.5
       '@babel/helper-plugin-utils': 7.22.5
-      '@babel/template': 7.22.15
+      '@babel/template': 7.23.9
     dev: true
 
   /@babel/plugin-transform-destructuring@7.22.5(@babel/core@7.23.5):
@@ -2864,7 +2860,7 @@ packages:
       '@babel/plugin-transform-unicode-regex': 7.22.5(@babel/core@7.23.5)
       '@babel/plugin-transform-unicode-sets-regex': 7.22.5(@babel/core@7.23.5)
       '@babel/preset-modules': 0.1.5(@babel/core@7.23.5)
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
       babel-plugin-polyfill-corejs2: 0.4.5(@babel/core@7.23.5)
       babel-plugin-polyfill-corejs3: 0.8.3(@babel/core@7.23.5)
       babel-plugin-polyfill-regenerator: 0.5.2(@babel/core@7.23.5)
@@ -2883,7 +2879,7 @@ packages:
       '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-proposal-unicode-property-regex': 7.18.6(@babel/core@7.23.5)
       '@babel/plugin-transform-dotall-regex': 7.22.5(@babel/core@7.23.5)
-      '@babel/types': 7.23.5
+      '@babel/types': 7.23.9
       esutils: 2.0.3
     dev: true
 
@@ -2933,8 +2929,6 @@ packages:
       '@babel/code-frame': 7.23.5
       '@babel/parser': 7.23.9
       '@babel/types': 7.23.9
-    dev: false
-    optional: true
 
   /@babel/traverse@7.23.5:
     resolution: {integrity: sha512-czx7Xy5a6sapWWRx61m1Ke1Ra4vczu1mCTtJam5zRTBOonfdJ+S/B6HYmGYu3fJtr8GGET3si6IhgWVBhJ/m8w==}
@@ -2970,8 +2964,6 @@ packages:
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
-    dev: false
-    optional: true
 
   /@babel/types@7.23.5:
     resolution: {integrity: sha512-ON5kSOJwVO6xXVRTvOI0eOnWe7VdUcIpsovGo9U/Br4Ie4UVFQTboO2cYnDhAGU6Fp+UxSiT+pMft0SMHfuq6w==}
@@ -2989,8 +2981,6 @@ packages:
       '@babel/helper-string-parser': 7.23.4
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
-    dev: false
-    optional: true
 
   /@bugsnag/browser@7.21.0:
     resolution: {integrity: sha512-mJ6r6SXpts+hdSnDNmTR35lZ+95BthqXpgBrDwquDCoY++zQ4OuzrkA/HZYD/rfpdSpgb7lO+AAlD7qrd9IylA==}
@@ -4981,7 +4971,7 @@ packages:
       '@shopify/hydrogen-codegen': ^0.3.0
       '@shopify/mini-oxygen': ^3.0.1
       graphql-config: ^5.0.3
-      vite: 4.4.9
+      vite: ^5.1.0
     peerDependenciesMeta:
       '@graphql-codegen/cli':
         optional: true
@@ -5199,7 +5189,7 @@ packages:
     os: [darwin, linux, win32]
     hasBin: true
     peerDependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': ^3.15.1
       '@shopify/cli-kit': ^3.58.0
     dependencies:
       '@bugsnag/core': 7.19.0
@@ -6952,7 +6942,7 @@ packages:
       '@babel/core': 7.23.5
       '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.23.5)
-      '@babel/traverse': 7.23.5
+      '@babel/traverse': 7.23.9
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -9822,7 +9812,7 @@ packages:
     resolution: {integrity: sha512-rXckvqPBB0Krifk5rn/5LvQGmyXwCUpBfmTwbkQNBY9JY8RSl3b8OftBNEYxg4+SWUhEKcPifgope28uL9inlA==}
     engines: {node: '>=14.16'}
     peerDependencies:
-      '@types/react': 17.0.2
+      '@types/react': '>=18.0.0'
       react: '>=18.0.0'
       react-devtools-core: ^4.19.1
     peerDependenciesMeta:
@@ -14360,6 +14350,7 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
+    version: 3.47.0
     peerDependencies:
       eslint: ^8.48.0
     dependencies:

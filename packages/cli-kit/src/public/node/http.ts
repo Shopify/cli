@@ -8,7 +8,8 @@ import {debugLogResponseInfo} from '../../private/node/api.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
 
-export {FetchError} from 'node-fetch'
+export {FetchError, Request} from 'node-fetch'
+export default FormData
 
 /**
  * Create a new FormData object.
