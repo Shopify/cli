@@ -4,7 +4,6 @@ import {
   isTextFile,
   isThemeAsset,
   mountThemeFileSystem,
-  readThemeFile,
   partitionThemeFiles,
   readThemeFilesFromDisk,
 } from './theme-fs.js'
@@ -45,6 +44,7 @@ describe('theme-fs', () => {
         root,
         delete: expect.any(Function),
         write: expect.any(Function),
+        read: expect.any(Function),
       })
     })
 
@@ -61,6 +61,7 @@ describe('theme-fs', () => {
         root,
         delete: expect.any(Function),
         write: expect.any(Function),
+        read: expect.any(Function),
       })
     })
 
@@ -149,14 +150,15 @@ describe('theme-fs', () => {
     })
   })
 
-  describe('readThemeFile', () => {
+  describe('themeFileSystem.read', async () => {
     test('reads theme file when it exists', async () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
       const key = 'templates/404.json'
+      const themeFileSystem = await mountThemeFileSystem(root)
 
       // When
-      const content = await readThemeFile(root, key)
+      const content = await themeFileSystem.read(key)
       const contentJson = JSON.parse(content?.toString() || '')
 
       // Then
@@ -175,9 +177,10 @@ describe('theme-fs', () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
       const key = 'templates/invalid.json'
+      const themeFileSystem = await mountThemeFileSystem(root)
 
       // When
-      const content = await readThemeFile(root, key)
+      const content = await themeFileSystem.read(key)
 
       // Then
       expect(content).toBeUndefined()
@@ -187,9 +190,10 @@ describe('theme-fs', () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
       const key = 'assets/sparkle.gif'
+      const themeFileSystem = await mountThemeFileSystem(root)
 
       // When
-      const content = await readThemeFile(root, key)
+      const content = await themeFileSystem.read(key)
 
       // Then
       expect(content).toBeDefined()

@@ -73,6 +73,9 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       await writeThemeFile(root, asset)
       files.set(asset.key, asset)
     },
+    read: async (assetKey: string) => {
+      return readThemeFile(root, assetKey)
+    },
   }
 }
 

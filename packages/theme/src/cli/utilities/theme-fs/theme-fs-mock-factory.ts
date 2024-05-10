@@ -10,5 +10,8 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
     write: async (asset: ThemeAsset) => {
       files.set(asset.key, asset)
     },
+    read: async (assetKey: string) => {
+      return files.get(assetKey)?.value || files.get(assetKey)?.attachment
+    },
   }
 }
