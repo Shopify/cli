@@ -153,7 +153,7 @@ export async function deployConfirmed(
 }
 
 function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance) {
-  const remoteVersionConfig = remoteSource.activeVersion?.config ?? remoteSource.draftVersion?.config
+  const remoteVersionConfig = remoteSource.activeVersion?.config
   const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : {}
   const localConfig = extension.configuration as unknown as SingleWebhookSubscriptionType
   return remoteVersionConfigObj.topic === localConfig.topic && remoteVersionConfigObj.uri === localConfig.uri
