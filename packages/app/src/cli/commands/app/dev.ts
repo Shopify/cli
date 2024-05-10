@@ -42,6 +42,12 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
   static flags = {
     ...globalFlags,
     ...appFlags,
+    logs: Flags.boolean({
+      hidden: false,
+      description: 'Subscribe and poll app logs.',
+      default: false,
+      env: 'SHOPIFY_FLAG_LOGS',
+    }),
     'api-key': Flags.string({
       hidden: true,
       description: 'The API key of your app.',
@@ -178,6 +184,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      streamLogs: flags.logs,
     }
 
     await dev(devOptions)
