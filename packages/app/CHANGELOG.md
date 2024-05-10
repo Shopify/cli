@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.60.1
+
+### Patch Changes
+
+- cfe97ca8b: Fix issue when dev'ing flow extensions
+  - @shopify/create-app@3.60.1
+  - @shopify/cli-kit@3.60.1
+  - @shopify/plugin-cloudflare@3.60.1
+
 ## 3.60.0
 
 ### Minor Changes
