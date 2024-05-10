@@ -1,9 +1,9 @@
 /* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
 /* eslint-disable import/no-extraneous-dependencies */
-import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
 import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
+import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
@@ -26,6 +26,9 @@ const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 // Find theme-check-node's config yml files
 const themePath = require.resolve('@shopify/theme-check-node')
 const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
+
+const themeUpdaterPath = require.resolve('@shopify/theme-check-docs-updater')
+const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 
 esBuild({
   bundle: true,
@@ -73,6 +76,10 @@ esBuild({
         {
           from: [configYmlPath],
           to: ['./dist/configs/'],
+        },
+        {
+          from: [themeUpdaterDataPath],
+          to: ['./dist/data/'],
         },
       ],
     }),
