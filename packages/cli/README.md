@@ -336,12 +336,11 @@ Replays a function locally based on a FunctionRunEvent.
 
 ```
 USAGE
-  $ shopify app function replay [-c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose]
+  $ shopify app function replay [-c <value>] [-e <value>] [-j] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
   -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
-  -i, --input=<value>   The input JSON to pass to the function. This should be a json file read.
   -j, --json            Log the run result as a JSON object.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.

@@ -13,12 +13,6 @@ export interface appfunctionreplay {
   '-e, --export <value>'?: string
 
   /**
-   * The input JSON to pass to the function. This should be a json file read.
-   * @environment SHOPIFY_FLAG_INPUT
-   */
-  '-i, --input <value>'?: string
-
-  /**
    * Log the run result as a JSON object.
    * @environment SHOPIFY_FLAG_JSON
    */

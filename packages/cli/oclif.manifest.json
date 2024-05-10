@@ -815,15 +815,6 @@
           "name": "export",
           "type": "option"
         },
-        "input": {
-          "char": "i",
-          "description": "The input JSON to pass to the function. This should be a json file read.",
-          "env": "SHOPIFY_FLAG_INPUT",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "input",
-          "type": "option"
-        },
         "json": {
           "allowNo": false,
           "char": "j",

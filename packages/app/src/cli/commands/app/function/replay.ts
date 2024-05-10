@@ -20,11 +20,6 @@ export default class FunctionReplay extends Command {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
-    input: Flags.string({
-      char: 'i',
-      description: 'The input JSON to pass to the function. This should be a json file read.',
-      env: 'SHOPIFY_FLAG_INPUT',
-    }),
     export: Flags.string({
       char: 'e',
       hidden: false,
@@ -62,9 +57,9 @@ export default class FunctionReplay extends Command {
         configName: flags.config,
         callback: async (_app, ourFunction) => {
           await runFunctionRunner(ourFunction, {
-            json: true,
+            json: flags.json,
             input: inputPath,
-            export: 'run',
+            export: flags.export,
           })
         },
       })
