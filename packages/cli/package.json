@@ -105,17 +105,17 @@
     "@shopify/plugin-did-you-mean": "3.60.0",
     "@shopify/theme": "3.60.0",
     "esbuild": "0.19.8",
-    "zod-to-json-schema": "3.21.4",
+    "zod-to-json-schema": "3.23.0",
     "npm": "10.7.0"
   },
   "devDependencies": {
     "@shopify/app": "3.60.0",
     "@shopify/theme": "3.60.0",
-    "@types/node": "18.19.3",
-    "@vitest/coverage-istanbul": "^0.34.3",
+    "@types/node": "18.19.33",
+    "@vitest/coverage-istanbul": "^0.34.6",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1",
-    "vitest": "^0.34.3"
+    "vitest": "^0.34.6"
   },
   "engines": {
     "node": ">=18.12.0"
