@@ -5,6 +5,7 @@ import {
   isThemeAsset,
   mountThemeFileSystem,
   partitionThemeFiles,
+  readThemeFile,
   readThemeFilesFromDisk,
 } from './theme-fs.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -151,14 +152,37 @@ describe('theme-fs', () => {
   })
 
   describe('themeFileSystem.read', async () => {
-    test('reads theme file when it exists', async () => {
+    test('"read" returns returns the content from the local disk and updates the file map', async () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
       const key = 'templates/404.json'
       const themeFileSystem = await mountThemeFileSystem(root)
+      expect(themeFileSystem.files.get(key)).toEqual({
+        key: 'templates/404.json',
+        checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+      })
 
       // When
       const content = await themeFileSystem.read(key)
+
+      // Then
+      expect(themeFileSystem.files.get(key)).toEqual({
+        key: 'templates/404.json',
+        checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+        value: content,
+        attachment: '',
+      })
+    })
+  })
+
+  describe('readThemeFile', () => {
+    test('reads theme file when it exists', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+      const key = 'templates/404.json'
+
+      // When
+      const content = await readThemeFile(root, key)
       const contentJson = JSON.parse(content?.toString() || '')
 
       // Then
@@ -177,10 +201,9 @@ describe('theme-fs', () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
       const key = 'templates/invalid.json'
-      const themeFileSystem = await mountThemeFileSystem(root)
 
       // When
-      const content = await themeFileSystem.read(key)
+      const content = await readThemeFile(root, key)
 
       // Then
       expect(content).toBeUndefined()
@@ -190,10 +213,9 @@ describe('theme-fs', () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
       const key = 'assets/sparkle.gif'
-      const themeFileSystem = await mountThemeFileSystem(root)
 
       // When
-      const content = await themeFileSystem.read(key)
+      const content = await readThemeFile(root, key)
 
       // Then
       expect(content).toBeDefined()
