@@ -4,6 +4,7 @@ import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} f
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 
 const DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
@@ -74,7 +75,18 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       files.set(asset.key, asset)
     },
     read: async (assetKey: string) => {
-      return readThemeFile(root, assetKey)
+      const fileValue = await readThemeFile(root, assetKey)
+      const fileChecksum = await checksum(root, assetKey)
+      files.set(
+        assetKey,
+        buildThemeAsset({
+          key: assetKey,
+          value: typeof fileValue === 'string' ? fileValue : '',
+          checksum: fileChecksum,
+          attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
+        })!,
+      )
+      return fileValue
     },
   }
 }
