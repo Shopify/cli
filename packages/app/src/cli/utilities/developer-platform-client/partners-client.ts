@@ -319,7 +319,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsQuery, variables)
   }
 
-  async appVersionByTag(input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
+  async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionByTagSchema> {
+    const input: AppVersionByTagVariables = {apiKey, versionTag}
     return this.request(AppVersionByTagQuery, input)
   }
 

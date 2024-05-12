@@ -41,6 +41,11 @@ import {
   CreateAssetURLMutationSchema,
   CreateAssetURLMutationVariables,
 } from './shopify-developers-client/graphql/create-asset-url.js'
+import {
+  AppVersionByTagQuery,
+  AppVersionByTagQuerySchema,
+  AppVersionByTagQueryVariables,
+} from './shopify-developers-client/graphql/app-version-by-tag.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -78,7 +83,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionByTagSchema as AppVersionByTagSchemaInterface} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
@@ -363,31 +368,87 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         organizationId,
         title,
         appVersions: {
-          nodes: result.app.releases.map((release) => {
+          nodes: result.app.versions.map((version) => {
             return {
-              createdAt: release.releaseDate,
+              createdAt: '0',
               createdBy: {
-                displayName: release.releasedBy.name,
+                displayName: version.createdBy.name,
               },
-              versionTag: release.version.versionTag,
+              versionTag: version.versionTag,
               status: '',
               distributionPercentage: 0,
+              versionId: version.id,
             }
           }),
           pageInfo: {
-            totalResults: result.app.releases.length,
+            totalResults: result.app.versions.length,
           },
         },
       },
     }
   }
 
-  async appVersionByTag(_input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
-    throw new BugError('Not implemented: appVersions')
+  async appVersionByTag(
+    {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
+    tag: string,
+  ): Promise<AppVersionByTagSchemaInterface> {
+    const query = AppVersionsQuery
+    const variables: AppVersionsQueryVariables = {appId}
+    const result = await orgScopedShopifyDevelopersRequest<AppVersionsQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
+    if (!result.app) {
+      throw new AbortError(`App not found for API key: ${apiKey}`)
+    }
+    const version = result.app.versions.find((version) => version.versionTag === tag)
+    if (!version) {
+      throw new AbortError(`Version not found for tag: ${tag}`)
+    }
+
+    const query2 = AppVersionByTagQuery
+    const variables2: AppVersionByTagQueryVariables = {appId, versionId: version.id}
+    const result2 = await orgScopedShopifyDevelopersRequest<AppVersionByTagQuerySchema>(
+      organizationId,
+      query2,
+      await this.token(),
+      variables2,
+    )
+    const versionInfo = result2.app.version
+
+    return {
+      app: {
+        appVersion: {
+          id: parseInt(versionInfo.id, 10),
+          uuid: versionInfo.id,
+          versionTag: versionInfo.versionTag,
+          location: '',
+          message: '',
+          appModuleVersions: result2.app.version.modules.map((mod) => {
+            return {
+              registrationId: mod.gid,
+              registrationUid: mod.uid,
+              registrationUuid: mod.uid,
+              registrationTitle: mod.handle,
+              type: mod.specification.externalIdentifier,
+              config: JSON.stringify(mod.config),
+              specification: {
+                ...mod.specification,
+                identifier: mod.specification.externalIdentifier,
+                options: {managementExperience: 'cli'},
+                experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+              },
+            }
+          }),
+        },
+      },
+    }
   }
 
   async appVersionsDiff(_input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
-    throw new BugError('Not implemented: appVersions')
+    throw new BugError('Not implemented: appVersionsDiff')
   }
 
   async activeAppVersion({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {

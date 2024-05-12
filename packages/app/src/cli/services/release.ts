@@ -31,7 +31,7 @@ export async function release(options: ReleaseOptions) {
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
     developerPlatformClient,
-    remoteApp.apiKey,
+    remoteApp,
     options.version,
   )
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
