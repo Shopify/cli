@@ -1,6 +1,5 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {SpecsAppConfiguration} from './specifications/types/app_config.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../services/dev/fetch.js'
@@ -27,25 +26,13 @@ export interface CustomTransformationConfig {
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
-export interface SimplifyConfig {
-  /**
-   * If required, specs can transform a top-level app configuration object taken from remote modules.
-   *
-   * This is typically to simplify the remote config into an optimal format for local use.
-   *
-   * @param remoteConfig - The top-level app configuration object taken from remote modules
-   * @returns The transformed top-level app configuration object
-   */
-  simplifyMergedRemoteConfig?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
-}
-
 type ExtensionExperience = 'extension' | 'configuration'
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export type ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> = {
+export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -89,7 +76,7 @@ export type ExtensionSpecification<TConfiguration extends BaseConfigType = BaseC
   transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
 
   uidStrategy: UidStrategy
-} & SimplifyConfig
+}
 
 /**
  * Extension specification, explicitly marked as having taken remote configuration values into account.
@@ -149,7 +136,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     transform: spec.transformLocalToRemote,
     reverseTransform: spec.transformRemoteToLocal,
-    simplifyMergedRemoteConfig: spec.simplifyMergedRemoteConfig,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
@@ -169,7 +155,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   schema: zod.ZodObject<any>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
-  simplify?: SimplifyConfig
   uidStrategy?: UidStrategy
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
@@ -181,7 +166,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     appModuleFeatures,
     transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
-    simplifyMergedRemoteConfig: spec.simplify?.simplifyMergedRemoteConfig,
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
   })

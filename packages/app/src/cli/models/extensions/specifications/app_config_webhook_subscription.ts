@@ -1,4 +1,3 @@
-import {WebhookSimplifyConfig} from './app_config_webhook.js'
 import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
@@ -80,7 +79,6 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
   schema: SingleWebhookSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
-  simplify: WebhookSimplifyConfig,
   uidStrategy: 'dynamic',
 })
 
