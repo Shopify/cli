@@ -47,6 +47,7 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -264,14 +265,11 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
         },
       } as unknown as BaseConfigType)
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'app_access')!
-
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: './',
-    specification,
+    specification: appAccessSpec,
   })
 
   return extension
