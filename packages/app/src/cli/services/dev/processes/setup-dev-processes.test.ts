@@ -6,11 +6,15 @@ import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
+  testAppAccessConfigExtension,
+  testAppConfigExtensions,
   testAppWithConfig,
   testDeveloperPlatformClient,
+  testSingleWebhookSubscriptionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
+  testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -231,6 +235,109 @@ describe('setup-dev-processes', () => {
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,
         },
+      },
+    })
+  })
+
+  test('pushUpdatesForDraftableExtensions does not include config extensions except app_access', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      subscriptionProductUrl: '/products/999999',
+      checkoutCartUrl: '/cart/999999:1',
+      theme: '1',
+      directory: '',
+      reset: false,
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      noTunnel: false,
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
+    const draftable = await testTaxCalculationExtension()
+    const nonDraftableSingleUidStrategyExtension = await testAppConfigExtensions()
+    const draftableSingleUidStrategyExtension = await testAppAccessConfigExtension()
+    const webhookSubscriptionModuleExtension = await testSingleWebhookSubscriptionExtension()
+    const webhooksModuleExtension = await testWebhookExtensions()
+    const theme = await testThemeExtensions()
+    const localApp = testAppWithConfig({
+      config: {},
+      app: {
+        webs: [
+          {
+            directory: 'web',
+            configuration: {
+              roles: [WebType.Backend, WebType.Frontend],
+              commands: {dev: 'npm exec remix dev'},
+              webhooks_path: '/webhooks',
+              hmr_server: {
+                http_paths: ['/ping'],
+              },
+            },
+          },
+        ],
+        allExtensions: [
+          previewable,
+          draftable,
+          theme,
+          nonDraftableSingleUidStrategyExtension,
+          draftableSingleUidStrategyExtension,
+          webhookSubscriptionModuleExtension,
+          webhooksModuleExtension,
+        ],
+      },
+    })
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecret: 'api-secret',
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+    }
+
+    const graphiqlKey = 'somekey'
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey,
+    })
+
+    expect(res.processes[3]).toMatchObject({
+      type: 'draftable-extension',
+      prefix: 'extensions',
+      function: pushUpdatesForDraftableExtensions,
+      options: {
+        localApp,
+        apiKey: 'api-key',
+        developerPlatformClient,
+        extensions: expect.arrayContaining([draftable, theme, previewable, draftableSingleUidStrategyExtension]),
+        remoteExtensionIds: {},
+        proxyUrl: 'https://example.com/proxy',
       },
     })
   })

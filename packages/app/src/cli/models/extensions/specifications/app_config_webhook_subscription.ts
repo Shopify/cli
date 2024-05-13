@@ -1,8 +1,8 @@
 import {WebhookSimplifyConfig} from './app_config_webhook.js'
-import {WebhooksConfig} from './types/app_config_webhook.js'
-import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
+import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
 
@@ -16,50 +16,13 @@ interface TransformedWebhookSubscription {
   filter?: string
 }
 
-/* this transforms webhooks from the TOML config to be parsed remotely
-ie.
-  given:
-  {
-    webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['orders/delete', 'orders/create'],
-              uri: 'https://example.com/webhooks/orders',
-            },
-            {
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks/products',
-            },
-          ]
-      }
-  }
-  the function should return:
-  {
-    subscriptions: [
-      { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
-      { topic: 'orders/delete', uri: https://example.com/webhooks/orderss'},
-      { topic: 'orders/create', uri: 'https://example.com/webhooks/orders'},
-    ]
-  }
-  */
-function transformFromWebhookSubscriptionConfig(content: object) {
-  const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
-  if (!webhooks) return content
-
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const {api_version, subscriptions = []} = webhooks
-
-  const webhookSubscriptions = subscriptions.flatMap((subscription) => {
-    const {uri, topics, ...optionalFields} = subscription
-    if (topics)
-      return topics.map((topic) => {
-        return {api_version, uri, topic, ...optionalFields}
-      })
-  })
-
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
-}
+export const SingleWebhookSubscriptionSchema = zod.object({
+  topic: zod.string(),
+  api_version: zod.string(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
+  sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
+})
 
 /* this transforms webhooks remotely to be accepted by the TOML
 ie.
@@ -108,17 +71,16 @@ function transformToWebhookSubscriptionConfig(content: object) {
 }
 
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformFromWebhookSubscriptionConfig(content),
+  forward: (content: object) => content,
   reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
 }
 
 const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
-  schema: WebhooksSchema,
+  schema: SingleWebhookSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
   simplify: WebhookSimplifyConfig,
-  extensionManagedInToml: true,
-  multipleModuleConfigPath: 'subscriptions',
+  uidStrategy: 'dynamic',
 })
 
 export default appWebhookSubscriptionSpec

@@ -1,6 +1,8 @@
+/* eslint-disable no-case-declarations */
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {
   ExtensionBuildOptions,
   buildFlowTemplateExtension,
@@ -14,7 +16,7 @@ import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
@@ -122,10 +124,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.handle =
-      this.specification.experience === 'configuration'
-        ? slugify(this.specification.identifier)
-        : this.configuration.handle ?? slugify(this.configuration.name ?? '')
+    this.handle = this.buildHandle()
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
@@ -147,8 +146,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return {successMessage, errorMessage}
   }
 
-  isUuidManaged() {
-    return !this.isAppConfigExtension
+  get isUUIDStrategyExtension() {
+    return this.specification.uidStrategy === 'uuid'
+  }
+
+  get isSingleStrategyExtension() {
+    return this.specification.uidStrategy === 'single'
+  }
+
+  get isDynamicStrategyExtension() {
+    return this.specification.uidStrategy === 'dynamic'
   }
 
   isSentToMetrics() {
@@ -328,10 +335,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
 
-    const uuid = this.isUuidManaged()
+    const uuid = this.isUUIDStrategyExtension
       ? identifiers.extensions[this.localIdentifier]
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+
     return {...result, uuid}
+  }
+
+  private buildHandle() {
+    switch (this.specification.uidStrategy) {
+      case 'single':
+        return slugify(this.specification.identifier)
+      case 'uuid':
+        return this.configuration.handle ?? slugify(this.configuration.name ?? '')
+      case 'dynamic':
+        // Hardcoded temporal solution for webhooks
+        const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
+        const handle = `${subscription.topic}${subscription.uri}`
+        return hashString(handle).substring(0, 30)
+    }
   }
 }
 
