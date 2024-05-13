@@ -4,7 +4,7 @@ import {Writable} from 'stream'
 
 const generateFetchAppLogUrl = (cursor?: string) => {
   // TODO: not hardcode this
-  const url = 'xyz'
+  const url = 'https://partners.script-service-0s4r.mehdi-salemi.us.spin.dev/app_logs/poll'
   return url + (cursor ? `?cursor=${cursor}` : '')
 }
 
@@ -45,24 +45,31 @@ export const fetchAppLogs = async ({
 
   const data = (await response.json()) as {
     app_logs?: {
-      type: string
+      event_type: string
       shop_id: number
-      app_id: number
+      api_client_id: number
       event_timestamp: string
-      payload: AppLog
+      payload: string
+      status: string
+      log_timestamp: string
     }[]
     cursor?: string
     errors?: string[]
   }
 
-  console.log('data', data)
+  // console.log('data', data)
 
-  writeAppLogsToFile({
-    appLog: {
-      logs: 'Error occurred while fetching logs',
-    },
-    writePath: './runs',
-  })
+  // const payload = data?.app_logs?.map((log) => log.payload)
+  // const parsedPayload = payload?.map((log) => JSON.parse(log))
+  // console.log('parsedPayload', parsedPayload)
+
+  // writeAppLogsToFile({
+  //   appLog: {
+  //     logs: 'Error occurred while fetching logs',
+  //   },
+  //   writePath: './runs',
+  //   stdout,
+  // })
 
   if (data?.errors) {
     data?.errors?.forEach((error) => {
@@ -70,12 +77,15 @@ export const fetchAppLogs = async ({
     })
   } else if (data.app_logs) {
     const {app_logs: appLogs} = data
+    console.log('appLogs', appLogs)
     appLogs?.forEach((log) => {
       writeAppLogsToFile({
         appLog: log.payload,
         writePath: './runs',
+        stdout,
+        label: log.event_timestamp,
       })
-      functionOutput({log, stdout})
+      functionOutput({log: log.payload, stdout})
     })
   }
 
