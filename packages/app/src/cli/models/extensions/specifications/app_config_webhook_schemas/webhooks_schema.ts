@@ -20,6 +20,7 @@ const WebhooksConfigSchema = zod
     // Transform subscriptions from condensed state to expanded state (only 1 topic per subscription)
     const expandedSubscriptions = value.subscriptions?.flatMap((subscription) => {
       const {topics = [], ...otherFields} = subscription
+      if (topics.length === 0) return subscription
       return topics.map((topic) => {
         return {topics: [topic], ...otherFields}
       })
