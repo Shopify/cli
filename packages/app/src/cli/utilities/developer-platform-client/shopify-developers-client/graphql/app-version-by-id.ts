@@ -1,8 +1,8 @@
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
-export const AppVersionByTagQuery = gql`
-  query AppVersionByTag($appId: ID!, $versionId: ID!) {
+export const AppVersionByIdQuery = gql`
+  query AppVersionById($appId: ID!, $versionId: ID!) {
     app(id: $appId) {
       id
       version(versionId: $versionId) {
@@ -14,6 +14,7 @@ export const AppVersionByTagQuery = gql`
           handle
           config
           specification {
+            identifier
             externalIdentifier
             name
             experience
@@ -24,12 +25,13 @@ export const AppVersionByTagQuery = gql`
   }
 `
 
-export interface AppVersionByTagQueryVariables {
+export interface AppVersionByIdQueryVariables {
   appId: string
   versionId: string
 }
 
 interface AppModuleSpecification {
+  identifier: string
   externalIdentifier: string
   name: string
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
@@ -43,7 +45,7 @@ interface AppModule {
   specification: AppModuleSpecification
 }
 
-export interface AppVersionByTagQuerySchema {
+export interface AppVersionByIdQuerySchema {
   app: {
     id: string
     version: {

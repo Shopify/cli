@@ -42,10 +42,10 @@ import {
   CreateAssetURLMutationVariables,
 } from './shopify-developers-client/graphql/create-asset-url.js'
 import {
-  AppVersionByTagQuery,
-  AppVersionByTagQuerySchema,
-  AppVersionByTagQueryVariables,
-} from './shopify-developers-client/graphql/app-version-by-tag.js'
+  AppVersionByIdQuery,
+  AppVersionByIdQuerySchema,
+  AppVersionByIdQueryVariables,
+} from './shopify-developers-client/graphql/app-version-by-id.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -409,9 +409,9 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       throw new AbortError(`Version not found for tag: ${tag}`)
     }
 
-    const query2 = AppVersionByTagQuery
-    const variables2: AppVersionByTagQueryVariables = {appId, versionId: version.id}
-    const result2 = await orgScopedShopifyDevelopersRequest<AppVersionByTagQuerySchema>(
+    const query2 = AppVersionByIdQuery
+    const variables2: AppVersionByIdQueryVariables = {appId, versionId: version.id}
+    const result2 = await orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
       organizationId,
       query2,
       await this.token(),
@@ -448,13 +448,61 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  async appVersionsDiff(_input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
+  async appVersionsDiff(app: MinimalOrganizationApp, {versionId}: AppVersionIdentifiers): Promise<AppVersionsDiffSchema> {
+    const variables: AppVersionByIdQueryVariables = {appId: app.id, versionId}
+    const [currentVersion, selectedVersion] = await Promise.all([
+      this.activeAppVersion(app),
+      orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
+        app.organizationId,
+        AppVersionByIdQuery,
+        await this.token(),
+        variables,
+      )
+    ])
+    const currentModules = currentVersion.appModuleVersions
+    const selectedVersionModules = selectedVersion.app.version.modules
+    const currentModuleUids = currentModules.map(mod => mod.registrationUid!)
+    const selectedVersionModuleUids = selectedVersionModules.map(mod => mod.uid)
+    const removed = currentModules.filter(mod => !selectedVersionModuleUids.includes(mod.registrationUid!))
+    const added = selectedVersionModules.filter(mod => !currentModuleUids.includes(mod.uid!))
+    const addedUids = added.map(mod => mod.uid)
+    const updated = selectedVersionModules.filter(mod => !addedUids.includes(mod.uid!))
     return {
       app: {
         versionsDiff: {
-          added: [],
-          updated: [],
-          removed: [],
+          added: added.map(mod => ({
+            uuid: mod.uid,
+            registrationTitle: mod.handle,
+            specification: {
+              identifier: mod.specification.identifier,
+              experience: mod.specification.experience.toLowerCase(),
+              options: {
+                managementExperience: mod.specification.experience.toLowerCase(),
+              },
+            },
+          })),
+          updated: updated.map(mod => ({
+            uuid: mod.uid,
+            registrationTitle: mod.handle,
+            specification: {
+              identifier: mod.specification.identifier,
+              experience: mod.specification.experience.toLowerCase(),
+              options: {
+                managementExperience: mod.specification.experience.toLowerCase(),
+              },
+            },
+          })),
+          removed: removed.map(mod => ({
+            uuid: mod.registrationUid!,
+            registrationTitle: mod.registrationTitle,
+            specification: {
+              identifier: mod.specification!.identifier,
+              experience: mod.specification!.experience,
+              options: {
+                managementExperience: mod.specification!.experience,
+              },
+            },
+          })),
         },
       },
     }

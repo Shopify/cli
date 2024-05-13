@@ -325,8 +325,9 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionByTagQuery, input)
   }
 
-  async appVersionsDiff(input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
-    return this.request(AppVersionsDiffQuery, input)
+  async appVersionsDiff({apiKey}: MinimalOrganizationApp, {appVersionId}: AppVersionIdentifiers): Promise<AppVersionsDiffSchema> {
+    const variables: AppVersionsDiffVariables = {apiKey, versionId: appVersionId}
+    return this.request(AppVersionsDiffQuery, variables)
   }
 
   async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {

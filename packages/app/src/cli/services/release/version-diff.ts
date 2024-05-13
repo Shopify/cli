@@ -1,4 +1,4 @@
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppVersionByTagSchema} from '../../api/graphql/app_version_by_tag.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
@@ -14,13 +14,9 @@ export async function versionDiffByVersion(
   versionDetails: AppVersionByTagSchema['app']['appVersion']
 }> {
   const versionDetails = await versionDetailsByTag(app, versionTag, developerPlatformClient)
-  const input: AppVersionsDiffVariables = {
-    apiKey: app.apiKey,
-    versionId: versionDetails.id,
-  }
   const {
     app: {versionsDiff},
-  }: AppVersionsDiffSchema = await developerPlatformClient.appVersionsDiff(input)
+  }: AppVersionsDiffSchema = await developerPlatformClient.appVersionsDiff(app, {versionId: versionDetails.uuid, appVersionId: versionDetails.id})
 
   return {versionsDiff, versionDetails}
 }
