@@ -78,7 +78,7 @@ describe('release', () => {
     await testRelease(app, 'app-version', {developerPlatformClient})
 
     // Then
-    expect(developerPlatformClient.release).toHaveBeenCalledWith({apiKey: APP.apiKey, appVersionId: 1})
+    expect(developerPlatformClient.release).toHaveBeenCalledWith(APP, {appVersionId: 1, versionId: 'uuid'})
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
         {

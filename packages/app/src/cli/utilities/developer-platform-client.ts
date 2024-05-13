@@ -25,7 +25,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
+import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {AppVersionByTagSchema} from '../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
@@ -57,6 +57,11 @@ export type Paginateable<T> = T & {
 interface SelectDeveloperPlatformClientOptions {
   configuration?: AppConfiguration | undefined
   organization?: Organization
+}
+
+export interface AppVersionIdentifiers {
+  appVersionId: number
+  versionId: string
 }
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
@@ -157,7 +162,7 @@ export interface DeveloperPlatformClient {
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
-  release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
+  release: (app: MinimalOrganizationApp, versionDetails: AppVersionIdentifiers) => Promise<AppReleaseSchema>
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,
   ) => Promise<ConvertDevToTransferDisabledSchema>
