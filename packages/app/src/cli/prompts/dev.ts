@@ -25,7 +25,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 
 export async function selectRunPrompt(runs: MinimalRunEvent[]): Promise<MinimalRunEvent> {
   const toAnswer = (run: MinimalRunEvent) => {
-    return {label: run.payload.invocationId, value: run}
+    return {label: run.payload.function_id, value: run}
   }
 
   const runsList = runs.map(toAnswer)

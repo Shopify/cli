@@ -4,7 +4,7 @@ import {Writable} from 'stream'
 
 const generateFetchAppLogUrl = (cursor?: string) => {
   // TODO: not hardcode this
-  const url = 'https://partners.script-service-0s4r.mehdi-salemi.us.spin.dev/app_logs/poll'
+  const url = 'https://partners.script-service-3j1b.mehdi-salemi.us.spin.dev/app_logs/poll'
   return url + (cursor ? `?cursor=${cursor}` : '')
 }
 
@@ -19,6 +19,16 @@ export interface AppLog {
   output_bytes?: number
   invocation_id?: string
   function_id?: string
+}
+
+export interface AppEventData {
+  shop_id: number
+  api_client_id: number
+  payload: string
+  event_type: string
+  cursor: string
+  status: 'success' | 'failure'
+  log_timestamp: string
 }
 
 export const fetchAppLogs = async ({
@@ -44,18 +54,12 @@ export const fetchAppLogs = async ({
   }
 
   const data = (await response.json()) as {
-    app_logs?: {
-      event_type: string
-      shop_id: number
-      api_client_id: number
-      event_timestamp: string
-      payload: string
-      status: string
-      log_timestamp: string
-    }[]
+    app_logs?: AppEventData[]
     cursor?: string
     errors?: string[]
   }
+
+  // console.log('data', data)
 
   // console.log('data', data)
 
@@ -77,13 +81,13 @@ export const fetchAppLogs = async ({
     })
   } else if (data.app_logs) {
     const {app_logs: appLogs} = data
-    console.log('appLogs', appLogs)
+    // console.log('appLogs', appLogs)
     appLogs?.forEach((log) => {
       writeAppLogsToFile({
-        appLog: log.payload,
-        writePath: './runs',
+        appLog: log,
+        writePath: './ufo/extensions/product-discount/runs',
         stdout,
-        label: log.event_timestamp,
+        label: log.log_timestamp,
       })
       functionOutput({log: log.payload, stdout})
     })

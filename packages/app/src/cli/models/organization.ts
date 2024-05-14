@@ -27,7 +27,7 @@ export interface MinimalRunEvent {
   type: 'function-run'
   payload: {
     input: string
-    invocationId: string
+    function_id: string
   }
 }
 
