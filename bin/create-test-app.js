@@ -79,9 +79,11 @@ program
     const flavor = options.flavor || "javascript";
     const appPath = path.join(homeDir, "Desktop", appName);
 
+    if (options.global) {
       try {
         const { stdout } = await execa(os.platform() == "win32" ? "where.exe" : "which", ["shopify"])
         if (stdout !== "") {
+          // Need the user to uninstall manually because we don't know how it was installed (npm, brew, etc.)
           log(
             `Found existing global shopify: ${stdout}. Please uninstall and try again.`
           )
@@ -89,7 +91,6 @@ program
         }
       } catch (error) {}
 
-    if (options.global) {
       log("Installing @shopify/cli@nightly Globally via npm...")
       await execa(
         "npm",
