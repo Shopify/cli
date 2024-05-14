@@ -90,13 +90,6 @@ program
           process.exit(1)
         }
       } catch (error) {}
-
-      log("Installing @shopify/cli@nightly Globally via npm...")
-      await execa(
-        "npm",
-        ["install", "-g", "@shopify/cli@nightly"],
-        defaultOpts
-      )
     }
 
     switch (options.packageManager) {
@@ -123,6 +116,10 @@ program
     }
 
     const nodeExec = async (commands, args = [], options = {}) => {
+      if (commands[0] === "shopify" && options.global) {
+        commands.shift()
+        return execa("shopify", commands, options);
+      }
       switch (nodePackageManager) {
         case "yarn":
         case "pnpm":
@@ -151,11 +148,18 @@ program
     };
 
     const appDev = async () => {
-      await appExec(nodePackageManager, ["run", "dev"]);
+      await appNodeExec(["shopify", "app", "dev"], []);
     };
 
+    const installGlobally = async (packageManager, install) => {
+      if (packageManager === 'yarn') {
+        await execa("yarn", ["global", "add", `@shopify/cli@${install}`], defaultOpts);
+      }
+      await execa(packageManager, ["install", "-g", `@shopify/cli@${install}`], defaultOpts);
+    }
+
     const generateExtension = async (args, options = {}) => {
-      await appNodeExec(["generate", "extension"], args, options);
+      await appNodeExec(["shopify", "app", "generate", "extension"], args, options);
     };
 
     if (fs.existsSync(appPath)) {
@@ -198,44 +202,50 @@ program
       case "nightly":
       case "experimental":
         log(`Creating new app in '${appPath}'...`);
-        switch (nodePackageManager) {
-          case "yarn":
-            // yarn doesn't support 'create @shopify/app@nightly' syntax
-            await execa(
-              "npm",
-              [
-                "init",
-                `@shopify/app@${options.install}`,
-                "--package-manager=yarn",
-                "--",
-                ...initArgs
-              ],
-              defaultOpts
-            );
-            break;
-          case "pnpm":
-          case "bun":
-            await execa(
-              nodePackageManager,
-              [
-                "create",
-                `@shopify/app@${options.install}`,
-                ...initArgs
-              ],
-              defaultOpts
-            );
-            break;
-          case "npm":
-            await execa(
-              "npm",
-              [
-                "init",
-                `@shopify/app@${options.install}`,
-                "--",
-                ...initArgs
-              ],
-              defaultOpts
-            );
+        if (options.global) {
+          log(`Installing @shopify/cli@${options.install} Globally via ${nodePackageManager}...`)
+          await installGlobally(nodePackageManager, options.install)
+          await execa("shopify", ["app", "init", ...initArgs], defaultOpts)
+        } else {
+          switch (nodePackageManager) {
+            case "yarn":
+              // yarn doesn't support 'create @shopify/app@nightly' syntax
+              await execa(
+                "npm",
+                [
+                  "init",
+                  `@shopify/app@${options.install}`,
+                  "--package-manager=yarn",
+                  "--",
+                  ...initArgs
+                ],
+                defaultOpts
+              );
+              break;
+            case "pnpm":
+            case "bun":
+              await execa(
+                nodePackageManager,
+                [
+                  "create",
+                  `@shopify/app@${options.install}`,
+                  ...initArgs
+                ],
+                defaultOpts
+              );
+              break;
+            case "npm":
+              await execa(
+                "npm",
+                [
+                  "create",
+                  `@shopify/app@${options.install}`,
+                  "--",
+                  ...initArgs
+                ],
+                defaultOpts
+              );
+          }
         }
         break;
       default:
