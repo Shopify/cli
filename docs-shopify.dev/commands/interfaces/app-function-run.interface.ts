@@ -2,36 +2,43 @@
 export interface appfunctionrun {
   /**
    * The name of the app configuration.
+   * @environment SHOPIFY_FLAG_APP_CONFIG
    */
   '-c, --config <value>'?: string
 
   /**
    * Name of the wasm export to invoke.
+   * @environment SHOPIFY_FLAG_EXPORT
    */
   '-e, --export <value>'?: string
 
   /**
    * The input JSON to pass to the function. If omitted, standard input is used.
+   * @environment SHOPIFY_FLAG_INPUT
    */
   '-i, --input <value>'?: string
 
   /**
    * Log the run result as a JSON object.
+   * @environment SHOPIFY_FLAG_JSON
    */
   '-j, --json'?: ''
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The path to your function directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

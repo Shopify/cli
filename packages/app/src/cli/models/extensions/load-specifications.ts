@@ -3,6 +3,9 @@ import appHomeSpec, {AppHomeSpecIdentifier} from './specifications/app_config_ap
 import appProxySpec, {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
 import appPOSSpec, {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
 import appWebhooksSpec, {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
+import appWebhookSubscriptionSpec, {
+  WebhookSubscriptionSpecIdentifier,
+} from './specifications/app_config_webhook_subscription.js'
 import appBrandingSpec, {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
 import appPrivacyComplienceSpec, {
@@ -27,6 +30,7 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
   AppAccessSpecIdentifier,
   WebhooksSpecIdentifier,
+  WebhookSubscriptionSpecIdentifier,
   PrivacyComplianceWebhooksSpecIdentifier,
   AppProxySpecIdentifier,
   PosSpecIdentifier,
@@ -52,6 +56,7 @@ function loadSpecifications() {
     appPOSSpec,
     appPrivacyComplienceSpec,
     appWebhooksSpec,
+    appWebhookSubscriptionSpec,
   ]
   const moduleSpecs = [
     checkoutPostPurchaseSpec,

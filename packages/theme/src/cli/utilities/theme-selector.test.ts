@@ -2,7 +2,7 @@ import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemes} from './theme-selector.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {test, describe, vi, expect} from 'vitest'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('./theme-selector/fetch.js')
@@ -30,7 +30,7 @@ describe('findOrSelectTheme', () => {
     // Given
     const selectedTheme = storeThemes[0]
     vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
-    vi.mocked(renderSelectPrompt).mockResolvedValue(selectedTheme)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(selectedTheme)
 
     // When
     const theme = await findOrSelectTheme(session, {
@@ -47,7 +47,7 @@ describe('findOrSelectTheme', () => {
     const header = 'Select a theme to open'
     const themes = [theme(7, 'development'), theme(8, 'development')]
     vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
-    vi.mocked(renderSelectPrompt).mockResolvedValue(themes[0])
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(themes[0])
     vi.mocked(getDevelopmentTheme).mockReturnValue('7')
 
     // When
@@ -57,7 +57,7 @@ describe('findOrSelectTheme', () => {
     })
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: header,
       choices: [
         {group: 'Development', label: 'theme 7 [yours]', value: themes[0]},

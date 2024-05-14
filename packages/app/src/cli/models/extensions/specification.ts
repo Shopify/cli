@@ -32,6 +32,7 @@ export interface SimplifyConfig {
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
+type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -64,6 +65,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   transform?: (content: object) => object
   reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
   simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
+  uidStrategy: UidStrategy
 }
 
 /**
@@ -118,6 +120,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.reverseTransform,
     simplify: spec.simplify,
     experience: spec.experience ?? 'extension',
+    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
   return {...defaults, ...spec}
 }
@@ -136,6 +139,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   simplify?: SimplifyConfig
+  uidStrategy?: UidStrategy
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -148,6 +152,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     simplify: resolveSimplifyAppConfig(spec.simplify),
     experience: 'configuration',
+    uidStrategy: spec.uidStrategy ?? 'single',
   })
 }
 

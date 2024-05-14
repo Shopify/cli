@@ -46,7 +46,10 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {vi} from 'vitest'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -246,6 +249,32 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   return extension
 }
 
+export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        access: {
+          admin: {direct_api_mode: 'online'},
+        },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      } as unknown as BaseConfigType)
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: 'shopify.app.toml',
+    directory: './',
+    specification: appAccessSpec,
+  })
+
+  return extension
+}
+
 export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'Payment Extension Name',
@@ -327,32 +356,28 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
 }
 
-export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
-  const configuration = {
-    name: 'web pixel name',
-    type: 'web_pixel' as const,
-    metafields: [],
-    runtime_context: 'strict',
-    customer_privacy: {
-      analytics: false,
-      marketing: true,
-      preferences: false,
-      sale_of_data: 'enabled',
-    },
-    settings: [],
-  }
+export async function testSingleWebhookSubscriptionExtension({
+  emptyConfig = false,
+  topic = 'orders/delete',
+} = {}): Promise<ExtensionInstance> {
+  // configuration should be a single webhook subscription because of how
+  // we create the extension instances in loader
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        topic,
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks',
+      } as unknown as BaseConfigType)
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
-  const parsed = specification.schema.parse(configuration)
-  const extension = new ExtensionInstance({
-    configuration: parsed,
+  const webhooksExtension = new ExtensionInstance({
+    configuration,
     configurationPath: '',
-    directory,
-    specification,
+    directory: './',
+    specification: appWebhookSubscriptionSpec,
   })
 
-  return extension
+  return webhooksExtension
 }
 
 export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
@@ -440,6 +465,42 @@ export async function testFunctionExtension(
     specification,
   })
   return extension
+}
+
+interface EditorExtensionCollectionProps {
+  directory?: string
+  configuration: {
+    name: string
+    handle?: string
+    includes?: string[]
+    include?: {handle: string}[]
+  }
+}
+
+export async function testEditorExtensionCollection({
+  directory,
+  configuration: passedConfig,
+}: EditorExtensionCollectionProps) {
+  const resolvedDir = directory ?? '/tmp/project/extensions/editor-extension-collection'
+  const configurationPath = joinPath(
+    resolvedDir ?? '/tmp/project/extensions/editor-extension-collection',
+    'shopify.extension.toml',
+  )
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'editor_extension_collection')!
+  const configuration = specification.schema.parse({
+    ...passedConfig,
+    type: 'editor_extension_collection',
+    metafields: [],
+  })
+
+  return new ExtensionInstance({
+    configuration,
+    directory: resolvedDir,
+    specification,
+    configurationPath,
+    entryPath: '',
+  })
 }
 
 interface TestPaymentsAppExtensionOptions {
@@ -593,6 +654,18 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       argo: {
         surface: 'checkout',
       },
+    },
+  },
+  {
+    name: 'Editor extension collection',
+    externalName: 'Editor extension collection',
+    identifier: 'editor_extension_collection',
+    externalIdentifier: 'editor_extension_collection_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 100,
     },
   },
 ]
@@ -989,5 +1062,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
 }

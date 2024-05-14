@@ -1,5 +1,7 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 
+export const MAX_EXTENSION_HANDLE_LENGTH = 30
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZodSchemaType<T> = zod.ZodType<T, any, any>
 
@@ -29,6 +31,7 @@ const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
   metafields: zod.array(MetafieldSchema).optional(),
+  default_placement_reference: zod.string().optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
@@ -53,7 +56,7 @@ const HandleSchema = zod
   .string()
   .trim()
   .nonempty("Handle can't be empty")
-  .max(30, "Handle can't exceed 30 characters")
+  .max(MAX_EXTENSION_HANDLE_LENGTH, `Handle can't exceed ${MAX_EXTENSION_HANDLE_LENGTH} characters`)
   .regex(/^[a-zA-Z0-9-]*$/, 'Handle can only contain alphanumeric characters and hyphens')
   .refine((handle) => !handle.startsWith('-') && !handle.endsWith('-'), "Handle can't start or end with a hyphen")
   .refine((handle) => [...handle].some((char) => char !== '-'), "Handle can't be all hyphens")

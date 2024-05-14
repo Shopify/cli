@@ -94,8 +94,13 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   const {startCommand, startArgs, startTime} = commandStartOptions
   const currentTime = new Date().getTime()
 
-  const {'@shopify/app': appPublic, ...otherPluginsPublic} = await fanoutHooks(config, 'public_command_metadata', {})
-  const {'@shopify/app': appSensitive, ...otherPluginsSensitive} = await fanoutHooks(
+  // All bundled plugins appear as `@shopify/cli` in the payload
+  const {'@shopify/cli': internalPluginsPublic, ...externalPluginsPublic} = await fanoutHooks(
+    config,
+    'public_command_metadata',
+    {},
+  )
+  const {'@shopify/cli': internalPluginsSensitive, ...externalPluginsSensitive} = await fanoutHooks(
     config,
     'sensitive_command_metadata',
     {},
@@ -129,7 +134,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       node_version: process.version.replace('v', ''),
       is_employee: await isShopify(),
       ...environmentData,
-      ...appPublic,
+      ...internalPluginsPublic,
       ...publicMetadata,
       cmd_all_timing_active_ms: totalTimeWithoutSubtimers,
       cmd_all_exit: exitMode,
@@ -138,14 +143,14 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       args: startArgs.join(' '),
       cmd_all_environment_flags: environmentFlags,
       error_message: errorMessage,
-      ...appSensitive,
+      ...internalPluginsSensitive,
       ...sensitiveEnvironmentData,
       metadata: JSON.stringify({
         ...sensitiveMetadata,
         extraPublic: {
-          ...otherPluginsPublic,
+          ...externalPluginsPublic,
         },
-        extraSensitive: {...otherPluginsSensitive},
+        extraSensitive: {...externalPluginsSensitive},
       }),
     },
   }

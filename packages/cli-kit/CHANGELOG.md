@@ -1,5 +1,21 @@
 # @shopify/cli-kit
 
+## 3.60.0
+
+### Minor Changes
+
+- 0ff96c777: Introduce `.json` support for theme app extensions
+
+## 3.59.0
+
+### Minor Changes
+
+- ca218cd31: Shopify CLI now defaults to be Global
+
+### Patch Changes
+
+- ca218cd31: Add an optional parameter to getAvailableTCPPort for the preferred port number
+
 ## 3.58.0
 
 ### Minor Changes

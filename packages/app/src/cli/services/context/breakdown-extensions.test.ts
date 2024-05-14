@@ -22,6 +22,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
@@ -63,9 +64,9 @@ const MODULE_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
   registrationTitle: 'Checkout post purchase',
-  type: 'post_purchase_ui_extension',
+  type: 'checkout_post_purchase',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_post_purchase',
     name: 'Post purchase UI extension',
     experience: 'extension',
     options: {
@@ -78,9 +79,9 @@ const MODULE_DASHBOARD_MIGRATED_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
   registrationTitle: 'Checkout post purchase',
-  type: 'post_purchase_ui_extension',
+  type: 'checkout_post_purchase',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_post_purchase',
     name: 'Post purchase UI extension',
     experience: 'extension',
     options: {
@@ -138,9 +139,9 @@ const MODULE_DELETED_CLI_B: AppModuleVersion = {
   registrationId: 'B',
   registrationUuid: 'UUID_B',
   registrationTitle: 'Checkout post purchase Deleted B',
-  type: 'post_purchase_ui_extension',
+  type: 'checkout_post_purchase',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_post_purchase',
     name: 'Post purchase UI extension',
     experience: 'extension',
     options: {
@@ -177,7 +178,7 @@ const VERSION_DIFF_CLI_A: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_B',
   registrationTitle: 'Checkout post purchase',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_post_purchase',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -189,7 +190,7 @@ const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_A',
   registrationTitle: 'Checkout post purchase Deleted B',
   specification: {
-    identifier: 'post_purchase_ui_extension',
+    identifier: 'checkout_post_purchase',
     experience: 'extension',
     options: {
       managementExperience: 'cli',
@@ -223,7 +224,7 @@ const LOCAL_APP = async (
     directory: '/app',
     configuration,
     allExtensions: [...uiExtensions, await testAppConfigExtensions()],
-    specifications: versionSchema.configSpecifications,
+    specifications: await loadLocalExtensionsSpecifications(),
     configSchema: versionSchema.schema,
   })
 

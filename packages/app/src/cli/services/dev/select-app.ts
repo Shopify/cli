@@ -34,7 +34,9 @@ export async function selectOrCreateApp(
     const name = await appNamePrompt(localAppName)
     return developerPlatformClient.createApp(org, name, options)
   } else {
-    const app = await selectAppPrompt(apps, hasMorePages, org.id, {directory: options?.directory})
+    const app = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id, {
+      directory: options?.directory,
+    })
 
     const data = getCachedCommandInfo()
     const tomls = (data?.tomls as {[key: string]: unknown}) ?? {}

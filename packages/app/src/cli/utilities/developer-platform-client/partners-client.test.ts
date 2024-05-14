@@ -64,7 +64,7 @@ describe('createApp', () => {
     })
 
     // Then
-    expect(got).toEqual({...APP1, newApp: true})
+    expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
@@ -86,7 +86,7 @@ describe('createApp', () => {
     const got = await partnersClient.createApp(ORG1, LOCAL_APP.name, {isLaunchable: false})
 
     // Then
-    expect(got).toEqual({...APP1, newApp: true})
+    expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 

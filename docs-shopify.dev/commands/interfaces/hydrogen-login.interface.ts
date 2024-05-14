@@ -2,11 +2,13 @@
 export interface hydrogenlogin {
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
+   * @environment SHOPIFY_SHOP
    */
   '-s, --shop <value>'?: string
 }

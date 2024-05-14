@@ -48,7 +48,7 @@ beforeEach(() => {
 describe('theme-uploader', () => {
   const remoteTheme = {id: 1, name: '', createdAtRuntime: false, processing: false, role: ''}
   const adminSession = {token: '', storeFqdn: ''}
-  const uploadOptions = {nodelete: false, path: 'tmp'}
+  const uploadOptions = {nodelete: false}
 
   test("should delete files that don't exist locally from remote theme", async () => {
     // Given
@@ -145,6 +145,41 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+  })
+
+  test('should delete files in correct order', async () => {
+    // Given
+    const remoteChecksums: Checksum[] = [
+      {key: 'templates/product.context.uk.json', checksum: '1'},
+      {key: 'templates/product.json', checksum: '2'},
+      {key: 'sections/header-group.json', checksum: '3'},
+      {key: 'templates/index.liquid', checksum: '4'},
+      {key: 'assets/liquid.liquid', checksum: '5'},
+      {key: 'config/settings_data.json', checksum: '6'},
+      {key: 'assets/image.png', checksum: '7'},
+    ]
+    const themeFileSystem = {
+      root: 'tmp',
+      files: new Map([]),
+    } as ThemeFileSystem
+
+    // When
+    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+
+    // Then
+    expect(deleteThemeAsset).toHaveBeenCalledTimes(7)
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(
+      1,
+      remoteTheme.id,
+      'templates/product.context.uk.json',
+      adminSession,
+    )
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(2, remoteTheme.id, 'templates/product.json', adminSession)
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(3, remoteTheme.id, 'sections/header-group.json', adminSession)
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(4, remoteTheme.id, 'templates/index.liquid', adminSession)
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(5, remoteTheme.id, 'assets/liquid.liquid', adminSession)
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(6, remoteTheme.id, 'config/settings_data.json', adminSession)
+    expect(deleteThemeAsset).toHaveBeenNthCalledWith(7, remoteTheme.id, 'assets/image.png', adminSession)
   })
 
   test('should separate files by type and upload in correct order', async () => {

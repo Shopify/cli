@@ -9,8 +9,8 @@ runs:
   steps:
     - name: Set Git configuration
       run: |
-        git config --global user.email "cli-foundations@shopify.com"
-        git config --global user.name "CLI Foundations"
+        git config --global user.email "app-management@shopify.com"
+        git config --global user.name "App Management"
       shell: bash
     - name: Install pnpm
       uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # pin@v2.2.4

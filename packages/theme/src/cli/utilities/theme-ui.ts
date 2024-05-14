@@ -1,5 +1,5 @@
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Task, renderConfirmationPrompt, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function themeComponent(theme: Theme) {
   return [
@@ -30,4 +30,11 @@ export async function currentDirectoryConfirmed(force: boolean) {
   return renderConfirmationPrompt({
     message: 'Do you want to proceed?',
   })
+}
+
+// This prevents the progress bar from polluting stdout (important for pipe operations)
+export async function renderTasksToStdErr(tasks: Task[]) {
+  if (tasks.length > 0) {
+    await renderTasks(tasks, {renderOptions: {stdout: process.stderr}})
+  }
 }
