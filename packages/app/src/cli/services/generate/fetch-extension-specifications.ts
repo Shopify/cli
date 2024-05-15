@@ -1,6 +1,6 @@
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
@@ -23,7 +23,7 @@ interface FetchSpecificationsOptions {
 export async function fetchSpecifications({
   developerPlatformClient,
   apiKey,
-}: FetchSpecificationsOptions): Promise<ExtensionSpecification[]> {
+}: FetchSpecificationsOptions): Promise<RemoteAwareExtensionSpecification[]> {
   const result: RemoteSpecification[] = await developerPlatformClient.specifications(apiKey)
 
   const extensionSpecifications: FlattenedRemoteSpecification[] = result
@@ -51,12 +51,12 @@ export async function fetchSpecifications({
 function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
-): ExtensionSpecification[] {
+): RemoteAwareExtensionSpecification[] {
   const updated = local.map((spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
+    if (remoteSpec) return {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification
     return undefined
   })
 
-  return getArrayRejectingUndefined<ExtensionSpecification>(updated)
+  return getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(updated)
 }
