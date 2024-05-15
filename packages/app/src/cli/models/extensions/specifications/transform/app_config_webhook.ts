@@ -30,28 +30,50 @@ export function transformToWebhookConfig(content: object) {
   })
   const webhooksSubscriptions: WebhooksConfig['subscriptions'] = mergeAllWebhooks(subscriptions)
 
-  const webhooksSubscriptionsObject = webhooksSubscriptions.length > 0 ? {subscriptions: webhooksSubscriptions} : {}
+  const webhooksSubscriptionsObject = webhooksSubscriptions ? {subscriptions: webhooksSubscriptions} : {}
   return deepMergeObjects(webhooks, {webhooks: webhooksSubscriptionsObject})
 }
 
-export function mergeAllWebhooks(subscriptions: WebhookSubscription[]): WebhookSubscription[] {
+export function mergeAllWebhooks(subscriptions: WebhookSubscription[]): WebhookSubscription[] | undefined {
+  if (subscriptions.length === 0) return
+  const topicSubscriptions = subscriptions
+    .filter((subscription) => subscription.topics !== undefined)
+    .map((subscription) => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const {compliance_topics, ...rest} = subscription
+      return rest
+    })
+  const complianceSubscriptions = subscriptions
+    .filter((subscription) => subscription.compliance_topics !== undefined)
+    .map((subscription) => {
+      const {topics, ...rest} = subscription
+      return rest
+    })
+
+  const mergedTopicSubscriptions = reduceByProperty(topicSubscriptions, 'topics')
+  const mergedComplianceSubscriptions = reduceByProperty(complianceSubscriptions, 'compliance_topics')
+
+  return [...mergedTopicSubscriptions, ...mergedComplianceSubscriptions]
+}
+
+function findSubscription(subscriptions: WebhookSubscription[], subscription: WebhookSubscription) {
+  return subscriptions.find(
+    (sub) =>
+      sub.uri === subscription.uri &&
+      sub.sub_topic === subscription.sub_topic &&
+      deepCompare(sub.include_fields ?? [], subscription.include_fields ?? []) &&
+      sub.filter === subscription.filter,
+  )
+}
+
+function reduceByProperty(
+  subscriptions: WebhookSubscription[],
+  property: keyof Pick<WebhookSubscription, 'topics' | 'compliance_topics'>,
+) {
   return subscriptions.reduce((accumulator, subscription) => {
-    const existingSubscription = accumulator.find(
-      (sub) =>
-        sub.uri === subscription.uri &&
-        sub.sub_topic === subscription.sub_topic &&
-        deepCompare(sub.include_fields ?? [], subscription.include_fields ?? []) &&
-        sub.filter === subscription.filter,
-    )
-    if (existingSubscription) {
-      if (subscription.compliance_topics) {
-        existingSubscription.compliance_topics ??= []
-        existingSubscription.compliance_topics.push(...subscription.compliance_topics)
-      }
-      if (subscription.topics) {
-        existingSubscription.topics ??= []
-        existingSubscription.topics.push(...subscription.topics)
-      }
+    const existingSubscription = findSubscription(accumulator, subscription)
+    if (existingSubscription && subscription[property]) {
+      ;(existingSubscription[property] ?? []).push(...(subscription[property] ?? []))
     } else {
       accumulator.push(subscription)
     }
