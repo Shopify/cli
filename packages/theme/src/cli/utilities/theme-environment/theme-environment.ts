@@ -1,5 +1,4 @@
-import {uploadTheme} from './theme-uploader.js'
-import {initializeThemeEditorSync} from './theme-environment/asset-file-syncer.js'
+import {uploadTheme} from '../theme-uploader.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
@@ -21,9 +20,7 @@ export async function startDevServer(theme: Theme, ctx: DevServerContext, onRead
 }
 
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
-  if (ctx.themeEditorSync) {
-    await initializeThemeEditorSync(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem)
-  } else {
+  if (!ctx.themeEditorSync) {
     await uploadTheme(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem, {})
   }
 }

@@ -1,12 +1,10 @@
-import {uploadTheme} from './theme-uploader.js'
 import {DevServerContext, startDevServer} from './theme-environment.js'
-import {initializeThemeEditorSync} from './theme-environment/asset-file-syncer.js'
+import {uploadTheme} from '../theme-uploader.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
-vi.mock('./asset-file-syncer.js')
 vi.mock('./theme-uploader.js')
 
 describe('startDevServer', () => {
@@ -33,7 +31,7 @@ describe('startDevServer', () => {
     expect(uploadTheme).toHaveBeenCalled()
   })
 
-  test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
+  test('should not upload the development theme to remote if themeEditorSync is true', async () => {
     // Given
     const context = {...defaultServerContext, themeEditorSync: true}
 
@@ -41,7 +39,6 @@ describe('startDevServer', () => {
     await startDevServer(developmentTheme, context, () => {})
 
     // Then
-    expect(initializeThemeEditorSync).toHaveBeenCalled()
     expect(uploadTheme).not.toHaveBeenCalled()
   })
 })

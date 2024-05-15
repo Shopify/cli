@@ -1,6 +1,6 @@
 import {LOCAL_STRATEGY, REMOTE_STRATEGY, initializeThemeEditorSync} from './asset-file-syncer.js'
-import {uploadTheme} from './theme-uploader.js'
-import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {uploadTheme} from '../theme-uploader.js'
+import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
