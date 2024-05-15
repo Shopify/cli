@@ -101,25 +101,15 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const appModules: BundleConfigWithSpecificationIdentifier[] = getArrayRejectingUndefined(
-              await Promise.all(
-                app.allExtensions.flatMap(async (ext): Promise<BundleConfigWithSpecificationIdentifier | undefined> => {
-                  const bundleConfig = await ext.bundleConfig({identifiers, developerPlatformClient, apiKey})
-                  if (bundleConfig) {
-                    return {
-                      ...bundleConfig,
-                      specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(ext.graphQLType),
-                    }
-                  }
-                }),
-              ),
+            const appModules = await Promise.all(
+              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, developerPlatformClient, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
               apiKey,
               organizationId: remoteApp.organizationId,
               bundlePath,
-              appModules,
+              appModules: getArrayRejectingUndefined(appModules),
               release,
               developerPlatformClient,
               extensionIds: identifiers.extensionIds,

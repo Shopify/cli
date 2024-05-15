@@ -944,7 +944,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    specifications: (_appId: string) => Promise.resolve(testRemoteSpecifications),
+    specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
     templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
@@ -980,7 +980,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     toExtensionGraphQLType: (input: string) => input,
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = {}
+  const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi

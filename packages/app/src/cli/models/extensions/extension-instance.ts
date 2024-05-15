@@ -339,7 +339,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
     const uid = this.isUuidManaged() ? this.uid : uuid
 
-    return {...result, uid, uuid}
+    return {
+      ...result,
+      uid,
+      uuid,
+      specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(this.graphQLType),
+    }
   }
 }
 
@@ -360,4 +365,5 @@ export interface BundleConfig {
   handle: string
   uid: string
   uuid: string
+  specificationIdentifier: string
 }
