@@ -169,7 +169,7 @@ export interface AppConfigurationInterface {
 
 export interface AppInterface extends AppConfigurationInterface {
   name: string
-  idEnvironmentVariableName: string
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   packageManager: PackageManager
   nodeDependencies: {[key: string]: string}
   webs: Web[]
@@ -191,7 +191,6 @@ export interface AppInterface extends AppConfigurationInterface {
 
 interface AppConstructor {
   name: string
-  idEnvironmentVariableName: string
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
@@ -208,7 +207,7 @@ interface AppConstructor {
 
 export class App implements AppInterface {
   name: string
-  idEnvironmentVariableName: string
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
@@ -224,7 +223,6 @@ export class App implements AppInterface {
 
   constructor({
     name,
-    idEnvironmentVariableName,
     directory,
     packageManager,
     configuration,
@@ -239,7 +237,6 @@ export class App implements AppInterface {
     remoteFlags,
   }: AppConstructor) {
     this.name = name
-    this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
     this.packageManager = packageManager
     this.configuration = this.configurationTyped(configuration)
@@ -413,7 +410,6 @@ export class EmptyApp extends App {
     const configSchema = getAppVersionedSchema(specifications ?? [])
     super({
       name: '',
-      idEnvironmentVariableName: '',
       directory: '',
       packageManager: 'npm',
       configuration,

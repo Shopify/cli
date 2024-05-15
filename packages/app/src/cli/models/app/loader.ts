@@ -303,7 +303,6 @@ class AppLoader {
 
     const appClass = new App({
       name,
-      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory,
       packageManager,
       configuration,

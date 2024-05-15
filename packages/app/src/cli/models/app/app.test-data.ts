@@ -76,7 +76,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 
   const newApp = new App({
     name: app.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     directory: app.directory ?? '/tmp/project',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
