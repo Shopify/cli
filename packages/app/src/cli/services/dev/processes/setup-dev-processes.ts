@@ -16,6 +16,7 @@ import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {setupDevSessionProcess} from './update-dev-session.js'
 
 interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -54,6 +55,7 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
+  beta: boolean
 }
 
 export async function setupDevProcesses({
@@ -67,6 +69,7 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
+  beta,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -112,13 +115,20 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    await setupDraftableExtensionsProcess({
-      localApp,
-      remoteApp,
-      apiKey,
-      developerPlatformClient,
-      proxyUrl: network.proxyUrl,
-    }),
+    beta
+      ? await setupDevSessionProcess({
+          localApp,
+          apiKey,
+          developerPlatformClient,
+          proxyUrl: network.proxyUrl,
+        })
+      : await setupDraftableExtensionsProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          developerPlatformClient,
+          proxyUrl: network.proxyUrl,
+        }),
     await setupPreviewThemeAppExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,

@@ -155,6 +155,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
+    beta: false,
   }
 }
 
@@ -186,7 +187,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
   }
 }
 
-async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
+export async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
   setPreviousAppId(config.commandOptions.directory, config.remoteApp.apiKey)
 
   await logMetadataForDev({
@@ -238,7 +239,7 @@ async function handleUpdatingOfPartnerUrls(
   return shouldUpdateURLs
 }
 
-async function setupNetworkingOptions(
+export async function setupNetworkingOptions(
   webs: Web[],
   graphiqlPort: number,
   frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl'>,
@@ -280,7 +281,7 @@ async function setupNetworkingOptions(
   }
 }
 
-async function launchDevProcesses({
+export async function launchDevProcesses({
   processes,
   previewUrl,
   graphiqlUrl,

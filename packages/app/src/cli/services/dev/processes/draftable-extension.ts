@@ -10,7 +10,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-interface DraftableExtensionOptions {
+export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
