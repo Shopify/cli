@@ -55,6 +55,15 @@ interface PartnersAPIOAuthOptions {
 }
 
 /**
+ * A scope supported by the Developer Platform API.
+ */
+type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage' | string
+interface AppManagementAPIOauthOptions {
+  /** List of scopes to request permissions for. */
+  scopes: AppManagementAPIScope[]
+}
+
+/**
  * A scope supported by the Storefront Renderer API.
  */
 type StorefrontRendererScope = 'devtools' | string
@@ -79,6 +88,7 @@ export interface OAuthApplications {
   storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
   businessPlatformApi?: BusinessPlatformAPIOAuthOptions
+  appManagementApi?: AppManagementAPIOauthOptions
 }
 
 export interface OAuthSession {
@@ -86,6 +96,7 @@ export interface OAuthSession {
   partners?: string
   storefront?: string
   businessPlatform?: string
+  appManagement?: string
 }
 
 /**
@@ -346,6 +357,11 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
     tokens.businessPlatform = fqdnSession.applications[appId]?.accessToken
   }
 
+  if (applications.appManagementApi) {
+    const appId = applicationId('app-management')
+    tokens.appManagement = fqdnSession.applications[appId]?.accessToken
+  }
+
   return tokens
 }
 
@@ -361,7 +377,8 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const partner = apps.partnersApi?.scopes || []
   const storefront = apps.storefrontRendererApi?.scopes || []
   const businessPlatform = apps.businessPlatformApi?.scopes || []
-  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform]
+  const appManagement = apps.appManagementApi?.scopes || []
+  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
   return allDefaultScopes(requestedScopes)
 }
 
@@ -376,11 +393,13 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
   const partnerScope = apps.partnersApi?.scopes || []
   const storefrontScopes = apps.storefrontRendererApi?.scopes || []
   const businessPlatformScopes = apps.businessPlatformApi?.scopes || []
+  const appManagementScopes = apps.appManagementApi?.scopes || []
   return {
     admin: apiScopes('admin', adminScope),
     partners: apiScopes('partners', partnerScope),
     storefront: apiScopes('storefront-renderer', storefrontScopes),
     businessPlatform: apiScopes('business-platform', businessPlatformScopes),
+    appManagement: apiScopes('app-management', appManagementScopes),
   }
 }
 
