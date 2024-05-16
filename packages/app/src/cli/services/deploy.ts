@@ -6,7 +6,6 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {BundleConfig} from '../models/extensions/extension-instance.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -47,10 +46,6 @@ interface DeployOptions {
 interface TasksContext {
   bundlePath?: string
   bundle?: boolean
-}
-
-interface BundleConfigWithSpecificationIdentifier extends BundleConfig {
-  specificationIdentifier: string
 }
 
 export async function deploy(options: DeployOptions) {
