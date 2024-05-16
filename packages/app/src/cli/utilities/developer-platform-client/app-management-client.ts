@@ -104,6 +104,8 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
+
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -120,6 +122,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   constructor(session?: PartnersSession) {
     this._session = session
+  }
+
+  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
+    throw new Error(`Not Implemented: ${input}`)
   }
 
   async session(): Promise<PartnersSession> {
