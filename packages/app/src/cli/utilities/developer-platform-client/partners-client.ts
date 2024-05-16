@@ -170,7 +170,7 @@ function getAppVars(
       title: `${name}`,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
-      requestedAccessScopes: [],
+      requestedAccessScopes: scopesArray ?? [],
       type: 'undecided',
     }
   }
