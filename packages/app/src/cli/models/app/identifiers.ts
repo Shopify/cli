@@ -126,6 +126,7 @@ interface GetAppIdentifiersOptions {
  */
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
+  developerPlatformClient: DeveloperPlatformClient,
   systemEnvironment = process.env,
 ): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
@@ -136,6 +137,9 @@ export function getAppIdentifiers(
   const processExtension = (extension: ExtensionInstance) => {
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
+    }
+    if (developerPlatformClient.supportsAtomicDeployments) {
+      extensionsIdentifiers[extension.localIdentifier] = extension.uid
     }
   }
   app.allExtensions.forEach(processExtension)

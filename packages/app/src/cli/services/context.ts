@@ -445,7 +445,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     force,
     release: !noRelease,
     developerPlatformClient,
-    envIdentifiers: getAppIdentifiers({app}),
+    envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
     remoteApp,
   })
 
@@ -510,7 +510,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     force: true,
   })
 
-  const prodEnvIdentifiers = getAppIdentifiers({app})
+  const prodEnvIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
 
   const {extensionIds: remoteExtensionIds} = await ensureDeploymentIdsPresence({
     app,
@@ -689,7 +689,7 @@ export async function fetchAppAndIdentifiers(
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   const app = options.app
   let reuseDevCache = reuseFromDev
-  let envIdentifiers = getAppIdentifiers({app})
+  let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
   let remoteApp: OrganizationApp | undefined
 
   if (options.reset) {

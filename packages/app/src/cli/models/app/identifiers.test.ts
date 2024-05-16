@@ -455,9 +455,12 @@ describe('getAppIdentifiers', () => {
       })
 
       // When
-      const got = await getAppIdentifiers({
-        app,
-      })
+      const got = await getAppIdentifiers(
+        {
+          app,
+        },
+        testDeveloperPlatformClient(),
+      )
 
       // Then
       expect(got.app).toEqual('FOO')
@@ -482,6 +485,7 @@ describe('getAppIdentifiers', () => {
         {
           app,
         },
+        testDeveloperPlatformClient(),
         {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
       )
 
