@@ -2,7 +2,9 @@ import {
   CreditCardPaymentsAppExtensionConfigType,
   CreditCardPaymentsAppExtensionSchema,
   creditCardPaymentsAppExtensionDeployConfig,
+  MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './credit_card_payments_app_extension_schema.js'
+import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -86,6 +88,49 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
     )
   })
 
+  test('returns an error if encryption certificate fingerprint is blank', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        encryption_certificate_fingerprint: '',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_small,
+          minimum: 1,
+          type: 'string',
+          inclusive: true,
+          exact: false,
+          message: "Encryption certificate fingerprint can't be blank",
+          path: ['encryption_certificate_fingerprint'],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if encryption certificate fingerprint is not present', async () => {
+    // When/Then
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {encryption_certificate_fingerprint, ...rest} = config
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...rest,
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'string',
+          received: 'undefined',
+          path: ['encryption_certificate_fingerprint'],
+          message: 'Required',
+        },
+      ]),
+    )
+  })
+
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
     // When/Then
     expect(() =>
@@ -100,6 +145,28 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
           code: zod.ZodIssueCode.custom,
           message: 'supports_installments and supports_deferred_payments must be the same',
           path: [],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if checkout_payment_method_fields has too many fields', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_big,
+          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+          type: 'array',
+          inclusive: true,
+          exact: false,
+          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
+          path: ['checkout_payment_method_fields'],
         },
       ]),
     )

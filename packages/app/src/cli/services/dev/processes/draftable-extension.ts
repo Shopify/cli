@@ -72,11 +72,11 @@ export async function setupDraftableExtensionsProcess({
 }: Omit<DraftableExtensionOptions, 'remoteExtensionIds' | 'extensions'> & {
   remoteApp: PartnersAppForIdentifierMatching
 }): Promise<DraftableExtensionProcess | undefined> {
-  // it would be good if this process didn't require the full local & remote app instances
-  const draftableExtensions = localApp.realExtensions
+  const draftableExtensions = localApp.draftableExtensions
   if (draftableExtensions.length === 0) {
     return
   }
+
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
 
   const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({

@@ -2,7 +2,9 @@ import {
   CustomOnsitePaymentsAppExtensionConfigType,
   CustomOnsitePaymentsAppExtensionSchema,
   customOnsitePaymentsAppExtensionDeployConfig,
+  MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './custom_onsite_payments_app_extension_schema.js'
+import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -83,6 +85,28 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
           received: 'undefined',
           path: ['buyer_label_translations', 0, 'locale'],
           message: 'Required',
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if checkout_payment_method_fields has too many fields', async () => {
+    // When/Then
+    expect(() =>
+      CustomOnsitePaymentsAppExtensionSchema.parse({
+        ...config,
+        checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_big,
+          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+          type: 'array',
+          inclusive: true,
+          exact: false,
+          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
+          path: ['checkout_payment_method_fields'],
         },
       ]),
     )

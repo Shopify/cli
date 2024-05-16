@@ -19,8 +19,11 @@ import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
 import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
+import init from './hooks/clear_command_cache.js'
+import gatherPublicMetadata from './hooks/public_metadata.js'
+import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 
-const APP_COMMANDS = {
+export const commands = {
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,
@@ -44,4 +47,6 @@ const APP_COMMANDS = {
   'webhook:trigger': WebhookTriggerDeprecated,
 }
 
-export default APP_COMMANDS
+export const AppSensitiveMetadataHook = gatherSensitiveMetadata
+export const AppInitHook = init
+export const AppPublicMetadataHook = gatherPublicMetadata

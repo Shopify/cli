@@ -88,7 +88,7 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "4.4.9",
-    "@oclif/core": "3.23.0"
+    "@oclif/core": "3.26.5"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
@@ -112,7 +112,8 @@
       "eslint-plugin-react-hooks",
       "esbuild",
       "@shopify/cli-hydrogen",
-      "@shopify/theme-check-node"
+      "@shopify/theme-check-node",
+      "@shopify/theme-check-docs-updater"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
