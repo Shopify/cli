@@ -190,9 +190,9 @@ describe('webhooks', () => {
               uri: 'https://example.com/webhooks/products',
             },
             {
-              sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create'],
-              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              filter: 'title:shoes',
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks/products',
             },
             {
               include_fields: ['variants', 'title'],
@@ -200,9 +200,9 @@ describe('webhooks', () => {
               uri: 'https://valid-url',
             },
             {
-              filter: 'title:shoes',
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks/products',
+              sub_topic: 'type:metaobject_one',
+              topics: ['metaobjects/create'],
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
           ],
         },

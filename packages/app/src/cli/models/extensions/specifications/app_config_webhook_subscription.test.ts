@@ -48,27 +48,32 @@ describe('webhook_subscription', () => {
         webhooks: {
           subscriptions: [
             {
+              api_version: '2024-01',
               topics: ['orders/create'],
               uri: 'https://example.com/webhooks/orders',
             },
             {
+              api_version: '2024-01',
               topics: ['products/create'],
               uri: 'https://example.com/webhooks/products',
             },
             {
-              sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create'],
-              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              api_version: '2024-01',
+              filter: 'title:shoes',
+              topics: ['products/update'],
+              uri: 'https://example.com/webhooks/products',
             },
             {
+              api_version: '2024-01',
               include_fields: ['variants', 'title'],
               topics: ['orders/create'],
               uri: 'https://valid-url',
             },
             {
-              filter: 'title:shoes',
-              topics: ['products/update'],
-              uri: 'https://example.com/webhooks/products',
+              api_version: '2024-01',
+              sub_topic: 'type:metaobject_one',
+              topics: ['metaobjects/create'],
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
           ],
         },

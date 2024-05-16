@@ -2891,15 +2891,15 @@ describe('WebhooksSchema', () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
         {uri: 'https://example.com', topics: ['products/create']},
+        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 2, 'products/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2919,7 +2919,7 @@ describe('WebhooksSchema', () => {
     const expectedParsedConfig = {
       api_version: '2021-07',
       subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/update', 'products/delete']},
+        {uri: 'https://example.com', topics: ['products/create', 'products/delete', 'products/update']},
         {uri: 'https://example.com2', topics: ['products/create', 'products/update']},
       ],
     }

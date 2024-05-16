@@ -40,11 +40,11 @@ function transformFromPrivacyComplianceWebhooksModule(content: object, options?:
 
   if (options?.flags?.includes(Flag.DeclarativeWebhooks)) {
     const webhooks: WebhookSubscription[] = []
-    if (customersRedactUrl) {
-      webhooks.push({compliance_topics: [ComplianceTopic.CustomersRedact], uri: customersRedactUrl})
-    }
     if (customersDataRequestUrl) {
       webhooks.push({compliance_topics: [ComplianceTopic.CustomersDataRequest], uri: customersDataRequestUrl})
+    }
+    if (customersRedactUrl) {
+      webhooks.push({compliance_topics: [ComplianceTopic.CustomersRedact], uri: customersRedactUrl})
     }
     if (shopRedactUrl) {
       webhooks.push({compliance_topics: [ComplianceTopic.ShopRedact], uri: shopRedactUrl})

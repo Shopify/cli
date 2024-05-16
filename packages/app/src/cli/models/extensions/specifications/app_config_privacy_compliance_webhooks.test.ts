@@ -98,12 +98,12 @@ describe('privacy_compliance_webhooks', () => {
         webhooks: {
           subscriptions: [
             {
-              compliance_topics: ['customers/redact'],
-              uri: 'https://example.com/customer-deletion',
-            },
-            {
               compliance_topics: ['customers/data_request'],
               uri: 'https://example.com/customer-data-request',
+            },
+            {
+              compliance_topics: ['customers/redact'],
+              uri: 'https://example.com/customer-deletion',
             },
             {
               compliance_topics: ['shop/redact'],

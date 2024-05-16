@@ -33,6 +33,7 @@ import {SpecsAppConfiguration} from '../../../models/extensions/specifications/t
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {reduceWebhooks} from '../../../models/extensions/specifications/transform/app_config_webhook.js'
+import {WebhooksConfig} from '../../../models/extensions/specifications/types/app_config_webhook.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
@@ -136,16 +137,6 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     appDirectory,
     developerPlatformClient,
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function condenseComplianceAndNonComplianceWebhooks(config: any): CurrentAppConfiguration {
-  const subscriptionsArr = config.webhooks.subscriptions ?? []
-  if (subscriptionsArr.length === 0) return config
-
-  const condensedSubscriptionsArr = reduceWebhooks(subscriptionsArr)
-  config.webhooks.subscriptions = condensedSubscriptionsArr
-  return config
 }
 
 /**
@@ -334,6 +325,21 @@ async function loadConfigurationFileName(
   if (currentToml) return currentToml
 
   return selectConfigName(localAppInfo.appDirectory || options.directory, remoteApp.title)
+}
+
+/**
+ * When we merge webhooks, we have the privacy and non-privacy compliance subscriptions
+ * separated for matching remote/local config purposes,
+ * but when we link we want to condense all webhooks together
+ * so we have to do an additional reduce here
+ */
+function condenseComplianceAndNonComplianceWebhooks(config: {[key: string]: unknown}): CurrentAppConfiguration {
+  const webhooksConfig = (config.webhooks as WebhooksConfig) ?? {}
+  if (webhooksConfig.subscriptions?.length) {
+    webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
+  }
+
+  return config as unknown as CurrentAppConfiguration
 }
 
 /**
