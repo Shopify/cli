@@ -380,7 +380,7 @@ interface ExtensionBundleConfigOptions {
   apiKey: string
 }
 
-export interface BundleConfig {
+interface BundleConfig {
   config: string
   context: string
   handle: string
