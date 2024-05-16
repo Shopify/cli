@@ -69,20 +69,21 @@ module ShopifyCLI
       end
 
       def create
-        raise InvalidThemeRole, "Can't create live theme. Use publish." if live?
+        raise
+        # raise InvalidThemeRole, "Can't create live theme. Use publish." if live?
 
-        _status, body = api_client.post(
-          path: "themes.json",
-          body: JSON.generate({
-            theme: {
-              name: name,
-              role: role,
-            },
-          }),
-        )
+        # _status, body = api_client.post(
+        #   path: "themes.json",
+        #   body: JSON.generate({
+        #     theme: {
+        #       name: name,
+        #       role: role,
+        #     },
+        #   }),
+        # )
 
-        @id = body["theme"]["id"]
-        @created_at_runtime = true
+        # @id = body["theme"]["id"]
+        # @created_at_runtime = true
       end
 
       def delete

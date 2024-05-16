@@ -47,6 +47,7 @@ module ShopifyCLI
     end
 
     def self.interactive?(env_variables: ENV)
+      puts env_variables["SHOPIFY_CLI_TTY"]
       if env_variables.key?(Constants::EnvironmentVariables::TTY)
         env_variable_truthy?(
           Constants::EnvironmentVariables::TTY,
