@@ -766,7 +766,7 @@ api_version = "2023-04"
   test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-    vi.mocked(convertToTransferDisabledStoreIfNeeded).mockResolvedValueOnce()
+    vi.mocked(convertToTransferDisabledStoreIfNeeded).mockResolvedValueOnce(true)
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
     const options = devOptions({apiKey: 'key2', storeFqdn: 'domain1'})

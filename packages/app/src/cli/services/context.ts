@@ -298,7 +298,8 @@ const storeFromFqdn = async (
 ): Promise<OrganizationStore> => {
   const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
   if (result?.store) {
-    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient)
+    // never automatically convert a store provided via the cache
+    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
     return result.store
   } else {
     throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
@@ -760,7 +761,13 @@ async function fetchDevDataFromOptions(
 
   if (options.storeFqdn) {
     selectedStore = orgWithStore!.store
-    await convertToTransferDisabledStoreIfNeeded(selectedStore, orgWithStore!.organization.id, developerPlatformClient)
+    // never automatically convert a store provided via the command line
+    await convertToTransferDisabledStoreIfNeeded(
+      selectedStore,
+      orgWithStore!.organization.id,
+      developerPlatformClient,
+      'never',
+    )
   }
 
   return {app: selectedApp, store: selectedStore}
