@@ -91,7 +91,7 @@ export async function updateAppIdentifiers(
 }
 
 async function addUidToToml(extension: ExtensionInstance) {
-  if (!extension.isUuidManaged() || !(await fileExists(extension.configurationPath))) return
+  if (!extension.isUUIDStrategyExtension || !(await fileExists(extension.configurationPath))) return
 
   const tomlContents = await readFile(extension.configurationPath)
   const extensionConfig = decodeToml(tomlContents)
