@@ -1,9 +1,9 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
 import {
-  ConvertDevToTestStoreSchema,
-  ConvertDevToTestStoreVariables,
-} from '../../api/graphql/convert_dev_to_test_store.js'
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -37,7 +37,7 @@ export async function selectStore(
 ): Promise<OrganizationStore> {
   const store = await selectStorePrompt(stores)
   if (store) {
-    await convertToTestStoreIfNeeded(store, org.id, developerPlatformClient)
+    await convertToTransferDisabledStoreIfNeeded(store, org.id, developerPlatformClient)
     return store
   }
 
@@ -97,9 +97,9 @@ async function waitForCreatedStore(
  * @param orgId - Current organization ID
  * @param developerPlatformClient - The client to access the platform API
  * @returns True if the store is valid
- * @throws If the store can't be found in the organization or we fail to make it a test store
+ * @throws If the store can't be found in the organization or we fail to make it a transfer-disabled store
  */
-export async function convertToTestStoreIfNeeded(
+export async function convertToTransferDisabledStoreIfNeeded(
   store: OrganizationStore,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
@@ -116,34 +116,36 @@ export async function convertToTestStoreIfNeeded(
       'Run dev --reset and select an eligible dev store.',
     )
   }
-  if (!store.transferDisabled) await convertStoreToTest(store, orgId, developerPlatformClient)
+  if (!store.transferDisabled) await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
 }
 
 /**
- * Convert a store to a test store so development apps can be installed
+ * Convert a store to a transfer-disabled store so development apps can be installed
  * This can't be undone, so we ask the user to confirm
  * @param store - Store to convert
  * @param orgId - Current organization ID
  * @param developerPlatformClient - The client to access the platform API
  */
-async function convertStoreToTest(
+async function convertStoreToTransferDisabled(
   store: OrganizationStore,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const variables: ConvertDevToTestStoreVariables = {
+  const variables: ConvertDevToTransferDisabledStoreVariables = {
     input: {
       organizationID: parseInt(orgId, 10),
       shopId: store.shopId,
     },
   }
-  const result: ConvertDevToTestStoreSchema = await developerPlatformClient.convertToTestStore(variables)
+  const result: ConvertDevToTransferDisabledSchema = await developerPlatformClient.convertToTransferDisabledStore(
+    variables,
+  )
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw new BugError(
-      `Error converting store ${store.shopDomain} to a Test store: ${errors}`,
+      `Error converting store ${store.shopDomain} to a transfer-disabled store: ${errors}`,
       'This store might not be compatible with draft apps, please try a different store',
     )
   }
-  outputSuccess(`Converted ${store.shopDomain} to a Test store`)
+  outputSuccess(`Converted ${store.shopDomain} to a transfer-disabled store`)
 }

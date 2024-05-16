@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
-import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -298,7 +298,7 @@ const storeFromFqdn = async (
 ): Promise<OrganizationStore> => {
   const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
   if (result?.store) {
-    await convertToTestStoreIfNeeded(result.store, orgId, developerPlatformClient)
+    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient)
     return result.store
   } else {
     throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
@@ -760,7 +760,7 @@ async function fetchDevDataFromOptions(
 
   if (options.storeFqdn) {
     selectedStore = orgWithStore!.store
-    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, developerPlatformClient)
+    await convertToTransferDisabledStoreIfNeeded(selectedStore, orgWithStore!.organization.id, developerPlatformClient)
   }
 
   return {app: selectedApp, store: selectedStore}

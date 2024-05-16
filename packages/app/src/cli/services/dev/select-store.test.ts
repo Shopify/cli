@@ -85,7 +85,7 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(developerPlatformClient.convertToTestStore).not.toHaveBeenCalled()
+    expect(developerPlatformClient.convertToTransferDisabledStore).not.toHaveBeenCalled()
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 

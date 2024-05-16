@@ -21,7 +21,7 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
@@ -909,7 +909,7 @@ const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
   },
 }
 
-const convertedToTestStoreResponse = {
+const convertedToTransferDisabledStoreResponse = {
   convertDevToTestStore: {
     convertedToTestStore: true,
     userErrors: [],
@@ -1017,7 +1017,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
-    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
+      Promise.resolve(convertedToTransferDisabledStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),

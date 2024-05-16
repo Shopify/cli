@@ -17,7 +17,10 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../api/graphql/convert_dev_to_test_store.js'
+import {
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {
@@ -147,7 +150,9 @@ export interface DeveloperPlatformClient {
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
-  convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
+  convertToTransferDisabledStore: (
+    input: ConvertDevToTransferDisabledStoreVariables,
+  ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>
