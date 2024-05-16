@@ -155,7 +155,7 @@ async function requestAppToken(
   }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  const appToken = await buildApplicationToken(value)
+  const appToken = buildApplicationToken(value)
   return {[identifier]: appToken}
 }
 
@@ -206,6 +206,6 @@ function buildApplicationToken(result: TokenRequestResult): ApplicationToken {
   return {
     accessToken: result.access_token,
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
-    scopes: result.scope?.split(' ') || [],
+    scopes: result.scope.split(' '),
   }
 }
