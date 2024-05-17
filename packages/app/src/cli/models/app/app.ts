@@ -193,10 +193,10 @@ export interface Web {
   framework?: string
 }
 
-export interface AppConfigurationInterface {
+export interface AppConfigurationInterface<T extends AppConfiguration = AppConfiguration> {
   directory: string
-  configuration: AppConfiguration
-  configSchema: zod.ZodTypeAny
+  configuration: T
+  configSchema: zod.ZodType<Omit<T, 'path'>>
 }
 
 export interface AppInterface extends AppConfigurationInterface {

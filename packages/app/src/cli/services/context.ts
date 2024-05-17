@@ -9,7 +9,13 @@ import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema, getAppScopesArray} from '../models/app/app.js'
+import {
+  AppConfiguration,
+  AppInterface,
+  isCurrentAppSchema,
+  getAppScopesArray,
+  CurrentAppConfiguration,
+} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
