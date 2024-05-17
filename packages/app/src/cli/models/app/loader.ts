@@ -948,26 +948,53 @@ export function isWebType(web: Web, type: WebType): boolean {
 }
 
 async function logMetadataForLoadedApp(
-  app: App,
+  app: AppInterface,
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
     usedCustomLayoutForExtensions: boolean
   },
 ) {
-  await metadata.addPublicMetadata(async () => {
-    const projectType = await getProjectType(app.webs)
+  const webs = app.webs
+  const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
 
-    const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
+  const appName = app.name
+  const appDirectory = app.directory
+  const sortedAppScopes = getAppScopesArray(app.configuration).sort()
+  const appUsesWorkspaces = app.usesWorkspaces
+
+  await logMetadataForLoadedAppUsingRawValues(
+    webs,
+    extensionsToAddToMetrics,
+    loadingStrategy,
+    appName,
+    appDirectory,
+    sortedAppScopes,
+    appUsesWorkspaces,
+  )
+}
+
+async function logMetadataForLoadedAppUsingRawValues(
+  webs: Web[],
+  extensionsToAddToMetrics: ExtensionInstance[],
+  loadingStrategy: {usedCustomLayoutForWeb: boolean; usedCustomLayoutForExtensions: boolean},
+  appName: string,
+  appDirectory: string,
+  sortedAppScopes: string[],
+  appUsesWorkspaces: boolean,
+) {
+  await metadata.addPublicMetadata(async () => {
+    const projectType = await getProjectType(webs)
+
     const extensionFunctionCount = extensionsToAddToMetrics.filter((extension) => extension.isFunctionExtension).length
     const extensionUICount = extensionsToAddToMetrics.filter((extension) => extension.isESBuildExtension).length
     const extensionThemeCount = extensionsToAddToMetrics.filter((extension) => extension.isThemeExtension).length
 
     const extensionTotalCount = extensionsToAddToMetrics.length
 
-    const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
+    const webBackendCount = webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
-      webBackendCount === 1 ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
-    const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
+      webBackendCount === 1 ? webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
+    const webFrontendCount = webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
     for (const extension of extensionsToAddToMetrics) {
@@ -990,22 +1017,22 @@ async function logMetadataForLoadedApp(
       app_extensions_theme_count: extensionThemeCount,
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
-      app_name_hash: hashString(app.name),
-      app_path_hash: hashString(app.directory),
-      app_scopes: JSON.stringify(getAppScopesArray(app.configuration).sort()),
+      app_name_hash: hashString(appName),
+      app_path_hash: hashString(appDirectory),
+      app_scopes: JSON.stringify(sortedAppScopes),
       app_web_backend_any: webBackendCount > 0,
       app_web_backend_count: webBackendCount,
       app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
       app_web_framework: webBackendFramework,
       app_web_frontend_any: webFrontendCount > 0,
       app_web_frontend_count: webFrontendCount,
-      env_package_manager_workspaces: app.usesWorkspaces,
+      env_package_manager_workspaces: appUsesWorkspaces,
     }
   })
 
   await metadata.addSensitiveMetadata(async () => {
     return {
-      app_name: app.name,
+      app_name: appName,
     }
   })
 }
