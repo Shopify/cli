@@ -1,6 +1,6 @@
 /* eslint-disable @shopify/prefer-module-scope-constants */
 import {automaticMatchmaking} from './id-matching.js'
-import {ExtensionRegistration} from '../dev/create-extension.js'
+import {RemoteSource} from './identifiers.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testDeveloperPlatformClient, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, beforeAll} from 'vitest'
@@ -8,57 +8,64 @@ import {describe, expect, vi, test, beforeAll} from 'vitest'
 vi.mock('../dev/fetch')
 vi.mock('../dev/create-extension')
 
-const REGISTRATION_A: ExtensionRegistration = {
+const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
+  uid: 'UID_A',
   id: 'A',
   title: 'EXTENSION_A',
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
-const REGISTRATION_A_2 = {
+const REGISTRATION_A_2: RemoteSource = {
   uuid: 'UUID_A_2',
+  uid: 'UID_A_2',
   id: 'A_2',
   title: 'EXTENSION_A_2',
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
-const REGISTRATION_A_3 = {
+const REGISTRATION_A_3: RemoteSource = {
   uuid: 'UUID_A_3',
+  uid: 'UID_A_3',
   id: 'A_3',
   title: 'EXTENSION_A_3',
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
-const REGISTRATION_A_4 = {
+const REGISTRATION_A_4: RemoteSource = {
   uuid: 'UUID_A_4',
   id: 'A_4',
   title: 'EXTENSION_A_4',
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
-const REGISTRATION_B = {
+const REGISTRATION_B: RemoteSource = {
   uuid: 'UUID_B',
+  uid: 'UID_B',
   id: 'B',
   title: 'EXTENSION_B',
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
-const REGISTRATION_C = {
+const REGISTRATION_C: RemoteSource = {
   uuid: 'UUID_C',
+  uid: 'UID_C',
   id: 'C',
   title: 'EXTENSION_C',
   type: 'THEME_APP_EXTENSION',
 }
 
-const REGISTRATION_D = {
+const REGISTRATION_D: RemoteSource = {
   uuid: 'UUID_D',
+  uid: 'UID_D',
   id: 'D',
   title: 'EXTENSION_D',
   type: 'WEB_PIXEL_EXTENSION',
 }
 
-const REGISTRATION_FUNCTION_A = {
+const REGISTRATION_FUNCTION_A: RemoteSource = {
   uuid: 'FUNCTION_UUID_A',
+  uid: 'FUNCTION_UID_A',
   id: 'FUNCTION_A',
   title: 'FUNCTION A',
   type: 'FUNCTION',
@@ -97,6 +104,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
+    uid: 'UID_A',
   })
 
   EXTENSION_A_2 = await testUIExtension({
@@ -117,6 +125,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
+    uid: 'UID_A_2',
   })
 
   EXTENSION_B = await testUIExtension({
@@ -137,6 +146,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
+    uid: 'UID_B',
   })
 
   EXTENSION_B_2 = await testUIExtension({
@@ -157,6 +167,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
+    uid: 'UID_B_2',
   })
 
   EXTENSION_C = await testUIExtension({
@@ -177,6 +188,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
+    uid: 'UID_C',
   })
 
   EXTENSION_D = await testUIExtension({
@@ -198,6 +210,7 @@ beforeAll(async () => {
     outputPath: '',
     entrySourceFilePath: '',
     devUUID: 'devUUID',
+    uid: 'UID_D',
   })
 
   FUNCTION_A = await testFunctionExtension({
@@ -746,6 +759,48 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
       identifiers: {},
       toConfirm: [],
       toCreate: [FUNCTION_A],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
+  test('creates all local extensions when there are no remote ones', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [EXTENSION_A, EXTENSION_B],
+      [],
+      {},
+      'uuid',
+      testDeveloperPlatformClient({supportsAtomicDeployments: true}),
+    )
+
+    // Then
+    const expected = {
+      identifiers: {},
+      toConfirm: [],
+      toCreate: [EXTENSION_A, EXTENSION_B],
+      toManualMatch: {local: [], remote: []},
+    }
+    expect(got).toEqual(expected)
+  })
+
+  test('creates the missing extension when there is a remote one', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [EXTENSION_A, EXTENSION_A_2],
+      [REGISTRATION_A],
+      {},
+      'uuid',
+      testDeveloperPlatformClient({supportsAtomicDeployments: true}),
+    )
+
+    // Then
+    const expected = {
+      identifiers: {'extension-a': 'UID_A'},
+      toConfirm: [],
+      toCreate: [EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
     }
     expect(got).toEqual(expected)

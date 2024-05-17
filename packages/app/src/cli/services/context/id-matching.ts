@@ -26,7 +26,7 @@ const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
 }
 
 /**
- * Automatically match local and remote sources if they have the same type and handle
+ * Automatically match local and remote sources if they have the same type and handle, and then only by type
  *
  * If multiple local or remote sources have the same type and handle, they can't be matched automatically
  */
@@ -81,7 +81,7 @@ function matchByUID(
 
   local.forEach((localSource) => {
     const possibleMatch = remote.find((remoteSource) => remoteSource.uid === localSource.uid)
-    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.id
+    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uid!
   })
 
   const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
@@ -207,6 +207,7 @@ export async function automaticMatchmaking(
   remoteIdField: 'id' | 'uuid',
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<MatchResult> {
+  const useUidMatching = developerPlatformClient.supportsAtomicDeployments
   const ids = getExtensionIds(localSources, identifiers)
   const localUUIDs = Object.values(ids)
 
@@ -214,7 +215,8 @@ export async function automaticMatchmaking(
     remoteSources.some((remote) => {
       if (remote.type !== developerPlatformClient.toExtensionGraphQLType(local.graphQLType)) return false
       return (
-        (local.uid && remote.uid && local.uid === remote.uid) || remote[remoteIdField] === ids[local.localIdentifier]
+        (useUidMatching && remote.uid === ids[local.localIdentifier]) ||
+        remote[remoteIdField] === ids[local.localIdentifier]
       )
     })
 
@@ -224,8 +226,6 @@ export async function automaticMatchmaking(
     remoteSources.filter((remote) => !localUUIDs.includes(remote[remoteIdField])),
   )
   const {local, remote} = pendingAfterMigratingFunctions
-
-  const useUidMatching = developerPlatformClient.supportsAtomicDeployments
 
   const {matched, toCreate, toConfirm, toManualMatch} = useUidMatching
     ? matchByUID(local, remote)
