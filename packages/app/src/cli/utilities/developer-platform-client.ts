@@ -47,6 +47,7 @@ import {
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {DevSessionDeploySchema} from '../api/graphql/dev_session_create.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -120,6 +121,12 @@ export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
 }
 
+export interface DevSessionDeployOptions {
+  organizationId: string
+  appId: string
+  url: string
+}
+
 export interface DeveloperPlatformClient {
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
@@ -146,6 +153,7 @@ export interface DeveloperPlatformClient {
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
+  devSessionDeploy: (input: DevSessionDeployOptions) => Promise<DevSessionDeploySchema>
   release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
   convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>

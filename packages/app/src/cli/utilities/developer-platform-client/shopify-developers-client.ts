@@ -33,6 +33,7 @@ import {
   Paginateable,
   ActiveAppVersion,
   AppDeployOptions,
+  DevSessionDeployOptions,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -83,6 +84,11 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import {
+  DevSessionDeploy,
+  DevSessionDeploySchema,
+  DevSessionDeployVariables,
+} from '../../api/graphql/dev_session_create.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -436,6 +442,17 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
 
     return versionResult
+  }
+
+  async devSessionDeploy({appId, url, organizationId}: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
+    const query = DevSessionDeploy
+    const variables: DevSessionDeployVariables = {appId, url}
+    return orgScopedShopifyDevelopersRequest<DevSessionDeploySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
   }
 
   async release(_input: AppReleaseVariables): Promise<AppReleaseSchema> {

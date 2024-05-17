@@ -7,6 +7,7 @@ import {
 import {
   ActiveAppVersion,
   AppDeployOptions,
+  DevSessionDeployOptions,
   DeveloperPlatformClient,
   Paginateable,
 } from '../developer-platform-client.js'
@@ -134,6 +135,7 @@ import {
   MigrateAppModuleSchema,
   MigrateAppModuleVariables,
 } from '../../api/graphql/extension_migrate_app_module.js'
+import {DevSessionDeploySchema} from '../../api/graphql/dev_session_create.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -359,6 +361,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     // Enforce the type
     const variables: AppDeployVariables = deployOptions
     return this.request(AppDeploy, variables)
+  }
+
+  async devSessionDeploy(_input: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
   }
 
   async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {
