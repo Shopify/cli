@@ -9,14 +9,7 @@ import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {
-  AppConfiguration,
-  AppInterface,
-  isCurrentAppSchema,
-  appIsLaunchable,
-  getAppScopesArray,
-  CurrentAppConfiguration,
-} from '../models/app/app.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema, getAppScopesArray} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -664,7 +657,7 @@ export async function fetchOrCreateOrganizationApp(app: AppInterface, directory?
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-  const isLaunchable = appIsLaunchable(app)
+  const isLaunchable = app.appIsLaunchable()
   const scopesArray = getAppScopesArray(app.configuration)
   const remoteApp = await selectOrCreateApp(app.name, apps, hasMorePages, organization, developerPlatformClient, {
     isLaunchable,

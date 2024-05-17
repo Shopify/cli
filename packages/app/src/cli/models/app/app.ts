@@ -110,17 +110,14 @@ export function usesLegacyScopesBehavior(config: AppConfiguration) {
   return false
 }
 
-export function appIsLaunchable(app: AppInterface) {
-  const frontendConfig = app?.webs?.find((web) => isWebType(web, WebType.Frontend))
-  const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
-
-  return Boolean(frontendConfig || backendConfig)
-}
-
-export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {
-  return Object.keys(configuration).filter(
-    (fieldName) => !Object.keys(AppSchema.shape).concat('path').includes(fieldName),
-  )
+/**
+ * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
+ */
+export function filterNonVersionedAppFields(configuration: object): string[] {
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path')
+  return Object.keys(configuration).filter((fieldName) => {
+    return !builtInFieldNames.includes(fieldName)
+  })
 }
 
 export enum WebType {
@@ -190,6 +187,12 @@ export interface AppInterface extends AppConfigurationInterface {
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  /**
+   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
+   *
+   * @returns true if the app can be launched, false otherwise
+   */
+  appIsLaunchable: () => boolean
 }
 
 interface AppConstructor {
@@ -314,6 +317,13 @@ export class App implements AppInterface {
     this.allExtensions.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
+  }
+
+  appIsLaunchable() {
+    const frontendConfig = this.webs.find((web) => isWebType(web, WebType.Frontend))
+    const backendConfig = this.webs.find((web) => isWebType(web, WebType.Backend))
+
+    return Boolean(frontendConfig || backendConfig)
   }
 
   get includeConfigOnDeploy() {
