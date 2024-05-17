@@ -1,4 +1,4 @@
-import link, {LinkOptions, EmptyApp} from './link.js'
+import link, {LinkOptions, emptyApp} from './link.js'
 import {saveCurrentConfig} from './use.js'
 import {
   testApp,
@@ -61,7 +61,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 beforeEach(async () => {
-  vi.mocked(loadAppConfiguration).mockResolvedValue(new EmptyApp([]))
+  vi.mocked(loadAppConfiguration).mockResolvedValue(emptyApp([]))
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
 })
 

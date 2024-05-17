@@ -2,7 +2,9 @@ import {saveCurrentConfig} from './use.js'
 import {
   App,
   AppConfiguration,
+  AppConfigurationInterface,
   AppInterface,
+  BasicAppConfigurationWithoutModules,
   CurrentAppConfiguration,
   getAppScopes,
   getAppVersionedSchema,
@@ -38,27 +40,35 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string) {
-    const configuration = clientId
-      ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
-      : {scopes: '', path: ''}
-    const configSchema = getAppVersionedSchema(specifications ?? [])
+type ConfigOutput = Pick<AppConfigurationInterface, 'configuration' | 'configSchema'>
 
-    super({
-      name: '',
-      directory: '',
-      packageManager: 'npm',
-      configuration,
-      nodeDependencies: {},
-      webs: [],
-      modules: [],
-      usesWorkspaces: false,
-      specifications,
-      configSchema,
-      remoteFlags: flags ?? [],
-    })
-  }
+export function emptyApp(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string): AppInterface {
+  const config: ConfigOutput = clientId
+    ? {
+        configuration: {
+          client_id: clientId,
+          access_scopes: {scopes: ''},
+          path: '',
+        } as BasicAppConfigurationWithoutModules,
+        configSchema: getAppVersionedSchema(specifications ?? []),
+      }
+    : {
+        configuration: {scopes: '', path: ''},
+        configSchema: getAppVersionedSchema(specifications ?? []),
+      }
+
+  return new App({
+    name: '',
+    directory: '',
+    packageManager: 'npm',
+    nodeDependencies: {},
+    webs: [],
+    modules: [],
+    usesWorkspaces: false,
+    specifications,
+    remoteFlags: flags ?? [],
+    ...config,
+  })
 }
 
 export interface LinkOptions {
@@ -151,10 +161,10 @@ async function loadAppOrEmptyApp(
     })
     const configuration = app.configuration
     if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
-    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
+    return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteFlags)
+    return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags)
   }
 }
 

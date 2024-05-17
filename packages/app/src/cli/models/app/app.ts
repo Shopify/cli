@@ -199,7 +199,7 @@ export interface AppConfigurationInterface<T extends AppConfiguration = AppConfi
   configSchema: zod.ZodType<Omit<T, 'path'>>
 }
 
-export interface AppInterface extends AppConfigurationInterface {
+export interface AppInterface<T extends AppConfiguration = AppConfiguration> extends AppConfigurationInterface<T> {
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   packageManager: PackageManager
@@ -227,11 +227,9 @@ export interface AppInterface extends AppConfigurationInterface {
   appIsLaunchable: () => boolean
 }
 
-interface AppConstructor {
+type AppConstructor<T extends AppConfiguration = AppConfiguration> = AppConfigurationInterface<T> & {
   name: string
-  directory: string
   packageManager: PackageManager
-  configuration: AppConfiguration
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   modules: ExtensionInstance[]
@@ -239,16 +237,15 @@ interface AppConstructor {
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications?: ExtensionSpecification[]
-  configSchema?: zod.ZodTypeAny
   remoteFlags?: Flag[]
 }
 
-export class App implements AppInterface {
+export class App<T extends AppConfiguration = AppConfiguration> implements AppInterface<T> {
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
   packageManager: PackageManager
-  configuration: AppConfiguration
+  configuration: T
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -273,11 +270,11 @@ export class App implements AppInterface {
     specifications,
     configSchema,
     remoteFlags,
-  }: AppConstructor) {
+  }: AppConstructor<T>) {
     this.name = name
     this.directory = directory
     this.packageManager = packageManager
-    this.configuration = this.configurationTyped(configuration)
+    this.configuration = configuration
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
@@ -361,11 +358,6 @@ export class App implements AppInterface {
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.build?.include_config_on_deploy
-  }
-
-  private configurationTyped(configuration: AppConfiguration) {
-    if (isLegacyAppSchema(configuration)) return configuration
-    return configuration as CurrentAppConfiguration & SpecsAppConfiguration
   }
 
   private filterDeclarativeWebhooksConfig() {

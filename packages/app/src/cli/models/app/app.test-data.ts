@@ -1,4 +1,12 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
+import {
+  App,
+  AppConfiguration,
+  AppConfigurationSchema,
+  AppInterface,
+  CurrentAppConfiguration,
+  WebType,
+  getAppVersionedSchema,
+} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -94,7 +102,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications,
-    configSchema: app.configSchema,
+    configSchema: app.configSchema ?? AppConfigurationSchema,
     remoteFlags: app.remoteFlags,
   })
 
