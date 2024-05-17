@@ -5,7 +5,13 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionDraft} from '../update-extension.js'
 import {setupExtensionWatcher} from '../extension/bundler.js'
+import {bundleAndBuildExtensions} from '../../deploy/bundle.js'
+import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
+import {inTemporaryDirectory, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {formData} from '@shopify/cli-kit/node/http'
+import {Writable} from 'stream'
 
 interface DevSessionOptions {
   extensions: ExtensionInstance[]
@@ -56,17 +62,28 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     await developerPlatformClient.refreshToken()
   }
 
-  // 1. Create Dev Session
-
-  // 2. Watch current app.toml, watch changes in extension folders, trigger a dev session update
-
-  const registrationId = ''
-
   await Promise.all(
     extensions.map(async (extension) => {
       await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
-      // Initial draft update for each extension
-      await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr})
+    }),
+  )
+
+  // 0. Create app manifest and build extensions
+
+  // 1. Request GCS URL
+
+  // 2. Create Dev Session
+
+  // 3. Watch current app.toml, watch changes in extension folders, trigger a dev session update
+
+  const manifest = await app.manifest()
+
+  console.log(JSON.stringify(manifest, null, 2))
+
+  await buildAndBundle(app, developerPlatformClient, apiKey, stderr)
+
+  await Promise.all(
+    extensions.map(async (extension) => {
       // Watch for changes
       return setupExtensionWatcher({
         extension,
@@ -78,12 +95,42 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         onChange: async () => {
           // At this point the extension has already been built and is ready to be updated
           return performActionWithRetryAfterRecovery(
-            async () =>
-              updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr}),
+            async () => buildAndBundle(app, developerPlatformClient, apiKey, stderr),
             refreshToken,
           )
         },
       })
     }),
   )
+}
+
+async function buildAndBundle(
+  app: AppInterface,
+  developerPlatformClient: DeveloperPlatformClient,
+  apiKey: string,
+  stderr: Writable,
+) {
+  await inTemporaryDirectory(async (tmpDir) => {
+    const bundlePath = joinPath(tmpDir, `bundle.zip`)
+    await mkdir(dirname(bundlePath))
+    await bundleAndBuildExtensions({app, bundlePath})
+
+    const signedURL = await getExtensionUploadURL(developerPlatformClient, apiKey)
+
+    const form = formData()
+    const buffer = readFileSync(bundlePath)
+    form.append('my_upload', buffer)
+    await fetch(signedURL, {
+      method: 'put',
+      body: buffer,
+      headers: form.getHeaders(),
+    })
+
+    const result = await developerPlatformClient.devSessionDeploy({organizationId: '', appId: apiKey, url: signedURL})
+
+    if (result.devSession.userErrors) {
+      stderr.write('Dev Session Error')
+      stderr.write(JSON.stringify(result.devSession.userErrors, null, 2))
+    }
+  })
 }

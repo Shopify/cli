@@ -17,6 +17,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 export const LegacyAppSchema = zod
   .object({
@@ -187,6 +189,7 @@ export interface AppInterface extends AppConfigurationInterface {
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  manifest: () => Promise<JsonMapType>
 }
 
 interface AppConstructor {
@@ -267,6 +270,28 @@ export class App implements AppInterface {
     return this.realExtensions.filter(
       (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
     )
+  }
+
+  async manifest(): Promise<JsonMapType> {
+    const modules = await Promise.all(
+      this.realExtensions.map(async (module) => {
+        const config = await module.commonDeployConfig('')
+        return {
+          type: module.type,
+          name: module.name,
+          handle: module.handle,
+          uid: module.devUUID,
+          ...config,
+        }
+      }),
+    )
+    const realModules = getArrayRejectingUndefined(modules)
+    return {
+      client_id: this.configuration.client_id,
+      name: this.name,
+      handle: '',
+      modules: realModules,
+    }
   }
 
   async updateDependencies() {

@@ -182,7 +182,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
-  async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
+  async commonDeployConfig(apiKey: string): Promise<{[key: string]: any} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
     const transformedConfig = this.specification.transform?.(this.configuration) as {[key: string]: unknown} | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
@@ -297,8 +297,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
-    const extensionId = identifiers.extensions[this.localIdentifier]!
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
+    const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.devUUID
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
