@@ -727,7 +727,6 @@ class AppConfigurationLoader {
   private directory: string
   private configName?: string
   private specifications: ExtensionSpecification[]
-  private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
 
   constructor(
@@ -735,14 +734,12 @@ class AppConfigurationLoader {
       directory,
       configName,
       specifications,
-      remoteFlags,
     }: AppConfigurationLoaderConstructorArgs & {specifications: ExtensionSpecification[]},
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.directory = directory
     this.configName = configName
     this.specifications = specifications
-    this.remoteFlags = remoteFlags ?? []
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
   }
 
