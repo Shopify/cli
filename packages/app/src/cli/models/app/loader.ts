@@ -20,11 +20,11 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, createConfigExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -36,7 +36,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -748,7 +748,7 @@ class AppConfigurationLoader {
 
   async loaded() {
     const specifications = this.specifications
-    const appDirectory = await this.getAppDirectory()
+    const appDirectory = await getAppDirectory(this.directory)
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
     const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
@@ -765,7 +765,7 @@ class AppConfigurationLoader {
 
     this.configName = this.configName ?? cachedCurrentConfig
 
-    const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
+    const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, this.configName)
     const file = await loadConfigurationFileContent(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(specifications, this.dynamicallySpecifiedConfigs.enabled)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
@@ -777,7 +777,7 @@ class AppConfigurationLoader {
     }
 
     let configuration = await parseConfigurationFile(schemaForConfigurationFile, configurationPath)
-    const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
+    const allClientIdsByConfigName = await getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
       usesLinkedConfig: false,
@@ -808,90 +808,13 @@ class AppConfigurationLoader {
     return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
   }
 
-  // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
-  // traverse up the filesystem to find the root app directory.
-  private async getAppDirectory() {
-    if (!(await fileExists(this.directory))) {
-      throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
-    }
-
-    // In order to find the chosen config for the app, we need to find the directory of the app.
-    // But we can't know the chosen config because the cache key is the directory itself. So we
-    // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
-    const appDirectory = await findPathUp(
-      async (directory) => {
-        const found = await glob(joinPath(directory, appConfigurationFileNameGlob))
-        if (found.length > 0) {
-          return directory
-        }
-      },
-      {
-        cwd: this.directory,
-        type: 'directory',
-      },
-    )
-
-    if (appDirectory) {
-      return appDirectory
-    } else {
-      throw new AbortError(
-        outputContent`Couldn't find an app toml file at ${outputToken.path(this.directory)}, is this an app directory?`,
-      )
-    }
-  }
-
-  private async getConfigurationPath(appDirectory: string) {
-    const configurationFileName = getAppConfigurationFileName(this.configName)
-    const configurationPath = joinPath(appDirectory, configurationFileName)
-
-    if (await fileExists(configurationPath)) {
-      return {configurationPath, configurationFileName}
-    } else {
-      throw new AbortError(
-        outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(this.directory)}.`,
-      )
-    }
-  }
-
-  /**
-   * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
-   */
-  private async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
-    const configNamesToClientId: {[key: string]: string} = {}
-    const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
-
-    const entries = (
-      await Promise.all(
-        candidates.map(async (candidateFile) => {
-          try {
-            const configuration = await parseConfigurationFile(
-              // we only care about the client ID, so no need to parse the entire file
-              zod.object({client_id: zod.string().optional()}),
-              candidateFile,
-              // we're not interested in error reporting at all
-              noopAbortOrReport,
-            )
-            if (configuration.client_id !== undefined) {
-              configNamesToClientId[basename(candidateFile)] = configuration.client_id
-              return [basename(candidateFile), configuration.client_id] as [string, string]
-            }
-            // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch {
-            // can ignore errors in parsing
-          }
-        }),
-      )
-    ).filter((entry) => entry !== undefined) as [string, string][]
-    return Object.fromEntries(entries)
-  }
-
   /**
    * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
    * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
    *
    * Returns the updated configuration object
    */
-  private remapDynamicConfigToNewParents(configuration: CurrentAppConfiguration): CurrentAppConfiguration {
+  private remapDynamicConfigToNewParents<T>(configuration: T): T {
     // remap configuration keys to their new parent, if needed
     // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
     if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
@@ -914,6 +837,85 @@ class AppConfigurationLoader {
     }
     return configuration
   }
+}
+
+async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
+  const configurationFileName = getAppConfigurationFileName(configName)
+  const configurationPath = joinPath(appDirectory, configurationFileName)
+
+  if (await fileExists(configurationPath)) {
+    return {configurationPath, configurationFileName}
+  } else {
+    throw new AbortError(outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`)
+  }
+}
+
+/**
+ * Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
+ * traverse up the filesystem to find the root app directory.
+ *
+ * @param directory - The current working directory, or the `--path` option
+ */
+async function getAppDirectory(directory: string) {
+  if (!(await fileExists(directory))) {
+    throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(directory)}`)
+  }
+
+  // In order to find the chosen config for the app, we need to find the directory of the app.
+  // But we can't know the chosen config because the cache key is the directory itself. So we
+  // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
+  const appDirectory = await findPathUp(
+    async (directory) => {
+      const found = await glob(joinPath(directory, appConfigurationFileNameGlob))
+      if (found.length > 0) {
+        return directory
+      }
+    },
+    {
+      cwd: directory,
+      type: 'directory',
+    },
+  )
+
+  if (appDirectory) {
+    return appDirectory
+  } else {
+    throw new AbortError(
+      outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
+    )
+  }
+}
+
+/**
+ * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
+ */
+async function getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
+  const configNamesToClientId: {[key: string]: string} = {}
+  const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
+
+  const entries = (
+    await Promise.all(
+      candidates.map(async (candidateFile) => {
+        try {
+          const configuration = await parseConfigurationFile(
+            // we only care about the client ID, so no need to parse the entire file
+            zod.object({client_id: zod.string().optional()}),
+            candidateFile,
+            // we're not interested in error reporting at all
+            noopAbortOrReport,
+          )
+          if (configuration.client_id !== undefined) {
+            configNamesToClientId[basename(candidateFile)] = configuration.client_id
+            return [basename(candidateFile), configuration.client_id] as [string, string]
+          }
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          // can ignore errors in parsing
+        }
+      }),
+    )
+  ).filter((entry) => entry !== undefined) as [string, string][]
+  return Object.fromEntries(entries)
 }
 
 export async function loadAppName(appDirectory: string): Promise<string> {
