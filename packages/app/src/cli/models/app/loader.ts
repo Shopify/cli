@@ -688,7 +688,8 @@ export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
   env = process.env,
 ): Promise<AppConfigurationInterface> {
-  const loader = new AppConfigurationLoader(options, getDynamicConfigOptionsFromEnvironment(env))
+  const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
+  const loader = new AppConfigurationLoader({...options, specifications}, getDynamicConfigOptionsFromEnvironment(env))
   const result = await loader.loaded()
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
@@ -725,12 +726,17 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
-  private specifications?: ExtensionSpecification[]
+  private specifications: ExtensionSpecification[]
   private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
 
   constructor(
-    {directory, configName, specifications, remoteFlags}: AppConfigurationLoaderConstructorArgs,
+    {
+      directory,
+      configName,
+      specifications,
+      remoteFlags,
+    }: AppConfigurationLoaderConstructorArgs & {specifications: ExtensionSpecification[]},
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.directory = directory
@@ -741,7 +747,7 @@ class AppConfigurationLoader {
   }
 
   async loaded() {
-    const specifications = this.specifications ?? (await loadLocalExtensionsSpecifications())
+    const specifications = this.specifications
     const appDirectory = await this.getAppDirectory()
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
