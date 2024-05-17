@@ -133,33 +133,32 @@ export async function convertToTransferDisabledStoreIfNeeded(
    * Against production (!isSpinEnvironment()), this allows you to reference other shops in a TOML file even if some of
    * the dev experience isn't completely supported.
    */
-  if (firstPartyDev()) return true
+  if (store.transferDisabled || firstPartyDev()) return true
+
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
     throw new AbortError(
       `The store you specified (${store.shopDomain}) is not a dev store`,
       'Run dev --reset and select an eligible dev store.',
     )
   }
-  if (!store.transferDisabled) {
-    switch (conversionMode) {
-      case 'prompt-first': {
-        const confirmed = await confirmConversionToTransferDisabledStorePrompt()
-        if (!confirmed) {
-          // tell caller the store is invalid and not converted. they may re-prompt etc.
-          return false
-        }
-        await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
-        break
+
+  switch (conversionMode) {
+    case 'prompt-first': {
+      const confirmed = await confirmConversionToTransferDisabledStorePrompt()
+      if (!confirmed) {
+        // tell caller the store is invalid and not converted. they may re-prompt etc.
+        return false
       }
-      case 'never': {
-        throw new AbortError(
-          'The store you specified is not transfer-disabled',
-          "Try running 'dev --reset' and selecting a different store, or choosing to convert this one.",
-        )
-      }
+      await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
+      return true
+    }
+    case 'never': {
+      throw new AbortError(
+        'The store you specified is not transfer-disabled',
+        "Try running 'dev --reset' and selecting a different store, or choosing to convert this one.",
+      )
     }
   }
-  return true
 }
 
 /**
