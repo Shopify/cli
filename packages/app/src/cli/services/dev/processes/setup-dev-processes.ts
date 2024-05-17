@@ -80,7 +80,6 @@ export async function setupDevProcesses({
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
-
   const processes = [
     ...(await setupWebProcesses({
       webs: localApp.webs,
@@ -118,10 +117,11 @@ export async function setupDevProcesses({
     }),
     beta
       ? await setupDevSessionProcess({
-          localApp,
+          app: localApp,
           apiKey,
           developerPlatformClient,
-          proxyUrl: network.proxyUrl,
+          url: network.proxyUrl,
+          organizationId: remoteApp.organizationId,
         })
       : await setupDraftableExtensionsProcess({
           localApp,
