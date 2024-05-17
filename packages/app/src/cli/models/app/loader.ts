@@ -67,10 +67,10 @@ export async function loadConfigurationFileContent(
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
   },
-  decode: (input: string) => object = decodeToml,
-): Promise<unknown> {
+  decode: (input: string) => JsonMapType = decodeToml,
+): Promise<JsonMapType> {
   if (!(await fileExists(filepath))) {
-    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, '', filepath)
+    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, {}, filepath)
   }
 
   try {
@@ -82,7 +82,7 @@ export async function loadConfigurationFileContent(
     if (err.line && err.pos && err.col) {
       return abortOrReport(
         outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
-        null,
+        {},
         filepath,
       )
     } else {
@@ -102,7 +102,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
   },
-  decode: (input: string) => object = decodeToml,
+  decode: (input: string) => JsonMapType = decodeToml,
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
