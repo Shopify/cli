@@ -199,10 +199,24 @@ export interface AppConfigurationInterface<T extends AppConfiguration = AppConfi
   configSchema: zod.ZodType<Omit<T, 'path'>>
 }
 
-export interface AppInterface<T extends AppConfiguration = AppConfiguration> extends AppConfigurationInterface<T> {
+// A tweak of the normal AppInterface for loading code that needs to present something that is almost a real app, but not quite
+export interface PartialAppInterface<T extends AppConfiguration = AppConfiguration>
+  extends AppConfigurationInterface<T> {
   name: string
-  idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   packageManager: PackageManager
+  specifications: ExtensionSpecification[]
+  remoteFlags: Flag[]
+
+  /**
+   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
+   *
+   * @returns true if the app can be launched, false otherwise
+   */
+  appIsLaunchable: () => boolean
+}
+
+export interface AppInterface<T extends AppConfiguration = AppConfiguration> extends PartialAppInterface<T> {
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -210,21 +224,13 @@ export interface AppInterface<T extends AppConfiguration = AppConfiguration> ext
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
-  specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
-  remoteFlags: Flag[]
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
-  /**
-   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
-   *
-   * @returns true if the app can be launched, false otherwise
-   */
-  appIsLaunchable: () => boolean
 }
 
 type AppConstructor<T extends AppConfiguration = AppConfiguration> = AppConfigurationInterface<T> & {
@@ -236,7 +242,7 @@ type AppConstructor<T extends AppConfiguration = AppConfiguration> = AppConfigur
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  specifications?: ExtensionSpecification[]
+  specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
 }
 
@@ -251,7 +257,7 @@ export class App<T extends AppConfiguration = AppConfiguration> implements AppIn
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  specifications?: ExtensionSpecification[]
+  specifications: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]

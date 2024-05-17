@@ -15,6 +15,7 @@ import {
   isCurrentAppSchema,
   getAppScopesArray,
   CurrentAppConfiguration,
+  PartialAppInterface,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -353,7 +354,7 @@ interface DeployContextOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 async function fetchDevAppAndPrompt(
-  app: AppInterface,
+  app: PartialAppInterface,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationApp | undefined> {
   const cachedInfo = getCachedAppInfo(app.directory)
@@ -659,7 +660,10 @@ export async function ensureVersionsListContext(
   }
 }
 
-export async function fetchOrCreateOrganizationApp(app: AppInterface, directory?: string): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(
+  app: PartialAppInterface,
+  directory?: string,
+): Promise<OrganizationApp> {
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)

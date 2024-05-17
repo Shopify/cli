@@ -1,9 +1,9 @@
 import {saveCurrentConfig} from './use.js'
 import {
-  App,
   AppConfiguration,
   AppConfigurationInterface,
   AppInterface,
+  PartialAppInterface,
   BasicAppConfigurationWithoutModules,
   CurrentAppConfiguration,
   getAppScopes,
@@ -42,7 +42,11 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 type ConfigOutput = Pick<AppConfigurationInterface, 'configuration' | 'configSchema'>
 
-export function emptyApp(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string): AppInterface {
+export function emptyApp(
+  specifications?: ExtensionSpecification[],
+  flags?: Flag[],
+  clientId?: string,
+): PartialAppInterface {
   const config: ConfigOutput = clientId
     ? {
         configuration: {
@@ -57,18 +61,15 @@ export function emptyApp(specifications?: ExtensionSpecification[], flags?: Flag
         configSchema: getAppVersionedSchema(specifications ?? []),
       }
 
-  return new App({
-    name: '',
+  return {
     directory: '',
-    packageManager: 'npm',
-    nodeDependencies: {},
-    webs: [],
-    modules: [],
-    usesWorkspaces: false,
-    specifications,
-    remoteFlags: flags ?? [],
     ...config,
-  })
+    name: '',
+    packageManager: 'npm',
+    specifications: specifications ?? [],
+    remoteFlags: flags ?? [],
+    appIsLaunchable: () => false,
+  }
 }
 
 export interface LinkOptions {
@@ -145,12 +146,22 @@ async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, di
   }
 }
 
+/**
+ * Attempts to load the app from the local file system, with fallback behaviour.
+ *
+ * The app itself is returned if the app has already been linked to the remote app, and its a match for the provided remote app.
+ *
+ * It is also returned if it is still using legacy config -- i.e. it's fresh from the template.
+ *
+ * Otherwise, return an empty app -- a placeholder that stores only the remote app's API key.
+ *
+ */
 async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
   remoteFlags?: Flag[],
   remoteApp?: OrganizationApp,
-): Promise<AppInterface> {
+): Promise<PartialAppInterface | AppInterface> {
   try {
     const app = await loadApp({
       specifications,
@@ -160,8 +171,14 @@ async function loadAppOrEmptyApp(
       remoteFlags,
     })
     const configuration = app.configuration
-    if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
-    return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
+
+    if (!isCurrentAppSchema(configuration)) {
+      return app
+    } else if (remoteApp?.apiKey === configuration.client_id) {
+      return app
+    } else {
+      return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
+    }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags)
@@ -169,7 +186,7 @@ async function loadAppOrEmptyApp(
 }
 
 async function loadRemoteApp(
-  localApp: AppInterface,
+  localApp: PartialAppInterface,
   apiKey: string | undefined,
   developerPlatformClient: DeveloperPlatformClient,
   directory?: string,
@@ -188,7 +205,7 @@ async function loadRemoteApp(
 async function loadConfigurationFileName(
   remoteApp: OrganizationApp,
   options: LinkOptions,
-  localApp: AppInterface,
+  localApp: AppConfigurationInterface,
 ): Promise<string> {
   const cache = getCachedCommandInfo()
 
@@ -233,7 +250,7 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
   return localAppConfig
 }
 
-function renderSuccessMessage(configFileName: string, appName: string, localApp: AppInterface) {
+function renderSuccessMessage(configFileName: string, appName: string, localApp: PartialAppInterface) {
   renderSuccess({
     headline: `${configFileName} is now linked to "${appName}" on Shopify`,
     body: `Using ${configFileName} as your default config.`,

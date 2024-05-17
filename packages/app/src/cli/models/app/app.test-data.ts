@@ -101,7 +101,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
     errors: app.errors,
-    specifications: app.specifications,
+    specifications: app.specifications ?? [],
     configSchema: app.configSchema ?? AppConfigurationSchema,
     remoteFlags: app.remoteFlags,
   })

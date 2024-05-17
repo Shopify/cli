@@ -736,7 +736,7 @@ type ConfigurationLoadResultMetadata = {
     }
 )
 
-type ConfigurationLoaderResult = AppConfigurationInterface & {
+type ConfigurationLoaderResult<T extends AppConfiguration = AppConfiguration> = AppConfigurationInterface<T> & {
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
 }
 
