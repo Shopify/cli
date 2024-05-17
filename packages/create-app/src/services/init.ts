@@ -2,6 +2,7 @@ import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/n
 import cleanup from '../utils/template/cleanup.js'
 import {
   findUpAndReadPackageJson,
+  lockfiles,
   PackageManager,
   UnknownPackageManagerError,
   writePackageJSON,
@@ -19,6 +20,7 @@ import {
   inTemporaryDirectory,
   mkdir,
   moveFile,
+  readFile,
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -33,6 +35,9 @@ interface InitOptions {
   packageManager: PackageManager
   local: boolean
   useGlobalCLI: boolean
+  postCloneActions: {
+    removeLockfilesFromGitignore: boolean
+  }
 }
 
 async function init(options: InitOptions) {
@@ -122,6 +127,26 @@ async function init(options: InitOptions) {
         },
       },
     )
+
+    if (options.postCloneActions.removeLockfilesFromGitignore) {
+      tasks.push({
+        title: 'Removing lockfiles from .gitignore',
+        task: async () => {
+          const gitignorePath = joinPath(templateScaffoldDir, '.gitignore')
+          if (await fileExists(gitignorePath)) {
+            let existingContent = await readFile(gitignorePath)
+
+            lockfiles.forEach((lockfile) => {
+              // convert to a regex matching a whole line, escaping any special characters
+              const lockfileRegex = new RegExp(`^${lockfile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'gm')
+              existingContent = existingContent.replace(lockfileRegex, '')
+            })
+
+            await writeFile(gitignorePath, existingContent.trim())
+          }
+        },
+      })
+    }
 
     if (await isShopify()) {
       tasks.push({

@@ -89,12 +89,12 @@ import {
   DevSessionDeploySchema,
   DevSessionDeployVariables,
 } from '../../api/graphql/dev_session_create.js'
+import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
 import {underscore} from '@shopify/cli-kit/common/string'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -117,8 +117,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      // Need to replace with actual auth token for developer platform
-      const token = 'token'
+      const token = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
