@@ -80,7 +80,6 @@ export async function ensureExtensionsIds(
     localExtensions,
     remoteExtensions,
     validIdentifiers,
-    'uuid',
     options.developerPlatformClient,
   )
 
@@ -98,7 +97,7 @@ export async function ensureExtensionsIds(
   }
 
   if (matchExtensions.toManualMatch.local.length > 0) {
-    const matchResult = await manualMatchIds(matchExtensions.toManualMatch, 'uuid')
+    const matchResult = await manualMatchIds(matchExtensions.toManualMatch)
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
   }

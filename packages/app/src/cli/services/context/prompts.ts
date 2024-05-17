@@ -17,18 +17,17 @@ export async function matchConfirmationPrompt(
 export async function selectRemoteSourcePrompt(
   localSource: LocalSource,
   remoteSourcesOfSameType: RemoteSource[],
-  remoteIdField: 'id' | 'uuid',
 ): Promise<RemoteSource> {
   const remoteOptions = remoteSourcesOfSameType.map((remote) => ({
     label: `Match it to ${remote.title} (ID: ${remote.id} on Shopify Partners)`,
-    value: remote[remoteIdField],
+    value: remote.uuid,
   }))
   remoteOptions.push({label: 'Create new extension', value: 'create'})
   const uuid = await renderAutocompletePrompt({
     message: `How would you like to deploy your "${localSource.handle}"?`,
     choices: remoteOptions,
   })
-  return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === uuid)!
+  return remoteSourcesOfSameType.find((remote) => remote.uuid === uuid)!
 }
 
 export async function extensionMigrationPrompt(

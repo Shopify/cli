@@ -233,7 +233,7 @@ beforeAll(async () => {
 describe('automaticMatchmaking: some local, no remote ones', () => {
   test('creates all local extensions', async () => {
     // When
-    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [], {}, 'uuid', testDeveloperPlatformClient())
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [], {}, testDeveloperPlatformClient())
 
     // Then
     const expected = {
@@ -249,7 +249,7 @@ describe('automaticMatchmaking: some local, no remote ones', () => {
 describe('automaticMatchmaking: some local of the same type, no remote ones', () => {
   test('creates all local extensions', async () => {
     // When
-    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [], {}, 'uuid', testDeveloperPlatformClient())
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [], {}, testDeveloperPlatformClient())
 
     // Then
     const expected = {
@@ -269,7 +269,6 @@ describe('automaticMatchmaking: some local of the same type, only one remote', (
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -291,7 +290,6 @@ describe('automaticMatchmaking: some local of the same type, a remote with same 
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A_3],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -313,7 +311,6 @@ describe('automaticMatchmaking: some local of the same type, one matching remote
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A, REGISTRATION_A_3],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -335,7 +332,6 @@ describe('automaticMatchmaking: some local of the same type, two remotes that do
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A_3, REGISTRATION_A_4],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -357,7 +353,6 @@ describe('automaticMatchmaking: two pairs of local and only one pair of remote b
       [EXTENSION_A, EXTENSION_A_2, EXTENSION_B, EXTENSION_B_2],
       [REGISTRATION_A_3, REGISTRATION_A_4],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -379,7 +374,6 @@ describe('automaticMatchmaking: same number of local and remote with matching ty
       [EXTENSION_A, EXTENSION_B],
       [REGISTRATION_A, REGISTRATION_B],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -401,7 +395,6 @@ describe('automaticMatchmaking: more local than remote, all remote match some lo
       [EXTENSION_A, EXTENSION_B, EXTENSION_C, EXTENSION_D],
       [REGISTRATION_A, REGISTRATION_B],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -423,7 +416,6 @@ describe('automaticMatchmaking: remote have types not present locally', () => {
       [EXTENSION_A, EXTENSION_B],
       [REGISTRATION_C, REGISTRATION_D],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -445,7 +437,6 @@ describe('automaticMatchmaking: some sources match, but other are missing', () =
       [EXTENSION_A, EXTENSION_B],
       [REGISTRATION_A, REGISTRATION_C],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -467,7 +458,6 @@ describe('automaticMatchmaking: multiple sources of the same type locally and re
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A, REGISTRATION_A_2],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -492,7 +482,6 @@ describe('automaticMatchmaking: multiple sources of the same type locally and re
       [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
       [REGISTRATION_A, REGISTRATION_A_2],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -517,7 +506,6 @@ describe('automaticMatchmaking: more remote of the same type than local', () => 
       [EXTENSION_A],
       [REGISTRATION_A, REGISTRATION_A_2],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -539,7 +527,6 @@ describe('automaticMatchmaking: more remote of the same type than local, but non
       [EXTENSION_A],
       [REGISTRATION_A_2, REGISTRATION_A_3],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -561,7 +548,6 @@ describe('automaticMatchmaking: more remote of different types than local', () =
       [EXTENSION_A],
       [REGISTRATION_A, REGISTRATION_B],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -585,7 +571,6 @@ describe('automaticMatchmaking: some sources have uuid, others can be matched', 
       {
         EXTENSION_A: 'UUID_A',
       },
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -609,7 +594,6 @@ describe("automaticMatchmaking: some sources have uuid, but doesn't match a remo
       {
         EXTENSION_A: 'UUID_WRONG',
       },
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -633,7 +617,6 @@ describe('automaticMatchmaking: duplicated sources types but some of them alread
       {
         EXTENSION_A: 'UUID_A',
       },
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -657,7 +640,6 @@ describe('automaticMatchmaking: automatic matches with different names', () => {
       [EXTENSION_A, EXTENSION_B],
       [registrationNewA, registrationNewB],
       {},
-      'uuid',
       testDeveloperPlatformClient(),
     )
 
@@ -678,7 +660,7 @@ describe('automaticMatchmaking: automatic matches with different names', () => {
 describe('automaticMatchmaking: if identifiers contains something else', () => {
   test('is ignored', async () => {
     // When
-    const got = await automaticMatchmaking([], [], {FUNCTION_A: 'FUNCTION_A'}, 'uuid', testDeveloperPlatformClient())
+    const got = await automaticMatchmaking([], [], {FUNCTION_A: 'FUNCTION_A'}, testDeveloperPlatformClient())
 
     // Then
     const expected = {
@@ -694,7 +676,7 @@ describe('automaticMatchmaking: if identifiers contains something else', () => {
 describe('automaticMatchmaking: functions', () => {
   test('creates all local functions', async () => {
     // When
-    const got = await automaticMatchmaking([FUNCTION_A], [], {}, 'id', testDeveloperPlatformClient())
+    const got = await automaticMatchmaking([FUNCTION_A], [], {}, testDeveloperPlatformClient())
 
     // Then
     const expected = {
@@ -714,7 +696,6 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
       [FUNCTION_A],
       [REGISTRATION_FUNCTION_A],
       {'function-a': 'LEGACY_FUNCTION_ULID_A'},
-      'id',
       testDeveloperPlatformClient(),
     )
 
@@ -735,7 +716,6 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
       [FUNCTION_A],
       [REGISTRATION_FUNCTION_A],
       {'function-a': 'LEGACY_FUNCTION_UUID_A'},
-      'id',
       testDeveloperPlatformClient(),
     )
 
@@ -752,7 +732,7 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
 
   test('creates local function when it does not exist on remote', async () => {
     // When
-    const got = await automaticMatchmaking([FUNCTION_A], [], {}, 'id', testDeveloperPlatformClient())
+    const got = await automaticMatchmaking([FUNCTION_A], [], {}, testDeveloperPlatformClient())
 
     // Then
     const expected = {
@@ -772,7 +752,6 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
       [EXTENSION_A, EXTENSION_B],
       [],
       {},
-      'uuid',
       testDeveloperPlatformClient({supportsAtomicDeployments: true}),
     )
 
@@ -792,7 +771,6 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A],
       {},
-      'uuid',
       testDeveloperPlatformClient({supportsAtomicDeployments: true}),
     )
 
