@@ -171,11 +171,10 @@ export class AppErrors {
 }
 
 interface AppLoaderConstructorArgs {
-  directory: string
   mode?: AppLoaderMode
-  configName?: string
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  loadedConfiguration: ConfigurationLoaderResult
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -190,8 +189,32 @@ export async function checkFolderIsValidApp(directory: string) {
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function loadApp(options: AppLoaderConstructorArgs, env = process.env): Promise<AppInterface> {
-  const loader = new AppLoader(options, getDynamicConfigOptionsFromEnvironment(env))
+export async function loadApp(
+  options: Omit<AppLoaderConstructorArgs, 'loadedConfiguration'> & {
+    directory: string
+    configName?: string
+  },
+  env = process.env,
+): Promise<AppInterface> {
+  const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
+  const dynamicConfigOptions = getDynamicConfigOptionsFromEnvironment(env)
+  const configurationLoader = new AppConfigurationLoader(
+    {
+      directory: options.directory,
+      configName: options.configName,
+      specifications,
+    },
+    dynamicConfigOptions,
+  )
+  const loadedConfiguration = await configurationLoader.loaded()
+
+  const loader = new AppLoader(
+    {
+      ...options,
+      loadedConfiguration,
+    },
+    dynamicConfigOptions,
+  )
   return loader.loaded()
 }
 
@@ -253,36 +276,26 @@ type DynamicallySpecifiedConfigLoading =
     }
 
 class AppLoader {
-  private directory: string
   private mode: AppLoaderMode
-  private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
   private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
+  private loadedConfiguration: ConfigurationLoaderResult
 
   constructor(
-    {directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs,
+    {mode, specifications, remoteFlags, loadedConfiguration}: AppLoaderConstructorArgs,
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.mode = mode ?? 'strict'
-    this.directory = directory
     this.specifications = specifications ?? []
-    this.configName = configName
     this.remoteFlags = remoteFlags ?? []
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
+    this.loadedConfiguration = loadedConfiguration
   }
 
   async loaded() {
-    const configurationLoader = new AppConfigurationLoader(
-      {
-        directory: this.directory,
-        configName: this.configName,
-        specifications: this.specifications,
-      },
-      this.dynamicallySpecifiedConfigs,
-    )
-    const {configuration, directory, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+    const {configuration, directory, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
@@ -723,6 +736,10 @@ type ConfigurationLoadResultMetadata = {
     }
 )
 
+type ConfigurationLoaderResult = AppConfigurationInterface & {
+  configurationLoadResultMetadata: ConfigurationLoadResultMetadata
+}
+
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
@@ -743,7 +760,7 @@ class AppConfigurationLoader {
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
   }
 
-  async loaded() {
+  async loaded(): Promise<ConfigurationLoaderResult> {
     const specifications = this.specifications
     const appDirectory = await getAppDirectory(this.directory)
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
