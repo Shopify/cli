@@ -1,16 +1,17 @@
 import {saveCurrentConfig} from './use.js'
 import {
+  App,
   AppConfiguration,
   AppInterface,
   CurrentAppConfiguration,
-  EmptyApp,
   getAppScopes,
+  getAppVersionedSchema,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {getAppConfigurationFileName, loadApp, loadAppConfiguration} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {
   InvalidApiKeyErrorMessage,
   fetchOrCreateOrganizationApp,
@@ -23,7 +24,10 @@ import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {
+  DeveloperPlatformClient,
+  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {SpecsAppConfiguration} from '../../../models/extensions/specifications/types/app_config.js'
@@ -34,6 +38,29 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
+export class EmptyApp extends App {
+  constructor(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string) {
+    const configuration = clientId
+      ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
+      : {scopes: '', path: ''}
+    const configSchema = getAppVersionedSchema(specifications ?? [])
+
+    super({
+      name: '',
+      directory: '',
+      packageManager: 'npm',
+      configuration,
+      nodeDependencies: {},
+      webs: [],
+      modules: [],
+      usesWorkspaces: false,
+      specifications,
+      configSchema,
+      remoteFlags: flags ?? [],
+    })
+  }
+}
+
 export interface LinkOptions {
   directory: string
   apiKey?: string
@@ -43,14 +70,8 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<CurrentAppConfiguration> {
-  let configuration: AppConfiguration | undefined
-  try {
-    // This will crash if we aren't in an app folder. But we need to continue in that case.
-    configuration = (await loadAppConfiguration(options)).configuration
-    // eslint-disable-next-line no-empty, no-catch-all/no-catch-all
-  } catch (error: unknown) {}
+  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
 
-  let developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration})
   const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient})
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const {localApp, configFileName, configFilePath} = await loadLocalApp(
@@ -61,7 +82,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   await logMetadataForLoadedContext(remoteApp)
 
-  configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  const configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration =
     (await fetchAppRemoteConfiguration(
       remoteApp,

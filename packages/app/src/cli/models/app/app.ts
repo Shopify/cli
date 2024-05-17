@@ -402,28 +402,6 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
   return allExtensions.find((ext) => ext.handle === handle)
 }
 
-export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string) {
-    const configuration = clientId
-      ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
-      : {scopes: '', path: ''}
-    const configSchema = getAppVersionedSchema(specifications ?? [])
-    super({
-      name: '',
-      directory: '',
-      packageManager: 'npm',
-      configuration,
-      nodeDependencies: {},
-      webs: [],
-      modules: [],
-      usesWorkspaces: false,
-      specifications,
-      configSchema,
-      remoteFlags: flags ?? [],
-    })
-  }
-}
-
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
 
 /**

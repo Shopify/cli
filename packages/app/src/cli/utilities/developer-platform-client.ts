@@ -47,6 +47,7 @@ import {
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -63,6 +64,35 @@ export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
   if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) clients.push(new ShopifyDevelopersClient())
   return clients
+}
+
+/**
+ * Attempts to load an app's configuration in order to select a developer platform client.
+ *
+ * The provided options are a subset of what is common across most services.
+ *
+ * @param directory - The working directory for this command (possibly via `--path`)
+ * @param configName - An optional configuration file name to force, provided by the developer
+ * @param developerPlatformClient - An optional developer platform client to use, forced by the developer
+ */
+export async function sniffServiceOptionsAndAppConfigToSelectPlatformClient(options: {
+  directory: string
+  configName?: string
+  developerPlatformClient?: DeveloperPlatformClient
+}): Promise<DeveloperPlatformClient> {
+  if (options.developerPlatformClient) {
+    return options.developerPlatformClient
+  }
+  try {
+    const {configuration} = await loadAppConfiguration(options)
+    const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+    return developerPlatformClient
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    // If the app is invalid, we really don't care at this point. This function is purely responsible for selecting
+    // a client.
+    return new PartnersClient()
+  }
 }
 
 export function selectDeveloperPlatformClient({
