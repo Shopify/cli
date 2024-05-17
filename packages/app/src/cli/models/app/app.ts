@@ -18,6 +18,11 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 
+// Schemas for loading app configuration
+
+/**
+ * Schema for a freshly minted app template.
+ */
 export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
@@ -31,6 +36,9 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
+/**
+ * Schema for a normal, linked app. Properties from modules are not validated.
+ */
 export const AppSchema = zod.object({
   client_id: zod.string(),
   organization_id: zod.string().optional(),
@@ -45,7 +53,34 @@ export const AppSchema = zod.object({
   web_directories: zod.array(zod.string()).optional(),
 })
 
+/**
+ * Utility schema that matches freshly minted or normal, linked, apps.
+ */
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
+
+// Types representing post-validated app configurations
+
+/**
+ * App configuration for something validated as either a freshly minted app template or a normal, linked, app.
+ *
+ * Try to avoid using this: generally you should be working with a more specific type.
+ */
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
+
+/**
+ * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
+ */
+export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
+
+/**
+ * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
+ */
+export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & SpecsAppConfiguration
+
+/**
+ * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
+ */
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
@@ -148,9 +183,6 @@ export const WebConfigurationSchema = zod.union([
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & SpecsAppConfiguration
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
