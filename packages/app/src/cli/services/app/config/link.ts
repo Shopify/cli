@@ -2,6 +2,7 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
+  CurrentAppConfiguration,
   EmptyApp,
   getAppScopes,
   isCurrentAppSchema,
@@ -41,7 +42,7 @@ export interface LinkOptions {
   developerPlatformClient?: DeveloperPlatformClient
 }
 
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<CurrentAppConfiguration> {
   let configuration: AppConfiguration | undefined
   try {
     // This will crash if we aren't in an app folder. But we need to continue in that case.
@@ -69,7 +70,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       localApp.remoteFlags,
     )) ?? buildRemoteApiClientConfiguration(configuration, remoteApp)
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-  configuration = deepMergeObjects(
+  const configurationIncludingRemote: CurrentAppConfiguration = deepMergeObjects(
     configuration,
     {
       ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
@@ -78,14 +79,14 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     replaceLocalArrayStrategy,
   )
 
-  await writeAppConfigurationFile(configuration, localApp.configSchema)
+  await writeAppConfigurationFile(configurationIncludingRemote, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccessMessage(configFileName, remoteAppConfiguration.name, localApp)
   }
 
-  return configuration
+  return configurationIncludingRemote
 }
 
 async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions, 'developerPlatformClient'>>) {
