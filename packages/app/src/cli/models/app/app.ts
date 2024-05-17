@@ -47,7 +47,10 @@ export const AppSchema = zod.object({
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
-export function getAppVersionedSchema(specs: ExtensionSpecification[], allowDynamicallySpecifiedConfigs = false) {
+export function getAppVersionedSchema(
+  specs: ExtensionSpecification[],
+  allowDynamicallySpecifiedConfigs = false,
+): typeof AppSchema {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.uidStrategy === 'single'
   const schema = specs
     .filter(isConfigSpecification)
