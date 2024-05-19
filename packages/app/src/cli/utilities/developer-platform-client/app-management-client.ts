@@ -111,8 +111,9 @@ import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partn
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
-import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {businessPlatformOrganizationsRequest, businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {DevStoresQuery, DevStoresQuerySchema, DevStoresQueryVariables} from './app-management-client/graphql/dev-stores.js'
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -324,8 +325,27 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async devStoresForOrg(_orgId: string): Promise<OrganizationStore[]> {
-    return []
+  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+    const base64Id = encodedGidFromId(orgId)
+    const variables: DevStoresQueryVariables = {organizationId: base64Id}
+    const storesResult = await businessPlatformOrganizationsRequest<DevStoresQuerySchema>(
+      DevStoresQuery,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
+
+    return storesResult.organization.properties.edges.map((edge) => {
+      const store = edge.node
+      return {
+        shopId: store.externalId,
+        link: store.primaryDomain,
+        shopDomain: store.primaryDomain,
+        shopName: store.name,
+        transferDisabled: true,
+        convertableToPartnerTest: true,
+      }
+    })
   }
 
   async appExtensionRegistrations(

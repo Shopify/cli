@@ -27,3 +27,30 @@ export async function businessPlatformRequest<T>(
     responseOptions: {onResponse: handleDeprecations},
   })
 }
+
+/**
+ * Executes a GraphQL query against the Business Platform Organizations API.
+ *
+ * @param query - GraphQL query to execute.
+ * @param token - Business Platform token.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <T>.
+ */
+export async function businessPlatformOrganizationsRequest<T>(
+  query: string,
+  token: string,
+  organizationId: string,
+  variables?: GraphQLVariables,
+): Promise<T> {
+  const api = 'BusinessPlatform'
+  const fqdn = await businessPlatformFqdn()
+  const url = `https://${fqdn}/organizations/api/unstable/organization/${organizationId}/graphql`
+  return graphqlRequest({
+    query,
+    api,
+    url,
+    token,
+    variables,
+    responseOptions: {onResponse: handleDeprecations},
+  })
+}
