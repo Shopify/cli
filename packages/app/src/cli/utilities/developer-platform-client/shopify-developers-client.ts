@@ -45,6 +45,7 @@ import {
   AppVersionByIdQuery,
   AppVersionByIdQuerySchema,
   AppVersionByIdQueryVariables,
+  AppModule as AppModuleReturnType,
 } from './shopify-developers-client/graphql/app-version-by-id.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
@@ -85,7 +86,7 @@ import {
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema as AppVersionByTagSchemaInterface} from '../../api/graphql/app_version_by_tag.js'
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -427,7 +428,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
           versionTag: versionInfo.versionTag,
           location: '',
           message: '',
-          appModuleVersions: result2.app.version.modules.map((mod) => {
+          appModuleVersions: result2.app.version.modules.map((mod: AppModuleReturnType) => {
             return {
               registrationId: mod.gid,
               registrationUid: mod.uid,
@@ -461,14 +462,9 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     ])
     const currentModules = currentVersion.app.activeRelease.version.modules
     const selectedVersionModules = selectedVersion.app.version.modules
-    const currentModuleUids = currentModules.map(mod => mod.uid)
-    const selectedVersionModuleUids = selectedVersionModules.map(mod => mod.uid)
-    const removed = currentModules.filter(mod => !selectedVersionModuleUids.includes(mod.uid))
-    const added = selectedVersionModules.filter(mod => !currentModuleUids.includes(mod.uid))
-    const addedUids = added.map(mod => mod.uid)
-    const updated = selectedVersionModules.filter(mod => !addedUids.includes(mod.uid))
+    const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
-    function formattedModule(mod: AppVersionByIdQuerySchema['app']['version']['modules'][number]) {
+    function formattedModule(mod: AppModuleReturnType) {
       return {
         uuid: mod.uid,
         registrationTitle: mod.handle,
@@ -1567,4 +1563,25 @@ function encodedGidFromId(id: string): string {
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
   return Buffer.from(gid, 'base64').toString('ascii').match(/\d+$/)![0]
+}
+
+interface DiffAppModulesInput {
+  currentModules: AppModuleReturnType[]
+  selectedVersionModules: AppModuleReturnType[]
+}
+
+interface DiffAppModulesOutput {
+  added: AppModuleReturnType[]
+  removed: AppModuleReturnType[]
+  updated: AppModuleReturnType[]
+}
+
+export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
+  const currentModuleUids = currentModules.map(mod => mod.uid)
+  const selectedVersionModuleUids = selectedVersionModules.map(mod => mod.uid)
+  const removed = currentModules.filter(mod => !selectedVersionModuleUids.includes(mod.uid))
+  const added = selectedVersionModules.filter(mod => !currentModuleUids.includes(mod.uid))
+  const addedUids = added.map(mod => mod.uid)
+  const updated = selectedVersionModules.filter(mod => !addedUids.includes(mod.uid))
+  return {added, removed, updated}
 }

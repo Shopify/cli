@@ -37,7 +37,7 @@ interface AppModuleSpecification {
   experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
-interface AppModule {
+export interface AppModule {
   gid: string
   uid: string
   handle: string
