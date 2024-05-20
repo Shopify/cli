@@ -449,7 +449,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  async appVersionsDiff(app: MinimalOrganizationApp, {versionId}: AppVersionIdentifiers): Promise<AppVersionsDiffSchema> {
+  async appVersionsDiff(
+    app: MinimalOrganizationApp,
+    {versionId}: AppVersionIdentifiers,
+  ): Promise<AppVersionsDiffSchema> {
     const variables: AppVersionByIdQueryVariables = {appId: app.id, versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
       this.activeAppVersionRawResult(app),
@@ -458,7 +461,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         AppVersionByIdQuery,
         await this.token(),
         variables,
-      )
+      ),
     ])
     const currentModules = currentVersion.app.activeRelease.version.modules
     const selectedVersionModules = selectedVersion.app.version.modules
@@ -510,16 +513,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       }),
       ...result.app.activeRelease,
     }
-  }
-
-  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
-      organizationId,
-      ActiveAppReleaseQuery,
-      await this.token(),
-      variables,
-    )
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
@@ -711,6 +704,19 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
       organizationId,
       query,
+      await this.token(),
+      variables,
+    )
+  }
+
+  private async activeAppVersionRawResult({
+    id,
+    organizationId,
+  }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+      organizationId,
+      ActiveAppReleaseQuery,
       await this.token(),
       variables,
     )
@@ -1577,11 +1583,11 @@ interface DiffAppModulesOutput {
 }
 
 export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
-  const currentModuleUids = currentModules.map(mod => mod.uid)
-  const selectedVersionModuleUids = selectedVersionModules.map(mod => mod.uid)
-  const removed = currentModules.filter(mod => !selectedVersionModuleUids.includes(mod.uid))
-  const added = selectedVersionModules.filter(mod => !currentModuleUids.includes(mod.uid))
-  const addedUids = added.map(mod => mod.uid)
-  const updated = selectedVersionModules.filter(mod => !addedUids.includes(mod.uid))
+  const currentModuleUids = currentModules.map((mod) => mod.uid)
+  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.uid)
+  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.uid))
+  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.uid))
+  const addedUids = added.map((mod) => mod.uid)
+  const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
   return {added, removed, updated}
 }

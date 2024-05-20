@@ -16,7 +16,10 @@ export async function versionDiffByVersion(
   const versionDetails = await versionDetailsByTag(app, versionTag, developerPlatformClient)
   const {
     app: {versionsDiff},
-  }: AppVersionsDiffSchema = await developerPlatformClient.appVersionsDiff(app, {versionId: versionDetails.uuid, appVersionId: versionDetails.id})
+  }: AppVersionsDiffSchema = await developerPlatformClient.appVersionsDiff(app, {
+    versionId: versionDetails.uuid,
+    appVersionId: versionDetails.id,
+  })
 
   return {versionsDiff, versionDetails}
 }

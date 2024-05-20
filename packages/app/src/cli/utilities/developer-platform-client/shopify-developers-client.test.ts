@@ -1,8 +1,8 @@
+import {diffAppModules} from './shopify-developers-client.js'
+import {AppModule} from './shopify-developers-client/graphql/app-version-by-id.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {diffAppModules} from './shopify-developers-client.js'
 import {describe, expect, test} from 'vitest'
-import {AppModule} from './shopify-developers-client/graphql/app-version-by-id.js'
 
 const extensionA = await testUIExtension({devUUID: 'extension-a-uuid'})
 const extensionB = await testUIExtension({devUUID: 'extension-b-uuid'})
@@ -18,11 +18,10 @@ function moduleFromExtension(extension: ExtensionInstance): AppModule {
       identifier: extension.specification.identifier,
       externalIdentifier: extension.specification.externalIdentifier,
       name: extension.specification.externalName,
-      experience: extension.specification.experience as "EXTENSION" | "CONFIGURATION",
-    }
+      experience: extension.specification.experience as 'EXTENSION' | 'CONFIGURATION',
+    },
   }
 }
-
 
 describe('diffAppModules', () => {
   test('something something', () => {
