@@ -451,7 +451,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async appVersionsDiff(app: MinimalOrganizationApp, {versionId}: AppVersionIdentifiers): Promise<AppVersionsDiffSchema> {
     const variables: AppVersionByIdQueryVariables = {appId: app.id, versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
-      this.activeAppVersion(app),
+      this.activeAppVersionRawResult(app),
       orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
         app.organizationId,
         AppVersionByIdQuery,
@@ -459,64 +459,42 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         variables,
       )
     ])
-    const currentModules = currentVersion.appModuleVersions
+    const currentModules = currentVersion.app.activeRelease.version.modules
     const selectedVersionModules = selectedVersion.app.version.modules
-    const currentModuleUids = currentModules.map(mod => mod.registrationUid!)
+    const currentModuleUids = currentModules.map(mod => mod.uid)
     const selectedVersionModuleUids = selectedVersionModules.map(mod => mod.uid)
-    const removed = currentModules.filter(mod => !selectedVersionModuleUids.includes(mod.registrationUid!))
-    const added = selectedVersionModules.filter(mod => !currentModuleUids.includes(mod.uid!))
+    const removed = currentModules.filter(mod => !selectedVersionModuleUids.includes(mod.uid))
+    const added = selectedVersionModules.filter(mod => !currentModuleUids.includes(mod.uid))
     const addedUids = added.map(mod => mod.uid)
-    const updated = selectedVersionModules.filter(mod => !addedUids.includes(mod.uid!))
+    const updated = selectedVersionModules.filter(mod => !addedUids.includes(mod.uid))
+
+    function formattedModule(mod: AppVersionByIdQuerySchema['app']['version']['modules'][number]) {
+      return {
+        uuid: mod.uid,
+        registrationTitle: mod.handle,
+        specification: {
+          identifier: mod.specification.identifier,
+          experience: mod.specification.experience.toLowerCase(),
+          options: {
+            managementExperience: mod.specification.experience.toLowerCase(),
+          },
+        },
+      }
+    }
+
     return {
       app: {
         versionsDiff: {
-          added: added.map(mod => ({
-            uuid: mod.uid,
-            registrationTitle: mod.handle,
-            specification: {
-              identifier: mod.specification.identifier,
-              experience: mod.specification.experience.toLowerCase(),
-              options: {
-                managementExperience: mod.specification.experience.toLowerCase(),
-              },
-            },
-          })),
-          updated: updated.map(mod => ({
-            uuid: mod.uid,
-            registrationTitle: mod.handle,
-            specification: {
-              identifier: mod.specification.identifier,
-              experience: mod.specification.experience.toLowerCase(),
-              options: {
-                managementExperience: mod.specification.experience.toLowerCase(),
-              },
-            },
-          })),
-          removed: removed.map(mod => ({
-            uuid: mod.registrationUid!,
-            registrationTitle: mod.registrationTitle,
-            specification: {
-              identifier: mod.specification!.identifier,
-              experience: mod.specification!.experience,
-              options: {
-                managementExperience: mod.specification!.experience,
-              },
-            },
-          })),
+          added: added.map(formattedModule),
+          updated: updated.map(formattedModule),
+          removed: removed.map(formattedModule),
         },
       },
     }
   }
 
-  async activeAppVersion({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
-    const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-    )
+  async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+    const result = await this.activeAppVersionRawResult(app)
     return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
@@ -536,6 +514,16 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       }),
       ...result.app.activeRelease,
     }
+  }
+
+  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+      organizationId,
+      ActiveAppReleaseQuery,
+      await this.token(),
+      variables,
+    )
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
