@@ -274,9 +274,16 @@ function renderSuccessMessage(configFileName: string, appName: string, localApp:
   })
 }
 
-function buildRemoteApiClientConfiguration(
-  appConfiguration: AppConfiguration,
+/**
+ * Given a remote app, and some local app configuration, build a top-level app configuration object to use locally.
+ *
+ * @param remoteApp - The remote app to build the configuration for. Configuration will typically come straight from here.
+ * @param appConfiguration - The local app configuration already in place. This is used only for pulling in data that came from the app template.
+ * @returns - A top-level app configuration object to use locally.
+ */
+function buildAppConfigurationFromRemoteAppProperties(
   remoteApp: OrganizationApp,
+  appConfiguration: AppConfiguration,
 ): SpecsAppConfiguration {
   return {
     ...addBrandingConfig(remoteApp),
