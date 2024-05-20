@@ -244,7 +244,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   }
 
   async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
-    // This should be the actual query, but it's not working at the moment...
     const query = SpecificationsQuery
     const variables: SpecificationsQueryVariables = {appId}
     const result = await orgScopedShopifyDevelopersRequest<SpecificationsQuerySchema>(

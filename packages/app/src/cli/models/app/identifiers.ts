@@ -4,7 +4,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import type {AppInterface} from './app.js'
@@ -91,7 +91,7 @@ export async function updateAppIdentifiers(
 }
 
 async function addUidToToml(extension: ExtensionInstance) {
-  if (!extension.isUUIDStrategyExtension || !(await fileExists(extension.configurationPath))) return
+  if (!extension.isUUIDStrategyExtension) return
 
   const tomlContents = await readFile(extension.configurationPath)
   const extensionConfig = decodeToml(tomlContents)
