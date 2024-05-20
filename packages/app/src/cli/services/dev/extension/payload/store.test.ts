@@ -54,6 +54,30 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       extensions: [{mock: 'extension-payload'}, {mock: 'extension-payload'}, {mock: 'extension-payload'}],
     })
   })
+
+  test('wraps stdout and stderr with prefixed logger', async () => {
+    // Given
+    const spy = vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
+      mock: 'extension-payload',
+    } as unknown as UIExtensionPayload)
+    const writable = new Writable()
+    vi.spyOn(ExtensionInstance.prototype, 'getPrefixedLogger').mockImplementation(() => writable)
+    const options = {
+      apiKey: 'mock-api-key',
+      appName: 'mock-app-name',
+      url: 'https://mock-url.com',
+      websocketURL: 'wss://mock-websocket-url.com',
+      extensions: [await testUIExtension()],
+      storeFqdn: 'mock-store-fqdn.shopify.com',
+      manifestVersion: '3',
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    // When
+    await getExtensionsPayloadStoreRawPayload(options)
+
+    // Then
+    expect(spy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({stdout: writable, stderr: writable}))
+  })
 })
 
 describe('ExtensionsPayloadStore()', () => {

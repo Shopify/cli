@@ -15,8 +15,9 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import * as components from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -377,5 +378,26 @@ describe('draftMessages', async () => {
 
     // Then
     expect(result).toBeUndefined()
+  })
+
+  describe('getPrefixedLogger', async () => {
+    test('returns a wrapped logger', async () => {
+      const newMessage = 'foo'
+
+      // Given
+      const extensionInstance = await testUIExtension()
+      vi.spyOn(components, 'prefixConcurrentOutputLog').mockReturnValue(newMessage)
+      const mockLogger = new Writable({
+        write: vi.fn(),
+      })
+      vi.spyOn(mockLogger, 'write')
+
+      // When
+      const logger = extensionInstance.getPrefixedLogger(mockLogger)
+      logger.write('bar')
+
+      // Then
+      expect(mockLogger.write).toHaveBeenCalledWith(newMessage, expect.anything(), expect.anything())
+    })
   })
 })
