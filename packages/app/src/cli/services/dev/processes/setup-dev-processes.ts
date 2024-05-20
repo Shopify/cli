@@ -16,9 +16,6 @@ import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import { ExtensionInstance } from '../../../models/extensions/extension-instance.js'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
-
 
 interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -32,7 +29,6 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
-  | TestProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -58,40 +54,6 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
-}
-
-interface TestProcessOptions {
-  extensions: ExtensionInstance[]
-}
-
-interface TestProcess extends BaseProcess<TestProcessOptions> {
-  type: 'test'
-}
-
-function setupTestProcess(localApp: AppInterface): TestProcess {
-  return {
-    type: 'test',
-    prefix: 'test',
-    function: async ({stdout, stderr, abortSignal}, options) => {
-      const logSources = options.extensions.map((extension) => extension.handle)
-      setTimeout(() => {
-        for (let i = 0; i < logSources.length; i++) {
-          let counter = 0
-          setInterval(() => {
-            const prefix = `<::${logSources[i]}::>`
-            stdout.write(`${prefix} Function execution ${randomUUID()} in ${(Math.random()*10).toFixed(2)}M instructions`)
-            if (counter % 5 == 0) {
-              stderr.write(`${prefix} Hello world my custom log ${counter++}`)
-              stderr.write(`${prefix} Some more logging from my function`)
-            }
-          }, (Math.random()+0.2) * 20000)
-        }
-      }, 10000)
-    },
-    options: {
-      extensions: localApp.draftableExtensions,
-    },
-  }
 }
 
 export async function setupDevProcesses({
@@ -175,7 +137,6 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
-    setupTestProcess(localApp)
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it

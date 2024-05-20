@@ -37,11 +37,15 @@ export async function getExtensionsPayloadStoreRawPayload(
       url: new URL('/extensions/dev-console', options.url).toString(),
     },
     store: options.storeFqdn,
-    extensions: await Promise.all(options.extensions.map((extension) => getUIExtensionPayload(extension, {
-      ...options,
-      stdout: extension.getPrefixedLogger(options.stdout),
-      stderr: extension.getPrefixedLogger(options.stderr),
-    }))),
+    extensions: await Promise.all(
+      options.extensions.map((extension) =>
+        getUIExtensionPayload(extension, {
+          ...options,
+          stdout: extension.getPrefixedLogger(options.stdout),
+          stderr: extension.getPrefixedLogger(options.stderr),
+        }),
+      ),
+    ),
   }
 }
 
