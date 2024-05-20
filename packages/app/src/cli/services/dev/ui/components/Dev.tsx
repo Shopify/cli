@@ -1,5 +1,6 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -12,7 +13,6 @@ import figures from '@shopify/cli-kit/node/figures'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
-import { ExtensionInstance } from '../../../../models/extensions/extension-instance.js'
 
 export interface DeveloperPreviewController {
   fetchMode: () => Promise<boolean>
@@ -195,8 +195,11 @@ const Dev: FunctionComponent<DevProps> = ({
   const season = now.getMonth() > 3 ? 'Summer' : 'Winter'
   const year = now.getFullYear()
 
-  const maxPrefixLength = Math.max(...errorHandledProcesses.map((process) => process.prefix.length), ...app.extensions.map((extension) => extension.handle.length));
-  const prefixColumnSize = Math.min(maxPrefixLength, 25);
+  const maxPrefixLength = Math.max(
+    ...errorHandledProcesses.map((process) => process.prefix.length),
+    ...app.extensions.map((extension) => extension.handle.length),
+  )
+  const prefixColumnSize = Math.min(maxPrefixLength, 25)
 
   return (
     <>
