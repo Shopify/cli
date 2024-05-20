@@ -1,3 +1,4 @@
+import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -9,6 +10,7 @@ import {
   testWebhookExtensions,
   testFlowActionExtension,
   testDeveloperPlatformClient,
+  testSingleWebhookSubscriptionExtension,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -16,6 +18,8 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {slugify} from '@shopify/cli-kit/common/string'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
@@ -335,6 +339,43 @@ describe('draftMessages', async () => {
 
     // Then
     expect(result).toBeUndefined()
+  })
+
+  describe('buildHandle', async () => {
+    test('extensions handle is either its handle or name when specification uidStrategy is uuid', async () => {
+      // Given
+      const extensionInstance = await testUIExtension()
+
+      const result = extensionInstance.configuration.handle ?? slugify(extensionInstance.configuration.name ?? '')
+      // Then
+      expect(extensionInstance.handle).toBe(result)
+    })
+
+    test('extensions handle is its identifier when specification uidStrategy is single', async () => {
+      // Given
+      const extensionInstance = await testAppConfigExtensions()
+
+      // When
+      const result = slugify(extensionInstance.specification.identifier)
+
+      // Then
+      expect(extensionInstance.handle).toBe(result)
+    })
+
+    test('extensions handle is a hashString when specification uidStrategy is dynamic and it is a webhook subscription extension', async () => {
+      // Given
+      const extensionInstance = await testSingleWebhookSubscriptionExtension()
+
+      // When
+      const subscription = extensionInstance.configuration as unknown as SingleWebhookSubscriptionType
+      let result = ''
+      if (subscription) {
+        result = hashString(subscription.topic + subscription.uri).substring(0, 30)
+      }
+
+      // Then
+      expect(extensionInstance.handle).toBe(result)
+    })
   })
 
   describe('getPrefixedLogger', async () => {

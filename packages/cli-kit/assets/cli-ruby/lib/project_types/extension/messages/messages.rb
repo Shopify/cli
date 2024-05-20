@@ -245,7 +245,7 @@ module Extension
             The extension development server binary could not be found!
 
             If you're running a development version of the CLI, please run `rake extensions:install` to install it.
-            Otherwise, please file a bug report via https://github.com/Shopify/shopify-cli/issues/new.
+            Otherwise, please file a bug report via https://github.com/Shopify/cli/issues/new.
           ERROR
         },
         outdated_extensions: {

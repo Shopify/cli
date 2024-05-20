@@ -72,7 +72,7 @@ export async function buildFlowTemplateExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Building Flow Template extension ${extension.localIdentifier}...`)
-  await bundleFlowTemplateExtension(extension, options)
+  await bundleFlowTemplateExtension(extension)
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 

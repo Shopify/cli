@@ -55,9 +55,9 @@ import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
-  ConvertDevToTestStoreSchema,
-  ConvertDevToTestStoreVariables,
-} from '../../api/graphql/convert_dev_to_test_store.js'
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -83,12 +83,12 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
 import {underscore} from '@shopify/cli-kit/common/string'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -111,8 +111,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      // Need to replace with actual auth token for developer platform
-      const token = 'token'
+      const token = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -450,8 +449,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: createExtension')
   }
 
-  async convertToTestStore(_input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
-    throw new BugError('Not implemented: convertToTestStore')
+  async convertToTransferDisabledStore(
+    _input: ConvertDevToTransferDisabledStoreVariables,
+  ): Promise<ConvertDevToTransferDisabledSchema> {
+    throw new BugError('Not implemented: convertToTransferDisabledStore')
   }
 
   async updateDeveloperPreview(

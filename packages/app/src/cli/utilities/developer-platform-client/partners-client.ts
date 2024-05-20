@@ -47,10 +47,10 @@ import {
   ExtensionCreateVariables,
 } from '../../api/graphql/extension_create.js'
 import {
-  ConvertDevToTestStoreQuery,
-  ConvertDevToTestStoreSchema,
-  ConvertDevToTestStoreVariables,
-} from '../../api/graphql/convert_dev_to_test_store.js'
+  ConvertDevToTransferDisabledStoreQuery,
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   FindStoreByDomainQuery,
   FindStoreByDomainQueryVariables,
@@ -170,7 +170,7 @@ function getAppVars(
       title: `${name}`,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
-      requestedAccessScopes: [],
+      requestedAccessScopes: scopesArray ?? [],
       type: 'undecided',
     }
   }
@@ -369,8 +369,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(GenerateSignedUploadUrl, input)
   }
 
-  async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
-    return this.request(ConvertDevToTestStoreQuery, input)
+  async convertToTransferDisabledStore(
+    input: ConvertDevToTransferDisabledStoreVariables,
+  ): Promise<ConvertDevToTransferDisabledSchema> {
+    return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {

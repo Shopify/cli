@@ -21,7 +21,7 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
@@ -46,6 +46,8 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -248,6 +250,32 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   return extension
 }
 
+export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        access: {
+          admin: {direct_api_mode: 'online'},
+        },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      } as unknown as BaseConfigType)
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: 'shopify.app.toml',
+    directory: './',
+    specification: appAccessSpec,
+  })
+
+  return extension
+}
+
 export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'Payment Extension Name',
@@ -327,6 +355,30 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   })
 
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
+}
+
+export async function testSingleWebhookSubscriptionExtension({
+  emptyConfig = false,
+  topic = 'orders/delete',
+} = {}): Promise<ExtensionInstance> {
+  // configuration should be a single webhook subscription because of how
+  // we create the extension instances in loader
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        topic,
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks',
+      } as unknown as BaseConfigType)
+
+  const webhooksExtension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification: appWebhookSubscriptionSpec,
+  })
+
+  return webhooksExtension
 }
 
 export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
@@ -858,7 +910,7 @@ const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
   },
 }
 
-const convertedToTestStoreResponse = {
+const convertedToTransferDisabledStoreResponse = {
   convertDevToTestStore: {
     convertedToTestStore: true,
     userErrors: [],
@@ -966,7 +1018,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
-    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
+      Promise.resolve(convertedToTransferDisabledStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
@@ -1011,5 +1064,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
 }
