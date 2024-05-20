@@ -1,4 +1,4 @@
-import {ConcurrentOutput} from './ConcurrentOutput.js'
+import {ConcurrentOutput, parseConcurrentOutputLog, prefixConcurrentOutputLog} from './ConcurrentOutput.js'
 import {render} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
@@ -161,5 +161,43 @@ describe('ConcurrentOutput', () => {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     expect(renderInstance.waitUntilExit().isFulfilled()).toBe(false)
+  })
+})
+
+describe('prefixConcurrentOutputLog', () => {
+  test('returns a string with the fix and the log', () => {
+    // Given
+    const prefix = 'my-extension'
+    const log = 'foo bar'
+
+    // When
+    const result = prefixConcurrentOutputLog(prefix, log)
+
+    // Then
+    expect(result).toBe('<::my-extension::>foo bar')
+  })
+})
+
+describe('parseConcurrentOutputLog', () => {
+  test('parses a log with a prefix', () => {
+    // Given
+    const log = '<::my-extension::>foo bar'
+
+    // When
+    const result = parseConcurrentOutputLog(log)
+
+    // Then
+    expect(result).toEqual({prefix: 'my-extension', log: 'foo bar'})
+  })
+
+  test('parses a log without a prefix', () => {
+    // Given
+    const log = 'foo bar'
+
+    // When
+    const result = parseConcurrentOutputLog(log)
+
+    // Then
+    expect(result).toEqual({prefix: undefined, log: 'foo bar'})
   })
 })

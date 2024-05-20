@@ -228,4 +228,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput, prefixConcurrentOutputLog}
+export {ConcurrentOutput, prefixConcurrentOutputLog, parseConcurrentOutputLog}

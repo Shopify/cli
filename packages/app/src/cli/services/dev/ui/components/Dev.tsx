@@ -39,6 +39,13 @@ export interface DevProps {
   isEditionWeek?: boolean
 }
 
+const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: ExtensionInstance[]) => {
+  return Math.max(
+    ...processes.map((process) => process.prefix.length),
+    ...extensions.map((extension) => extension.handle.length),
+  )
+}
+
 const Dev: FunctionComponent<DevProps> = ({
   abortController,
   processes,
@@ -195,16 +202,11 @@ const Dev: FunctionComponent<DevProps> = ({
   const season = now.getMonth() > 3 ? 'Summer' : 'Winter'
   const year = now.getFullYear()
 
-  const maxPrefixLength = Math.max(
-    ...errorHandledProcesses.map((process) => process.prefix.length),
-    ...app.extensions.map((extension) => extension.handle.length),
-  )
-
   return (
     <>
       <ConcurrentOutput
         processes={errorHandledProcesses}
-        prefixColumnSize={maxPrefixLength}
+        prefixColumnSize={calculatePrefixColumnSize(errorHandledProcesses, app.extensions)}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
       />
@@ -260,4 +262,4 @@ const Dev: FunctionComponent<DevProps> = ({
   )
 }
 
-export {Dev}
+export {Dev, calculatePrefixColumnSize}
