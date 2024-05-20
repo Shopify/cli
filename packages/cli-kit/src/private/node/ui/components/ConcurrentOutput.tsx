@@ -104,7 +104,7 @@ function parseLog(log: string): ParsedLog {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
-  prefixColumnSize = 12,
+  prefixColumnSize,
   abortSignal,
   showTimestamps = true,
   keepRunningAfterProcessesResolve = false,
@@ -113,6 +113,17 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const {exit: unmountInk} = useApp()
 
   const concurrentColors = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
+
+  // If the prefixColumnSize is not provided, we calculate it based on the longest prefix
+  const calculatedPrefixColumnSize = useMemo(
+    () =>
+      prefixColumnSize ??
+      Math.min(
+        processes.reduce((maxPrefixLength, process) => Math.max(maxPrefixLength, process.prefix.length), 0),
+        25,
+      ),
+    [processes, prefixColumnSize],
+  )
 
   const addPrefix = (prefix: string, prefixes: string[]) => {
     const index = prefixes.indexOf(prefix)
@@ -157,11 +168,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   )
 
   const formatPrefix = (prefix: string) => {
-    if (prefix.length > prefixColumnSize) {
-      return prefix.substring(0, prefixColumnSize)
+    // Truncate prefix if needed
+    if (prefix.length > calculatedPrefixColumnSize) {
+      return prefix.substring(0, calculatedPrefixColumnSize)
     }
 
-    return `${prefix}${' '.repeat(prefixColumnSize - prefix.length)}`
+    return `${prefix}${' '.repeat(calculatedPrefixColumnSize - prefix.length)}`
   }
 
   useEffect(() => {
