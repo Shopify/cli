@@ -7,7 +7,9 @@ import {
 import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {Writable} from 'stream'
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
   test('returns the raw payload', async () => {
@@ -21,7 +23,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       appName: 'mock-app-name',
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
-      extensions: [{}, {}, {}],
+      extensions: [await testUIExtension(), await testUIExtension(), await testUIExtension()],
       storeFqdn: 'mock-store-fqdn.shopify.com',
       manifestVersion: '3',
     } as unknown as ExtensionsPayloadStoreOptions
@@ -249,7 +251,13 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = await testUIExtension({
+        devUUID: '123',
+        configuration: {name: 'bar', type: 'ui_extension'},
+      })
+
+      const writable = new Writable()
+      vi.spyOn(ExtensionInstance.prototype, 'getPrefixedLogger').mockImplementation(() => writable)
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, {hidden: true})
@@ -257,6 +265,8 @@ describe('ExtensionsPayloadStore()', () => {
       // Then
       expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
         ...mockOptions,
+        stdout: writable,
+        stderr: writable,
         currentDevelopmentPayload: {hidden: true},
       })
       expect(extensionsPayloadStore.getRawPayload()).toStrictEqual({
@@ -276,7 +286,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = await testUIExtension({
+        devUUID: '123',
+        configuration: {type: 'ui_extension'},
+      })
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
@@ -307,7 +320,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = await testUIExtension({
+        devUUID: '123',
+        configuration: {type: 'ui_extension'},
+      })
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
@@ -332,7 +348,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = await testUIExtension({
+        devUUID: '123',
+        configuration: {type: 'ui_extension'},
+      })
       const onUpdateSpy = vi.fn()
 
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
