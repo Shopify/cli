@@ -2,26 +2,31 @@
 export interface hydrogengenerateroutes {
   /**
    * Remix adapter used in the route. The default is `@shopify/remix-oxygen`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER
    */
   '--adapter <value>'?: string
 
   /**
    * Generate TypeScript files
+   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT
    */
   '--typescript'?: ''
 
   /**
    * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
+   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER
    */
   '--locale-param <value>'?: string
 
   /**
    * Overwrites the destination directory and files if they already exist.
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
   '-f, --force'?: ''
 
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 }

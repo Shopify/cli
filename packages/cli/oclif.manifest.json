@@ -2314,15 +2314,24 @@
       "description": "",
       "enableJsonFlag": true,
       "examples": [
-        "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> ",
-        "<%= config.bin %> <%= command.id %> https://github.com/someuser/someplugin",
-        "<%= config.bin %> <%= command.id %> someuser/someplugin"
+        {
+          "command": "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> ",
+          "description": "Install a plugin from npm registry."
+        },
+        {
+          "command": "<%= config.bin %> <%= command.id %> https://github.com/someuser/someplugin",
+          "description": "Install a plugin from a github url."
+        },
+        {
+          "command": "<%= config.bin %> <%= command.id %> someuser/someplugin",
+          "description": "Install a plugin from a github slug."
+        }
       ],
       "flags": {
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Run yarn install with force flag.",
+          "description": "Force npm to fetch remote resources even if a local copy exists on disk.",
           "name": "force",
           "type": "boolean"
         },
@@ -2349,7 +2358,7 @@
         "silent": {
           "allowNo": false,
           "char": "s",
-          "description": "Silences yarn output.",
+          "description": "Silences npm output.",
           "exclusive": [
             "verbose"
           ],
@@ -2359,7 +2368,7 @@
         "verbose": {
           "allowNo": false,
           "char": "v",
-          "description": "Show verbose yarn output.",
+          "description": "Show verbose npm output.",
           "exclusive": [
             "silent"
           ],
@@ -2375,7 +2384,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": false,
-      "usage": "plugins:install PLUGIN..."
+      "summary": "Installs a plugin into <%= config.bin %>."
     },
     "plugins:link": {
       "aliases": [
@@ -2421,8 +2430,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
-      "usage": "plugins:link PLUGIN"
+      "strict": true
     },
     "plugins:reset": {
       "aliases": [
@@ -2492,8 +2500,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
-      "usage": "plugins:uninstall PLUGIN..."
+      "strict": false
     },
     "plugins:update": {
       "aliases": [
@@ -2887,6 +2894,14 @@
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `theme dev` implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -4021,6 +4036,14 @@
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `theme dev` implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -4437,5 +4460,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.59.0"
+  "version": "3.60.0"
 }

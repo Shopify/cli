@@ -26,6 +26,7 @@ const testCommand: CommandWithMarkdown = {
       type: 'boolean',
       char: 'a',
       description: 'another flag description',
+      env: 'FLAG_ENV',
       allowNo: false,
     },
   },
@@ -63,11 +64,13 @@ describe('writeCommandFlagInterface', () => {
 export interface topictestcommand {
   /**
    * flag description
+   *
    */
   '-f, --flag1 <value>'?: string
 
   /**
    * another flag description
+   * @environment FLAG_ENV
    */
   '-a, --flag2'?: ''
 }

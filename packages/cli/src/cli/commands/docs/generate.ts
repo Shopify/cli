@@ -141,8 +141,11 @@ export async function writeCommandFlagInterface(
       const type = flag.type === 'option' ? 'string' : "''"
       const value = flag.type === 'option' ? ' <value>' : ''
       const optional = flag.required ? '' : '?'
+      // eslint-disable-next-line no-negated-condition
+      const envValue = flag.env !== undefined ? ` @environment ${flag.env}` : ''
       const flagContent = `  /**
    * ${flagDescription}
+   *${envValue}
    */
   '${char}--${flagName}${value}'${optional}: ${type}`
       // Example output: '-c, --config <value>'?: string

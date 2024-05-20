@@ -42,7 +42,7 @@ const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_MB * megabytes
 const LIQUID_SIZE_LIMIT_KB = 500
 const LIQUID_SIZE_LIMIT = LIQUID_SIZE_LIMIT_KB * kilobytes
 
-const SUPPORTED_ASSET_EXTS = ['.jpg', '.jpeg', '.js', '.css', '.png', '.svg']
+const SUPPORTED_ASSET_EXTS = ['.jpg', '.jpeg', '.json', '.js', '.css', '.png', '.svg']
 const SUPPORTED_LOCALE_EXTS = ['.json']
 const SUPPORTED_EXTS: {[dirname: string]: FilenameValidation} = {
   assets: {

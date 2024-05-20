@@ -2,6 +2,7 @@
 export interface hydrogenunlink {
   /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
 }

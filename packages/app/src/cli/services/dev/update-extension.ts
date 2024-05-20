@@ -7,6 +7,7 @@ import {
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
@@ -38,7 +39,13 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const config = (await extension.deployConfig({apiKey, developerPlatformClient})) || {}
+  let config
+  if (extension.isThemeExtension) {
+    // When updating just the theme extension draft, upload the files as part of the config.
+    config = await themeExtensionConfig(extension)
+  } else {
+    config = (await extension.deployConfig({apiKey, developerPlatformClient})) || {}
+  }
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,

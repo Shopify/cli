@@ -15,12 +15,16 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
+import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 
 export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
     name: zod.string().optional(),
-    scopes: zod.string().default(''),
+    scopes: zod
+      .string()
+      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
+      .default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
@@ -171,7 +175,7 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
-  draftableExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
@@ -214,7 +218,7 @@ export class App implements AppInterface {
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
   remoteFlags: Flag[]
-  private realExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
 
   constructor({
     name,
@@ -255,10 +259,6 @@ export class App implements AppInterface {
 
     if (this.includeConfigOnDeploy) return this.realExtensions
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
-  }
-
-  get draftableExtensions() {
-    return this.realExtensions.filter((ext) => ext.isDraftable())
   }
 
   async updateDependencies() {

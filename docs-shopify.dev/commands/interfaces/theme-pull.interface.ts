@@ -2,61 +2,73 @@
 export interface themepull {
   /**
    * Pull theme files from your remote development theme.
+   * @environment SHOPIFY_FLAG_DEVELOPMENT
    */
   '-d, --development'?: ''
 
   /**
    * The environment to apply to the current command.
+   * @environment SHOPIFY_FLAG_ENVIRONMENT
    */
   '-e, --environment <value>'?: string
 
   /**
    * Skip downloading the specified files (Multiple flags allowed).
+   * @environment SHOPIFY_FLAG_IGNORE
    */
   '-x, --ignore <value>'?: string
 
   /**
    * Pull theme files from your remote live theme.
+   * @environment SHOPIFY_FLAG_LIVE
    */
   '-l, --live'?: ''
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * Runs the pull command without deleting local files.
+   * @environment SHOPIFY_FLAG_NODELETE
    */
   '-n, --nodelete'?: ''
 
   /**
    * Download only the specified files (Multiple flags allowed).
+   * @environment SHOPIFY_FLAG_ONLY
    */
   '-o, --only <value>'?: string
 
   /**
    * Password generated from the Theme Access app.
+   * @environment SHOPIFY_CLI_THEME_TOKEN
    */
   '--password <value>'?: string
 
   /**
    * The path to your theme directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+   * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>'?: string
 
   /**
    * Theme ID or name of the remote theme.
+   * @environment SHOPIFY_FLAG_THEME_ID
    */
   '-t, --theme <value>'?: string
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

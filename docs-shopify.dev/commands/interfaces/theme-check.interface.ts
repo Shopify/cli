@@ -2,6 +2,7 @@
 export interface themecheck {
   /**
    * Automatically fix offenses
+   * @environment SHOPIFY_FLAG_AUTO_CORRECT
    */
   '-a, --auto-correct'?: ''
 
@@ -10,56 +11,67 @@ export interface themecheck {
       Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
       theme-check:recommended, theme-check:all
       For backwards compatibility, :theme_app_extension is also supported 
+   * @environment SHOPIFY_FLAG_CONFIG
    */
   '-C, --config <value>'?: string
 
   /**
    * The environment to apply to the current command.
+   * @environment SHOPIFY_FLAG_ENVIRONMENT
    */
   '-e, --environment <value>'?: string
 
   /**
    * Minimum severity for exit with error code
+   * @environment SHOPIFY_FLAG_FAIL_LEVEL
    */
   '--fail-level <value>'?: string
 
   /**
    * Generate a .theme-check.yml file
+   * @environment SHOPIFY_FLAG_INIT
    */
   '--init'?: ''
 
   /**
    * List enabled checks
+   * @environment SHOPIFY_FLAG_LIST
    */
   '--list'?: ''
 
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The output format to use
+   * @environment SHOPIFY_FLAG_OUTPUT
    */
   '-o, --output <value>'?: string
 
   /**
    * The path to your theme directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Output active config to STDOUT
+   * @environment SHOPIFY_FLAG_PRINT
    */
   '--print'?: ''
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 
   /**
    * Print Theme Check version
+   * @environment SHOPIFY_FLAG_VERSION
    */
   '-v, --version'?: ''
 }
