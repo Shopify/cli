@@ -114,16 +114,15 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
   const concurrentColors = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
 
-  // If the prefixColumnSize is not provided, we calculate it based on the longest prefix
-  const calculatedPrefixColumnSize = useMemo(
-    () =>
+  const calculatedPrefixColumnSize = useMemo(() => {
+    // If the prefixColumnSize is not provided, we calculate it based on the longest process prefix
+    const columnSize =
       prefixColumnSize ??
-      Math.min(
-        processes.reduce((maxPrefixLength, process) => Math.max(maxPrefixLength, process.prefix.length), 0),
-        25,
-      ),
-    [processes, prefixColumnSize],
-  )
+      processes.reduce((maxPrefixLength, process) => Math.max(maxPrefixLength, process.prefix.length), 0)
+
+    // Apply overall limit to the prefix column size
+    return Math.min(columnSize, 25)
+  }, [processes, prefixColumnSize])
 
   const addPrefix = (prefix: string, prefixes: string[]) => {
     const index = prefixes.indexOf(prefix)

@@ -199,13 +199,12 @@ const Dev: FunctionComponent<DevProps> = ({
     ...errorHandledProcesses.map((process) => process.prefix.length),
     ...app.extensions.map((extension) => extension.handle.length),
   )
-  const prefixColumnSize = Math.min(maxPrefixLength, 25)
 
   return (
     <>
       <ConcurrentOutput
         processes={errorHandledProcesses}
-        prefixColumnSize={prefixColumnSize}
+        prefixColumnSize={maxPrefixLength}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
       />
