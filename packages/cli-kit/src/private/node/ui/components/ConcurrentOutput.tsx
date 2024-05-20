@@ -111,8 +111,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
-
-  const concurrentColors = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
+  const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
 
   const calculatedPrefixColumnSize = useMemo(() => {
     // If the prefixColumnSize is not provided, we calculate it based on the longest process prefix
@@ -200,7 +199,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     runProcesses()
-  }, [abortSignal, processes, unmountInk, keepRunningAfterProcessesResolve, writableStream])
+  }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
 
   const {lineVertical} = figures
 
