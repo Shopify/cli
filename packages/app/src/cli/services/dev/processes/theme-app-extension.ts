@@ -7,7 +7,7 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
-import {prefixLog} from '@shopify/cli-kit/node/ui/components'
+import {prefixConcurrentOutputLog} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
 // Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
@@ -30,7 +30,7 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
 const getPrefixedLogger = (wrappedWritable: Writable) => {
   return new Writable({
     write(chunk, _encoding, callback) {
-      wrappedWritable.write(`${prefixLog(prefix, chunk.toString('utf8'))}`, 'utf8', callback)
+      wrappedWritable.write(`${prefixConcurrentOutputLog(prefix, chunk.toString('utf8'))}`, 'utf8', callback)
     },
   })
 }

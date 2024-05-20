@@ -48,11 +48,11 @@ function currentTime() {
  * @param prefix - The override value for the prefix column
  * @param log - The log to prefix
  */
-function prefixLog(prefix: string, log: string): string {
+function prefixConcurrentOutputLog(prefix: string, log: string): string {
   return `<::${prefix}::>${log}`
 }
 
-function parseLog(log: string): ParsedLog {
+function parseConcurrentOutputLog(log: string): ParsedLog {
   // Example: <::hello-world::> foo bar\nssssada
   const prefixRegex = /(<::(([^:])+)::>\s?)[\s\S]+/g
   const prefixMatch = prefixRegex.exec(log)
@@ -144,7 +144,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     (process: OutputProcess, prefixes: string[]) => {
       return new Writable({
         write(chunk, _encoding, next) {
-          const parsedLog: ParsedLog = parseLog(chunk.toString('utf8'))
+          const parsedLog: ParsedLog = parseConcurrentOutputLog(chunk.toString('utf8'))
           const prefix = parsedLog.prefix ?? process.prefix
           const index = addPrefix(prefix, prefixes)
 
@@ -228,4 +228,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput, prefixLog}
+export {ConcurrentOutput, prefixConcurrentOutputLog}

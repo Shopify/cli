@@ -19,7 +19,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {prefixLog} from '@shopify/cli-kit/node/ui/components'
+import {prefixConcurrentOutputLog} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
 /**
@@ -232,7 +232,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const handle = this.handle
     return new Writable({
       write(chunk, _encoding, callback) {
-        wrappedWritable.write(`${prefixLog(handle, chunk.toString('utf8'))}`, 'utf8', callback)
+        wrappedWritable.write(`${prefixConcurrentOutputLog(handle, chunk.toString('utf8'))}`, 'utf8', callback)
       },
     })
   }
