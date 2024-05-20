@@ -48,7 +48,7 @@ async function generate(options: GenerateOptions) {
   const specifications = await fetchSpecifications({developerPlatformClient, apiKey})
   const app: AppInterface = await loadApp({
     directory: options.directory,
-    configName: options.configName,
+    userProvidedConfigName: options.configName,
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)

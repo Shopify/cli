@@ -68,7 +68,7 @@ interface SaveCurrentConfigOptions {
 
 export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
   const {configuration} = await loadAppConfiguration({
-    configName: configFileName,
+    userProvidedConfigName: configFileName,
     directory,
   })
 

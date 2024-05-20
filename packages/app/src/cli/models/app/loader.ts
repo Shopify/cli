@@ -170,11 +170,9 @@ export class AppErrors {
   }
 }
 
-interface AppLoaderConstructorArgs {
+interface AppLoaderConstructorArgs<T extends AppConfiguration = AppConfiguration> {
   mode?: AppLoaderMode
-  specifications?: ExtensionSpecification[]
-  remoteFlags?: Flag[]
-  loadedConfiguration: ConfigurationLoaderResult
+  loadedConfiguration: ConfigurationLoaderResult<T>
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -192,7 +190,9 @@ export async function checkFolderIsValidApp(directory: string) {
 export async function loadApp(
   options: Omit<AppLoaderConstructorArgs, 'loadedConfiguration'> & {
     directory: string
-    configName?: string
+    userProvidedConfigName?: string
+    specifications?: ExtensionSpecification[]
+    remoteFlags?: Flag[]
   },
   env = process.env,
 ): Promise<AppInterface> {
@@ -201,8 +201,9 @@ export async function loadApp(
   const configurationLoader = new AppConfigurationLoader(
     {
       directory: options.directory,
-      configName: options.configName,
+      userProvidedConfigName: options.userProvidedConfigName,
       specifications,
+      remoteFlags: options.remoteFlags,
     },
     dynamicConfigOptions,
   )
@@ -210,7 +211,7 @@ export async function loadApp(
 
   const loader = new AppLoader(
     {
-      ...options,
+      mode: options.mode,
       loadedConfiguration,
     },
     dynamicConfigOptions,
@@ -275,21 +276,21 @@ type DynamicallySpecifiedConfigLoading =
       remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
     }
 
-class AppLoader {
+class AppLoader<T extends AppConfiguration = AppConfiguration> {
   private mode: AppLoaderMode
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
   private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
-  private loadedConfiguration: ConfigurationLoaderResult
+  private loadedConfiguration: ConfigurationLoaderResult<T>
 
   constructor(
-    {mode, specifications, remoteFlags, loadedConfiguration}: AppLoaderConstructorArgs,
+    {mode, loadedConfiguration}: AppLoaderConstructorArgs<T>,
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.mode = mode ?? 'strict'
-    this.specifications = specifications ?? []
-    this.remoteFlags = remoteFlags ?? []
+    this.specifications = loadedConfiguration.specifications
+    this.remoteFlags = loadedConfiguration.remoteFlags
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
     this.loadedConfiguration = loadedConfiguration
   }
@@ -710,7 +711,7 @@ export async function loadAppConfiguration(
 
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
-  configName?: string
+  userProvidedConfigName?: string
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
 }
@@ -742,44 +743,50 @@ type ConfigurationLoaderResult<T extends AppConfiguration = AppConfiguration> = 
 
 class AppConfigurationLoader {
   private directory: string
-  private configName?: string
+  private userProvidedConfigName?: string
   private specifications: ExtensionSpecification[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
+  private remoteFlags: Flag[]
 
   constructor(
     {
       directory,
-      configName,
+      userProvidedConfigName,
       specifications,
+      remoteFlags,
     }: AppConfigurationLoaderConstructorArgs & {specifications: ExtensionSpecification[]},
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.directory = directory
-    this.configName = configName
+    this.userProvidedConfigName = userProvidedConfigName
     this.specifications = specifications
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
+    this.remoteFlags = remoteFlags ?? []
   }
 
   async loaded(): Promise<ConfigurationLoaderResult> {
     const specifications = this.specifications
     const appDirectory = await getAppDirectory(this.directory)
-    const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
-    const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
+    const configSource: LinkedConfigurationSource = this.userProvidedConfigName ? 'flag' : 'cached'
+    const cachedCurrentConfigName = getCachedAppInfo(appDirectory)?.configFile
+    const cachedCurrentConfigPath = cachedCurrentConfigName ? joinPath(appDirectory, cachedCurrentConfigName) : null
 
-    if (!this.configName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
+    if (!this.userProvidedConfigName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
       const warningContent = {
-        headline: `Couldn't find ${cachedCurrentConfig}`,
+        headline: `Couldn't find ${cachedCurrentConfigName}`,
         body: [
           "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
         ],
       }
-      this.configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
+      this.userProvidedConfigName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
     }
 
-    this.configName = this.configName ?? cachedCurrentConfig
+    this.userProvidedConfigName = this.userProvidedConfigName ?? cachedCurrentConfigName
 
-    const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, this.configName)
+    const {configurationPath, configurationFileName} = await getConfigurationPath(
+      appDirectory,
+      this.userProvidedConfigName,
+    )
     const file = await loadConfigurationFileContent(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(specifications, this.dynamicallySpecifiedConfigs.enabled)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
@@ -819,7 +826,14 @@ class AppConfigurationLoader {
 
     configuration = this.remapDynamicConfigToNewParents(configuration)
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
+    return {
+      directory: appDirectory,
+      configuration,
+      configurationLoadResultMetadata,
+      configSchema: appVersionedSchema,
+      specifications,
+      remoteFlags: this.remoteFlags,
+    }
   }
 
   /**

@@ -197,6 +197,8 @@ export interface AppConfigurationInterface<T extends AppConfiguration = AppConfi
   directory: string
   configuration: T
   configSchema: zod.ZodType<Omit<T, 'path'>>
+  specifications: ExtensionSpecification[]
+  remoteFlags: Flag[]
 }
 
 // A tweak of the normal AppInterface for loading code that needs to present something that is almost a real app, but not quite
@@ -204,8 +206,6 @@ export interface PartialAppInterface<T extends AppConfiguration = AppConfigurati
   extends AppConfigurationInterface<T> {
   name: string
   packageManager: PackageManager
-  specifications: ExtensionSpecification[]
-  remoteFlags: Flag[]
 
   /**
    * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.

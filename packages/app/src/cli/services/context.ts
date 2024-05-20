@@ -221,7 +221,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   const localApp = await loadApp({
     directory: options.directory,
     specifications,
-    configName: getAppConfigurationShorthand(configuration.path),
+    userProvidedConfigName: getAppConfigurationShorthand(configuration.path),
     remoteFlags: selectedApp.flags,
   })
 
@@ -430,7 +430,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,
-    configName: getAppConfigurationShorthand(options.app.configuration.path),
+    userProvidedConfigName: getAppConfigurationShorthand(options.app.configuration.path),
     remoteFlags: remoteApp.flags,
   })
 
@@ -492,7 +492,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const app: AppInterface = await loadApp({
     specifications,
     directory: draftExtensionsPushOptions.directory,
-    configName: draftExtensionsPushOptions.config,
+    userProvidedConfigName: draftExtensionsPushOptions.config,
   })
   let developerPlatformClient =
     draftExtensionsPushOptions.developerPlatformClient ??
@@ -812,7 +812,7 @@ export async function getAppContext({
 
   const {configuration} = await loadAppConfiguration({
     directory,
-    configName,
+    userProvidedConfigName: configName,
   })
 
   let remoteApp

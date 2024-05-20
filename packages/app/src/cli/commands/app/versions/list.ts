@@ -50,7 +50,11 @@ export default class VersionsList extends Command {
     }
     const apiKey = flags['client-id'] || flags['api-key']
     const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+    const app: AppInterface = await loadApp({
+      specifications,
+      directory: flags.path,
+      userProvidedConfigName: flags.config,
+    })
 
     await versionList({
       app,

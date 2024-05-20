@@ -2072,7 +2072,7 @@ wrong = "property"
     vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
     // When
-    const result = loadApp({directory: tmpDir, specifications, configName: 'non-existent'})
+    const result = loadApp({directory: tmpDir, specifications, userProvidedConfigName: 'non-existent'})
 
     // Then
     await expect(result).rejects.toThrow(`Couldn't find shopify.app.non-existent.toml in ${tmpDir}.`)

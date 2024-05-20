@@ -167,7 +167,7 @@ async function loadAppOrEmptyApp(
       specifications,
       directory: options.directory,
       mode: 'report',
-      configName: options.baseConfigName,
+      userProvidedConfigName: options.baseConfigName,
       remoteFlags,
     })
     const configuration = app.configuration

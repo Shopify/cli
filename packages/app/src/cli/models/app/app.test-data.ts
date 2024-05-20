@@ -103,7 +103,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     errors: app.errors,
     specifications: app.specifications ?? [],
     configSchema: app.configSchema ?? AppConfigurationSchema,
-    remoteFlags: app.remoteFlags,
+    remoteFlags: app.remoteFlags ?? [],
   })
 
   if (app.updateDependencies) {
