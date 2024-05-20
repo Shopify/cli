@@ -1,4 +1,4 @@
-import {saveCurrentConfig} from './use.js'
+import {setCurrentConfigPreference} from './use.js'
 import {
   AppConfiguration,
   AppConfigurationInterface,
@@ -94,13 +94,18 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   await logMetadataForLoadedContext(remoteApp)
 
   const configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
-  const remoteAppConfiguration =
-    (await fetchAppRemoteConfiguration(
-      remoteApp,
-      developerPlatformClient,
-      localApp.specifications ?? [],
-      localApp.remoteFlags,
-    )) ?? buildRemoteApiClientConfiguration(configuration, remoteApp)
+
+  let remoteAppConfiguration = await fetchAppRemoteConfiguration(
+    remoteApp,
+    developerPlatformClient,
+    localApp.specifications ?? [],
+    localApp.remoteFlags,
+  )
+  // TODO this might be droppable -- if remote apps always have an active version and some modules?
+  if (!remoteAppConfiguration) {
+    remoteAppConfiguration = buildAppConfigurationFromRemoteAppProperties(remoteApp, configuration)
+  }
+
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
   const configurationIncludingRemote: CurrentAppConfiguration = deepMergeObjects(
     configuration,
@@ -112,7 +117,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   )
 
   await writeAppConfigurationFile(configurationIncludingRemote, localApp.configSchema)
-  await saveCurrentConfig({configFileName, directory})
+  await setCurrentConfigPreference(configurationIncludingRemote, {configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccessMessage(configFileName, remoteAppConfiguration.name, localApp)
@@ -245,6 +250,12 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
         ...localAppConfig,
         build,
       }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((localAppConfig as any).scopes === '') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (localAppConfig as any).scopes
     }
   }
   return localAppConfig

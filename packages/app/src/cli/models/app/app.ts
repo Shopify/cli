@@ -82,6 +82,9 @@ export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & Spec
  */
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 
+/** Validation schema that produces a provided app configuration type */
+type SchemaForConfig<TConfig extends {path: string}> = zod.ZodType<Omit<TConfig, 'path'>>
+
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
   allowDynamicallySpecifiedConfigs = false,
@@ -199,7 +202,7 @@ export interface AppConfigurationInterface<
 > {
   directory: string
   configuration: TConfig
-  configSchema: zod.ZodType<Omit<TConfig, 'path'>>
+  configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
   remoteFlags: Flag[]
 }
