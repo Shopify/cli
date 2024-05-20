@@ -7,9 +7,14 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {prefixLog} from '@shopify/cli-kit/node/ui/components'
+import {Writable} from 'stream'
 
 // Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
 const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000
+
+// Logging prefix for theme app extensions
+const prefix = 'theme-extensions'
 
 interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
@@ -22,18 +27,29 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
   type: 'theme-app-extensions'
 }
 
+const getPrefixedLogger = (wrappedWritable: Writable) => {
+  return new Writable({
+    write(chunk, _encoding, callback) {
+      wrappedWritable.write(`${prefixLog(prefix, chunk.toString('utf8'))}`, 'utf8', callback)
+    },
+  })
+}
+
 export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
   {adminSession, themeExtensionServerArgs: args, storefrontToken, developerPlatformClient},
 ) => {
+  const themeOut = getPrefixedLogger(stdout)
+  const themeErr = getPrefixedLogger(stderr)
+
   const refreshSequence = (attempt = 0) => {
-    outputDebug(`Refreshing Developer Platform token (attempt ${attempt})...`, stdout)
+    outputDebug(`Refreshing Developer Platform token (attempt ${attempt})...`, themeOut)
     refreshToken(developerPlatformClient)
       .then(() => {
-        outputDebug('Refreshed Developer Platform token successfully', stdout)
+        outputDebug('Refreshed Developer Platform token successfully', themeOut)
       })
       .catch((error) => {
-        outputDebug(`Failed to refresh Developer Platform token: ${error}`, stderr)
+        outputDebug(`Failed to refresh Developer Platform token: ${error}`, themeErr)
         if (attempt < 3) {
           // Retry after 30 seconds. Sometimes we see random ECONNREFUSED errors
           // so let's let the network sort itself out and retry.
@@ -50,8 +66,8 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
     store: adminSession.storeFqdn,
     adminToken: adminSession.token,
     storefrontToken,
-    stdout,
-    stderr,
+    stdout: themeOut,
+    stderr: themeErr,
     signal: abortSignal,
   })
 }
@@ -99,7 +115,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
 
   return {
     type: 'theme-app-extensions',
-    prefix: 'extensions',
+    prefix,
     function: runThemeAppExtensionsServer,
     options: {
       adminSession,
