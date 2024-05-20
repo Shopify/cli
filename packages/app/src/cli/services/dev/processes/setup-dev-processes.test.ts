@@ -186,7 +186,7 @@ describe('setup-dev-processes', () => {
     })
     expect(res.processes[4]).toMatchObject({
       type: 'theme-app-extensions',
-      prefix: 'extensions',
+      prefix: 'theme-extensions',
       function: runThemeAppExtensionsServer,
       options: {
         adminSession: {
