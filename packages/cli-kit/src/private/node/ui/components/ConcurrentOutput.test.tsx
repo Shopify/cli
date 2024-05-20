@@ -66,6 +66,123 @@ describe('ConcurrentOutput', () => {
     `)
   })
 
+  test('renders custom prefixes on log lines', async () => {
+    // Given
+    const extensionName = 'my-extension'
+    const processes = [
+      {
+        prefix: '1',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write(prefixConcurrentOutputLog(extensionName, 'foo bar'))
+        },
+      },
+    ]
+
+    // When
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={processes}
+        // Ensure it's not truncated
+        prefixColumnSize={extensionName.length}
+        abortSignal={new AbortController().signal}
+      />,
+    )
+    await renderInstance.waitUntilExit()
+
+    // Then
+    const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
+    expect(logColumns?.length).toBe(3)
+    // 4 is largest prefix, plus spacing
+    expect(logColumns[1]?.trim()).toEqual(extensionName)
+  })
+
+  test('renders prefix column width based on prefixColumnSize', async () => {
+    // Given
+    const columnSize = 5
+    const processes = [
+      {
+        prefix: '1234567890',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write('foo')
+        },
+      },
+      {
+        prefix: '1',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write('bar')
+        },
+      },
+    ]
+
+    // When
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={processes}
+        prefixColumnSize={columnSize}
+        abortSignal={new AbortController().signal}
+      />,
+    )
+    await renderInstance.waitUntilExit()
+
+    // Then
+    const logLines = unstyled(renderInstance.lastFrame()!).split('\n').filter(Boolean)
+    expect(logLines?.length).toBe(2)
+    logLines.forEach((line) => {
+      const logColumns = line.split('│')
+      expect(logColumns?.length).toBe(3)
+      // Including spacing
+      expect(logColumns[1]?.length).toBe(columnSize + 2)
+    })
+  })
+
+  test('renders prefix column width based on processes by default', async () => {
+    // Given
+    const processes = [
+      {
+        prefix: '1',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write('foo')
+        },
+      },
+      {prefix: '12', action: async () => {}},
+      {prefix: '123', action: async () => {}},
+      {prefix: '1234', action: async () => {}},
+    ]
+
+    // When
+    const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
+    await renderInstance.waitUntilExit()
+
+    // Then
+    const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
+    expect(logColumns?.length).toBe(3)
+    // 4 is largest prefix, plus spacing
+    expect(logColumns[1]?.length).toBe(4 + 2)
+  })
+
+  test('does not render prefix column larger than max', async () => {
+    // Given
+    const processes = [
+      {
+        prefix: '1',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write('foo')
+        },
+      },
+      {prefix: new Array(26).join('0'), action: async () => {}},
+    ]
+
+    // When
+    const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
+    await renderInstance.waitUntilExit()
+
+    // Then
+    const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
+    expect(logColumns?.length).toBe(3)
+    // 25 is largest column allowed, plus spacing
+    expect(logColumns[1]?.length).toBe(25 + 2)
+  })
+
   test('rejects with the error thrown inside one of the processes', async () => {
     // Given
     const backendProcess = {
