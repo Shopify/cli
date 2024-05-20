@@ -170,9 +170,9 @@ export class AppErrors {
   }
 }
 
-interface AppLoaderConstructorArgs<T extends AppConfiguration = AppConfiguration> {
+interface AppLoaderConstructorArgs<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   mode?: AppLoaderMode
-  loadedConfiguration: ConfigurationLoaderResult<T>
+  loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -188,7 +188,7 @@ export async function checkFolderIsValidApp(directory: string) {
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
 export async function loadApp(
-  options: Omit<AppLoaderConstructorArgs, 'loadedConfiguration'> & {
+  options: Omit<AppLoaderConstructorArgs<AppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
     directory: string
     userProvidedConfigName?: string
     specifications?: ExtensionSpecification[]
@@ -276,16 +276,16 @@ type DynamicallySpecifiedConfigLoading =
       remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
     }
 
-class AppLoader<T extends AppConfiguration = AppConfiguration> {
+class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private mode: AppLoaderMode
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
   private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
-  private loadedConfiguration: ConfigurationLoaderResult<T>
+  private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 
   constructor(
-    {mode, loadedConfiguration}: AppLoaderConstructorArgs<T>,
+    {mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>,
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.mode = mode ?? 'strict'
@@ -737,7 +737,10 @@ type ConfigurationLoadResultMetadata = {
     }
 )
 
-type ConfigurationLoaderResult<T extends AppConfiguration = AppConfiguration> = AppConfigurationInterface<T> & {
+type ConfigurationLoaderResult<
+  TConfig extends AppConfiguration,
+  TModuleSpec extends ExtensionSpecification,
+> = AppConfigurationInterface<TConfig, TModuleSpec> & {
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
 }
 
@@ -764,7 +767,7 @@ class AppConfigurationLoader {
     this.remoteFlags = remoteFlags ?? []
   }
 
-  async loaded(): Promise<ConfigurationLoaderResult> {
+  async loaded(): Promise<ConfigurationLoaderResult<AppConfiguration, ExtensionSpecification>> {
     const specifications = this.specifications
     const appDirectory = await getAppDirectory(this.directory)
     const configSource: LinkedConfigurationSource = this.userProvidedConfigName ? 'flag' : 'cached'

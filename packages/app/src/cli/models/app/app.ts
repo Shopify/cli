@@ -193,17 +193,22 @@ export interface Web {
   framework?: string
 }
 
-export interface AppConfigurationInterface<T extends AppConfiguration = AppConfiguration> {
+export interface AppConfigurationInterface<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> {
   directory: string
-  configuration: T
-  configSchema: zod.ZodType<Omit<T, 'path'>>
-  specifications: ExtensionSpecification[]
+  configuration: TConfig
+  configSchema: zod.ZodType<Omit<TConfig, 'path'>>
+  specifications: TModuleSpec[]
   remoteFlags: Flag[]
 }
 
 // A tweak of the normal AppInterface for loading code that needs to present something that is almost a real app, but not quite
-export interface PartialAppInterface<T extends AppConfiguration = AppConfiguration>
-  extends AppConfigurationInterface<T> {
+export interface PartialAppInterface<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
   packageManager: PackageManager
 
@@ -215,7 +220,10 @@ export interface PartialAppInterface<T extends AppConfiguration = AppConfigurati
   appIsLaunchable: () => boolean
 }
 
-export interface AppInterface<T extends AppConfiguration = AppConfiguration> extends PartialAppInterface<T> {
+export interface AppInterface<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> extends PartialAppInterface<TConfig, TModuleSpec> {
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   nodeDependencies: {[key: string]: string}
   webs: Web[]
@@ -233,7 +241,10 @@ export interface AppInterface<T extends AppConfiguration = AppConfiguration> ext
   preDeployValidation: () => Promise<void>
 }
 
-type AppConstructor<T extends AppConfiguration = AppConfiguration> = AppConfigurationInterface<T> & {
+type AppConstructor<
+  TConfig extends AppConfiguration,
+  TModuleSpec extends ExtensionSpecification,
+> = AppConfigurationInterface<TConfig, TModuleSpec> & {
   name: string
   packageManager: PackageManager
   nodeDependencies: {[key: string]: string}
@@ -246,18 +257,22 @@ type AppConstructor<T extends AppConfiguration = AppConfiguration> = AppConfigur
   remoteFlags?: Flag[]
 }
 
-export class App<T extends AppConfiguration = AppConfiguration> implements AppInterface<T> {
+export class App<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> implements AppInterface<TConfig, TModuleSpec>
+{
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
   packageManager: PackageManager
-  configuration: T
+  configuration: TConfig
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  specifications: ExtensionSpecification[]
+  specifications: TModuleSpec[]
   configSchema: zod.ZodTypeAny
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
@@ -276,7 +291,7 @@ export class App<T extends AppConfiguration = AppConfiguration> implements AppIn
     specifications,
     configSchema,
     remoteFlags,
-  }: AppConstructor<T>) {
+  }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
     this.packageManager = packageManager
