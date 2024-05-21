@@ -64,9 +64,9 @@ import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
-  ConvertDevToTestStoreSchema,
-  ConvertDevToTestStoreVariables,
-} from '../../api/graphql/convert_dev_to_test_store.js'
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -484,8 +484,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: createExtension')
   }
 
-  async convertToTestStore(_input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
-    throw new BugError('Not implemented: convertToTestStore')
+  async convertToTransferDisabledStore(
+    _input: ConvertDevToTransferDisabledStoreVariables,
+  ): Promise<ConvertDevToTransferDisabledSchema> {
+    throw new BugError('Not implemented: convertToTransferDisabledStore')
   }
 
   async updateDeveloperPreview(

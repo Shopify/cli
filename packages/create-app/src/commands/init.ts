@@ -83,6 +83,9 @@ export default class Init extends Command {
       local: flags.local,
       directory: flags.path,
       useGlobalCLI: promptAnswers.globalCLIResult.alreadyInstalled || promptAnswers.globalCLIResult.install,
+      postCloneActions: {
+        removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
+      },
     })
   }
 

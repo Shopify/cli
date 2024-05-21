@@ -1,7 +1,11 @@
 import {selectStore} from './select-store.js'
 import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+import {
+  reloadStoreListPrompt,
+  selectStorePrompt,
+  confirmConversionToTransferDisabledStorePrompt,
+} from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
@@ -64,6 +68,7 @@ describe('selectStore', async () => {
   test('prompts user to convert store to non-transferable if selection is invalid', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
+    vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(true)
 
     // When
     const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
@@ -71,6 +76,22 @@ describe('selectStore', async () => {
     // Then
     expect(got).toEqual(STORE2)
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
+  })
+
+  test('choosing not to convert to transfer-disabled forces another prompt', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+    vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(false)
+
+    // When
+    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
+
+    // Then
+    expect(got).toEqual(STORE1)
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
   test('not prompts user to convert store to non-transferable if selection is invalid inside spin instance and first party', async () => {
@@ -85,7 +106,7 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(developerPlatformClient.convertToTestStore).not.toHaveBeenCalled()
+    expect(developerPlatformClient.convertToTransferDisabledStore).not.toHaveBeenCalled()
     expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
   })
 
