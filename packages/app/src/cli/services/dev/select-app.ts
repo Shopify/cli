@@ -1,3 +1,4 @@
+import {searchForAppsByNameFactory} from './prompt-helpers.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
@@ -35,7 +36,7 @@ export async function selectOrCreateApp(
     const name = await appNamePrompt(localAppName)
     return developerPlatformClient.createApp(org, name, options)
   } else {
-    const app = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id, {
+    const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages, {
       directory: options?.directory,
     })
 

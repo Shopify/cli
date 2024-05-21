@@ -9,13 +9,18 @@ import {
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../context.js'
+import {searchForAppsByNameFactory} from '../dev/prompt-helpers.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedApp = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id)
+  const selectedApp = await selectAppPrompt(
+    searchForAppsByNameFactory(developerPlatformClient, org.id),
+    apps,
+    hasMorePages,
+  )
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
 }
