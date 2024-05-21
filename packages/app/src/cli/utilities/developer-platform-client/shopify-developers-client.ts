@@ -378,7 +378,6 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
               },
               versionTag: version.versionTag,
               status: '',
-              distributionPercentage: 0,
               versionId: version.id,
             }
           }),
