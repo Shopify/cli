@@ -373,7 +373,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppDeploy, variables)
   }
 
-  async release({apiKey}: MinimalOrganizationApp, {appVersionId}: AppVersionIdentifiers): Promise<AppReleaseSchema> {
+  async release({
+    app: {apiKey},
+    version: {appVersionId},
+  }: {
+    app: MinimalOrganizationApp
+    version: AppVersionIdentifiers
+  }): Promise<AppReleaseSchema> {
     const input: AppReleaseVariables = {apiKey, appVersionId}
     return this.request(AppRelease, input)
   }

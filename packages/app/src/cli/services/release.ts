@@ -61,9 +61,12 @@ export async function release(options: ReleaseOptions) {
     {
       title: 'Releasing version',
       task: async (context: Context) => {
-        context.appRelease = await developerPlatformClient.release(remoteApp, {
-          versionId: versionDetails.uuid,
-          appVersionId: versionDetails.id,
+        context.appRelease = await developerPlatformClient.release({
+          app: remoteApp,
+          version: {
+            versionId: versionDetails.uuid,
+            appVersionId: versionDetails.id,
+          },
         })
       },
     },

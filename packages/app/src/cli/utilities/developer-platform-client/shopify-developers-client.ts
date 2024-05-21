@@ -601,10 +601,13 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return versionResult
   }
 
-  async release(
-    {id: appId, organizationId}: MinimalOrganizationApp,
-    {versionId}: AppVersionIdentifiers,
-  ): Promise<AppReleaseSchema> {
+  async release({
+    app: {id: appId, organizationId},
+    version: {versionId},
+  }: {
+    app: MinimalOrganizationApp
+    version: AppVersionIdentifiers
+  }): Promise<AppReleaseSchema> {
     const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId}
     const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>(
       organizationId,
