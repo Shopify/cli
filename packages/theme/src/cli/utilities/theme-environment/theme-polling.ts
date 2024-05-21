@@ -57,6 +57,9 @@ export async function pollRemoteJsonChanges(
     assetsChangedOnRemote
       .filter((file) => file.key.endsWith('.json'))
       .map(async (file) => {
+        if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
+          return
+        }
         const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
         if (asset) {
           return localFileSystem.write(asset).then(() => {
