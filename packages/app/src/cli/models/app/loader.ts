@@ -190,7 +190,7 @@ export async function checkFolderIsValidApp(directory: string) {
 export async function loadApp<TModuleSpec extends ExtensionSpecification = ExtensionSpecification>(
   options: Omit<AppLoaderConstructorArgs<AppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
     directory: string
-    userProvidedConfigName?: string
+    userProvidedConfigName: string | undefined
     specifications: TModuleSpec[]
     remoteFlags?: Flag[]
   },
@@ -711,7 +711,7 @@ export async function loadAppConfiguration(
 
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
-  userProvidedConfigName?: string
+  userProvidedConfigName: string | undefined
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
 }
