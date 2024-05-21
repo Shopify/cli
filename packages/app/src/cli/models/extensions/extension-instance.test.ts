@@ -369,7 +369,7 @@ describe('draftMessages', async () => {
       const subscription = extensionInstance.configuration as unknown as SingleWebhookSubscriptionType
       let result = ''
       if (subscription) {
-        result = hashString(subscription.topic + subscription.uri).substring(0, 30)
+        result = hashString(subscription.topic + subscription.uri + subscription.filter).substring(0, 30)
       }
 
       // Then

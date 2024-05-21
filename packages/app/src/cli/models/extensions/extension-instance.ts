@@ -363,7 +363,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-        const handle = `${subscription.topic}${subscription.uri}`
+        const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
         return hashString(handle).substring(0, 30)
     }
   }
