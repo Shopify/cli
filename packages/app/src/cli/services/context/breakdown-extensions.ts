@@ -81,10 +81,10 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
 
 export async function extensionsIdentifiersReleaseBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
-  apiKey: string,
+  app: MinimalOrganizationApp,
   version: string,
 ) {
-  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, developerPlatformClient)
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(app, version, developerPlatformClient)
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
