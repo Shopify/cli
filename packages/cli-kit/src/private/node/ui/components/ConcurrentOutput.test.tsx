@@ -297,7 +297,7 @@ describe('ConcurrentOutput', () => {
 })
 
 describe('prefixConcurrentOutputLog', () => {
-  test('returns a string with the fix and the log', () => {
+  test('returns a string with the prefix and the log', () => {
     // Given
     const prefix = 'my-extension'
     const log = 'foo bar'
