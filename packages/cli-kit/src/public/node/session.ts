@@ -48,6 +48,29 @@ ${outputToken.json(scopes)}
 }
 
 /**
+ * Ensure that we have a valid session to access the App Management API.
+ *
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param env - Optional environment variables to use.
+ * @param options - Optional extra options to use.
+ * @returns The access token for the App Management API.
+ */
+export async function ensureAuthenticatedAppManagement(
+  scopes: string[] = [],
+  env = process.env,
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<string> {
+  outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
+${outputToken.json(scopes)}
+`)
+  const tokens = await ensureAuthenticated({appManagementApi: {scopes}}, env, options)
+  if (!tokens) {
+    throw new BugError('No App Management token found after ensuring authenticated')
+  }
+  return tokens.appManagement!
+}
+
+/**
  * Ensure that we have a valid session to access the Storefront API.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.

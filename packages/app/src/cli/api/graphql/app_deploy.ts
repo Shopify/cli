@@ -47,6 +47,7 @@ export const AppDeploy = gql`
 `
 
 export interface AppModuleSettings {
+  uid?: string
   uuid?: string
   specificationIdentifier?: string
   config: string

@@ -1,11 +1,14 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('fetchExtensionSpecifications', () => {
   test('returns the filtered and mapped results including theme', async () => {
     // Given/When
-    const got = await fetchSpecifications({developerPlatformClient: testDeveloperPlatformClient(), apiKey: 'apiKey'})
+    const got = await fetchSpecifications({
+      developerPlatformClient: testDeveloperPlatformClient(),
+      app: testOrganizationApp(),
+    })
 
     // Then
     expect(got).toEqual(

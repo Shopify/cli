@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
-import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -206,7 +206,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     }
   }
 
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: selectedApp.apiKey})
+  const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
 
   selectedApp = {
     ...selectedApp,
@@ -298,7 +298,8 @@ const storeFromFqdn = async (
 ): Promise<OrganizationStore> => {
   const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
   if (result?.store) {
-    await convertToTestStoreIfNeeded(result.store, orgId, developerPlatformClient)
+    // never automatically convert a store provided via the cache
+    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
     return result.store
   } else {
     throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
@@ -426,7 +427,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: remoteApp.apiKey})
+  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,
@@ -445,14 +446,14 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     force,
     release: !noRelease,
     developerPlatformClient,
-    envIdentifiers: getAppIdentifiers({app}),
+    envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
     remoteApp,
   })
 
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app, identifiers, command: 'deploy'}),
+    app: await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient}),
   }
 
   const result: DeployContextOutput = {
@@ -510,7 +511,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     force: true,
   })
 
-  const prodEnvIdentifiers = getAppIdentifiers({app})
+  const prodEnvIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
 
   const {extensionIds: remoteExtensionIds} = await ensureDeploymentIdsPresence({
     app,
@@ -611,7 +612,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release'}),
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release', developerPlatformClient}),
   }
   const result = {
     app: options.app,
@@ -692,7 +693,7 @@ export async function fetchAppAndIdentifiers(
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   const app = options.app
   let reuseDevCache = reuseFromDev
-  let envIdentifiers = getAppIdentifiers({app})
+  let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
   let remoteApp: OrganizationApp | undefined
 
   if (options.reset) {
@@ -763,7 +764,13 @@ async function fetchDevDataFromOptions(
 
   if (options.storeFqdn) {
     selectedStore = orgWithStore!.store
-    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, developerPlatformClient)
+    // never automatically convert a store provided via the command line
+    await convertToTransferDisabledStoreIfNeeded(
+      selectedStore,
+      orgWithStore!.organization.id,
+      developerPlatformClient,
+      'never',
+    )
   }
 
   return {app: selectedApp, store: selectedStore}

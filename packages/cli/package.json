@@ -98,15 +98,14 @@
   "dependencies": {
     "@oclif/core": "3.26.5",
     "@oclif/plugin-commands": "3.3.2",
-    "@oclif/plugin-plugins": "5.0.19",
+    "@oclif/plugin-plugins": "5.1.2",
     "@shopify/app": "3.60.0",
     "@shopify/cli-kit": "3.60.0",
     "@shopify/plugin-cloudflare": "3.60.0",
     "@shopify/plugin-did-you-mean": "3.60.0",
     "@shopify/theme": "3.60.0",
     "esbuild": "0.19.8",
-    "zod-to-json-schema": "3.21.4",
-    "npm": "10.7.0"
+    "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
     "@shopify/app": "3.60.0",

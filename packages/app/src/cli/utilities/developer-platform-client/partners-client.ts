@@ -7,6 +7,7 @@ import {
 import {
   ActiveAppVersion,
   AppDeployOptions,
+  AssetUrlSchema,
   DeveloperPlatformClient,
   Paginateable,
 } from '../developer-platform-client.js'
@@ -47,10 +48,10 @@ import {
   ExtensionCreateVariables,
 } from '../../api/graphql/extension_create.js'
 import {
-  ConvertDevToTestStoreQuery,
-  ConvertDevToTestStoreSchema,
-  ConvertDevToTestStoreVariables,
-} from '../../api/graphql/convert_dev_to_test_store.js'
+  ConvertDevToTransferDisabledStoreQuery,
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   FindStoreByDomainQuery,
   FindStoreByDomainQueryVariables,
@@ -170,7 +171,7 @@ function getAppVars(
       title: `${name}`,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
-      requestedAccessScopes: [],
+      requestedAccessScopes: scopesArray ?? [],
       type: 'undecided',
     }
   }
@@ -270,14 +271,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(appId: string): Promise<RemoteSpecification[]> {
-    const variables: ExtensionSpecificationsQueryVariables = {api_key: appId}
+  async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+    const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     return result.extensionSpecifications
   }
 
-  async templateSpecifications(appId: string): Promise<ExtensionTemplate[]> {
-    const variables: RemoteTemplateSpecificationsVariables = {apiKey: appId}
+  async templateSpecifications(apiKey: string): Promise<ExtensionTemplate[]> {
+    const variables: RemoteTemplateSpecificationsVariables = {apiKey}
     const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
     return result.templateSpecifications
   }
@@ -358,6 +359,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     const {organizationId, ...deployOptions} = deployInput
     // Enforce the type
     const variables: AppDeployVariables = deployOptions
+    // Exclude uid
+    variables.appModules = variables.appModules?.map((element) => {
+      const {uid, ...otherFields} = element
+      return otherFields
+    })
     return this.request(AppDeploy, variables)
   }
 
@@ -365,12 +371,19 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppRelease, input)
   }
 
-  async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
-    return this.request(GenerateSignedUploadUrl, input)
+  async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables: GenerateSignedUploadUrlVariables = {apiKey: app.apiKey, bundleFormat: 1}
+    const result = await this.request<GenerateSignedUploadUrlSchema>(GenerateSignedUploadUrl, variables)
+    return {
+      assetUrl: result.appVersionGenerateSignedUploadUrl.signedUploadUrl,
+      userErrors: result.appVersionGenerateSignedUploadUrl.userErrors,
+    }
   }
 
-  async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
-    return this.request(ConvertDevToTestStoreQuery, input)
+  async convertToTransferDisabledStore(
+    input: ConvertDevToTransferDisabledStoreVariables,
+  ): Promise<ConvertDevToTransferDisabledSchema> {
+    return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {

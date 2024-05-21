@@ -2,11 +2,12 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
-  apiKey: string
+  app: MinimalAppIdentifiers
 }
 /**
  * Returns all extension specifications the user has access to.
@@ -22,9 +23,9 @@ interface FetchSpecificationsOptions {
  */
 export async function fetchSpecifications({
   developerPlatformClient,
-  apiKey,
+  app,
 }: FetchSpecificationsOptions): Promise<RemoteAwareExtensionSpecification[]> {
-  const result: RemoteSpecification[] = await developerPlatformClient.specifications(apiKey)
+  const result: RemoteSpecification[] = await developerPlatformClient.specifications(app)
 
   const extensionSpecifications: FlattenedRemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))

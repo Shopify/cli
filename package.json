@@ -110,7 +110,6 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
-      "esbuild",
       "@shopify/cli-hydrogen",
       "@shopify/theme-check-node",
       "@shopify/theme-check-docs-updater"
@@ -171,12 +170,7 @@
           "**/index.ts!"
         ],
         "project": "**/*.ts!",
-        "ignoreDependencies": [
-          "@oclif/plugin-commands",
-          "@shopify/plugin-did-you-mean",
-          "@shopify/app",
-          "@shopify/theme"
-        ],
+        "ignoreDependencies": [],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -285,7 +279,6 @@
         ],
         "project": "**/*.ts",
         "ignoreDependencies": [
-          "@cucumber/pretty-formatter",
           "@cucumber/messages"
         ],
         "ignoreBinaries": [
