@@ -3,6 +3,7 @@ import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graph
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -15,7 +16,8 @@ interface FetchSpecificationsOptions {
  * - Theme extensions
  *
  * Will return a merge of the local and remote specifications (remote values override local ones)
- * Will only return the specifications that are also defined locally
+ * - Will only return the specifications that are defined in both places.
+ * - "deprecated" extension specifications aren't included
  *
  * @param developerPlatformClient - The client to access the platform API
  * @returns List of extension specifications
@@ -58,5 +60,20 @@ function mergeLocalAndRemoteSpecs(
     return undefined
   })
 
-  return getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(updated)
+  const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(updated)
+
+  // Log the specs that were defined locally but aren't in the result
+  // This usually means the spec is a gated one and the caller doesn't have adequate access. Or, we're in a test and
+  // the mocked specification set is missing something.
+  const missing = local.filter((spec) => !result.find((result) => result.identifier === spec.identifier))
+  if (missing.length > 0) {
+    outputDebug(
+      `The following extension specifications were defined locally but not found in the remote specifications: ${missing
+        .map((spec) => spec.identifier)
+        .sort()
+        .join(', ')}`,
+    )
+  }
+
+  return result
 }
