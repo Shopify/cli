@@ -164,7 +164,6 @@ describe('ui', () => {
         process.stdout,
         process.stderr,
         abortController.signal,
-        [],
       )
     })
 
