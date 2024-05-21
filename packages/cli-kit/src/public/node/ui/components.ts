@@ -1,1 +1,5 @@
-export {ConcurrentOutput, prefixConcurrentOutputLog} from '../../../private/node/ui/components/ConcurrentOutput.js'
+export {
+  ConcurrentOutput,
+  prefixConcurrentOutputLog,
+  parseConcurrentOutputLog,
+} from '../../../private/node/ui/components/ConcurrentOutput.js'
