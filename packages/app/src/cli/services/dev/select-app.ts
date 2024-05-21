@@ -1,7 +1,8 @@
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
-import {getCachedCommandInfo, setCachedCommandInfo} from '../local-storage.js'
+import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppConfigurationFileName} from '../../models/app/loader.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 /**
@@ -39,9 +40,10 @@ export async function selectOrCreateApp(
     })
 
     const data = getCachedCommandInfo()
-    const tomls = (data?.tomls as {[key: string]: unknown}) ?? {}
+    const tomls = (data?.tomls as {[key: string]: AppConfigurationFileName}) ?? {}
+    const selectedToml = tomls[app.apiKey]
 
-    if (tomls[app.apiKey]) setCachedCommandInfo({selectedToml: tomls[app.apiKey], askConfigName: false})
+    if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
     const fullSelectedApp = await developerPlatformClient.appFromId(app)
     return fullSelectedApp!

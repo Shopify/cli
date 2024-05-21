@@ -307,9 +307,9 @@ async function loadConfigurationFileName(
     format: 'legacy' | 'current'
   },
 ): Promise<AppConfigurationFileName> {
+  // If the user has already selected a config name, use that
   const cache = getCachedCommandInfo()
-
-  if (!cache?.askConfigName && cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
+  if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
 
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
@@ -321,7 +321,7 @@ async function loadConfigurationFileName(
 
   const existingTomls = await getTomls(options.directory)
   const currentToml = existingTomls[remoteApp.apiKey]
-  if (currentToml) return currentToml as AppConfigurationFileName
+  if (currentToml) return currentToml
 
   return selectConfigName(localAppInfo.appDirectory || options.directory, remoteApp.title)
 }

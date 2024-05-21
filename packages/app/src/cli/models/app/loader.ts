@@ -1128,7 +1128,7 @@ export function getAppConfigurationShorthand(path: string) {
 }
 
 /** Checks if configName is a valid one (`shopify.app.toml`, or `shopify.app.<something>.toml`) */
-function isValidFormatAppConfigurationFileName(configName: string): configName is AppConfigurationFileName {
+export function isValidFormatAppConfigurationFileName(configName: string): configName is AppConfigurationFileName {
   if (appConfigurationFileNameRegex.test(configName)) {
     return true
   }
