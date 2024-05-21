@@ -16,8 +16,7 @@ const external = [
   // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
   'react-devtools-core',
   // esbuild can't be bundled per design
-  'esbuild',
-  'npm',
+  'esbuild'
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
