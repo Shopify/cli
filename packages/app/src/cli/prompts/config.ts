@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import {AppSchema, CurrentAppConfiguration} from '../models/app/app.js'
 import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
+import {AppConfigurationFileName} from '../models/app/loader.js'
 import {
   RenderTextPromptOptions,
   renderConfirmationPrompt,
@@ -17,7 +18,7 @@ import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
+export async function selectConfigName(directory: string, defaultName = ''): Promise<AppConfigurationFileName> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
   let configName = await renderTextPrompt(namePromptOptions)
 
@@ -40,7 +41,7 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   return filenameFromName(configName)
 }
 
-function filenameFromName(name: string, highlight = false): string {
+function filenameFromName(name: string, highlight = false): AppConfigurationFileName {
   const slugifiedName = slugify(name)
   if (slugifiedName === '') return 'shopify.app.toml'
   const configName = highlight ? colors.cyan(slugifiedName) : slugifiedName
