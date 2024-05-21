@@ -24,7 +24,7 @@ function moduleFromExtension(extension: ExtensionInstance): AppModule {
 }
 
 describe('diffAppModules', () => {
-  test('something something', () => {
+  test('extracts the added, removed and updated modules between two releases', () => {
     // Given
     const [moduleA, moduleB, moduleC] = [
       moduleFromExtension(extensionA),
