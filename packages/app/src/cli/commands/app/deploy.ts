@@ -7,6 +7,7 @@ import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -99,7 +100,11 @@ export default class Deploy extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const app: AppInterface = await loadApp({directory: flags.path, userProvidedConfigName: flags.config})
+    const app: AppInterface = await loadApp({
+      directory: flags.path,
+      userProvidedConfigName: flags.config,
+      specifications: await loadLocalExtensionsSpecifications(),
+    })
 
     const requiredNonTTYFlags = ['force']
     if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')

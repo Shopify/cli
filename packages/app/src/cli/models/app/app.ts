@@ -73,6 +73,11 @@ export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path:
 export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
 
 /**
+ * The build options section for a normal, linked app.
+ */
+export type BuildOptions = BasicAppConfigurationWithoutModules['build']
+
+/**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
  */
 export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & SpecsAppConfiguration
@@ -207,26 +212,12 @@ export interface AppConfigurationInterface<
   remoteFlags: Flag[]
 }
 
-// A tweak of the normal AppInterface for loading code that needs to present something that is almost a real app, but not quite
-export interface PartialAppInterface<
+export interface AppInterface<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
   packageManager: PackageManager
-
-  /**
-   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
-   *
-   * @returns true if the app can be launched, false otherwise
-   */
-  appIsLaunchable: () => boolean
-}
-
-export interface AppInterface<
-  TConfig extends AppConfiguration = AppConfiguration,
-  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
-> extends PartialAppInterface<TConfig, TModuleSpec> {
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   nodeDependencies: {[key: string]: string}
   webs: Web[]
@@ -237,11 +228,16 @@ export interface AppInterface<
   draftableExtensions: ExtensionInstance[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
-  hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  /**
+   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
+   *
+   * @returns true if the app can be launched, false otherwise
+   */
+  appIsLaunchable: () => boolean
 }
 
 type AppConstructor<
@@ -354,10 +350,6 @@ export class App<
     }
 
     await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
-  }
-
-  hasExtensions(): boolean {
-    return this.allExtensions.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {

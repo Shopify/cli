@@ -2,10 +2,12 @@ import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 // toml does not support comments and there aren't currently any good/maintained libs for this,
 // so for now, we manually add comments
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
+  outputDebug(`Writing app configuration to ${configuration.path}`)
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 

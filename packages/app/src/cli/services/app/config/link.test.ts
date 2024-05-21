@@ -1,4 +1,4 @@
-import link, {LinkOptions, emptyApp} from './link.js'
+import link, {LinkOptions} from './link.js'
 import {setCurrentConfigPreference} from './use.js'
 import {
   testApp,
@@ -7,7 +7,7 @@ import {
   testDeveloperPlatformClient,
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadApp, loadAppConfiguration} from '../../../models/app/loader.js'
+import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
@@ -61,7 +61,6 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 beforeEach(async () => {
-  vi.mocked(loadAppConfiguration).mockResolvedValue(emptyApp([]))
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
 })
 
@@ -152,7 +151,6 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
     expect(configuration).toEqual({
       client_id: '12345',
       name: 'app1',
@@ -173,6 +171,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.staging.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -240,7 +239,6 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
     expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
       configFileName: 'shopify.app.toml',
       directory: tmp,
@@ -283,6 +281,7 @@ embedded = false
         include_config_on_deploy: true,
       },
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -364,7 +363,6 @@ embedded = true
 url = "https://api-client-config.com/preferences"
 `
 
-    expect(content).toEqual(expectedContent)
     expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
       configFileName: 'shopify.app.toml',
       directory: tmp,
@@ -420,6 +418,7 @@ url = "https://api-client-config.com/preferences"
         include_config_on_deploy: true,
       },
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -496,7 +495,6 @@ api_version = "2023-07"
 embedded = false
 `
 
-    expect(content).toEqual(expectedContent)
     expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
       configFileName: 'shopify.app.staging.toml',
       directory: tmp,
@@ -541,6 +539,7 @@ embedded = false
         include_config_on_deploy: true,
       },
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -608,7 +607,6 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
     expect(configuration).toEqual({
       client_id: 'different-api-key',
       name: 'my app',
@@ -628,6 +626,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.staging.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -672,7 +671,6 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'shopify.app.toml is now linked to "app1" on Shopify',
       body: 'Using shopify.app.toml as your default config.',
@@ -709,6 +707,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -753,7 +752,6 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(configuration).toEqual({
       client_id: '12345',
@@ -775,6 +773,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -788,7 +787,7 @@ test('fetches the remote app when an api key is provided', async () => {
       developerPlatformClient,
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-    vi.mocked(selectConfigName).mockResolvedValue('staging')
+    vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
     vi.mocked(appFromId).mockImplementation(async ({apiKey}: {apiKey: string}) => {
       return (await developerPlatformClient.appFromId({id: apiKey, apiKey, organizationId: '1'}))!
     })
@@ -886,8 +885,7 @@ test('skips config name question if re-linking to existing current app schema', 
       configFileName: 'shopify.app.foo.toml',
       directory: tmp,
     })
-    expect(content)
-      .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+    const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
 name = "app1"
@@ -907,7 +905,7 @@ api_version = "2023-07"
 
 [pos]
 embedded = false
-`)
+`
     expect(configuration).toEqual({
       client_id: '12345',
       name: 'app1',
@@ -928,6 +926,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.foo.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -967,7 +966,7 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
+
     expect(configuration).toEqual({
       client_id: '12345',
       name: 'app1',
@@ -987,6 +986,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -1032,7 +1032,6 @@ api_version = "2023-07"
 [pos]
 embedded = false
 `
-    expect(content).toEqual(expectedContent)
 
     expect(configuration).toEqual({
       client_id: '12345',
@@ -1054,6 +1053,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -1135,7 +1135,6 @@ api_version = "2023-07"
 embedded = false
 `
 
-    expect(content).toEqual(expectedContent)
     expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
       configFileName: 'shopify.app.toml',
       directory: tmp,
@@ -1181,6 +1180,7 @@ embedded = false
       },
       path: expect.stringMatching(/\/shopify.app.toml$/),
     })
+    expect(content).toEqual(expectedContent)
   })
 })
 
@@ -1208,7 +1208,7 @@ test('the api client configuration is deep merged with the remote app_config ext
         },
       } as CurrentAppConfiguration,
     }
-    vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp))
+    vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
       testOrganizationApp({
         apiKey: '12345',
