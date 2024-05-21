@@ -7,7 +7,7 @@ import {performance} from 'perf_hooks'
 
 export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management'
 
-export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'business-platform', 'app-management']
+export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'business-platform']
 
 interface RequestOptions<T> {
   request: Promise<T>
