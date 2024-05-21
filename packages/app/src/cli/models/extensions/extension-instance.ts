@@ -300,7 +300,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
-    const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.devUUID
+    const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.uid
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
