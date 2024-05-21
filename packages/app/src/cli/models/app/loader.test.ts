@@ -74,7 +74,7 @@ automatically_update_urls_on_dev = true
 
   afterEach(async () => {
     if (tmpDir) {
-      await rmdir(tmpDir)
+      await rmdir(tmpDir, {force: true})
     }
   })
 
@@ -2457,8 +2457,28 @@ wrong = "property"
       cmd_app_all_configs_any: true,
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
-      cmd_app_linked_config_git_tracked: true,
+      cmd_app_linked_config_git_tracked: false,
       cmd_app_linked_config_source: 'cached',
+      cmd_app_warning_api_key_deprecation_displayed: false,
+      app_extensions_any: false,
+      app_extensions_breakdown: {},
+      app_extensions_count: 0,
+      app_extensions_custom_layout: false,
+      app_extensions_function_any: false,
+      app_extensions_function_count: 0,
+      app_extensions_theme_any: false,
+      app_extensions_theme_count: 0,
+      app_extensions_ui_any: false,
+      app_extensions_ui_count: 0,
+      app_name_hash: expect.any(String),
+      app_path_hash: expect.any(String),
+      app_scopes: '[]',
+      app_web_backend_any: true,
+      app_web_backend_count: 1,
+      app_web_custom_layout: false,
+      app_web_framework: 'unknown',
+      app_web_frontend_any: false,
+      app_web_frontend_count: 0,
     })
   })
 })
