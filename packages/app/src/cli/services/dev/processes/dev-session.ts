@@ -115,15 +115,14 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
 // Build all extensions into the bundle path
 async function initialBuild(options: DevSessionProcessOptions) {
-  await Promise.all(
-    options.app.realExtensions.map((extension) => {
-      extension.buildForBundle(
-        {...options, app: options.app, environment: 'development'},
-        options.bundlePath,
-        undefined,
-      )
-    }),
-  )
+  const allPromises = options.app.realExtensions.map((extension) => {
+    return extension.buildForBundle(
+      {...options, app: options.app, environment: 'development'},
+      options.bundlePath,
+      undefined,
+    )
+  })
+  await Promise.all(allPromises)
 }
 
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
@@ -230,13 +229,8 @@ Redeploy Paths:
       environment: 'development',
       appURL: url,
     })
-      .then(({newConfig, previousConfig}) => {
-        if (shouldBuild) {
-          if (buildSignal.aborted) return
-          return onChange()
-        }
-
-        if (deepCompare(newConfig, previousConfig)) return
+      .then(() => {
+        if (shouldBuild && buildSignal.aborted) return
         return onChange()
       })
       .catch((updateError: Error) => {
