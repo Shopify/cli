@@ -4,14 +4,14 @@ import {testUIExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test} from 'vitest'
 
-const extensionA = await testUIExtension({devUUID: 'extension-a-uuid'})
-const extensionB = await testUIExtension({devUUID: 'extension-b-uuid'})
-const extensionC = await testUIExtension({devUUID: 'extension-c-uuid'})
+const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
+const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
+const extensionC = await testUIExtension({uid: 'extension-c-uuid'})
 
 function moduleFromExtension(extension: ExtensionInstance): AppModule {
   return {
-    gid: extension.devUUID,
-    uid: extension.devUUID,
+    gid: extension.uid,
+    uid: extension.uid,
     handle: extension.handle,
     config: extension.configuration,
     specification: {
