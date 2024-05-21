@@ -99,7 +99,6 @@ describe('ConcurrentOutput', () => {
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
     expect(logColumns?.length).toBe(3)
-    // 4 is largest prefix, plus spacing
     expect(logColumns[1]?.trim()).toEqual(extensionName)
   })
 
