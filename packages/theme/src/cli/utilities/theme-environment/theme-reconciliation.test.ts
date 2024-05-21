@@ -99,6 +99,20 @@ describe('reconcileThemeFiles', () => {
       // Then
       expect(spy).not.toHaveBeenCalled()
     })
+
+    test('should skip local file prompt when nodelete option is true', async () => {
+      // Given
+      const files = new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
+      const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
+      const spy = vi.spyOn(localThemeFileSystem, 'delete')
+
+      // When
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, {noDelete: true})
+
+      // Then
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+      expect(spy).not.toHaveBeenCalledWith()
+    })
   })
 
   describe('files with conflicting checksums', () => {

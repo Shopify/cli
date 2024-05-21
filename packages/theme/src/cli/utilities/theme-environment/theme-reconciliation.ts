@@ -13,11 +13,16 @@ interface FilePartitions {
   remoteFilesToDelete: Checksum[]
 }
 
+interface ReconciliationOptions {
+  noDelete: boolean
+}
+
 export async function reconcileJsonFiles(
   targetTheme: Theme,
   session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
+  options?: ReconciliationOptions,
 ) {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
@@ -33,11 +38,14 @@ export async function reconcileJsonFiles(
     return localThemeFileSystem
   }
 
-  const partitionedFiles = await partitionFilesByReconciliationStrategy({
-    filesOnlyPresentLocally,
-    filesOnlyPresentOnRemote,
-    filesWithConflictingChecksums,
-  })
+  const partitionedFiles = await partitionFilesByReconciliationStrategy(
+    {
+      filesOnlyPresentLocally,
+      filesOnlyPresentOnRemote,
+      filesWithConflictingChecksums,
+    },
+    options,
+  )
 
   await performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles)
 }
@@ -144,33 +152,38 @@ async function performFileReconciliation(
   await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
 }
 
-async function partitionFilesByReconciliationStrategy(files: {
-  filesOnlyPresentLocally: Checksum[]
-  filesOnlyPresentOnRemote: Checksum[]
-  filesWithConflictingChecksums: Checksum[]
-}): Promise<FilePartitions> {
+async function partitionFilesByReconciliationStrategy(
+  files: {
+    filesOnlyPresentLocally: Checksum[]
+    filesOnlyPresentOnRemote: Checksum[]
+    filesWithConflictingChecksums: Checksum[]
+  },
+  options?: ReconciliationOptions,
+): Promise<FilePartitions> {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = files
 
   const localFilesToDelete: Checksum[] = []
   const filesToDownload: Checksum[] = []
   const remoteFilesToDelete: Checksum[] = []
 
-  await promptFileReconciliationStrategy(
-    filesOnlyPresentLocally,
-    'The files listed below are only present locally. What would you like to do?',
-    {
-      remote: {
-        label: 'Delete files from the local directory',
-        callback: (files) => {
-          localFilesToDelete.push(...files)
+  if (!options?.noDelete) {
+    await promptFileReconciliationStrategy(
+      filesOnlyPresentLocally,
+      'The files listed below are only present locally. What would you like to do?',
+      {
+        remote: {
+          label: 'Delete files from the local directory',
+          callback: (files) => {
+            localFilesToDelete.push(...files)
+          },
+        },
+        local: {
+          label: 'Upload local files to the remote theme',
+          callback: () => {},
         },
       },
-      local: {
-        label: 'Upload local files to the remote theme',
-        callback: () => {},
-      },
-    },
-  )
+    )
+  }
 
   await promptFileReconciliationStrategy(
     filesOnlyPresentOnRemote,

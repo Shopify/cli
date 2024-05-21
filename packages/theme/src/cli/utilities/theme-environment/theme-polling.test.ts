@@ -4,7 +4,7 @@ import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeFileSystem, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
@@ -14,8 +14,14 @@ vi.mock('../theme-fs.js')
 describe('pollRemoteJsonChanges', async () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
-  const files = new Map<string, ThemeAsset>([])
-  const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
+
+  let defaultThemeFileSystem: ThemeFileSystem
+  let files: Map<string, ThemeAsset>
+
+  beforeEach(() => {
+    files = new Map<string, ThemeAsset>([])
+    defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
+  })
 
   test('downloads modified files from the remote theme', async () => {
     // Given
@@ -77,14 +83,18 @@ describe('pollRemoteJsonChanges', async () => {
   test('deletes local file from remote theme when there is a change on remote', async () => {
     // Given
     const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const files = new Map<string, ThemeAsset>([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
+    const themeFileSystem = fakeThemeFileSystem('tmp', files)
     vi.mocked(fetchChecksums).mockResolvedValue([])
 
     // When
-    await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+    await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, {
+      noDelete: true,
+    })
 
     // Then
     expect(fetchThemeAsset).not.toHaveBeenCalled()
-    expect(defaultThemeFileSystem.files.get('templates/asset.json')).toBeUndefined()
+    expect(themeFileSystem.files.get('templates/asset.json')).toEqual({checksum: '1', key: 'templates/asset.json'})
   })
 
   test('throws an error when there is a change on remote and local', async () => {

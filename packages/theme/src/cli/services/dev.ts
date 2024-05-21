@@ -30,6 +30,7 @@ interface DevOptions {
   flagsToPass: string[]
   'dev-preview': boolean
   'theme-editor-sync': boolean
+  noDelete: boolean
 }
 
 export async function dev(options: DevOptions) {
@@ -42,31 +43,40 @@ export async function dev(options: DevOptions) {
     return
   }
 
-  if (options.flagsToPass.includes('--poll')) {
-    renderWarning({
-      body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
+  if (options['dev-preview']) {
+    if (options.flagsToPass.includes('--poll')) {
+      renderWarning({
+        body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
+      })
+    }
+
+    outputInfo('This feature is currently in development and is not ready for use or testing yet.')
+
+    const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
+    const localThemeFileSystem = await mountThemeFileSystem(options.directory)
+    const session: DevServerSession = {
+      ...options.adminSession,
+      storefrontToken: options.storefrontToken,
+      expiresAt: new Date(),
+    }
+    const ctx = {
+      session,
+      remoteChecksums,
+      localThemeFileSystem,
+      themeEditorSync: options['theme-editor-sync'],
+      options: {
+        noDelete: options.noDelete,
+      },
+    }
+
+    await startDevServer(options.theme, ctx, () => {
+      renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
     })
+
+    return
   }
 
-  outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-
-  const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
-  const localThemeFileSystem = await mountThemeFileSystem(options.directory)
-  const session: DevServerSession = {
-    ...options.adminSession,
-    storefrontToken: options.storefrontToken,
-    expiresAt: new Date(),
-  }
-  const ctx = {
-    session,
-    remoteChecksums,
-    localThemeFileSystem,
-    themeEditorSync: options['theme-editor-sync'],
-  }
-
-  await startDevServer(options.theme, ctx, () => {
-    renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
-  })
+  await legacyDev(options)
 }
 
 async function legacyDev(options: DevOptions) {

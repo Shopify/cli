@@ -17,15 +17,16 @@ vi.mock('../theme-fs.js')
 describe('reconcileAndPollThemeEditorChanges', async () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
-  const files = new Map<string, ThemeAsset>([])
-  const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
 
   test('should call pollThemeEditorChanges with updated checksums if the remote theme was been updated during reconciliation', async () => {
     // Given
+    const files = new Map<string, ThemeAsset>([])
+    const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
     const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
+
     vi.mocked(reconcileJsonFiles).mockResolvedValue(undefined)
     vi.mocked(fetchChecksums).mockResolvedValue([{checksum: '2', key: 'templates/asset.json'}])
-    const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
     vi.mocked(mountThemeFileSystem).mockResolvedValue(newFileSystem)
 
     // When
@@ -34,6 +35,9 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       adminSession,
       initialRemoteChecksums,
       defaultThemeFileSystem,
+      {
+        noDelete: false,
+      },
     )
 
     // Then
@@ -42,6 +46,9 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       adminSession,
       [{checksum: '2', key: 'templates/asset.json'}],
       newFileSystem,
+      {
+        noDelete: false,
+      },
     )
   })
 })

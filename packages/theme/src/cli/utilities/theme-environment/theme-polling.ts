@@ -7,18 +7,23 @@ import {renderError, renderText} from '@shopify/cli-kit/node/ui'
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
+interface PollingOptions {
+  noDelete: boolean
+}
+
 export function pollThemeEditorChanges(
   targetTheme: Theme,
   session: AdminSession,
   remoteChecksum: Checksum[],
   localFileSystem: ThemeFileSystem,
+  options?: PollingOptions,
 ) {
   outputDebug('Listening for changes in the theme editor')
 
   return setTimeout(() => {
-    pollRemoteJsonChanges(targetTheme, session, remoteChecksum, localFileSystem)
+    pollRemoteJsonChanges(targetTheme, session, remoteChecksum, localFileSystem, options)
       .then((latestChecksums) => {
-        pollThemeEditorChanges(targetTheme, session, latestChecksums, localFileSystem)
+        pollThemeEditorChanges(targetTheme, session, latestChecksums, localFileSystem, options)
       })
       .catch((err) => {
         if (err instanceof PollingError) {
@@ -35,6 +40,7 @@ export async function pollRemoteJsonChanges(
   currentSession: AdminSession,
   remoteChecksums: Checksum[],
   localFileSystem: ThemeFileSystem,
+  options?: PollingOptions,
 ): Promise<Checksum[]> {
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession)
 
@@ -71,15 +77,17 @@ export async function pollRemoteJsonChanges(
       }),
   )
 
-  await Promise.all(
-    assetsDeletedFromRemote
-      .filter((file) => file.key.endsWith('.json'))
-      .map((file) =>
-        localFileSystem.delete(file.key).then(() => {
-          renderText({text: `Synced: remove '${file.key}' from local theme`})
-        }),
-      ),
-  )
+  if (!options?.noDelete) {
+    await Promise.all(
+      assetsDeletedFromRemote
+        .filter((file) => file.key.endsWith('.json'))
+        .map((file) =>
+          localFileSystem.delete(file.key).then(() => {
+            renderText({text: `Synced: remove '${file.key}' from local theme`})
+          }),
+        ),
+    )
+  }
   return latestChecksums
 }
 
