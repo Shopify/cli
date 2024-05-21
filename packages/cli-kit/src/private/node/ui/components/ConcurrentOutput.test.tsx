@@ -6,19 +6,26 @@ import React from 'react'
 import {describe, expect, test} from 'vitest'
 import {Writable} from 'stream'
 
+/**
+ * ConcurrentOutput tests are unreliable unless we await a promise that resolves after the process has written to stdout.
+ */
+class Synchronizer {
+  resolve: () => void
+  promise: Promise<void>
+
+  constructor() {
+    this.resolve = () => {}
+    this.promise = new Promise<void>((resolve, _reject) => {
+      this.resolve = resolve
+    })
+  }
+}
+
 describe('ConcurrentOutput', () => {
   test('renders a stream of concurrent outputs from sub-processes', async () => {
     // Given
-    let backendPromiseResolve: () => void
-    let frontendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>(function (resolve, _reject) {
-      backendPromiseResolve = resolve
-    })
-
-    const frontendPromise = new Promise<void>(function (resolve, _reject) {
-      frontendPromiseResolve = resolve
-    })
+    const backendSync = new Synchronizer()
+    const frontendSync = new Synchronizer()
 
     const backendProcess = {
       prefix: 'backend',
@@ -27,23 +34,20 @@ describe('ConcurrentOutput', () => {
         stdout.write('second backend message')
         stdout.write('third backend message')
 
-        backendPromiseResolve()
+        backendSync.resolve()
       },
     }
 
     const frontendProcess = {
       prefix: 'frontend',
       action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        await backendPromise
+        await backendSync.promise
 
         stdout.write('first frontend message')
         stdout.write('second frontend message')
         stdout.write('third frontend message')
 
-        frontendPromiseResolve()
-
-        // await promise that never resolves
-        await new Promise(() => {})
+        frontendSync.resolve()
       },
     }
     // When
@@ -52,7 +56,7 @@ describe('ConcurrentOutput', () => {
       <ConcurrentOutput processes={[backendProcess, frontendProcess]} abortSignal={new AbortController().signal} />,
     )
 
-    await frontendPromise
+    await frontendSync.promise
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -68,12 +72,14 @@ describe('ConcurrentOutput', () => {
 
   test('renders custom prefixes on log lines', async () => {
     // Given
+    const processSync = new Synchronizer()
     const extensionName = 'my-extension'
     const processes = [
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write(prefixConcurrentOutputLog(extensionName, 'foo bar'))
+          processSync.resolve()
         },
       },
     ]
@@ -87,7 +93,8 @@ describe('ConcurrentOutput', () => {
         abortSignal={new AbortController().signal}
       />,
     )
-    await renderInstance.waitUntilExit()
+
+    await processSync.promise
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
@@ -98,18 +105,23 @@ describe('ConcurrentOutput', () => {
 
   test('renders prefix column width based on prefixColumnSize', async () => {
     // Given
+    const processSync1 = new Synchronizer()
+    const processSync2 = new Synchronizer()
+
     const columnSize = 5
     const processes = [
       {
         prefix: '1234567890',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('foo')
+          processSync1.resolve()
         },
       },
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('bar')
+          processSync2.resolve()
         },
       },
     ]
@@ -122,7 +134,7 @@ describe('ConcurrentOutput', () => {
         abortSignal={new AbortController().signal}
       />,
     )
-    await renderInstance.waitUntilExit()
+    await Promise.all([processSync1.promise, processSync2.promise])
 
     // Then
     const logLines = unstyled(renderInstance.lastFrame()!).split('\n').filter(Boolean)
@@ -137,11 +149,13 @@ describe('ConcurrentOutput', () => {
 
   test('renders prefix column width based on processes by default', async () => {
     // Given
+    const processSync = new Synchronizer()
     const processes = [
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('foo')
+          processSync.resolve()
         },
       },
       {prefix: '12', action: async () => {}},
@@ -151,7 +165,7 @@ describe('ConcurrentOutput', () => {
 
     // When
     const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
-    await renderInstance.waitUntilExit()
+    await processSync.promise
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
@@ -162,11 +176,13 @@ describe('ConcurrentOutput', () => {
 
   test('does not render prefix column larger than max', async () => {
     // Given
+    const processSync = new Synchronizer()
     const processes = [
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('foo')
+          processSync.resolve()
         },
       },
       {prefix: new Array(26).join('0'), action: async () => {}},
@@ -174,7 +190,7 @@ describe('ConcurrentOutput', () => {
 
     // When
     const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
-    await renderInstance.waitUntilExit()
+    await processSync.promise
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
