@@ -52,6 +52,7 @@ export async function updateAppIdentifiers(
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   if (developerPlatformClient.supportsAtomicDeployments) {
+    // We can't update the TOML files in parallel because some extensions might share the same file
     for (const extension of app.allExtensions) {
       // eslint-disable-next-line no-await-in-loop
       await addUidToToml(extension)
