@@ -12,10 +12,7 @@ import {
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../api/graphql/generate_signed_upload_url.js'
+
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
 import {
   ConvertDevToTransferDisabledSchema,
@@ -123,6 +120,17 @@ export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
 }
 
+type WithUserErrors<T> = T & {
+  userErrors: {
+    field: string[]
+    message: string
+  }[]
+}
+
+export type AssetUrlSchema = WithUserErrors<{
+  assetUrl: string
+}>
+
 export interface DeveloperPlatformClient {
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
@@ -134,7 +142,7 @@ export interface DeveloperPlatformClient {
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
-  specifications: (appId: string) => Promise<RemoteSpecification[]>
+  specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (appId: string) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
@@ -145,7 +153,7 @@ export interface DeveloperPlatformClient {
   appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
   appVersionsDiff: (input: AppVersionsDiffVariables) => Promise<AppVersionsDiffSchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
-  generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
+  generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>

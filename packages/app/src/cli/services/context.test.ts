@@ -1051,6 +1051,7 @@ describe('ensureDeployContext', () => {
       app,
       identifiers,
       command: 'deploy',
+      developerPlatformClient,
     })
     expect(got.remoteApp.id).toEqual(APP1.id)
     expect(got.remoteApp.title).toEqual(APP1.title)
@@ -1123,6 +1124,7 @@ describe('ensureDeployContext', () => {
       app,
       identifiers,
       command: 'deploy',
+      developerPlatformClient,
     })
     expect(got.remoteApp.id).toEqual(APP1.id)
     expect(got.remoteApp.title).toEqual(APP1.title)
@@ -1677,6 +1679,7 @@ describe('ensureReleaseContext', () => {
         app: APP2.apiKey,
       },
       command: 'release',
+      developerPlatformClient,
     })
 
     expect(got.app).toEqual(app)

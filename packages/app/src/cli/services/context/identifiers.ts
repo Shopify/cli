@@ -23,6 +23,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
 
 export interface RemoteSource {
   uuid: string
+  uid?: string
   type: string
   id: string
   title: string
@@ -31,6 +32,7 @@ export interface RemoteSource {
 }
 
 export interface LocalSource {
+  uid?: string
   localIdentifier: string
   graphQLType: string
   type: string

@@ -7,9 +7,9 @@ import {
   testDeveloperPlatformClient,
   testFunctionExtension,
   testLocalExtensionTemplates,
+  testOrganizationApp,
   testRemoteExtensionTemplates,
   testThemeExtensions,
-  testOrganizationApp,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'

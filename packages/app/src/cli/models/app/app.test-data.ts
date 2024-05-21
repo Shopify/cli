@@ -12,14 +12,15 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AssetUrlSchema,
+  CreateAppOptions,
+  DeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
@@ -203,6 +204,7 @@ export async function testUIExtension(
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+  extension.uid = uiExtension?.uid ?? 'test-ui-extension-uid'
 
   return extension
 }
@@ -902,11 +904,9 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
-const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
-  appVersionGenerateSignedUploadUrl: {
-    signedUploadUrl: 'signed-upload-url',
-    userErrors: [],
-  },
+const generateSignedUploadUrlResponse: AssetUrlSchema = {
+  assetUrl: 'signed-upload-url',
+  userErrors: [],
 }
 
 const convertedToTransferDisabledStoreResponse = {
@@ -997,7 +997,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    specifications: (_appId: string) => Promise.resolve(testRemoteSpecifications),
+    specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
     templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
@@ -1015,8 +1015,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
-    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
-      Promise.resolve(generateSignedUploadUrlResponse),
+    generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
       Promise.resolve(convertedToTransferDisabledStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
@@ -1035,7 +1034,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     toExtensionGraphQLType: (input: string) => input,
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = {}
+  const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi

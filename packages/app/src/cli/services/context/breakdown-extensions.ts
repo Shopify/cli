@@ -141,11 +141,7 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 async function fetchRemoteExtensionsRegistrations(
   options: EnsureDeploymentIdsPresenceOptions,
 ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-  return options.developerPlatformClient.appExtensionRegistrations({
-    id: options.appId,
-    apiKey: options.appId,
-    organizationId: '0',
-  })
+  return options.developerPlatformClient.appExtensionRegistrations(options.remoteApp)
 }
 
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(
