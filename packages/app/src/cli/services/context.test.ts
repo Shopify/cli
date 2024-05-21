@@ -6,7 +6,7 @@ import {
   fetchStoreByDomain,
 } from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
-import {selectStore, convertToTestStoreIfNeeded} from './dev/select-store.js'
+import {selectStore, convertToTransferDisabledStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {
   DevContextOptions,
@@ -766,7 +766,7 @@ api_version = "2023-04"
   test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-    vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
+    vi.mocked(convertToTransferDisabledStoreIfNeeded).mockResolvedValueOnce(true)
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
     const options = devOptions({apiKey: 'key2', storeFqdn: 'domain1'})
@@ -1051,6 +1051,7 @@ describe('ensureDeployContext', () => {
       app,
       identifiers,
       command: 'deploy',
+      developerPlatformClient,
     })
     expect(got.remoteApp.id).toEqual(APP1.id)
     expect(got.remoteApp.title).toEqual(APP1.title)
@@ -1123,6 +1124,7 @@ describe('ensureDeployContext', () => {
       app,
       identifiers,
       command: 'deploy',
+      developerPlatformClient,
     })
     expect(got.remoteApp.id).toEqual(APP1.id)
     expect(got.remoteApp.title).toEqual(APP1.title)
@@ -1677,6 +1679,7 @@ describe('ensureReleaseContext', () => {
         app: APP2.apiKey,
       },
       command: 'release',
+      developerPlatformClient,
     })
 
     expect(got.app).toEqual(app)
