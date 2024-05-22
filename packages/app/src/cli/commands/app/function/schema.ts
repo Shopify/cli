@@ -49,7 +49,7 @@ export default class FetchSchema extends Command {
 
     await inFunctionContext({
       path: flags.path,
-      configName: flags.configName,
+      userProvidedConfigName: flags.configName,
       callback: async (app, ourFunction) => {
         await generateSchemaService({
           app,

@@ -25,7 +25,7 @@ interface WebhookTriggerOptions {
  * @param flags - Passed flags
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
-  const app: AppInterface = await loadApp({directory: flags.path, configName: flags.config})
+  const app: AppInterface = await loadApp({directory: flags.path, userProvidedConfigName: flags.config})
   const developerPlatformClient: DeveloperPlatformClient =
     flags.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   const options: WebhookTriggerOptions = await validateAndCollectFlags(flags, developerPlatformClient, app)

@@ -1,4 +1,13 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
+import {
+  App,
+  AppConfiguration,
+  AppConfigurationSchema,
+  AppInterface,
+  CurrentAppConfiguration,
+  LegacyAppConfiguration,
+  WebType,
+  getAppVersionedSchema,
+} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -78,7 +87,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 
   const newApp = new App({
     name: app.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     directory: app.directory ?? '/tmp/project',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
@@ -96,9 +104,9 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
     errors: app.errors,
-    specifications: app.specifications,
-    configSchema: app.configSchema,
-    remoteFlags: app.remoteFlags,
+    specifications: app.specifications ?? [],
+    configSchema: app.configSchema ?? AppConfigurationSchema,
+    remoteFlags: app.remoteFlags ?? [],
   })
 
   if (app.updateDependencies) {
@@ -115,7 +123,10 @@ interface TestAppWithConfigOptions {
   config: object
 }
 
-export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+export function testAppWithLegacyConfig({
+  app = {},
+  config = {},
+}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
     path: '',
     scopes: '',
@@ -123,17 +134,17 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
     extension_directories: [],
     ...config,
   }
-  return testApp({...app, configuration})
+  return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
   const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app
+  return app as AppInterface<CurrentAppConfiguration>
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {

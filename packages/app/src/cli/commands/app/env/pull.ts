@@ -34,7 +34,7 @@ export default class EnvPull extends Command {
     const app: AppInterface = await loadApp({
       specifications,
       directory: flags.path,
-      configName: flags.config,
+      userProvidedConfigName: flags.config,
       mode: 'report',
     })
     const envFile = joinPath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configuration.path))

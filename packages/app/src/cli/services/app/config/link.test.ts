@@ -1,4 +1,4 @@
-import link, {LinkOptions} from './link.js'
+import link, {LinkOptions, emptyApp} from './link.js'
 import {saveCurrentConfig} from './use.js'
 import {
   testApp,
@@ -10,7 +10,7 @@ import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp, loadAppConfiguration} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {AppInterface, CurrentAppConfiguration, EmptyApp} from '../../../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
@@ -61,7 +61,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 beforeEach(async () => {
-  vi.mocked(loadAppConfiguration).mockResolvedValue(new EmptyApp([]))
+  vi.mocked(loadAppConfiguration).mockResolvedValue(emptyApp([]))
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
 })
 

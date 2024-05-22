@@ -69,6 +69,14 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
 }
 
 /**
+ * Extension specification, explicitly marked as having taken remote configuration values into account.
+ */
+export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> =
+  ExtensionSpecification<TConfiguration> & {
+    loadedRemoteSpecs: true
+  }
+
+/**
  * These fields are forbidden when creating a new ExtensionSpec
  * They belong to the ExtensionSpec interface, but the values are obtained from the API
  * and should not be set by us locally
