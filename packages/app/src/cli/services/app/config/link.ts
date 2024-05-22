@@ -4,7 +4,7 @@ import {
   CurrentAppConfiguration,
   getAppVersionedSchema,
   isCurrentAppSchema,
-  BuildOptions,
+  CliBuildPreferences,
   getAppScopes,
   LegacyAppConfiguration,
   AppCreationDefaultOptions,
@@ -191,7 +191,7 @@ type LocalAppOptions =
       configFormat: 'current'
       scopes: string
       localAppIdMatchedRemote: true
-      existingBuildOptions: BuildOptions
+      existingBuildOptions: CliBuildPreferences
       existingConfig: CurrentAppConfiguration
       appDirectory: string
       packageManager: PackageManager
@@ -388,10 +388,10 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
  * Put together the default options for the `build` section in an app configuration.
  */
 function buildOptionsForGeneratedConfigFile(options: {
-  existingBuildOptions: BuildOptions
+  existingBuildOptions: CliBuildPreferences
   linkedAppAndClientIdFromFileAreInSync: boolean
   linkedAppWasNewlyCreated: boolean
-}): BuildOptions {
+}): CliBuildPreferences {
   const {existingBuildOptions, linkedAppAndClientIdFromFileAreInSync, linkedAppWasNewlyCreated} = options
   const buildOptions = {
     ...(linkedAppWasNewlyCreated ? {include_config_on_deploy: true} : {}),

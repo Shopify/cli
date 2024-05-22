@@ -73,9 +73,9 @@ export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path:
 export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
 
 /**
- * The build options section for a normal, linked app.
+ * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
  */
-export type BuildOptions = BasicAppConfigurationWithoutModules['build']
+export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
 
 /**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
