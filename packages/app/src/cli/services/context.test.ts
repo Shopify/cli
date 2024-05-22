@@ -57,6 +57,7 @@ import {
 import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -196,7 +197,12 @@ vi.mock('./app/select-app.js')
 vi.mock('../utilities/developer-platform-client.js')
 
 beforeAll(async () => {
-  vi.mocked(fetchSpecifications).mockResolvedValue(await loadSpecifications.loadLocalExtensionsSpecifications())
+  const localSpecs = await loadSpecifications.loadLocalExtensionsSpecifications()
+  const mockedRemoteSpecs = localSpecs.map((spec) => ({
+    ...spec,
+    loadedRemoteSpecs: true,
+  })) as RemoteAwareExtensionSpecification[]
+  vi.mocked(fetchSpecifications).mockResolvedValue(mockedRemoteSpecs)
 })
 
 beforeEach(async () => {
@@ -235,6 +241,8 @@ describe('ensureGenerateContext', () => {
         scopes: 'read_products',
       },
       configSchema,
+      specifications: [],
+      remoteFlags: [],
     })
   })
 
@@ -292,6 +300,8 @@ describe('ensureGenerateContext', () => {
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
       configSchema,
+      specifications: [],
+      remoteFlags: [],
     })
 
     // When
@@ -318,6 +328,8 @@ describe('ensureGenerateContext', () => {
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
       configSchema,
+      specifications: [],
+      remoteFlags: [],
     })
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
@@ -346,6 +358,8 @@ describe('ensureGenerateContext', () => {
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
       configSchema,
+      specifications: [],
+      remoteFlags: [],
     })
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
@@ -402,6 +416,8 @@ describe('ensureDevContext', async () => {
         scopes: 'read_products',
       },
       configSchema,
+      specifications: [],
+      remoteFlags: [],
     })
   })
 
@@ -427,6 +443,8 @@ describe('ensureDevContext', async () => {
         directory: tmp,
         configuration: localApp.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -493,6 +511,8 @@ dev_store_url = "domain1"
           },
         }).configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
       const options = devOptions({apiKey: APP2.apiKey})
@@ -541,6 +561,8 @@ dev_store_url = "domain1"
         directory: tmp,
         configuration: localApp.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
       const app = await mockApp(tmp, localApp)
@@ -576,6 +598,8 @@ dev_store_url = "domain1"
         directory: tmp,
         configuration: localApp.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
@@ -625,6 +649,8 @@ api_version = "2023-04"
         directory: tmp,
         configuration: localApp.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
@@ -851,6 +877,8 @@ api_version = "2023-04"
         directory: tmp,
         configuration: localApp.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
       const app = await mockApp(tmp, localApp)
@@ -899,6 +927,8 @@ api_version = "2023-04"
         directory: tmp,
         configuration: localApp.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
       const app = await mockApp(tmp, localApp)
@@ -1088,7 +1118,7 @@ describe('ensureDeployContext', () => {
 
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(link).mockResolvedValue((app as any).configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     const writeAppConfigurationFileSpy = vi
@@ -1612,7 +1642,7 @@ describe('ensureDraftExtensionsPushContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(link).mockResolvedValue((app as any).configuration)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     const extras: Partial<DeveloperPlatformClient> = {
