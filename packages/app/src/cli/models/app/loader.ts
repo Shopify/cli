@@ -508,6 +508,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       }
     })
 
+    // Temporary code to validate that there is a single print action extension per target in an app.
+    // Should be replaced by core validation.
+    this.validatePrintActionExtensionsUniqueness(allExtensions)
+
     return allExtensions
   }
 
@@ -691,6 +695,59 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
+  }
+
+  private validatePrintActionExtensionsUniqueness(
+    allExtensions: ExtensionInstance<{
+      name: string
+      type: string
+      metafields: {namespace: string; key: string}[]
+      handle?: string | undefined
+      uid?: string | undefined
+      description?: string | undefined
+      api_version?: string | undefined
+      extension_points?: unknown
+      capabilities?:
+        | {
+            network_access?: boolean | undefined
+            block_progress?: boolean | undefined
+            api_access?: boolean | undefined
+            collect_buyer_consent?:
+              | {sms_marketing?: boolean | undefined; customer_privacy?: boolean | undefined}
+              | undefined
+          }
+        | undefined
+      settings?:
+        | {
+            fields?:
+              | {
+                  type: string
+                  key?: string | undefined
+                  name?: string | undefined
+                  description?: string | undefined
+                  required?: boolean | undefined
+                  validations?: unknown[] | undefined
+                }[]
+              | undefined
+          }
+        | undefined
+    }>[],
+  ) {
+    const printActionExtensions = allExtensions
+      .filter((ext) => ext.type === 'ui_extension')
+      .map((ext) => ext.configuration.extension_points)
+      .flat()
+      .filter((extensionPoint) => printTargets.includes((extensionPoint as {target: string}).target))
+
+    printTargets.forEach((target) => {
+      if (printActionExtensions.filter((ext) => (ext as {target: string}).target === target).length > 1) {
+        this.abortOrReport(
+          outputContent`Duplicated target "${target}" in app. You can only have one print action extension per target in an app. Please remove the duplicates.`,
+          undefined,
+          '', // TODO: find the configuration path
+        )
+      }
+    })
   }
 }
 
@@ -1134,3 +1191,10 @@ function isValidFormatAppConfigurationFileName(configName: string): configName i
   }
   return false
 }
+
+const printTargets = [
+  'admin.order-details.print-action.render',
+  'admin.order-index.selection-print-action.render',
+  'admin.product-details.print-action.render',
+  'admin.product-index.selection-print-action.render',
+]
