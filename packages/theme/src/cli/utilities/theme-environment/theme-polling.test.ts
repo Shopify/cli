@@ -80,7 +80,24 @@ describe('pollRemoteJsonChanges', async () => {
     })
   })
 
-  test('deletes local file from remote theme when there is a change on remote', async () => {
+  test('deletes local file when files is deleted on remote', async () => {
+    // Given
+    const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const files = new Map<string, ThemeAsset>([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
+    const themeFileSystem = fakeThemeFileSystem('tmp', files)
+    vi.mocked(fetchChecksums).mockResolvedValue([])
+
+    // When
+    await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, {
+      noDelete: false,
+    })
+
+    // Then
+    expect(fetchThemeAsset).not.toHaveBeenCalled()
+    expect(themeFileSystem.files.get('templates/asset.json')).toBeUndefined()
+  })
+
+  test('does not deletes local file when noDelete option is provided and file is deleted from remote', async () => {
     // Given
     const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
     const files = new Map<string, ThemeAsset>([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
