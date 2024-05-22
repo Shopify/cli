@@ -119,7 +119,6 @@ describe('info', () => {
         name: 'my app',
         client_id: '123',
         application_url: 'https://example.com/lala',
-        embedded: true,
         webhooks: {api_version: '2023-07'},
         access_scopes: {scopes: 'read_products'},
       }

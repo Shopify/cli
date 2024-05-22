@@ -553,7 +553,6 @@ dev_store_url = "domain1"
           scopes: 'write_products',
           webhooks: {api_version: '2023-04'},
           application_url: 'https://myapp.com',
-          embedded: true,
         } as CurrentAppConfiguration,
       }
       const {schema: configSchema} = await buildVersionedAppSchema()
@@ -869,7 +868,6 @@ api_version = "2023-04"
           name: APP2.apiKey,
           application_url: 'https://example.com',
           webhooks: {api_version: '2023-04'},
-          embedded: true,
         } as CurrentAppConfiguration,
       }
       const {schema: configSchema} = await buildVersionedAppSchema()
@@ -920,7 +918,6 @@ api_version = "2023-04"
           name: APP2.apiKey,
           application_url: 'https://example.com',
           webhooks: {api_version: '2023-04'},
-          embedded: true,
         } as CurrentAppConfiguration,
       }
       vi.mocked(loadAppConfiguration).mockResolvedValue({
