@@ -91,13 +91,6 @@ async function identifyFilesToReconcile(
       applyFileFilters(filesWithConflictingChecksums, localThemeFileSystem, filterOptions),
     ])
 
-  // eslint-disable-next-line no-console
-  console.log('filteredFilesOnlyPresentOnRemote', filteredFilesOnlyPresentOnRemote)
-  // eslint-disable-next-line no-console
-  console.log('filteredFilesOnlyPresentLocally', filteredFilesOnlyPresentLocally)
-  // eslint-disable-next-line no-console
-  console.log('filteredFilesWithConflictingChecksums', filteredFilesWithConflictingChecksums)
-
   return {
     filesOnlyPresentOnRemote: filteredFilesOnlyPresentOnRemote,
     filesOnlyPresentLocally: filteredFilesOnlyPresentLocally,

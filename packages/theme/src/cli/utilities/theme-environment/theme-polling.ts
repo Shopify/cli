@@ -1,3 +1,4 @@
+import {applyIgnoreFilters} from '../asset-ignore.js'
 import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -9,6 +10,8 @@ class PollingError extends Error {}
 
 interface PollingOptions {
   noDelete?: boolean
+  only?: string[]
+  ignore?: string[]
 }
 
 export function pollThemeEditorChanges(
@@ -40,20 +43,24 @@ export async function pollRemoteJsonChanges(
   currentSession: AdminSession,
   remoteChecksums: Checksum[],
   localFileSystem: ThemeFileSystem,
-  options?: PollingOptions,
+  options: PollingOptions = {},
 ): Promise<Checksum[]> {
-  const latestChecksums = await fetchChecksums(targetTheme.id, currentSession)
+  const filteredRemoteChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
 
-  const previousChecksums = new Map(remoteChecksums.map((checksum) => [checksum.key, checksum]))
+  const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
+    applyFileFilters(checksums, localFileSystem, options),
+  )
+
+  const previousChecksumsMap = new Map(filteredRemoteChecksums.map((checksum) => [checksum.key, checksum]))
   const assetsChangedOnRemote = latestChecksums.filter((latestAsset) => {
-    const previousAsset = previousChecksums.get(latestAsset.key)
+    const previousAsset = previousChecksumsMap.get(latestAsset.key)
     if (!previousAsset || previousAsset.checksum !== latestAsset.checksum) {
       return true
     }
   })
 
   const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
-  const assetsDeletedFromRemote = remoteChecksums.filter((previousChecksum) => {
+  const assetsDeletedFromRemote = filteredRemoteChecksums.filter((previousChecksum) => {
     return latestChecksumsMap.get(previousChecksum.key) === undefined
   })
 
@@ -62,19 +69,17 @@ export async function pollRemoteJsonChanges(
   await abortIfMultipleSourcesChange(previousFileValues, localFileSystem, assetsChangedOnRemote)
 
   await Promise.all(
-    assetsChangedOnRemote
-      .filter((file) => file.key.endsWith('.json'))
-      .map(async (file) => {
-        if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
-          return
-        }
-        const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
-        if (asset) {
-          return localFileSystem.write(asset).then(() => {
-            renderText({text: `Synced: get '${asset.key}' from remote theme`})
-          })
-        }
-      }),
+    assetsChangedOnRemote.map(async (file) => {
+      if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
+        return
+      }
+      const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
+      if (asset) {
+        return localFileSystem.write(asset).then(() => {
+          renderText({text: `Synced: get '${asset.key}' from remote theme`})
+        })
+      }
+    }),
   )
 
   if (!options?.noDelete) {
@@ -105,4 +110,9 @@ async function abortIfMultipleSourcesChange(
       )
     }
   }
+}
+
+async function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem, options: PollingOptions) {
+  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
+  return filteredFiles.filter((file) => file.key.endsWith('.json'))
 }
