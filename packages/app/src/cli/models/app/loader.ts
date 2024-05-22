@@ -25,6 +25,7 @@ import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -697,50 +698,15 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     }
   }
 
-  private validatePrintActionExtensionsUniqueness(
-    allExtensions: ExtensionInstance<{
-      name: string
-      type: string
-      metafields: {namespace: string; key: string}[]
-      handle?: string | undefined
-      uid?: string | undefined
-      description?: string | undefined
-      api_version?: string | undefined
-      extension_points?: unknown
-      capabilities?:
-        | {
-            network_access?: boolean | undefined
-            block_progress?: boolean | undefined
-            api_access?: boolean | undefined
-            collect_buyer_consent?:
-              | {sms_marketing?: boolean | undefined; customer_privacy?: boolean | undefined}
-              | undefined
-          }
-        | undefined
-      settings?:
-        | {
-            fields?:
-              | {
-                  type: string
-                  key?: string | undefined
-                  name?: string | undefined
-                  description?: string | undefined
-                  required?: boolean | undefined
-                  validations?: unknown[] | undefined
-                }[]
-              | undefined
-          }
-        | undefined
-    }>[],
-  ) {
+  private validatePrintActionExtensionsUniqueness(allExtensions: ExtensionInstance[]) {
     const printActionExtensions = allExtensions
       .filter((ext) => ext.type === 'ui_extension')
-      .map((ext) => ext.configuration.extension_points)
+      .map((ext) => ext.configuration.extension_points as UIExtensionSchemaType['extension_points'])
       .flat()
-      .filter((extensionPoint) => printTargets.includes((extensionPoint as {target: string}).target))
+      .filter((extensionPoint) => printTargets.includes(extensionPoint.target))
 
     printTargets.forEach((target) => {
-      if (printActionExtensions.filter((ext) => (ext as {target: string}).target === target).length > 1) {
+      if (printActionExtensions.filter((ext) => ext.target === target).length > 1) {
         this.abortOrReport(
           outputContent`Duplicated target "${target}" in app. You can only have one print action extension per target in an app. Please remove the duplicates.`,
           undefined,

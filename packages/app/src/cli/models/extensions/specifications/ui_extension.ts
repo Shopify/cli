@@ -6,6 +6,7 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -14,6 +15,8 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
 }
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
+
+export type UIExtensionSchemaType = zod.infer<typeof UIExtensionSchema>
 
 export const UIExtensionSchema = BaseSchema.extend({
   extension_points: NewExtensionPointsSchema.optional(),
