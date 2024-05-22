@@ -1,4 +1,4 @@
-import {appCreationDefaultOptions, fetchOrCreateOrganizationApp} from './context.js'
+import {fetchOrCreateOrganizationApp} from './context.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -37,7 +37,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(appCreationDefaultOptions(app))).apiKey
+    apiKey = (await fetchOrCreateOrganizationApp(app.creationDefaultOptions())).apiKey
   }
 
   const usingTargets = Boolean(targeting?.length)

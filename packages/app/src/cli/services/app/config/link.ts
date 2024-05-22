@@ -7,6 +7,7 @@ import {
   BuildOptions,
   getAppScopes,
   LegacyAppConfiguration,
+  AppCreationDefaultOptions,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -15,9 +16,7 @@ import {
   fetchOrCreateOrganizationApp,
   logMetadataForLoadedContext,
   appFromId,
-  appCreationDefaultOptions,
   InvalidApiKeyErrorMessage,
-  AppCreationDefaultOptions,
 } from '../../context.js'
 import {Flag} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -167,7 +166,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
     const configuration = app.configuration
 
     if (!isCurrentAppSchema(configuration)) {
-      return {creationOptions: appCreationDefaultOptions(app), appDirectory: app.directory}
+      return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
     }
     return {creationOptions: appCreationDefaults}
     // eslint-disable-next-line no-catch-all/no-catch-all

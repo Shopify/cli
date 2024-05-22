@@ -13,8 +13,8 @@ import {
   AppConfiguration,
   AppInterface,
   isCurrentAppSchema,
-  getAppScopesArray,
   CurrentAppConfiguration,
+  AppCreationDefaultOptions,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -660,20 +660,6 @@ export async function ensureVersionsListContext(
   }
 }
 
-export interface AppCreationDefaultOptions {
-  isLaunchable: boolean
-  scopesArray: string[]
-  name: string
-}
-
-export function appCreationDefaultOptions(app: AppInterface): AppCreationDefaultOptions {
-  return {
-    isLaunchable: app.appIsLaunchable(),
-    scopesArray: getAppScopesArray(app.configuration),
-    name: app.name,
-  }
-}
-
 export async function fetchOrCreateOrganizationApp(
   options: AppCreationDefaultOptions,
   directory?: string,
@@ -727,7 +713,7 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!remoteApp) {
-    remoteApp = await fetchOrCreateOrganizationApp(appCreationDefaultOptions(app))
+    remoteApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
   }
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})

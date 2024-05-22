@@ -238,6 +238,11 @@ export interface AppInterface<
    * @returns true if the app can be launched, false otherwise
    */
   appIsLaunchable: () => boolean
+
+  /**
+   * If creating an app on the platform based on this app and its configuration, what default options should the app take?
+   */
+  creationDefaultOptions(): AppCreationDefaultOptions
 }
 
 type AppConstructor<
@@ -371,6 +376,14 @@ export class App<
     return Boolean(frontendConfig || backendConfig)
   }
 
+  creationDefaultOptions(): AppCreationDefaultOptions {
+    return {
+      isLaunchable: this.appIsLaunchable(),
+      scopesArray: getAppScopesArray(this.configuration),
+      name: this.name,
+    }
+  }
+
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.build?.include_config_on_deploy
@@ -487,4 +500,10 @@ export async function getDependencyVersion(dependency: string, directory: string
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: dependency, version: packageContent.version}
+}
+
+export interface AppCreationDefaultOptions {
+  isLaunchable: boolean
+  scopesArray: string[]
+  name: string
 }
