@@ -5,6 +5,7 @@ import {reloadExtensionConfig} from '../update-extension.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface ExtensionWatcherOptions extends DevSessionProcessOptions {
   extension: ExtensionInstance
