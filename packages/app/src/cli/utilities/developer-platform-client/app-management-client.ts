@@ -2,51 +2,51 @@ import {
   CreateAppMutation,
   CreateAppMutationVariables,
   CreateAppMutationSchema,
-} from './shopify-developers-client/graphql/create-app.js'
+} from './app-management-client/graphql/create-app.js'
 import {
   ActiveAppReleaseQuery,
   ActiveAppReleaseQueryVariables,
   ActiveAppReleaseQuerySchema,
-} from './shopify-developers-client/graphql/active-app-release.js'
+} from './app-management-client/graphql/active-app-release.js'
 import {
   SpecificationsQuery,
   SpecificationsQueryVariables,
   SpecificationsQuerySchema,
-} from './shopify-developers-client/graphql/specifications.js'
+} from './app-management-client/graphql/specifications.js'
 import {
   AppVersionsQuery,
   AppVersionsQueryVariables,
   AppVersionsQuerySchema,
-} from './shopify-developers-client/graphql/app-versions.js'
+} from './app-management-client/graphql/app-versions.js'
 import {
   CreateAppVersionMutation,
   CreateAppVersionMutationSchema,
   CreateAppVersionMutationVariables,
-} from './shopify-developers-client/graphql/create-app-version.js'
+} from './app-management-client/graphql/create-app-version.js'
 import {
   ReleaseVersionMutation,
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
-} from './shopify-developers-client/graphql/release-version.js'
-import {OrganizationsQuery, OrganizationsQuerySchema} from './shopify-developers-client/graphql/organizations.js'
-import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './shopify-developers-client/graphql/apps.js'
+} from './app-management-client/graphql/release-version.js'
+import {OrganizationsQuery, OrganizationsQuerySchema} from './app-management-client/graphql/organizations.js'
+import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './app-management-client/graphql/apps.js'
 import {
   OrganizationQuery,
   OrganizationQuerySchema,
   OrganizationQueryVariables,
-} from './shopify-developers-client/graphql/organization.js'
-import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
+} from './app-management-client/graphql/organization.js'
+import {UserInfoQuery, UserInfoQuerySchema} from './app-management-client/graphql/user-info.js'
 import {
   CreateAssetURLMutation,
   CreateAssetURLMutationSchema,
   CreateAssetURLMutationVariables,
-} from './shopify-developers-client/graphql/create-asset-url.js'
+} from './app-management-client/graphql/create-asset-url.js'
 import {
   AppVersionByIdQuery,
   AppVersionByIdQuerySchema,
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
-} from './shopify-developers-client/graphql/app-version-by-id.js'
+} from './app-management-client/graphql/app-version-by-id.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -56,7 +56,7 @@ import {
   AssetUrlSchema,
   AppVersionIdentifiers,
 } from '../developer-platform-client.js'
-import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -65,7 +65,7 @@ import {
   OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
-import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
+import {filterDisabledFlags} from '../../services/dev/fetch.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   ExtensionRegistration,
@@ -108,11 +108,11 @@ import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} f
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
+import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
-import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-export class ShopifyDevelopersClient implements DeveloperPlatformClient {
+export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined
@@ -125,7 +125,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async session(): Promise<PartnersSession> {
     if (!this._session) {
       if (isUnitTest()) {
-        throw new Error('ShopifyDevelopersClient.session() should not be invoked dynamically in a unit test')
+        throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
       const userInfoResult = await businessPlatformRequest<UserInfoQuerySchema>(
         UserInfoQuery,
@@ -162,9 +162,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async businessPlatformToken(): Promise<string> {
     if (isUnitTest()) {
-      throw new Error(
-        'ShopifyDevelopersClient.businessPlatformToken() should not be invoked dynamically in a unit test',
-      )
+      throw new Error('AppManagementClient.businessPlatformToken() should not be invoked dynamically in a unit test')
     }
     if (!this._businessPlatformToken) {
       this._businessPlatformToken = await ensureAuthenticatedBusinessPlatform()
@@ -237,7 +235,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
     const query = AppsQuery
-    const result = await orgScopedShopifyDevelopersRequest<AppsQuerySchema>(organizationId, query, await this.token())
+    const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token())
     const minimalOrganizationApps = result.apps.map((app) => {
       const brandingConfig = app.activeRelease.version.modules.find(
         (mod: MinimalAppModule) => mod.specification.externalIdentifier === 'branding',
@@ -258,7 +256,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = SpecificationsQuery
     const variables: SpecificationsQueryVariables = {appId}
-    const result = await orgScopedShopifyDevelopersRequest<SpecificationsQuerySchema>(
+    const result = await appManagementRequest<SpecificationsQuerySchema>(
       organizationId,
       query,
       await this.token(),
@@ -298,12 +296,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray)
 
     const mutation = CreateAppMutation
-    const result = await orgScopedShopifyDevelopersRequest<CreateAppMutationSchema>(
-      org.id,
-      mutation,
-      await this.token(),
-      variables,
-    )
+    const result = await appManagementRequest<CreateAppMutationSchema>(org.id, mutation, await this.token(), variables)
     if (result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -358,7 +351,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersionsQuery
     const variables: AppVersionsQueryVariables = {appId: id}
-    const result = await orgScopedShopifyDevelopersRequest<AppVersionsQuerySchema>(
+    const result = await appManagementRequest<AppVersionsQuerySchema>(
       organizationId,
       query,
       await this.token(),
@@ -395,7 +388,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   ): Promise<AppVersionByTagSchemaInterface> {
     const query = AppVersionsQuery
     const variables: AppVersionsQueryVariables = {appId}
-    const result = await orgScopedShopifyDevelopersRequest<AppVersionsQuerySchema>(
+    const result = await appManagementRequest<AppVersionsQuerySchema>(
       organizationId,
       query,
       await this.token(),
@@ -411,7 +404,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
     const query2 = AppVersionByIdQuery
     const variables2: AppVersionByIdQueryVariables = {appId, versionId: version.id}
-    const result2 = await orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
+    const result2 = await appManagementRequest<AppVersionByIdQuerySchema>(
       organizationId,
       query2,
       await this.token(),
@@ -455,7 +448,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const variables: AppVersionByIdQueryVariables = {appId: app.id, versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
       this.activeAppVersionRawResult(app),
-      orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
+      appManagementRequest<AppVersionByIdQuerySchema>(
         app.organizationId,
         AppVersionByIdQuery,
         await this.token(),
@@ -520,7 +513,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
 
   async generateSignedUploadUrl({organizationId, apiKey}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const variables: CreateAssetURLMutationVariables = {appId: apiKey}
-    const result = await orgScopedShopifyDevelopersRequest<CreateAssetURLMutationSchema>(
+    const result = await appManagementRequest<CreateAssetURLMutationSchema>(
       organizationId,
       CreateAssetURLMutation,
       await this.token(),
@@ -554,7 +547,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       assetsUrl: bundleUrl,
     }
 
-    const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
+    const result = await appManagementRequest<CreateAppVersionMutationSchema>(
       organizationId,
       CreateAppVersionMutation,
       await this.token(),
@@ -563,7 +556,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     const {version, userErrors} = result.versionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
-    const devDashFqdn = (await shopifyDevelopersFqdn()).replace('app.', 'developers.')
+    const devDashFqdn = (await appManagementFqdn()).replace('app.', 'developers.')
     const versionResult = {
       appDeploy: {
         appVersion: {
@@ -586,7 +579,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
 
     const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
-    const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>(
+    const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
       '1',
       ReleaseVersionMutation,
       await this.token(),
@@ -609,7 +602,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     version: AppVersionIdentifiers
   }): Promise<AppReleaseSchema> {
     const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId}
-    const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>(
+    const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
       organizationId,
       ReleaseVersionMutation,
       await this.token(),
@@ -703,12 +696,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-    )
+    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
   private async activeAppVersionRawResult({
@@ -716,7 +704,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     organizationId,
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+    return appManagementRequest<ActiveAppReleaseQuerySchema>(
       organizationId,
       ActiveAppReleaseQuery,
       await this.token(),
@@ -1559,7 +1547,7 @@ async function stubbedExtensionTemplates(): Promise<ExtensionTemplate[]> {
   ]
 }
 
-// Business platform uses base64-encoded GIDs, while Shopify Developers uses
+// Business platform uses base64-encoded GIDs, while App Management uses
 // just the integer portion of that ID. These functions convert between the two.
 
 // 1234 => gid://organization/Organization/1234 => base64

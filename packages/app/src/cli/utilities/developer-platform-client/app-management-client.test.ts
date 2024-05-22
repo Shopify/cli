@@ -1,5 +1,5 @@
-import {diffAppModules} from './shopify-developers-client.js'
-import {AppModule} from './shopify-developers-client/graphql/app-version-by-id.js'
+import {diffAppModules} from './app-management-client.js'
+import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test} from 'vitest'
