@@ -61,6 +61,16 @@ export interface DevServerContext {
      * Prevents deletion of local files.
      */
     noDelete: boolean
+
+    /**
+     * Glob patterns ignore-list for file reconciliation and sychronization.
+     */
+    ignore?: string[]
+
+    /**
+     * Glob patterns allow-list for file reconciliation and sychronization.
+     */
+    only?: string[]
   }
 }
 

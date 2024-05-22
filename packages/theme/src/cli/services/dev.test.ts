@@ -29,6 +29,8 @@ describe('dev', () => {
     'theme-editor-sync': false,
     'dev-preview': false,
     noDelete: false,
+    ignore: [],
+    only: [],
   }
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
 
@@ -52,7 +54,9 @@ describe('dev', () => {
           localThemeFileSystem,
           themeEditorSync: true,
           options: {
+            ignore: [],
             noDelete: false,
+            only: [],
           },
         },
         expect.any(Function),

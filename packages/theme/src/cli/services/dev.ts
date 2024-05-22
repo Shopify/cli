@@ -31,6 +31,8 @@ interface DevOptions {
   'dev-preview': boolean
   'theme-editor-sync': boolean
   noDelete: boolean
+  ignore: string[]
+  only: string[]
 }
 
 export async function dev(options: DevOptions) {
@@ -66,6 +68,8 @@ export async function dev(options: DevOptions) {
       themeEditorSync: options['theme-editor-sync'],
       options: {
         noDelete: options.noDelete,
+        ignore: options.ignore,
+        only: options.only,
       },
     }
 

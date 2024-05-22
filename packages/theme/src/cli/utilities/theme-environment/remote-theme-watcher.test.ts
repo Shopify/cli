@@ -37,6 +37,8 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       defaultThemeFileSystem,
       {
         noDelete: false,
+        ignore: [],
+        only: [],
       },
     )
 
@@ -48,6 +50,8 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       newFileSystem,
       {
         noDelete: false,
+        ignore: [],
+        only: [],
       },
     )
   })
