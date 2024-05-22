@@ -144,6 +144,7 @@ You can run this command only in a directory that matches the [default Shopify t
 
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
+    const {ignore = [], only = []} = flags
 
     const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
 
@@ -178,6 +179,8 @@ You can run this command only in a directory that matches the [default Shopify t
       'dev-preview': flags['dev-preview'],
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
+      ignore,
+      only,
     })
   }
 }
