@@ -82,13 +82,14 @@ async function identifyFilesToReconcile(
   const filterOptions = {
     only: options.only,
     ignore: options.ignore,
+    jsonOnly: true,
   }
 
   const [filteredFilesOnlyPresentOnRemote, filteredFilesOnlyPresentLocally, filteredFilesWithConflictingChecksums] =
     await Promise.all([
-      applyFileFilters(filesOnlyPresentOnRemote, localThemeFileSystem, filterOptions),
-      applyFileFilters(filesOnlyPresentLocally, localThemeFileSystem, filterOptions),
-      applyFileFilters(filesWithConflictingChecksums, localThemeFileSystem, filterOptions),
+      applyIgnoreFilters(filesOnlyPresentOnRemote, localThemeFileSystem, filterOptions),
+      applyIgnoreFilters(filesOnlyPresentLocally, localThemeFileSystem, filterOptions),
+      applyIgnoreFilters(filesWithConflictingChecksums, localThemeFileSystem, filterOptions),
     ])
 
   return {
@@ -96,15 +97,6 @@ async function identifyFilesToReconcile(
     filesOnlyPresentLocally: filteredFilesOnlyPresentLocally,
     filesWithConflictingChecksums: filteredFilesWithConflictingChecksums,
   }
-}
-
-async function applyFileFilters(
-  files: Checksum[],
-  localThemeFileSystem: ThemeFileSystem,
-  options: ReconciliationOptions,
-) {
-  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
-  return filteredFiles.filter((file) => file.key.endsWith('.json'))
 }
 
 async function promptFileReconciliationStrategy(

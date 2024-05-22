@@ -102,6 +102,22 @@ describe('applyIgnoreFilters', () => {
     ])
   })
 
+  test('returns only JSON files when the jsonOnly option is true', async () => {
+    // Given
+    const options = {jsonOnly: true}
+
+    // When
+    const result = await applyIgnoreFilters(checksums, themeFileSystem, options)
+
+    // Then
+    expect(result).toEqual([
+      {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+      {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+      {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+      {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+    ])
+  })
+
   test(`doesn't throws an error when invalid regexes are passed`, async () => {
     // Given
     const options = {ignore: ['*.css']}

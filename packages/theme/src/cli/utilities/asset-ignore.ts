@@ -5,10 +5,16 @@ import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
 
+export interface FilterOptions {
+  ignore?: string[]
+  only?: string[]
+  jsonOnly?: boolean
+}
+
 export async function applyIgnoreFilters(
   themeChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
-  options: {ignore?: string[]; only?: string[]} = {},
+  options: FilterOptions = {},
 ) {
   const shopifyIgnore = await shopifyIgnoredPatterns(themeFileSystem)
 
@@ -17,10 +23,12 @@ export async function applyIgnoreFilters(
 
   raiseWarningForNonExplicitGlobPatterns([...shopifyIgnore, ...ignoreOptions, ...onlyOptions])
 
-  return themeChecksums
+  const filteredChecksums = themeChecksums
     .filter(filterBy(shopifyIgnore, '.shopifyignore'))
     .filter(filterBy(ignoreOptions, '--ignore'))
     .filter(filterBy(onlyOptions, '--only', true))
+
+  return options.jsonOnly ? filteredChecksums.filter((file) => file.key.endsWith('.json')) : filteredChecksums
 }
 
 function filterBy(patterns: string[], type: string, invertMatch = false) {

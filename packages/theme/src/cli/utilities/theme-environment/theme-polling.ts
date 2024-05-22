@@ -1,4 +1,4 @@
-import {applyIgnoreFilters} from '../asset-ignore.js'
+import {FilterOptions, applyIgnoreFilters} from '../asset-ignore.js'
 import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -40,8 +40,9 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions = {},
 ): Promise<Checksum[]> {
-  const previousChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
-  const latestChecksums = await fetchLatestChecksums(targetTheme, currentSession, localFileSystem, options)
+  const filterOptions: FilterOptions = {...options, jsonOnly: true}
+  const previousChecksums = await applyIgnoreFilters(remoteChecksums, localFileSystem, filterOptions)
+  const latestChecksums = await fetchLatestChecksums(targetTheme, currentSession, localFileSystem, filterOptions)
 
   const assetsChangedOnRemote = getChangedAssets(previousChecksums, latestChecksums)
   const assetsDeletedFromRemote = getDeletedAssets(previousChecksums, latestChecksums)
@@ -62,10 +63,10 @@ async function fetchLatestChecksums(
   targetTheme: Theme,
   currentSession: AdminSession,
   localFileSystem: ThemeFileSystem,
-  options: PollingOptions,
+  options: FilterOptions,
 ): Promise<Checksum[]> {
   const checksums = await fetchChecksums(targetTheme.id, currentSession)
-  return applyFileFilters(checksums, localFileSystem, options)
+  return applyIgnoreFilters(checksums, localFileSystem, options)
 }
 
 function getChangedAssets(previousChecksums: Checksum[], latestChecksums: Checksum[]): Checksum[] {
@@ -131,11 +132,6 @@ async function abortIfMultipleSourcesChange(
       )
     }
   }
-}
-
-async function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem, options: PollingOptions) {
-  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
-  return filteredFiles.filter((file) => file.key.endsWith('.json'))
 }
 
 function handlePollingError(err: Error) {
