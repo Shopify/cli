@@ -37,6 +37,12 @@ export async function dev(options: DevOptions) {
   }
 
   if (options['dev-preview']) {
+    if (options.flagsToPass.includes('--poll')) {
+      renderWarning({
+        body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
+      })
+    }
+
     outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
     const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)

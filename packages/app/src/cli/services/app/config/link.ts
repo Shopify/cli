@@ -66,7 +66,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   // Then pull in the local app and gather options for the merge process
   const specifications = await fetchSpecifications({
     developerPlatformClient: options.developerPlatformClient!,
-    apiKey: remoteApp.apiKey,
+    app: remoteApp,
   })
   const flags = remoteApp.flags
   const localAppOptions = await loadLocalAppOptions(options, specifications, flags, remoteApp.apiKey)

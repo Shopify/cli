@@ -1,6 +1,6 @@
 import {gql} from 'graphql-request'
 
-export const ConvertDevToTestStoreQuery = gql`
+export const ConvertDevToTransferDisabledStoreQuery = gql`
   mutation convertDevToTestStore($input: ConvertDevToTestStoreInput!) {
     convertDevToTestStore(input: $input) {
       convertedToTestStore
@@ -12,14 +12,14 @@ export const ConvertDevToTestStoreQuery = gql`
   }
 `
 
-export interface ConvertDevToTestStoreVariables {
+export interface ConvertDevToTransferDisabledStoreVariables {
   input: {
     organizationID: number
     shopId: string
   }
 }
 
-export interface ConvertDevToTestStoreSchema {
+export interface ConvertDevToTransferDisabledSchema {
   convertDevToTestStore: {
     convertedToTestStore: boolean
     userErrors: {

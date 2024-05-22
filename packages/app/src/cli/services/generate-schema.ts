@@ -26,7 +26,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   const developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const {api_version: version, type, targeting} = extension.configuration
-  let apiKey = options.apiKey || getAppIdentifiers({app}).app
+  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
   const stdout = options.stdout
 
   if (!apiKey) {

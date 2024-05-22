@@ -85,10 +85,10 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
 
 export async function extensionsIdentifiersReleaseBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
-  apiKey: string,
+  app: MinimalOrganizationApp,
   version: string,
 ) {
-  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, developerPlatformClient)
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(app, version, developerPlatformClient)
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
@@ -145,11 +145,7 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 async function fetchRemoteExtensionsRegistrations(
   options: EnsureDeploymentIdsPresenceOptions,
 ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-  return options.developerPlatformClient.appExtensionRegistrations({
-    id: options.appId,
-    apiKey: options.appId,
-    organizationId: '0',
-  })
+  return options.developerPlatformClient.appExtensionRegistrations(options.remoteApp)
 }
 
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(

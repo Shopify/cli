@@ -4,6 +4,7 @@ import {
   AppConfigurationSchema,
   AppInterface,
   CurrentAppConfiguration,
+  LegacyAppConfiguration,
   WebType,
   getAppVersionedSchema,
 } from './app.js'
@@ -20,16 +21,18 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AppVersionIdentifiers,
+  AssetUrlSchema,
+  CreateAppOptions,
+  DeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
@@ -38,7 +41,7 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/g
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -120,7 +123,10 @@ interface TestAppWithConfigOptions {
   config: object
 }
 
-export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+export function testAppWithLegacyConfig({
+  app = {},
+  config = {},
+}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
     path: '',
     scopes: '',
@@ -128,17 +134,17 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
     extension_directories: [],
     ...config,
   }
-  return testApp({...app, configuration})
+  return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
   const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app
+  return app as AppInterface<CurrentAppConfiguration>
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -210,6 +216,7 @@ export async function testUIExtension(
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+  extension.uid = uiExtension?.uid ?? 'test-ui-extension-uid'
 
   return extension
 }
@@ -1053,14 +1060,12 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
-const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
-  appVersionGenerateSignedUploadUrl: {
-    signedUploadUrl: 'signed-upload-url',
-    userErrors: [],
-  },
+const generateSignedUploadUrlResponse: AssetUrlSchema = {
+  assetUrl: 'signed-upload-url',
+  userErrors: [],
 }
 
-const convertedToTestStoreResponse = {
+const convertedToTransferDisabledStoreResponse = {
   convertDevToTestStore: {
     convertedToTestStore: true,
     userErrors: [],
@@ -1148,7 +1153,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    specifications: (_appId: string) => Promise.resolve(testRemoteSpecifications),
+    specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
     templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
@@ -1157,7 +1162,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
-    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
@@ -1165,10 +1170,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
-    release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
-    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
-      Promise.resolve(generateSignedUploadUrlResponse),
-    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
+    generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
+      Promise.resolve(convertedToTransferDisabledStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
@@ -1185,7 +1190,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     toExtensionGraphQLType: (input: string) => input,
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = {}
+  const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi

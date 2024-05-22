@@ -12,12 +12,12 @@ import {
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../api/graphql/generate_signed_upload_url.js'
+
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../api/graphql/convert_dev_to_test_store.js'
+import {
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {
@@ -25,9 +25,9 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../api/graphql/app_version_by_tag.js'
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/app_versions_diff.js'
+import {AppReleaseSchema} from '../api/graphql/app_release.js'
+import {AppVersionByTagSchema} from '../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../services/webhook/request-topics.js'
@@ -58,6 +58,11 @@ export type Paginateable<T> = T & {
 interface SelectDeveloperPlatformClientOptions {
   configuration?: AppConfiguration | undefined
   organization?: Organization
+}
+
+export interface AppVersionIdentifiers {
+  appVersionId: number
+  versionId: string
 }
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
@@ -153,6 +158,17 @@ export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
 }
 
+type WithUserErrors<T> = T & {
+  userErrors: {
+    field: string[]
+    message: string
+  }[]
+}
+
+export type AssetUrlSchema = WithUserErrors<{
+  assetUrl: string
+}>
+
 export interface DeveloperPlatformClient {
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
@@ -164,23 +180,25 @@ export interface DeveloperPlatformClient {
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
-  specifications: (appId: string) => Promise<RemoteSpecification[]>
+  specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (appId: string) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (app: MinimalAppIdentifiers) => Promise<AllAppExtensionRegistrationsQuerySchema>
-  appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
+  appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
-  appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
-  appVersionsDiff: (input: AppVersionsDiffVariables) => Promise<AppVersionsDiffSchema>
+  appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
+  appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
-  generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
+  generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
-  release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
-  convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
+  release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
+  convertToTransferDisabledStore: (
+    input: ConvertDevToTransferDisabledStoreVariables,
+  ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>

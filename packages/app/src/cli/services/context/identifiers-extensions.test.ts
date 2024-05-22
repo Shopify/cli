@@ -362,10 +362,10 @@ describe('matchmaking returns ok with pending manual matches', () => {
     })
 
     // Then
-    expect(manualMatchIds).toHaveBeenCalledWith(
-      {local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B], remote: [REGISTRATION_A, REGISTRATION_A_2]},
-      'uuid',
-    )
+    expect(manualMatchIds).toHaveBeenCalledWith({
+      local: [EXTENSION_A, EXTENSION_A_2, EXTENSION_B],
+      remote: [REGISTRATION_A, REGISTRATION_A_2],
+    })
     expect(got).toEqual({
       dashboardOnlyExtensions: [],
       extensionsToCreate: [EXTENSION_B],
@@ -445,10 +445,10 @@ describe('matchmaking returns ok with pending manual matches and manual match fa
         EXTENSION_A: 'UUID_A',
       },
     })
-    expect(manualMatchIds).toBeCalledWith(
-      {local: [EXTENSION_A, EXTENSION_A_2], remote: [REGISTRATION_A, REGISTRATION_A_2]},
-      'uuid',
-    )
+    expect(manualMatchIds).toBeCalledWith({
+      local: [EXTENSION_A, EXTENSION_A_2],
+      remote: [REGISTRATION_A, REGISTRATION_A_2],
+    })
   })
   test('deployConfirmed', async () => {
     // Given
@@ -722,7 +722,8 @@ describe('includes functions', () => {
     })
 
     // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A], [FUNCTION_A]), {
+    const ensureExtensionsIdsOptions = options([EXTENSION_A], [FUNCTION_A])
+    const got = await ensureExtensionsIds(ensureExtensionsIdsOptions, {
       extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
       dashboardManagedExtensionRegistrations: [],
     })
@@ -732,7 +733,7 @@ describe('includes functions', () => {
       [EXTENSION_A, FUNCTION_A],
       [REGISTRATION_A, FUNCTION_REGISTRATION_A],
       {},
-      'uuid',
+      ensureExtensionsIdsOptions.developerPlatformClient,
     )
     expect(got).toEqual({
       dashboardOnlyExtensions: [],
@@ -790,7 +791,12 @@ describe('excludes non uuid managed extensions', () => {
     })
 
     // Then
-    expect(automaticMatchmaking).toHaveBeenCalledWith([EXTENSION_A], [REGISTRATION_A], {}, 'uuid')
+    expect(automaticMatchmaking).toHaveBeenCalledWith(
+      [EXTENSION_A],
+      [REGISTRATION_A],
+      {},
+      ensureExtensionsIdsOptions.developerPlatformClient,
+    )
   })
 })
 

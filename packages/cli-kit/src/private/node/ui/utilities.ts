@@ -2,5 +2,7 @@ import {appendToTokenItem, TokenItem, tokenItemToString} from './components/Toke
 
 export function messageWithPunctuation(message: TokenItem) {
   const messageToString = tokenItemToString(message)
-  return messageToString.endsWith('?') || messageToString.endsWith(':') ? message : appendToTokenItem(message, ':')
+  return messageToString.endsWith('?') || messageToString.endsWith(':') || messageToString.endsWith('.')
+    ? message
+    : appendToTokenItem(message, ':')
 }

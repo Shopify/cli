@@ -593,7 +593,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, 'apiKey', ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
 
     // Then
     expect(result).toEqual({
@@ -626,7 +626,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, 'apiKey', ' 1.0.0')
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
 
     // Then
     expect(result).toEqual({

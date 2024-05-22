@@ -8,7 +8,16 @@ import {
   ActiveAppReleaseQueryVariables,
   ActiveAppReleaseQuerySchema,
 } from './shopify-developers-client/graphql/active-app-release.js'
-// import {SpecificationsQuery, SpecificationsQueryVariables, SpecificationsQuerySchema} from './shopify-developers-client/graphql/specifications.js'
+import {
+  SpecificationsQuery,
+  SpecificationsQueryVariables,
+  SpecificationsQuerySchema,
+} from './shopify-developers-client/graphql/specifications.js'
+import {
+  AppVersionsQuery,
+  AppVersionsQueryVariables,
+  AppVersionsQuerySchema,
+} from './shopify-developers-client/graphql/app-versions.js'
 import {
   CreateAppVersionMutation,
   CreateAppVersionMutationSchema,
@@ -27,12 +36,25 @@ import {
   OrganizationQueryVariables,
 } from './shopify-developers-client/graphql/organization.js'
 import {UserInfoQuery, UserInfoQuerySchema} from './shopify-developers-client/graphql/user-info.js'
+import {
+  CreateAssetURLMutation,
+  CreateAssetURLMutationSchema,
+  CreateAssetURLMutationVariables,
+} from './shopify-developers-client/graphql/create-asset-url.js'
+import {
+  AppVersionByIdQuery,
+  AppVersionByIdQuerySchema,
+  AppVersionByIdQueryVariables,
+  AppModule as AppModuleReturnType,
+} from './shopify-developers-client/graphql/app-version-by-id.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
   Paginateable,
   ActiveAppVersion,
   AppDeployOptions,
+  AssetUrlSchema,
+  AppVersionIdentifiers,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -44,28 +66,27 @@ import {
   OrganizationStore,
 } from '../../models/organization.js'
 import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
-import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../../api/graphql/generate_signed_upload_url.js'
+  AllAppExtensionRegistrationsQuerySchema,
+  ExtensionRegistration,
+} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
+import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
-  ConvertDevToTestStoreSchema,
-  ConvertDevToTestStoreVariables,
-} from '../../api/graphql/convert_dev_to_test_store.js'
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
 import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
+import {AppReleaseSchema} from '../../api/graphql/app_release.js'
+import {AppVersionByTagSchema as AppVersionByTagSchemaInterface} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
@@ -83,12 +104,11 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {orgScopedShopifyDevelopersRequest} from '@shopify/cli-kit/node/api/shopify-developers'
-import {underscore} from '@shopify/cli-kit/common/string'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -111,8 +131,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      // Need to replace with actual auth token for developer platform
-      const token = 'token'
+      const token = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -236,28 +255,35 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(_appId: string): Promise<RemoteSpecification[]> {
-    return stubbedExtensionSpecifications()
-
-    // // This should be the actual query, but it's not working at the moment...
-    // const query = SpecificationsQuery
-    // const variables: SpecificationsQueryVariables = {appId}
-    // const result = await orgScopedShopifyDevelopersRequest<SpecificationsQuerySchema>(ORG1.id, query, await this.token(), variables)
-    // console.log(JSON.stringify(result, null, 2))
-    // return result.specifications.map((spec): ExtensionSpecification => ({
-    // externalName: spec.name,
-    // additionalIdentifiers: [],
-    // partnersWebIdentifier: spec.identifier,
-    // surface: '',
-    // registrationLimit: 1,
-    // appModuleFeatures: (_config) => [],
-    // ...spec,
-    // experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
-    // }))
+  async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+    const query = SpecificationsQuery
+    const variables: SpecificationsQueryVariables = {appId}
+    const result = await orgScopedShopifyDevelopersRequest<SpecificationsQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
+    return result.specifications
+      .filter((spec) => spec.experience !== 'DEPRECATED')
+      .map(
+        (spec): RemoteSpecification => ({
+          name: spec.name,
+          externalName: spec.name,
+          identifier: spec.identifier,
+          externalIdentifier: spec.externalIdentifier,
+          gated: false,
+          options: {
+            managementExperience: 'cli',
+            registrationLimit: spec.appModuleLimit,
+          },
+          experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
+        }),
+      )
   }
 
   async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {
-    throw new BugError('Not implemented: templateSpecifications')
+    return stubbedExtensionTemplates()
   }
 
   async createApp(
@@ -307,55 +333,178 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     appIdentifiers: MinimalAppIdentifiers,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const {app} = await this.fetchApp(appIdentifiers)
-    const {modules} = app.activeRelease.version
+    const configurationRegistrations: ExtensionRegistration[] = []
+    const extensionRegistrations: ExtensionRegistration[] = []
+    app.activeRelease.version.modules.forEach((mod) => {
+      const registration = {
+        id: mod.uid,
+        uid: mod.uid,
+        uuid: mod.uid,
+        title: mod.specification.name,
+        type: mod.specification.identifier,
+      }
+      if (mod.specification.experience === 'CONFIGURATION') configurationRegistrations.push(registration)
+      if (mod.specification.experience === 'EXTENSION') extensionRegistrations.push(registration)
+    })
     return {
       app: {
-        extensionRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
-        configurationRegistrations: modules
-          .filter((mod) => mod.specification.experience === 'CONFIGURATION')
-          .map((mod) => ({
-            id: mod.uid,
-            uuid: mod.uid,
-            title: mod.specification.name,
-            type: mod.specification.externalIdentifier,
-          })),
+        configurationRegistrations,
+        extensionRegistrations,
       },
     }
   }
 
-  async appVersions(_appId: string): Promise<AppVersionsQuerySchema> {
-    throw new BugError('Not implemented: appVersions')
-  }
-
-  async appVersionByTag(_input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
-    throw new BugError('Not implemented: appVersions')
-  }
-
-  async appVersionsDiff(_input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
-    throw new BugError('Not implemented: appVersions')
-  }
-
-  async activeAppVersion({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
-    const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    const result = await orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+  async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
+    const query = AppVersionsQuery
+    const variables: AppVersionsQueryVariables = {appId: id}
+    const result = await orgScopedShopifyDevelopersRequest<AppVersionsQuerySchema>(
       organizationId,
       query,
       await this.token(),
       variables,
     )
     return {
+      app: {
+        id: result.app.id,
+        organizationId,
+        title,
+        appVersions: {
+          nodes: result.app.versions.map((version) => {
+            return {
+              createdAt: '0',
+              createdBy: {
+                displayName: version.createdBy.name,
+              },
+              versionTag: version.versionTag,
+              status: '',
+              versionId: version.id,
+            }
+          }),
+          pageInfo: {
+            totalResults: result.app.versions.length,
+          },
+        },
+      },
+    }
+  }
+
+  async appVersionByTag(
+    {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
+    tag: string,
+  ): Promise<AppVersionByTagSchemaInterface> {
+    const query = AppVersionsQuery
+    const variables: AppVersionsQueryVariables = {appId}
+    const result = await orgScopedShopifyDevelopersRequest<AppVersionsQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+    )
+    if (!result.app) {
+      throw new AbortError(`App not found for API key: ${apiKey}`)
+    }
+    const version = result.app.versions.find((version) => version.versionTag === tag)
+    if (!version) {
+      throw new AbortError(`Version not found for tag: ${tag}`)
+    }
+
+    const query2 = AppVersionByIdQuery
+    const variables2: AppVersionByIdQueryVariables = {appId, versionId: version.id}
+    const result2 = await orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
+      organizationId,
+      query2,
+      await this.token(),
+      variables2,
+    )
+    const versionInfo = result2.app.version
+
+    return {
+      app: {
+        appVersion: {
+          id: parseInt(versionInfo.id, 10),
+          uuid: versionInfo.id,
+          versionTag: versionInfo.versionTag,
+          location: '',
+          message: '',
+          appModuleVersions: result2.app.version.modules.map((mod: AppModuleReturnType) => {
+            return {
+              registrationId: mod.gid,
+              registrationUid: mod.uid,
+              registrationUuid: mod.uid,
+              registrationTitle: mod.handle,
+              type: mod.specification.externalIdentifier,
+              config: JSON.stringify(mod.config),
+              specification: {
+                ...mod.specification,
+                identifier: mod.specification.externalIdentifier,
+                options: {managementExperience: 'cli'},
+                experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+              },
+            }
+          }),
+        },
+      },
+    }
+  }
+
+  async appVersionsDiff(
+    app: MinimalOrganizationApp,
+    {versionId}: AppVersionIdentifiers,
+  ): Promise<AppVersionsDiffSchema> {
+    const variables: AppVersionByIdQueryVariables = {appId: app.id, versionId}
+    const [currentVersion, selectedVersion] = await Promise.all([
+      this.activeAppVersionRawResult(app),
+      orgScopedShopifyDevelopersRequest<AppVersionByIdQuerySchema>(
+        app.organizationId,
+        AppVersionByIdQuery,
+        await this.token(),
+        variables,
+      ),
+    ])
+    const currentModules = currentVersion.app.activeRelease.version.modules
+    const selectedVersionModules = selectedVersion.app.version.modules
+    const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
+
+    function formattedModule(mod: AppModuleReturnType) {
+      return {
+        uuid: mod.uid,
+        registrationTitle: mod.handle,
+        specification: {
+          identifier: mod.specification.identifier,
+          experience: mod.specification.experience.toLowerCase(),
+          options: {
+            managementExperience: mod.specification.experience.toLowerCase(),
+          },
+        },
+      }
+    }
+
+    return {
+      app: {
+        versionsDiff: {
+          added: added.map(formattedModule),
+          updated: updated.map(formattedModule),
+          removed: removed.map(formattedModule),
+        },
+      },
+    }
+  }
+
+  async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+    const result = await this.activeAppVersionRawResult(app)
+    return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
           registrationId: mod.gid,
           registrationUid: mod.uid,
+          registrationUuid: mod.uid,
           registrationTitle: mod.handle,
           type: mod.specification.externalIdentifier,
           config: mod.config,
           specification: {
             ...mod.specification,
-            identifier: mod.specification.externalIdentifier,
+            identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
             experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
           },
@@ -369,26 +518,40 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: functionUploadUrl')
   }
 
-  async generateSignedUploadUrl(_input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
-    throw new BugError('Not implemented: generateSignedUploadUrl')
+  async generateSignedUploadUrl({organizationId, apiKey}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables: CreateAssetURLMutationVariables = {appId: apiKey}
+    const result = await orgScopedShopifyDevelopersRequest<CreateAssetURLMutationSchema>(
+      organizationId,
+      CreateAssetURLMutation,
+      await this.token(),
+      variables,
+    )
+    return result.assetUrlCreate
   }
 
   async updateExtension(_input: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
     throw new BugError('Not implemented: updateExtension')
   }
 
-  async deploy({apiKey, appModules, organizationId, versionTag}: AppDeployOptions): Promise<AppDeploySchema> {
+  async deploy({
+    apiKey,
+    appModules,
+    organizationId,
+    versionTag,
+    bundleUrl,
+  }: AppDeployOptions): Promise<AppDeploySchema> {
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
       appModules: (appModules ?? []).map((mod) => {
         return {
-          uid: mod.uuid ?? mod.handle,
-          specificationIdentifier: mod.specificationIdentifier ?? underscore(mod.handle),
+          uid: mod.uid ?? mod.uuid ?? mod.handle,
+          specificationIdentifier: mod.specificationIdentifier,
           handle: mod.handle,
           config: mod.config,
         }
       }),
       versionTag,
+      assetsUrl: bundleUrl,
     }
 
     const result = await orgScopedShopifyDevelopersRequest<CreateAppVersionMutationSchema>(
@@ -438,8 +601,35 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     return versionResult
   }
 
-  async release(_input: AppReleaseVariables): Promise<AppReleaseSchema> {
-    throw new BugError('Not implemented: release')
+  async release({
+    app: {id: appId, organizationId},
+    version: {versionId},
+  }: {
+    app: MinimalOrganizationApp
+    version: AppVersionIdentifiers
+  }): Promise<AppReleaseSchema> {
+    const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId}
+    const releaseResult = await orgScopedShopifyDevelopersRequest<ReleaseVersionMutationSchema>(
+      organizationId,
+      ReleaseVersionMutation,
+      await this.token(),
+      releaseVariables,
+    )
+    return {
+      appRelease: {
+        appVersion: {
+          versionTag: releaseResult.versionRelease.release.version.versionTag,
+          message: '',
+          location: '',
+        },
+        userErrors: releaseResult.versionRelease.userErrors?.map((err) => ({
+          field: err.field,
+          message: err.message,
+          category: '',
+          details: [],
+        })),
+      },
+    }
   }
 
   async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
@@ -450,8 +640,10 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: createExtension')
   }
 
-  async convertToTestStore(_input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
-    throw new BugError('Not implemented: convertToTestStore')
+  async convertToTransferDisabledStore(
+    _input: ConvertDevToTransferDisabledStoreVariables,
+  ): Promise<ConvertDevToTransferDisabledSchema> {
+    throw new BugError('Not implemented: convertToTransferDisabledStore')
   }
 
   async updateDeveloperPreview(
@@ -518,6 +710,19 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       variables,
     )
   }
+
+  private async activeAppVersionRawResult({
+    id,
+    organizationId,
+  }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    return orgScopedShopifyDevelopersRequest<ActiveAppReleaseQuerySchema>(
+      organizationId,
+      ActiveAppReleaseQuery,
+      await this.token(),
+      variables,
+    )
+  }
 }
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
@@ -558,67 +763,798 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
   }
 }
 
-async function stubbedExtensionSpecifications(): Promise<RemoteSpecification[]> {
+async function stubbedExtensionTemplates(): Promise<ExtensionTemplate[]> {
   return [
     {
-      name: 'App access',
-      externalName: 'App access',
-      externalIdentifier: 'app_access',
-      identifier: 'app_access',
-      gated: false,
-      experience: 'configuration',
-      options: {
-        managementExperience: 'cli',
-        registrationLimit: 1,
-      },
-      features: {
-        argo: undefined,
-      },
+      identifier: 'order_discounts',
+      name: 'Discount orders - Function',
+      defaultName: 'order-discount',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'discounts/javascript/order-discounts/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'discounts/javascript/order-discounts/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'discounts/rust/order-discounts/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'discounts/wasm/order-discounts/default',
+            },
+          ],
+        },
+      ],
     },
     {
-      name: 'App Home',
-      externalName: 'App Home',
-      externalIdentifier: 'app_home',
-      identifier: 'app_home',
-      gated: false,
-      experience: 'configuration',
-      options: {
-        managementExperience: 'cli',
-        registrationLimit: 1,
-      },
-      features: {
-        argo: undefined,
-      },
+      identifier: 'cart_checkout_validation',
+      name: 'Cart and checkout validation - Function',
+      defaultName: 'cart-checkout-validation',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'checkout/javascript/cart-checkout-validation/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'checkout/javascript/cart-checkout-validation/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'checkout/rust/cart-checkout-validation/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'checkout/wasm/cart-checkout-validation/default',
+            },
+          ],
+        },
+      ],
     },
     {
-      name: 'Branding',
-      externalName: 'Branding',
-      externalIdentifier: 'branding',
-      identifier: 'branding',
-      gated: false,
-      experience: 'configuration',
-      options: {
-        managementExperience: 'cli',
-        registrationLimit: 1,
-      },
-      features: {
-        argo: undefined,
-      },
+      identifier: 'cart_transform',
+      name: 'Cart transformer - Function',
+      defaultName: 'cart-transformer',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'checkout/javascript/cart-transform/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'checkout/javascript/cart-transform/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'checkout/rust/cart-transform/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'checkout/wasm/cart-transform/default',
+            },
+          ],
+        },
+      ],
     },
     {
-      name: 'Webhooks',
-      externalName: 'Webhooks',
-      externalIdentifier: 'webhooks',
-      identifier: 'webhooks',
-      gated: false,
-      experience: 'configuration',
-      options: {
-        managementExperience: 'cli',
-        registrationLimit: 1,
-      },
-      features: {
-        argo: undefined,
-      },
+      identifier: 'delivery_customization',
+      name: 'Delivery customization - Function',
+      defaultName: 'delivery-customization',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'checkout/javascript/delivery-customization/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'checkout/javascript/delivery-customization/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'checkout/rust/delivery-customization/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'checkout/wasm/delivery-customization/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'payment_customization',
+      name: 'Payment customization - Function',
+      defaultName: 'payment-customization',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'checkout/javascript/payment-customization/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'checkout/javascript/payment-customization/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'checkout/rust/payment-customization/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'checkout/wasm/payment-customization/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'product_discounts',
+      name: 'Discount products - Function',
+      defaultName: 'product-discount',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'discounts/javascript/product-discounts/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'discounts/javascript/product-discounts/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'discounts/rust/product-discounts/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'discounts/wasm/product-discounts/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'shipping_discounts',
+      name: 'Discount shipping - Function',
+      defaultName: 'shipping-discount',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'discounts/javascript/shipping-discounts/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'discounts/javascript/shipping-discounts/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'discounts/rust/shipping-discounts/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'discounts/wasm/shipping-discounts/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'fulfillment_constraints',
+      name: 'Fulfillment constraints - Function',
+      defaultName: 'fulfillment-constraints',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'order-routing/javascript/fulfillment-constraints/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'order-routing/javascript/fulfillment-constraints/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'order-routing/rust/fulfillment-constraints/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'order-routing/wasm/fulfillment-constraints/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'local_pickup_delivery_option_generator',
+      name: 'Local pickup delivery option generators — Function',
+      defaultName: 'local-pickup-delivery-option-generators',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'order-routing/javascript/local-pickup-delivery-option-generators/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'order-routing/javascript/local-pickup-delivery-option-generators/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'order-routing/rust/local-pickup-delivery-option-generators/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'order-routing/wasm/local-pickup-delivery-option-generators/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'discounts_allocator',
+      name: 'Discounts allocator — Function',
+      defaultName: 'discounts-allocator',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'discounts/javascript/discounts-allocator/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'discounts/javascript/discounts-allocator/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'discounts/rust/discounts-allocator/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'discounts/wasm/discounts-allocator/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'pickup_point_delivery_option_generator',
+      name: 'Pickup point delivery option generators — Function',
+      defaultName: 'pickup-point-delivery-option-generators',
+      group: 'Discounts and checkout',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/function-examples',
+          type: 'function',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'order-routing/javascript/pickup-point-delivery-option-generators/default',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'order-routing/typescript/pickup-point-delivery-option-generators/default',
+            },
+            {
+              name: 'Rust',
+              value: 'rust',
+              path: 'order-routing/rust/pickup-point-delivery-option-generators/default',
+            },
+            {
+              name: 'Wasm',
+              value: 'wasm',
+              path: 'order-routing/wasm/pickup-point-delivery-option-generators/default',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'admin_action',
+      name: 'Admin action',
+      defaultName: 'admin-action',
+      group: 'Admin',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'admin-action',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'admin-action',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'admin-action',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'admin-action',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'admin_block',
+      name: 'Admin block',
+      defaultName: 'admin-block',
+      group: 'Admin',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'admin-block',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'admin-block',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'admin-block',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'admin-block',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'checkout_ui',
+      name: 'Checkout UI',
+      defaultName: 'checkout-ui',
+      group: 'Discounts and checkout',
+      sortPriority: 0,
+      supportLinks: ['https://shopify.dev/api/checkout-extensions/checkout/configuration'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'checkout-extension',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'checkout-extension',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'checkout-extension',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'checkout-extension',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'product_configuration',
+      name: 'Product configuration',
+      defaultName: 'product-configuration',
+      group: 'Admin',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/apps/selling-strategies/bundles/product-config'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'product-configuration-extension',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'product-configuration-extension',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'product-configuration-extension',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'product-configuration-extension',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'customer_account_ui',
+      name: 'Customer account UI (preview for dev stores only)',
+      defaultName: 'customer-account-ui',
+      group: 'Customer account',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'customer-account-extension',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'customer-account-extension',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'customer-account-extension',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'customer-account-extension',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'pos_ui',
+      name: 'POS UI',
+      defaultName: 'pos-ui',
+      group: 'Point-of-Sale',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'pos_ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'pos-ui-extension',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'pos-ui-extension',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'pos-ui-extension',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'pos-ui-extension',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'tax_calculation',
+      name: 'Tax calculation',
+      defaultName: 'tax-calculation',
+      group: 'Admin',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'tax_calculation',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'Config only',
+              value: 'config-only',
+              path: 'tax-calculation',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'flow_action',
+      name: 'Flow action',
+      defaultName: 'Flow action',
+      group: 'Automations',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'flow_action',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'Config only',
+              value: 'config-only',
+              path: 'flow-action',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'flow_trigger',
+      name: 'Flow trigger',
+      defaultName: 'Flow trigger',
+      group: 'Automations',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'flow_trigger',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'Config only',
+              value: 'config-only',
+              path: 'flow-trigger',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'post_purchase_ui',
+      name: 'Post-purchase UI',
+      defaultName: 'post-purchase-ui',
+      group: 'Discounts and checkout',
+      sortPriority: 1,
+      supportLinks: ['https://shopify.dev/docs/apps/checkout/post-purchase'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'checkout_post_purchase',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'checkout-post-purchase',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'checkout-post-purchase',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'checkout-post-purchase',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'checkout-post-purchase',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'validation_settings_ui',
+      name: 'Validation Settings - UI Extension',
+      defaultName: 'validation-settings-ui',
+      group: 'Admin',
+      sortPriority: undefined,
+      supportLinks: ['https://shopify.dev/docs/apps/checkout/validation/server-side'],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'ui_extension',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'validation-settings',
+            },
+            {
+              name: 'JavaScript',
+              value: 'vanilla-js',
+              path: 'validation-settings',
+            },
+            {
+              name: 'TypeScript React',
+              value: 'typescript-react',
+              path: 'validation-settings',
+            },
+            {
+              name: 'TypeScript',
+              value: 'typescript',
+              path: 'validation-settings',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      identifier: 'flow_template',
+      name: 'Flow template',
+      defaultName: 'Flow template',
+      group: 'Automations',
+      sortPriority: undefined,
+      supportLinks: [],
+      types: [
+        {
+          url: 'https://github.com/Shopify/extensions-templates',
+          type: 'flow_template',
+          extensionPoints: [],
+          supportedFlavors: [
+            {
+              name: 'Config only',
+              value: 'config-only',
+              path: 'flow-template',
+            },
+          ],
+        },
+      ],
     },
   ]
 }
@@ -635,4 +1571,25 @@ function encodedGidFromId(id: string): string {
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
   return Buffer.from(gid, 'base64').toString('ascii').match(/\d+$/)![0]
+}
+
+interface DiffAppModulesInput {
+  currentModules: AppModuleReturnType[]
+  selectedVersionModules: AppModuleReturnType[]
+}
+
+interface DiffAppModulesOutput {
+  added: AppModuleReturnType[]
+  removed: AppModuleReturnType[]
+  updated: AppModuleReturnType[]
+}
+
+export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
+  const currentModuleUids = currentModules.map((mod) => mod.uid)
+  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.uid)
+  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.uid))
+  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.uid))
+  const addedUids = added.map((mod) => mod.uid)
+  const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
+  return {added, removed, updated}
 }

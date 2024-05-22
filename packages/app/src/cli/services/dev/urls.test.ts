@@ -77,7 +77,7 @@ describe('updateURLs', () => {
   test('when config as code is enabled, the configuration is updated as well', async () => {
     // Given
     const appWithConfig = testAppWithConfig()
-    const apiKey = appWithConfig.configuration.client_id as string
+    const apiKey = appWithConfig.configuration.client_id
     const urls = {
       applicationUrl: 'https://example.com',
       redirectUrlWhitelist: [
@@ -166,7 +166,7 @@ describe('updateURLs', () => {
   test('also updates app proxy url when config as code is enabled', async () => {
     // Given
     const appWithConfig = testAppWithConfig()
-    const apiKey = appWithConfig.configuration.client_id as string
+    const apiKey = appWithConfig.configuration.client_id
 
     const urls = {
       applicationUrl: 'https://example.com',
