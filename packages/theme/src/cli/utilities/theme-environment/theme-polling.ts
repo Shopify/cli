@@ -8,7 +8,7 @@ const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
 interface PollingOptions {
-  noDelete: boolean
+  noDelete?: boolean
 }
 
 export function pollThemeEditorChanges(

@@ -19,7 +19,7 @@ export async function reconcileAndPollThemeEditorChanges(
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
   options?: {
-    noDelete: boolean
+    noDelete?: boolean
   },
 ) {
   outputDebug('Initiating theme asset reconciliation process')

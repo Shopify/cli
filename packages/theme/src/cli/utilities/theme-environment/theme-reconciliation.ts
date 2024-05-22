@@ -14,7 +14,7 @@ interface FilePartitions {
 }
 
 interface ReconciliationOptions {
-  noDelete: boolean
+  noDelete?: boolean
 }
 
 export async function reconcileJsonFiles(

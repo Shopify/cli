@@ -13,8 +13,8 @@ export interface DevServerContext {
   remoteChecksums: Checksum[]
   localThemeFileSystem: ThemeFileSystem
   themeEditorSync: boolean
-  options: {
-    noDelete: boolean
+  options?: {
+    noDelete?: boolean
   }
 }
 
@@ -27,7 +27,7 @@ export async function startDevServer(theme: Theme, ctx: DevServerContext, onRead
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   if (ctx.themeEditorSync) {
     await reconcileAndPollThemeEditorChanges(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem, {
-      noDelete: ctx.options.noDelete,
+      noDelete: ctx.options?.noDelete,
     })
   }
 
