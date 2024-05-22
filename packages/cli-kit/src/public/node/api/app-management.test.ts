@@ -1,6 +1,6 @@
-import {orgScopedShopifyDevelopersRequest, handleDeprecations} from './shopify-developers.js'
+import {appManagementRequest, handleDeprecations} from './app-management.js'
 import {graphqlRequest, GraphQLResponse} from './graphql.js'
-import {shopifyDevelopersFqdn} from '../context/fqdn.js'
+import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
 
@@ -9,28 +9,28 @@ vi.mock('../../../private/node/context/deprecations-store.js')
 vi.mock('../context/fqdn.js')
 
 const mockedResult = 'OK'
-const shopifyDevelopersFqdnValue = 'shopify.com'
+const appManagementFqdnValue = 'shopify.com'
 const orgId = Math.floor(Math.random() * 1000000000000).toString()
-const url = `https://${shopifyDevelopersFqdnValue}/organization/${orgId}/graphql`
+const url = `https://${appManagementFqdnValue}/organization/${orgId}/graphql`
 
 const mockedToken = 'token'
 
 beforeEach(() => {
-  vi.mocked(shopifyDevelopersFqdn).mockResolvedValue(shopifyDevelopersFqdnValue)
+  vi.mocked(appManagementFqdn).mockResolvedValue(appManagementFqdnValue)
 })
 
-describe('orgScopedShopifyDevelopersRequest', () => {
+describe('appManagementRequest', () => {
   test('graphqlRequest is called with correct parameters', async () => {
     // Given
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await orgScopedShopifyDevelopersRequest(orgId, 'query', mockedToken, {variables: 'variables'})
+    await appManagementRequest(orgId, 'query', mockedToken, {variables: 'variables'})
 
     // Then
     expect(graphqlRequest).toHaveBeenLastCalledWith({
       query: 'query',
-      api: 'Shopify Developers',
+      api: 'App Management',
       url,
       token: mockedToken,
       variables: {variables: 'variables'},

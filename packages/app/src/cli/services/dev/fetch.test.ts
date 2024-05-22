@@ -11,7 +11,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
-import {ShopifyDevelopersClient} from '../../utilities/developer-platform-client/shopify-developers-client.js'
+import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -69,7 +69,7 @@ const FETCH_STORE_RESPONSE_VALUE: FindStoreByDomainSchema = {
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('../../utilities/developer-platform-client/partners-client.js')
-vi.mock('../../utilities/developer-platform-client/shopify-developers-client.js')
+vi.mock('../../utilities/developer-platform-client/app-management-client.js')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -77,16 +77,16 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners without USE_SHOPIFY_DEVELOPERS_CLIENT', async () => {
+  test('returns fetched organizations from Partners without USE_APP_MANAGEMENT_API', async () => {
     // Given
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),
     }) as PartnersClient
-    const shopifyDevelopersClient: ShopifyDevelopersClient = testDeveloperPlatformClient({
+    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG2]),
-    }) as ShopifyDevelopersClient
+    }) as AppManagementClient
     vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(ShopifyDevelopersClient).mockReturnValue(shopifyDevelopersClient)
+    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
 
     // When
     const got = await fetchOrganizations()
@@ -94,20 +94,20 @@ describe('fetchOrganizations', async () => {
     // Then
     expect(got).toEqual([ORG1])
     expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(shopifyDevelopersClient.organizations).not.toHaveBeenCalled()
+    expect(appManagementClient.organizations).not.toHaveBeenCalled()
   })
 
-  test('returns fetched organizations from Partners and Shopify Developers with USE_SHOPIFY_DEVELOPERS_CLIENT', async () => {
+  test('returns fetched organizations from Partners and App Management with USE_APP_MANAGEMENT_API', async () => {
     // Given
-    vi.stubEnv('USE_SHOPIFY_DEVELOPERS_CLIENT', '1')
+    vi.stubEnv('USE_APP_MANAGEMENT_API', '1')
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),
     }) as PartnersClient
-    const shopifyDevelopersClient: ShopifyDevelopersClient = testDeveloperPlatformClient({
+    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG2]),
-    }) as ShopifyDevelopersClient
+    }) as AppManagementClient
     vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(ShopifyDevelopersClient).mockReturnValue(shopifyDevelopersClient)
+    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
 
     // When
     const got = await fetchOrganizations()
@@ -115,7 +115,7 @@ describe('fetchOrganizations', async () => {
     // Then
     expect(got).toEqual([ORG1, ORG2])
     expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(shopifyDevelopersClient.organizations).toHaveBeenCalled()
+    expect(appManagementClient.organizations).toHaveBeenCalled()
   })
 
   test('throws if there are no organizations', async () => {
