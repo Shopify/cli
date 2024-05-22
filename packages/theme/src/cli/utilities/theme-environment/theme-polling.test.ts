@@ -1,4 +1,4 @@
-import * as themePolling from './theme-polling.js'
+import {pollRemoteJsonChanges} from './theme-polling.js'
 import {readThemeFilesFromDisk} from '../theme-fs.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -12,7 +12,6 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../theme-fs.js')
 
 describe('pollRemoteJsonChanges', async () => {
-  const {pollRemoteJsonChanges} = themePolling
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
   const files = new Map<string, ThemeAsset>([])
@@ -48,6 +47,27 @@ describe('pollRemoteJsonChanges', async () => {
 
     // Then
     expect(defaultThemeFileSystem.files.get('templates/asset.json')).toEqual({
+      checksum: '1',
+      key: 'templates/asset.json',
+      value: 'content',
+    })
+  })
+
+  test('does not download newly added files from remote theme when file with equivalent checksum is already presenty locally', async () => {
+    // Given
+    const remoteChecksums: Checksum[] = []
+    const updatedRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json', value: 'content'}]]),
+    )
+
+    // When
+    await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem)
+
+    // Then
+    expect(themeFileSystem.files.get('templates/asset.json')).toEqual({
       checksum: '1',
       key: 'templates/asset.json',
       value: 'content',

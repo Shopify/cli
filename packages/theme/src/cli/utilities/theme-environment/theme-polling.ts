@@ -1,4 +1,4 @@
-import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -51,12 +51,17 @@ export async function pollRemoteJsonChanges(
     return latestChecksumsMap.get(previousChecksum.key) === undefined
   })
 
-  await abortIfMultipleSourcesChange(localFileSystem, assetsChangedOnRemote)
+  const previousFileValues = new Map(localFileSystem.files)
+  await Promise.all(assetsChangedOnRemote.map((file) => localFileSystem.read(file.key)))
+  await abortIfMultipleSourcesChange(previousFileValues, localFileSystem, assetsChangedOnRemote)
 
   await Promise.all(
     assetsChangedOnRemote
       .filter((file) => file.key.endsWith('.json'))
       .map(async (file) => {
+        if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
+          return
+        }
         const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
         if (asset) {
           return localFileSystem.write(asset).then(() => {
@@ -78,11 +83,13 @@ export async function pollRemoteJsonChanges(
   return latestChecksums
 }
 
-async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, assetsChangedOnRemote: Checksum[]) {
+async function abortIfMultipleSourcesChange(
+  previousFileValues: Map<string, ThemeAsset>,
+  localFileSystem: ThemeFileSystem,
+  assetsChangedOnRemote: Checksum[],
+) {
   for (const asset of assetsChangedOnRemote) {
-    const previousChecksum = localFileSystem.files.get(asset.key)?.checksum
-    // eslint-disable-next-line no-await-in-loop
-    await localFileSystem.read(asset.key)
+    const previousChecksum = previousFileValues.get(asset.key)?.checksum
     const newChecksum = localFileSystem.files.get(asset.key)?.checksum
     if (previousChecksum !== newChecksum) {
       throw new PollingError(
