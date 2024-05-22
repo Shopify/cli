@@ -119,6 +119,10 @@ const templateJsonUrls = [
   'https://raw.githubusercontent.com/Shopify/function-examples/templates-json/templates.json',
 ]
 
+interface GatedExtensionTemplate extends ExtensionTemplate {
+  organizationBetaFlags?: string[]
+}
+
 export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
   public supportsAtomicDeployments = true
@@ -291,11 +295,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
       )
   }
 
-  async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {
-    return Promise.all(templateJsonUrls.map(async (url) => {
+  async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
+    const allExtensions = await Promise.all(templateJsonUrls.map(async (url) => {
       const response = await fetch(url)
-      return response.json() as Promise<ExtensionTemplate[]>
+      return response.json() as Promise<GatedExtensionTemplate[]>
     })).then(templates2DArray => templates2DArray.flat(1))
+    const allBetaFlags = Array.from(new Set(allExtensions.map(ext => ext.organizationBetaFlags ?? []).flat()))
+    const enabledBetaFlags = await this.organizationBetaFlags(organizationId, allBetaFlags)
+    return allExtensions.filter(ext => {
+      return !ext.organizationBetaFlags || ext.organizationBetaFlags.every(flag => enabledBetaFlags[flag])
+    })
   }
 
   async createApp(
@@ -724,6 +733,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
     )
+  }
+
+  private async organizationBetaFlags(_organizationId: string, allBetaFlags: string[]): Promise<{[key: string]: boolean}> {
+    // For now, stub everything as false
+    const stub: {[flag: string]: boolean} = {}
+    allBetaFlags.forEach(flag => {
+      stub[flag] = false
+    })
+    return stub
   }
 }
 

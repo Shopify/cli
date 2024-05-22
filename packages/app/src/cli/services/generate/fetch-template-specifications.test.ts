@@ -1,5 +1,5 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {describe, expect, test} from 'vitest'
 
@@ -11,7 +11,7 @@ describe('fetchTemplateSpecifications', () => {
     // When
     const got: ExtensionTemplate[] = await fetchExtensionTemplates(
       testDeveloperPlatformClient(),
-      'apiKey',
+      testOrganizationApp(),
       enabledSpecifications,
     )
 

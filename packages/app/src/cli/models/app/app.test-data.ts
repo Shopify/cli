@@ -1198,7 +1198,7 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
 }
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  const clientStub = {
+  const clientStub: DeveloperPlatformClient = {
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
@@ -1209,7 +1209,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
-    templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
+    templateSpecifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>

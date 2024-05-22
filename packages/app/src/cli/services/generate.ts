@@ -53,7 +53,7 @@ async function generate(options: GenerateOptions) {
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(
     developerPlatformClient,
-    remoteApp.apiKey,
+    remoteApp,
     availableSpecifications,
   )
 
