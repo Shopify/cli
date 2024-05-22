@@ -101,7 +101,7 @@ describe('pollRemoteJsonChanges', async () => {
     expect(themeFileSystem.files.get('templates/asset.json')).toBeUndefined()
   })
 
-  test('does not deletes local file when noDelete option is provided and file is deleted from remote', async () => {
+  test('does not delete local file when noDelete option is provided and file is deleted from remote', async () => {
     // Given
     const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
     const files = new Map<string, ThemeAsset>([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]])
@@ -173,16 +173,81 @@ describe('pollRemoteJsonChanges', async () => {
     expect(spy).not.toHaveBeenCalled()
   })
 
-  test('only polls for JSON assets', async () => {
-    // Given
-    const remoteChecksums = [{checksum: '1', key: 'section/section.liquid'}]
-    const updatedRemoteChecksums = [{checksum: '2', key: 'section/section.liquid'}]
-    vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+  describe('file filtering', () => {
+    test('only polls for JSON assets', async () => {
+      // Given
+      const remoteChecksums = [{checksum: '1', key: 'section/section.liquid'}]
+      const updatedRemoteChecksums = [{checksum: '2', key: 'section/section.liquid'}]
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
 
-    // When
-    await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)
+      // When
+      await pollRemoteJsonChanges(
+        developmentTheme,
+        adminSession,
+        remoteChecksums,
+        defaultThemeFileSystem,
+        defaultOptions,
+      )
 
-    // Then
-    expect(defaultThemeFileSystem.files.get('section/section.liquid')).toBeUndefined()
+      // Then
+      expect(defaultThemeFileSystem.files.get('section/section.liquid')).toBeUndefined()
+    })
+
+    test('only polls for assets that match the only option', async () => {
+      // Given
+      const remoteChecksums = [
+        {checksum: '1', key: 'templates/asset.json'},
+        {checksum: '1', key: 'templates/asset2.json'},
+      ]
+      const updatedRemoteChecksums = [
+        {checksum: '2', key: 'templates/asset.json'},
+        {checksum: '2', key: 'templates/asset2.json'},
+      ]
+      vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '2', key: 'templates/asset.json', value: 'content'})
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+
+      // When
+      await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        only: ['templates/asset.json'],
+      })
+
+      // Then
+      expect(fetchThemeAsset).toHaveBeenCalledOnce()
+      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset.json', adminSession)
+      expect(defaultThemeFileSystem.files.get('templates/asset.json')).toEqual({
+        checksum: '2',
+        key: 'templates/asset.json',
+        value: 'content',
+      })
+      expect(defaultThemeFileSystem.files.get('templates/asset2.json')).toBeUndefined()
+    })
+
+    test('ignores assets that match the ignore option', async () => {
+      // Given
+      const remoteChecksums = [
+        {checksum: '1', key: 'templates/asset.json'},
+        {checksum: '1', key: 'templates/asset2.json'},
+      ]
+      const updatedRemoteChecksums = [
+        {checksum: '2', key: 'templates/asset.json'},
+        {checksum: '2', key: 'templates/asset2.json'},
+      ]
+      vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '2', key: 'templates/asset2.json', value: 'content'})
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+
+      // When
+      await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ignore: ['templates/asset.json'],
+      })
+
+      // Then
+      expect(fetchThemeAsset).toHaveBeenCalledOnce()
+      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset2.json', adminSession)
+      expect(defaultThemeFileSystem.files.get('templates/asset2.json')).toEqual({
+        checksum: '2',
+        key: 'templates/asset2.json',
+        value: 'content',
+      })
+    })
   })
 })
