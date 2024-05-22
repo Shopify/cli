@@ -1,7 +1,7 @@
 import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
 import {transformToWebhookConfig, transformFromWebhookConfig} from './transform/app_config_webhook.js'
 import {WebhookSubscription} from './types/app_config_webhook.js'
-import {SpecsAppConfiguration} from './types/app_config.js'
+import {AppConfigurationUsedByCli} from './types/app_config.js'
 import {CustomTransformationConfig, SimplifyConfig, createConfigExtensionSpecification} from '../specification.js'
 
 export const WebhooksSpecIdentifier = 'webhooks'
@@ -12,7 +12,7 @@ const WebhookTransformConfig: CustomTransformationConfig = {
 }
 
 export const WebhookSimplifyConfig: SimplifyConfig = {
-  simplifyMergedRemoteConfig: (remoteConfig: SpecsAppConfiguration) => simplifyWebhooks(remoteConfig),
+  simplifyMergedRemoteConfig: (remoteConfig: AppConfigurationUsedByCli) => simplifyWebhooks(remoteConfig),
 }
 
 const appWebhooksSpec = createConfigExtensionSpecification({
@@ -24,7 +24,7 @@ const appWebhooksSpec = createConfigExtensionSpecification({
 
 export default appWebhooksSpec
 
-function simplifyWebhooks(remoteConfig: SpecsAppConfiguration) {
+function simplifyWebhooks(remoteConfig: AppConfigurationUsedByCli) {
   if (!remoteConfig.webhooks?.subscriptions) return remoteConfig
 
   remoteConfig.webhooks.subscriptions = mergeAllWebhooks(remoteConfig.webhooks.subscriptions)

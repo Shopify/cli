@@ -1,6 +1,6 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {SpecsAppConfiguration} from './specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from './specifications/types/app_config.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../services/dev/fetch.js'
@@ -36,7 +36,7 @@ export interface SimplifyConfig {
    * @param remoteConfig - The top-level app configuration object taken from remote modules
    * @returns The transformed top-level app configuration object
    */
-  simplifyMergedRemoteConfig?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
+  simplifyMergedRemoteConfig?: (obj: AppConfigurationUsedByCli) => AppConfigurationUsedByCli
 }
 
 type ExtensionExperience = 'extension' | 'configuration'

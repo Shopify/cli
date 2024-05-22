@@ -1,5 +1,5 @@
 import spec from './app_config_webhook.js'
-import {SpecsAppConfiguration} from './types/app_config.js'
+import {AppConfigurationUsedByCli} from './types/app_config.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhooks', () => {
@@ -279,7 +279,7 @@ describe('webhooks', () => {
         pos: {embedded: false},
         application_url: 'https://decided-tabs-chevrolet-stating.trycloudflare.com',
         embedded: true,
-      } as unknown as SpecsAppConfiguration
+      } as unknown as AppConfigurationUsedByCli
       const webhookSpec = spec
       // When
       const result = webhookSpec.simplifyMergedRemoteConfig!(remoteApp)

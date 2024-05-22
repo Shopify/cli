@@ -4,7 +4,7 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
@@ -80,7 +80,7 @@ export type BuildOptions = BasicAppConfigurationWithoutModules['build']
 /**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
  */
-export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & SpecsAppConfiguration
+export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppConfigurationUsedByCli
 
 /**
  * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
