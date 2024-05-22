@@ -836,7 +836,7 @@ test('throws an error when an invalid api key is is provided', async () => {
       developerPlatformClient,
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-    vi.mocked(selectConfigName).mockResolvedValue('staging')
+    vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
 
     // When
     const result = link(options)

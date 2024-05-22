@@ -49,7 +49,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-type AppLoaderMode = 'strict' | 'report'
+export type AppLoaderMode = 'strict' | 'report'
 
 type AbortOrReport = <T>(
   errorMessage: OutputMessage,
