@@ -46,7 +46,7 @@ describe('dev', () => {
       expect(startDevServer).toHaveBeenCalledWith(
         options.theme,
         {
-          session: {...adminSession, storefrontToken: 'my-storefront-token'},
+          session: {...adminSession, storefrontToken: 'my-storefront-token', expiresAt: expect.any(Date)},
           remoteChecksums: [],
           localThemeFileSystem,
           themeEditorSync: true,
