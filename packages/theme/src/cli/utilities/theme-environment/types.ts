@@ -56,7 +56,7 @@ export interface DevServerContext {
   /**
    * Additional options for the development server.
    */
-  options: {
+  options?: {
     /**
      * Prevents deletion of local files.
      */

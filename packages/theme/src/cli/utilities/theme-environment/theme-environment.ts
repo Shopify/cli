@@ -1,12 +1,7 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {uploadTheme} from '../theme-uploader.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-
-export interface DevServerSession extends AdminSession {
-  storefrontToken: string
-}
 
 export async function startDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
   await ensureThemeEnvironmentSetup(theme, ctx)
