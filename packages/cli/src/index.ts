@@ -10,7 +10,6 @@ import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
-import HydrogenInit from './cli/commands/hydrogen/init.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import ThemeCommands from '@shopify/theme'
@@ -97,7 +96,6 @@ export const COMMANDS: any = {
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
-  'hydrogen:init': HydrogenInit,
   'docs:generate': DocsGenerate,
 }
 

@@ -2156,7 +2156,7 @@
       "flags": {
         "bundle-stats": {
           "allowNo": true,
-          "description": "Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
+          "description": "[Classic Remix Compiler] Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
           "name": "bundle-stats",
           "type": "boolean"
         },
@@ -2192,6 +2192,14 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_DISABLE_ROUTE_WARNING",
           "name": "disable-route-warning",
           "type": "boolean"
+        },
+        "entry": {
+          "description": "Entry file for the worker. Defaults to `./server`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_ENTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "entry",
+          "type": "option"
         },
         "lockfile-check": {
           "allowNo": true,
@@ -2626,6 +2634,13 @@
           "required": false,
           "type": "boolean"
         },
+        "disable-deps-optimizer": {
+          "allowNo": false,
+          "description": "Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically",
+          "env": "SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER",
+          "name": "disable-deps-optimizer",
+          "type": "boolean"
+        },
         "disable-version-check": {
           "allowNo": false,
           "description": "Skip the version check when running `hydrogen dev`",
@@ -2639,6 +2654,14 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES",
           "name": "disable-virtual-routes",
           "type": "boolean"
+        },
+        "entry": {
+          "description": "Entry file for the worker. Defaults to `./server`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_ENTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "entry",
+          "type": "option"
         },
         "env": {
           "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
@@ -2662,6 +2685,13 @@
           "name": "env-branch",
           "type": "option"
         },
+        "host": {
+          "allowNo": false,
+          "description": "Expose the server to the local network",
+          "name": "host",
+          "required": false,
+          "type": "boolean"
+        },
         "inspector-port": {
           "description": "The port where the inspector is available. Defaults to 9229.",
           "env": "SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT",
@@ -2672,8 +2702,8 @@
         },
         "legacy-runtime": {
           "allowNo": false,
-          "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-          "env": "SHOPIFY_HYDROGEN_FLAG_WORKER",
+          "description": "[Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME",
           "name": "legacy-runtime",
           "type": "boolean"
         },
@@ -2691,11 +2721,12 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "port",
+          "required": false,
           "type": "option"
         },
         "sourcemap": {
           "allowNo": true,
-          "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
+          "description": "[Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP",
           "name": "sourcemap",
           "type": "boolean"
@@ -3002,7 +3033,105 @@
       ],
       "args": {
       },
+      "description": "Creates a new Hydrogen storefront.",
+      "descriptionWithMarkdown": "Creates a new Hydrogen storefront.",
       "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Overwrites the destination directory and files if they already exist.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "git": {
+          "allowNo": true,
+          "description": "Init Git and create initial commits.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_GIT",
+          "name": "git",
+          "type": "boolean"
+        },
+        "install-deps": {
+          "allowNo": true,
+          "description": "Auto installs dependencies using the active package manager.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS",
+          "name": "install-deps",
+          "type": "boolean"
+        },
+        "language": {
+          "description": "Sets the template language to use. One of `js` or `ts`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_LANGUAGE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "language",
+          "type": "option"
+        },
+        "markets": {
+          "description": "Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_I18N",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "markets",
+          "type": "option"
+        },
+        "mock-shop": {
+          "allowNo": false,
+          "description": "Use mock.shop as the data source for the storefront.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_MOCK_DATA",
+          "name": "mock-shop",
+          "type": "boolean"
+        },
+        "package-manager": {
+          "env": "SHOPIFY_HYDROGEN_FLAG_PACKAGE_MANAGER",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "package-manager",
+          "options": [
+            "npm",
+            "yarn",
+            "pnpm",
+            "unknown"
+          ],
+          "type": "option"
+        },
+        "path": {
+          "description": "The path to the directory of the new Hydrogen storefront.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "type": "option"
+        },
+        "quickstart": {
+          "allowNo": false,
+          "description": "Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`",
+          "env": "SHOPIFY_HYDROGEN_FLAG_QUICKSTART",
+          "name": "quickstart",
+          "type": "boolean"
+        },
+        "routes": {
+          "allowNo": true,
+          "description": "Generate routes for all pages.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_ROUTES",
+          "name": "routes",
+          "type": "boolean"
+        },
+        "shortcut": {
+          "allowNo": true,
+          "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_SHORTCUT",
+          "name": "shortcut",
+          "type": "boolean"
+        },
+        "template": {
+          "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_TEMPLATE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "template",
+          "type": "option"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3011,8 +3140,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
-      "summary": "Create a new hydrogen project"
+      "strict": true
     },
     "hydrogen:link": {
       "aliases": [
@@ -3191,7 +3319,7 @@
         "legacy-runtime": {
           "allowNo": false,
           "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-          "env": "SHOPIFY_HYDROGEN_FLAG_WORKER",
+          "env": "SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME",
           "name": "legacy-runtime",
           "type": "boolean"
         },

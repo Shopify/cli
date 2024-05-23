@@ -49,7 +49,6 @@
 * [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
 * [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
 * [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
-* [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins install PLUGIN`](#shopify-plugins-install-plugin)
@@ -761,15 +760,16 @@ Builds a Hydrogen storefront for production.
 ```
 USAGE
   $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
-    [--lockfile-check] [--path <value>] [--sourcemap]
+    [--entry <value>] [--lockfile-check] [--path <value>] [--sourcemap]
 
 FLAGS
-  --[no-]bundle-stats            Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to
-                                 disable.
+  --[no-]bundle-stats            [Classic Remix Compiler] Show a bundle size summary after building. Defaults to true,
+                                 use `--no-bundle-stats` to disable.
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
   --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
                                  this file exists.
   --disable-route-warning        Disables any warnings about missing standard routes.
+  --entry=<value>                Entry file for the worker. Defaults to `./server`.
   --[no-]lockfile-check          Checks that there is exactly one valid lockfile in the project. Defaults to `true`.
                                  Deactivate with `--no-lockfile-check`.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
@@ -910,9 +910,9 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 
 ```
 USAGE
-  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-version-check]
-    [--disable-virtual-routes] [--env <value> | --env-branch <value>] [--inspector-port <value>] [--legacy-runtime]
-    [--path <value>] [--port <value>] [--sourcemap] [--verbose]
+  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
+    [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
+    [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>] [--sourcemap] [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
@@ -920,18 +920,21 @@ FLAGS
                                  this file exists.
   --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
                                  or Chrome DevTools.
+  --disable-deps-optimizer       Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically
   --disable-version-check        Skip the version check when running `hydrogen dev`
   --disable-virtual-routes       Disable rendering fallback routes when a route file doesn't exist.
+  --entry=<value>                Entry file for the worker. Defaults to `./server`.
   --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
                                  using the `env list` command.
   --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --host                         Expose the server to the local network
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
+  --legacy-runtime               [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
-  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
-                                 `--no-sourcemaps`.
+  --[no-]sourcemap               [Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`.
+                                 Deactivate `--no-sourcemaps`.
   --verbose                      Outputs more information about the command's execution.
 
 DESCRIPTION
@@ -1043,11 +1046,32 @@ DESCRIPTION
 
 ## `shopify hydrogen init`
 
-Create a new hydrogen project
+Creates a new Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen init
+  $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
+    [--path <value>] [--quickstart] [--routes] [--shortcut] [--template <value>]
+
+FLAGS
+  -f, --force              Overwrites the destination directory and files if they already exist.
+      --[no-]git           Init Git and create initial commits.
+      --[no-]install-deps  Auto installs dependencies using the active package manager.
+      --language=<value>   Sets the template language to use. One of `js` or `ts`.
+      --markets=<value>    Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`,
+                           `subdomains`, `none`. Example: `--markets subfolders`.
+      --mock-shop          Use mock.shop as the data source for the storefront.
+      --path=<value>       The path to the directory of the new Hydrogen storefront.
+      --quickstart         Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify
+                           hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes
+                           --markets none`
+      --[no-]routes        Generate routes for all pages.
+      --[no-]shortcut      Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with
+                           `--no-shortcut`.
+      --template=<value>   Scaffolds project based on an existing template or example from the Hydrogen repository.
+
+DESCRIPTION
+  Creates a new Hydrogen storefront.
 ```
 
 ## `shopify hydrogen link`
@@ -1270,7 +1294,6 @@ DESCRIPTION
   Upgrade Remix and Hydrogen npm dependencies.
 ```
 
-## `shopify plugins:install PLUGIN...`
 ## `shopify plugins add PLUGIN`
 
 Installs a plugin into shopify.
