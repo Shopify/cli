@@ -51,8 +51,14 @@ interface BundleOptions {
   sourceMaps?: boolean
 }
 
-interface Localization {
+interface FlowTemplateLocalization {
+  /**
+   * The default language the template is displayed in.
+   */
   default_locale: string
+  /**
+   * A hash of language codes to the base64 encoded content of the translation file.
+   */
   translations: {[key: string]: string}
 }
 
@@ -97,7 +103,7 @@ export async function bundleThemeExtension(
 
 export async function bundleFlowTemplateExtension(extension: ExtensionInstance): Promise<void> {
   const files = await flowTemplateExtensionFiles(extension)
-  const localizationObject: Localization = {
+  const localizationObject: FlowTemplateLocalization = {
     default_locale: '',
     translations: {},
   }
@@ -218,7 +224,7 @@ function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
 async function processFlowTemplateFile(
   filepath: string,
   extension: ExtensionInstance,
-  localizationObject: Localization,
+  localizationObject: FlowTemplateLocalization,
 ): Promise<void> {
   const content = await readFile(filepath)
   const encodedContent = Buffer.from(content).toString('base64')
@@ -241,7 +247,7 @@ async function ensureDirectoryExists(filePath: string): Promise<void> {
 async function processFlowLocalizationFile(
   filepath: string,
   encodedContent: string,
-  localizationObject: Localization,
+  localizationObject: FlowTemplateLocalization,
 ): Promise<void> {
   const locale = basename(filepath, '.json')
   const isDefault = locale.endsWith('.default')

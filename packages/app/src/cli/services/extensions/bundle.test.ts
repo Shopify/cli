@@ -346,8 +346,8 @@ describe('bundleExtension()', () => {
         const specification = allSpecs.find((spec) => spec.identifier === 'flow_template')!
         const flowTemplateExtension = new ExtensionInstance({
           configuration: {
-            name: 'theme extension name',
-            type: 'theme' as const,
+            name: 'Flow template extension name',
+            type: 'flow_template' as const,
             metafields: [],
           },
           configurationPath: '',
@@ -358,18 +358,6 @@ describe('bundleExtension()', () => {
         const outputPath = joinPath(tmpDir, 'dist')
         await mkdir(outputPath)
         flowTemplateExtension.outputPath = outputPath
-
-        const app = testApp({
-          directory: '/project',
-          allExtensions: [flowTemplateExtension],
-        })
-
-        const stdout: any = {
-          write: vi.fn(),
-        }
-        const stderr: any = {
-          write: vi.fn(),
-        }
 
         const blocksPath = joinPath(tmpDir, 'blocks')
         await mkdir(blocksPath)
