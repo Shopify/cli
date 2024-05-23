@@ -32,10 +32,11 @@ const themeUpdaterPath = require.resolve('@shopify/theme-check-docs-updater')
 const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
-const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/lib/generator-templates/**/*')
 
+const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/lib/generator-templates/**/*')
 const hydrogenRouteTemplates = joinPath(hydrogenPath, 'dist/lib/setups/routes/templates/**/*')
 const hydrogenI18nTemplates = joinPath(hydrogenPath, 'dist/lib/setups/i18n/templates/**/*')
+const hydrogenVirtualRoute = joinPath(hydrogenPath, 'dist/lib/virtual-routes/**/*')
 
 esBuild({
   bundle: true,
@@ -99,6 +100,10 @@ esBuild({
         {
           from: [hydrogenI18nTemplates],
           to: ['./dist/templates'],
+        },
+        {
+          from: [hydrogenVirtualRoute],
+          to: ['./dist/virtual-routes'],
         },
       ],
     }),
