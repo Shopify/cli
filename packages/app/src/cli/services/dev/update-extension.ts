@@ -64,7 +64,7 @@ export async function updateExtensionDraft({
     stderr.write(`Error while updating drafts: ${errors}`)
   } else {
     const draftUpdateSuccesMessage = extension.draftMessages.successMessage
-    if (draftUpdateSuccesMessage) outputInfo(`${draftUpdateSuccesMessage}`, stdout)
+    if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
   }
 }
 
