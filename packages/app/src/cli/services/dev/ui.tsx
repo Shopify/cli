@@ -11,8 +11,6 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {parseConcurrentOutputLog} from '@shopify/cli-kit/node/ui/components'
-import {Writable} from 'stream'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -103,15 +101,6 @@ async function partnersURL(organizationId: string, appId: string) {
   }
 }
 
-function getNonInteractiveWriter(wrappedWritable: Writable) {
-  return new Writable({
-    write(chunk, _encoding, callback) {
-      const parsedLog = parseConcurrentOutputLog(chunk.toString('utf8'))
-      wrappedWritable.write(`${parsedLog.prefix ? `${parsedLog.prefix} | ` : ''}${parsedLog.log}`, 'utf8', callback)
-    },
-  })
-}
-
 async function renderDevNonInteractive({
   processes,
   app: {canEnablePreviewMode},
@@ -126,11 +115,7 @@ async function renderDevNonInteractive({
   }
   return Promise.all(
     processes.map(async (concurrentProcess) => {
-      await concurrentProcess.action(
-        getNonInteractiveWriter(process.stdout),
-        getNonInteractiveWriter(process.stderr),
-        abortController.signal,
-      )
+      await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
     }),
   )
 }

@@ -6,6 +6,7 @@ import {Box, Static, Text, TextProps, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
+import {AsyncLocalStorage} from 'node:async_hooks'
 
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
@@ -42,31 +43,13 @@ function currentTime() {
   return `${hours}:${minutes}:${seconds}`
 }
 
-/**
- * Allows users of ConcurrentOutput to format logs with a prefix column override.
- *
- * @param prefix - The override value for the prefix column
- * @param log - The log to prefix
- */
-function prefixConcurrentOutputLog(prefix: string, log: string): string {
-  return `<::${prefix}::>${log}`
+interface ConcurrentOutputContext {
+  getOutputPrefix(): string
 }
 
-function parseConcurrentOutputLog(log: string): ParsedLog {
-  // Example: <::hello-world::> foo bar\nssssada
-  const prefixRegex = /(<::(([^:])+)::>\s?)[\s\S]+/g
-  const prefixMatch = prefixRegex.exec(log)
-  if (prefixMatch && prefixMatch[1] && prefixMatch[2]) {
-    return {
-      // Example: hello-world
-      prefix: prefixMatch[2],
-      // To strip off <::hello-world::>
-      log: log.substring(prefixMatch[1].length),
-    }
-  }
-  return {
-    log,
-  }
+const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()
+function useConcurrentOutputContext<T>(context: ConcurrentOutputContext, callback: () => T): T {
+  return outputContextStore.run(context, callback)
 }
 
 /**
@@ -146,11 +129,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     (process: OutputProcess, prefixes: string[]) => {
       return new Writable({
         write(chunk, _encoding, next) {
-          const parsedLog: ParsedLog = parseConcurrentOutputLog(chunk.toString('utf8'))
-          const prefix = parsedLog.prefix ?? process.prefix
-          const index = addPrefix(prefix, prefixes)
+          const context = outputContextStore.getStore()
+          const prefix = context?.getOutputPrefix() ?? process.prefix
+          const log = chunk.toString('utf8')
 
-          const lines = stripAnsi(parsedLog.log.replace(/(\n)$/, '')).split(/\n/)
+          const index = addPrefix(prefix, prefixes)
+          const lines = stripAnsi(log.replace(/(\n)$/, '')).split(/\n/)
           addOrUpdateConcurrentUIEventOutput({prefix, index, output: lines.join('\n')})
           setProcessOutput((previousProcessOutput) => [
             ...previousProcessOutput,
@@ -230,4 +214,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput, prefixConcurrentOutputLog, parseConcurrentOutputLog}
+export {ConcurrentOutput, ConcurrentOutputContext, useConcurrentOutputContext}

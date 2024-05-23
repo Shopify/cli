@@ -22,8 +22,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {prefixConcurrentOutputLog} from '@shopify/cli-kit/node/ui/components'
-import {Writable} from 'stream'
+import {ConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 
 /**
  * Class that represents an instance of a local extension
@@ -37,7 +36,9 @@ import {Writable} from 'stream'
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
+export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType>
+  implements ConcurrentOutputContext
+{
   entrySourceFilePath: string
   devUUID: string
   localIdentifier: string
@@ -229,13 +230,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
   }
 
-  getPrefixedLogger(wrappedWritable: Writable) {
-    const handle = this.handle
-    return new Writable({
-      write(chunk, _encoding, callback) {
-        wrappedWritable.write(`${prefixConcurrentOutputLog(handle, chunk.toString('utf8'))}`, 'utf8', callback)
-      },
-    })
+  getOutputPrefix(): string {
+    return this.handle
   }
 
   // Functions specific properties
