@@ -1,18 +1,21 @@
+import {fileExistsSync} from './fs.js'
+import {cwd, joinPath} from './path.js'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
-    // const path = sniffForPath() ?? cwd()
-    // if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
-    //   options.pluginAdditions = {
-    //     core: ['@shopify/cli-hydrogen'],
-    //     path,
-    //   }
-    // }
+    const path = sniffForPath() ?? cwd()
+    if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
+      options.pluginAdditions = {
+        core: ['@shopify/cli-hydrogen'],
+        path,
+      }
+    }
     super(options)
 
-    // this['determinePriority'] = this.customPriority
+    // eslint-disable-next-line dot-notation
+    this['determinePriority'] = this.customPriority
   }
 
   customPriority(commands: Command.Loadable[]): Command.Loadable | undefined {
