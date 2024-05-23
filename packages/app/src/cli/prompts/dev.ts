@@ -1,7 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
-import {setCachedCommandInfo} from '../services/local-storage.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -18,17 +17,16 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 }
 
 export async function selectAppPrompt(
-  developerPlatformClient: DeveloperPlatformClient,
+  onSearchForAppsByName: (term: string) => Promise<{apps: MinimalOrganizationApp[]; hasMorePages: boolean}>,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
-  orgId: string,
   options?: {
     directory?: string
   },
 ): Promise<MinimalAppIdentifiers> {
   const tomls = await getTomls(options?.directory)
 
-  if (tomls) setCachedCommandInfo({tomls})
+  if (tomls) setCachedCommandTomlMap(tomls)
 
   const toAnswer = (app: MinimalOrganizationApp) => {
     if (tomls[app?.apiKey]) {
@@ -45,7 +43,7 @@ export async function selectAppPrompt(
     choices: currentAppChoices.map(toAnswer),
     hasMorePages,
     search: async (term) => {
-      const result = await developerPlatformClient.appsForOrg(orgId, term)
+      const result = await onSearchForAppsByName(term)
       currentAppChoices = result.apps
 
       return {

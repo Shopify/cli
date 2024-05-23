@@ -9,7 +9,6 @@ export const AppVersionsQuery = gql`
       appVersions {
         nodes {
           createdAt
-          distributionPercentage
           createdBy {
             displayName
           }
@@ -37,7 +36,6 @@ export interface AppVersionsQuerySchema {
     appVersions: {
       nodes: {
         createdAt: string
-        distributionPercentage: number
         createdBy?: {
           displayName?: string
         }

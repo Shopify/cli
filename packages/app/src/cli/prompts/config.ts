@@ -1,10 +1,8 @@
 /* eslint-disable no-await-in-loop */
-import {AppSchema, CurrentAppConfiguration} from '../models/app/app.js'
-import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
+import {AppConfigurationFileName} from '../models/app/loader.js'
 import {
   RenderTextPromptOptions,
   renderConfirmationPrompt,
-  renderInfo,
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
@@ -12,12 +10,9 @@ import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
-import {zod} from '@shopify/cli-kit/node/schema'
 
-export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
+export async function selectConfigName(directory: string, defaultName = ''): Promise<AppConfigurationFileName> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
   let configName = await renderTextPrompt(namePromptOptions)
 
@@ -40,7 +35,7 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   return filenameFromName(configName)
 }
 
-function filenameFromName(name: string, highlight = false): string {
+function filenameFromName(name: string, highlight = false): AppConfigurationFileName {
   const slugifiedName = slugify(name)
   if (slugifiedName === '') return 'shopify.app.toml'
   const configName = highlight ? colors.cyan(slugifiedName) : slugifiedName
@@ -80,26 +75,4 @@ export function validate(value: string): string | undefined {
   const result = slugify(value)
   // Max filename size for Windows/Mac including the prefix/postfix
   if (result.length > 238) return 'The file name is too long.'
-}
-
-export function buildDiffConfigContent(
-  localConfig: CurrentAppConfiguration,
-  remoteConfig: unknown,
-  schema: zod.ZodTypeAny = AppSchema,
-  renderNoChanges = true,
-) {
-  const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
-    {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},
-  )
-
-  if (deepCompare(updated, baseline)) {
-    if (renderNoChanges) renderInfo({headline: 'No changes to update.'})
-    return undefined
-  }
-
-  return {
-    baselineContent: encodeToml(baseline),
-    updatedContent: encodeToml(updated),
-  }
 }

@@ -37,7 +37,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app)).apiKey
+    apiKey = (await fetchOrCreateOrganizationApp(app.creationDefaultOptions())).apiKey
   }
 
   const usingTargets = Boolean(targeting?.length)

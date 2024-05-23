@@ -186,7 +186,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async commonDeployConfig(apiKey: string): Promise<{[key: string]: any} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transform?.(this.configuration) as {[key: string]: unknown} | undefined
+    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration) as
+      | {[key: string]: unknown}
+      | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
     return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }
@@ -363,7 +365,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-        const handle = `${subscription.topic}${subscription.uri}`
+        const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
         return hashString(handle).substring(0, 30)
     }
   }

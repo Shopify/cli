@@ -35,6 +35,11 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "bundle": {
+      "dependsOn": [
+        "build"
+      ]
     }
   },
   "extends": "@nx/workspace/presets/npm.json",
@@ -44,7 +49,9 @@
       "runner": "@nx/workspace/tasks-runners/default",
       "options": {
         "cacheableOperations": [
-          "build"
+          "build",
+          "build:code",
+          "build:types"
         ],
         "runtimeCacheInputs": [
           "node bin/cache-inputs.js || node ../../bin/cache-inputs.js || node ../bin/cache-inputs.js"

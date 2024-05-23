@@ -41,7 +41,7 @@ describe('webhook_subscription', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.reverseTransform!(object)
+      const result = webhookSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({

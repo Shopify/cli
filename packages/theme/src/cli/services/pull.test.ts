@@ -24,7 +24,7 @@ describe('pull', () => {
 
       // Then
       expect(result).toBeTruthy()
-      await rmdir(root)
+      await rmdir(root, {force: true})
     })
   })
 })

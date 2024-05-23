@@ -9,13 +9,18 @@ import {
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../context.js'
+import {searchForAppsByNameFactory} from '../dev/prompt-helpers.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedApp = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id)
+  const selectedApp = await selectAppPrompt(
+    searchForAppsByNameFactory(developerPlatformClient, org.id),
+    apps,
+    hasMorePages,
+  )
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
 }
@@ -29,6 +34,13 @@ export function extensionTypeStrategy(specs: ExtensionSpecification[], type?: st
   return spec?.uidStrategy
 }
 
+/**
+ * Given an app from the platform, return a top-level app configuration object to use locally.
+ *
+ * The current active app version is used as the source for configuration.
+ *
+ * @returns - a top-level app configuration object, or undefined if there's no active app version to use.
+ */
 export async function fetchAppRemoteConfiguration(
   remoteApp: MinimalOrganizationApp,
   developerPlatformClient: DeveloperPlatformClient,
@@ -40,18 +52,31 @@ export async function fetchAppRemoteConfiguration(
     activeAppVersion?.appModuleVersions.filter(
       (module) => extensionTypeStrategy(specifications, module.specification?.identifier) !== 'uuid',
     ) || []
+
+  // This might be droppable -- if remote apps always have an active version and some modules?
   if (appModuleVersionsConfig.length === 0) return undefined
+
   const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
     specifications,
     flags,
   ) as unknown as SpecsAppConfiguration
   return specifications.reduce(
-    (simplifiedConfiguration, spec) => spec.simplify?.(simplifiedConfiguration) ?? simplifiedConfiguration,
+    (simplifiedConfiguration, spec) =>
+      spec.simplifyMergedRemoteConfig?.(simplifiedConfiguration) ?? simplifiedConfiguration,
     remoteConfiguration,
   )
 }
 
+/**
+ * Given a set of modules provided by the platform, return a top-level app configuration object to use locally.
+ *
+ * Some modules may have transformations configured, provided by the module's specification. The configurations,
+ * transformed or not, are merged together into a single object.
+ *
+ * @param configRegistrations - modules provided by the platform. The caller is expected to filter to those relevant to top-level app configuration.
+ * @returns a top-level app configuration object
+ */
 export function remoteAppConfigurationExtensionContent(
   configRegistrations: AppModuleVersion[],
   specifications: ExtensionSpecification[],
@@ -67,7 +92,7 @@ export function remoteAppConfigurationExtensionContent(
     const config = module.config
     if (!config) return
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {flags}) ?? config)
+    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.transformRemoteToLocal?.(config, {flags}) ?? config)
   })
 
   return {...remoteAppConfig}

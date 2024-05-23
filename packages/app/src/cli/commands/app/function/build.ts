@@ -22,7 +22,7 @@ export default class FunctionBuild extends Command {
     const {flags} = await this.parse(FunctionBuild)
     await inFunctionContext({
       path: flags.path,
-      configName: flags.config,
+      userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
         await buildFunctionExtension(ourFunction, {
           app,

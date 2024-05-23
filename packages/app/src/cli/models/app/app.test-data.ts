@@ -1,4 +1,13 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
+import {
+  App,
+  AppConfiguration,
+  AppConfigurationSchema,
+  AppInterface,
+  CurrentAppConfiguration,
+  LegacyAppConfiguration,
+  WebType,
+  getAppVersionedSchema,
+} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -14,6 +23,7 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
   ActiveAppVersion,
+  AppVersionIdentifiers,
   AssetUrlSchema,
   CreateAppOptions,
   DeveloperPlatformClient,
@@ -31,7 +41,7 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/g
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -77,7 +87,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 
   const newApp = new App({
     name: app.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     directory: app.directory ?? '/tmp/project',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
@@ -95,9 +104,9 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
     errors: app.errors,
-    specifications: app.specifications,
-    configSchema: app.configSchema,
-    remoteFlags: app.remoteFlags,
+    specifications: app.specifications ?? [],
+    configSchema: app.configSchema ?? AppConfigurationSchema,
+    remoteFlags: app.remoteFlags ?? [],
   })
 
   if (app.updateDependencies) {
@@ -114,7 +123,10 @@ interface TestAppWithConfigOptions {
   config: object
 }
 
-export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+export function testAppWithLegacyConfig({
+  app = {},
+  config = {},
+}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
     path: '',
     scopes: '',
@@ -122,17 +134,17 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
     extension_directories: [],
     ...config,
   }
-  return testApp({...app, configuration})
+  return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
   const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app
+  return app as AppInterface<CurrentAppConfiguration>
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -670,6 +682,150 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       registrationLimit: 100,
     },
   },
+  {
+    name: 'Flow Action',
+    externalName: 'Flow Action',
+    identifier: 'flow_action',
+    externalIdentifier: 'flow_action',
+    gated: true,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 100,
+    },
+  },
+  {
+    name: 'Flow Template',
+    externalName: 'Flow Template',
+    externalIdentifier: 'flow_template',
+    identifier: 'flow_template',
+    gated: true,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 300,
+    },
+  },
+  {
+    name: 'Flow Trigger',
+    externalName: 'Flow Trigger',
+    externalIdentifier: 'flow_trigger',
+    identifier: 'flow_trigger',
+    gated: true,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 100,
+    },
+  },
+  {
+    name: 'POS UI Extension',
+    externalName: 'POS UI',
+    externalIdentifier: 'pos_ui',
+    identifier: 'pos_ui_extension',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 50,
+    },
+  },
+  {
+    name: 'Web Pixel Extension',
+    externalName: 'Web Pixel',
+    externalIdentifier: 'web_pixel',
+    identifier: 'web_pixel_extension',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Branding',
+    externalName: 'Branding',
+    externalIdentifier: 'branding',
+    identifier: 'branding',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'App access',
+    externalName: 'App access',
+    externalIdentifier: 'app_access',
+    identifier: 'app_access',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Webhooks',
+    externalName: 'Webhooks',
+    externalIdentifier: 'webhooks',
+    identifier: 'webhooks',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Privacy Compliance Webhooks',
+    externalName: 'Privacy Compliance Webhooks',
+    externalIdentifier: 'privacy_compliance_webhooks',
+    identifier: 'privacy_compliance_webhooks',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'App Proxy',
+    externalName: 'App Proxy',
+    externalIdentifier: 'app_proxy',
+    identifier: 'app_proxy',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Point Of Sale Configuration',
+    externalName: 'Point Of Sale Configuration',
+    externalIdentifier: 'point_of_sale',
+    identifier: 'point_of_sale',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'App Home',
+    externalName: 'App Home',
+    externalIdentifier: 'app_home',
+    identifier: 'app_home',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
 ]
 
 export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
@@ -1006,7 +1162,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
-    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
@@ -1014,7 +1170,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
-    release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
+    release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
       Promise.resolve(convertedToTransferDisabledStoreResponse),
