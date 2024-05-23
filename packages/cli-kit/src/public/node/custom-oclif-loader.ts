@@ -28,7 +28,8 @@ export class ShopifyConfig extends Config {
       const aIndex = oclifPlugins.indexOf(pluginAliasA)
       const bIndex = oclifPlugins.indexOf(pluginAliasB)
 
-      // Hydrogen has higher priority than core plugins to override the custom init method.
+      // Hydrogen has higher priority than core plugins. This way a user can have an older version of cli-hydrogen in their project.
+      // And the Hydrogen team can load a local version for testing.
       if (aCommand.pluginType === 'core' && bCommand.pluginAlias === '@shopify/cli-hydrogen') {
         // If b is hydrogen and a is core sort b first
         return 1
