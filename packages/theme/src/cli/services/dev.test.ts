@@ -1,11 +1,18 @@
 import {showDeprecationWarnings, refreshTokens, dev} from './dev.js'
+import {startDevServer} from '../utilities/theme-environment.js'
+import {mountThemeFileSystem} from '../utilities/theme-fs.js'
+import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/ruby')
+vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('../utilities/theme-environment.js')
+vi.mock('../utilities/theme-fs.js')
 
 describe('dev', () => {
   const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
@@ -22,6 +29,32 @@ describe('dev', () => {
     'theme-editor-sync': false,
     'dev-preview': false,
   }
+  const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
+
+  describe('Dev-Preview Implementation', async () => {
+    test('calls startDevServer with the correct arguments when the `dev-preview` option is provided', async () => {
+      // Given
+      vi.mocked(fetchChecksums).mockResolvedValue([])
+      vi.mocked(mountThemeFileSystem).mockResolvedValue(localThemeFileSystem)
+      vi.mocked(startDevServer).mockResolvedValue()
+      const devOptions = {...options, 'dev-preview': true, 'theme-editor-sync': true}
+
+      // When
+      await dev(devOptions)
+
+      // Then
+      expect(startDevServer).toHaveBeenCalledWith(
+        options.theme,
+        {
+          session: {...adminSession, storefrontToken: 'my-storefront-token'},
+          remoteChecksums: [],
+          localThemeFileSystem,
+          themeEditorSync: true,
+        },
+        expect.any(Function),
+      )
+    })
+  })
 
   describe('execCLI2', async () => {
     test('runs theme serve on CLI2 without passing a token when no password is used', async () => {

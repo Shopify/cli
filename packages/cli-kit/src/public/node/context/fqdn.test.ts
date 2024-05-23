@@ -1,4 +1,4 @@
-import {partnersFqdn, shopifyDevelopersFqdn, identityFqdn, normalizeStoreFqdn, businessPlatformFqdn} from './fqdn.js'
+import {partnersFqdn, appManagementFqdn, identityFqdn, normalizeStoreFqdn, businessPlatformFqdn} from './fqdn.js'
 import {spinFqdn, isSpinEnvironment} from '../context/spin.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {expect, describe, test, vi} from 'vitest'
@@ -42,13 +42,13 @@ describe('partners', () => {
   })
 })
 
-describe('shopifyDevelopersFqdn', () => {
+describe('appManagementFqdn', () => {
   test('returns the local fqdn when the environment is local', async () => {
     // Given
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
 
     // When
-    const got = await shopifyDevelopersFqdn()
+    const got = await appManagementFqdn()
 
     // Then
     expect(got).toEqual('app.shopify.myshopify.io')
@@ -59,7 +59,7 @@ describe('shopifyDevelopersFqdn', () => {
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
 
     // When
-    const got = await shopifyDevelopersFqdn()
+    const got = await appManagementFqdn()
 
     // Then
     expect(got).toEqual('shopify.com')
@@ -71,7 +71,7 @@ describe('shopifyDevelopersFqdn', () => {
     vi.mocked(spinFqdn).mockResolvedValue('spin.com')
 
     // When
-    const got = await shopifyDevelopersFqdn()
+    const got = await appManagementFqdn()
 
     // Then
     expect(got).toEqual('app.shopify.spin.com')

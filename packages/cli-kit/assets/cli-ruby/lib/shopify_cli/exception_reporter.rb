@@ -64,6 +64,7 @@ module ShopifyCLI
 
     def self.report_error?(context:)
       return false if Environment.development?
+      return false unless Environment.interactive?
 
       CLI::UI::Prompt.ask(context.message("core.error_reporting.report_error.question")) do |handler|
         handler.option(context.message("core.error_reporting.report_error.yes")) { |_| true }

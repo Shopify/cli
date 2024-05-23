@@ -23,18 +23,22 @@ export interface EnsureDeploymentIdsPresenceOptions {
 
 export interface RemoteSource {
   uuid: string
+  uid?: string
   type: string
   id: string
   title: string
   draftVersion?: {config: string}
+  activeVersion?: {config: string}
 }
 
 export interface LocalSource {
+  uid?: string
   localIdentifier: string
   graphQLType: string
   type: string
   handle: string
   contextValue: string
+  configuration?: object
 }
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {

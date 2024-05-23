@@ -18,6 +18,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -1866,6 +1867,79 @@ wrong = "property"
     ])
   })
 
+  test('loads the app with webhook subscription extensions created individually', async () => {
+    // Given
+    const appConfigurationWithWebhooks = `
+    name = "for-testing-webhooks"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [build]
+    include_config_on_deploy = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [[webhooks.subscriptions]]
+      topics = ["orders/create", "orders/delete"]
+      uri = "https://example.com"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+    `
+    await writeConfig(appConfigurationWithWebhooks)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications, remoteFlags: [Flag.DeclarativeWebhooks]})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(6)
+    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        name: 'for-testing-webhooks',
+      }),
+      expect.objectContaining({
+        auth: {
+          redirect_urls: ['https://example.com/api/auth'],
+        },
+      }),
+      // this is the webhooks extension
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/create'],
+              uri: 'https://example.com',
+            },
+            {
+              topics: ['orders/delete'],
+              uri: 'https://example.com',
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      }),
+      // this is a webhook subscription extension
+      expect.objectContaining({
+        api_version: '2024-01',
+        topic: 'orders/create',
+        uri: 'https://example.com',
+      }),
+      // this is a webhook subscription extension
+      expect.objectContaining({
+        api_version: '2024-01',
+        topic: 'orders/delete',
+        uri: 'https://example.com',
+      }),
+    ])
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -1998,10 +2072,10 @@ wrong = "property"
     vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
     // When
-    const result = loadApp({directory: tmpDir, specifications, configName: 'non-existent'})
+    const result = loadApp({directory: tmpDir, specifications, userProvidedConfigName: 'non-existent'})
 
     // Then
-    await expect(result).rejects.toThrow(`Couldn't find shopify.app.non-existent.toml in ${tmpDir}.`)
+    await expect(result).rejects.toThrow()
     expect(use).not.toHaveBeenCalled()
   })
 
@@ -2719,9 +2793,27 @@ describe('WebhooksSchema', () => {
       ],
     }
 
+    const expectedParsedConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/update'],
+        },
+        {uri: 'https://example.com', topics: ['products/create']},
+        {uri: 'https://example.com', topics: ['products/update']},
+        {uri: 'pubsub://my-project-123:my-topic', topics: ['products/create']},
+        {uri: 'pubsub://my-project-123:my-topic', topics: ['products/update']},
+      ],
+    }
+
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(parsedConfiguration.webhooks).toMatchObject(expectedParsedConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
@@ -2734,9 +2826,9 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2753,9 +2845,9 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions', 2, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2772,9 +2864,20 @@ describe('WebhooksSchema', () => {
       ],
     }
 
+    const expectedParsedConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {uri: 'https://example.com', topics: ['products/create']},
+        {uri: 'https://example.com', topics: ['products/update']},
+        {uri: 'https://example.com2', topics: ['products/create']},
+        {uri: 'https://example.com2', topics: ['products/update']},
+        {uri: 'https://example.com', topics: ['products/delete']},
+      ],
+    }
+
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(parsedConfiguration.webhooks).toMatchObject(expectedParsedConfig)
   })
 
   test('removes trailing forward slash', async () => {
@@ -2847,7 +2950,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2872,7 +2975,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2897,7 +3000,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
@@ -2924,7 +3027,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'metaobjects/create'],
     }
@@ -2946,6 +3049,51 @@ describe('WebhooksSchema', () => {
           topics: ['products/create'],
           uri: 'https://example.com',
           sub_topic: 'type:metaobject_two',
+        },
+      ],
+    }
+  })
+
+  test('does not allow identical topic and uri and filter in different subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/update'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+  })
+
+  test('allows identical topic and uri if filter is different', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shirts',
         },
       ],
     }

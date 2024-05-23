@@ -19,7 +19,6 @@ const external = [
   'esbuild',
   'lightningcss',
   '@ast-grep/napi',
-  'npm',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -28,6 +27,9 @@ const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 // Find theme-check-node's config yml files
 const themePath = require.resolve('@shopify/theme-check-node')
 const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
+
+const themeUpdaterPath = require.resolve('@shopify/theme-check-docs-updater')
+const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
 const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/lib/generator-templates/**/*')
@@ -81,6 +83,10 @@ esBuild({
         {
           from: [configYmlPath],
           to: ['./dist/configs/'],
+        },
+        {
+          from: [themeUpdaterDataPath],
+          to: ['./dist/data/'],
         },
         {
           from: [hydrogenTemplateAssets],

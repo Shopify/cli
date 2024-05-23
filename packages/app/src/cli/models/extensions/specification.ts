@@ -32,6 +32,7 @@ export interface SimplifyConfig {
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
+type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -64,9 +65,16 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   transform?: (content: object) => object
   reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
   simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
-  extensionManagedInToml?: boolean
-  multipleModuleConfigPath?: string
+  uidStrategy: UidStrategy
 }
+
+/**
+ * Extension specification, explicitly marked as having taken remote configuration values into account.
+ */
+export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> =
+  ExtensionSpecification<TConfiguration> & {
+    loadedRemoteSpecs: true
+  }
 
 /**
  * These fields are forbidden when creating a new ExtensionSpec
@@ -120,8 +128,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.reverseTransform,
     simplify: spec.simplify,
     experience: spec.experience ?? 'extension',
-    extensionManagedInToml: spec.extensionManagedInToml ?? false,
-    multipleModuleConfigPath: spec.multipleModuleConfigPath,
+    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
   return {...defaults, ...spec}
 }
@@ -140,8 +147,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   simplify?: SimplifyConfig
-  extensionManagedInToml?: boolean
-  multipleModuleConfigPath?: string
+  uidStrategy?: UidStrategy
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -153,9 +159,8 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transform: resolveAppConfigTransform(spec.transformConfig),
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     simplify: resolveSimplifyAppConfig(spec.simplify),
-    extensionManagedInToml: spec.extensionManagedInToml,
-    multipleModuleConfigPath: spec.multipleModuleConfigPath,
     experience: 'configuration',
+    uidStrategy: spec.uidStrategy ?? 'single',
   })
 }
 

@@ -1,5 +1,5 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
-import {ShopifyDevelopersClient} from './developer-platform-client/shopify-developers-client.js'
+import {AppManagementClient} from './developer-platform-client/app-management-client.js'
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
@@ -12,12 +12,12 @@ import {
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../api/graphql/generate_signed_upload_url.js'
+
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../api/graphql/convert_dev_to_test_store.js'
+import {
+  ConvertDevToTransferDisabledSchema,
+  ConvertDevToTransferDisabledStoreVariables,
+} from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {
@@ -25,9 +25,9 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../api/graphql/app_version_by_tag.js'
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../api/graphql/app_versions_diff.js'
+import {AppReleaseSchema} from '../api/graphql/app_release.js'
+import {AppVersionByTagSchema} from '../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../services/webhook/request-topics.js'
@@ -47,6 +47,7 @@ import {
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -59,17 +60,51 @@ interface SelectDeveloperPlatformClientOptions {
   organization?: Organization
 }
 
+export interface AppVersionIdentifiers {
+  appVersionId: number
+  versionId: string
+}
+
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) clients.push(new ShopifyDevelopersClient())
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
   return clients
+}
+
+/**
+ * Attempts to load an app's configuration in order to select a developer platform client.
+ *
+ * The provided options are a subset of what is common across most services.
+ *
+ * @param directory - The working directory for this command (possibly via `--path`)
+ * @param configName - An optional configuration file name to force, provided by the developer
+ * @param developerPlatformClient - An optional developer platform client to use, forced by the developer
+ */
+export async function sniffServiceOptionsAndAppConfigToSelectPlatformClient(options: {
+  directory: string
+  configName?: string
+  developerPlatformClient?: DeveloperPlatformClient
+}): Promise<DeveloperPlatformClient> {
+  if (options.developerPlatformClient) {
+    return options.developerPlatformClient
+  }
+  try {
+    const {configuration} = await loadAppConfiguration(options)
+    const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+    return developerPlatformClient
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    // If the app is invalid, we really don't care at this point. This function is purely responsible for selecting
+    // a client.
+    return new PartnersClient()
+  }
 }
 
 export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) {
     if (organization) return selectDeveloperPlatformClientByOrg(organization)
     return selectDeveloperPlatformClientByConfig(configuration)
   }
@@ -77,13 +112,13 @@ export function selectDeveloperPlatformClient({
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
-  if (organization.source === OrganizationSource.BusinessPlatform) return new ShopifyDevelopersClient()
+  if (organization.source === OrganizationSource.BusinessPlatform) return new AppManagementClient()
   return new PartnersClient()
 }
 
 function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
   if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
-    return new ShopifyDevelopersClient()
+    return new AppManagementClient()
   return new PartnersClient()
 }
 
@@ -120,6 +155,17 @@ export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
 }
 
+type WithUserErrors<T> = T & {
+  userErrors: {
+    field: string[]
+    message: string
+  }[]
+}
+
+export type AssetUrlSchema = WithUserErrors<{
+  assetUrl: string
+}>
+
 export interface DeveloperPlatformClient {
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
@@ -131,23 +177,25 @@ export interface DeveloperPlatformClient {
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
-  specifications: (appId: string) => Promise<RemoteSpecification[]>
+  specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (appId: string) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (app: MinimalAppIdentifiers) => Promise<AllAppExtensionRegistrationsQuerySchema>
-  appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
+  appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
-  appVersionByTag: (input: AppVersionByTagVariables) => Promise<AppVersionByTagSchema>
-  appVersionsDiff: (input: AppVersionsDiffVariables) => Promise<AppVersionsDiffSchema>
+  appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
+  appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
-  generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
+  generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
-  release: (input: AppReleaseVariables) => Promise<AppReleaseSchema>
-  convertToTestStore: (input: ConvertDevToTestStoreVariables) => Promise<ConvertDevToTestStoreSchema>
+  release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
+  convertToTransferDisabledStore: (
+    input: ConvertDevToTransferDisabledStoreVariables,
+  ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
   sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>

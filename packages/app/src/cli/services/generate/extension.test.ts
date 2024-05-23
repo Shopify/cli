@@ -8,7 +8,7 @@ import * as extensionsCommon from '../extensions/common.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {loadApp} from '../../models/app/loader.js'
 import * as functionBuild from '../function/build.js'
-import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
@@ -468,6 +468,7 @@ async function createFromTemplate({
     extensionTemplate: specification,
     app: await loadApp({directory: appDirectory, specifications}),
     extensionChoices: [{index: 0, name, flavor: extensionFlavor}],
+    developerPlatformClient: testDeveloperPlatformClient(),
   })
   return result[0]!.directory
 }

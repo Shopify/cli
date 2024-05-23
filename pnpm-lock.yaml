@@ -149,8 +149,8 @@ importers:
         specifier: 8.0.0
         version: 8.0.0
       '@shopify/theme-check-node':
-        specifier: 2.5.0
-        version: 2.5.0
+        specifier: 2.5.1
+        version: 2.5.1
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -240,14 +240,14 @@ importers:
         specifier: 3.3.2
         version: 3.3.2
       '@oclif/plugin-plugins':
-        specifier: 5.0.19
-        version: 5.0.19
+        specifier: 5.1.2
+        version: 5.1.2
       '@shopify/app':
         specifier: 3.60.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe
-        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe(react-dom@17.0.2)(react@18.3.1)'
+        specifier: 0.0.0-next-65239c7-20240523044243
+        version: 0.0.0-next-65239c7-20240523044243(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.60.0
         version: link:../cli-kit
@@ -263,9 +263,6 @@ importers:
       esbuild:
         specifier: 0.19.8
         version: 0.19.8
-      npm:
-        specifier: 10.7.0
-        version: 10.7.0
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
@@ -669,11 +666,11 @@ importers:
         specifier: 3.60.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 2.5.0
-        version: 2.5.0
+        specifier: 2.5.1
+        version: 2.5.1
       '@shopify/theme-language-server-node':
-        specifier: 1.11.0
-        version: 1.11.0
+        specifier: 1.11.1
+        version: 1.11.1
       yaml:
         specifier: 2.3.2
         version: 2.3.2
@@ -2992,11 +2989,22 @@ packages:
     resolution: {integrity: sha512-Qq8l06rSDTZtxgNIDpTeXHrin9C30INNbPfnR2CNcEsCmfqyVQb4USPEuRb0xg5wiaLKU9r4IAatMqiCgdzG6A==}
     dependencies:
       '@bugsnag/browser': 7.22.7
-      '@bugsnag/node': 7.22.7
+      '@bugsnag/node': 7.23.0
     dev: false
 
   /@bugsnag/node@7.22.7:
     resolution: {integrity: sha512-Ud8vpX9UkGxoWAk7OigyR7w1eycbsE5uv5KZx0aWiqDPXylvICd42V5ZiWstpkdm9IVFo9AQ4+gmerHPe4Lwrg==}
+    dependencies:
+      '@bugsnag/core': 7.22.7
+      byline: 5.0.0
+      error-stack-parser: 2.1.4
+      iserror: 0.0.2
+      pump: 3.0.0
+      stack-generator: 2.0.10
+    dev: false
+
+  /@bugsnag/node@7.23.0:
+    resolution: {integrity: sha512-eXA8/h+J2booEMlKsuRl1NAszebwm4KZ9zxCSg/xN4sw5boXia7kMifLf8QTqk+UBtIhNKBsyQQKHXbawKyE6Q==}
     dependencies:
       '@bugsnag/core': 7.22.7
       byline: 5.0.0
@@ -4362,19 +4370,20 @@ packages:
       fast-levenshtein: 3.0.0
     dev: true
 
-  /@oclif/plugin-plugins@5.0.19:
-    resolution: {integrity: sha512-5Y7e75dGQe6DrKz5fJrM3Nl790d2aY/rbCjHQ4Kk9jhmOvLF00IkrPElFCVDlbLCAESSt8zqR82nb7k0hcomeg==}
+  /@oclif/plugin-plugins@5.1.2:
+    resolution: {integrity: sha512-O8LhkCoL4VKFn72Ur2D9zB3a7ntgIrlOzjhRnND6cwsoA0FBeqNi0Jz8pzvJzLv7fZCN9O6kxNBN/Zmkb7rgJg==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 3.26.5
       chalk: 5.3.0
       debug: 4.3.4(supports-color@8.1.1)
-      npm: 10.7.0
+      npm: 10.8.0
       npm-package-arg: 11.0.2
       npm-run-path: 5.3.0
       object-treeify: 4.0.1
-      semver: 7.6.0
-      validate-npm-package-name: 5.0.0
+      semver: 7.6.2
+      validate-npm-package-name: 5.0.1
+      which: 4.0.0
       yarn: 1.22.22
     transitivePeerDependencies:
       - supports-color
@@ -4910,6 +4919,63 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /@shopify/cli-hydrogen@0.0.0-next-65239c7-20240523044243(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-B5+/Oy1NC4DGkwPmrRAieXoZfe5hZ5kyQy86rmXlp+s0Xyx7gMpq2LJa0ziis97eGf5XdKMPidpiHwWj05JzzA==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@graphql-codegen/cli': ^5.0.2
+      '@remix-run/dev': ^2.1.0
+      '@shopify/hydrogen-codegen': 0.0.0-next-65239c7-20240523044243
+      '@shopify/mini-oxygen': 0.0.0-next-65239c7-20240523044243
+      graphql-config: ^5.0.3
+      vite: 4.4.9
+    peerDependenciesMeta:
+      '@graphql-codegen/cli':
+        optional: true
+      '@remix-run/dev':
+        optional: true
+      '@shopify/hydrogen-codegen':
+        optional: true
+      '@shopify/mini-oxygen':
+        optional: true
+      graphql-config:
+        optional: true
+      vite:
+        optional: true
+    dependencies:
+      '@ast-grep/napi': 0.11.0
+      '@oclif/core': 3.26.5
+      '@shopify/cli-kit': 3.60.0
+      '@shopify/oxygen-cli': 4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@3.60.0)
+      '@shopify/plugin-cloudflare': 3.60.0
+      ansi-escapes: 6.2.0
+      cli-truncate: 4.0.0
+      diff: 5.1.0
+      fs-extra: 11.1.0
+      get-port: 7.1.0
+      gunzip-maybe: 1.4.2
+      prettier: 2.8.8
+      semver: 7.5.4
+      source-map: 0.7.4
+      source-map-support: 0.5.21
+      tar-fs: 2.1.1
+      tempy: 3.0.0
+      ts-morph: 20.0.0
+      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
+    optionalDependencies:
+      '@parcel/watcher': 2.4.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - bufferutil
+      - encoding
+      - react
+      - react-devtools-core
+      - react-dom
+      - supports-color
+      - utf-8-validate
+    dev: false
+
   /@shopify/cli-kit@3.60.0:
     resolution: {integrity: sha512-+XJmEPqKy+ZBa6EMYr06Z5O8RhgTl/LaCya+rQWdenBNlXkJNkmsQ571nglOZdfPakjuRcFfWKe5jL8yj2vonA==}
     engines: {node: '>=18.12.0'}
@@ -5067,8 +5133,8 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.4.4(@oclif/core@3.26.5)(@shopify/cli-kit@3.60.0):
-    resolution: {integrity: sha512-vCbI9pQyTzBTIiSMWgXkbgurhYt1Dr/MQfpCUYFwCGfRuLhRoVW25sxJHiXxyp8xY10Kx95rYWJrRq4KBQe18w==}
+  /@shopify/oxygen-cli@4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@3.60.0):
+    resolution: {integrity: sha512-bh9deBzXYs3wa45o+87kD3MZPQcDbEHgfb76jOiOtf0oz1p1YOZzWXehg2UlaYP4h/uJjkmriXivPlwNRVoAVg==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
@@ -5078,7 +5144,7 @@ packages:
     dependencies:
       '@bugsnag/core': 7.22.7
       '@bugsnag/js': 7.22.7
-      '@bugsnag/node': 7.22.7
+      '@bugsnag/node': 7.23.0
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': 3.60.0
       async: 3.2.5
@@ -5195,8 +5261,8 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@2.5.0:
-    resolution: {integrity: sha512-MlUa0pszA+ruW+a5wpZ1tZONAJ1BpfRrRNCuFDQ359nKJ8EPNms2e8AbjsMXLmXBeTwIdrlmE5ex8gdA4ezEag==}
+  /@shopify/theme-check-common@2.5.1:
+    resolution: {integrity: sha512-m/rBrsCrOx8WdPRYi3HkpFPScyIoEgJ9hTIrhAYIeXDRJTSrQARDXHAqCDrFZ8Q0UIru2sEh25Ttlpr53z3KIw==}
     dependencies:
       '@shopify/liquid-html-parser': 2.0.3
       cross-fetch: 4.0.0
@@ -5209,33 +5275,33 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@2.5.0:
-    resolution: {integrity: sha512-AsG3IwYU4VrvYvOE8uPNnlWDfGBWIhv3h5AQ0fmq9qEdKX1Htek419LNxbRM5cwsR6LE5fi22R1LACEec17IsQ==}
+  /@shopify/theme-check-docs-updater@2.5.1:
+    resolution: {integrity: sha512-z1S62V2OVVFACWTd8QqoK4tBGl9jT43NuGpImRruS9nwiuzR9XUDR87lo7MVX1gZAF2aiQHbhWw5n/kxE09aCg==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 2.5.0
+      '@shopify/theme-check-common': 2.5.1
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@2.5.0:
-    resolution: {integrity: sha512-UgVTWn+T3orz1LpFuS1+VlJXD009SAlliupB1bF4IFA6NdcS47U/KVC7eX8sGgpSG+eX3g9uXtvN1wDaeRcDtg==}
+  /@shopify/theme-check-node@2.5.1:
+    resolution: {integrity: sha512-YuZ0nyVNxXC2g9dFLORQFe/vXq43aP2umt17uB+u1cPEERLTdRpsxEpE6yzkbXINlDVTpoyasQ571XIAlHHpOA==}
     dependencies:
-      '@shopify/theme-check-common': 2.5.0
-      '@shopify/theme-check-docs-updater': 2.5.0
+      '@shopify/theme-check-common': 2.5.1
+      '@shopify/theme-check-docs-updater': 2.5.1
       glob: 8.1.0
       yaml: 2.3.2
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-common@1.11.0:
-    resolution: {integrity: sha512-ZXcan+jCTlhzoJnxfJfzcy2rmOAq5aN9V3c5pGjAIzeRnW2nNywH0+4LyUv4YSaovlUxWzakD2wxF+6lPsLEjw==}
+  /@shopify/theme-language-server-common@1.11.1:
+    resolution: {integrity: sha512-JvCdNCtNPCznipnsvB49ErhNa2NLtAKDnfAaiEhmDX7uiqBRkYklOXYZweSdlZm7LWiC/3gE/YLI4wc7f/cDTg==}
     dependencies:
       '@shopify/liquid-html-parser': 2.0.3
-      '@shopify/theme-check-common': 2.5.0
+      '@shopify/theme-check-common': 2.5.1
       '@vscode/web-custom-data': 0.4.9
       vscode-json-languageservice: 5.3.11
       vscode-languageserver: 8.1.0
@@ -5245,12 +5311,12 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@1.11.0:
-    resolution: {integrity: sha512-pwMFOvG1kM7unBzNqgMd2x9xVKCjiTGy2s44IykjU7lrmMth3tTzWJf2zjl1k8coH0yJcn+U3lB9zb7V6wi/2w==}
+  /@shopify/theme-language-server-node@1.11.1:
+    resolution: {integrity: sha512-PAFTqYaIhSzg+VBrSxsSV6qEHSoG5LE8BPAatfuT3kiZSgNFsA1Ela5Sh9em6fdAX2kfjlx9xloI9GpPfGm1oA==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 2.5.0
-      '@shopify/theme-check-node': 2.5.0
-      '@shopify/theme-language-server-common': 1.11.0
+      '@shopify/theme-check-docs-updater': 2.5.1
+      '@shopify/theme-check-node': 2.5.1
+      '@shopify/theme-language-server-common': 1.11.1
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -6962,6 +7028,7 @@ packages:
     resolution: {integrity: sha512-SW9lzGTLvWTP1AY8xeAMZimqDrIaSdLQUcVr9DMef51niJ022Ri87SwRRKYm4A6iHfkPaiVUu/Duw2Wc4J7kKg==}
     dependencies:
       semver: 7.5.4
+    dev: true
 
   /byline@5.0.0:
     resolution: {integrity: sha512-s6webAy+R4SR8XVuJWt2V2rGvhnrhxN+9S15GNuTK3wKPOXFF6RNc+8ug2XhH+2s4f+uudG4kUVYmYOQWL2g0Q==}
@@ -10043,6 +10110,11 @@ packages:
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  /isexe@3.1.1:
+    resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
+    engines: {node: '>=16'}
+    dev: false
+
   /isobject@2.1.0:
     resolution: {integrity: sha512-+OUdGJlgjOBZDfxnDjYYG6zp487z0JGNQq3cYQYg5f5hKR+syHMsaztzGeml/4kGG55CSpKSpWTY+jYGgsHLgA==}
     engines: {node: '>=0.10.0'}
@@ -10978,7 +11050,7 @@ packages:
       hosted-git-info: 7.0.2
       proc-log: 4.2.0
       semver: 7.5.4
-      validate-npm-package-name: 5.0.0
+      validate-npm-package-name: 5.0.1
     dev: false
 
   /npm-run-path@2.0.2:
@@ -11001,8 +11073,8 @@ packages:
     dependencies:
       path-key: 4.0.0
 
-  /npm@10.7.0:
-    resolution: {integrity: sha512-FXylyYSXNjgXx3l82BT8RSQvCoGIQ3h8YdRFGKNvo3Pv/bKscK4pdWkx/onwTpHDqGw+oeLf4Rxln9WVyxAxlQ==}
+  /npm@10.8.0:
+    resolution: {integrity: sha512-wh93uRczgp7HDnPMiLXcCkv2hagdJS0zJ9KT/31d0FoXP02+qgN2AOwpaW85fxRWkinl2rELfPw+CjBXW48/jQ==}
     engines: {node: ^18.17.0 || >=20.5.0}
     hasBin: true
     dev: false
@@ -11844,17 +11916,6 @@ packages:
       react: 17.0.2
       scheduler: 0.20.2
 
-  /react-dom@17.0.2(react@18.3.1):
-    resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
-    peerDependencies:
-      react: 17.0.2
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 18.3.1
-      scheduler: 0.20.2
-    dev: false
-
   /react-dom@18.2.0(react@18.2.0):
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -12388,6 +12449,12 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: true
+
+  /semver@7.6.2:
+    resolution: {integrity: sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==}
+    engines: {node: '>=10'}
+    hasBin: true
 
   /send@0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
@@ -12610,7 +12677,7 @@ packages:
       git-hooks-list: 3.1.0
       globby: 13.2.2
       is-plain-obj: 4.1.0
-      semver: 7.6.0
+      semver: 7.6.2
       sort-object-keys: 1.1.3
     dev: true
 
@@ -13546,15 +13613,15 @@ packages:
       querystringify: 2.2.0
       requires-port: 1.0.0
 
-  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@18.3.1):
+  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
       react: 16.8.0 - 18
       react-dom: 16.8.0 - 18
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      react: 18.3.1
-      react-dom: 17.0.2(react@18.3.1)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
     dev: false
 
   /util-arity@1.1.0:
@@ -13604,6 +13671,12 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       builtins: 5.1.0
+    dev: true
+
+  /validate-npm-package-name@5.0.1:
+    resolution: {integrity: sha512-OljLrQ9SQdOUqTaQxqL5dEfZWrXExyyWsozYlAWFawPVNuD83igl7uJD2RTkNMbniIYgt8l81eCJGIdQF7avLQ==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    dev: false
 
   /vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
@@ -13991,6 +14064,14 @@ packages:
     dependencies:
       isexe: 2.0.0
 
+  /which@4.0.0:
+    resolution: {integrity: sha512-GlaYyEb07DPxYCKhKzplCWBJtvxZcZMrL+4UkrTSJHHPyZU4mYYTv3qaOe77H7EODLSSopAUFAc6W8U4yqvscg==}
+    engines: {node: ^16.13.0 || >=18.0.0}
+    hasBin: true
+    dependencies:
+      isexe: 3.1.1
+    dev: false
+
   /why-is-node-running@2.2.2:
     resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}
     engines: {node: '>=8'}
@@ -14220,66 +14301,6 @@ packages:
   /zod@3.23.5:
     resolution: {integrity: sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==}
     dev: true
-
-  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe(react-dom@17.0.2)(react@18.3.1)':
-    resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe}
-    id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?36d1b66ec4edca33883cf215883e55f8bd888cfe'
-    name: '@shopify/cli-hydrogen'
-    version: 8.0.3
-    engines: {node: '>=18.0.0'}
-    hasBin: true
-    peerDependencies:
-      '@graphql-codegen/cli': ^5.0.2
-      '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': ^0.3.0
-      '@shopify/mini-oxygen': ^3.0.1
-      graphql-config: ^5.0.3
-      vite: 4.4.9
-    peerDependenciesMeta:
-      '@graphql-codegen/cli':
-        optional: true
-      '@remix-run/dev':
-        optional: true
-      '@shopify/hydrogen-codegen':
-        optional: true
-      '@shopify/mini-oxygen':
-        optional: true
-      graphql-config:
-        optional: true
-      vite:
-        optional: true
-    dependencies:
-      '@ast-grep/napi': 0.11.0
-      '@oclif/core': 3.26.5
-      '@shopify/cli-kit': 3.60.0
-      '@shopify/oxygen-cli': 4.4.4(@oclif/core@3.26.5)(@shopify/cli-kit@3.60.0)
-      '@shopify/plugin-cloudflare': 3.60.0
-      ansi-escapes: 6.2.0
-      cli-truncate: 4.0.0
-      diff: 5.1.0
-      fs-extra: 11.1.0
-      get-port: 7.1.0
-      gunzip-maybe: 1.4.2
-      prettier: 2.8.8
-      semver: 7.5.4
-      source-map: 0.7.4
-      source-map-support: 0.5.21
-      tar-fs: 2.1.1
-      tempy: 3.0.0
-      ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@18.3.1)
-    optionalDependencies:
-      '@parcel/watcher': 2.4.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - encoding
-      - react
-      - react-devtools-core
-      - react-dom
-      - supports-color
-      - utf-8-validate
-    dev: false
 
   file:packages/eslint-plugin-cli(eslint@8.57.0)(prettier@2.8.8)(typescript@5.2.2)(vitest@0.34.6):
     resolution: {directory: packages/eslint-plugin-cli, type: directory}

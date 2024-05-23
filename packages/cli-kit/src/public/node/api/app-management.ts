@@ -1,5 +1,5 @@
 import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
-import {shopifyDevelopersFqdn} from '../context/fqdn.js'
+import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import Bottleneck from 'bottleneck'
 
@@ -12,7 +12,7 @@ const limiter = new Bottleneck({
 })
 
 /**
- * Executes an org-scoped GraphQL query against the Developers API.
+ * Executes an org-scoped GraphQL query against the App Management API.
  *
  * @param orgId - The organization ID.
  * @param query - GraphQL query to execute.
@@ -20,14 +20,14 @@ const limiter = new Bottleneck({
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function orgScopedShopifyDevelopersRequest<T>(
+export async function appManagementRequest<T>(
   orgId: string,
   query: string,
   token: string,
   variables?: GraphQLVariables,
 ): Promise<T> {
-  const api = 'Shopify Developers'
-  const fqdn = await shopifyDevelopersFqdn()
+  const api = 'App Management'
+  const fqdn = await appManagementFqdn()
   const url = `https://${fqdn}/organization/${orgId}/graphql`
   const result = limiter.schedule<T>(() =>
     graphqlRequest({

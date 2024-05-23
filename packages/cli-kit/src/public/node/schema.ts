@@ -8,13 +8,13 @@ export {z as zod} from 'zod'
  * @param schema - The schema to make strict.
  * @returns The result strict schema.
  */
-export function deepStrict(schema: ZodTypeAny): ZodTypeAny {
+export function deepStrict<T>(schema: T): T {
   if (schema instanceof ZodObject) {
     const shape = schema.shape
     const strictShape = Object.fromEntries(
       Object.entries(shape).map(([key, value]) => [key, deepStrict(value as ZodTypeAny)]),
     )
-    return z.object(strictShape).strict()
+    return z.object(strictShape).strict() as T
   } else if (schema instanceof ZodOptional) {
     return deepStrict(schema._def.innerType).optional()
   } else {

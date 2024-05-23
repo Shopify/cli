@@ -1,4 +1,13 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
+import {
+  App,
+  AppConfiguration,
+  AppConfigurationSchema,
+  AppInterface,
+  CurrentAppConfiguration,
+  LegacyAppConfiguration,
+  WebType,
+  getAppVersionedSchema,
+} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -12,16 +21,18 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AppVersionIdentifiers,
+  AssetUrlSchema,
+  CreateAppOptions,
+  DeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
@@ -30,7 +41,7 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/g
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -46,6 +57,8 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -74,7 +87,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 
   const newApp = new App({
     name: app.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     directory: app.directory ?? '/tmp/project',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
@@ -92,9 +104,9 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
     errors: app.errors,
-    specifications: app.specifications,
-    configSchema: app.configSchema,
-    remoteFlags: app.remoteFlags,
+    specifications: app.specifications ?? [],
+    configSchema: app.configSchema ?? AppConfigurationSchema,
+    remoteFlags: app.remoteFlags ?? [],
   })
 
   if (app.updateDependencies) {
@@ -111,7 +123,10 @@ interface TestAppWithConfigOptions {
   config: object
 }
 
-export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+export function testAppWithLegacyConfig({
+  app = {},
+  config = {},
+}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
     path: '',
     scopes: '',
@@ -119,17 +134,17 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
     extension_directories: [],
     ...config,
   }
-  return testApp({...app, configuration})
+  return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
   const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app
+  return app as AppInterface<CurrentAppConfiguration>
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -201,6 +216,7 @@ export async function testUIExtension(
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+  extension.uid = uiExtension?.uid ?? 'test-ui-extension-uid'
 
   return extension
 }
@@ -242,6 +258,32 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
     configurationPath: 'shopify.app.toml',
     directory: './',
     specification,
+  })
+
+  return extension
+}
+
+export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        access: {
+          admin: {direct_api_mode: 'online'},
+        },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      } as unknown as BaseConfigType)
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: 'shopify.app.toml',
+    directory: './',
+    specification: appAccessSpec,
   })
 
   return extension
@@ -326,6 +368,30 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   })
 
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
+}
+
+export async function testSingleWebhookSubscriptionExtension({
+  emptyConfig = false,
+  topic = 'orders/delete',
+} = {}): Promise<ExtensionInstance> {
+  // configuration should be a single webhook subscription because of how
+  // we create the extension instances in loader
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        topic,
+        api_version: '2024-01',
+        uri: 'https://my-app.com/webhooks',
+      } as unknown as BaseConfigType)
+
+  const webhooksExtension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification: appWebhookSubscriptionSpec,
+  })
+
+  return webhooksExtension
 }
 
 export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
@@ -850,14 +916,12 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
-const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
-  appVersionGenerateSignedUploadUrl: {
-    signedUploadUrl: 'signed-upload-url',
-    userErrors: [],
-  },
+const generateSignedUploadUrlResponse: AssetUrlSchema = {
+  assetUrl: 'signed-upload-url',
+  userErrors: [],
 }
 
-const convertedToTestStoreResponse = {
+const convertedToTransferDisabledStoreResponse = {
   convertDevToTestStore: {
     convertedToTestStore: true,
     userErrors: [],
@@ -945,7 +1009,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    specifications: (_appId: string) => Promise.resolve(testRemoteSpecifications),
+    specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
     templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
@@ -954,7 +1018,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
-    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
@@ -962,10 +1026,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
-    release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
-    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
-      Promise.resolve(generateSignedUploadUrlResponse),
-    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
+    generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
+      Promise.resolve(convertedToTransferDisabledStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
@@ -982,7 +1046,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     toExtensionGraphQLType: (input: string) => input,
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = {}
+  const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi
@@ -1010,5 +1074,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
 }

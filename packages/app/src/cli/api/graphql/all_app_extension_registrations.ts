@@ -55,6 +55,7 @@ export interface AllAppExtensionRegistrationsQueryVariables {
 
 export interface ExtensionRegistration {
   id: string
+  uid?: string
   uuid: string
   title: string
   type: string

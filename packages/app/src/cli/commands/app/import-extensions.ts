@@ -58,7 +58,11 @@ export default class ImportExtensions extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(ImportExtensions)
     const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+    const app: AppInterface = await loadApp({
+      specifications,
+      directory: flags.path,
+      userProvidedConfigName: flags.config,
+    })
 
     const choices = migrationChoices.map((choice) => {
       return {label: choice.label, value: choice.value}
