@@ -465,6 +465,51 @@ wrong = "property"
     await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Duplicated handle/)
   })
 
+  test('throws an error if the app has more than one print action with the same target', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "ui_extension"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.print-action.render"
+
+      [[extensions]]
+      type = "ui_extension"
+      handle = "handle-2"
+      name = "my_extension_2"
+      description = "custom description"
+
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.print-action.render"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+
+    // Create a temporary ActionExtension.js file
+    const extensionDirectory = joinPath(tmpDir, 'extensions', 'my_extension_1', 'src')
+    await mkdir(extensionDirectory)
+
+    const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+    await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
+      'Duplicated print action target "admin.product-details.print-action.render" in extensions "my_extension_1" and "my_extension_2". You can only have one print action extension per target in an app. Please remove the duplicates.',
+    )
+  })
+
   test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
     // Given
     await writeConfig(appConfiguration, {

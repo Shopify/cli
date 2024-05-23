@@ -699,21 +699,40 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   private validatePrintActionExtensionsUniqueness(allExtensions: ExtensionInstance[]) {
-    const printActionExtensions = allExtensions
-      .filter((ext) => ext.type === 'ui_extension')
-      .map((ext) => ext.configuration.extension_points as UIExtensionSchemaType['extension_points'])
-      .flat()
-      .filter((extensionPoint) => printTargets.includes(extensionPoint.target))
+    const duplicates: {[key: string]: ExtensionInstance[]} = {}
 
-    printTargets.forEach((target) => {
-      if (printActionExtensions.filter((ext) => ext.target === target).length > 1) {
-        this.abortOrReport(
-          outputContent`Duplicated target "${target}" in app. You can only have one print action extension per target in an app. Please remove the duplicates.`,
-          undefined,
-          '', // TODO: find the configuration path
-        )
-      }
-    })
+    allExtensions
+      .filter((ext) => ext.type === 'ui_extension')
+      .forEach((extension) => {
+        const points = extension.configuration.extension_points as UIExtensionSchemaType['extension_points']
+        const targets = points.flatMap((point) => point.target).filter((target) => printTargets.includes(target))
+        targets.forEach((target) => {
+          const targetExtensions = duplicates[target] ?? []
+          targetExtensions.push(extension)
+          duplicates[target] = targetExtensions
+
+          if (targetExtensions.length > 1) {
+            const extensionNames = joinWithAnd(targetExtensions.map((ext) => ext.configuration.name))
+            this.abortOrReport(
+              outputContent`Duplicated print action target "${target}" in extensions ${extensionNames}. You can only have one print action extension per target in an app. Please remove the duplicates.`,
+              undefined,
+              extension.configurationPath,
+            )
+          }
+        })
+      })
+  }
+
+  private getPrintTargets(extensionsPoints: [{target: string}] | undefined): string[] {
+    return (
+      extensionsPoints
+        ?.filter((extensionPoint: {target: string}) => printTargets.includes(extensionPoint.target))
+        .map((extensionPoint: {target: string}) => extensionPoint.target) || []
+    )
+  }
+
+  private getTargetsIntersection(targets1: string[], targets2: string[]): string[] {
+    return targets1.filter((target) => targets2.includes(target))
   }
 }
 
