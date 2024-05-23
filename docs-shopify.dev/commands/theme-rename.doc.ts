@@ -29,7 +29,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themerename',
   },
   ],
-  category: 'theme commands',
+  category: 'theme',
   related: [
   ],
 }

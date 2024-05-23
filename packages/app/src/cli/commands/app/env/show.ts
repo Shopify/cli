@@ -25,7 +25,7 @@ export default class EnvShow extends Command {
     const app: AppInterface = await loadApp({
       specifications,
       directory: flags.path,
-      configName: flags.config,
+      userProvidedConfigName: flags.config,
       mode: 'report',
     })
     outputInfo(await showEnv(app))

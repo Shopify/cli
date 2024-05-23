@@ -2,16 +2,19 @@
 export interface themepackage {
   /**
    * Disable color output.
+   * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
 
   /**
    * The path to your theme directory.
+   * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
 
   /**
    * Increase the verbosity of the logs.
+   * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
 }

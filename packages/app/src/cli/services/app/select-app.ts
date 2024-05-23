@@ -1,6 +1,6 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
-import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {Flag, fetchOrganizations} from '../dev/fetch.js'
+import {selectAppPrompt} from '../../prompts/dev.js'
+import {Flag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {
@@ -8,16 +8,25 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
+import {selectOrg} from '../context.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
-  const developerPlatformClient = selectDeveloperPlatformClient()
-  const orgs = await fetchOrganizations(developerPlatformClient)
-  const org = await selectOrganizationPrompt(orgs)
+  const org = await selectOrg()
+  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedApp = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
+  const selectedApp = await selectAppPrompt(developerPlatformClient, apps, hasMorePages, org.id)
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
   return fullSelectedApp!
+}
+
+export function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
+  if (!type) return
+  const spec = specs.find(
+    (spec) =>
+      spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
+  )
+  return spec?.uidStrategy
 }
 
 export async function fetchAppRemoteConfiguration(
@@ -28,7 +37,9 @@ export async function fetchAppRemoteConfiguration(
 ) {
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
-    activeAppVersion?.appModuleVersions.filter((module) => module.specification?.experience === 'configuration') || []
+    activeAppVersion?.appModuleVersions.filter(
+      (module) => extensionTypeStrategy(specifications, module.specification?.identifier) !== 'uuid',
+    ) || []
   if (appModuleVersionsConfig.length === 0) return undefined
   const remoteConfiguration = remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
@@ -47,7 +58,7 @@ export function remoteAppConfigurationExtensionContent(
   flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
-  const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
+  const configSpecifications = specifications.filter((spec) => spec.uidStrategy !== 'uuid')
   configRegistrations.forEach((module) => {
     const configSpec = configSpecifications.find(
       (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),

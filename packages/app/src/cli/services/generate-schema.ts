@@ -23,9 +23,10 @@ interface GenerateSchemaOptions {
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const {api_version: version, type, targeting} = extension.configuration
-  let apiKey = options.apiKey || getAppIdentifiers({app}).app
+  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
   const stdout = options.stdout
 
   if (!apiKey) {
@@ -36,7 +37,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app, developerPlatformClient)).apiKey
+    apiKey = (await fetchOrCreateOrganizationApp(app)).apiKey
   }
 
   const usingTargets = Boolean(targeting?.length)

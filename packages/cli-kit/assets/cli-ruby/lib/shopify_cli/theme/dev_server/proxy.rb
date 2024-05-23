@@ -25,8 +25,8 @@ module ShopifyCLI
       ]
 
       class Proxy
-        SESSION_COOKIE_NAME = "_secure_session_id"
-        SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=(\h+)/
+        SESSION_COOKIE_NAME = "_shopify_essential"
+        SESSION_COOKIE_REGEXP = /#{SESSION_COOKIE_NAME}=([^;]*)(;|$)/
         SESSION_COOKIE_MAX_AGE = 60 * 60 * 23 # 1 day - leeway of 1h
         IGNORED_ENDPOINTS = %w[
           shopify/monorail
@@ -58,7 +58,8 @@ module ShopifyCLI
           query = URI.decode_www_form(env["QUERY_STRING"])
           replace_templates = build_replacement_param(env)
 
-          clean_sfr_cache(env, query, headers)
+          response = set_preview_theme_id(env, query, headers)
+          return serve_response(response, env) if response
 
           response = if replace_templates.any?
             # Pass to SFR the recently modified templates in `replace_templates` or
@@ -87,16 +88,14 @@ module ShopifyCLI
             @core_endpoints << env["PATH_INFO"]
           end
 
-          body = patch_body(env, response.body)
-          body = [body] unless body.respond_to?(:each)
-          [response.code, headers, body]
+          serve_response(response, env, headers)
         end
 
         def secure_session_id
           if secure_session_id_expired?
-            @ctx.debug("Refreshing preview _secure_session_id cookie")
+            @ctx.debug("Refreshing preview _shopify_essential cookie")
             response = request("HEAD", "/", query: [[:preview_theme_id, theme_id]])
-            @secure_session_id = extract_secure_session_id_from_response_headers(response)
+            @secure_session_id = extract_shopify_essential_from_response_headers(response)
             @last_session_cookie_refresh = Time.now
           end
 
@@ -105,7 +104,18 @@ module ShopifyCLI
 
         private
 
-        def clean_sfr_cache(env, query, headers)
+        def serve_response(response, env, headers = get_response_headers(response, env))
+          body = patch_body(env, response.body)
+          body = [body] unless body.respond_to?(:each)
+          [response.code, headers, body]
+        end
+
+        def set_preview_theme_id(env, query, headers)
+          if env["PATH_INFO"].start_with?("/password")
+            @cache_cleaned = false
+            return
+          end
+
           return if @cache_cleaned
 
           @cache_cleaned = true
@@ -190,7 +200,7 @@ module ShopifyCLI
             +""
           end
 
-          expected_session_cookie = "#{SESSION_COOKIE_NAME}=#{secure_session_id}"
+          expected_session_cookie = "#{SESSION_COOKIE_NAME}=#{secure_session_id};"
 
           unless cookie_header.include?(expected_session_cookie)
             if cookie_header.include?(SESSION_COOKIE_NAME)
@@ -210,7 +220,7 @@ module ShopifyCLI
           Time.now - @last_session_cookie_refresh >= SESSION_COOKIE_MAX_AGE
         end
 
-        def extract_secure_session_id_from_response_headers(headers)
+        def extract_shopify_essential_from_response_headers(headers)
           return unless headers["set-cookie"]
 
           headers["set-cookie"][SESSION_COOKIE_REGEXP, 1]
@@ -230,9 +240,9 @@ module ShopifyCLI
             response_headers["location"].gsub!(%r{(https://#{shop})}, "http://#{host(env)}")
           end
 
-          new_session_id = extract_secure_session_id_from_response_headers(response_headers)
+          new_session_id = extract_shopify_essential_from_response_headers(response_headers)
           if new_session_id
-            @ctx.debug("New _secure_session_id cookie from response")
+            @ctx.debug("New _shopify_essential cookie from response")
             @secure_session_id = new_session_id
             @last_session_cookie_refresh = Time.now
           end

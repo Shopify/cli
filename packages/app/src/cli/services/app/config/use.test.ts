@@ -43,7 +43,6 @@ describe('use', () => {
       expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
       expect(setCachedAppInfo).not.toHaveBeenCalled()
       expect(loadAppConfiguration).not.toHaveBeenCalled()
-
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Cleared current configuration.',
         body: [
@@ -88,6 +87,8 @@ describe('use', () => {
         directory: tmp,
         configuration: appWithoutClientID.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
 
       // When
@@ -154,6 +155,8 @@ describe('use', () => {
         directory: tmp,
         configuration: app.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
 
       // When
@@ -193,6 +196,8 @@ describe('use', () => {
         directory: tmp,
         configuration: app.configuration,
         configSchema,
+        specifications: [],
+        remoteFlags: [],
       })
 
       // When
@@ -230,7 +235,13 @@ describe('use', () => {
       // Given
       const {configuration} = testApp({}, 'current')
       const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory,
+        configuration,
+        configSchema,
+        specifications: [],
+        remoteFlags: [],
+      })
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
       const options = {
@@ -254,7 +265,13 @@ describe('use', () => {
       // Given
       const {configuration} = testApp({}, 'current')
       const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory,
+        configuration,
+        configSchema,
+        specifications: [],
+        remoteFlags: [],
+      })
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
       const options = {
@@ -278,7 +295,13 @@ describe('use', () => {
       // Given
       const {configuration} = testApp({}, 'current')
       const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory,
+        configuration,
+        configSchema,
+        specifications: [],
+        remoteFlags: [],
+      })
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       vi.mocked(appFromId).mockResolvedValue(REMOTE_APP)
       createConfigFile(directory, 'shopify.app.something.toml')
@@ -288,7 +311,7 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, REMOTE_APP)
+      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, {apiKey: REMOTE_APP.apiKey, organizationId: '0'})
     })
   })
 })

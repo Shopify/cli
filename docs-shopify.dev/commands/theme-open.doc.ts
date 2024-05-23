@@ -5,8 +5,8 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'theme open',
   description: `Returns links that let you preview the specified theme. The following links are returned:
 
-  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
-  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+  - A link to the [editor](/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.
 
   If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.`,
   overviewPreviewDescription: `Opens the preview of your remote theme.`,
@@ -31,7 +31,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'themeopen',
   },
   ],
-  category: 'theme commands',
+  category: 'theme',
   related: [
   ],
 }

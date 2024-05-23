@@ -5,7 +5,10 @@ import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
+import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
+import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
+import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -13,17 +16,29 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
+import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 
+// Schemas for loading app configuration
+
+/**
+ * Schema for a freshly minted app template.
+ */
 export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
     name: zod.string().optional(),
-    scopes: zod.string().default(''),
+    scopes: zod
+      .string()
+      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
+      .default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
   .strict()
 
+/**
+ * Schema for a normal, linked app. Properties from modules are not validated.
+ */
 export const AppSchema = zod.object({
   client_id: zod.string(),
   organization_id: zod.string().optional(),
@@ -38,10 +53,40 @@ export const AppSchema = zod.object({
   web_directories: zod.array(zod.string()).optional(),
 })
 
+/**
+ * Utility schema that matches freshly minted or normal, linked, apps.
+ */
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
-export function getAppVersionedSchema(specs: ExtensionSpecification[], allowDynamicallySpecifiedConfigs = false) {
-  const isConfigSpecification = (spec: ExtensionSpecification) => spec.experience === 'configuration'
+// Types representing post-validated app configurations
+
+/**
+ * App configuration for something validated as either a freshly minted app template or a normal, linked, app.
+ *
+ * Try to avoid using this: generally you should be working with a more specific type.
+ */
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
+
+/**
+ * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
+ */
+export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
+
+/**
+ * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
+ */
+export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & SpecsAppConfiguration
+
+/**
+ * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
+ */
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
+
+export function getAppVersionedSchema(
+  specs: ExtensionSpecification[],
+  allowDynamicallySpecifiedConfigs = false,
+): typeof AppSchema {
+  const isConfigSpecification = (spec: ExtensionSpecification) => spec.uidStrategy === 'single'
   const schema = specs
     .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,17 +145,14 @@ export function usesLegacyScopesBehavior(config: AppConfiguration) {
   return false
 }
 
-export function appIsLaunchable(app: AppInterface) {
-  const frontendConfig = app?.webs?.find((web) => isWebType(web, WebType.Frontend))
-  const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
-
-  return Boolean(frontendConfig || backendConfig)
-}
-
-export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {
-  return Object.keys(configuration).filter(
-    (fieldName) => !Object.keys(AppSchema.shape).concat('path').includes(fieldName),
-  )
+/**
+ * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
+ */
+export function filterNonVersionedAppFields(configuration: object): string[] {
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path')
+  return Object.keys(configuration).filter((fieldName) => {
+    return !builtInFieldNames.includes(fieldName)
+  })
 }
 
 export enum WebType {
@@ -141,9 +183,6 @@ export const WebConfigurationSchema = zod.union([
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & SpecsAppConfiguration
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
@@ -154,26 +193,47 @@ export interface Web {
   framework?: string
 }
 
-export interface AppConfigurationInterface {
+export interface AppConfigurationInterface<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> {
   directory: string
-  configuration: AppConfiguration
-  configSchema: zod.ZodTypeAny
+  configuration: TConfig
+  configSchema: zod.ZodType<Omit<TConfig, 'path'>>
+  specifications: TModuleSpec[]
+  remoteFlags: Flag[]
 }
 
-export interface AppInterface extends AppConfigurationInterface {
+// A tweak of the normal AppInterface for loading code that needs to present something that is almost a real app, but not quite
+export interface PartialAppInterface<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
-  idEnvironmentVariableName: string
   packageManager: PackageManager
+
+  /**
+   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
+   *
+   * @returns true if the app can be launched, false otherwise
+   */
+  appIsLaunchable: () => boolean
+}
+
+export interface AppInterface<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> extends PartialAppInterface<TConfig, TModuleSpec> {
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
-  specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
-  remoteFlags: Flag[]
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -181,42 +241,44 @@ export interface AppInterface extends AppConfigurationInterface {
   preDeployValidation: () => Promise<void>
 }
 
-interface AppConstructor {
+type AppConstructor<
+  TConfig extends AppConfiguration,
+  TModuleSpec extends ExtensionSpecification,
+> = AppConfigurationInterface<TConfig, TModuleSpec> & {
   name: string
-  idEnvironmentVariableName: string
-  directory: string
   packageManager: PackageManager
-  configuration: AppConfiguration
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   modules: ExtensionInstance[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  specifications?: ExtensionSpecification[]
-  configSchema?: zod.ZodTypeAny
+  specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
 }
 
-export class App implements AppInterface {
+export class App<
+  TConfig extends AppConfiguration = AppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+> implements AppInterface<TConfig, TModuleSpec>
+{
   name: string
-  idEnvironmentVariableName: string
+  idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
   packageManager: PackageManager
-  configuration: AppConfiguration
+  configuration: TConfig
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  specifications?: ExtensionSpecification[]
+  specifications: TModuleSpec[]
   configSchema: zod.ZodTypeAny
   remoteFlags: Flag[]
-  private realExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstance[]
 
   constructor({
     name,
-    idEnvironmentVariableName,
     directory,
     packageManager,
     configuration,
@@ -229,12 +291,11 @@ export class App implements AppInterface {
     specifications,
     configSchema,
     remoteFlags,
-  }: AppConstructor) {
+  }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
-    this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
     this.packageManager = packageManager
-    this.configuration = this.configurationTyped(configuration)
+    this.configuration = configuration
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
@@ -256,7 +317,9 @@ export class App implements AppInterface {
   }
 
   get draftableExtensions() {
-    return this.realExtensions.filter((ext) => ext.isDraftable())
+    return this.realExtensions.filter(
+      (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
+    )
   }
 
   async updateDependencies() {
@@ -273,6 +336,17 @@ export class App implements AppInterface {
       const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
       if (errors) {
         throw new AbortError('Invalid function configuration', errors.join('\n'))
+      }
+    }
+
+    const extensionCollections = this.allExtensions.filter(
+      (ext) => ext.isEditorExtensionCollection,
+    ) as ExtensionInstance<EditorExtensionCollectionType>[]
+
+    if (extensionCollections.length > 0) {
+      const errors = validateExtensionsHandlesInCollection(extensionCollections, this.allExtensions)
+      if (errors) {
+        throw new AbortError('Invalid editor extension collection configuration', errors.join('\n\n'))
       }
     }
 
@@ -295,14 +369,16 @@ export class App implements AppInterface {
     })
   }
 
+  appIsLaunchable() {
+    const frontendConfig = this.webs.find((web) => isWebType(web, WebType.Frontend))
+    const backendConfig = this.webs.find((web) => isWebType(web, WebType.Backend))
+
+    return Boolean(frontendConfig || backendConfig)
+  }
+
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.build?.include_config_on_deploy
-  }
-
-  private configurationTyped(configuration: AppConfiguration) {
-    if (isLegacyAppSchema(configuration)) return configuration
-    return configuration as CurrentAppConfiguration & SpecsAppConfiguration
   }
 
   private filterDeclarativeWebhooksConfig() {
@@ -343,31 +419,45 @@ export function validateFunctionExtensionsWithUiHandle(
   return errors.length > 0 ? errors : undefined
 }
 
-function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
-  return allExtensions.find((ext) => ext.handle === handle)
+export type UIExtensionType = zod.infer<typeof UIExtensionSchema>
+
+export function validateExtensionsHandlesInCollection(
+  editorExtensionCollections: ExtensionInstance<EditorExtensionCollectionType>[],
+  allExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+
+  const allowableTypesForExtensionInCollection = ['ui_extension']
+  editorExtensionCollections.forEach((collection) => {
+    collection.configuration.inCollection.forEach((extension) => {
+      const matchingExtension = findExtensionByHandle(allExtensions, extension.handle)
+
+      if (!matchingExtension) {
+        errors.push(
+          `[${collection.handle}] editor extension collection: Add extension with handle '${extension.handle}' to local app. Local app must include extension with handle '${extension.handle}'.`,
+        )
+      } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.specification.identifier)) {
+        errors.push(
+          `[${collection.handle}] editor extension collection: Remove extension of type '${matchingExtension.specification.identifier}' from this collection. This extension type is not supported in collections.`,
+        )
+      } else if (matchingExtension.specification.identifier === 'ui_extension') {
+        const uiExtension = matchingExtension as ExtensionInstance<UIExtensionType>
+        uiExtension.configuration.extension_points.forEach((extensionPoint) => {
+          if (extensionPoint.target.startsWith('admin.')) {
+            errors.push(
+              `[${collection.handle}] editor extension collection: Remove extension '${matchingExtension.configuration.handle}' with target '${extensionPoint.target}' from this collection. This extension target is not supported in collections.`,
+            )
+          }
+        })
+      }
+    })
+  })
+
+  return errors.length > 0 ? errors : undefined
 }
 
-export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[], flags?: Flag[], clientId?: string) {
-    const configuration = clientId
-      ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
-      : {scopes: '', path: ''}
-    const configSchema = getAppVersionedSchema(specifications ?? [])
-    super({
-      name: '',
-      idEnvironmentVariableName: '',
-      directory: '',
-      packageManager: 'npm',
-      configuration,
-      nodeDependencies: {},
-      webs: [],
-      modules: [],
-      usesWorkspaces: false,
-      specifications,
-      configSchema,
-      remoteFlags: flags ?? [],
-    })
-  }
+function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
+  return allExtensions.find((ext) => ext.handle === handle)
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'

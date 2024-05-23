@@ -15,15 +15,22 @@ interface ImportOptions {
   apiKey?: string
   developerPlatformClient?: DeveloperPlatformClient
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration) => string
+  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
 }
 
 export async function importExtensions(options: ImportOptions) {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
   await logMetadataForLoadedContext(remoteApp)
 
+  const initialRemoteExtensions = await developerPlatformClient.appExtensionRegistrations({
+    id: remoteApp.apiKey,
+    apiKey: remoteApp.apiKey,
+    organizationId: remoteApp.organizationId,
+  })
+  const {extensionRegistrations} = initialRemoteExtensions.app
   const extensions = await getExtensions({
     developerPlatformClient,
     apiKey: remoteApp.apiKey,
@@ -48,7 +55,7 @@ export async function importExtensions(options: ImportOptions) {
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = options.buildTomlObject(ext)
+    const tomlObject = options.buildTomlObject(ext, extensionRegistrations)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid
@@ -59,8 +66,12 @@ export async function importExtensions(options: ImportOptions) {
   renderSuccessMessages(generatedExtensions)
   await updateAppIdentifiers({
     app: options.app,
-    identifiers: {extensions: extensionUuids, app: remoteApp.apiKey},
+    identifiers: {
+      extensions: extensionUuids,
+      app: remoteApp.apiKey,
+    },
     command: 'deploy',
+    developerPlatformClient,
   })
 }
 

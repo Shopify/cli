@@ -26,6 +26,8 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isSpin} from '@shopify/cli-kit/node/context/spin'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -53,6 +55,15 @@ interface PartnersAPIOAuthOptions {
 }
 
 /**
+ * A scope supported by the Developer Platform API.
+ */
+type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage' | string
+interface AppManagementAPIOauthOptions {
+  /** List of scopes to request permissions for. */
+  scopes: AppManagementAPIScope[]
+}
+
+/**
  * A scope supported by the Storefront Renderer API.
  */
 type StorefrontRendererScope = 'devtools' | string
@@ -77,6 +88,7 @@ export interface OAuthApplications {
   storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
   businessPlatformApi?: BusinessPlatformAPIOAuthOptions
+  appManagementApi?: AppManagementAPIOauthOptions
 }
 
 export interface OAuthSession {
@@ -84,6 +96,7 @@ export interface OAuthSession {
   partners?: string
   storefront?: string
   businessPlatform?: string
+  appManagement?: string
 }
 
 /**
@@ -123,7 +136,7 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   function throwOnNoPrompt() {
-    if (!noPrompt) return
+    if (!noPrompt || (isSpin() && firstPartyDev())) return
     throw new AbortError(
       `The currently available CLI credentials are invalid.
 
@@ -231,6 +244,8 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  * @param partnersToken - Partners token.
  */
 async function ensureUserHasPartnerAccount(partnersToken: string) {
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
+
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken))) {
     outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
@@ -342,6 +357,11 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
     tokens.businessPlatform = fqdnSession.applications[appId]?.accessToken
   }
 
+  if (applications.appManagementApi) {
+    const appId = applicationId('app-management')
+    tokens.appManagement = fqdnSession.applications[appId]?.accessToken
+  }
+
   return tokens
 }
 
@@ -357,7 +377,8 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const partner = apps.partnersApi?.scopes || []
   const storefront = apps.storefrontRendererApi?.scopes || []
   const businessPlatform = apps.businessPlatformApi?.scopes || []
-  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform]
+  const appManagement = apps.appManagementApi?.scopes || []
+  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
   return allDefaultScopes(requestedScopes)
 }
 
@@ -372,11 +393,13 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
   const partnerScope = apps.partnersApi?.scopes || []
   const storefrontScopes = apps.storefrontRendererApi?.scopes || []
   const businessPlatformScopes = apps.businessPlatformApi?.scopes || []
+  const appManagementScopes = apps.appManagementApi?.scopes || []
   return {
     admin: apiScopes('admin', adminScope),
     partners: apiScopes('partners', partnerScope),
     storefront: apiScopes('storefront-renderer', storefrontScopes),
     businessPlatform: apiScopes('business-platform', businessPlatformScopes),
+    appManagement: apiScopes('app-management', appManagementScopes),
   }
 }
 

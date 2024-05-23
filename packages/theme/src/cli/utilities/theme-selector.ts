@@ -1,7 +1,7 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {capitalize} from '@shopify/cli-kit/common/string'
 
@@ -25,7 +25,7 @@ export async function findOrSelectTheme(session: AdminSession, options: {header?
     return filterThemes(store, themes, filter)[0]!
   }
 
-  return renderSelectPrompt({
+  return renderAutocompletePrompt({
     message: options.header ?? '',
     choices: themes.map((theme) => {
       const yoursLabel = theme.id.toString() === getDevelopmentTheme() ? ' [yours]' : ''

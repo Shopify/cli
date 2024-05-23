@@ -2,15 +2,15 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
-import {appFromId, logMetadataForLoadedContext} from '../../context.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {logMetadataForLoadedContext} from '../../context.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface UseOptions {
   directory: string
@@ -27,7 +27,6 @@ export default async function use({
   warningContent,
   shouldRenderSuccess = true,
   reset = false,
-  developerPlatformClient = selectDeveloperPlatformClient(),
 }: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
@@ -57,7 +56,7 @@ export default async function use({
     })
   }
 
-  await logMetadata(configuration, developerPlatformClient)
+  await logMetadata(configuration)
 
   return configFileName
 }
@@ -69,7 +68,7 @@ interface SaveCurrentConfigOptions {
 
 export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
   const {configuration} = await loadAppConfiguration({
-    configName: configFileName,
+    userProvidedConfigName: configFileName,
     directory,
   })
 
@@ -97,15 +96,9 @@ async function getConfigFileName(directory: string, configName?: string): Promis
   return selectConfigFile(directory)
 }
 
-async function logMetadata(configuration: CurrentAppConfiguration, developerPlatformClient: DeveloperPlatformClient) {
-  const app = await appFromId({
+async function logMetadata(configuration: CurrentAppConfiguration) {
+  await logMetadataForLoadedContext({
+    organizationId: configuration.organization_id || '0',
     apiKey: configuration.client_id,
-    organizationId: configuration.organization_id,
-    developerPlatformClient,
   })
-  if (app) {
-    await logMetadataForLoadedContext(app)
-  } else {
-    outputDebug("Couldn't find app for analytics. Make sure you have a valid client ID.")
-  }
 }

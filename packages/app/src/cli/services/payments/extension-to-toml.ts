@@ -25,6 +25,7 @@ import {
   customOnsiteDeployConfigToCLIConfig,
   CUSTOM_ONSITE_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
@@ -50,29 +51,37 @@ export enum DashboardPaymentExtensionType {
   Redeemable = 'payments_app_redeemable',
 }
 
-export function buildTomlObject(extension: ExtensionRegistration): string {
+export function buildTomlObject(extension: ExtensionRegistration, allExtensions: ExtensionRegistration[]): string {
   const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
   switch (context) {
     case OFFSITE_TARGET:
-      return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(extension, offsiteDeployConfigToCLIConfig)
+      return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(
+        extension,
+        allExtensions,
+        offsiteDeployConfigToCLIConfig,
+      )
     case CREDIT_CARD_TARGET:
       return buildPaymentsToml<CreditCardPaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         creditCardDeployConfigToCLIConfig,
       )
     case CUSTOM_CREDIT_CARD_TARGET:
       return buildPaymentsToml<CustomCreditCardPaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         customCreditCardDeployConfigToCLIConfig,
       )
     case CUSTOM_ONSITE_TARGET:
       return buildPaymentsToml<CustomOnsitePaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         customOnsiteDeployConfigToCLIConfig,
       )
     case REDEEMABLE_TARGET:
       return buildPaymentsToml<RedeemablePaymentsAppExtensionDeployConfigType>(
         extension,
+        allExtensions,
         redeemableDeployConfigToCLIConfig,
       )
     default:
@@ -84,14 +93,15 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
  */
 function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   extension: ExtensionRegistration,
-  serialize: (config: T) => {[key: string]: unknown} | undefined,
+  allExtensions: ExtensionRegistration[],
+  serialize: (config: T, allExtensions: ExtensionRegistration[]) => {[key: string]: unknown} | undefined,
 ) {
   const version = extension.activeVersion ?? extension.draftVersion
   const versionConfig = version?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const dashboardConfig: T = JSON.parse(versionConfig)
 
-  const cliConfig = serialize(dashboardConfig)
+  const cliConfig = serialize(dashboardConfig, allExtensions)
   if (cliConfig) delete cliConfig.api_version
 
   const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
@@ -102,7 +112,7 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
       {
         name: extension.title,
         type: 'payments_extension',
-        handle: slugify(extension.title),
+        handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
         ...cliConfig,
         targeting: [
           {

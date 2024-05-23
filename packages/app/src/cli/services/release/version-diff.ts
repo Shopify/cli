@@ -1,43 +1,43 @@
-import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
+import {AppVersionByTagSchema} from '../../api/graphql/app_version_by_tag.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 export async function versionDiffByVersion(
-  apiKey: string,
-  version: string,
+  app: MinimalOrganizationApp,
+  versionTag: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<{
   versionsDiff: AppVersionsDiffSchema['app']['versionsDiff']
   versionDetails: AppVersionByTagSchema['app']['appVersion']
 }> {
-  const versionDetails = await versionDetailsByTag(apiKey, version, developerPlatformClient)
-  const input: AppVersionsDiffVariables = {
-    apiKey,
-    versionId: versionDetails.id,
-  }
+  const versionDetails = await versionDetailsByTag(app, versionTag, developerPlatformClient)
   const {
     app: {versionsDiff},
-  }: AppVersionsDiffSchema = await developerPlatformClient.appVersionsDiff(input)
+  }: AppVersionsDiffSchema = await developerPlatformClient.appVersionsDiff(app, {
+    versionId: versionDetails.uuid,
+    appVersionId: versionDetails.id,
+  })
 
   return {versionsDiff, versionDetails}
 }
 
-async function versionDetailsByTag(apiKey: string, version: string, developerPlatformClient: DeveloperPlatformClient) {
+async function versionDetailsByTag(
+  app: MinimalOrganizationApp,
+  versionTag: string,
+  developerPlatformClient: DeveloperPlatformClient,
+) {
   try {
-    const input: AppVersionByTagVariables = {
-      apiKey,
-      versionTag: version,
-    }
     const {
       app: {appVersion},
-    }: AppVersionByTagSchema = await developerPlatformClient.appVersionByTag(input)
+    }: AppVersionByTagSchema = await developerPlatformClient.appVersionByTag(app, versionTag)
     return appVersion
   } catch (err) {
     renderError({
       headline: "Version couldn't be released.",
-      body: ['Version', {userInput: version}, 'could not be found.'],
+      body: ['Version', {userInput: versionTag}, 'could not be found.'],
     })
     throw new AbortSilentError()
   }

@@ -2,11 +2,12 @@ import {getDeepInstallNPMTasks, updateCLIDependencies} from '../utils/template/n
 import cleanup from '../utils/template/cleanup.js'
 import {
   findUpAndReadPackageJson,
+  lockfiles,
   PackageManager,
   UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -19,6 +20,7 @@ import {
   inTemporaryDirectory,
   mkdir,
   moveFile,
+  readFile,
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -32,7 +34,10 @@ interface InitOptions {
   template: string
   packageManager: PackageManager
   local: boolean
-  useGlobalCI: boolean
+  useGlobalCLI: boolean
+  postCloneActions: {
+    removeLockfilesFromGitignore: boolean
+  }
 }
 
 async function init(options: InitOptions) {
@@ -42,6 +47,16 @@ async function init(options: InitOptions) {
   const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+
+  renderInfo({
+    body: [
+      `Initializing project with`,
+      {command: packageManager},
+      `\nUse the`,
+      {command: `--package-manager`},
+      `flag to select a different package manager.`,
+    ],
+  })
 
   await inTemporaryDirectory(async (tmpDir) => {
     const templateDownloadDir = joinPath(tmpDir, 'download')
@@ -106,12 +121,32 @@ async function init(options: InitOptions) {
             packageJSON,
             local: options.local,
             directory: templateScaffoldDir,
-            useGlobalCLI: options.useGlobalCI,
+            useGlobalCLI: options.useGlobalCLI,
           })
           await writePackageJSON(templateScaffoldDir, packageJSON)
         },
       },
     )
+
+    if (options.postCloneActions.removeLockfilesFromGitignore) {
+      tasks.push({
+        title: 'Removing lockfiles from .gitignore',
+        task: async () => {
+          const gitignorePath = joinPath(templateScaffoldDir, '.gitignore')
+          if (await fileExists(gitignorePath)) {
+            let existingContent = await readFile(gitignorePath)
+
+            lockfiles.forEach((lockfile) => {
+              // convert to a regex matching a whole line, escaping any special characters
+              const lockfileRegex = new RegExp(`^${lockfile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'gm')
+              existingContent = existingContent.replace(lockfileRegex, '')
+            })
+
+            await writeFile(gitignorePath, existingContent.trim())
+          }
+        },
+      })
+    }
 
     if (await isShopify()) {
       tasks.push({
@@ -126,7 +161,7 @@ async function init(options: InitOptions) {
 
     tasks.push(
       {
-        title: 'Installing dependencies',
+        title: `Installing dependencies with ${packageManager}`,
         task: async () => {
           await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
         },

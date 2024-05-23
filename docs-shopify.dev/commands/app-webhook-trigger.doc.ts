@@ -10,13 +10,13 @@ const data: ReferenceEntityTemplateSchema = {
 
   Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.
 
-  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).
+  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](/docs/apps/webhooks).
 
   ### Limitations
 
   - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.
   - Webhooks triggered using this method aren't retried when they fail.
-  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).
+  - Trigger requests are rate-limited using the [Partner API rate limit](/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
   `,
   overviewPreviewDescription: `Trigger delivery of a sample webhook topic payload to a designated address.`,
@@ -41,7 +41,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appwebhooktrigger',
   },
   ],
-  category: 'app commands',
+  category: 'app',
   related: [
   ],
 }

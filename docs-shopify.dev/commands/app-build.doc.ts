@@ -3,9 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app build',
-  description: `This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).
+  description: `This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](/docs/apps/tools/cli/configuration).
 
-  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the \`build\` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`,
+  If you're building a [theme app extension](/docs/apps/online-store/theme-app-extensions), then running the \`build\` command runs [Theme Check](/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`,
   overviewPreviewDescription: `Build the app, including extensions.`,
   type: 'command',
   isVisualComponent: false,
@@ -28,7 +28,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appbuild',
   },
   ],
-  category: 'app commands',
+  category: 'app',
   related: [
   ],
 }

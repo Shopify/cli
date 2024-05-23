@@ -1,9 +1,13 @@
 import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
+  AppConfigurationInterface,
   AppInterface,
-  EmptyApp,
+  PartialAppInterface,
+  BasicAppConfigurationWithoutModules,
+  CurrentAppConfiguration,
   getAppScopes,
+  getAppVersionedSchema,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
@@ -22,15 +26,51 @@ import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {
+  DeveloperPlatformClient,
+  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {SpecsAppConfiguration} from '../../../models/extensions/specifications/types/app_config.js'
+import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
+
+type ConfigOutput = Pick<AppConfigurationInterface, 'configuration' | 'configSchema'>
+
+export function emptyApp(
+  specifications?: ExtensionSpecification[],
+  flags?: Flag[],
+  clientId?: string,
+): PartialAppInterface {
+  const config: ConfigOutput = clientId
+    ? {
+        configuration: {
+          client_id: clientId,
+          access_scopes: {scopes: ''},
+          path: '',
+        } as BasicAppConfigurationWithoutModules,
+        configSchema: getAppVersionedSchema(specifications ?? []),
+      }
+    : {
+        configuration: {scopes: '', path: ''},
+        configSchema: getAppVersionedSchema(specifications ?? []),
+      }
+
+  return {
+    directory: '',
+    ...config,
+    name: '',
+    packageManager: 'npm',
+    specifications: specifications ?? [],
+    remoteFlags: flags ?? [],
+    appIsLaunchable: () => false,
+  }
+}
 
 export interface LinkOptions {
   directory: string
@@ -40,15 +80,20 @@ export interface LinkOptions {
   developerPlatformClient?: DeveloperPlatformClient
 }
 
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const updatedOptions = {...options, developerPlatformClient}
-  const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<CurrentAppConfiguration> {
+  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
+
+  const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(
+    {...options, developerPlatformClient},
+    remoteApp,
+    directory,
+  )
 
   await logMetadataForLoadedContext(remoteApp)
 
-  let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  const configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration =
     (await fetchAppRemoteConfiguration(
       remoteApp,
@@ -57,7 +102,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       localApp.remoteFlags,
     )) ?? buildRemoteApiClientConfiguration(configuration, remoteApp)
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-  configuration = deepMergeObjects(
+  const configurationIncludingRemote: CurrentAppConfiguration = deepMergeObjects(
     configuration,
     {
       ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
@@ -66,14 +111,14 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     replaceLocalArrayStrategy,
   )
 
-  await writeAppConfigurationFile(configuration, localApp.configSchema)
+  await writeAppConfigurationFile(configurationIncludingRemote, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccessMessage(configFileName, remoteAppConfiguration.name, localApp)
   }
 
-  return configuration
+  return configurationIncludingRemote
 }
 
 async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions, 'developerPlatformClient'>>) {
@@ -89,7 +134,7 @@ async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions,
 async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
   const specifications = await fetchSpecifications({
     developerPlatformClient: options.developerPlatformClient!,
-    apiKey: remoteApp.apiKey,
+    app: remoteApp,
   })
   const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.flags, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
@@ -101,37 +146,53 @@ async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, di
   }
 }
 
+/**
+ * Attempts to load the app from the local file system, with fallback behaviour.
+ *
+ * The app itself is returned if the app has already been linked to the remote app, and its a match for the provided remote app.
+ *
+ * It is also returned if it is still using legacy config -- i.e. it's fresh from the template.
+ *
+ * Otherwise, return an empty app -- a placeholder that stores only the remote app's API key.
+ *
+ */
 async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
   remoteFlags?: Flag[],
   remoteApp?: OrganizationApp,
-): Promise<AppInterface> {
+): Promise<PartialAppInterface | AppInterface> {
   try {
     const app = await loadApp({
       specifications,
       directory: options.directory,
       mode: 'report',
-      configName: options.baseConfigName,
+      userProvidedConfigName: options.baseConfigName,
       remoteFlags,
     })
     const configuration = app.configuration
-    if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
-    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
+
+    if (!isCurrentAppSchema(configuration)) {
+      return app
+    } else if (remoteApp?.apiKey === configuration.client_id) {
+      return app
+    } else {
+      return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags, remoteApp?.apiKey)
+    }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteFlags)
+    return emptyApp(await loadLocalExtensionsSpecifications(), remoteFlags)
   }
 }
 
 async function loadRemoteApp(
-  localApp: AppInterface,
+  localApp: PartialAppInterface,
   apiKey: string | undefined,
   developerPlatformClient: DeveloperPlatformClient,
   directory?: string,
 ): Promise<OrganizationApp> {
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
+    return fetchOrCreateOrganizationApp(localApp, directory)
   }
   const app = await appFromId({apiKey, developerPlatformClient})
   if (!app) {
@@ -144,7 +205,7 @@ async function loadRemoteApp(
 async function loadConfigurationFileName(
   remoteApp: OrganizationApp,
   options: LinkOptions,
-  localApp: AppInterface,
+  localApp: AppConfigurationInterface,
 ): Promise<string> {
   const cache = getCachedCommandInfo()
 
@@ -158,8 +219,11 @@ async function loadConfigurationFileName(
     return configurationFileNames.app
   }
 
-  const configName = await selectConfigName(localApp.directory || options.directory, remoteApp.title)
-  return `shopify.app.${configName}.toml`
+  const existingTomls = await getTomls(options.directory)
+  const currentToml = existingTomls[remoteApp.apiKey]
+  if (currentToml) return currentToml
+
+  return selectConfigName(localApp.directory || options.directory, remoteApp.title)
 }
 
 function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp, configFilePath: string) {
@@ -186,7 +250,7 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
   return localAppConfig
 }
 
-function renderSuccessMessage(configFileName: string, appName: string, localApp: AppInterface) {
+function renderSuccessMessage(configFileName: string, appName: string, localApp: PartialAppInterface) {
   renderSuccess({
     headline: `${configFileName} is now linked to "${appName}" on Shopify`,
     body: `Using ${configFileName} as your default config.`,

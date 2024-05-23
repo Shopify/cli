@@ -7,12 +7,15 @@ import {
   testDeveloperPlatformClient,
   testFunctionExtension,
   testLocalExtensionTemplates,
+  testOrganizationApp,
   testRemoteExtensionTemplates,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
-import {describe, expect, vi, afterEach, test} from 'vitest'
+import * as developerPlatformClient from '../utilities/developer-platform-client.js'
+import {PartnersClient} from '../utilities/developer-platform-client/partners-client.js'
+import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -33,6 +36,13 @@ vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
 vi.mock('./local-storage.js')
+
+beforeEach(() => {
+  // Never bother loading the app just to get a platform client
+  vi.spyOn(developerPlatformClient, 'sniffServiceOptionsAndAppConfigToSelectPlatformClient').mockResolvedValue(
+    new PartnersClient(),
+  )
+})
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -174,6 +184,7 @@ describe('generate', () => {
 })
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
+  const developerPlatformClient = testDeveloperPlatformClient()
   const appRoot = '/'
   const app = testAppWithConfig({
     app: {
@@ -188,7 +199,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
+  vi.mocked(ensureGenerateContext).mockResolvedValue(testOrganizationApp({developerPlatformClient, apiKey: 'api-key'}))
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
     extensionContent: [

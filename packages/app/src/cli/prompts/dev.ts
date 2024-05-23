@@ -1,7 +1,7 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandInfo} from '../services/local-storage.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -18,16 +18,15 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 }
 
 export async function selectAppPrompt(
+  developerPlatformClient: DeveloperPlatformClient,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   orgId: string,
   options?: {
     directory?: string
-    developerPlatformClient?: DeveloperPlatformClient
   },
 ): Promise<MinimalAppIdentifiers> {
   const tomls = await getTomls(options?.directory)
-  const developerPlatformClient = options?.developerPlatformClient ?? selectDeveloperPlatformClient()
 
   if (tomls) setCachedCommandInfo({tomls})
 
@@ -73,6 +72,15 @@ export async function selectStorePrompt(stores: OrganizationStore[]): Promise<Or
     choices: storeList,
   })
   return stores.find((store) => store.shopId === id)
+}
+
+export async function confirmConversionToTransferDisabledStorePrompt(): Promise<boolean> {
+  return renderConfirmationPrompt({
+    message: `Make this store transfer-disabled? For security, once you use a development store to preview an app locally, the store can never be transferred to a merchant to use as a production store.`,
+    confirmationMessage: 'Yes, make this store transfer-disabled permanently',
+    cancellationMessage: 'No, select another store',
+    defaultValue: false,
+  })
 }
 
 export async function appNamePrompt(currentName: string): Promise<string> {

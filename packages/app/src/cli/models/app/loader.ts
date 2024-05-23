@@ -20,9 +20,11 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, createConfigExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {findConfigFiles} from '../../prompts/config.js'
+import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
+import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -34,7 +36,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -65,10 +67,10 @@ export async function loadConfigurationFileContent(
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
   },
-  decode: (input: string) => object = decodeToml,
-): Promise<unknown> {
+  decode: (input: string) => JsonMapType = decodeToml,
+): Promise<JsonMapType> {
   if (!(await fileExists(filepath))) {
-    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, '', filepath)
+    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, {}, filepath)
   }
 
   try {
@@ -80,7 +82,7 @@ export async function loadConfigurationFileContent(
     if (err.line && err.pos && err.col) {
       return abortOrReport(
         outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
-        null,
+        {},
         filepath,
       )
     } else {
@@ -100,7 +102,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
   },
-  decode: (input: string) => object = decodeToml,
+  decode: (input: string) => JsonMapType = decodeToml,
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
@@ -108,7 +110,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   if (!configurationObject) return fallbackOutput
 
-  const configuration = await parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
   return {...configuration, path: filepath}
 }
 
@@ -124,12 +126,12 @@ export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
 /**
  * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
  */
-export async function parseConfigurationObject<TSchema extends zod.ZodType>(
+export function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema>> {
+): zod.TypeOf<TSchema> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -168,12 +170,9 @@ export class AppErrors {
   }
 }
 
-interface AppLoaderConstructorArgs {
-  directory: string
+interface AppLoaderConstructorArgs<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   mode?: AppLoaderMode
-  configName?: string
-  specifications?: ExtensionSpecification[]
-  remoteFlags?: Flag[]
+  loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -188,8 +187,35 @@ export async function checkFolderIsValidApp(directory: string) {
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function loadApp(options: AppLoaderConstructorArgs, env = process.env): Promise<AppInterface> {
-  const loader = new AppLoader(options, getDynamicConfigOptionsFromEnvironment(env))
+export async function loadApp(
+  options: Omit<AppLoaderConstructorArgs<AppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
+    directory: string
+    userProvidedConfigName?: string
+    specifications?: ExtensionSpecification[]
+    remoteFlags?: Flag[]
+  },
+  env = process.env,
+): Promise<AppInterface> {
+  const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
+  const dynamicConfigOptions = getDynamicConfigOptionsFromEnvironment(env)
+  const configurationLoader = new AppConfigurationLoader(
+    {
+      directory: options.directory,
+      userProvidedConfigName: options.userProvidedConfigName,
+      specifications,
+      remoteFlags: options.remoteFlags,
+    },
+    dynamicConfigOptions,
+  )
+  const loadedConfiguration = await configurationLoader.loaded()
+
+  const loader = new AppLoader(
+    {
+      mode: options.mode,
+      loadedConfiguration,
+    },
+    dynamicConfigOptions,
+  )
   return loader.loaded()
 }
 
@@ -250,37 +276,27 @@ type DynamicallySpecifiedConfigLoading =
       remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
     }
 
-class AppLoader {
-  private directory: string
+class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private mode: AppLoaderMode
-  private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
   private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
+  private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 
   constructor(
-    {directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs,
+    {mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>,
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.mode = mode ?? 'strict'
-    this.directory = directory
-    this.specifications = specifications ?? []
-    this.configName = configName
-    this.remoteFlags = remoteFlags ?? []
+    this.specifications = loadedConfiguration.specifications
+    this.remoteFlags = loadedConfiguration.remoteFlags
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
+    this.loadedConfiguration = loadedConfiguration
   }
 
   async loaded() {
-    const configurationLoader = new AppConfigurationLoader(
-      {
-        directory: this.directory,
-        configName: this.configName,
-        specifications: this.specifications,
-      },
-      this.dynamicallySpecifiedConfigs,
-    )
-    const {configuration, directory, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+    const {configuration, directory, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
@@ -301,7 +317,6 @@ class AppLoader {
 
     const appClass = new App({
       name,
-      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory,
       packageManager,
       configuration,
@@ -430,7 +445,7 @@ class AppLoader {
       )
     }
 
-    const configuration = await parseConfigurationObject(
+    const configuration = parseConfigurationObject(
       specification.schema,
       configurationPath,
       configurationObject,
@@ -467,7 +482,12 @@ class AppLoader {
       ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
       : []
 
-    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
+    const webhookPromises = isCurrentAppSchema(appConfiguration)
+      ? this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
+      : []
+
+    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
+
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
 
     // Validate that all extensions have a unique handle.
@@ -540,12 +560,42 @@ class AppLoader {
     })
   }
 
+  private createWebhookSubscriptionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+    const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
+    if (!specification) return []
+    const specConfiguration = parseConfigurationObject(
+      WebhooksSchema,
+      appConfiguration.path,
+      appConfiguration,
+      this.abortOrReport.bind(this),
+    )
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {api_version, subscriptions = []} = specConfiguration.webhooks
+    // Find all unique subscriptions
+    const webhookSubscriptions = getArrayRejectingUndefined(
+      subscriptions.flatMap((subscription) => {
+        // compliance_topics gets handled by privacy_compliance_webhooks
+        const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
+        return topics?.map((topic) => {
+          return {api_version, uri, topic, ...optionalFields}
+        })
+      }),
+    )
+
+    // Create 1 extension instance per subscription
+    const instances = webhookSubscriptions.map(async (subscription) => {
+      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
+    })
+
+    return instances
+  }
+
   private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
-        .filter((specification) => specification.experience === 'configuration')
+        .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
-          const specConfiguration = await parseConfigurationObject(
+          const specConfiguration = parseConfigurationObject(
             specification.schema,
             appConfiguration.path,
             appConfiguration,
@@ -652,7 +702,8 @@ export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
   env = process.env,
 ): Promise<AppConfigurationInterface> {
-  const loader = new AppConfigurationLoader(options, getDynamicConfigOptionsFromEnvironment(env))
+  const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
+  const loader = new AppConfigurationLoader({...options, specifications}, getDynamicConfigOptionsFromEnvironment(env))
   const result = await loader.loaded()
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
@@ -660,7 +711,7 @@ export async function loadAppConfiguration(
 
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
-  configName?: string
+  userProvidedConfigName?: string
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
 }
@@ -686,44 +737,59 @@ type ConfigurationLoadResultMetadata = {
     }
 )
 
+type ConfigurationLoaderResult<
+  TConfig extends AppConfiguration,
+  TModuleSpec extends ExtensionSpecification,
+> = AppConfigurationInterface<TConfig, TModuleSpec> & {
+  configurationLoadResultMetadata: ConfigurationLoadResultMetadata
+}
+
 class AppConfigurationLoader {
   private directory: string
-  private configName?: string
-  private specifications?: ExtensionSpecification[]
-  private remoteFlags: Flag[]
+  private userProvidedConfigName?: string
+  private specifications: ExtensionSpecification[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
+  private remoteFlags: Flag[]
 
   constructor(
-    {directory, configName, specifications, remoteFlags}: AppConfigurationLoaderConstructorArgs,
+    {
+      directory,
+      userProvidedConfigName,
+      specifications,
+      remoteFlags,
+    }: AppConfigurationLoaderConstructorArgs & {specifications: ExtensionSpecification[]},
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.directory = directory
-    this.configName = configName
+    this.userProvidedConfigName = userProvidedConfigName
     this.specifications = specifications
-    this.remoteFlags = remoteFlags ?? []
     this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
+    this.remoteFlags = remoteFlags ?? []
   }
 
-  async loaded() {
-    const specifications = this.specifications ?? (await loadLocalExtensionsSpecifications())
-    const appDirectory = await this.getAppDirectory()
-    const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
-    const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
+  async loaded(): Promise<ConfigurationLoaderResult<AppConfiguration, ExtensionSpecification>> {
+    const specifications = this.specifications
+    const appDirectory = await getAppDirectory(this.directory)
+    const configSource: LinkedConfigurationSource = this.userProvidedConfigName ? 'flag' : 'cached'
+    const cachedCurrentConfigName = getCachedAppInfo(appDirectory)?.configFile
+    const cachedCurrentConfigPath = cachedCurrentConfigName ? joinPath(appDirectory, cachedCurrentConfigName) : null
 
-    if (!this.configName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
+    if (!this.userProvidedConfigName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
       const warningContent = {
-        headline: `Couldn't find ${cachedCurrentConfig}`,
+        headline: `Couldn't find ${cachedCurrentConfigName}`,
         body: [
           "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
         ],
       }
-      this.configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
+      this.userProvidedConfigName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
     }
 
-    this.configName = this.configName ?? cachedCurrentConfig
+    this.userProvidedConfigName = this.userProvidedConfigName ?? cachedCurrentConfigName
 
-    const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
+    const {configurationPath, configurationFileName} = await getConfigurationPath(
+      appDirectory,
+      this.userProvidedConfigName,
+    )
     const file = await loadConfigurationFileContent(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(specifications, this.dynamicallySpecifiedConfigs.enabled)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
@@ -735,7 +801,7 @@ class AppConfigurationLoader {
     }
 
     let configuration = await parseConfigurationFile(schemaForConfigurationFile, configurationPath)
-    const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
+    const allClientIdsByConfigName = await getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
       usesLinkedConfig: false,
@@ -763,84 +829,14 @@ class AppConfigurationLoader {
 
     configuration = this.remapDynamicConfigToNewParents(configuration)
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
-  }
-
-  // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
-  // traverse up the filesystem to find the root app directory.
-  private async getAppDirectory() {
-    if (!(await fileExists(this.directory))) {
-      throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
+    return {
+      directory: appDirectory,
+      configuration,
+      configurationLoadResultMetadata,
+      configSchema: appVersionedSchema,
+      specifications,
+      remoteFlags: this.remoteFlags,
     }
-
-    // In order to find the chosen config for the app, we need to find the directory of the app.
-    // But we can't know the chosen config because the cache key is the directory itself. So we
-    // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
-    const appDirectory = await findPathUp(
-      async (directory) => {
-        const found = await glob(joinPath(directory, appConfigurationFileNameGlob))
-        if (found.length > 0) {
-          return directory
-        }
-      },
-      {
-        cwd: this.directory,
-        type: 'directory',
-      },
-    )
-
-    if (appDirectory) {
-      return appDirectory
-    } else {
-      throw new AbortError(
-        outputContent`Couldn't find an app toml file at ${outputToken.path(this.directory)}, is this an app directory?`,
-      )
-    }
-  }
-
-  private async getConfigurationPath(appDirectory: string) {
-    const configurationFileName = getAppConfigurationFileName(this.configName)
-    const configurationPath = joinPath(appDirectory, configurationFileName)
-
-    if (await fileExists(configurationPath)) {
-      return {configurationPath, configurationFileName}
-    } else {
-      throw new AbortError(
-        outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(this.directory)}.`,
-      )
-    }
-  }
-
-  /**
-   * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
-   */
-  private async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
-    const configNamesToClientId: {[key: string]: string} = {}
-    const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
-
-    const entries = (
-      await Promise.all(
-        candidates.map(async (candidateFile) => {
-          try {
-            const configuration = await parseConfigurationFile(
-              // we only care about the client ID, so no need to parse the entire file
-              zod.object({client_id: zod.string().optional()}),
-              candidateFile,
-              // we're not interested in error reporting at all
-              noopAbortOrReport,
-            )
-            if (configuration.client_id !== undefined) {
-              configNamesToClientId[basename(candidateFile)] = configuration.client_id
-              return [basename(candidateFile), configuration.client_id] as [string, string]
-            }
-            // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch {
-            // can ignore errors in parsing
-          }
-        }),
-      )
-    ).filter((entry) => entry !== undefined) as [string, string][]
-    return Object.fromEntries(entries)
   }
 
   /**
@@ -849,7 +845,7 @@ class AppConfigurationLoader {
    *
    * Returns the updated configuration object
    */
-  private remapDynamicConfigToNewParents(configuration: CurrentAppConfiguration): CurrentAppConfiguration {
+  private remapDynamicConfigToNewParents<T>(configuration: T): T {
     // remap configuration keys to their new parent, if needed
     // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
     if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
@@ -872,6 +868,85 @@ class AppConfigurationLoader {
     }
     return configuration
   }
+}
+
+async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
+  const configurationFileName = getAppConfigurationFileName(configName)
+  const configurationPath = joinPath(appDirectory, configurationFileName)
+
+  if (await fileExists(configurationPath)) {
+    return {configurationPath, configurationFileName}
+  } else {
+    throw new AbortError(outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`)
+  }
+}
+
+/**
+ * Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
+ * traverse up the filesystem to find the root app directory.
+ *
+ * @param directory - The current working directory, or the `--path` option
+ */
+async function getAppDirectory(directory: string) {
+  if (!(await fileExists(directory))) {
+    throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(directory)}`)
+  }
+
+  // In order to find the chosen config for the app, we need to find the directory of the app.
+  // But we can't know the chosen config because the cache key is the directory itself. So we
+  // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
+  const appDirectory = await findPathUp(
+    async (directory) => {
+      const found = await glob(joinPath(directory, appConfigurationFileNameGlob))
+      if (found.length > 0) {
+        return directory
+      }
+    },
+    {
+      cwd: directory,
+      type: 'directory',
+    },
+  )
+
+  if (appDirectory) {
+    return appDirectory
+  } else {
+    throw new AbortError(
+      outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
+    )
+  }
+}
+
+/**
+ * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
+ */
+async function getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
+  const configNamesToClientId: {[key: string]: string} = {}
+  const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
+
+  const entries = (
+    await Promise.all(
+      candidates.map(async (candidateFile) => {
+        try {
+          const configuration = await parseConfigurationFile(
+            // we only care about the client ID, so no need to parse the entire file
+            zod.object({client_id: zod.string().optional()}),
+            candidateFile,
+            // we're not interested in error reporting at all
+            noopAbortOrReport,
+          )
+          if (configuration.client_id !== undefined) {
+            configNamesToClientId[basename(candidateFile)] = configuration.client_id
+            return [basename(candidateFile), configuration.client_id] as [string, string]
+          }
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          // can ignore errors in parsing
+        }
+      }),
+    )
+  ).filter((entry) => entry !== undefined) as [string, string][]
+  return Object.fromEntries(entries)
 }
 
 export async function loadAppName(appDirectory: string): Promise<string> {
@@ -912,26 +987,53 @@ export function isWebType(web: Web, type: WebType): boolean {
 }
 
 async function logMetadataForLoadedApp(
-  app: App,
+  app: AppInterface,
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
     usedCustomLayoutForExtensions: boolean
   },
 ) {
-  await metadata.addPublicMetadata(async () => {
-    const projectType = await getProjectType(app.webs)
+  const webs = app.webs
+  const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
 
-    const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
+  const appName = app.name
+  const appDirectory = app.directory
+  const sortedAppScopes = getAppScopesArray(app.configuration).sort()
+  const appUsesWorkspaces = app.usesWorkspaces
+
+  await logMetadataForLoadedAppUsingRawValues(
+    webs,
+    extensionsToAddToMetrics,
+    loadingStrategy,
+    appName,
+    appDirectory,
+    sortedAppScopes,
+    appUsesWorkspaces,
+  )
+}
+
+async function logMetadataForLoadedAppUsingRawValues(
+  webs: Web[],
+  extensionsToAddToMetrics: ExtensionInstance[],
+  loadingStrategy: {usedCustomLayoutForWeb: boolean; usedCustomLayoutForExtensions: boolean},
+  appName: string,
+  appDirectory: string,
+  sortedAppScopes: string[],
+  appUsesWorkspaces: boolean,
+) {
+  await metadata.addPublicMetadata(async () => {
+    const projectType = await getProjectType(webs)
+
     const extensionFunctionCount = extensionsToAddToMetrics.filter((extension) => extension.isFunctionExtension).length
     const extensionUICount = extensionsToAddToMetrics.filter((extension) => extension.isESBuildExtension).length
     const extensionThemeCount = extensionsToAddToMetrics.filter((extension) => extension.isThemeExtension).length
 
     const extensionTotalCount = extensionsToAddToMetrics.length
 
-    const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
+    const webBackendCount = webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
-      webBackendCount === 1 ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
-    const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
+      webBackendCount === 1 ? webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
+    const webFrontendCount = webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
     for (const extension of extensionsToAddToMetrics) {
@@ -954,22 +1056,22 @@ async function logMetadataForLoadedApp(
       app_extensions_theme_count: extensionThemeCount,
       app_extensions_ui_any: extensionUICount > 0,
       app_extensions_ui_count: extensionUICount,
-      app_name_hash: hashString(app.name),
-      app_path_hash: hashString(app.directory),
-      app_scopes: JSON.stringify(getAppScopesArray(app.configuration).sort()),
+      app_name_hash: hashString(appName),
+      app_path_hash: hashString(appDirectory),
+      app_scopes: JSON.stringify(sortedAppScopes),
       app_web_backend_any: webBackendCount > 0,
       app_web_backend_count: webBackendCount,
       app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
       app_web_framework: webBackendFramework,
       app_web_frontend_any: webFrontendCount > 0,
       app_web_frontend_count: webFrontendCount,
-      env_package_manager_workspaces: app.usesWorkspaces,
+      env_package_manager_workspaces: appUsesWorkspaces,
     }
   })
 
   await metadata.addSensitiveMetadata(async () => {
     return {
-      app_name: app.name,
+      app_name: appName,
     }
   })
 }
@@ -995,20 +1097,40 @@ async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadR
 
 const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 const appConfigurationFileNameGlob = 'shopify.app*.toml'
+type AppConfigurationFileName = 'shopify.app.toml' | `shopify.app.${string}.toml`
 
-export function getAppConfigurationFileName(configName?: string) {
+/**
+ * Gets the name of the app configuration file (e.g. `shopify.app.production.toml`) based on a provided config name.
+ *
+ * @param configName - Optional config name to base the file name upon
+ * @returns Either the default app configuration file name (`shopify.app.toml`), the given config name (if it matched the valid format), or `shopify.app.<config name>.toml` if it was an arbitrary string
+ */
+export function getAppConfigurationFileName(configName?: string): AppConfigurationFileName {
   if (!configName) {
     return configurationFileNames.app
   }
 
-  if (appConfigurationFileNameRegex.test(configName)) {
+  if (isValidFormatAppConfigurationFileName(configName)) {
     return configName
   } else {
     return `shopify.app.${slugify(configName)}.toml`
   }
 }
 
+/**
+ * Given a path to an app configuration file, extract the shorthand section from the file name.
+ *
+ * This is undefined for `shopify.app.toml` files, or returns e.g. `production` for `shopify.app.production.toml`.
+ */
 export function getAppConfigurationShorthand(path: string) {
   const match = basename(path).match(appConfigurationFileNameRegex)
   return match?.[1]?.slice(1)
+}
+
+/** Checks if configName is a valid one (`shopify.app.toml`, or `shopify.app.<something>.toml`) */
+function isValidFormatAppConfigurationFileName(configName: string): configName is AppConfigurationFileName {
+  if (appConfigurationFileNameRegex.test(configName)) {
+    return true
+  }
+  return false
 }

@@ -7,7 +7,7 @@ dependencies:
     # 404 issues like the one described in this comment:
     # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
     - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc .yarnrc
-    - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
+    - curl -fsSL https://get.pnpm.io/install.sh | PNPM_VERSION=8.15.7 SHELL=`which bash` bash -
     - bash -i -c "pnpm install"
 deploy:
   interval: 24h
@@ -22,8 +22,6 @@ deploy:
     - bash -i -c "if [ -f '.changeset/pre.json' ]; then npm_config_loglevel=verbose pnpm changeset pre exit; fi"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot experimental"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-manifests"
-    # - bash -i -c "npm_config_loglevel=verbose pnpm refresh-manifests"
-    # - bash -i -c "npm_config_loglevel=verbose pnpm nx run cli-kit:build"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
   post:
     - bash -i -c "pnpm run update-bugsnag"

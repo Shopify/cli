@@ -49,9 +49,11 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  let developerPlatformClient =
+    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   // eslint-disable-next-line prefer-const
   let {app, identifiers, remoteApp, release} = await ensureDeployContext({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const apiKey = identifiers?.app ?? remoteApp.apiKey
 
   outputNewline()
@@ -116,7 +118,7 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
             }
 
-            app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+            app = await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
           },
         },
       ]
@@ -135,7 +137,7 @@ export async function deploy(options: DeployOptions) {
        * If deployment fails when uploading we want the identifiers to be persisted
        * for the next run.
        */
-      await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+      await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
       throw error
     }
   })

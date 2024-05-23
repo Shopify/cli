@@ -3,6 +3,8 @@ import {
   BasePaymentsAppExtensionDeployConfigType,
   ConfirmationSchema,
 } from './base_payments_app_extension_schema.js'
+import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
+import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
@@ -10,6 +12,7 @@ export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
 >
 
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
+export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
 export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(ConfirmationSchema)
   .required({
@@ -23,7 +26,9 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
     ui_extension_handle: zod.string().optional(),
-    encryption_certificate_fingerprint: zod.string().optional(),
+    encryption_certificate_fingerprint: zod
+      .string()
+      .min(1, {message: "Encryption certificate fingerprint can't be blank"}),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -31,6 +36,10 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
           required: zod.boolean(),
           key: zod.string(),
         }),
+      )
+      .max(
+        MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+        `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
       )
       .optional(),
   })
@@ -47,8 +56,9 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
 
   multiple_capture: boolean
   checkout_hosted_fields?: string[]
+  ui_extension_registration_uuid?: string
   ui_extension_handle?: string
-  encryption_certificate?: {
+  encryption_certificate: {
     fingerprint: string
     certificate: string
   }
@@ -61,7 +71,10 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
 
 export function customCreditCardDeployConfigToCLIConfig(
   config: CustomCreditCardPaymentsAppExtensionDeployConfigType,
+  allExtensions: ExtensionRegistration[],
 ): Omit<CustomCreditCardPaymentsAppExtensionConfigType, 'name' | 'type' | 'metafields' | 'targeting'> | undefined {
+  const uiExtensionHandle = extensionUuidToHandle(config, allExtensions)
+
   return {
     api_version: config.api_version,
     payment_session_url: config.start_payment_session_url,
@@ -73,12 +86,12 @@ export function customCreditCardDeployConfigToCLIConfig(
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
-    encryption_certificate_fingerprint: config.encryption_certificate?.fingerprint,
+    encryption_certificate_fingerprint: config.encryption_certificate.fingerprint,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     checkout_hosted_fields: config.checkout_hosted_fields,
-    ui_extension_handle: config.ui_extension_handle,
+    ui_extension_handle: uiExtensionHandle,
   }
 }
 

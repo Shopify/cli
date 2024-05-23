@@ -1,6 +1,3 @@
-import {requestApiVersions} from './request-api-versions.js'
-import {requestTopics} from './request-topics.js'
-import {isValueSet} from './trigger.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -9,8 +6,11 @@ export interface WebhookTriggerFlags {
   apiVersion?: string
   deliveryMethod?: string
   address?: string
+  clientId?: string
   clientSecret?: string
   developerPlatformClient?: DeveloperPlatformClient
+  path: string
+  config?: string
 }
 
 export const DELIVERY_METHOD = {
@@ -63,81 +63,13 @@ function isAnyHttp(address: string): boolean {
 }
 
 /**
- * Returns valid address - method pairs from flags
- *
- * @param flags - Command flags
- * @returns [deliveryMethod, address]
- */
-export function parseAddressAndMethod(flags: WebhookTriggerFlags): [string | undefined, string | undefined] {
-  let deliveryMethod
-  let address
-  const methodWasPassed = isValueSet(flags.deliveryMethod)
-  if (methodWasPassed) {
-    deliveryMethod = parseDeliveryMethodFlag(flags.deliveryMethod as string)
-  }
-
-  const addressWasPassed = isValueSet(flags.address)
-  if (addressWasPassed) {
-    if (methodWasPassed) {
-      validateAddressMethod(flags.address as string, flags.deliveryMethod as string)
-    }
-    ;[address, deliveryMethod] = parseAddressFlag(flags.address as string)
-  }
-
-  return [deliveryMethod, address]
-}
-
-/**
- * Returns valid api-version - topic pairs
- *
- * @param developerPlatformClient - The client to access the platform API
- * @param flags - Command flags
- * @returns [apiVersion, topic]
- */
-export async function parseVersionAndTopic(
-  developerPlatformClient: DeveloperPlatformClient,
-  flags: WebhookTriggerFlags,
-): Promise<[string | undefined, string | undefined]> {
-  let topic
-  let apiVersion
-  const versionWasPassed = isValueSet(flags.apiVersion)
-  if (versionWasPassed) {
-    apiVersion = parseApiVersionFlag(flags.apiVersion as string, await requestApiVersions(developerPlatformClient))
-  }
-  const topicWasPassed = isValueSet(flags.topic)
-  if (topicWasPassed && versionWasPassed) {
-    topic = parseTopicFlag(
-      flags.topic as string,
-      flags.apiVersion as string,
-      await requestTopics(developerPlatformClient, flags.apiVersion as string),
-    )
-  } else if (topicWasPassed) {
-    topic = flags.topic
-  }
-
-  return [apiVersion, topic]
-}
-
-function parseDeliveryMethodFlag(method: string): string {
-  if (method !== DELIVERY_METHOD.HTTP && method !== DELIVERY_METHOD.PUBSUB && method !== DELIVERY_METHOD.EVENTBRIDGE) {
-    throw new AbortError(
-      'Invalid Delivery Method passed',
-      `${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB}, and ${DELIVERY_METHOD.EVENTBRIDGE} are allowed`,
-      ['Try again with a valid delivery method'],
-    )
-  }
-
-  return method
-}
-
-/**
  * check if the address is allowed for the delivery method
  *
  * @param address - Address
  * @param deliveryMethod - Delivery Method
- * @returns true or Exception
+ * @returns [address, deliveryMethod]
  */
-export function validateAddressMethod(address: string, deliveryMethod: string): boolean {
+export function validateAddressMethod(address: string, deliveryMethod: string): [string, string] {
   if (!isAddressAllowedForDeliveryMethod(address, deliveryMethod)) {
     throw new AbortError(
       `Can't deliver your webhook payload to this address using '${deliveryMethod}'`,
@@ -145,8 +77,12 @@ export function validateAddressMethod(address: string, deliveryMethod: string): 
       deliveryMethodInstructions(deliveryMethod),
     )
   }
+  let method = deliveryMethod
+  if (isLocal(address)) {
+    method = DELIVERY_METHOD.LOCALHOST
+  }
 
-  return true
+  return [address.trim(), method]
 }
 
 function deliveryMethodInstructions(method: string): string[] {
@@ -166,51 +102,7 @@ function deliveryMethodInstructions(method: string): string[] {
   return []
 }
 
-/**
- * Check if the address is valid and return a valid address - method pair
- *
- * @param address - Address
- * @returns [address, deliveryMethod]
- */
-export function parseAddressFlag(address: string): [string, string] {
-  const method = deliveryMethodForAddress(address)
-  if (method === undefined) {
-    throw new AbortError(
-      'No delivery method available for the address',
-      `Use a valid address for ${DELIVERY_METHOD.HTTP}, ${DELIVERY_METHOD.PUBSUB} or ${DELIVERY_METHOD.EVENTBRIDGE}`,
-    )
-  }
-
-  return [address.trim(), method]
-}
-
-/**
- * Infer the delivery method from address
- *
- * @param address - Address
- * @returns deliveryMethod or undefined
- */
-export function deliveryMethodForAddress(address: string): string | undefined {
-  if (PROTOCOL.PUBSUB.test(address)) {
-    return DELIVERY_METHOD.PUBSUB
-  }
-
-  if (PROTOCOL.EVENTBRIDGE.test(address)) {
-    return DELIVERY_METHOD.EVENTBRIDGE
-  }
-
-  if (isAnyHttp(address) && isLocal(address)) {
-    return DELIVERY_METHOD.LOCALHOST
-  }
-
-  if (PROTOCOL.HTTP.test(address)) {
-    return DELIVERY_METHOD.HTTP
-  }
-
-  return undefined
-}
-
-function parseApiVersionFlag(passedVersion: string, availableVersions: string[]): string {
+export function parseApiVersionFlag(passedVersion: string, availableVersions: string[]): string {
   if (availableVersions.includes(passedVersion)) {
     return passedVersion
   }
@@ -253,4 +145,32 @@ function equivalentTopic(passedTopic: string, availableTopics: string[]): string
   }
 
   return availableTopics.find((elm) => elm.toUpperCase().replace('/', '_') === passedTopic)
+}
+
+/**
+ * Infer the delivery method from address
+ *
+ * @param address - Address
+ * @returns deliveryMethod or undefined
+ */
+export function deliveryMethodForAddress(address: string | undefined): string | undefined {
+  if (!address) return undefined
+
+  if (PROTOCOL.PUBSUB.test(address)) {
+    return DELIVERY_METHOD.PUBSUB
+  }
+
+  if (PROTOCOL.EVENTBRIDGE.test(address)) {
+    return DELIVERY_METHOD.EVENTBRIDGE
+  }
+
+  if (isAnyHttp(address) && isLocal(address)) {
+    return DELIVERY_METHOD.LOCALHOST
+  }
+
+  if (PROTOCOL.HTTP.test(address)) {
+    return DELIVERY_METHOD.HTTP
+  }
+
+  return undefined
 }

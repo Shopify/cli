@@ -1,0 +1,1 @@
+shopify hydrogen env pull [flags]

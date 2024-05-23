@@ -7,16 +7,14 @@ export default class Init extends Command {
   static strict = false
 
   async run(): Promise<void> {
-    const args = ['exec', '@shopify/create-hydrogen']
+    const args = ['exec', '@shopify/create-hydrogen@latest']
 
     // Remove everything before the `init` command
     const initIndex = process.argv.indexOf('init')
-    const flags = process.argv.slice(initIndex + 1)
 
-    if (flags.length > 0) {
-      args.push('--')
-      args.push(...flags)
-    }
+    // Force hydrogen to show a package manager selection prompt
+    const flags = ['--', '--package-manager', 'unknown'].concat(process.argv.slice(initIndex + 1))
+    args.push(...flags)
 
     try {
       await exec('npm', args, {stdio: 'inherit'})

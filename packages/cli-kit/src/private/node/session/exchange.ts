@@ -6,6 +6,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, ExtendableError} from '../../../public/node/error.js'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
@@ -15,6 +16,7 @@ export interface ExchangeScopes {
   partners: string[]
   storefront: string[]
   businessPlatform: string[]
+  appManagement: string[]
 }
 /**
  * Given a valid authorization code, request an identity access token.
@@ -49,12 +51,14 @@ export async function exchangeAccessForApplicationTokens(
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
+  const appManagementEnabled = isTruthy(process.env.USE_APP_MANAGEMENT_API)
 
-  const [partners, storefront, businessPlatform, admin] = await Promise.all([
+  const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
     requestAppToken('partners', token, scopes.partners),
     requestAppToken('storefront-renderer', token, scopes.storefront),
     requestAppToken('business-platform', token, scopes.businessPlatform),
     store ? requestAppToken('admin', token, scopes.admin, store) : {},
+    appManagementEnabled ? requestAppToken('app-management', token, scopes.appManagement) : {},
   ])
 
   return {
@@ -62,6 +66,7 @@ export async function exchangeAccessForApplicationTokens(
     ...storefront,
     ...businessPlatform,
     ...admin,
+    ...appManagement,
   }
 }
 
@@ -150,7 +155,7 @@ async function requestAppToken(
   }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  const appToken = await buildApplicationToken(value)
+  const appToken = buildApplicationToken(value)
   return {[identifier]: appToken}
 }
 

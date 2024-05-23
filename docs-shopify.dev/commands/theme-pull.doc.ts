@@ -28,7 +28,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     type: 'themepull',
   },
   ],
-  category: 'theme commands',
+  category: 'theme',
   related: [
   ],
 }

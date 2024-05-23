@@ -1,9 +1,14 @@
 {
   "name": "@shopify/plugin-did-you-mean",
-  "version": "3.58.0",
+  "version": "3.60.0",
   "private": true,
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/plugin-did-you-mean"
   },
   "license": "MIT",
   "author": "Shopify",
@@ -36,8 +41,8 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.23.0",
-    "@shopify/cli-kit": "3.58.0",
+    "@oclif/core": "3.26.5",
+    "@shopify/cli-kit": "3.60.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {
@@ -56,16 +61,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "oclif": {
-    "commands": "dist/commands",
-    "topics": {
-      "config:autocorrect": {
-        "description": "Configure autocorrect feature."
-      }
-    },
-    "hooks": {
-      "command_not_found": "dist/index"
-    }
-  }
+  "engine-strict": true
 }

@@ -4,6 +4,7 @@ import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} f
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 
 const DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
@@ -29,6 +30,7 @@ const THEME_DIRECTORY_PATTERNS = [
   'layout/**/*.liquid',
   'locales/**/*.json',
   'sections/**/*.{liquid,json}',
+  'blocks/**/*.liquid',
   'snippets/**/*.liquid',
   'templates/**/*.{liquid,json}',
   'templates/customers/**/*.{liquid,json}',
@@ -64,10 +66,32 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
   return {
     root,
     files,
+    delete: async (assetKey: string) => {
+      await removeThemeFile(root, assetKey)
+      files.delete(assetKey)
+    },
+    write: async (asset: ThemeAsset) => {
+      await writeThemeFile(root, asset)
+      files.set(asset.key, asset)
+    },
+    read: async (assetKey: string) => {
+      const fileValue = await readThemeFile(root, assetKey)
+      const fileChecksum = await checksum(root, assetKey)
+      files.set(
+        assetKey,
+        buildThemeAsset({
+          key: assetKey,
+          value: typeof fileValue === 'string' ? fileValue : '',
+          checksum: fileChecksum,
+          attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
+        })!,
+      )
+      return fileValue
+    },
   }
 }
 
-export async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
+async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
   const absolutePath = joinPath(root, key)
 
   await ensureDirExists(absolutePath)
@@ -94,7 +118,7 @@ export async function readThemeFile(root: string, path: Key): Promise<string | B
   return readFile(absolutePath, options)
 }
 
-export async function removeThemeFile(root: string, path: Key) {
+async function removeThemeFile(root: string, path: Key) {
   const absolutePath = joinPath(root, path)
 
   const themeFileExists = await fileExists(absolutePath)

@@ -1,5 +1,5 @@
 import {versionDiffByVersion} from './version-diff.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {AppVersionByTagSchema} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {describe, expect, test} from 'vitest'
@@ -17,7 +17,9 @@ describe('versionDiffByVersion', () => {
     })
 
     // When/Then
-    await expect(versionDiffByVersion('apiKey', 'version', developerPlatformClient)).rejects.toThrow(AbortSilentError)
+    await expect(versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)).rejects.toThrow(
+      AbortSilentError,
+    )
     expect(outputMock.error()).toMatchInlineSnapshot(`
       "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
@@ -96,7 +98,7 @@ describe('versionDiffByVersion', () => {
     })
 
     // When
-    const result = await versionDiffByVersion('apiKey', 'version', developerPlatformClient)
+    const result = await versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)
 
     // Then
     expect(result).toEqual({versionsDiff: versionsDiff.app.versionsDiff, versionDetails: versionDetails.app.appVersion})

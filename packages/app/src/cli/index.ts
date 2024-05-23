@@ -11,6 +11,7 @@ import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
+import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
@@ -18,8 +19,11 @@ import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
 import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
+import init from './hooks/clear_command_cache.js'
+import gatherPublicMetadata from './hooks/public_metadata.js'
+import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 
-const APP_COMMANDS = {
+export const commands = {
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,
@@ -32,6 +36,7 @@ const APP_COMMANDS = {
   'app:draft-extensions:push': DraftExtensionsPush,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
+  'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
@@ -42,4 +47,6 @@ const APP_COMMANDS = {
   'webhook:trigger': WebhookTriggerDeprecated,
 }
 
-export default APP_COMMANDS
+export const AppSensitiveMetadataHook = gatherSensitiveMetadata
+export const AppInitHook = init
+export const AppPublicMetadataHook = gatherPublicMetadata

@@ -15,6 +15,7 @@
     },
     "build:code": {
       "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
       "options": {
         "command": "pnpm vite build --config vite.config.ts",
         "cwd": "packages/ui-extensions-server-kit"
@@ -23,6 +24,7 @@
     "build:types": {
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
+      "outputs": ["{workspaceRoot}/dist"],
       "options": {
         "command": "pnpm tsc --emitDeclarationOnly",
         "cwd": "packages/ui-extensions-server-kit"

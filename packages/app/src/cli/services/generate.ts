@@ -1,7 +1,10 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {
+  DeveloperPlatformClient,
+  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadApp} from '../models/app/loader.js'
 import generateExtensionPrompts, {
@@ -38,23 +41,28 @@ interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const apiKey = await ensureGenerateContext({...options, developerPlatformClient})
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey})
+  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
+  const remoteApp = await ensureGenerateContext({...options, developerPlatformClient})
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
   const app: AppInterface = await loadApp({
     directory: options.directory,
-    configName: options.configName,
+    userProvidedConfigName: options.configName,
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, apiKey, availableSpecifications)
+  const extensionTemplates = await fetchExtensionTemplates(
+    developerPlatformClient,
+    remoteApp.apiKey,
+    availableSpecifications,
+  )
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
   await saveAnalyticsMetadata(promptAnswers, options.template)
 
-  const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
+  const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtensions = await generateExtensionTemplate(generateExtensionOptions)
 
   renderSuccessMessages(generatedExtensions, app.packageManager)
@@ -118,12 +126,14 @@ function buildGenerateOptions(
   promptAnswers: GenerateExtensionPromptOutput,
   app: AppInterface,
   options: GenerateOptions,
+  developerPlatformClient: DeveloperPlatformClient,
 ): GenerateExtensionTemplateOptions {
   return {
     app,
     cloneUrl: options.cloneUrl,
     extensionChoices: promptAnswers.extensionContent,
     extensionTemplate: promptAnswers.extensionTemplate,
+    developerPlatformClient,
   }
 }
 

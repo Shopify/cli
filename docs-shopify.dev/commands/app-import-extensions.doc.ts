@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'appimportextensions',
   },
   ],
-  category: 'app commands',
+  category: 'app',
   related: [
   ],
 }

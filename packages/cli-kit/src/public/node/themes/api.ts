@@ -53,6 +53,9 @@ export async function bulkUploadThemeAssets(
   session: AdminSession,
 ): Promise<Result[]> {
   const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
+  if (response.status !== 207) {
+    throw new AbortError('Upload failed, could not reach the server')
+  }
   return buildBulkUploadResults(response.json.results, assets)
 }
 

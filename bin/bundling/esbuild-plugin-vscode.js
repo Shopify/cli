@@ -7,6 +7,8 @@ const packagesWithUMDexports = [
   'vscode-languageserver-textdocument'
 ]
 
+// This plugin solves this issue with vscode packages that have UMD exports:
+// https://github.com/microsoft/vscode-json-languageservice/issues/200
 const ShopifyVSCodePlugin = {
   name: "ShopifyVSCodePlugin",
   setup(build) {
