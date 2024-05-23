@@ -79,7 +79,7 @@ export class ShopifyConfig extends Config {
  *
  * @returns The value of the `--path` argument, if provided.
  */
-function sniffForPath(): string | undefined {
+export function sniffForPath(): string | undefined {
   const pathFlagIndex = process.argv.indexOf('--path')
   if (pathFlagIndex === -1) return
   const pathFlag = process.argv[pathFlagIndex + 1]
