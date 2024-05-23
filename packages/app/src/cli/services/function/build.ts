@@ -252,7 +252,7 @@ export class ExportJavyBuilder implements JavyBuilder {
 
   async compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
     const witContent = this.wit
-    outputDebug(`Generating world to use with Javy:`)
+    outputDebug('Generating world to use with Javy:')
     outputDebug(witContent)
 
     return inTemporaryDirectory(async (dir) => {
