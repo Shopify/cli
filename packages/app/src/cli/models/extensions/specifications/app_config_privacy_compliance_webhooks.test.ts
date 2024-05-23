@@ -19,7 +19,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.transform!(object)
+      const result = privacyComplianceSpec.transformLocalToRemote!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -48,7 +48,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.transform!(object)
+      const result = privacyComplianceSpec.transformLocalToRemote!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -73,7 +73,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.transform!(object)
+      const result = privacyComplianceSpec.transformLocalToRemote!(object)
 
       // Then
       expect(isEmpty(result)).toBeTruthy()
@@ -91,7 +91,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object, {flags: [Flag.DeclarativeWebhooks]})
 
       // Then
       expect(result).toMatchObject({
@@ -124,7 +124,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object, {flags: [Flag.DeclarativeWebhooks]})
 
       // Then
       expect(result).toEqual({
@@ -149,7 +149,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object, {flags: [Flag.DeclarativeWebhooks]})
 
       // Then
       expect(isEmpty(result)).toBeTruthy()
@@ -167,7 +167,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object)
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -191,7 +191,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object)
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toEqual({
@@ -213,7 +213,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object)
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(isEmpty(result)).toBeTruthy()

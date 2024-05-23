@@ -15,7 +15,7 @@ describe('app_config_app_proxy', () => {
       const appConfigSpec = spec
 
       // When
-      const result = appConfigSpec.transform!(object)
+      const result = appConfigSpec.transformLocalToRemote!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -37,7 +37,7 @@ describe('app_config_app_proxy', () => {
       const appConfigSpec = spec
 
       // When
-      const result = appConfigSpec.reverseTransform!(object)
+      const result = appConfigSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({

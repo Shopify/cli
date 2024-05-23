@@ -73,6 +73,11 @@ export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path:
 export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
 
 /**
+ * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
+ */
+export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
+
+/**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
  */
 export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & SpecsAppConfiguration
@@ -81,6 +86,9 @@ export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & Spec
  * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
  */
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
+
+/** Validation schema that produces a provided app configuration type */
+type SchemaForConfig<TConfig extends {path: string}> = zod.ZodType<Omit<TConfig, 'path'>>
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
@@ -199,31 +207,17 @@ export interface AppConfigurationInterface<
 > {
   directory: string
   configuration: TConfig
-  configSchema: zod.ZodType<Omit<TConfig, 'path'>>
+  configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
   remoteFlags: Flag[]
-}
-
-// A tweak of the normal AppInterface for loading code that needs to present something that is almost a real app, but not quite
-export interface PartialAppInterface<
-  TConfig extends AppConfiguration = AppConfiguration,
-  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
-> extends AppConfigurationInterface<TConfig, TModuleSpec> {
-  name: string
-  packageManager: PackageManager
-
-  /**
-   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
-   *
-   * @returns true if the app can be launched, false otherwise
-   */
-  appIsLaunchable: () => boolean
 }
 
 export interface AppInterface<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
-> extends PartialAppInterface<TConfig, TModuleSpec> {
+> extends AppConfigurationInterface<TConfig, TModuleSpec> {
+  name: string
+  packageManager: PackageManager
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   nodeDependencies: {[key: string]: string}
   webs: Web[]
@@ -234,11 +228,21 @@ export interface AppInterface<
   draftableExtensions: ExtensionInstance[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
-  hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  /**
+   * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
+   *
+   * @returns true if the app can be launched, false otherwise
+   */
+  appIsLaunchable: () => boolean
+
+  /**
+   * If creating an app on the platform based on this app and its configuration, what default options should the app take?
+   */
+  creationDefaultOptions(): AppCreationDefaultOptions
 }
 
 type AppConstructor<
@@ -353,10 +357,6 @@ export class App<
     await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
   }
 
-  hasExtensions(): boolean {
-    return this.allExtensions.length > 0
-  }
-
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
@@ -374,6 +374,14 @@ export class App<
     const backendConfig = this.webs.find((web) => isWebType(web, WebType.Backend))
 
     return Boolean(frontendConfig || backendConfig)
+  }
+
+  creationDefaultOptions(): AppCreationDefaultOptions {
+    return {
+      isLaunchable: this.appIsLaunchable(),
+      scopesArray: getAppScopesArray(this.configuration),
+      name: this.name,
+    }
   }
 
   get includeConfigOnDeploy() {
@@ -492,4 +500,10 @@ export async function getDependencyVersion(dependency: string, directory: string
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: dependency, version: packageContent.version}
+}
+
+export interface AppCreationDefaultOptions {
+  isLaunchable: boolean
+  scopesArray: string[]
+  name: string
 }

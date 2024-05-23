@@ -13,9 +13,8 @@ import {
   AppConfiguration,
   AppInterface,
   isCurrentAppSchema,
-  getAppScopesArray,
   CurrentAppConfiguration,
-  PartialAppInterface,
+  AppCreationDefaultOptions,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -355,7 +354,7 @@ interface DeployContextOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 async function fetchDevAppAndPrompt(
-  app: PartialAppInterface,
+  app: AppInterface,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationApp | undefined> {
   const cachedInfo = getCachedAppInfo(app.directory)
@@ -662,15 +661,14 @@ export async function ensureVersionsListContext(
 }
 
 export async function fetchOrCreateOrganizationApp(
-  app: PartialAppInterface,
+  options: AppCreationDefaultOptions,
   directory?: string,
 ): Promise<OrganizationApp> {
+  const {isLaunchable, scopesArray, name} = options
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-  const isLaunchable = app.appIsLaunchable()
-  const scopesArray = getAppScopesArray(app.configuration)
-  const remoteApp = await selectOrCreateApp(app.name, apps, hasMorePages, organization, developerPlatformClient, {
+  const remoteApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient, {
     isLaunchable,
     scopesArray,
     directory,
@@ -715,7 +713,7 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!remoteApp) {
-    remoteApp = await fetchOrCreateOrganizationApp(app)
+    remoteApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
   }
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})

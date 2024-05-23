@@ -55,7 +55,7 @@ describe('initialize a extension', async () => {
         appDirectory: tmpDir,
         specifications,
       })
-      const app = await loadApp({directory: tmpDir, specifications})
+      const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       const generatedExtension = app.allExtensions[0]!
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
@@ -86,7 +86,7 @@ describe('initialize a extension', async () => {
 
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
-      const loadedApp = await loadApp({directory: tmpDir, specifications})
+      const loadedApp = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       expect(loadedApp.allExtensions.length).toEqual(2)
     })
   })
@@ -326,7 +326,7 @@ describe('initialize a extension', async () => {
       })
 
       // Then
-      const app = await loadApp({directory: tmpDir, specifications})
+      const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       const generatedFunction = app.allExtensions[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
@@ -367,7 +367,7 @@ describe('initialize a extension', async () => {
         })
 
         // Then
-        const app = await loadApp({directory: tmpDir, specifications})
+        const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
         const generatedFunction = app.allExtensions[0]!
         expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedFunction.configuration.name).toBe(name)
@@ -466,7 +466,7 @@ async function createFromTemplate({
 }: CreateFromTemplateOptions): Promise<string> {
   const result = await generateExtensionTemplate({
     extensionTemplate: specification,
-    app: await loadApp({directory: appDirectory, specifications}),
+    app: await loadApp({directory: appDirectory, specifications, userProvidedConfigName: undefined}),
     extensionChoices: [{index: 0, name, flavor: extensionFlavor}],
     developerPlatformClient: testDeveloperPlatformClient(),
   })

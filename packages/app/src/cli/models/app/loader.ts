@@ -49,7 +49,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-type AppLoaderMode = 'strict' | 'report'
+export type AppLoaderMode = 'strict' | 'report'
 
 type AbortOrReport = <T>(
   errorMessage: OutputMessage,
@@ -187,18 +187,18 @@ export async function checkFolderIsValidApp(directory: string) {
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function loadApp(
+export async function loadApp<TModuleSpec extends ExtensionSpecification = ExtensionSpecification>(
   options: Omit<AppLoaderConstructorArgs<AppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
     directory: string
-    userProvidedConfigName?: string
-    specifications?: ExtensionSpecification[]
+    userProvidedConfigName: string | undefined
+    specifications: TModuleSpec[]
     remoteFlags?: Flag[]
   },
   env = process.env,
-): Promise<AppInterface> {
-  const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
+): Promise<AppInterface<AppConfiguration, TModuleSpec>> {
+  const specifications = options.specifications
   const dynamicConfigOptions = getDynamicConfigOptionsFromEnvironment(env)
-  const configurationLoader = new AppConfigurationLoader(
+  const configurationLoader = new AppConfigurationLoader<TModuleSpec>(
     {
       directory: options.directory,
       userProvidedConfigName: options.userProvidedConfigName,
@@ -209,7 +209,7 @@ export async function loadApp(
   )
   const loadedConfiguration = await configurationLoader.loaded()
 
-  const loader = new AppLoader(
+  const loader = new AppLoader<AppConfiguration, TModuleSpec>(
     {
       mode: options.mode,
       loadedConfiguration,
@@ -279,7 +279,7 @@ type DynamicallySpecifiedConfigLoading =
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private mode: AppLoaderMode
   private errors: AppErrors = new AppErrors()
-  private specifications: ExtensionSpecification[]
+  private specifications: TModuleSpec[]
   private remoteFlags: Flag[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
   private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
@@ -436,7 +436,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specification = createConfigExtensionSpecification({
         identifier: type,
         schema: zod.object({}).passthrough(),
-      })
+      }) as TModuleSpec
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -711,7 +711,7 @@ export async function loadAppConfiguration(
 
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
-  userProvidedConfigName?: string
+  userProvidedConfigName: string | undefined
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
 }
@@ -744,10 +744,10 @@ type ConfigurationLoaderResult<
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
 }
 
-class AppConfigurationLoader {
+class AppConfigurationLoader<TModuleSpec extends ExtensionSpecification> {
   private directory: string
   private userProvidedConfigName?: string
-  private specifications: ExtensionSpecification[]
+  private specifications: TModuleSpec[]
   private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
   private remoteFlags: Flag[]
 
@@ -757,7 +757,7 @@ class AppConfigurationLoader {
       userProvidedConfigName,
       specifications,
       remoteFlags,
-    }: AppConfigurationLoaderConstructorArgs & {specifications: ExtensionSpecification[]},
+    }: Omit<AppConfigurationLoaderConstructorArgs, 'specifications'> & {specifications: TModuleSpec[]},
     dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
   ) {
     this.directory = directory
@@ -767,7 +767,7 @@ class AppConfigurationLoader {
     this.remoteFlags = remoteFlags ?? []
   }
 
-  async loaded(): Promise<ConfigurationLoaderResult<AppConfiguration, ExtensionSpecification>> {
+  async loaded(): Promise<ConfigurationLoaderResult<AppConfiguration, TModuleSpec>> {
     const specifications = this.specifications
     const appDirectory = await getAppDirectory(this.directory)
     const configSource: LinkedConfigurationSource = this.userProvidedConfigName ? 'flag' : 'cached'
@@ -1097,7 +1097,7 @@ async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadR
 
 const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 const appConfigurationFileNameGlob = 'shopify.app*.toml'
-type AppConfigurationFileName = 'shopify.app.toml' | `shopify.app.${string}.toml`
+export type AppConfigurationFileName = 'shopify.app.toml' | `shopify.app.${string}.toml`
 
 /**
  * Gets the name of the app configuration file (e.g. `shopify.app.production.toml`) based on a provided config name.
@@ -1128,7 +1128,7 @@ export function getAppConfigurationShorthand(path: string) {
 }
 
 /** Checks if configName is a valid one (`shopify.app.toml`, or `shopify.app.<something>.toml`) */
-function isValidFormatAppConfigurationFileName(configName: string): configName is AppConfigurationFileName {
+export function isValidFormatAppConfigurationFileName(configName: string): configName is AppConfigurationFileName {
   if (appConfigurationFileNameRegex.test(configName)) {
     return true
   }

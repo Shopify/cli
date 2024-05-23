@@ -12,7 +12,7 @@ const WebhookTransformConfig: CustomTransformationConfig = {
 }
 
 export const WebhookSimplifyConfig: SimplifyConfig = {
-  simplify: (remoteConfig: SpecsAppConfiguration) => simplifyWebhooks(remoteConfig),
+  simplifyMergedRemoteConfig: (remoteConfig: SpecsAppConfiguration) => simplifyWebhooks(remoteConfig),
 }
 
 const appWebhooksSpec = createConfigExtensionSpecification({
