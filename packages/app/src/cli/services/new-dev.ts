@@ -19,7 +19,10 @@ export async function newDev(commandOptions: DevOptions) {
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelClient = await initTunnelClient(commandOptions)
-  const {configuration} = await loadAppConfiguration(commandOptions)
+  const {configuration} = await loadAppConfiguration({
+    ...commandOptions,
+    userProvidedConfigName: commandOptions.configName,
+  })
   let developerPlatformClient = selectDeveloperPlatformClient({configuration})
   const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {

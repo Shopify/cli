@@ -69,6 +69,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     await developerPlatformClient.refreshToken()
   }
 
+  const extensionsInManifest = await app.draftableExtensions.filter((extension) => {
+    return extension.configurationPath === app.configuration.path
+  })
+
   await inTemporaryDirectory(async (tmpDir) => {
     const bundlePath = joinPath(tmpDir, 'bundle')
     await mkdir(bundlePath)
@@ -77,23 +81,24 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
     await initialBuild(processOptions)
     await bundleExtensionsAndUpload(processOptions)
+    const manifestWatcher = undefined
+    const newExtensionsWatcher = undefined
+    const deletedExtensionsWatcher = undefined
 
-    await Promise.all(
-      extensions.map(async (extension) => {
-        // Watch for changes
-        return devSessionExtensionWatcher({
-          ...processOptions,
-          extension,
-          onChange: async () => {
-            // At this point the extension has already been built and is ready to be updated
-            return performActionWithRetryAfterRecovery(
-              async () => bundleExtensionsAndUpload(processOptions),
-              refreshToken,
-            )
-          },
-        })
-      }),
-    )
+    const extensionWatchers = extensions.map(async (extension) => {
+      return devSessionExtensionWatcher({
+        ...processOptions,
+        extension,
+        onChange: async () => {
+          // At this point the extension has already been built and is ready to be updated
+          return performActionWithRetryAfterRecovery(
+            async () => bundleExtensionsAndUpload(processOptions),
+            refreshToken,
+          )
+        },
+      })
+    })
+    await Promise.all(extensionWatchers)
   })
 }
 

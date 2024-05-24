@@ -603,12 +603,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async devSessionDeploy({appId, url, organizationId}: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
     const query = DevSessionDeploy
     const variables: DevSessionDeployVariables = {appId, url}
-    return orgScopedShopifyDevelopersRequest<DevSessionDeploySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-    )
+    return appManagementRequest<DevSessionDeploySchema>(organizationId, query, await this.token(), variables)
   }
 
   async release({
