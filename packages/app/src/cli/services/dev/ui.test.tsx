@@ -161,9 +161,8 @@ describe('ui', () => {
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
         1,
-        // stdout and stderr are wrapped
-        expect.anything(),
-        expect.anything(),
+        process.stdout,
+        process.stderr,
         abortController.signal,
       )
     })

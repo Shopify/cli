@@ -22,7 +22,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {ConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 
 /**
  * Class that represents an instance of a local extension
@@ -36,9 +35,7 @@ import {ConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType>
-  implements ConcurrentOutputContext
-{
+export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
   entrySourceFilePath: string
   devUUID: string
   localIdentifier: string

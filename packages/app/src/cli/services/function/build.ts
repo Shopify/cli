@@ -236,7 +236,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     }
 
     const contents = this.entrypointContents
-    outputDebug(`Generating dist/function.js using generated module:`)
+    outputDebug('Generating dist/function.js using generated module:')
     outputDebug(contents)
 
     const esbuildOptions: Parameters<typeof esBuild>[0] = {

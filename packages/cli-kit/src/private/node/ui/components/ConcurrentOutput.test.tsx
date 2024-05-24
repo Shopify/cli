@@ -1,4 +1,4 @@
-import {ConcurrentOutput} from './ConcurrentOutput.js'
+import {ConcurrentOutput, useConcurrentOutputContext} from './ConcurrentOutput.js'
 import {render} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
@@ -78,7 +78,10 @@ describe('ConcurrentOutput', () => {
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-          // TODO: set context instead stdout.write(prefixConcurrentOutputLog(extensionName, 'foo bar'))
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          useConcurrentOutputContext({outputPrefix: extensionName}, () => {
+            stdout.write('foo bar')
+          })
           processSync.resolve()
         },
       },

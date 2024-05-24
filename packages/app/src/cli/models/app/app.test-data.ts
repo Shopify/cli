@@ -189,7 +189,6 @@ export async function testUIExtension(
   const configuration = uiExtension?.configuration ?? {
     name: uiExtension?.configuration?.name ?? 'test-ui-extension',
     type: uiExtension?.configuration?.type ?? uiExtension?.type ?? 'product_subscription',
-    handle: uiExtension?.configuration?.handle,
     metafields: [],
     capabilities: {
       block_progress: false,

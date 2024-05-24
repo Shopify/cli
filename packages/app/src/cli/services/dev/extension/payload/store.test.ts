@@ -7,9 +7,7 @@ import {
 import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {Writable} from 'stream'
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
   test('returns the raw payload', async () => {
@@ -23,7 +21,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       appName: 'mock-app-name',
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
-      extensions: [await testUIExtension(), await testUIExtension(), await testUIExtension()],
+      extensions: [{}, {}, {}],
       storeFqdn: 'mock-store-fqdn.shopify.com',
       manifestVersion: '3',
     } as unknown as ExtensionsPayloadStoreOptions
@@ -53,30 +51,6 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       store: 'mock-store-fqdn.shopify.com',
       extensions: [{mock: 'extension-payload'}, {mock: 'extension-payload'}, {mock: 'extension-payload'}],
     })
-  })
-
-  test('wraps stdout and stderr with prefixed logger', async () => {
-    // Given
-    const spy = vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
-      mock: 'extension-payload',
-    } as unknown as UIExtensionPayload)
-    const writable = new Writable()
-    vi.spyOn(ExtensionInstance.prototype, 'getPrefixedLogger').mockImplementation(() => writable)
-    const options = {
-      apiKey: 'mock-api-key',
-      appName: 'mock-app-name',
-      url: 'https://mock-url.com',
-      websocketURL: 'wss://mock-websocket-url.com',
-      extensions: [await testUIExtension()],
-      storeFqdn: 'mock-store-fqdn.shopify.com',
-      manifestVersion: '3',
-    } as unknown as ExtensionsPayloadStoreOptions
-
-    // When
-    await getExtensionsPayloadStoreRawPayload(options)
-
-    // Then
-    expect(spy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({stdout: writable, stderr: writable}))
   })
 })
 
@@ -275,13 +249,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = await testUIExtension({
-        devUUID: '123',
-        configuration: {name: 'bar', type: 'ui_extension'},
-      })
-
-      const writable = new Writable()
-      vi.spyOn(ExtensionInstance.prototype, 'getPrefixedLogger').mockImplementation(() => writable)
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, {hidden: true})
@@ -289,8 +257,6 @@ describe('ExtensionsPayloadStore()', () => {
       // Then
       expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
         ...mockOptions,
-        stdout: writable,
-        stderr: writable,
         currentDevelopmentPayload: {hidden: true},
       })
       expect(extensionsPayloadStore.getRawPayload()).toStrictEqual({
@@ -310,10 +276,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = await testUIExtension({
-        devUUID: '123',
-        configuration: {type: 'ui_extension'},
-      })
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
@@ -344,10 +307,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = await testUIExtension({
-        devUUID: '123',
-        configuration: {type: 'ui_extension'},
-      })
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
@@ -372,10 +332,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = await testUIExtension({
-        devUUID: '123',
-        configuration: {type: 'ui_extension'},
-      })
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
       const onUpdateSpy = vi.fn()
 
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
