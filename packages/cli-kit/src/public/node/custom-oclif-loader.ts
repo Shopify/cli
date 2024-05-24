@@ -7,6 +7,9 @@ export class ShopifyConfig extends Config {
   constructor(options: Options) {
     const path = sniffForPath() ?? cwd()
     if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
+      // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
+      // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
+      // 2. To allow the Hydrogen team to load a local version for testing.
       options.pluginAdditions = {
         core: ['@shopify/cli-hydrogen'],
         path,
@@ -28,8 +31,7 @@ export class ShopifyConfig extends Config {
       const aIndex = oclifPlugins.indexOf(pluginAliasA)
       const bIndex = oclifPlugins.indexOf(pluginAliasB)
 
-      // Hydrogen has higher priority than core plugins. This way a user can have an older version of cli-hydrogen in their project.
-      // And the Hydrogen team can load a local version for testing.
+      // If there is an external cli-hydrogen plugin, its commands should take priority over bundled ('core') commands
       if (aCommand.pluginType === 'core' && bCommand.pluginAlias === '@shopify/cli-hydrogen') {
         // If b is hydrogen and a is core sort b first
         return 1
