@@ -246,8 +246,8 @@ importers:
         specifier: 3.60.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-65239c7-20240523044243
-        version: 0.0.0-next-65239c7-20240523044243(react-dom@17.0.2)(react@17.0.2)
+        specifier: 0.0.0-next-5a554b2-20240524062056
+        version: 0.0.0-next-5a554b2-20240524062056(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.60.0
         version: link:../cli-kit
@@ -4919,15 +4919,15 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-65239c7-20240523044243(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-B5+/Oy1NC4DGkwPmrRAieXoZfe5hZ5kyQy86rmXlp+s0Xyx7gMpq2LJa0ziis97eGf5XdKMPidpiHwWj05JzzA==}
+  /@shopify/cli-hydrogen@0.0.0-next-5a554b2-20240524062056(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-XnEhzPfyPyVuc30yhw8EVPLhogbsCUNoVUgSg0SspwBzXgLwlOYEEkFUOyq2mhybJEk/XjwRyq7bgP80sEsnHg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-65239c7-20240523044243
-      '@shopify/mini-oxygen': 0.0.0-next-65239c7-20240523044243
+      '@shopify/hydrogen-codegen': 0.0.0-next-5a554b2-20240524062056
+      '@shopify/mini-oxygen': 0.0.0-next-5a554b2-20240524062056
       graphql-config: ^5.0.3
       vite: 4.4.9
     peerDependenciesMeta:
