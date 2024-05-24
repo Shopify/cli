@@ -161,6 +161,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.uidStrategy === 'dynamic'
   }
 
+  get outputPrefix() {
+    return this.handle
+  }
+
   isSentToMetrics() {
     return !this.isAppConfigExtension
   }
@@ -228,10 +232,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   hasExtensionPointTarget(target: string): boolean {
     return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
-  }
-
-  getOutputPrefix(): string {
-    return this.handle
   }
 
   // Functions specific properties

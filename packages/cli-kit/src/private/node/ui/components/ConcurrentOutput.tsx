@@ -22,11 +22,6 @@ interface Chunk {
   lines: string[]
 }
 
-interface ParsedLog {
-  prefix?: string
-  log: string
-}
-
 function addLeadingZero(number: number) {
   if (number < 10) {
     return `0${number}`
@@ -44,10 +39,11 @@ function currentTime() {
 }
 
 interface ConcurrentOutputContext {
-  getOutputPrefix(): string
+  outputPrefix: string
 }
 
 const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()
+
 function useConcurrentOutputContext<T>(context: ConcurrentOutputContext, callback: () => T): T {
   return outputContextStore.run(context, callback)
 }
@@ -130,7 +126,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
       return new Writable({
         write(chunk, _encoding, next) {
           const context = outputContextStore.getStore()
-          const prefix = context?.getOutputPrefix() ?? process.prefix
+          const prefix = context?.outputPrefix ?? process.prefix
           const log = chunk.toString('utf8')
 
           const index = addPrefix(prefix, prefixes)

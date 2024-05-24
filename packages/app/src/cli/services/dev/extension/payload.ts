@@ -17,7 +17,7 @@ export async function getUIExtensionPayload(
   extension: ExtensionInstance,
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
-  return useConcurrentOutputContext(extension, async () => {
+  return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 

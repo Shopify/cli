@@ -38,7 +38,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 
   await Promise.all(
     extensions.map(async (extension) => {
-      return useConcurrentOutputContext(extension, async () => {
+      return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
         await extension.build({
           app,
           stdout,
