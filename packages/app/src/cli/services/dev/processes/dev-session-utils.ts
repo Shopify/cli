@@ -5,11 +5,28 @@ import {reloadExtensionConfig} from '../update-extension.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
-import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 
 interface ExtensionWatcherOptions extends DevSessionProcessOptions {
   extension: ExtensionInstance
   onChange: () => Promise<void>
+}
+
+interface AppWatcherOptions extends DevSessionProcessOptions {
+  onChange: () => Promise<void>
+}
+
+export async function devSessionManifestWatcher({app, stdout, stderr, signal, onChange}: AppWatcherOptions) {
+  const {default: chokidar} = await import('chokidar')
+
+  const manifestWatcher = chokidar.watch(app.configuration.path).on('change', (path) => {
+    outputDebug(`App manifest at path ${path} changed`, stdout)
+    onChange().catch((error: Error) => {
+      outputWarn(`Failed to update app manifest: ${error.message}`, stdout)
+    })
+  })
+  listenForAbortOnWatcheraa(signal, manifestWatcher, 'app manifest', stdout, stderr)
 }
 
 export async function devSessionExtensionWatcher({
@@ -38,21 +55,6 @@ Redeploy Paths:
 `.trim(),
     stdout,
   )
-
-  const listenForAbortOnWatcher = (watcher: FSWatcher) => {
-    signal.addEventListener('abort', () => {
-      outputDebug(`Closing file watching for extension with ID ${extension.devUUID}`, stdout)
-      watcher
-        .close()
-        .then(() => {
-          outputDebug(`File watching closed for extension with ${extension.devUUID}`, stdout)
-        })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .catch((error: any) => {
-          outputDebug(`File watching failed to close for extension with ${extension.devUUID}: ${error.message}`, stderr)
-        })
-    })
-  }
 
   let buildController: AbortController | null
   const allPaths = [...buildPaths, ...configurationPaths]
@@ -86,7 +88,7 @@ Redeploy Paths:
         }
       })
   })
-  listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
+  listenForAbortOnWatcheraa(signal, functionRebuildAndRedeployWatcher, extension.devUUID, stdout, stderr)
 }
 
 async function reloadAndbuildIfNecessary(
@@ -98,4 +100,25 @@ async function reloadAndbuildIfNecessary(
   const reloadedConfig = reloadExtensionConfig({extension, stdout: options.stdout})
   if (!build) return reloadedConfig
   return extension.buildForBundle(options, bundlePath, undefined).then(() => reloadedConfig)
+}
+
+const listenForAbortOnWatcheraa = (
+  signal: AbortSignal,
+  watcher: FSWatcher,
+  identifier: string,
+  stdout: Writable,
+  stderr: Writable,
+) => {
+  signal.addEventListener('abort', () => {
+    outputDebug(`Closing file watching for ${identifier}`, stdout)
+    watcher
+      .close()
+      .then(() => {
+        outputDebug(`File watching closed for ${identifier}`, stdout)
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .catch((error: any) => {
+        outputDebug(`File watching failed to close for ${identifier}: ${error.message}`, stderr)
+      })
+  })
 }

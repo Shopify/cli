@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {devSessionExtensionWatcher} from './dev-session-utils.js'
+import {devSessionExtensionWatcher, devSessionManifestWatcher} from './dev-session-utils.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -62,43 +62,49 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 ) => {
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
-  const {extensions, developerPlatformClient, app} = options
+  const {developerPlatformClient, app} = options
   await installJavy(app)
 
   async function refreshToken() {
     await developerPlatformClient.refreshToken()
   }
 
-  const extensionsInManifest = await app.draftableExtensions.filter((extension) => {
-    return extension.configurationPath === app.configuration.path
+  // Extensions defined in the app toml that don't have any other watch paths
+  // const extensionsInManifest = await app.draftableExtensions.filter(async (extension) => {
+  //   const watchPaths = (await extension.watchConfigurationPaths()).concat(extension.watchBuildPaths ?? [])
+  //   return watchPaths.length === 1 && watchPaths[0] === app.configuration.path
+  // })
+
+  // Extensions (defined in any toml) that need a custom watcher because they have custom paths
+  const extensions = await app.realExtensions.filter(async (extension) => {
+    const watchPaths = (await extension.watchConfigurationPaths()).concat(extension.watchBuildPaths ?? [])
+    return watchPaths.length > 1 || watchPaths[0] !== app.configuration.path
   })
 
+  // Review if this extension list makes sense
+
   await inTemporaryDirectory(async (tmpDir) => {
-    const bundlePath = joinPath(tmpDir, 'bundle')
+    const dir = '/Users/isaac/Desktop/testing'
+    const bundlePath = joinPath(dir, 'bundle')
     await mkdir(bundlePath)
 
     const processOptions = {...options, stderr, stdout, signal, bundlePath}
 
     await initialBuild(processOptions)
     await bundleExtensionsAndUpload(processOptions)
-    const manifestWatcher = undefined
     const newExtensionsWatcher = undefined
     const deletedExtensionsWatcher = undefined
 
+    const onChange = async () => {
+      return performActionWithRetryAfterRecovery(async () => bundleExtensionsAndUpload(processOptions), refreshToken)
+    }
+
     const extensionWatchers = extensions.map(async (extension) => {
-      return devSessionExtensionWatcher({
-        ...processOptions,
-        extension,
-        onChange: async () => {
-          // At this point the extension has already been built and is ready to be updated
-          return performActionWithRetryAfterRecovery(
-            async () => bundleExtensionsAndUpload(processOptions),
-            refreshToken,
-          )
-        },
-      })
+      console.log('extension: ', extension.name)
+      return devSessionExtensionWatcher({...processOptions, extension, onChange})
     })
-    await Promise.all(extensionWatchers)
+    const manifestWatcher = devSessionManifestWatcher({...processOptions, onChange})
+    await Promise.all([...extensionWatchers, manifestWatcher])
   })
 }
 
