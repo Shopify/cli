@@ -726,34 +726,37 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
   return {
-    appModules: [
-      {
-        uid: 'app_home',
-        specificationIdentifier: 'app_home',
-        config: JSON.stringify({
-          app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-          embedded: isLaunchable,
-        }),
-      },
-      {
-        uid: 'branding',
-        specificationIdentifier: 'branding',
-        config: JSON.stringify({name}),
-      },
-      {
-        uid: 'webhooks',
-        specificationIdentifier: 'webhooks',
-        config: JSON.stringify({api_version: '2024-01'}),
-      },
-      {
-        uid: 'app_access',
-        specificationIdentifier: 'app_access',
-        config: JSON.stringify({
-          redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
-          ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
-        }),
-      },
-    ],
+    appSource: {
+      modules: [
+        {
+          uid: 'app_home',
+          specificationIdentifier: 'app_home',
+          config: JSON.stringify({
+            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+            embedded: isLaunchable,
+          }),
+        },
+        {
+          uid: 'branding',
+          specificationIdentifier: 'branding',
+          config: JSON.stringify({name}),
+        },
+        {
+          uid: 'webhooks',
+          specificationIdentifier: 'webhooks',
+          config: JSON.stringify({api_version: '2024-01'}),
+        },
+        {
+          uid: 'app_access',
+          specificationIdentifier: 'app_access',
+          config: JSON.stringify({
+            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+            ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+          }),
+        },
+      ],
+    },
+    name,
   }
 }
 
