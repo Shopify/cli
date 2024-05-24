@@ -28,7 +28,7 @@ export async function appManagementRequest<T>(
 ): Promise<T> {
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
-  const url = `https://${fqdn}/organization/${orgId}/graphql`
+  const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql`
   const result = limiter.schedule<T>(() =>
     graphqlRequest({
       query,
