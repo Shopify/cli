@@ -28,7 +28,15 @@ export interface CustomTransformationConfig {
 }
 
 export interface SimplifyConfig {
-  simplify?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
+  /**
+   * If required, specs can transform a top-level app configuration object taken from remote modules.
+   *
+   * This is typically to simplify the remote config into an optimal format for local use.
+   *
+   * @param remoteConfig - The top-level app configuration object taken from remote modules
+   * @returns The transformed top-level app configuration object
+   */
+  simplifyMergedRemoteConfig?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
@@ -37,7 +45,7 @@ type UidStrategy = 'single' | 'dynamic' | 'uuid'
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
+export type ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> = {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -62,11 +70,26 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  transform?: (content: object) => object
-  reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
-  simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
+
+  /**
+   * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
+   *
+   * @param localContent - Content taken from the local filesystem
+   * @returns Transformed configuration to send to the platform in place of the locally provided content
+   */
+  transformLocalToRemote?: (localContent: object) => object
+
+  /**
+   * If required, convert configuration from the platform to the format used locally in the filesystem.
+   *
+   * @param remoteContent - Platform provided content taken from an instance of this module
+   * @param options - Additional options to be used in the transformation
+   * @returns Transformed configuration to use in place of the platform provided content
+   */
+  transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
+
   uidStrategy: UidStrategy
-}
+} & SimplifyConfig
 
 /**
  * Extension specification, explicitly marked as having taken remote configuration values into account.
@@ -124,9 +147,9 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    transform: spec.transform,
-    reverseTransform: spec.reverseTransform,
-    simplify: spec.simplify,
+    transform: spec.transformLocalToRemote,
+    reverseTransform: spec.transformRemoteToLocal,
+    simplifyMergedRemoteConfig: spec.simplifyMergedRemoteConfig,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
@@ -156,17 +179,12 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures,
-    transform: resolveAppConfigTransform(spec.transformConfig),
-    reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
-    simplify: resolveSimplifyAppConfig(spec.simplify),
+    transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
+    transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    simplifyMergedRemoteConfig: spec.simplify?.simplifyMergedRemoteConfig,
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
   })
-}
-
-function resolveSimplifyAppConfig(simplifyConfig?: SimplifyConfig) {
-  // returns the configuration if there is no simplify function defined in the specification
-  return simplifyConfig?.simplify ?? ((content: SpecsAppConfiguration) => content)
 }
 
 function resolveAppConfigTransform(transformConfig?: TransformationConfig | CustomTransformationConfig) {

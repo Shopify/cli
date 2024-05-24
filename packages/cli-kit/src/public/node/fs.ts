@@ -45,6 +45,7 @@ import {
   rename as fsRename,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
+import * as os from 'os'
 import type {Pattern, Options as GlobOptions} from 'fast-glob'
 
 /**
@@ -276,13 +277,13 @@ export async function rmdir(path: string, options: RmDirOptions = {}): Promise<v
 }
 
 /**
- * Create a temporary directory.
+ * Create a temporary directory within the OS provided location for temp directories
  *
  * @returns Path to the temporary directory.
  */
 export async function mkTmpDir(): Promise<string> {
   outputDebug(outputContent`Creating a temporary directory...`)
-  const directory = await fsMkdtemp('tmp-')
+  const directory = await fsMkdtemp(joinPath(os.tmpdir(), 'tmp-'))
   return directory
 }
 

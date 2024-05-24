@@ -89,7 +89,10 @@ export async function sniffServiceOptionsAndAppConfigToSelectPlatformClient(opti
     return options.developerPlatformClient
   }
   try {
-    const {configuration} = await loadAppConfiguration(options)
+    const {configuration} = await loadAppConfiguration({
+      ...options,
+      userProvidedConfigName: options.configName,
+    })
     const developerPlatformClient = selectDeveloperPlatformClient({configuration})
     return developerPlatformClient
     // eslint-disable-next-line no-catch-all/no-catch-all

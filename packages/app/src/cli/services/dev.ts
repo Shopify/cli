@@ -82,7 +82,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const {configuration} = await loadAppConfiguration(commandOptions)
+  const {configuration} = await loadAppConfiguration({
+    ...commandOptions,
+    userProvidedConfigName: commandOptions.configName,
+  })
   let developerPlatformClient = selectDeveloperPlatformClient({configuration})
   const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {

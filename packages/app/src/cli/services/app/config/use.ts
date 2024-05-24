@@ -1,7 +1,7 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {AppConfiguration, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -48,7 +48,11 @@ export default async function use({
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
-  const configuration = await saveCurrentConfig({configFileName, directory})
+  const {configuration} = await loadAppConfiguration({
+    userProvidedConfigName: configFileName,
+    directory,
+  })
+  setCurrentConfigPreference(configuration, {configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -61,24 +65,25 @@ export default async function use({
   return configFileName
 }
 
-interface SaveCurrentConfigOptions {
-  configFileName: string
-  directory: string
-}
-
-export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
-  const {configuration} = await loadAppConfiguration({
-    userProvidedConfigName: configFileName,
-    directory,
-  })
-
+/**
+ * Sets the prefered app configuration file to use from now on.
+ *
+ * @param configuration - The configuration taken from this file. Used to ensure we're not remembering a malformed or incomplete configuration.
+ * @returns - Nothing, but does confirm that the configuration is an up to date one (and not fresh from a template).
+ */
+export function setCurrentConfigPreference(
+  configuration: AppConfiguration,
+  options: {
+    configFileName: string
+    directory: string
+  },
+): asserts configuration is CurrentAppConfiguration {
+  const {configFileName, directory} = options
   if (isCurrentAppSchema(configuration) && configuration.client_id) {
     setCachedAppInfo({
       directory,
       configFile: configFileName,
     })
-
-    return configuration
   } else {
     throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
   }

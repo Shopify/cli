@@ -20,7 +20,7 @@ describe('app_config_app_access', () => {
       const appAccessSpec = spec
 
       // When
-      const result = appAccessSpec.transform!(object)
+      const result = appAccessSpec.transformLocalToRemote!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -48,7 +48,7 @@ describe('app_config_app_access', () => {
       const appAccessSpec = spec
 
       // When
-      const result = appAccessSpec.reverseTransform!(object)
+      const result = appAccessSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({
