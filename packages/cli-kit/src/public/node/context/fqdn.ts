@@ -40,7 +40,7 @@ export async function partnersFqdn(): Promise<string> {
  */
 export async function appManagementFqdn(): Promise<string> {
   const environment = serviceEnvironment()
-  const productionFqdn = 'shopify.com'
+  const productionFqdn = 'app.shopify.com'
   switch (environment) {
     case 'local':
       return 'app.shopify.myshopify.io'
