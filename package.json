@@ -171,7 +171,9 @@
           "**/index.ts!"
         ],
         "project": "**/*.ts!",
-        "ignoreDependencies": ["@ast-grep/napi"],
+        "ignoreDependencies": [
+          "@ast-grep/napi"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"
