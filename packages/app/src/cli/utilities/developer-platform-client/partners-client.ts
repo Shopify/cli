@@ -7,6 +7,8 @@ import {
 import {
   ActiveAppVersion,
   AppDeployOptions,
+  AssetUrlSchema,
+  AppVersionIdentifiers,
   DeveloperPlatformClient,
   Paginateable,
 } from '../developer-platform-client.js'
@@ -270,14 +272,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(appId: string): Promise<RemoteSpecification[]> {
-    const variables: ExtensionSpecificationsQueryVariables = {api_key: appId}
+  async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+    const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     return result.extensionSpecifications
   }
 
-  async templateSpecifications(appId: string): Promise<ExtensionTemplate[]> {
-    const variables: RemoteTemplateSpecificationsVariables = {apiKey: appId}
+  async templateSpecifications(apiKey: string): Promise<ExtensionTemplate[]> {
+    const variables: RemoteTemplateSpecificationsVariables = {apiKey}
     const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
     return result.templateSpecifications
   }
@@ -313,17 +315,22 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AllAppExtensionRegistrationsQuery, variables)
   }
 
-  async appVersions(apiKey: string): Promise<AppVersionsQuerySchema> {
+  async appVersions({apiKey}: OrganizationApp): Promise<AppVersionsQuerySchema> {
     const variables: AppVersionsQueryVariables = {apiKey}
     return this.request(AppVersionsQuery, variables)
   }
 
-  async appVersionByTag(input: AppVersionByTagVariables): Promise<AppVersionByTagSchema> {
+  async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionByTagSchema> {
+    const input: AppVersionByTagVariables = {apiKey, versionTag}
     return this.request(AppVersionByTagQuery, input)
   }
 
-  async appVersionsDiff(input: AppVersionsDiffVariables): Promise<AppVersionsDiffSchema> {
-    return this.request(AppVersionsDiffQuery, input)
+  async appVersionsDiff(
+    {apiKey}: MinimalOrganizationApp,
+    {appVersionId}: AppVersionIdentifiers,
+  ): Promise<AppVersionsDiffSchema> {
+    const variables: AppVersionsDiffVariables = {apiKey, versionId: appVersionId}
+    return this.request(AppVersionsDiffQuery, variables)
   }
 
   async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {
@@ -358,15 +365,32 @@ export class PartnersClient implements DeveloperPlatformClient {
     const {organizationId, ...deployOptions} = deployInput
     // Enforce the type
     const variables: AppDeployVariables = deployOptions
+    // Exclude uid
+    variables.appModules = variables.appModules?.map((element) => {
+      const {uid, ...otherFields} = element
+      return otherFields
+    })
     return this.request(AppDeploy, variables)
   }
 
-  async release(input: AppReleaseVariables): Promise<AppReleaseSchema> {
+  async release({
+    app: {apiKey},
+    version: {appVersionId},
+  }: {
+    app: MinimalOrganizationApp
+    version: AppVersionIdentifiers
+  }): Promise<AppReleaseSchema> {
+    const input: AppReleaseVariables = {apiKey, appVersionId}
     return this.request(AppRelease, input)
   }
 
-  async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
-    return this.request(GenerateSignedUploadUrl, input)
+  async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables: GenerateSignedUploadUrlVariables = {apiKey: app.apiKey, bundleFormat: 1}
+    const result = await this.request<GenerateSignedUploadUrlSchema>(GenerateSignedUploadUrl, variables)
+    return {
+      assetUrl: result.appVersionGenerateSignedUploadUrl.signedUploadUrl,
+      userErrors: result.appVersionGenerateSignedUploadUrl.userErrors,
+    }
   }
 
   async convertToTransferDisabledStore(

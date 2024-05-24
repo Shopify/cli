@@ -49,6 +49,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   outputPath: string
   handle: string
   specification: ExtensionSpecification
+  uid: string
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -131,6 +132,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
+    this.uid = this.configuration.uid ?? randomUUID()
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
@@ -191,7 +193,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transform?.(this.configuration) as {[key: string]: unknown} | undefined
+    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration) as
+      | {[key: string]: unknown}
+      | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
     return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }
@@ -332,7 +336,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return context
   }
 
-  async bundleConfig({identifiers, developerPlatformClient, apiKey}: ExtensionBundleConfigOptions) {
+  async bundleConfig({
+    identifiers,
+    developerPlatformClient,
+    apiKey,
+  }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
     const configValue = await this.deployConfig({apiKey, developerPlatformClient})
     if (!configValue) return undefined
 
@@ -343,10 +351,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     const uuid = this.isUUIDStrategyExtension
-      ? identifiers.extensions[this.localIdentifier]
-      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+      ? identifiers.extensions[this.localIdentifier]!
+      : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
+    const uid = this.isUUIDStrategyExtension ? this.uid : uuid
 
-    return {...result, uuid}
+    return {
+      ...result,
+      uid,
+      uuid,
+      specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(this.graphQLType),
+    }
   }
 
   private buildHandle() {
@@ -358,7 +372,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-        const handle = `${subscription.topic}${subscription.uri}`
+        const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
         return hashString(handle).substring(0, 30)
     }
   }
@@ -373,4 +387,13 @@ interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
+}
+
+interface BundleConfig {
+  config: string
+  context: string
+  handle: string
+  uid: string
+  uuid: string
+  specificationIdentifier: string
 }

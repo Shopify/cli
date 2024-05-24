@@ -1,3 +1,4 @@
+import {AppConfigurationFileName} from '../models/app/loader.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizePath} from '@shopify/cli-kit/node/path'
@@ -91,7 +92,7 @@ function commandLocalStorage() {
   return _commandLocalStorageInstance
 }
 
-export function setCachedCommandInfo(data: {[key: string]: unknown}): void {
+function setCachedCommandInfo(data: {[key: string]: unknown}): void {
   const id = process.env.COMMAND_RUN_ID
 
   if (!id) return
@@ -117,4 +118,12 @@ export function getCachedCommandInfo() {
 export function clearCachedCommandInfo() {
   const store = commandLocalStorage()
   store.clear()
+}
+
+export function setCachedCommandTomlMap(tomls: {[clientId: string]: AppConfigurationFileName}) {
+  setCachedCommandInfo({tomls})
+}
+
+export function setCachedCommandTomlPreference(selectedToml: AppConfigurationFileName) {
+  setCachedCommandInfo({selectedToml})
 }

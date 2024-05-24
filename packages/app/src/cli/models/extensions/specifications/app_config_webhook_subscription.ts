@@ -22,6 +22,7 @@ export const SingleWebhookSubscriptionSchema = zod.object({
   uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
+  filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
 })
 
 /* this transforms webhooks remotely to be accepted by the TOML

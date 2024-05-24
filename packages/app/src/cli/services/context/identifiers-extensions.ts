@@ -76,7 +76,12 @@ export async function ensureExtensionsIds(
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }
 
-  const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
+  const matchExtensions = await automaticMatchmaking(
+    localExtensions,
+    remoteExtensions,
+    validIdentifiers,
+    options.developerPlatformClient,
+  )
 
   let validMatches = matchExtensions.identifiers
   const extensionsToCreate = matchExtensions.toCreate ?? []
@@ -92,7 +97,7 @@ export async function ensureExtensionsIds(
   }
 
   if (matchExtensions.toManualMatch.local.length > 0) {
-    const matchResult = await manualMatchIds(matchExtensions.toManualMatch, 'uuid')
+    const matchResult = await manualMatchIds(matchExtensions.toManualMatch)
     validMatches = {...validMatches, ...matchResult.identifiers}
     extensionsToCreate.push(...matchResult.toCreate)
   }
@@ -230,15 +235,14 @@ async function createExtensions(
   output = true,
 ) {
   const result: {[localIdentifier: string]: RemoteSource} = {}
-  let counter = 0
   for (const extension of extensions) {
-    counter++
     if (developerPlatformClient.supportsAtomicDeployments) {
       // Just pretend to create the extension, as it's not necessary to do anything
       // in this case.
       result[extension.localIdentifier] = {
-        id: `${extension.localIdentifier}-${counter}`,
-        uuid: `${extension.localIdentifier}-${counter}`,
+        id: extension.uid!,
+        uid: extension.uid,
+        uuid: extension.uid!,
         type: extension.type,
         title: extension.handle,
       }

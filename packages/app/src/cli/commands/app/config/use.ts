@@ -37,9 +37,10 @@ export default class ConfigUse extends Command {
 
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(ConfigUse)
-    // eslint-disable-next-line @shopify/cli/required-fields-when-loading-app
+
     const localApp = await loadAppConfiguration({
       directory: flags.path,
+      userProvidedConfigName: undefined,
     })
 
     await use({directory: localApp.directory, configName: args.config, reset: flags.reset})

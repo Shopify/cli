@@ -40,7 +40,7 @@ export default class FunctionRun extends Command {
     const {flags} = await this.parse(FunctionRun)
     await inFunctionContext({
       path: flags.path,
-      configName: flags.config,
+      userProvidedConfigName: flags.config,
       callback: async (_app, ourFunction) => {
         await runFunctionRunner(ourFunction, {
           json: flags.json,

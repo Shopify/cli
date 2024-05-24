@@ -20,15 +20,15 @@ export const functionFlags = {
 
 export async function inFunctionContext({
   path,
-  configName,
+  userProvidedConfigName,
   callback,
 }: {
   path: string
-  configName?: string
+  userProvidedConfigName?: string
   callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<void>
 }) {
   const specifications = await loadLocalExtensionsSpecifications()
-  const app: AppInterface = await loadApp({specifications, directory: path, configName})
+  const app: AppInterface = await loadApp({specifications, directory: path, userProvidedConfigName})
 
   const allFunctions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
   const ourFunction = allFunctions.find((fun) => fun.directory === path) as ExtensionInstance<FunctionConfigType>

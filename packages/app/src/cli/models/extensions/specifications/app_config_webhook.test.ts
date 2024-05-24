@@ -49,7 +49,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.transform!(object)
+      const result = webhookSpec.transformLocalToRemote!(object)
 
       // Then
       expect(result).toEqual({
@@ -129,7 +129,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.transform!(object)
+      const result = webhookSpec.transformLocalToRemote!(object)
 
       // Then
       expect(result).toEqual({
@@ -171,7 +171,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.reverseTransform!(object)
+      const result = webhookSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -213,7 +213,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.reverseTransform!(object)
+      const result = webhookSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -282,7 +282,7 @@ describe('webhooks', () => {
       } as unknown as SpecsAppConfiguration
       const webhookSpec = spec
       // When
-      const result = webhookSpec.simplify!(remoteApp)
+      const result = webhookSpec.simplifyMergedRemoteConfig!(remoteApp)
       // Then
       expect(result).toMatchObject({
         name: 'test-app',

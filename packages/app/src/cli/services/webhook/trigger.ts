@@ -5,6 +5,7 @@ import {collectAddressAndMethod, collectApiVersion, collectCredentials, collectT
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
 
 interface WebhookTriggerOptions {
@@ -25,7 +26,11 @@ interface WebhookTriggerOptions {
  * @param flags - Passed flags
  */
 export async function webhookTriggerService(flags: WebhookTriggerFlags) {
-  const app: AppInterface = await loadApp({directory: flags.path, configName: flags.config})
+  const app: AppInterface = await loadApp({
+    directory: flags.path,
+    userProvidedConfigName: flags.config,
+    specifications: await loadLocalExtensionsSpecifications(),
+  })
   const developerPlatformClient: DeveloperPlatformClient =
     flags.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   const options: WebhookTriggerOptions = await validateAndCollectFlags(flags, developerPlatformClient, app)

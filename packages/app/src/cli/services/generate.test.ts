@@ -1,19 +1,20 @@
 import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
 import {generateExtensionTemplate} from './generate/extension.js'
-import {loadApp, loadAppConfiguration} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import {
   testAppWithConfig,
   testDeveloperPlatformClient,
   testFunctionExtension,
   testLocalExtensionTemplates,
+  testOrganizationApp,
   testRemoteExtensionTemplates,
   testThemeExtensions,
-  testOrganizationApp,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
-import {EmptyApp} from '../models/app/app.js'
+import * as developerPlatformClient from '../utilities/developer-platform-client.js'
+import {PartnersClient} from '../utilities/developer-platform-client/partners-client.js'
 import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -37,7 +38,10 @@ vi.mock('../services/context.js')
 vi.mock('./local-storage.js')
 
 beforeEach(() => {
-  vi.mocked(loadAppConfiguration).mockResolvedValue(new EmptyApp([]))
+  // Never bother loading the app just to get a platform client
+  vi.spyOn(developerPlatformClient, 'sniffServiceOptionsAndAppConfigToSelectPlatformClient').mockResolvedValue(
+    new PartnersClient(),
+  )
 })
 
 afterEach(() => {

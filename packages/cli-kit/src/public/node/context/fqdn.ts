@@ -34,11 +34,11 @@ export async function partnersFqdn(): Promise<string> {
 }
 
 /**
- * It returns the Shopify Developers' API service we should interact with.
+ * It returns the App Management API service we should interact with.
  *
- * @returns Fully-qualified domain of the Shopify Developers service we should interact with.
+ * @returns Fully-qualified domain of the App Management service we should interact with.
  */
-export async function shopifyDevelopersFqdn(): Promise<string> {
+export async function appManagementFqdn(): Promise<string> {
   const environment = serviceEnvironment()
   const productionFqdn = 'shopify.com'
   switch (environment) {

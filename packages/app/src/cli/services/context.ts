@@ -13,9 +13,8 @@ import {
   AppConfiguration,
   AppInterface,
   isCurrentAppSchema,
-  appIsLaunchable,
-  getAppScopesArray,
   CurrentAppConfiguration,
+  AppCreationDefaultOptions,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -206,7 +205,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     }
   }
 
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: selectedApp.apiKey})
+  const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
 
   selectedApp = {
     ...selectedApp,
@@ -221,7 +220,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   const localApp = await loadApp({
     directory: options.directory,
     specifications,
-    configName: getAppConfigurationShorthand(configuration.path),
+    userProvidedConfigName: getAppConfigurationShorthand(configuration.path),
     remoteFlags: selectedApp.flags,
   })
 
@@ -427,11 +426,11 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
-  const specifications = await fetchSpecifications({developerPlatformClient, apiKey: remoteApp.apiKey})
+  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,
-    configName: getAppConfigurationShorthand(options.app.configuration.path),
+    userProvidedConfigName: getAppConfigurationShorthand(options.app.configuration.path),
     remoteFlags: remoteApp.flags,
   })
 
@@ -446,14 +445,14 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     force,
     release: !noRelease,
     developerPlatformClient,
-    envIdentifiers: getAppIdentifiers({app}),
+    envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
     remoteApp,
   })
 
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app, identifiers, command: 'deploy'}),
+    app: await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient}),
   }
 
   const result: DeployContextOutput = {
@@ -493,7 +492,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const app: AppInterface = await loadApp({
     specifications,
     directory: draftExtensionsPushOptions.directory,
-    configName: draftExtensionsPushOptions.config,
+    userProvidedConfigName: draftExtensionsPushOptions.config,
   })
   let developerPlatformClient =
     draftExtensionsPushOptions.developerPlatformClient ??
@@ -511,7 +510,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     force: true,
   })
 
-  const prodEnvIdentifiers = getAppIdentifiers({app})
+  const prodEnvIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
 
   const {extensionIds: remoteExtensionIds} = await ensureDeploymentIdsPresence({
     app,
@@ -612,7 +611,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release'}),
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release', developerPlatformClient}),
   }
   const result = {
     app: options.app,
@@ -661,13 +660,15 @@ export async function ensureVersionsListContext(
   }
 }
 
-export async function fetchOrCreateOrganizationApp(app: AppInterface, directory?: string): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(
+  options: AppCreationDefaultOptions,
+  directory?: string,
+): Promise<OrganizationApp> {
+  const {isLaunchable, scopesArray, name} = options
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-  const isLaunchable = appIsLaunchable(app)
-  const scopesArray = getAppScopesArray(app.configuration)
-  const remoteApp = await selectOrCreateApp(app.name, apps, hasMorePages, organization, developerPlatformClient, {
+  const remoteApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient, {
     isLaunchable,
     scopesArray,
     directory,
@@ -690,7 +691,7 @@ export async function fetchAppAndIdentifiers(
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   const app = options.app
   let reuseDevCache = reuseFromDev
-  let envIdentifiers = getAppIdentifiers({app})
+  let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
   let remoteApp: OrganizationApp | undefined
 
   if (options.reset) {
@@ -712,7 +713,7 @@ export async function fetchAppAndIdentifiers(
   }
 
   if (!remoteApp) {
-    remoteApp = await fetchOrCreateOrganizationApp(app)
+    remoteApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
   }
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
@@ -816,7 +817,7 @@ export async function getAppContext({
 
   const {configuration} = await loadAppConfiguration({
     directory,
-    configName,
+    userProvidedConfigName: configName,
   })
 
   let remoteApp

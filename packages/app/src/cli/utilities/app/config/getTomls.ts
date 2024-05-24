@@ -1,19 +1,22 @@
-import {loadConfigurationFileContent} from '../../../models/app/loader.js'
+import {
+  AppConfigurationFileName,
+  isValidFormatAppConfigurationFileName,
+  loadConfigurationFileContent,
+} from '../../../models/app/loader.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readdirSync} from 'fs'
 
-export async function getTomls(appDirectory?: string) {
+export async function getTomls(appDirectory?: string): Promise<{[clientId: string]: AppConfigurationFileName}> {
   if (!appDirectory) {
     return {}
   }
 
-  const regex = /^shopify\.app(\.[-\w]+)?\.toml$/
-  const clientIds: {[key: string]: string} = {}
+  const clientIds: {[key: string]: AppConfigurationFileName} = {}
 
   const files = readdirSync(appDirectory)
   await Promise.all(
     files.map(async (file) => {
-      if (regex.test(file)) {
+      if (isValidFormatAppConfigurationFileName(file)) {
         const filePath = joinPath(appDirectory, file)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsedToml = (await loadConfigurationFileContent(filePath)) as {[key: string]: any}

@@ -1,13 +1,14 @@
-import {uploadTheme} from './theme-uploader.js'
-import {DevServerContext, startDevServer} from './theme-environment.js'
-import {initializeThemeEditorSync} from './asset-file-syncer.js'
+import {startDevServer} from './theme-environment.js'
+import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {DevServerContext} from './types.js'
+import {uploadTheme} from '../theme-uploader.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
-vi.mock('./asset-file-syncer.js')
-vi.mock('./theme-uploader.js')
+vi.mock('./remote-theme-watcher.js')
+vi.mock('../theme-uploader.js')
 
 describe('startDevServer', () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
@@ -16,7 +17,7 @@ describe('startDevServer', () => {
     files: new Map([['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}]]),
   } as ThemeFileSystem
   const defaultServerContext: DevServerContext = {
-    session: {storefrontToken: '', token: '', storeFqdn: ''},
+    session: {storefrontToken: '', token: '', storeFqdn: '', expiresAt: new Date()},
     remoteChecksums: [],
     localThemeFileSystem,
     themeEditorSync: false,
@@ -41,7 +42,7 @@ describe('startDevServer', () => {
     await startDevServer(developmentTheme, context, () => {})
 
     // Then
-    expect(initializeThemeEditorSync).toHaveBeenCalled()
-    expect(uploadTheme).not.toHaveBeenCalled()
+    expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalled()
+    expect(uploadTheme).toHaveBeenCalled()
   })
 })

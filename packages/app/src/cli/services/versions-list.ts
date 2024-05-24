@@ -3,6 +3,7 @@ import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {OrganizationApp} from '../models/organization.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
@@ -23,15 +24,15 @@ const TABLE_FORMATTING_CHARS = 12
 
 async function fetchAppVersions(
   developerPlatformClient: DeveloperPlatformClient,
-  apiKey: string,
+  app: OrganizationApp,
   json: boolean,
 ): Promise<{
   appVersions: AppVersionLine[]
   totalResults: number
   app: AppVersionsQuerySchema['app']
 }> {
-  const res: AppVersionsQuerySchema = await developerPlatformClient.appVersions(apiKey)
-  if (!res.app) throw new AbortError(`Invalid API Key: ${apiKey}`)
+  const res: AppVersionsQuerySchema = await developerPlatformClient.appVersions(app)
+  if (!res.app) throw new AbortError(`Invalid API Key: ${app.apiKey}`)
 
   const appVersions = res.app.appVersions.nodes.map((appVersion) => {
     const message = appVersion.message ?? ''
@@ -92,9 +93,9 @@ export default async function versionList(options: VersionListOptions) {
   const result = await ensureVersionsListContext(options)
   const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
 
-  const {id: appId, organizationId, title, apiKey} = result.remoteApp
+  const {id: appId, organizationId, title} = result.remoteApp
 
-  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, apiKey, options.json)
+  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, result.remoteApp, options.json)
 
   const {businessName: org} = await fetchOrgFromId(organizationId, developerPlatformClient)
 
