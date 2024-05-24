@@ -25,6 +25,7 @@ import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -508,6 +509,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       }
     })
 
+    // Temporary code to validate that there is a single print action extension per target in an app.
+    // Should be replaced by core validation.
+    this.validatePrintActionExtensionsUniqueness(allExtensions)
+
     return allExtensions
   }
 
@@ -691,6 +696,31 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
+  }
+
+  private validatePrintActionExtensionsUniqueness(allExtensions: ExtensionInstance[]) {
+    const duplicates: {[key: string]: ExtensionInstance[]} = {}
+
+    allExtensions
+      .filter((ext) => ext.type === 'ui_extension')
+      .forEach((extension) => {
+        const points = extension.configuration.extension_points as UIExtensionSchemaType['extension_points']
+        const targets = points.flatMap((point) => point.target).filter((target) => printTargets.includes(target))
+        targets.forEach((target) => {
+          const targetExtensions = duplicates[target] ?? []
+          targetExtensions.push(extension)
+          duplicates[target] = targetExtensions
+
+          if (targetExtensions.length > 1) {
+            const extensionNames = joinWithAnd(targetExtensions.map((ext) => ext.configuration.name))
+            this.abortOrReport(
+              outputContent`Duplicated print action target "${target}" in extensions ${extensionNames}. You can only have one print action extension per target in an app. Please remove the duplicates.`,
+              undefined,
+              extension.configurationPath,
+            )
+          }
+        })
+      })
   }
 }
 
@@ -1134,3 +1164,10 @@ export function isValidFormatAppConfigurationFileName(configName: string): confi
   }
   return false
 }
+
+const printTargets = [
+  'admin.order-details.print-action.render',
+  'admin.order-index.selection-print-action.render',
+  'admin.product-details.print-action.render',
+  'admin.product-index.selection-print-action.render',
+]
