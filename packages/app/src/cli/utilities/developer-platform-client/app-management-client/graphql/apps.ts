@@ -9,7 +9,6 @@ export const AppsQuery = gql`
         id
         version {
           modules {
-            gid
             uid
             handle
             config
