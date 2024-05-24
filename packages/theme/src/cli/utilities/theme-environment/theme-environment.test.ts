@@ -1,6 +1,6 @@
-import {startDevServer} from './theme-environment.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
+import {setupDevServer} from './theme-environment.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi} from 'vitest'
@@ -20,22 +20,26 @@ describe('startDevServer', () => {
     session: {storefrontToken: '', token: '', storeFqdn: '', expiresAt: new Date()},
     remoteChecksums: [],
     localThemeFileSystem,
-    themeEditorSync: false,
     options: {
       ignore: ['assets/*.json'],
       only: ['templates/*.liquid'],
       noDelete: true,
+      host: '127.0.0.1',
+      port: '9292',
+      liveReload: 'hot-reload',
+      open: false,
+      themeEditorSync: false,
     },
   }
 
   test('should upload the development theme to remote', async () => {
     // Given
-    const context = {
+    const context: DevServerContext = {
       ...defaultServerContext,
     }
 
     // When
-    await startDevServer(developmentTheme, context, () => {})
+    await setupDevServer(developmentTheme, context, () => {})
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(
@@ -53,13 +57,16 @@ describe('startDevServer', () => {
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
     // Given
-    const context = {
+    const context: DevServerContext = {
       ...defaultServerContext,
-      themeEditorSync: true,
+      options: {
+        ...defaultServerContext.options,
+        themeEditorSync: true,
+      },
     }
 
     // When
-    await startDevServer(developmentTheme, context, () => {})
+    await setupDevServer(developmentTheme, context, () => {})
 
     // Then
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
@@ -80,7 +87,7 @@ describe('startDevServer', () => {
     const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
 
     // When
-    await startDevServer(developmentTheme, context, () => {})
+    await setupDevServer(developmentTheme, context, () => {})
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
