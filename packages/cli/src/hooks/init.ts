@@ -10,7 +10,7 @@ import {readFileSync} from 'fs'
  * If it's not, show a warning and exit. We need to do this here because some hydrogen commands depend on some peerDependencies
  * that are loaded dynamically from the project's package.json.
  *
- * To check if the project is a Hydrogen one, we look for the presence of the @shopify/hydrogen dependency in the project's package.json.
+ * To check if the project is a Hydrogen one, we look for the presence of the \@shopify/hydrogen dependency in the project's package.json.
  *
  * @param options - The options passed to the hook.
  */
