@@ -4,7 +4,6 @@ import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {
   extensionTypeStrategy,
@@ -17,6 +16,11 @@ import {
   RemoteExtensionRegistrations,
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
+import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
+import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -150,7 +154,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
-  const remoteConfig =
+  const remoteConfig: Partial<SpecsAppConfiguration> =
     (await fetchAppRemoteConfiguration(
       remoteApp,
       developerPlatformClient,
@@ -164,7 +168,6 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
     baselineConfig as CurrentAppConfiguration,
     remoteConfig,
     app.configSchema,
-    false,
   )
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
@@ -201,6 +204,26 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
     existingUpdatedFieldNames: modifiedVersionedLocalFieldNames,
     newFieldNames: newVersionedLocalFieldNames,
     deletedFieldNames: deletedVersionedLocalFieldNames,
+  }
+}
+
+function buildDiffConfigContent(
+  localConfig: CurrentAppConfiguration,
+  remoteConfig: Partial<SpecsAppConfiguration>,
+  schema: zod.ZodTypeAny,
+) {
+  const [updated, baseline] = deepDifference(
+    {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
+    {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},
+  )
+
+  if (deepCompare(updated, baseline)) {
+    return undefined
+  }
+
+  return {
+    baselineContent: encodeToml(baseline),
+    updatedContent: encodeToml(updated),
   }
 }
 

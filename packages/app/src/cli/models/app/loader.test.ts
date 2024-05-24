@@ -7,6 +7,7 @@ import {
   parseHumanReadableError,
   loadAppConfiguration,
   checkFolderIsValidApp,
+  AppLoaderMode,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -45,6 +46,11 @@ describe('load', () => {
   let specifications: ExtensionSpecification[] = []
 
   let tmpDir: string
+
+  function loadTestingApp(extras?: {remoteFlags?: Flag[]; mode?: AppLoaderMode}) {
+    return loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined, ...extras})
+  }
+
   const appConfiguration = `
 scopes = "read_products"
 `
@@ -74,7 +80,7 @@ automatically_update_urls_on_dev = true
 
   afterEach(async () => {
     if (tmpDir) {
-      await rmdir(tmpDir)
+      await rmdir(tmpDir, {force: true})
     }
   })
 
@@ -151,7 +157,9 @@ automatically_update_urls_on_dev = true
       await rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(loadApp({directory: tmp, specifications})).rejects.toThrow(`Couldn't find directory ${tmp}`)
+      await expect(loadApp({directory: tmp, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
+        `Couldn't find directory ${tmp}`,
+      )
     })
   })
 
@@ -160,7 +168,7 @@ automatically_update_urls_on_dev = true
     const currentDir = cwd()
 
     // When/Then
-    await expect(loadApp({directory: currentDir, specifications})).rejects.toThrow(
+    await expect(loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
       `Couldn't find an app toml file at ${currentDir}`,
     )
   })
@@ -173,7 +181,7 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     // When/Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when the configuration is valid and has no blocks', async () => {
@@ -181,7 +189,7 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -201,7 +209,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When/Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when the configuration file has invalid nested elements but the schema isnt generated from the specifications', async () => {
@@ -218,7 +226,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications: []})
+    const app = await loadApp({directory: tmpDir, specifications: [], userProvidedConfigName: undefined})
 
     // Then
     expect(app.name).toBe('my_app')
@@ -229,7 +237,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.packageManager).toBe('npm')
@@ -242,7 +250,7 @@ wrong = "property"
     await writeFile(yarnLockPath, '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.packageManager).toBe('yarn')
@@ -255,7 +263,7 @@ wrong = "property"
     await writeFile(pnpmLockPath, '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.packageManager).toBe('pnpm')
@@ -266,7 +274,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(false)
@@ -282,7 +290,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -301,7 +309,7 @@ wrong = "property"
     })
 
     // When
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
@@ -334,7 +342,7 @@ wrong = "property"
     })
 
     // When
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     // Then
     expect(mockOutput.warn()).toBe('')
@@ -348,7 +356,7 @@ wrong = "property"
     await writeFile(pnpmWorkspaceFilePath, '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -364,7 +372,7 @@ wrong = "property"
     })
 
     // When
-    let app = await loadApp({directory: tmpDir, specifications})
+    let app = await loadTestingApp()
     const web = app.webs[0]!
     // Force npm to symlink the workspace directory
     await writeFile(
@@ -375,7 +383,7 @@ wrong = "property"
       directory: app.directory,
       packageManager: 'npm',
     })
-    app = await loadApp({directory: tmpDir, specifications})
+    app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -387,7 +395,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -409,7 +417,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Validation errors in/)
+    await expect(loadTestingApp()).rejects.toThrow(/Validation errors in/)
   })
 
   test('throws an error if the extension type is invalid', async () => {
@@ -432,7 +440,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type "invalid_type"/)
+    await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type "invalid_type"/)
   })
 
   test('throws if 2 or more extensions have the same handle', async () => {
@@ -462,7 +470,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Duplicated handle/)
+    await expect(loadTestingApp()).rejects.toThrow(/Duplicated handle/)
   })
 
   test('throws an error if the app has more than one print action with the same target', async () => {
@@ -532,9 +540,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-      /Missing handle for extension "my_extension"/,
-    )
+    await expect(loadTestingApp()).rejects.toThrow(/Missing handle for extension "my_extension"/)
   })
 
   test('throws an error if the extension configuration is missing both extensions and type', async () => {
@@ -556,7 +562,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type/)
+    await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type/)
   })
 
   test('loads the app with web blocks', async () => {
@@ -565,7 +571,7 @@ wrong = "property"
     await moveFile(webDirectory, joinPath(tmpDir, 'we_check_everywhere'))
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -581,7 +587,7 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'backend'})
 
     // Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('throws an error if there are multiple frontends', async () => {
@@ -593,7 +599,7 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'frontend'})
 
     // Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app with custom located web blocks', async () => {
@@ -605,7 +611,7 @@ wrong = "property"
     await moveFile(webDirectory, joinPath(tmpDir, 'must_be_here'))
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -620,7 +626,7 @@ wrong = "property"
     await moveFile(webDirectory, joinPath(tmpDir, 'cannot_be_here'))
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.webs.length).toBe(0)
@@ -644,7 +650,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
@@ -670,7 +676,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
@@ -699,7 +705,7 @@ wrong = "property"
     await writeFile(joinPath(customExtensionDirectory, 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
@@ -721,7 +727,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: blockDir, specifications})
+    const app = await loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})
 
     // Then
     expect(app.name).toBe('my_app')
@@ -754,7 +760,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my_extension_2'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
@@ -802,7 +808,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
@@ -841,7 +847,7 @@ wrong = "property"
     )
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).resolves.not.toBeUndefined()
+    await expect(loadTestingApp()).resolves.not.toBeUndefined()
   })
 
   test(`throws an error if the extension doesn't have a source file`, async () => {
@@ -857,7 +863,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: blockDir, specifications})).rejects.toThrow(
+    await expect(loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
       /Couldn't find an index.{js,jsx,ts,tsx} file in the directories/,
     )
   })
@@ -874,7 +880,7 @@ wrong = "property"
     })
 
     // When
-    await expect(() => loadApp({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
   test("throws an error if the configuration file doesn't exist", async () => {
@@ -882,7 +888,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the function configuration file is invalid', async () => {
@@ -896,7 +902,7 @@ wrong = "property"
     })
 
     // When
-    await expect(() => loadApp({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
   test('throws an error if the function has a type non included in the specs', async () => {
@@ -912,7 +918,7 @@ wrong = "property"
     })
 
     // When
-    await expect(() => loadApp({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
   test('loads the app when it has a function with a valid configuration', async () => {
@@ -936,7 +942,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-function'), 'src', 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
     const myFunction = app.allExtensions[0]!
 
     // Then
@@ -972,7 +978,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1035,7 +1041,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1108,7 +1114,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1187,7 +1193,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1258,7 +1264,7 @@ wrong = "property"
     await writeFile(tempFilePath, '/* ActionExtension.js content */')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1364,7 +1370,7 @@ wrong = "property"
     )
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1469,7 +1475,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-checkout-post-purchase'), 'index.js'), '/** content **/')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1519,7 +1525,7 @@ wrong = "property"
     await writeFile(tempFilePath, `/** content **/`)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1561,7 +1567,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1620,7 +1626,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1691,7 +1697,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1779,7 +1785,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-checkout-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1843,7 +1849,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-product-subscription'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1880,7 +1886,7 @@ wrong = "property"
     await writeConfig(linkedAppConfigurationWithPosConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(5)
@@ -1936,7 +1942,7 @@ wrong = "property"
     await writeConfig(appConfigurationWithWebhooks)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications, remoteFlags: [Flag.DeclarativeWebhooks]})
+    const app = await loadTestingApp({remoteFlags: [Flag.DeclarativeWebhooks]})
 
     // Then
     expect(app.allExtensions).toHaveLength(6)
@@ -2017,7 +2023,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
@@ -2050,7 +2056,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
@@ -2073,7 +2079,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
@@ -2083,7 +2089,7 @@ wrong = "property"
     const {webDirectory} = await writeConfig(appConfiguration)
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
@@ -2101,7 +2107,7 @@ wrong = "property"
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
@@ -2144,7 +2150,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2170,7 +2176,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2196,7 +2202,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when access.admin.embedded_app_direct_api_access = true', async () => {
@@ -2219,7 +2225,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2245,7 +2251,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2271,7 +2277,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when using dynamically specified config sections with remapping', async () => {
@@ -2307,6 +2313,7 @@ wrong = "property"
       {
         directory: tmpDir,
         specifications,
+        userProvidedConfigName: undefined,
       },
       {
         SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
@@ -2386,6 +2393,7 @@ wrong = "property"
       {
         directory: tmpDir,
         specifications,
+        userProvidedConfigName: undefined,
       },
       {
         SHOPIFY_CLI_DYNAMIC_CONFIG: '1',
@@ -2435,6 +2443,7 @@ wrong = "property"
       {
         directory: tmpDir,
         specifications,
+        userProvidedConfigName: undefined,
       },
       {
         SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
@@ -2467,7 +2476,7 @@ wrong = "property"
       vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
       // When
-      await loadApp({directory: tmpDir, specifications})
+      await loadTestingApp()
 
       // Then
       expect(use).toHaveBeenCalledWith({
@@ -2492,7 +2501,7 @@ wrong = "property"
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
@@ -2502,8 +2511,28 @@ wrong = "property"
       cmd_app_all_configs_any: true,
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
-      cmd_app_linked_config_git_tracked: true,
+      cmd_app_linked_config_git_tracked: false,
       cmd_app_linked_config_source: 'cached',
+      cmd_app_warning_api_key_deprecation_displayed: false,
+      app_extensions_any: false,
+      app_extensions_breakdown: {},
+      app_extensions_count: 0,
+      app_extensions_custom_layout: false,
+      app_extensions_function_any: false,
+      app_extensions_function_count: 0,
+      app_extensions_theme_any: false,
+      app_extensions_theme_count: 0,
+      app_extensions_ui_any: false,
+      app_extensions_ui_count: 0,
+      app_name_hash: expect.any(String),
+      app_path_hash: expect.any(String),
+      app_scopes: '[]',
+      app_web_backend_any: true,
+      app_web_backend_count: 1,
+      app_web_custom_layout: false,
+      app_web_framework: 'unknown',
+      app_web_frontend_any: false,
+      app_web_frontend_count: 0,
     })
   })
 })
