@@ -760,7 +760,7 @@ Builds a Hydrogen storefront for production.
 ```
 USAGE
   $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
-    [--entry <value>] [--lockfile-check] [--path <value>] [--sourcemap]
+    [--entry <value>] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
 
 FLAGS
   --[no-]bundle-stats            [Classic Remix Compiler] Show a bundle size summary after building. Defaults to true,
@@ -776,6 +776,7 @@ FLAGS
                                  where the command is run.
   --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
                                  `--no-sourcemaps`.
+  --watch                        Watches for changes and rebuilds the project writing output to disk.
 
 DESCRIPTION
   Builds a Hydrogen storefront for production.
@@ -849,9 +850,10 @@ Builds and profiles the server startup time the app.
 
 ```
 USAGE
-  $ shopify hydrogen debug cpu [--output <value>] [--path <value>]
+  $ shopify hydrogen debug cpu [--entry <value>] [--output <value>] [--path <value>]
 
 FLAGS
+  --entry=<value>   Entry file for the worker. Defaults to `./server`.
   --output=<value>  [default: startup.cpuprofile] Specify a path to generate the profile file. Defaults to
                     "startup.cpuprofile".
   --path=<value>    The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
@@ -1148,21 +1150,28 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 
 ```
 USAGE
-  $ shopify hydrogen preview [--debug] [--env <value> | --env-branch <value>] [--inspector-port <value>]
-    [--legacy-runtime] [--path <value>] [--port <value>] [--verbose]
+  $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
+    <value> | --env-branch <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
+    [--verbose] [--watch ]
 
 FLAGS
-  --debug                   Enables inspector connections to the server with a debugger such as Visual Studio Code or
-                            Chrome DevTools.
-  --env=<value>             Specifies the environment to perform the operation using its handle. Fetch the handle using
-                            the `env list` command.
-  --env-branch=<value>      Specifies the environment to perform the operation using its Git branch name.
-  --inspector-port=<value>  The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime          Runs the app in a Node.js sandbox instead of an Oxygen worker.
-  --path=<value>            The path to the directory of the Hydrogen storefront. Defaults to the current directory
-                            where the command is run.
-  --port=<value>            The port to run the server on. Defaults to 3000.
-  --verbose                 Outputs more information about the command's execution.
+  --build                        Builds the app before starting the preview server.
+  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
+  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
+                                 this file exists.
+  --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
+                                 or Chrome DevTools.
+  --entry=<value>                Entry file for the worker. Defaults to `./server`.
+  --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
+                                 using the `env list` command.
+  --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
+  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --port=<value>                 The port to run the server on. Defaults to 3000.
+  --verbose                      Outputs more information about the command's execution.
+  --watch                        Watches for changes and rebuilds the project.
 
 DESCRIPTION
   Runs a Hydrogen storefront in an Oxygen worker for production.

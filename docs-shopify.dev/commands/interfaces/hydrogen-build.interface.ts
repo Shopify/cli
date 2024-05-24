@@ -47,4 +47,10 @@ export interface hydrogenbuild {
    * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP
    */
   '--sourcemap'?: ''
+
+  /**
+   * Watches for changes and rebuilds the project writing output to disk.
+   * @environment SHOPIFY_HYDROGEN_FLAG_WATCH
+   */
+  '--watch'?: ''
 }

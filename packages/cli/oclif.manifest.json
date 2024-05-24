@@ -2222,6 +2222,13 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP",
           "name": "sourcemap",
           "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "description": "Watches for changes and rebuilds the project writing output to disk.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_WATCH",
+          "name": "watch",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -2378,6 +2385,22 @@
       "description": "Builds and profiles the server startup time the app.",
       "descriptionWithMarkdown": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
       "flags": {
+        "diff": {
+          "allowNo": false,
+          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
+          "hidden": true,
+          "name": "diff",
+          "required": false,
+          "type": "boolean"
+        },
+        "entry": {
+          "description": "Entry file for the worker. Defaults to `./server`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_ENTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "entry",
+          "type": "option"
+        },
         "output": {
           "default": "startup.cpuprofile",
           "description": "Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".",
@@ -3279,12 +3302,61 @@
       "description": "Runs a Hydrogen storefront in an Oxygen worker for production.",
       "descriptionWithMarkdown": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.",
       "flags": {
+        "build": {
+          "allowNo": false,
+          "description": "Builds the app before starting the preview server.",
+          "name": "build",
+          "type": "boolean"
+        },
+        "codegen": {
+          "allowNo": false,
+          "dependsOn": [
+            "build"
+          ],
+          "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+          "name": "codegen",
+          "required": false,
+          "type": "boolean"
+        },
+        "codegen-config-path": {
+          "dependsOn": [
+            "codegen"
+          ],
+          "description": "Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "codegen-config-path",
+          "required": false,
+          "type": "option"
+        },
         "debug": {
           "allowNo": false,
           "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
           "env": "SHOPIFY_HYDROGEN_FLAG_DEBUG",
           "name": "debug",
           "type": "boolean"
+        },
+        "diff": {
+          "allowNo": false,
+          "dependsOn": [
+            "build"
+          ],
+          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
+          "hidden": true,
+          "name": "diff",
+          "required": false,
+          "type": "boolean"
+        },
+        "entry": {
+          "dependsOn": [
+            "build"
+          ],
+          "description": "Entry file for the worker. Defaults to `./server`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_ENTRY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "entry",
+          "type": "option"
         },
         "env": {
           "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
@@ -3345,6 +3417,15 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_VERBOSE",
           "name": "verbose",
           "required": false,
+          "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "dependsOn": [
+            "build"
+          ],
+          "description": "Watches for changes and rebuilds the project.",
+          "name": "watch",
           "type": "boolean"
         },
         "worker": {
