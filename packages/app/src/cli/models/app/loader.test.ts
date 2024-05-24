@@ -513,7 +513,7 @@ wrong = "property"
     await writeFile(tempFilePath, '/* ActionExtension.js content */')
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
+    await expect(loadTestingApp()).rejects.toThrow(
       'Duplicated print action target "admin.product-details.print-action.render" in extensions "my_extension_1" and "my_extension_2". You can only have one print action extension per target in an app. Please remove the duplicates.',
     )
   })

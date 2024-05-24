@@ -722,18 +722,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         })
       })
   }
-
-  private getPrintTargets(extensionsPoints: [{target: string}] | undefined): string[] {
-    return (
-      extensionsPoints
-        ?.filter((extensionPoint: {target: string}) => printTargets.includes(extensionPoint.target))
-        .map((extensionPoint: {target: string}) => extensionPoint.target) || []
-    )
-  }
-
-  private getTargetsIntersection(targets1: string[], targets2: string[]): string[] {
-    return targets1.filter((target) => targets2.includes(target))
-  }
 }
 
 /**
