@@ -1,26 +1,30 @@
 import {gql} from 'graphql-request'
 
 export const CreateAppMutation = gql`
-  mutation CreateApp($appModules: [NewModuleVersion!]!) {
-    appCreate(appModules: $appModules) {
+  mutation CreateApp($appSource: AppSourceInput!, $name: String!) {
+    appCreate(appSource: $appSource, name: $name) {
       app {
         id
       }
       userErrors {
-        field
+        category
         message
+        on
       }
     }
   }
 `
 
 export interface CreateAppMutationVariables {
-  appModules: {
-    uid: string
-    specificationIdentifier: string
-    config: string
-  }[]
-  assetsUrl?: string
+  appSource: {
+    modules: {
+      uid: string
+      specificationIdentifier: string
+      config: string
+    }[]
+    assetsUrl?: string
+  }
+  name: string
 }
 
 export interface CreateAppMutationSchema {
