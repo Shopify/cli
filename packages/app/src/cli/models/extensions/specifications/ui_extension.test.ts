@@ -115,7 +115,7 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('targeting object accepts a default_placement_reference', async () => {
+    test('targeting object accepts a default_placement', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
@@ -123,7 +123,7 @@ describe('ui_extension', async () => {
           {
             target: 'EXTENSION::POINT::A',
             module: './src/ExtensionPointA.js',
-            default_placement_reference: 'PLACEMENT_REFERENCE1',
+            default_placement: 'PLACEMENT_REFERENCE1',
           },
         ],
         api_version: '2023-01' as const,
