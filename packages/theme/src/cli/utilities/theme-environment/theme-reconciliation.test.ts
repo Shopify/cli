@@ -1,4 +1,4 @@
-import {reconcileJsonFiles} from './theme-reconciliation.js'
+import {ReconciliationOptions, reconcileJsonFiles} from './theme-reconciliation.js'
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -20,6 +20,9 @@ describe('reconcileThemeFiles', () => {
   const remoteChecksums: Checksum[] = []
   const files = new Map<string, ThemeAsset>([])
   const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
+  const defaultOptions: ReconciliationOptions = {
+    noDelete: false,
+  }
 
   test('should only reconcile JSON files', async () => {
     // Given
@@ -31,7 +34,7 @@ describe('reconcileThemeFiles', () => {
     ]
 
     // When
-    await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+    await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)
 
     // Then
     expect(fetchThemeAsset).toHaveBeenCalledTimes(1)
@@ -49,7 +52,7 @@ describe('reconcileThemeFiles', () => {
 
       // When
       expect(defaultThemeFileSystem.files.get('templates/asset.json')).toBeUndefined()
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)
 
       // Then
       expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, assetToBeDownloaded.key, adminSession)
@@ -63,7 +66,7 @@ describe('reconcileThemeFiles', () => {
       const remoteChecksums = [assetToBeDeleted]
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem)
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)
 
       // Then
       expect(deleteThemeAsset).toHaveBeenCalledWith(developmentTheme.id, assetToBeDeleted.key, adminSession)
@@ -80,7 +83,7 @@ describe('reconcileThemeFiles', () => {
       const spy = vi.spyOn(localThemeFileSystem, 'delete')
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, defaultOptions)
 
       // Then
       expect(spy).toHaveBeenCalledWith('templates/asset.json')
@@ -94,7 +97,7 @@ describe('reconcileThemeFiles', () => {
       const spy = vi.spyOn(localThemeFileSystem, 'delete')
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, defaultOptions)
 
       // Then
       expect(spy).not.toHaveBeenCalled()
@@ -107,7 +110,10 @@ describe('reconcileThemeFiles', () => {
       const spy = vi.spyOn(localThemeFileSystem, 'delete')
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, {noDelete: true})
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, {
+        ...defaultOptions,
+        noDelete: true,
+      })
 
       // Then
       expect(renderSelectPrompt).not.toHaveBeenCalled()
@@ -124,7 +130,7 @@ describe('reconcileThemeFiles', () => {
       const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, defaultOptions)
 
       // Then
       expect(fetchThemeAsset).toHaveBeenCalled()
@@ -138,7 +144,7 @@ describe('reconcileThemeFiles', () => {
       const remoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem)
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, localThemeFileSystem, defaultOptions)
 
       // Then
       expect(fetchThemeAsset).not.toHaveBeenCalled()

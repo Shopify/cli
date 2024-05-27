@@ -21,6 +21,9 @@ describe('startDevServer', () => {
     remoteChecksums: [],
     localThemeFileSystem,
     themeEditorSync: false,
+    options: {
+      noDelete: false,
+    },
   }
 
   test('should upload the development theme to remote if themeEditorSync is false', async () => {

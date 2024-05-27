@@ -13,8 +13,8 @@ interface FilePartitions {
   remoteFilesToDelete: Checksum[]
 }
 
-interface ReconciliationOptions {
-  noDelete?: boolean
+export interface ReconciliationOptions {
+  noDelete: boolean
 }
 
 export async function reconcileJsonFiles(
@@ -22,7 +22,7 @@ export async function reconcileJsonFiles(
   session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-  options?: ReconciliationOptions,
+  options: ReconciliationOptions,
 ) {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
@@ -158,7 +158,7 @@ async function partitionFilesByReconciliationStrategy(
     filesOnlyPresentOnRemote: Checksum[]
     filesWithConflictingChecksums: Checksum[]
   },
-  options?: ReconciliationOptions,
+  options: ReconciliationOptions,
 ): Promise<FilePartitions> {
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = files
 
@@ -166,7 +166,7 @@ async function partitionFilesByReconciliationStrategy(
   const filesToDownload: Checksum[] = []
   const remoteFilesToDelete: Checksum[] = []
 
-  if (!options?.noDelete) {
+  if (!options.noDelete) {
     await promptFileReconciliationStrategy(
       filesOnlyPresentLocally,
       'The files listed below are only present locally. What would you like to do?',

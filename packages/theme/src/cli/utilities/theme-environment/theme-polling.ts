@@ -7,8 +7,8 @@ import {renderError, renderText} from '@shopify/cli-kit/node/ui'
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
-interface PollingOptions {
-  noDelete?: boolean
+export interface PollingOptions {
+  noDelete: boolean
 }
 
 export function pollThemeEditorChanges(
@@ -16,7 +16,7 @@ export function pollThemeEditorChanges(
   session: AdminSession,
   remoteChecksum: Checksum[],
   localFileSystem: ThemeFileSystem,
-  options?: PollingOptions,
+  options: PollingOptions,
 ) {
   outputDebug('Listening for changes in the theme editor')
 
@@ -40,7 +40,7 @@ export async function pollRemoteJsonChanges(
   currentSession: AdminSession,
   remoteChecksums: Checksum[],
   localFileSystem: ThemeFileSystem,
-  options?: PollingOptions,
+  options: PollingOptions,
 ): Promise<Checksum[]> {
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession)
 
@@ -77,7 +77,7 @@ export async function pollRemoteJsonChanges(
       }),
   )
 
-  if (!options?.noDelete) {
+  if (!options.noDelete) {
     await Promise.all(
       assetsDeletedFromRemote
         .filter((file) => file.key.endsWith('.json'))

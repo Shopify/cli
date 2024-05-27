@@ -1,7 +1,7 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {startDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerSession} from '../utilities/theme-environment/types.js'
+import {DevServerContext, DevServerSession} from '../utilities/theme-environment/types.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -58,7 +58,7 @@ export async function dev(options: DevOptions) {
     storefrontToken: options.storefrontToken,
     expiresAt: new Date(),
   }
-  const ctx = {
+  const ctx: DevServerContext = {
     session,
     remoteChecksums,
     localThemeFileSystem,
