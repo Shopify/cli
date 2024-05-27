@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {devSessionExtensionWatcher, devSessionManifestWatcher} from './dev-session-utils.js'
+import {devSessionExtensionWatcher} from './dev-session-utils.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -76,10 +76,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   // })
 
   // Extensions (defined in any toml) that need a custom watcher because they have custom paths
-  const extensions = await app.realExtensions.filter(async (extension) => {
-    const watchPaths = (await extension.watchConfigurationPaths()).concat(extension.watchBuildPaths ?? [])
-    return watchPaths.length > 1 || watchPaths[0] !== app.configuration.path
-  })
+  // const extensions = await asyncFilter(app.realExtensions, async (extension) => {
+  //   const watchPaths = (await extension.watchConfigurationPaths()).concat(extension.watchBuildPaths ?? [])
+  //   if (watchPaths.length === 0) return false
+  //   return watchPaths.length > 1 || watchPaths[0] !== app.configuration.path
+  // })
 
   // Review if this extension list makes sense
 
@@ -99,12 +100,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       return performActionWithRetryAfterRecovery(async () => bundleExtensionsAndUpload(processOptions), refreshToken)
     }
 
-    const extensionWatchers = extensions.map(async (extension) => {
-      console.log('extension: ', extension.name)
+    const extensionWatchers = app.draftableExtensions.map(async (extension) => {
       return devSessionExtensionWatcher({...processOptions, extension, onChange})
     })
-    const manifestWatcher = devSessionManifestWatcher({...processOptions, onChange})
-    await Promise.all([...extensionWatchers, manifestWatcher])
+    // const manifestWatcher = devSessionManifestWatcher({...processOptions, onChange})
+    await Promise.all([...extensionWatchers])
   })
 }
 
