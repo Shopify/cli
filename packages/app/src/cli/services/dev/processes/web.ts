@@ -6,6 +6,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {exec} from '@shopify/cli-kit/node/system'
+import {isVerbose} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 interface LaunchWebOptions {
@@ -144,10 +145,12 @@ export async function launchWebProcess(
     REMIX_DEV_ORIGIN: hostname,
   }
 
+  const baseCommandRunConfig = {signal, directory, port, env, stdout, stderr}
+
   // Support for multiple sequential commands: `echo "hello" && echo "world"`
   // Pre-dev commands are run before the dev command, but without any output
-  if (preDevCommand) await runArrayOfCommands({command: preDevCommand, signal, directory, port, env})
-  await runArrayOfCommands({command: devCommand, signal, directory, port, env, stdout, stderr})
+  if (preDevCommand) await runCommands({...baseCommandRunConfig, command: preDevCommand, showOutput: isVerbose()})
+  await runCommands({...baseCommandRunConfig, command: devCommand, showOutput: true})
 }
 
 interface RunArrayOfCommandsOptions {
@@ -155,12 +158,22 @@ interface RunArrayOfCommandsOptions {
   signal: AbortSignal
   directory: string
   port: number
+  showOutput: boolean
   env: {[key: string]: string | undefined}
   stdout?: Writable
   stderr?: Writable
 }
 
-async function runArrayOfCommands({command, signal, directory, port, env, stdout, stderr}: RunArrayOfCommandsOptions) {
+async function runCommands({
+  command,
+  signal,
+  directory,
+  port,
+  env,
+  showOutput,
+  stdout,
+  stderr,
+}: RunArrayOfCommandsOptions) {
   const commands = command.split('&&').map((cmd) => cmd.trim()) ?? []
   for (const command of commands) {
     const [cmd, ...args] = command.split(' ')
@@ -168,8 +181,8 @@ async function runArrayOfCommands({command, signal, directory, port, env, stdout
     // eslint-disable-next-line no-await-in-loop
     await exec(cmd!, args, {
       cwd: directory,
-      stdout,
-      stderr,
+      stdout: showOutput ? stdout : undefined,
+      stderr: showOutput ? stderr : undefined,
       signal,
       env: {
         ...env,
