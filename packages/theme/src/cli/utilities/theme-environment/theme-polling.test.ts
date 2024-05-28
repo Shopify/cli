@@ -14,9 +14,7 @@ vi.mock('../theme-fs.js')
 describe('pollRemoteJsonChanges', async () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
-  const defaultOptions: PollingOptions = {
-    noDelete: false,
-  }
+  const defaultOptions: PollingOptions = {noDelete: false, only: [], ignore: []}
 
   let defaultThemeFileSystem: ThemeFileSystem
   let files: Map<string, ThemeAsset>
@@ -208,6 +206,7 @@ describe('pollRemoteJsonChanges', async () => {
 
       // When
       await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ...defaultOptions,
         only: ['templates/asset.json'],
       })
 
@@ -237,6 +236,7 @@ describe('pollRemoteJsonChanges', async () => {
 
       // When
       await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ...defaultOptions,
         ignore: ['templates/asset.json'],
       })
 

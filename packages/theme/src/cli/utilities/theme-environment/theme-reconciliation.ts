@@ -14,10 +14,10 @@ interface FilePartitions {
   remoteFilesToDelete: Checksum[]
 }
 
-export interface ReconciliationOptions {
+interface ReconciliationOptions {
   noDelete: boolean
-  only?: string[]
-  ignore?: string[]
+  only: string[]
+  ignore: string[]
 }
 
 export async function reconcileJsonFiles(
@@ -54,7 +54,7 @@ export async function reconcileJsonFiles(
 async function identifyFilesToReconcile(
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-  options: ReconciliationOptions = {},
+  options: ReconciliationOptions,
 ): Promise<{
   filesOnlyPresentOnRemote: Checksum[]
   filesOnlyPresentLocally: Checksum[]
@@ -101,7 +101,7 @@ async function identifyFilesToReconcile(
 async function applyFileFilters(
   files: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-  options: ReconciliationOptions,
+  options: {only: string[]; ignore: string[]},
 ) {
   const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
   return filteredFiles.filter((file) => file.key.endsWith('.json'))

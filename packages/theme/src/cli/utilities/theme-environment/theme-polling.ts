@@ -10,8 +10,8 @@ class PollingError extends Error {}
 
 export interface PollingOptions {
   noDelete: boolean
-  only?: string[]
-  ignore?: string[]
+  only: string[]
+  ignore: string[]
 }
 
 export function pollThemeEditorChanges(

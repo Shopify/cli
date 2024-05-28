@@ -1,4 +1,4 @@
-import {ReconciliationOptions, reconcileJsonFiles} from './theme-reconciliation.js'
+import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -20,9 +20,7 @@ describe('reconcileThemeFiles', () => {
   const remoteChecksums: Checksum[] = []
   const files = new Map<string, ThemeAsset>([])
   const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
-  const defaultOptions: ReconciliationOptions = {
-    noDelete: false,
-  }
+  const defaultOptions = {noDelete: false, only: [], ignore: []}
 
   describe('file filters', () => {
     test('should only reconcile JSON files', async () => {
@@ -54,6 +52,7 @@ describe('reconcileThemeFiles', () => {
 
       // When
       await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ...defaultOptions,
         only: ['templates/*'],
       })
 
@@ -75,6 +74,7 @@ describe('reconcileThemeFiles', () => {
 
       // When
       await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ...defaultOptions,
         ignore: ['templates/*'],
       })
 

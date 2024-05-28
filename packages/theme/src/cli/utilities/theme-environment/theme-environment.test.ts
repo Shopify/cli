@@ -45,6 +45,7 @@ describe('startDevServer', () => {
       context.localThemeFileSystem,
       {
         ignore: ['assets/*.json'],
+        nodelete: true,
         only: ['templates/*.liquid'],
       },
     )
@@ -76,27 +77,16 @@ describe('startDevServer', () => {
 
   test('should skip deletion of remote files if noDelete flag is passed', async () => {
     // Given
-    const context = {...defaultServerContext, options: {noDelete: true}}
+    const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
 
     // When
     await startDevServer(developmentTheme, context, () => {})
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
+      ignore: ['assets/*.json'],
       nodelete: true,
-    })
-  })
-
-  test('should skip deletion of remote files if noDelete flag is passed', async () => {
-    // Given
-    const context = {...defaultServerContext, options: {noDelete: true}}
-
-    // When
-    await startDevServer(developmentTheme, context, () => {})
-
-    // Then
-    expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
-      nodelete: true,
+      only: ['templates/*.liquid'],
     })
   })
 })
