@@ -1,4 +1,4 @@
-import {ReconciliationOptions, reconcileJsonFiles} from './theme-reconciliation.js'
+import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -20,25 +20,67 @@ describe('reconcileThemeFiles', () => {
   const remoteChecksums: Checksum[] = []
   const files = new Map<string, ThemeAsset>([])
   const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
-  const defaultOptions: ReconciliationOptions = {
-    noDelete: false,
-  }
+  const defaultOptions = {noDelete: false, only: [], ignore: []}
 
-  test('should only reconcile JSON files', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
-    const remoteChecksums = [
-      {checksum: '1', key: 'templates/template.json', value: 'content'},
-      {checksum: '2', key: 'sections/section.liquid', value: 'content'},
-      {checksum: '3', key: 'assets/asset.css', value: 'content'},
-    ]
+  describe('file filters', () => {
+    test('should only reconcile JSON files', async () => {
+      // Given
+      vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
+      const remoteChecksums = [
+        {checksum: '1', key: 'templates/template.json', value: 'content'},
+        {checksum: '2', key: 'sections/section.liquid', value: 'content'},
+        {checksum: '3', key: 'assets/asset.css', value: 'content'},
+      ]
 
-    // When
-    await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)
+      // When
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)
 
-    // Then
-    expect(fetchThemeAsset).toHaveBeenCalledTimes(1)
-    expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, 'templates/template.json', adminSession)
+      // Then
+      expect(fetchThemeAsset).toHaveBeenCalledTimes(1)
+      expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, 'templates/template.json', adminSession)
+    })
+
+    test('should only reconcile files that match the `only` option', async () => {
+      // Given
+      vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
+      const remoteChecksums = [
+        {checksum: '1', key: 'templates/template.json', value: 'content'},
+        {checksum: '2', key: 'sections/section.liquid', value: 'content'},
+        {checksum: '3', key: 'assets/asset.css', value: 'content'},
+        {checksum: '4', key: 'templates/gift_card.liquid', value: 'content'},
+      ]
+
+      // When
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ...defaultOptions,
+        only: ['templates/*'],
+      })
+
+      // Then
+      expect(fetchThemeAsset).toHaveBeenCalledTimes(1)
+      expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, 'templates/template.json', adminSession)
+    })
+
+    // should respect the `ignore` option
+    test('should not reconcile files that match the `ignore` option', async () => {
+      // Given
+      vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
+      const remoteChecksums = [
+        {checksum: '1', key: 'templates/template.json', value: 'content'},
+        {checksum: '2', key: 'sections/section.liquid', value: 'content'},
+        {checksum: '3', key: 'assets/asset.css', value: 'content'},
+        {checksum: '4', key: 'templates/gift_card.liquid', value: 'content'},
+      ]
+
+      // When
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+        ...defaultOptions,
+        ignore: ['templates/*'],
+      })
+
+      // Then
+      expect(fetchThemeAsset).toHaveBeenCalledTimes(0)
+    })
   })
 
   describe('files only present on remote developer theme', () => {

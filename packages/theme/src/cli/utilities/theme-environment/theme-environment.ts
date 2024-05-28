@@ -22,5 +22,7 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
 
   await uploadTheme(theme, ctx.session, ctx.remoteChecksums, ctx.localThemeFileSystem, {
     nodelete: ctx.options.noDelete,
+    ignore: ctx.options?.ignore,
+    only: ctx.options?.only,
   })
 }
