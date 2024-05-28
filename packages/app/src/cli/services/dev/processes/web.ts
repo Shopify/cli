@@ -146,7 +146,7 @@ export async function launchWebProcess(
 
   // Support for multiple sequential commands: `echo "hello" && echo "world"`
   // Pre-dev commands are run before the dev command, but without any output
-  await runArrayOfCommands({command: preDevCommand ?? '', signal, directory, port, env})
+  if (preDevCommand) await runArrayOfCommands({command: preDevCommand, signal, directory, port, env})
   await runArrayOfCommands({command: devCommand, signal, directory, port, env, stdout, stderr})
 }
 
@@ -164,6 +164,7 @@ async function runArrayOfCommands({command, signal, directory, port, env, stdout
   const commands = command.split('&&').map((cmd) => cmd.trim()) ?? []
   for (const command of commands) {
     const [cmd, ...args] = command.split(' ')
+    if (cmd?.length === 0) continue
     // eslint-disable-next-line no-await-in-loop
     await exec(cmd!, args, {
       cwd: directory,
