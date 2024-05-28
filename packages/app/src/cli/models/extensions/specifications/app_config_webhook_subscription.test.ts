@@ -1,5 +1,7 @@
 import spec from './app_config_webhook_subscription.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+
+vi.mock('../../../utilities/extensions/configuration.ts')
 
 describe('webhook_subscription', () => {
   describe('reverseTransform', () => {
@@ -77,6 +79,24 @@ describe('webhook_subscription', () => {
             },
           ],
         },
+      })
+    })
+  })
+
+  describe('forwardTransform', () => {
+    test('when a relative URI is used, it inherits the application_url', () => {
+      const object = {
+        topics: ['products/create'],
+        uri: '/products',
+      }
+
+      const webhookSpec = spec
+
+      const result = webhookSpec.transformLocalToRemote!(object)
+
+      expect(result).toEqual({
+        uri: 'https://my-app-url.com/products',
+        topics: ['products/create'],
       })
     })
   })

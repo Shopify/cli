@@ -26,6 +26,7 @@ import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/ap
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
+import {LocalAppConfiguration} from '../../utilities/extensions/configuration.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -298,6 +299,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
   async loaded() {
     const {configuration, directory, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
+    LocalAppConfiguration.getInstance().initializeConfig(configuration)
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 

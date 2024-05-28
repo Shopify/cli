@@ -144,7 +144,8 @@
           "react"
         ],
         "ignore": [
-          "configurations/vite.config.ts"
+          "configurations/vite.config.ts",
+          "**/__mocks__/**"
         ]
       },
       "packages/app": {

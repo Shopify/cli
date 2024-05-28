@@ -21,9 +21,9 @@ export interface TransformationConfig {
   [key: string]: string
 }
 
-export interface CustomTransformationConfig {
-  forward?: (obj: object, options?: {flags?: Flag[]}) => object
-  reverse?: (obj: object, options?: {flags?: Flag[]}) => object
+export interface CustomTransformationConfig<T = object> {
+  forward?: (obj: T, options?: {flags?: Flag[]}) => object
+  reverse?: (obj: T, options?: {flags?: Flag[]}) => object
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
