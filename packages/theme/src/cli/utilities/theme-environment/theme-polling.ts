@@ -1,5 +1,5 @@
 import {applyIgnoreFilters} from '../asset-ignore.js'
-import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -53,9 +53,7 @@ export async function pollRemoteJsonChanges(
   const assetsChangedOnRemote = getChangedAssets(previousChecksums, latestChecksums)
   const assetsDeletedFromRemote = getDeletedAssets(latestChecksums, previousChecksums)
 
-  const previousFileValues = new Map(localFileSystem.files)
-  await Promise.all(assetsChangedOnRemote.map((file) => localFileSystem.read(file.key)))
-  await abortIfMultipleSourcesChange(previousFileValues, localFileSystem, assetsChangedOnRemote)
+  await abortIfMultipleSourcesChange(localFileSystem, assetsChangedOnRemote)
 
   await syncChangedAssets(targetTheme, currentSession, localFileSystem, assetsChangedOnRemote)
   await deleteRemovedAssets(localFileSystem, assetsDeletedFromRemote, options)
@@ -118,11 +116,13 @@ function deleteRemovedAssets(
   }
 }
 
-async function abortIfMultipleSourcesChange(
-  previousFileValues: Map<string, ThemeAsset>,
-  localFileSystem: ThemeFileSystem,
-  assetsChangedOnRemote: Checksum[],
-) {
+/**
+ * Updates the local file system with the latest local changes and throws an error if the file has been changed on both local and remote sources.
+ */
+async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, assetsChangedOnRemote: Checksum[]) {
+  const previousFileValues = new Map(localFileSystem.files)
+  await Promise.all(assetsChangedOnRemote.map((file) => localFileSystem.read(file.key)))
+
   for (const asset of assetsChangedOnRemote) {
     const previousChecksum = previousFileValues.get(asset.key)?.checksum
     const newChecksum = localFileSystem.files.get(asset.key)?.checksum
