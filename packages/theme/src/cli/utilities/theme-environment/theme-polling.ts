@@ -82,8 +82,17 @@ export async function pollRemoteJsonChanges(
     }),
   )
 
+  await deleteRemovedAssets(localFileSystem, assetsDeletedFromRemote, options)
+  return latestChecksums
+}
+
+function deleteRemovedAssets(
+  localFileSystem: ThemeFileSystem,
+  assetsDeletedFromRemote: Checksum[],
+  options: {noDelete: boolean},
+) {
   if (!options.noDelete) {
-    await Promise.all(
+    return Promise.all(
       assetsDeletedFromRemote.map((file) =>
         localFileSystem.delete(file.key).then(() => {
           renderText({text: `Synced: remove '${file.key}' from local theme`})
@@ -91,7 +100,6 @@ export async function pollRemoteJsonChanges(
       ),
     )
   }
-  return latestChecksums
 }
 
 async function abortIfMultipleSourcesChange(
