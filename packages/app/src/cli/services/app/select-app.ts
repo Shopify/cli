@@ -61,11 +61,7 @@ export async function fetchAppRemoteConfiguration(
     specifications,
     flags,
   ) as unknown as SpecsAppConfiguration
-  return specifications.reduce(
-    (simplifiedConfiguration, spec) =>
-      spec.simplifyMergedRemoteConfig?.(simplifiedConfiguration) ?? simplifiedConfiguration,
-    remoteConfiguration,
-  )
+  return remoteConfiguration
 }
 
 /**

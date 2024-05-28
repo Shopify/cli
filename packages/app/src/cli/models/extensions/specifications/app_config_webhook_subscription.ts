@@ -1,5 +1,5 @@
-import {WebhookSimplifyConfig} from './app_config_webhook.js'
 import {UriValidation, removeTrailingSlash} from './validation/common.js'
+import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -66,7 +66,7 @@ function transformToWebhookSubscriptionConfig(content: object) {
 
   return {
     webhooks: {
-      subscriptions: subscriptionsArray,
+      subscriptions: mergeAllWebhooks(subscriptionsArray),
     },
   }
 }
@@ -80,7 +80,6 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
   schema: SingleWebhookSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
-  simplify: WebhookSimplifyConfig,
   uidStrategy: 'dynamic',
 })
 
