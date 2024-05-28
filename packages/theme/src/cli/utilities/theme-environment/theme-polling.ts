@@ -51,11 +51,7 @@ export async function pollRemoteJsonChanges(
   )
 
   const assetsChangedOnRemote = getChangedAssets(previousChecksums, latestChecksums)
-
-  const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
-  const assetsDeletedFromRemote = previousChecksums.filter((previousChecksum) => {
-    return latestChecksumsMap.get(previousChecksum.key) === undefined
-  })
+  const assetsDeletedFromRemote = getDeletedAssets(latestChecksums, previousChecksums)
 
   const previousFileValues = new Map(localFileSystem.files)
   await Promise.all(assetsChangedOnRemote.map((file) => localFileSystem.read(file.key)))
@@ -65,6 +61,14 @@ export async function pollRemoteJsonChanges(
   await deleteRemovedAssets(localFileSystem, assetsDeletedFromRemote, options)
 
   return latestChecksums
+}
+
+function getDeletedAssets(latestChecksums: Checksum[], previousChecksums: Checksum[]) {
+  const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
+  const assetsDeletedFromRemote = previousChecksums.filter((previousChecksum) => {
+    return latestChecksumsMap.get(previousChecksum.key) === undefined
+  })
+  return assetsDeletedFromRemote
 }
 
 function getChangedAssets(previousChecksums: Checksum[], latestChecksums: Checksum[]) {
