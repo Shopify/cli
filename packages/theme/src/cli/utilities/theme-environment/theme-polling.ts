@@ -45,13 +45,12 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
 ): Promise<Checksum[]> {
-  const filteredRemoteChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
-
+  const previousChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
     applyFileFilters(checksums, localFileSystem, options),
   )
 
-  const previousChecksumsMap = new Map(filteredRemoteChecksums.map((checksum) => [checksum.key, checksum]))
+  const previousChecksumsMap = new Map(previousChecksums.map((checksum) => [checksum.key, checksum]))
   const assetsChangedOnRemote = latestChecksums.filter((latestAsset) => {
     const previousAsset = previousChecksumsMap.get(latestAsset.key)
     if (!previousAsset || previousAsset.checksum !== latestAsset.checksum) {
@@ -60,7 +59,7 @@ export async function pollRemoteJsonChanges(
   })
 
   const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
-  const assetsDeletedFromRemote = filteredRemoteChecksums.filter((previousChecksum) => {
+  const assetsDeletedFromRemote = previousChecksums.filter((previousChecksum) => {
     return latestChecksumsMap.get(previousChecksum.key) === undefined
   })
 
