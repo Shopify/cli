@@ -4,7 +4,7 @@ updates:
     versioning-strategy: increase
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     labels:
       - "dependencies"
     open-pull-requests-limit: 100
@@ -42,7 +42,7 @@ updates:
     versioning-strategy: increase
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     labels:
       - "dependencies"
     open-pull-requests-limit: 100
