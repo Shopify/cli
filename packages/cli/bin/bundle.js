@@ -18,7 +18,9 @@ const external = [
   // esbuild can't be bundled per design
   'esbuild',
   'lightningcss',
+  // These two are binary dependencies from Hydrogen that can't be bundled
   '@ast-grep/napi',
+  '@parcel/watcher',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
