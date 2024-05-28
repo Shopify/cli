@@ -84,13 +84,11 @@ export async function pollRemoteJsonChanges(
 
   if (!options.noDelete) {
     await Promise.all(
-      assetsDeletedFromRemote
-        .filter((file) => file.key.endsWith('.json'))
-        .map((file) =>
-          localFileSystem.delete(file.key).then(() => {
-            renderText({text: `Synced: remove '${file.key}' from local theme`})
-          }),
-        ),
+      assetsDeletedFromRemote.map((file) =>
+        localFileSystem.delete(file.key).then(() => {
+          renderText({text: `Synced: remove '${file.key}' from local theme`})
+        }),
+      ),
     )
   }
   return latestChecksums
