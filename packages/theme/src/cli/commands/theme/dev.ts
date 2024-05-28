@@ -178,6 +178,7 @@ You can run this command only in a directory that matches the [default Shopify t
       flagsToPass,
       'dev-preview': flags['dev-preview'],
       'theme-editor-sync': flags['theme-editor-sync'],
+      noDelete: flags.nodelete,
     })
   }
 }

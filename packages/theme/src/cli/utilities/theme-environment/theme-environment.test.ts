@@ -21,6 +21,9 @@ describe('startDevServer', () => {
     remoteChecksums: [],
     localThemeFileSystem,
     themeEditorSync: false,
+    options: {
+      noDelete: false,
+    },
   }
 
   test('should upload the development theme to remote if themeEditorSync is false', async () => {
@@ -44,5 +47,18 @@ describe('startDevServer', () => {
     // Then
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalled()
     expect(uploadTheme).toHaveBeenCalled()
+  })
+
+  test('should skip deletion of remote files if noDelete flag is passed', async () => {
+    // Given
+    const context = {...defaultServerContext, options: {noDelete: true}}
+
+    // When
+    await startDevServer(developmentTheme, context, () => {})
+
+    // Then
+    expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
+      nodelete: true,
+    })
   })
 })
