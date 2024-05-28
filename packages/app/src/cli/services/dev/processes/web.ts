@@ -17,6 +17,7 @@ interface LaunchWebOptions {
   frontendServerPort?: number
   directory: string
   devCommand: string
+  preDevCommand?: string
   scopes?: string
   shopCustomDomain?: string
   hmrServerOptions?: {port: number; httpPaths: string[]}
@@ -60,7 +61,7 @@ export async function setupWebProcesses({
           }
         : undefined
 
-    return {
+    const process: WebProcess = {
       type: 'web',
       prefix: web.configuration.name ?? ['web', ...web.configuration.roles].join('-'),
       function: launchWebProcess,
@@ -75,11 +76,13 @@ export async function setupWebProcesses({
         frontendServerPort: frontendPort,
         directory: web.directory,
         devCommand: web.configuration.commands.dev,
+        preDevCommand: web.configuration.commands.predev,
         scopes,
         shopCustomDomain,
         hmrServerOptions,
       },
-    } as WebProcess
+    }
+    return process
   })
   return Promise.all(webProcessSetups)
 }
@@ -103,7 +106,7 @@ async function getWebProcessPort({
 }
 
 export async function launchWebProcess(
-  {stdout, stderr, abortSignal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
+  {stdout, stderr, abortSignal: signal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
   {
     port,
     apiKey,
@@ -113,6 +116,7 @@ export async function launchWebProcess(
     frontendServerPort,
     directory,
     devCommand,
+    preDevCommand,
     scopes,
     shopCustomDomain,
     hmrServerOptions,
@@ -141,15 +145,31 @@ export async function launchWebProcess(
   }
 
   // Support for multiple sequential commands: `echo "hello" && echo "world"`
-  const devCommands = devCommand.split('&&').map((cmd) => cmd.trim()) ?? []
-  for (const command of devCommands) {
+  // Pre-dev commands are run before the dev command, but without any output
+  await runArrayOfCommands({command: preDevCommand ?? '', signal, directory, port, env})
+  await runArrayOfCommands({command: devCommand, signal, directory, port, env, stdout, stderr})
+}
+
+interface RunArrayOfCommandsOptions {
+  command: string
+  signal: AbortSignal
+  directory: string
+  port: number
+  env: {[key: string]: string | undefined}
+  stdout?: Writable
+  stderr?: Writable
+}
+
+async function runArrayOfCommands({command, signal, directory, port, env, stdout, stderr}: RunArrayOfCommandsOptions) {
+  const commands = command.split('&&').map((cmd) => cmd.trim()) ?? []
+  for (const command of commands) {
     const [cmd, ...args] = command.split(' ')
     // eslint-disable-next-line no-await-in-loop
     await exec(cmd!, args, {
       cwd: directory,
       stdout,
       stderr,
-      signal: abortSignal,
+      signal,
       env: {
         ...env,
         PORT: `${port}`,
