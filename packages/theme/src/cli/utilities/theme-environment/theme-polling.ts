@@ -68,6 +68,18 @@ export async function pollRemoteJsonChanges(
   await Promise.all(assetsChangedOnRemote.map((file) => localFileSystem.read(file.key)))
   await abortIfMultipleSourcesChange(previousFileValues, localFileSystem, assetsChangedOnRemote)
 
+  await syncChangedAssets(targetTheme, currentSession, localFileSystem, assetsChangedOnRemote)
+  await deleteRemovedAssets(localFileSystem, assetsDeletedFromRemote, options)
+
+  return latestChecksums
+}
+
+async function syncChangedAssets(
+  targetTheme: Theme,
+  currentSession: AdminSession,
+  localFileSystem: ThemeFileSystem,
+  assetsChangedOnRemote: Checksum[],
+) {
   await Promise.all(
     assetsChangedOnRemote.map(async (file) => {
       if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
@@ -75,15 +87,11 @@ export async function pollRemoteJsonChanges(
       }
       const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
       if (asset) {
-        return localFileSystem.write(asset).then(() => {
-          renderText({text: `Synced: get '${asset.key}' from remote theme`})
-        })
+        await localFileSystem.write(asset)
+        renderText({text: `Synced: get '${asset.key}' from remote theme`})
       }
     }),
   )
-
-  await deleteRemovedAssets(localFileSystem, assetsDeletedFromRemote, options)
-  return latestChecksums
 }
 
 function deleteRemovedAssets(
