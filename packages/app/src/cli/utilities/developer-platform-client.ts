@@ -44,6 +44,7 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
+import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphql/subscribe_to_app_logs.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
@@ -212,4 +213,5 @@ export interface DeveloperPlatformClient {
   apiSchemaDefinition: (input: ApiSchemaDefinitionQueryVariables) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
+  subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
 }
