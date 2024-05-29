@@ -27,6 +27,9 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   options.devOptions.extensions.forEach(async (extension) => {
+    if (extension.type === 'flow_template') {
+      return
+    }
     bundlers.push(
       bundleExtension({
         minify: false,

@@ -44,6 +44,10 @@ export function PreviewLinks({extension}: Props) {
     )
   }
 
+  if (extension.type === 'flow_template') {
+    return <PreviewLink rootUrl={extension.development.root.url} title="Flow template" />
+  }
+
   return (
     <PreviewLink
       rootUrl={extension.development.root.url}
