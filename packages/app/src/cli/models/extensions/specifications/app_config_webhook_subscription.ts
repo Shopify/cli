@@ -1,7 +1,5 @@
 import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
-import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {getPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
@@ -51,20 +49,12 @@ ie.
   }
   */
 function transformToWebhookSubscriptionConfig(content: object) {
-  const subscriptions = getPathValue(content, 'subscriptions') as TransformedWebhookSubscription[]
-  if (!subscriptions) return {}
-
-  const subscriptionsArray = subscriptions.map((subscription: TransformedWebhookSubscription) => {
-    const {topic, ...otherFields} = subscription
-    return {
-      topics: [topic],
-      ...otherFields,
-    }
-  })
-
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const {api_version, topic, ...otherFields} = content as TransformedWebhookSubscription
+  const subscription = {topics: [topic], ...otherFields}
   return {
     webhooks: {
-      subscriptions: mergeAllWebhooks(subscriptionsArray),
+      subscriptions: [subscription],
     },
   }
 }

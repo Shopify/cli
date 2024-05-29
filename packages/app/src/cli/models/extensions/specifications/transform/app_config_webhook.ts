@@ -1,36 +1,21 @@
-import {WebhooksConfig, NormalizedWebhookSubscription, WebhookSubscription} from '../types/app_config_webhook.js'
-import {deepCompare, deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
+import {WebhooksConfig, WebhookSubscription} from '../types/app_config_webhook.js'
+import {deepCompare, getPathValue} from '@shopify/cli-kit/common/object'
 
 export function transformFromWebhookConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
-  const webhookSubscriptions = []
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  const {api_version, subscriptions = []} = webhooks
+  const {api_version} = webhooks
 
-  // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
-  for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
-    if (topics) webhookSubscriptions.push(topics.map((topic) => ({uri, topic, ...optionalFields})))
-  }
-
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions.flat(), api_version} : {api_version}
+  return {api_version}
 }
 
 export function transformToWebhookConfig(content: object) {
   let webhooks = {}
   const apiVersion = getPathValue(content, 'api_version') as string
   webhooks = {...(apiVersion ? {webhooks: {api_version: apiVersion}} : {})}
-  const serverWebhooks = getPathValue(content, 'subscriptions') as NormalizedWebhookSubscription[]
-  if (!serverWebhooks) return webhooks
-
-  const subscriptions = serverWebhooks.map(({topic, ...otherFields}) => {
-    return {topics: [topic], ...otherFields} as WebhookSubscription
-  })
-  const webhooksSubscriptions: WebhooksConfig['subscriptions'] = mergeAllWebhooks(subscriptions)
-
-  const webhooksSubscriptionsObject = webhooksSubscriptions ? {subscriptions: webhooksSubscriptions} : {}
-  return deepMergeObjects(webhooks, {webhooks: webhooksSubscriptionsObject})
+  return webhooks
 }
 
 /**
@@ -49,8 +34,9 @@ export function mergeAllWebhooks(subscriptions: WebhookSubscription[]): WebhookS
   const topicSubscriptions = subscriptions
     .filter((subscription) => subscription.topics !== undefined)
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    .map(({compliance_topics, topics, ...rest}) => {
-      return {topics, ...rest}
+    .flatMap(({compliance_topics, topics, ...rest}) => {
+      const sortedTopics = sortArrayAlphabetically(topics)
+      return sortedTopics?.map((topic) => ({topics: [topic], ...rest})) ?? []
     })
   const complianceSubscriptions = subscriptions
     .filter((subscription) => subscription.topics === undefined || subscription.compliance_topics !== undefined)
@@ -59,12 +45,12 @@ export function mergeAllWebhooks(subscriptions: WebhookSubscription[]): WebhookS
       return {compliance_topics, ...rest}
     })
 
-  const mergedTopicSubscriptions = reduceWebhooks(topicSubscriptions, 'topics')
   const mergedComplianceSubscriptions = reduceWebhooks(complianceSubscriptions, 'compliance_topics')
-  const sortedTopicsSubscriptions = sortTopics(mergedTopicSubscriptions)
   const sortedComplianceTopicsSubscriptions = sortComplianceTopics(mergedComplianceSubscriptions)
 
-  return [...sortWebhooksByUri(sortedTopicsSubscriptions), ...sortWebhooksByUri(sortedComplianceTopicsSubscriptions)]
+  // order of compliance and non-compliance subscription matters here
+  // because of the way we are creating and storing the extensions in loader.ts
+  return [...sortWebhooksByUri(sortedComplianceTopicsSubscriptions), ...sortWebhooksByUri(topicSubscriptions)]
 }
 
 function sortArrayAlphabetically(array: string[] | undefined) {
@@ -72,10 +58,6 @@ function sortArrayAlphabetically(array: string[] | undefined) {
 }
 function sortWebhooksByUri(subscriptions: WebhookSubscription[]) {
   return subscriptions.sort((oneSub, twoSub) => oneSub.uri.localeCompare(twoSub.uri))
-}
-function sortTopics(subscriptions: WebhookSubscription[]) {
-  subscriptions.forEach((sub) => (sub.topics = sortArrayAlphabetically(sub.topics)))
-  return subscriptions
 }
 function sortComplianceTopics(subscriptions: WebhookSubscription[]) {
   subscriptions.forEach((sub) => (sub.compliance_topics = sortArrayAlphabetically(sub.compliance_topics)))
