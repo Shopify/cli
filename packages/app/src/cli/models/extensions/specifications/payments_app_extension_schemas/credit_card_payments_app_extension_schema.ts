@@ -13,6 +13,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
 
 export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
+// If updating this limit, also update the limit in the Partners Web Platform (https://github.com/Shopify/partners-web-platform/) - MAX_CHECKOUT_PAYMENT_METHOD_FIELDS
 export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
 export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(DeferredPaymentsSchema)
