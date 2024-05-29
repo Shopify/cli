@@ -502,11 +502,15 @@ export async function testEditorExtensionCollection({
   )
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'editor_extension_collection')!
-  const configuration = specification.schema.parse({
+  const parsed = specification.parseConfigurationObject({
     ...passedConfig,
     type: 'editor_extension_collection',
     metafields: [],
   })
+  if (parsed.state !== 'ok') {
+    throw new Error('Failed to parse configuration')
+  }
+  const configuration = parsed.data
 
   return new ExtensionInstance({
     configuration,

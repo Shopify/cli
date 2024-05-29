@@ -2,7 +2,7 @@ import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphq
 import {
   loadConfigurationFileContent,
   parseConfigurationFile,
-  parseConfigurationObject,
+  parseConfigurationObjectAgainstSpecification,
 } from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
@@ -105,8 +105,8 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     configObject = {...configuration, ...extensionConfig}
   }
 
-  const newConfig = await parseConfigurationObject(
-    extension.specification.schema,
+  const newConfig = await parseConfigurationObjectAgainstSpecification(
+    extension.specification,
     extension.configurationPath,
     configObject,
     abort,

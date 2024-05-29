@@ -57,7 +57,6 @@ export type ExtensionSpecification<TConfiguration extends BaseConfigType = BaseC
   experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
-  schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,
@@ -89,6 +88,30 @@ export type ExtensionSpecification<TConfiguration extends BaseConfigType = BaseC
   transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
 
   uidStrategy: UidStrategy
+
+  /**
+   * Have this specification contribute to the schema used to validate app configuration. For specifications that don't
+   * form part of app config, they can return the schema unchanged.
+   *
+   * @param appConfigSchema - The schema used to validate app configuration. This will usually be the output from calling this function for another specification
+   * @returns The schema used to validate app configuration, with this specification's schema merged in
+   */
+  contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => ZodSchemaType<unknown>
+
+  /**
+   * Parse some provided configuration into a valid configuration object for this extension.
+   */
+  parseConfigurationObject: (configurationObject: unknown) =>
+    | {
+        state: 'ok'
+        data: TConfiguration
+        errors: undefined
+      }
+    | {
+        state: 'error'
+        data: undefined
+        errors: Pick<zod.ZodIssueBase, 'path' | 'message'>[]
+      }
 } & SimplifyConfig
 
 /**
@@ -99,12 +122,24 @@ export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigT
     loadedRemoteSpecs: true
   }
 
+export function isRemoteAware(spec: ExtensionSpecification): spec is RemoteAwareExtensionSpecification {
+  return (spec as RemoteAwareExtensionSpecification).loadedRemoteSpecs === true
+}
+
 /**
  * These fields are forbidden when creating a new ExtensionSpec
  * They belong to the ExtensionSpec interface, but the values are obtained from the API
  * and should not be set by us locally
  */
-type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name' | 'surface'
+type ForbiddenFields =
+  | 'registrationLimit'
+  | 'category'
+  | 'externalIdentifier'
+  | 'externalName'
+  | 'name'
+  | 'surface'
+  | 'contributeToAppConfigurationSchema'
+  | 'parseConfigurationObject'
 
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
@@ -113,6 +148,7 @@ interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseCo
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  schema?: ZodSchemaType<TConfiguration>
 }
 
 /**
@@ -153,7 +189,34 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
-  return {...defaults, ...spec}
+  const merged = {...defaults, ...spec}
+
+  return {
+    ...merged,
+    contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => {
+      if (merged.uidStrategy !== 'single') {
+        // no change
+        return appConfigSchema
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (appConfigSchema as any).merge(merged.schema)
+    },
+    parseConfigurationObject: (configurationObject: unknown) => {
+      const parseResult = merged.schema.safeParse(configurationObject)
+      if (!parseResult.success) {
+        return {
+          state: 'error',
+          data: undefined,
+          errors: parseResult.error.errors,
+        }
+      }
+      return {
+        state: 'ok',
+        data: parseResult.data,
+        errors: undefined,
+      }
+    },
+  }
 }
 
 /**

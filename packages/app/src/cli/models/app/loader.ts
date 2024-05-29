@@ -148,6 +148,33 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
   return parseResult.data
 }
 
+/**
+ * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
+ */
+export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
+  spec: ExtensionSpecification,
+  filepath: string,
+  configurationObject: unknown,
+  abortOrReport: AbortOrReport,
+): zod.TypeOf<TSchema> {
+  const parsed = spec.parseConfigurationObject(configurationObject)
+  switch (parsed.state) {
+    case 'ok': {
+      return parsed.data
+    }
+    case 'error': {
+      const fallbackOutput = {} as zod.TypeOf<TSchema>
+      return abortOrReport(
+        outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
+          filepath,
+        )}:\n\n${parseHumanReadableError(parsed.errors)}`,
+        fallbackOutput,
+        filepath,
+      )
+    }
+  }
+}
+
 export class AppErrors {
   private errors: {
     [key: string]: OutputMessage
@@ -445,8 +472,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       )
     }
 
-    const configuration = parseConfigurationObject(
-      specification.schema,
+    const configuration = parseConfigurationObjectAgainstSpecification(
+      specification,
       configurationPath,
       configurationObject,
       this.abortOrReport.bind(this),
@@ -595,8 +622,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
-          const specConfiguration = parseConfigurationObject(
-            specification.schema,
+          const specConfiguration = parseConfigurationObjectAgainstSpecification(
+            specification,
             appConfiguration.path,
             appConfiguration,
             this.abortOrReport.bind(this),
@@ -616,12 +643,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         }),
     )
 
-    if (!this.dynamicallySpecifiedConfigs) {
-      return extensionInstancesWithKeys
-        .filter(([instance]) => instance)
-        .map(([instance]) => instance as ExtensionInstance)
-    }
-
     // get all the keys from appConfiguration that aren't used by any of the results
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
@@ -629,6 +650,15 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path']
         return !configKeysThatAreNeverModules.includes(key)
       })
+
+    if (!this.dynamicallySpecifiedConfigs) {
+      if (unusedKeys.length > 0) {
+        throw new Error('Not all of the config was consumed')
+      }
+      return extensionInstancesWithKeys
+        .filter(([instance]) => instance)
+        .map(([instance]) => instance as ExtensionInstance)
+    }
 
     // make some extension instances for the unused keys
     const unusedExtensionInstances = unusedKeys.map((key) => {
