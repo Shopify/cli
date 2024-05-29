@@ -9,6 +9,7 @@ import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 
 interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
@@ -37,27 +38,50 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 
   await Promise.all(
     extensions.map(async (extension) => {
-      await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
-      const registrationId = remoteExtensions[extension.localIdentifier]
-      if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-      // Initial draft update for each extension
-      await updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr})
-      // Watch for changes
-      return setupExtensionWatcher({
-        extension,
-        app,
-        url: proxyUrl,
-        stdout,
-        stderr,
-        signal,
-        onChange: async () => {
-          // At this point the extension has already been built and is ready to be updated
-          return performActionWithRetryAfterRecovery(
-            async () =>
-              updateExtensionDraft({extension, developerPlatformClient, apiKey, registrationId, stdout, stderr}),
-            refreshToken,
-          )
-        },
+      return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
+        await extension.build({
+          app,
+          stdout,
+          stderr,
+          useTasks: false,
+          signal,
+          environment: 'development',
+        })
+        const registrationId = remoteExtensions[extension.localIdentifier]
+        if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+        // Initial draft update for each extension
+        await updateExtensionDraft({
+          extension,
+          developerPlatformClient,
+          apiKey,
+          registrationId,
+          stdout,
+          stderr,
+        })
+        // Watch for changes
+        return setupExtensionWatcher({
+          extension,
+          app,
+          url: proxyUrl,
+          stdout,
+          stderr,
+          signal,
+          onChange: async () => {
+            // At this point the extension has already been built and is ready to be updated
+            return performActionWithRetryAfterRecovery(
+              async () =>
+                updateExtensionDraft({
+                  extension,
+                  developerPlatformClient,
+                  apiKey,
+                  registrationId,
+                  stdout,
+                  stderr,
+                }),
+              refreshToken,
+            )
+          },
+        })
       })
     }),
   )
