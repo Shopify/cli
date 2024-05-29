@@ -113,6 +113,7 @@ import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platfo
 import {shopifyDevelopersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class ShopifyDevelopersClient implements DeveloperPlatformClient {
+  public clientName = 'developer-api'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined

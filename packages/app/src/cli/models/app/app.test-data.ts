@@ -1148,6 +1148,7 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub = {
+    clientName: 'test',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
@@ -1197,9 +1198,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
-      retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi
-        .fn()
-        .mockImplementation(value)
+      retVal[
+        key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName'>
+      ] = vi.fn().mockImplementation(value)
     }
   }
   return retVal as DeveloperPlatformClient
