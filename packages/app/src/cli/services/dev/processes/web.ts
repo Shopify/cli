@@ -149,7 +149,11 @@ export async function launchWebProcess(
 
   // Support for multiple sequential commands: `echo "hello" && echo "world"`
   // Pre-dev commands are run before the dev command, but without any output
-  if (preDevCommand) await runCommands({...baseCommandRunConfig, command: preDevCommand, showOutput: isVerbose()})
+  if (preDevCommand) {
+    stdout.write(`Running pre-dev command: "${preDevCommand}"...`)
+    await runCommands({...baseCommandRunConfig, command: preDevCommand, showOutput: isVerbose()})
+    stdout.write(`Running pre-dev command: ${preDevCommand}... Done!`)
+  }
   await runCommands({...baseCommandRunConfig, command: devCommand, showOutput: true})
 }
 
@@ -182,7 +186,7 @@ async function runCommands({
     await exec(cmd!, args, {
       cwd: directory,
       stdout: showOutput ? stdout : undefined,
-      stderr: showOutput ? stderr : undefined,
+      stderr,
       signal,
       env: {
         ...env,
