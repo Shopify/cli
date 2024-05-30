@@ -18,7 +18,7 @@ import {
   generateExtensionTemplate,
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
-import {ExtensionTemplate, TemplateType} from '../models/app/template.js'
+import {ExtensionTemplate} from '../models/app/template.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
@@ -63,9 +63,9 @@ async function generate(options: GenerateOptions) {
   await saveAnalyticsMetadata(promptAnswers, options.template)
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
-  const generatedExtensions = await generateExtensionTemplate(generateExtensionOptions)
+  const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  renderSuccessMessages(generatedExtensions, app.packageManager)
+  renderSuccessMessage(generatedExtension, app.packageManager)
 }
 
 async function buildPromptOptions(
@@ -97,29 +97,26 @@ function checkLimits(
   app: AppInterface,
 ) {
   const iterateeFunction = (template: ExtensionTemplate) => {
-    const allValid = template.types.every((type) => !limitReached(app, specifications, type))
+    const allValid = !limitReached(app, specifications, template)
     return allValid ? 'validTemplates' : 'templatesOverlimit'
   }
   return groupBy(extensionTemplates, iterateeFunction)
 }
 
-function limitReached(app: AppInterface, specifications: ExtensionSpecification[], templateType: TemplateType) {
-  const type = templateType.type
+function limitReached(app: AppInterface, specifications: ExtensionSpecification[], template: ExtensionTemplate) {
+  const type = template.type
   const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
   return existingExtensions.length >= (specification?.registrationLimit || 1)
 }
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
-  await Promise.all(
-    promptAnswers.extensionContent.map((extensionContent) => {
-      return metadata.addPublicMetadata(() => ({
-        cmd_scaffold_template_flavor: extensionContent.flavor,
-        cmd_scaffold_type: promptAnswers.extensionTemplate.identifier,
-        cmd_scaffold_used_prompts_for_type: !typeFlag,
-      }))
-    }),
-  )
+  const {extensionContent} = promptAnswers
+  return metadata.addPublicMetadata(() => ({
+    cmd_scaffold_template_flavor: extensionContent.flavor,
+    cmd_scaffold_type: promptAnswers.extensionTemplate.identifier,
+    cmd_scaffold_used_prompts_for_type: !typeFlag,
+  }))
 }
 
 function buildGenerateOptions(
@@ -137,24 +134,22 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessages(
-  generatedExtensions: GeneratedExtension[],
+function renderSuccessMessage(
+  extension: GeneratedExtension,
   packageManager: AppInterface['packageManager'],
 ) {
-  generatedExtensions.forEach((extension) => {
-    const formattedSuccessfulMessage = formatSuccessfulRunMessage(
-      extension.extensionTemplate,
-      extension.directory,
-      packageManager,
-    )
-    renderSuccess(formattedSuccessfulMessage)
-  })
+  const formattedSuccessfulMessage = formatSuccessfulRunMessage(
+    extension.extensionTemplate,
+    extension.directory,
+    packageManager,
+  )
+  renderSuccess(formattedSuccessfulMessage)
 }
 
 function validateExtensionFlavor(extensionTemplate?: ExtensionTemplate, flavor?: string) {
   if (!flavor || !extensionTemplate) return
 
-  const possibleFlavors: string[] = extensionTemplate.types[0]!.supportedFlavors.map((flavor) => flavor.value as string)
+  const possibleFlavors: string[] = extensionTemplate.supportedFlavors.map((flavor) => flavor.value as string)
 
   if (!possibleFlavors.includes(flavor)) {
     throw new AbortError(
@@ -175,7 +170,7 @@ function formatSuccessfulRunMessage(
     reference: [],
   }
 
-  if (extensionTemplate.types.some((type) => type.type !== 'function')) {
+  if (extensionTemplate.type !== 'function') {
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
       {command: `${formatPackageManagerCommand(depndencyManager, 'shopify app dev')}`},
@@ -216,14 +211,12 @@ async function handleTypeParameter(
 
   // Validate limits for selected type.
   // If no type is selected, filter out any types that have reached their limit
-  extensionTemplate.types.forEach((type) => {
-    if (limitReached(app, specifications, type)) {
-      throw new AbortError(
-        `Invalid extension type: ${typeFlag}`,
-        `You have reached the limit of extension(s) of type ${type.type} per app`,
-      )
-    }
-  })
+  if (limitReached(app, specifications, extensionTemplate)) {
+    throw new AbortError(
+      `Invalid extension type: ${typeFlag}`,
+      `You have reached the limit of extension(s) of type ${extensionTemplate.type} per app`,
+    )
+  }
 
   return extensionTemplate
 }

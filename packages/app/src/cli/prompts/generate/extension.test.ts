@@ -50,7 +50,7 @@ describe('extension prompt', async () => {
     expect(renderTextPrompt).toHaveBeenCalledWith(extensionNameQuestion)
     expect(got).toEqual({
       extensionTemplate,
-      extensionContent: [{name: 'ext', flavor: undefined, index: 0}],
+      extensionContent: {name: 'ext', flavor: undefined},
     })
   })
 
@@ -76,7 +76,7 @@ describe('extension prompt', async () => {
     expect(renderAutocompletePrompt).toHaveBeenCalledWith(extensionTypeQuestion)
     expect(got).toEqual({
       extensionTemplate,
-      extensionContent: [{name: 'my-special-extension', flavor: undefined, index: 0}],
+      extensionContent: {name: 'my-special-extension', flavor: undefined},
     })
   })
 
@@ -113,7 +113,7 @@ describe('extension prompt', async () => {
     })
     expect(got).toEqual({
       extensionTemplate,
-      extensionContent: [{name: 'my-special-extension', flavor: 'react', index: 0}],
+      extensionContent: {name: 'my-special-extension', flavor: 'react'},
     })
   })
 
@@ -136,7 +136,7 @@ describe('extension prompt', async () => {
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensionTemplate,
-      extensionContent: [{name: 'my-special-extension', index: 0, flavor: 'liquid'}],
+      extensionContent: {name: 'my-special-extension', flavor: 'liquid'},
     })
   })
 
@@ -172,7 +172,7 @@ describe('extension prompt', async () => {
 
     expect(got).toEqual({
       extensionTemplate,
-      extensionContent: [{name: 'my-product-discount', flavor: 'rust', index: 0}],
+      extensionContent: {name: 'my-product-discount', flavor: 'rust'},
     })
   })
 
@@ -207,7 +207,7 @@ describe('extension prompt', async () => {
     expect(renderAutocompletePrompt).toHaveBeenCalledWith(functionTypes)
     expect(got).toEqual({
       extensionTemplate,
-      extensionContent: [{name: 'my-product-discount', index: 0, flavor: 'rust'}],
+      extensionContent: {name: 'my-product-discount', flavor: 'rust'},
     })
   })
 })

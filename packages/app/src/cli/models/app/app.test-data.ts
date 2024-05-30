@@ -894,18 +894,14 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'cart-checkout-validation',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'checkout/rust/cart-checkout-validation/default',
-          },
-        ],
+        name: 'Rust',
+        value: 'rust',
+        path: 'checkout/rust/cart-checkout-validation/default',
       },
     ],
   },
@@ -915,23 +911,19 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'cart-transformer',
     group: 'Discounts and checkout',
     supportLinks: [],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'checkout/wasm/cart-transform/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'checkout/rust/cart-transform/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'checkout/wasm/cart-transform/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'checkout/rust/cart-transform/default',
       },
     ],
   },
@@ -941,23 +933,19 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'product-discounts',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'discounts/wasm/product-discounts/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'discounts/rust/product-discounts/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'discounts/wasm/product-discounts/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'discounts/rust/product-discounts/default',
       },
     ],
   },
@@ -967,28 +955,24 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'order-discounts',
     group: 'Discounts and checkout',
     supportLinks: [],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'discounts/wasm/order-discounts/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'discounts/rust/order-discounts/default',
-          },
-          {
-            name: 'JavaScript',
-            value: 'vanilla-js',
-            path: 'discounts/javascript/order-discounts/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'discounts/wasm/order-discounts/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'discounts/rust/order-discounts/default',
+      },
+      {
+        name: 'JavaScript',
+        value: 'vanilla-js',
+        path: 'discounts/javascript/order-discounts/default',
       },
     ],
   },

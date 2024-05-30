@@ -11,6 +11,6 @@ export async function fetchExtensionTemplates(
   return remoteTemplates.filter(
     (template) =>
       availableSpecifications.includes(template.identifier) ||
-      availableSpecifications.includes(template.types[0]!.type),
+      availableSpecifications.includes(template.type),
   )
 }

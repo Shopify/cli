@@ -204,16 +204,14 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   vi.mocked(ensureGenerateContext).mockResolvedValue(testOrganizationApp({developerPlatformClient, apiKey: 'api-key'}))
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
-    extensionContent: [
-      {
-        index: 0,
-        name: identifier,
-        flavor: 'vanilla-js',
-      },
-    ],
+    extensionContent: {
+      name: identifier,
+      flavor: 'vanilla-js',
+    },
   })
-  vi.mocked(generateExtensionTemplate).mockResolvedValue([
-    {directory: joinPath('extensions', 'name'), extensionTemplate},
-  ])
+  vi.mocked(generateExtensionTemplate).mockResolvedValue({
+    directory: joinPath('extensions', 'name'),
+    extensionTemplate,
+  })
   return mockAndCaptureOutput()
 }

@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
-import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -20,11 +20,10 @@ export interface GenerateExtensionPromptOptions {
 
 export interface GenerateExtensionPromptOutput {
   extensionTemplate: ExtensionTemplate
-  extensionContent: GenerateExtensionContentOutput[]
+  extensionContent: GenerateExtensionContentOutput
 }
 
 export interface GenerateExtensionContentOutput {
-  index: number
   name: string
   flavor?: ExtensionFlavorValue
 }
@@ -74,7 +73,7 @@ const generateExtensionPrompts = async (
   if (!templateType) {
     if (extensionFlavor) {
       extensionTemplates = extensionTemplates.filter((template) =>
-        template.types[0]?.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
+        template.supportedFlavors.map((elem) => elem.value as string).includes(extensionFlavor),
       )
     }
 
@@ -91,16 +90,10 @@ const generateExtensionPrompts = async (
 
   const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
-  const extensionContent: GenerateExtensionContentOutput[] = []
-  /* eslint-disable no-await-in-loop */
-  for (const [index, templateType] of extensionTemplate.types.entries()) {
-    const name =
-      (extensionTemplate.types.length === 1 && options.name) ||
-      (await promptName(options.directory, extensionTemplate.defaultName))
-    const flavor = options.extensionFlavor ?? (await promptFlavor(templateType))
-    extensionContent.push({index, name, flavor})
-  }
-  /* eslint-enable no-await-in-loop */
+  const name = options.name ||
+    (await promptName(options.directory, extensionTemplate.defaultName))
+  const flavor = options.extensionFlavor ?? (await promptFlavor(extensionTemplate))
+  const extensionContent = {name, flavor}
 
   return {extensionTemplate, extensionContent}
 }
@@ -119,18 +112,18 @@ async function promptName(directory: string, defaultName: string, number = 1): P
   })
 }
 
-async function promptFlavor(templateType: TemplateType): Promise<ExtensionFlavorValue | undefined> {
-  if (templateType.supportedFlavors.length === 0) {
+async function promptFlavor(extensionTemplate: ExtensionTemplate): Promise<ExtensionFlavorValue | undefined> {
+  if (extensionTemplate.supportedFlavors.length === 0) {
     return undefined
   }
 
-  if (templateType.supportedFlavors.length === 1 && templateType.supportedFlavors[0]) {
-    return templateType.supportedFlavors[0].value
+  if (extensionTemplate.supportedFlavors.length === 1 && extensionTemplate.supportedFlavors[0]) {
+    return extensionTemplate.supportedFlavors[0].value
   }
 
   return renderSelectPrompt({
     message: 'What would you like to work in?',
-    choices: templateType.supportedFlavors.map((flavor) => {
+    choices: extensionTemplate.supportedFlavors.map((flavor) => {
       return {
         label: flavor.name,
         value: flavor.value,
