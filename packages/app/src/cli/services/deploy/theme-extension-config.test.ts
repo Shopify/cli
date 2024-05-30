@@ -20,6 +20,7 @@ describe('themeExtensionConfig', () => {
         configurationPath: '',
         directory: tmpDir,
         specification,
+        appConfiguration: {scopes: ''},
       })
 
       await mkdir(joinPath(tmpDir, 'blocks'))
@@ -50,6 +51,7 @@ describe('themeExtensionConfig', () => {
         configurationPath: '',
         directory: tmpDir,
         specification,
+        appConfiguration: {scopes: ''},
       })
 
       await mkdir(joinPath(tmpDir, 'blocks'))

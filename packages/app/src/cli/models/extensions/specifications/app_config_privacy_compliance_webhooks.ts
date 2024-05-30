@@ -7,7 +7,7 @@ import {Flag} from '../../../services/dev/fetch.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
 
 const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
-  forward: (content: object, _options?: {flags?: Flag[]}) => transformToPrivacyComplianceWebhooksModule(content),
+  forward: (content: object) => transformToPrivacyComplianceWebhooksModule(content),
   reverse: (content: object, options?: {flags?: Flag[]}) =>
     transformFromPrivacyComplianceWebhooksModule(content, options),
 }

@@ -67,6 +67,8 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  */
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
 
+export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchema>
+
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */

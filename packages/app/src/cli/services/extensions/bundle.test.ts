@@ -285,6 +285,7 @@ describe('bundleExtension()', () => {
           configurationPath: '',
           directory: tmpDir,
           specification,
+          appConfiguration: {scopes: ''},
         })
 
         const outputPath = joinPath(tmpDir, 'dist')

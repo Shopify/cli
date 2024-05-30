@@ -2,6 +2,7 @@ import {
   App,
   AppConfiguration,
   AppConfigurationSchema,
+  AppConfigurationWithoutPath,
   AppInterface,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
@@ -179,10 +180,13 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
+
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {
     configuration?: Partial<BaseConfigType> & {path?: string}
   } = {},
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
 ): Promise<ExtensionInstance> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
@@ -213,6 +217,7 @@ export async function testUIExtension(
     entryPath,
     directory,
     specification,
+    appConfiguration,
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
@@ -221,7 +226,10 @@ export async function testUIExtension(
   return extension
 }
 
-export async function testThemeExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testThemeExtensions(
+  directory = './my-extension',
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
@@ -236,12 +244,16 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
     configurationPath: '',
     directory,
     specification,
+    appConfiguration,
   })
 
   return extension
 }
 
-export async function testAppConfigExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppConfigExtensions(
+  emptyConfig = false,
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -258,12 +270,16 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
     configurationPath: 'shopify.app.toml',
     directory: './',
     specification,
+    appConfiguration,
   })
 
   return extension
 }
 
-export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppAccessConfigExtension(
+  emptyConfig = false,
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -284,12 +300,16 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
     configurationPath: 'shopify.app.toml',
     directory: './',
     specification: appAccessSpec,
+    appConfiguration,
   })
 
   return extension
 }
 
-export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testPaymentExtensions(
+  directory = './my-extension',
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+): Promise<ExtensionInstance> {
   const configuration = {
     name: 'Payment Extension Name',
     type: 'payments_extension' as const,
@@ -305,6 +325,7 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
     configurationPath: '',
     directory,
     specification,
+    appConfiguration,
   })
 
   return extension
@@ -313,14 +334,18 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
 export function testWebhookExtensions(params?: {
   emptyConfig?: boolean
   complianceTopics: false
+  appConfiguration?: AppConfiguration
 }): Promise<ExtensionInstance>
 export function testWebhookExtensions(params?: {
   emptyConfig?: boolean
   complianceTopics: true
+  appConfiguration?: AppConfiguration
 }): Promise<ExtensionInstance[]>
-export async function testWebhookExtensions({emptyConfig = false, complianceTopics = false} = {}): Promise<
-  ExtensionInstance | ExtensionInstance[]
-> {
+export async function testWebhookExtensions({
+  emptyConfig = false,
+  complianceTopics = false,
+  appConfiguration = placeholderAppConfiguration,
+} = {}): Promise<ExtensionInstance | ExtensionInstance[]> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -358,6 +383,7 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
     configurationPath: '',
     directory: './',
     specification: webhooksSpecification,
+    appConfiguration,
   })
 
   const privacyExtension = new ExtensionInstance({
@@ -365,6 +391,7 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
     configurationPath: '',
     directory: './',
     specification: privacySpecification,
+    appConfiguration,
   })
 
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
@@ -373,6 +400,7 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
 export async function testSingleWebhookSubscriptionExtension({
   emptyConfig = false,
   topic = 'orders/delete',
+  appConfiguration = placeholderAppConfiguration,
 } = {}): Promise<ExtensionInstance> {
   // configuration should be a single webhook subscription because of how
   // we create the extension instances in loader
@@ -389,12 +417,16 @@ export async function testSingleWebhookSubscriptionExtension({
     configurationPath: '',
     directory: './',
     specification: appWebhookSubscriptionSpec,
+    appConfiguration,
   })
 
   return webhooksExtension
 }
 
-export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testTaxCalculationExtension(
+  directory = './my-extension',
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+): Promise<ExtensionInstance> {
   const configuration = {
     name: 'tax',
     type: 'tax_calculation' as const,
@@ -416,12 +448,16 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     configurationPath: '',
     directory,
     specification,
+    appConfiguration,
   })
 
   return extension
 }
 
-export async function testFlowActionExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testFlowActionExtension(
+  directory = './my-extension',
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+): Promise<ExtensionInstance> {
   const configuration = {
     name: 'flow action',
     type: 'flow_action' as const,
@@ -437,6 +473,7 @@ export async function testFlowActionExtension(directory = './my-extension'): Pro
     configurationPath: '',
     directory,
     specification,
+    appConfiguration,
   })
 
   return extension
@@ -464,6 +501,7 @@ interface TestFunctionExtensionOptions {
 
 export async function testFunctionExtension(
   opts: TestFunctionExtensionOptions = {},
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
 ): Promise<ExtensionInstance<FunctionConfigType>> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
@@ -477,6 +515,7 @@ export async function testFunctionExtension(
     entryPath: opts.entryPath,
     directory,
     specification,
+    appConfiguration,
   })
   return extension
 }
@@ -491,10 +530,10 @@ interface EditorExtensionCollectionProps {
   }
 }
 
-export async function testEditorExtensionCollection({
-  directory,
-  configuration: passedConfig,
-}: EditorExtensionCollectionProps) {
+export async function testEditorExtensionCollection(
+  {directory, configuration: passedConfig}: EditorExtensionCollectionProps,
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
+) {
   const resolvedDir = directory ?? '/tmp/project/extensions/editor-extension-collection'
   const configurationPath = joinPath(
     resolvedDir ?? '/tmp/project/extensions/editor-extension-collection',
@@ -514,6 +553,7 @@ export async function testEditorExtensionCollection({
     specification,
     configurationPath,
     entryPath: '',
+    appConfiguration,
   })
 }
 
@@ -524,6 +564,7 @@ interface TestPaymentsAppExtensionOptions {
 }
 export async function testPaymentsAppExtension(
   opts: TestPaymentsAppExtensionOptions,
+  appConfiguration: AppConfigurationWithoutPath = placeholderAppConfiguration,
 ): Promise<ExtensionInstance<PaymentsAppExtensionConfigType>> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-payments-app-extension'
   const configuration = opts.config
@@ -537,6 +578,7 @@ export async function testPaymentsAppExtension(
     entryPath: opts.entryPath,
     directory,
     specification,
+    appConfiguration,
   })
   return extension
 }
