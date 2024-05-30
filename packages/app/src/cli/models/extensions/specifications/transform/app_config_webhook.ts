@@ -1,15 +1,16 @@
-import {LocalAppConfiguration} from '../../../../utilities/extensions/configuration.js'
+import {CustomTransformationConfigOptions} from '../../specification.js'
+import {SpecsAppConfiguration} from '../types/app_config.js'
 import {WebhooksConfig, NormalizedWebhookSubscription, WebhookSubscription} from '../types/app_config_webhook.js'
 import {deepCompare, deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 
-export function transformFromWebhookConfig(content: object) {
+export function transformFromWebhookConfig(content: object, options?: CustomTransformationConfigOptions) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
   const webhookSubscriptions = []
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const {api_version, subscriptions = []} = webhooks
-  const appUrl = LocalAppConfiguration.getInstance().getConfigValue('application_url')
+  const appUrl = (options?.fullAppConfiguration as unknown as SpecsAppConfiguration)?.application_url
 
   // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
   for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {

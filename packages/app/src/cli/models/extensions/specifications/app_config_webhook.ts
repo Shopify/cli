@@ -1,11 +1,16 @@
 import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
 import {transformToWebhookConfig, transformFromWebhookConfig} from './transform/app_config_webhook.js'
-import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {
+  CustomTransformationConfig,
+  CustomTransformationConfigOptions,
+  createConfigExtensionSpecification,
+} from '../specification.js'
 
 export const WebhooksSpecIdentifier = 'webhooks'
 
 const WebhookTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformFromWebhookConfig(content),
+  forward: (content: object, options?: CustomTransformationConfigOptions) =>
+    transformFromWebhookConfig(content, options),
   reverse: (content: object) => transformToWebhookConfig(content),
 }
 

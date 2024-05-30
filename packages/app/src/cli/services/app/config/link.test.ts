@@ -36,7 +36,6 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')
 vi.mock('../select-app.js')
-vi.mock('../../../utilities/extensions/configuration.js')
 
 const DEFAULT_REMOTE_CONFIGURATION = {
   name: 'app1',
@@ -1129,7 +1128,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 api_version = "2023-07"
 
   [[webhooks.subscriptions]]
-  uri = "https://example.com/customers"
+  uri = "/customers"
   compliance_topics = [ "customers/redact", "customers/data_request" ]
 
 [pos]
@@ -1172,7 +1171,7 @@ embedded = false
         subscriptions: [
           {
             compliance_topics: ['customers/redact', 'customers/data_request'],
-            uri: 'https://example.com/customers',
+            uri: '/customers',
           },
         ],
       },

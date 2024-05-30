@@ -3,6 +3,7 @@ import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../services/dev/fetch.js'
+import {CurrentAppConfiguration} from '../app/app.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -21,9 +22,13 @@ export interface TransformationConfig {
   [key: string]: string
 }
 
+export interface CustomTransformationConfigOptions {
+  flags?: Flag[]
+  fullAppConfiguration?: CurrentAppConfiguration
+}
 export interface CustomTransformationConfig<T = object> {
-  forward?: (obj: T, options?: {flags?: Flag[]}) => object
-  reverse?: (obj: T, options?: {flags?: Flag[]}) => object
+  forward?: (obj: T, options?: CustomTransformationConfigOptions) => object
+  reverse?: (obj: T, options?: CustomTransformationConfigOptions) => object
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
@@ -64,7 +69,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @param localContent - Content taken from the local filesystem
    * @returns Transformed configuration to send to the platform in place of the locally provided content
    */
-  transformLocalToRemote?: (localContent: object) => object
+  transformLocalToRemote?: (localContent: object, options?: CustomTransformationConfigOptions) => object
 
   /**
    * If required, convert configuration from the platform to the format used locally in the filesystem.
@@ -73,7 +78,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @param options - Additional options to be used in the transformation
    * @returns Transformed configuration to use in place of the platform provided content
    */
-  transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
+  transformRemoteToLocal?: (remoteContent: object, options?: CustomTransformationConfigOptions) => object
 
   uidStrategy: UidStrategy
 }

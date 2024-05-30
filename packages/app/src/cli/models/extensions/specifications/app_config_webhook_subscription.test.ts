@@ -1,7 +1,6 @@
 import spec from './app_config_webhook_subscription.js'
-import {describe, expect, test, vi} from 'vitest'
-
-vi.mock('../../../utilities/extensions/configuration.ts')
+import {CurrentAppConfiguration} from '../../app/app.js'
+import {describe, expect, test} from 'vitest'
 
 describe('webhook_subscription', () => {
   describe('reverseTransform', () => {
@@ -92,7 +91,9 @@ describe('webhook_subscription', () => {
 
       const webhookSpec = spec
 
-      const result = webhookSpec.transformLocalToRemote!(object)
+      const result = webhookSpec.transformLocalToRemote!(object, {
+        fullAppConfiguration: {application_url: 'https://my-app-url.com'} as CurrentAppConfiguration,
+      })
 
       expect(result).toEqual({
         uri: 'https://my-app-url.com/products',

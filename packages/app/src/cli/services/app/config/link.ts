@@ -33,8 +33,6 @@ import {SpecsAppConfiguration} from '../../../models/extensions/specifications/t
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {reduceWebhooks} from '../../../models/extensions/specifications/transform/app_config_webhook.js'
-import {WebhooksConfig} from '../../../models/extensions/specifications/types/app_config_webhook.js'
-import {LocalAppConfiguration} from '../../../utilities/extensions/configuration.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
@@ -334,10 +332,10 @@ async function loadConfigurationFileName(
  * but when we link we want to condense all webhooks together
  * so we have to do an additional reduce here
  */
-function condenseComplianceAndNonComplianceWebhooks(config: {[key: string]: unknown}): CurrentAppConfiguration {
-  const webhooksConfig = (config.webhooks as WebhooksConfig) ?? {}
-  if (webhooksConfig.subscriptions?.length) {
-    const appUrl = LocalAppConfiguration.getInstance().getConfigValue<string>('application_url')
+function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
+  const webhooksConfig = config.webhooks
+  if (webhooksConfig?.subscriptions?.length) {
+    const appUrl = config?.application_url as string | undefined
     webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
     webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({
       uri: appUrl && uri.includes(appUrl) ? uri.replace(appUrl, '') : uri,
@@ -345,7 +343,7 @@ function condenseComplianceAndNonComplianceWebhooks(config: {[key: string]: unkn
     }))
   }
 
-  return config as unknown as CurrentAppConfiguration
+  return config
 }
 
 /**

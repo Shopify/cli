@@ -1,7 +1,6 @@
 import {UriValidation, removeTrailingSlash} from './validation/common.js'
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {LocalAppConfiguration} from '../../../utilities/extensions/configuration.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -74,8 +73,8 @@ function transformToWebhookSubscriptionConfig(content: object) {
 
 type WebhookContent = zod.infer<typeof SingleWebhookSubscriptionSchema>
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig<WebhookContent> = {
-  forward: ({uri, ...content}) => {
-    const appUrl = LocalAppConfiguration.getInstance().getConfigValue<string>('application_url')
+  forward: ({uri, ...content}, options) => {
+    const appUrl = options?.fullAppConfiguration?.application_url
     return {
       uri: appUrl && uri.startsWith('/') ? `${appUrl}${uri}` : uri,
       ...content,
