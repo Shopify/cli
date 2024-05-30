@@ -301,8 +301,23 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
     const allExtensions = await Promise.all(
       templateJsonUrls.map(async (url) => {
-        const response = await fetch(url)
-        return response.json() as Promise<GatedExtensionTemplate[]>
+        try {
+          const response = await fetch(url)
+          return response.json() as Promise<GatedExtensionTemplate[]>
+        } catch (_e) {
+          throw new AbortError(
+            [
+              'Failed to fetch extension templates from',
+              {link: {url}},
+              {char: '.'},
+              'This likely means a problem with GitHub.',
+            ],
+            [
+              {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
+              'or try again later.',
+            ],
+          )
+        }
       }),
     ).then((templates2DArray) => templates2DArray.flat(1))
     return allowedTemplates(allExtensions, async (betaFlags: string[]) =>
