@@ -227,8 +227,10 @@ async function processFlowTemplateFile(
   localizationObject: FlowTemplateLocalization,
 ): Promise<void> {
   const content = await readFile(filepath)
+  // whatever is the file, encode its content as base64
   const encodedContent = Buffer.from(content).toString('base64')
 
+  // if it's the definition file, copy it to the output directory to be uploaded to the gcs
   if (filepath.endsWith('.flow')) {
     const relativePathName = relativePath(extension.directory, filepath)
     const outputFile = joinPath(extension.outputPath, relativePathName)

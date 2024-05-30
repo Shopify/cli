@@ -29,6 +29,8 @@ const flowTemplateSpec = createExtensionSpecification({
       discoverable: config.template.discoverable,
       allow_one_click_activate: config.template.allow_one_click_activate,
       enabled: config.template.enabled,
+      definition: {},
+      localization: {},
     }
   },
 })
