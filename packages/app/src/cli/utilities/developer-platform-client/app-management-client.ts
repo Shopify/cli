@@ -115,6 +115,7 @@ import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+import {randomUUID} from 'node:crypto'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
@@ -462,7 +463,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           message: '',
           appModuleVersions: result2.app.version.modules.map((mod: AppModuleReturnType) => {
             return {
-              registrationId: mod.gid,
+              registrationId: mod.key,
               registrationUid: mod.uid,
               registrationUuid: mod.uid,
               registrationTitle: mod.handle,
@@ -529,7 +530,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
-          registrationId: mod.gid,
+          registrationId: mod.key,
           registrationUid: mod.uid,
           registrationUuid: mod.uid,
           registrationTitle: mod.handle,
@@ -776,7 +777,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
     appSource: {
       modules: [
         {
-          uid: 'app_home',
+          uid: randomUUID(),
           specificationIdentifier: 'app_home',
           config: JSON.stringify({
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
@@ -784,17 +785,17 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           }),
         },
         {
-          uid: 'branding',
+          uid: randomUUID(),
           specificationIdentifier: 'branding',
           config: JSON.stringify({name}),
         },
         {
-          uid: 'webhooks',
+          uid: randomUUID(),
           specificationIdentifier: 'webhooks',
           config: JSON.stringify({api_version: '2024-01'}),
         },
         {
-          uid: 'app_access',
+          uid: randomUUID(),
           specificationIdentifier: 'app_access',
           config: JSON.stringify({
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
