@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.61.0
+
+### Minor Changes
+
+- 79a951f3c: Allow passing an initial value for TextPrompt
+- 87a6cc590: Dev stores are no longer automatically made transfer-disabled
+
+### Patch Changes
+
+- 0c117d0f4: Updated the output of `app dev` to include extension handles in log messages.
+- 009a43078: Fix auth for 1p development in Spin
+
 ## 3.60.0
 
 ### Minor Changes
