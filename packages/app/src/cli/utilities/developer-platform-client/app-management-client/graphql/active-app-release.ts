@@ -9,7 +9,7 @@ export const ActiveAppReleaseQuery = gql`
         id
         version {
           modules {
-            gid
+            key
             uid
             handle
             config
@@ -38,7 +38,7 @@ interface AppModuleSpecification {
 }
 
 interface AppModule {
-  gid: string
+  key: string
   uid: string
   handle: string
   config: JsonMapType
