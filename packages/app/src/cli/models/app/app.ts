@@ -338,7 +338,7 @@ export class App<
           name: module.name,
           handle: module.handle,
           uid: module.devUUID,
-          ...config,
+          config,
         }
       }),
     )

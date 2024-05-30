@@ -2,10 +2,12 @@ import {DevSessionProcessOptions} from './dev-session.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {reloadExtensionConfig} from '../update-extension.js'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {defaultExtensionDirectory} from '../../../models/app/loader.js'
+import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 interface ExtensionWatcherOptions extends DevSessionProcessOptions {
@@ -27,6 +29,18 @@ export async function devSessionManifestWatcher({app, stdout, stderr, signal, on
     })
   })
   listenForAbortOnWatcheraa(signal, manifestWatcher, 'app manifest', stdout, stderr)
+}
+
+export async function newExtensionWatcher({app, stdout}: AppWatcherOptions) {
+  const {default: chokidar} = await import('chokidar')
+
+  const existingTomls = app.realExtensions.map((extension) => extension.configurationPath)
+
+  // chokidar will report all files in the directory when it starts watching
+  // so we need to filter out the ones that already exist
+  chokidar.watch(joinPath(app.directory, defaultExtensionDirectory, '**/*.toml')).on('add', (path) => {
+    outputInfo(`New extension added at path ${path}`, stdout)
+  })
 }
 
 export async function devSessionExtensionWatcher({
@@ -88,6 +102,7 @@ Redeploy Paths:
         }
       })
   })
+
   listenForAbortOnWatcheraa(signal, functionRebuildAndRedeployWatcher, extension.devUUID, stdout, stderr)
 }
 

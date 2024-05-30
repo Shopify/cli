@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {devSessionExtensionWatcher} from './dev-session-utils.js'
+import {devSessionExtensionWatcher, newExtensionWatcher} from './dev-session-utils.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -93,7 +93,6 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
     await initialBuild(processOptions)
     await bundleExtensionsAndUpload(processOptions)
-    const newExtensionsWatcher = undefined
     const deletedExtensionsWatcher = undefined
 
     const onChange = async () => {
@@ -103,8 +102,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     const extensionWatchers = app.draftableExtensions.map(async (extension) => {
       return devSessionExtensionWatcher({...processOptions, extension, onChange})
     })
+
+    const newWatcher = newExtensionWatcher({...processOptions, onChange})
+
     // const manifestWatcher = devSessionManifestWatcher({...processOptions, onChange})
-    await Promise.all([...extensionWatchers])
+    await Promise.all([...extensionWatchers, newWatcher])
   })
 }
 

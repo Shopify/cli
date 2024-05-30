@@ -48,7 +48,7 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
-const defaultExtensionDirectory = 'extensions/*'
+export const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
