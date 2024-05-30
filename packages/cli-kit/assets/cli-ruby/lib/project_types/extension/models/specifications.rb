@@ -82,7 +82,7 @@ module Extension
       end
 
       def select_cli_extensions(specification_attribute_sets)
-        specification_attribute_sets.select { |attributes| attributes.dig(:options, :management_experience) == "cli" }
+        specification_attribute_sets.select { |attributes| attributes.dig(:options, :management_experience) == "cli" && attributes[:identifier] != "data" }
       end
     end
   end
