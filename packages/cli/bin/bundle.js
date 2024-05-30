@@ -36,8 +36,6 @@ const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
 const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
-console.log(hydrogenAssets)
-
 esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
