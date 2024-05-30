@@ -113,14 +113,17 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
 const templateJsonUrls = [
   'https://raw.githubusercontent.com/Shopify/extensions-templates/templates-json/templates.json',
   'https://raw.githubusercontent.com/Shopify/function-examples/templates-json/templates.json',
 ]
 
-interface GatedExtensionTemplate extends ExtensionTemplate {
+export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
+  minimumCliVersion?: string
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
@@ -300,11 +303,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const response = await fetch(url)
       return response.json() as Promise<GatedExtensionTemplate[]>
     })).then(templates2DArray => templates2DArray.flat(1))
-    const allBetaFlags = Array.from(new Set(allExtensions.map(ext => ext.organizationBetaFlags ?? []).flat()))
-    const enabledBetaFlags = await this.organizationBetaFlags(organizationId, allBetaFlags)
-    return allExtensions.filter(ext => {
-      return !ext.organizationBetaFlags || ext.organizationBetaFlags.every(flag => enabledBetaFlags[flag])
-    })
+    return allowedTemplates(
+      allExtensions,
+      async (betaFlags: string[]) => this.organizationBetaFlags(organizationId, betaFlags)
+    )
   }
 
   async createApp(
@@ -816,4 +818,17 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
   const addedUids = added.map((mod) => mod.uid)
   const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
   return {added, removed, updated}
+}
+
+export async function allowedTemplates(
+  templates: GatedExtensionTemplate[],
+  betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>
+): Promise<GatedExtensionTemplate[]> {
+  const allBetaFlags = Array.from(new Set(templates.map(ext => ext.organizationBetaFlags ?? []).flat()))
+  const enabledBetaFlags = await betaFlagsFetcher(allBetaFlags)
+  return templates.filter(ext => {
+    const hasAnyNeededBetas = !ext.organizationBetaFlags || ext.organizationBetaFlags.every(flag => enabledBetaFlags[flag])
+    const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
+    return hasAnyNeededBetas && satisfiesMinCliVersion
+  })
 }
