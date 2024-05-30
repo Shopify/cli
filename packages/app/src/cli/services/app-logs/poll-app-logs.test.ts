@@ -121,7 +121,7 @@ describe('pollAppLogs', () => {
       stdout,
     })
 
-    expect(stdout.write).toHaveBeenCalledWith('Function executed succesfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
     expect(stdout.write).toHaveBeenCalledWith(LOGS)
 
     expect(vi.getTimerCount()).toEqual(1)

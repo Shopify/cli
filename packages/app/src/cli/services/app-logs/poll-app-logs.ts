@@ -62,14 +62,16 @@ export const pollAppLogs = async ({
       const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
 
       if (functionLog.status === 'success') {
-        stdout.write(`Function executed succesfully using ${fuel}M instructions.`)
+        stdout.write(`Function executed successfully using ${fuel}M instructions.`)
       } else if (functionLog.status === 'failure') {
         stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
       }
 
       // print the logs from the appLogs as well
       const logs = JSON.parse(functionLog.payload).logs
-      stdout.write(logs)
+      if (logs.length > 0) {
+        stdout.write(logs)
+      }
 
       // eslint-disable-next-line no-await-in-loop
       await writeAppLogsToFile({
