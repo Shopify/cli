@@ -57,6 +57,7 @@ import {
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
+import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -1181,6 +1182,13 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   },
 }
 
+const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
+  appLogsSubscribe: {
+    success: true,
+    jwtToken: 'jwttoken',
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
     requiresOrganization: false,
@@ -1227,6 +1235,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
+    subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub
