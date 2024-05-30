@@ -51,11 +51,7 @@ async function generate(options: GenerateOptions) {
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(
-    developerPlatformClient,
-    remoteApp,
-    availableSpecifications,
-  )
+  const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
@@ -134,10 +130,7 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(
-  extension: GeneratedExtension,
-  packageManager: AppInterface['packageManager'],
-) {
+function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager']) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,

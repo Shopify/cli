@@ -10,7 +10,6 @@ export async function fetchExtensionTemplates(
   const remoteTemplates: ExtensionTemplate[] = await developerPlatformClient.templateSpecifications(app)
   return remoteTemplates.filter(
     (template) =>
-      availableSpecifications.includes(template.identifier) ||
-      availableSpecifications.includes(template.type),
+      availableSpecifications.includes(template.identifier) || availableSpecifications.includes(template.type),
   )
 }

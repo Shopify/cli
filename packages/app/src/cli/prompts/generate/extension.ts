@@ -90,8 +90,7 @@ const generateExtensionPrompts = async (
 
   const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
-  const name = options.name ||
-    (await promptName(options.directory, extensionTemplate.defaultName))
+  const name = options.name || (await promptName(options.directory, extensionTemplate.defaultName))
   const flavor = options.extensionFlavor ?? (await promptFlavor(extensionTemplate))
   const extensionContent = {name, flavor}
 

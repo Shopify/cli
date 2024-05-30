@@ -268,7 +268,7 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
 /**
  * Utility function used to check whether a package version satisfies some requirements
  * @param version - The version to check
- * @param requirements - The requirements to check against, e.g. ">=1.0.0" - see https://www.npmjs.com/package/semver#ranges
+ * @param requirements - The requirements to check against, e.g. "\>=1.0.0" - see https://www.npmjs.com/package/semver#ranges
  * @returns A boolean indicating whether the version satisfies the requirements
  */
 export function versionSatisfies(version: string, requirements: string): boolean {

@@ -78,7 +78,9 @@ export async function generateExtensionTemplate(
 ): Promise<GeneratedExtension> {
   const extensionName: string = options.extensionChoices.name
   const extensionFlavorValue = options.extensionChoices.flavor
-  const extensionFlavor = options.extensionTemplate.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
+  const extensionFlavor = options.extensionTemplate.supportedFlavors.find(
+    (flavor) => flavor.value === extensionFlavorValue,
+  )
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
   const url = options.cloneUrl || options.extensionTemplate.url
   const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined

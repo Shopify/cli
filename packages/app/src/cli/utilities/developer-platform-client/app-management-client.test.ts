@@ -1,6 +1,6 @@
 import {GatedExtensionTemplate, allowedTemplates, diffAppModules} from './app-management-client.js'
 import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
-import {testUIExtension, testDeveloperPlatformClient, testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
+import {testUIExtension, testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -74,10 +74,7 @@ describe('allowedTemplates', () => {
     ]
 
     // When
-    const got = await allowedTemplates(
-      templates,
-      () => Promise.resolve({allowedFlag: true, notAllowedFlag: false}),
-    )
+    const got = await allowedTemplates(templates, () => Promise.resolve({allowedFlag: true, notAllowedFlag: false}))
 
     // Then
     expect(got.length).toEqual(2)

@@ -291,7 +291,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const {types, ...rest} = template
       return {
         ...rest,
-        ...types[0]
+        ...types[0],
       }
     })
   }

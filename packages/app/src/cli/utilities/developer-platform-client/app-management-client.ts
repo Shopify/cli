@@ -299,13 +299,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    const allExtensions = await Promise.all(templateJsonUrls.map(async (url) => {
-      const response = await fetch(url)
-      return response.json() as Promise<GatedExtensionTemplate[]>
-    })).then(templates2DArray => templates2DArray.flat(1))
-    return allowedTemplates(
-      allExtensions,
-      async (betaFlags: string[]) => this.organizationBetaFlags(organizationId, betaFlags)
+    const allExtensions = await Promise.all(
+      templateJsonUrls.map(async (url) => {
+        const response = await fetch(url)
+        return response.json() as Promise<GatedExtensionTemplate[]>
+      }),
+    ).then((templates2DArray) => templates2DArray.flat(1))
+    return allowedTemplates(allExtensions, async (betaFlags: string[]) =>
+      this.organizationBetaFlags(organizationId, betaFlags),
     )
   }
 
@@ -737,10 +738,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private async organizationBetaFlags(_organizationId: string, allBetaFlags: string[]): Promise<{[key: string]: boolean}> {
+  private async organizationBetaFlags(
+    _organizationId: string,
+    allBetaFlags: string[],
+  ): Promise<{[key: string]: boolean}> {
     // For now, stub everything as false
     const stub: {[flag: string]: boolean} = {}
-    allBetaFlags.forEach(flag => {
+    allBetaFlags.forEach((flag) => {
       stub[flag] = false
     })
     return stub
@@ -822,13 +826,15 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
 
 export async function allowedTemplates(
   templates: GatedExtensionTemplate[],
-  betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>
+  betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>,
 ): Promise<GatedExtensionTemplate[]> {
-  const allBetaFlags = Array.from(new Set(templates.map(ext => ext.organizationBetaFlags ?? []).flat()))
+  const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
   const enabledBetaFlags = await betaFlagsFetcher(allBetaFlags)
-  return templates.filter(ext => {
-    const hasAnyNeededBetas = !ext.organizationBetaFlags || ext.organizationBetaFlags.every(flag => enabledBetaFlags[flag])
-    const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
+  return templates.filter((ext) => {
+    const hasAnyNeededBetas =
+      !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
+    const satisfiesMinCliVersion =
+      !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
     return hasAnyNeededBetas && satisfiesMinCliVersion
   })
 }
