@@ -34,11 +34,9 @@ const themeUpdaterPath = require.resolve('@shopify/theme-check-docs-updater')
 const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 
 const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
+const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
-const hydrogenTemplateAssets = joinPath(hydrogenPath, 'dist/lib/generator-templates/**/*')
-const hydrogenRouteTemplates = joinPath(hydrogenPath, 'dist/lib/setups/routes/templates/**/*')
-const hydrogenI18nTemplates = joinPath(hydrogenPath, 'dist/lib/setups/i18n/templates/**/*')
-const hydrogenVirtualRoute = joinPath(hydrogenPath, 'dist/lib/virtual-routes/**/*')
+console.log(hydrogenAssets)
 
 esBuild({
   bundle: true,
@@ -62,6 +60,7 @@ esBuild({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
       resolveFrom: 'cwd',
+      globbyOptions: {dot: true},
       assets: [
         {
           from: ['../app/assets/**/*'],
@@ -92,20 +91,8 @@ esBuild({
           to: ['./dist/data/'],
         },
         {
-          from: [hydrogenTemplateAssets],
-          to: ['./dist/generator-templates/'],
-        },
-        {
-          from: [hydrogenRouteTemplates],
-          to: ['./dist/templates'],
-        },
-        {
-          from: [hydrogenI18nTemplates],
-          to: ['./dist/templates'],
-        },
-        {
-          from: [hydrogenVirtualRoute],
-          to: ['./dist/virtual-routes'],
+          from: [hydrogenAssets],
+          to: ['./dist/assets/hydrogen'],
         },
       ],
     }),
