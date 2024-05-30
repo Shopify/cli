@@ -7,22 +7,10 @@ export interface hydrogeninit {
   '-f, --force'?: ''
 
   /**
-   * The path to the directory of the new Hydrogen storefront.
-   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
+   * Init Git and create initial commits.
+   * @environment SHOPIFY_HYDROGEN_FLAG_GIT
    */
-  '--path <value>'?: string
-
-  /**
-   * Sets the template language to use. One of `js` or `ts`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE
-   */
-  '--language <value>'?: string
-
-  /**
-   * Scaffolds project based on an existing template or example from the Hydrogen repository.
-   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE
-   */
-  '--template <value>'?: string
+  '--git'?: ''
 
   /**
    * Auto installs dependencies using the active package manager.
@@ -31,10 +19,10 @@ export interface hydrogeninit {
   '--install-deps'?: ''
 
   /**
-   * Use mock.shop as the data source for the storefront.
-   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA
+   * Sets the template language to use. One of `js` or `ts`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE
    */
-  '--mock-shop'?: ''
+  '--language <value>'?: string
 
   /**
    * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.
@@ -43,10 +31,22 @@ export interface hydrogeninit {
   '--markets <value>'?: string
 
   /**
-   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT
+   * Use mock.shop as the data source for the storefront.
+   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA
    */
-  '--shortcut'?: ''
+  '--mock-shop'?: ''
+
+  /**
+   * The path to the directory of the new Hydrogen storefront.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
+   */
+  '--path <value>'?: string
+
+  /**
+   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`
+   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART
+   */
+  '--quickstart'?: ''
 
   /**
    * Generate routes for all pages.
@@ -55,14 +55,14 @@ export interface hydrogeninit {
   '--routes'?: ''
 
   /**
-   * Init Git and create initial commits.
-   * @environment SHOPIFY_HYDROGEN_FLAG_GIT
+   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT
    */
-  '--git'?: ''
+  '--shortcut'?: ''
 
   /**
-   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`
-   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART
+   * Scaffolds project based on an existing template or example from the Hydrogen repository.
+   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE
    */
-  '--quickstart'?: ''
+  '--template <value>'?: string
 }

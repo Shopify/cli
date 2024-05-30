@@ -27,6 +27,7 @@
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
+    "changeset-build-no-docs": "changeset version && pnpm install --no-frozen-lockfile && pnpm build && bin/update-cli-kit-version.js",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "build-docs": "sh ./bin/docs/build-docs.sh",
@@ -170,7 +171,10 @@
           "**/index.ts!"
         ],
         "project": "**/*.ts!",
-        "ignoreDependencies": [],
+        "ignoreDependencies": [
+          "@ast-grep/napi",
+          "@parcel/watcher"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -286,8 +290,5 @@
         ]
       }
     }
-  },
-  "dependencies": {
-    "@shopify/cli-hydrogen": "8.0.1"
   }
 }

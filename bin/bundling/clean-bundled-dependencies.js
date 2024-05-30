@@ -16,7 +16,5 @@ export default async function cleanBundledDependencies(external) {
 
   json.dependencies = newDependencies
 
-  console.log(newDependencies)
-
   await writeFile('./package.json', JSON.stringify(json, null, 2))
 }

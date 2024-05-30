@@ -7,7 +7,7 @@ import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-depend
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -17,6 +17,10 @@ const external = [
   'react-devtools-core',
   // esbuild can't be bundled per design
   'esbuild',
+  'lightningcss',
+  // These two are binary dependencies from Hydrogen that can't be bundled
+  '@ast-grep/napi',
+  '@parcel/watcher',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -28,6 +32,9 @@ const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
 
 const themeUpdaterPath = require.resolve('@shopify/theme-check-docs-updater')
 const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
+
+const hydrogenPath = dirname(require.resolve('@shopify/cli-hydrogen/package.json'))
+const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
 esBuild({
   bundle: true,
@@ -51,6 +58,7 @@ esBuild({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
       resolveFrom: 'cwd',
+      globbyOptions: {dot: true},
       assets: [
         {
           from: ['../app/assets/**/*'],
@@ -79,6 +87,10 @@ esBuild({
         {
           from: [themeUpdaterDataPath],
           to: ['./dist/data/'],
+        },
+        {
+          from: [hydrogenAssets],
+          to: ['./dist/assets/hydrogen'],
         },
       ],
     }),
