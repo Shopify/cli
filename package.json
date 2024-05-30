@@ -172,7 +172,8 @@
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
-          "@ast-grep/napi"
+          "@ast-grep/napi",
+          "@parcel/watcher"
         ],
         "vite": {
           "config": [
