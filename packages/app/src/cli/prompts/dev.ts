@@ -1,12 +1,7 @@
-import {
-  Organization,
-  MinimalOrganizationApp,
-  OrganizationStore,
-  MinimalAppIdentifiers,
-  MinimalRunEvent,
-} from '../models/organization.js'
+import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
+import {LogData} from '../services/function/replay.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -22,18 +17,18 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function selectRunPrompt(runs: MinimalRunEvent[]): Promise<MinimalRunEvent> {
-  const toAnswer = (run: MinimalRunEvent) => {
-    return {label: run.payload.invocationId, value: run}
+export async function selectLogPrompt(logs: LogData[]): Promise<LogData> {
+  const toAnswer = (log: LogData) => {
+    return {label: `${log.log_timestamp} (${log.status})`, value: log}
   }
 
-  const runsList = runs.map(toAnswer)
+  const logsList = logs.map(toAnswer)
 
-  const selectedRun = await renderAutocompletePrompt({
-    message: 'Which run would you like to replay?',
-    choices: runsList,
+  const selectedLog = await renderAutocompletePrompt({
+    message: 'Which log would you like to replay?',
+    choices: logsList,
   })
-  return selectedRun
+  return selectedLog
 }
 
 export async function selectAppPrompt(

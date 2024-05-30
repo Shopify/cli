@@ -25,6 +25,8 @@ export type MinimalOrganizationApp = MinimalAppIdentifiers & {
 }
 export interface MinimalRunEvent {
   type: 'function-run'
+  log_timestamp: string
+  status: string
   payload: {
     input: string
     invocationId: string

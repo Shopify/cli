@@ -1,13 +1,10 @@
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
-import {runFunctionRunner} from '../../../services/function/build.js'
-import {readFunctionRunsDirectory} from '../../../services/function/replay.js'
+import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
-import {selectRunPrompt} from '../../../prompts/dev.js'
+import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
 export default class FunctionReplay extends Command {
   static summary = 'Replays a function locally based on a FunctionRunEvent.'
@@ -20,6 +17,18 @@ export default class FunctionReplay extends Command {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    'api-key': Flags.string({
+      hidden: true,
+      description: "Application's API key that will be exposed at build time.",
+      env: 'SHOPIFY_FLAG_API_KEY',
+      exclusive: ['config'],
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: "Application's Client ID that will be exposed at build time.",
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
+    }),
     export: Flags.string({
       char: 'e',
       hidden: false,
@@ -37,32 +46,25 @@ export default class FunctionReplay extends Command {
 
   public async run() {
     const {flags} = await this.parse(FunctionReplay)
-    const functionPath = flags.path
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
+    const apiKey = flags['client-id'] || flags['api-key']
 
-    const runs = await readFunctionRunsDirectory(functionPath)
-
-    const selectedRun = await selectRunPrompt(runs)
-
-    const input = selectedRun.payload.input
-
-    // dump the output to a file
-    await inTemporaryDirectory(async (tmpDir) => {
-      // create file to pass to runner
-      const inputPath = joinPath(tmpDir, 'input_for_runner.json')
-      await writeFile(inputPath, input)
-
-      // invoke the existing run command with the input from the file
-      await inFunctionContext({
-        path: flags.path,
-        configName: flags.config,
-        callback: async (_app, ourFunction) => {
-          await runFunctionRunner(ourFunction, {
-            json: flags.json,
-            input: inputPath,
-            export: flags.export,
-          })
-        },
-      })
+    await inFunctionContext({
+      path: flags.path,
+      userProvidedConfigName: flags.config,
+      callback: async (app, ourFunction) => {
+        await replay({
+          app,
+          extension: ourFunction,
+          apiKey,
+          stdout: flags.stdout,
+          path: flags.path,
+          json: flags.json,
+          export: flags.export,
+        })
+      },
     })
   }
 }
