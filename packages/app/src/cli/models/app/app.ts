@@ -179,6 +179,7 @@ const baseWebConfigurationSchema = zod.object({
   port: zod.number().max(65536).min(0).optional(),
   commands: zod.object({
     build: zod.string().optional(),
+    predev: zod.string().optional(),
     dev: zod.string(),
   }),
   name: zod.string().optional(),
