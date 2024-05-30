@@ -424,6 +424,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     configurationObject: unknown,
     configurationPath: string,
     directory: string,
+    appConfiguration: TConfig,
   ): Promise<ExtensionInstance | undefined> {
     let specification = this.findSpecificationForType(type)
     let entryPath
@@ -463,6 +464,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       entryPath,
       directory,
       specification,
+      appConfiguration,
     })
 
     if (usedKnownSpecification) {
@@ -475,10 +477,14 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return extensionInstance
   }
 
-  private async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+  private async loadExtensions(appDirectory: string, appConfiguration: TConfig): Promise<ExtensionInstance[]> {
     if (this.specifications.length === 0) return []
 
-    const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
+    const extensionPromises = await this.createExtensionInstances(
+      appDirectory,
+      appConfiguration,
+      appConfiguration.extension_directories,
+    )
     const configExtensionPromises = isCurrentAppSchema(appConfiguration)
       ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
       : []
@@ -516,7 +522,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return allExtensions
   }
 
-  private async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
+  private async createExtensionInstances(
+    appDirectory: string,
+    appConfiguration: TConfig,
+    extensionDirectories?: string[],
+  ) {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
@@ -547,12 +557,18 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
             )
             restConfig.handle = 'unknown-handle'
           }
-          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
+          return this.createExtensionInstance(
+            mergedConfig.type,
+            restConfig,
+            configurationPath,
+            directory,
+            appConfiguration,
+          )
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
         // Legacy toml file with a single extension.
-        return this.createExtensionInstance(type, obj, configurationPath, directory)
+        return this.createExtensionInstance(type, obj, configurationPath, directory, appConfiguration)
       } else {
         return this.abortOrReport(
           outputContent`Invalid extension type at "${outputToken.path(
@@ -565,7 +581,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     })
   }
 
-  private createWebhookSubscriptionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+  private createWebhookSubscriptionInstances(directory: string, appConfiguration: TConfig) {
     const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
     if (!specification) return []
     const specConfiguration = parseConfigurationObject(
@@ -589,13 +605,19 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     // Create 1 extension instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
-      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
+      return this.createExtensionInstance(
+        specification.identifier,
+        subscription,
+        appConfiguration.path,
+        directory,
+        appConfiguration,
+      )
     })
 
     return instances
   }
 
-  private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
@@ -614,6 +636,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
             specConfiguration,
             appConfiguration.path,
             directory,
+            appConfiguration,
           ).then((extensionInstance) =>
             this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
           )
@@ -639,7 +662,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const unusedExtensionInstances = unusedKeys.map((key) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const specConfiguration = {[key]: (appConfiguration as any)[key]}
-      return this.createExtensionInstance(key, specConfiguration, appConfiguration.path, directory)
+      return this.createExtensionInstance(key, specConfiguration, appConfiguration.path, directory, appConfiguration)
     })
 
     // return all the non null extension instances, plus the unused ones

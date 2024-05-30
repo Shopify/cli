@@ -14,6 +14,7 @@ import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -47,6 +48,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   handle: string
   specification: ExtensionSpecification
   uid: string
+  appConfiguration: AppConfigurationWithoutPath
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -118,6 +120,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     entryPath?: string
     directory: string
     specification: ExtensionSpecification
+    appConfiguration: AppConfigurationWithoutPath
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -139,6 +142,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const config = this.configuration as unknown as FunctionConfigType
       this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
+
+    this.appConfiguration = options.appConfiguration
   }
 
   get draftMessages() {
@@ -190,7 +195,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration) as
+    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, this.appConfiguration) as
       | {[key: string]: unknown}
       | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
