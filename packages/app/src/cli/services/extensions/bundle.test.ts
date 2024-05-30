@@ -1,4 +1,4 @@
-import {bundleExtension, bundleThemeExtension} from './bundle.js'
+import {bundleExtension, bundleThemeExtension, bundleFlowTemplateExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -334,6 +334,51 @@ describe('bundleExtension()', () => {
           .map((filePath) => basename(filePath))
           .some((filename) => ignoredFiles.includes(filename))
         expect(hasFiles).toEqual(false)
+      })
+    })
+  })
+
+  describe('bundleFlowTemplateExtension()', () => {
+    test('should skip all ignored file patterns', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'flow_template')!
+        const flowTemplateExtension = new ExtensionInstance({
+          configuration: {
+            name: 'Flow template extension name',
+            type: 'flow_template' as const,
+            metafields: [],
+          },
+          configurationPath: '',
+          directory: tmpDir,
+          specification,
+        })
+
+        const outputPath = joinPath(tmpDir, 'dist')
+        await mkdir(outputPath)
+        flowTemplateExtension.outputPath = outputPath
+
+        const blocksPath = joinPath(tmpDir, 'blocks')
+        await mkdir(blocksPath)
+
+        const keptFiles = ['template.flow', 'localization.json']
+        await Promise.all(
+          keptFiles.map(async (filename) => {
+            touchFileSync(joinPath(blocksPath, filename))
+            touchFileSync(joinPath(tmpDir, filename))
+          }),
+        )
+
+        // When
+        await bundleFlowTemplateExtension(flowTemplateExtension)
+
+        // Then
+        const filePaths = await glob(joinPath(flowTemplateExtension.outputPath, '/**/*'))
+        const hasFiles = filePaths
+          .map((filePath) => basename(filePath))
+          .every((filename) => keptFiles.includes(filename))
+        expect(hasFiles).toEqual(true)
       })
     })
   })

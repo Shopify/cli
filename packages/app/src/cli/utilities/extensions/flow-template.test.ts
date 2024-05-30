@@ -42,7 +42,6 @@ describe('flowTemplateExtensionFiles', () => {
 
       // Then
       await expect(flowTemplateExtensionFiles(flowTemplateExtension)).resolves.toStrictEqual([
-        joinPath(tmpDir, 'myDir/shopify.extension.toml'),
         joinPath(tmpDir, 'myDir/template.flow'),
         joinPath(tmpDir, 'myDir/locales/en.default.json'),
         joinPath(tmpDir, 'myDir/locales/fr.json'),

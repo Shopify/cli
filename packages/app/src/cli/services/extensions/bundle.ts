@@ -5,8 +5,8 @@ import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
 import {flowTemplateExtensionFiles} from '../../utilities/extensions/flow-template.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {copyFile, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {basename, dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -51,6 +51,17 @@ interface BundleOptions {
   sourceMaps?: boolean
 }
 
+interface FlowTemplateLocalization {
+  /**
+   * The default language the template is displayed in.
+   */
+  default_locale: string
+  /**
+   * A hash of language codes to the base64 encoded content of the translation file.
+   */
+  translations: {[key: string]: string}
+}
+
 /**
  * Invokes ESBuild with the given options to bundle an extension.
  * @param options - ESBuild options
@@ -92,15 +103,16 @@ export async function bundleThemeExtension(
 
 export async function bundleFlowTemplateExtension(extension: ExtensionInstance): Promise<void> {
   const files = await flowTemplateExtensionFiles(extension)
+  const localizationObject: FlowTemplateLocalization = {
+    default_locale: '',
+    translations: {},
+  }
 
-  await Promise.all(
-    files.map(function (filepath) {
-      const relativePathName = relativePath(extension.directory, filepath)
-      const outputFile = joinPath(extension.outputPath, relativePathName)
-      if (filepath === outputFile) return
-      return copyFile(filepath, outputFile)
-    }),
-  )
+  await Promise.all(files.map((filepath) => processFlowTemplateFile(filepath, extension, localizationObject)))
+
+  const localizationFile = joinPath(extension.outputPath, 'localization.json')
+  const localizationContent = JSON.stringify(localizationObject)
+  await writeFile(localizationFile, localizationContent)
 }
 
 function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: BundleOptions) {
@@ -207,4 +219,44 @@ function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
       })
     },
   }
+}
+
+async function processFlowTemplateFile(
+  filepath: string,
+  extension: ExtensionInstance,
+  localizationObject: FlowTemplateLocalization,
+): Promise<void> {
+  const content = await readFile(filepath)
+  // whatever is the file, encode its content as base64
+  const encodedContent = Buffer.from(content).toString('base64')
+
+  // if it's the definition file, copy it to the output directory to be uploaded to the gcs
+  if (filepath.endsWith('.flow')) {
+    const relativePathName = relativePath(extension.directory, filepath)
+    const outputFile = joinPath(extension.outputPath, relativePathName)
+    await ensureDirectoryExists(outputFile)
+    await writeFile(outputFile, encodedContent)
+  } else if (filepath.endsWith('.json')) {
+    return processFlowLocalizationFile(filepath, encodedContent, localizationObject)
+  }
+}
+
+async function ensureDirectoryExists(filePath: string): Promise<void> {
+  const directory = dirname(filePath)
+  await mkdir(directory)
+}
+
+async function processFlowLocalizationFile(
+  filepath: string,
+  encodedContent: string,
+  localizationObject: FlowTemplateLocalization,
+): Promise<void> {
+  const locale = basename(filepath, '.json')
+  const isDefault = locale.endsWith('.default')
+  const localeKey = isDefault ? locale.replace('.default', '') : locale
+
+  if (isDefault) {
+    localizationObject.default_locale = localeKey
+  }
+  localizationObject.translations[localeKey] = encodedContent
 }
