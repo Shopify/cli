@@ -2768,9 +2768,8 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2796,9 +2795,8 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2957,9 +2955,8 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 

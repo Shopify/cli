@@ -4,10 +4,11 @@ import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {Flag} from '../../../services/dev/fetch.js'
+import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
 
 const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformToPrivacyComplianceWebhooksModule(content),
+  forward: transformToPrivacyComplianceWebhooksModule,
   reverse: (content: object, options?: {flags?: Flag[]}) =>
     transformFromPrivacyComplianceWebhooksModule(content, options),
 }
@@ -23,13 +24,14 @@ const appPrivacyComplienceSpec = createConfigExtensionSpecification({
 
 export default appPrivacyComplienceSpec
 
-function transformToPrivacyComplianceWebhooksModule(content: object) {
+function transformToPrivacyComplianceWebhooksModule(content: object, appConfiguration: AppConfigurationWithoutPath) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
+  const appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
 
   return compact({
-    customers_redact_url: getCustomersDeletionUri(webhooks),
-    customers_data_request_url: getCustomersDataRequestUri(webhooks),
-    shop_redact_url: getShopDeletionUri(webhooks),
+    customers_redact_url: relativeUri(getCustomersDeletionUri(webhooks), appUrl),
+    customers_data_request_url: relativeUri(getCustomersDataRequestUri(webhooks), appUrl),
+    shop_redact_url: relativeUri(getShopDeletionUri(webhooks), appUrl),
   })
 }
 
@@ -70,6 +72,10 @@ function transformFromPrivacyComplianceWebhooksModule(content: object, options?:
 
 function getComplianceUri(webhooks: WebhooksConfig, complianceTopic: string): string | undefined {
   return webhooks.subscriptions?.find((subscription) => subscription.compliance_topics?.includes(complianceTopic))?.uri
+}
+
+function relativeUri(uri?: string, appUrl?: string) {
+  return appUrl && uri?.startsWith('/') ? `${appUrl}${uri}` : uri
 }
 
 function getCustomersDeletionUri(webhooks: WebhooksConfig) {
