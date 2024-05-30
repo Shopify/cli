@@ -9,7 +9,7 @@ export const AppVersionByIdQuery = gql`
         id
         versionTag
         modules {
-          gid
+          key
           uid
           handle
           config
@@ -38,7 +38,7 @@ interface AppModuleSpecification {
 }
 
 export interface AppModule {
-  gid: string
+  key: string
   uid: string
   handle: string
   config: JsonMapType

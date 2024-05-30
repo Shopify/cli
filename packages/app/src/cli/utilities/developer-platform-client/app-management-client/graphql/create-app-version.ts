@@ -18,7 +18,7 @@ export const CreateAppVersionMutation = gql`
       version {
         id
         modules {
-          gid
+          key
           uid
           handle
           config
@@ -57,7 +57,7 @@ interface AppModuleSpecification {
 }
 
 interface AppModule {
-  gid: string
+  key: string
   uid: string
   handle: string
   config: {
