@@ -9,6 +9,7 @@ export const AppsQuery = gql`
         id
         version {
           modules {
+            key
             uid
             handle
             config
@@ -23,7 +24,7 @@ export const AppsQuery = gql`
 `
 
 export interface MinimalAppModule {
-  gid: string
+  key: string
   uid: string
   handle: string
   config: JsonMapType
