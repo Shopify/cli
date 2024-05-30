@@ -104,7 +104,7 @@
     "@shopify/plugin-cloudflare": "3.60.0",
     "@shopify/plugin-did-you-mean": "3.60.0",
     "@shopify/theme": "3.60.0",
-    "@shopify/cli-hydrogen": "0.0.0-next-5a554b2-20240524062056",
+    "@shopify/cli-hydrogen": "0.0.0-next-af90c44-20240530085021",
     "@ast-grep/napi": "0.11.0",
     "@parcel/watcher": "2.4.1",
     "esbuild": "0.19.8",
@@ -180,6 +180,10 @@
         {
           "target": "./dist/index.js",
           "identifier": "AppInitHook"
+        },
+        {
+          "target": "./dist/index.js",
+          "identifier": "HydrogenInitHook"
         }
       ],
       "prerun": "./dist/hooks/prerun.js",

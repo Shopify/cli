@@ -13,7 +13,7 @@ import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import ThemeCommands from '@shopify/theme'
-import HydrogenCommands from '@shopify/cli-hydrogen'
+import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
@@ -26,6 +26,8 @@ export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunne
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
+
+export const HydrogenInitHook = HydrogenHooks.init
 
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.
