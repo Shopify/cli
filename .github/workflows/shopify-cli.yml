@@ -15,7 +15,8 @@ on:
         type: choice
         options:
           - 18.12.0
-          - 20.2.0
+          - 20.14.0
+          - 22.2.0
       os:
         description: 'Operating system'
         required: true
@@ -59,7 +60,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['18.12.0', '20.2.0']
+        node: ['18.12.0', '20.14.0', '22.2.0']
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -215,7 +216,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['18.12.0', '20.2.0']
+        node: ['18.12.0', '20.14.0', '22.2.0']
     steps:
       - uses: actions/checkout@v3
         with:
