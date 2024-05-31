@@ -3,6 +3,7 @@ import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../services/dev/fetch.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -22,7 +23,7 @@ export interface TransformationConfig {
 }
 
 export interface CustomTransformationConfig {
-  forward?: (obj: object, options?: {flags?: Flag[]}) => object
+  forward?: (obj: object, appConfiguration: AppConfigurationWithoutPath, options?: {flags?: Flag[]}) => object
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
@@ -64,12 +65,13 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @param localContent - Content taken from the local filesystem
    * @returns Transformed configuration to send to the platform in place of the locally provided content
    */
-  transformLocalToRemote?: (localContent: object) => object
+  transformLocalToRemote?: (localContent: object, appConfiguration: AppConfigurationWithoutPath) => object
 
   /**
    * If required, convert configuration from the platform to the format used locally in the filesystem.
    *
    * @param remoteContent - Platform provided content taken from an instance of this module
+   * @param existingAppConfiguration - Existing app configuration on the filesystem that this transformed content may be merged with
    * @param options - Additional options to be used in the transformation
    * @returns Transformed configuration to use in place of the platform provided content
    */

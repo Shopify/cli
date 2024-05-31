@@ -57,6 +57,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
           registrationId,
           stdout,
           stderr,
+          appConfiguration: app.configuration,
         })
         // Watch for changes
         return setupExtensionWatcher({
@@ -77,6 +78,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
                   registrationId,
                   stdout,
                   stderr,
+                  appConfiguration: app.configuration,
                 }),
               refreshToken,
             )

@@ -1,5 +1,6 @@
 import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {
+  placeholderAppConfiguration,
   testDeveloperPlatformClient,
   testPaymentExtensions,
   testThemeExtensions,
@@ -57,6 +58,7 @@ describe('updateExtensionDraft()', () => {
         registrationId,
         stdout,
         stderr,
+        appConfiguration: placeholderAppConfiguration,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -87,6 +89,7 @@ describe('updateExtensionDraft()', () => {
       registrationId,
       stdout,
       stderr,
+      appConfiguration: placeholderAppConfiguration,
     })
 
     expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -129,6 +132,7 @@ describe('updateExtensionDraft()', () => {
         registrationId,
         stdout,
         stderr,
+        appConfiguration: placeholderAppConfiguration,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -165,6 +169,7 @@ describe('updateExtensionDraft()', () => {
         registrationId,
         stdout,
         stderr,
+        appConfiguration: placeholderAppConfiguration,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -211,6 +216,7 @@ describe('updateExtensionDraft()', () => {
         registrationId,
         stdout,
         stderr,
+        appConfiguration: placeholderAppConfiguration,
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')

@@ -33,6 +33,7 @@ export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExten
               registrationId,
               stdout,
               stderr,
+              appConfiguration: app.configuration,
             })
           },
         }
