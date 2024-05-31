@@ -137,10 +137,10 @@ describe('selectFunctionRun', () => {
     // Then
     expect(got).toEqual(RUN2)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which run would you like to replay?',
+      message: 'Which function run would you like to replay locally?',
       choices: [
         {label: `${RUN1.log_timestamp} (${RUN1.status}) - ${RUN1.identifier}`, value: RUN1},
-        {label: `${RUN2.log_timestamp} (${RUN2.status}) - ${RUN2.identifier}`, value: RUN1},
+        {label: `${RUN2.log_timestamp} (${RUN2.status}) - ${RUN2.identifier}`, value: RUN2},
       ],
     })
   })
