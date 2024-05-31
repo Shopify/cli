@@ -25,11 +25,10 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
   const bundlers: Promise<void>[] = []
 
+  const extensions = options.devOptions.extensions.filter((ext) => ext.isESBuildExtension)
+
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  options.devOptions.extensions.forEach(async (extension) => {
-    if (extension.type === 'flow_template') {
-      return
-    }
+  extensions.forEach(async (extension) => {
     bundlers.push(
       bundleExtension({
         minify: false,
