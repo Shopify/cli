@@ -42,6 +42,18 @@ export interface SimplifyConfig {
 type ExtensionExperience = 'extension' | 'configuration'
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
+export type ParseConfigurationResult<TConfiguration> =
+  | {
+      state: 'ok'
+      data: TConfiguration
+      errors: undefined
+    }
+  | {
+      state: 'error'
+      data: undefined
+      errors: Pick<zod.ZodIssueBase, 'path' | 'message'>[]
+    }
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -101,17 +113,7 @@ export type ExtensionSpecification<TConfiguration extends BaseConfigType = BaseC
   /**
    * Parse some provided configuration into a valid configuration object for this extension.
    */
-  parseConfigurationObject: (configurationObject: unknown) =>
-    | {
-        state: 'ok'
-        data: TConfiguration
-        errors: undefined
-      }
-    | {
-        state: 'error'
-        data: undefined
-        errors: Pick<zod.ZodIssueBase, 'path' | 'message'>[]
-      }
+  parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
 } & SimplifyConfig
 
 /**

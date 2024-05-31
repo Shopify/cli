@@ -3,6 +3,7 @@ import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graph
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -57,7 +58,17 @@ function mergeLocalAndRemoteSpecs(
 ): RemoteAwareExtensionSpecification[] {
   const updated = local.map((spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification
+    if (remoteSpec) {
+      const merged = {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
+        FlattenedRemoteSpecification
+
+      const parseConfigurationObject = unifiedConfigurationParserFactory(merged)
+
+      return {
+        ...merged,
+        parseConfigurationObject,
+      }
+    }
     return undefined
   })
 

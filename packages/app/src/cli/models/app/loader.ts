@@ -157,7 +157,7 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
 export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
   spec: ExtensionSpecification,
   filepath: string,
-  configurationObject: unknown,
+  configurationObject: object,
   abortOrReport: AbortOrReport,
 ): zod.TypeOf<TSchema> {
   const parsed = spec.parseConfigurationObject(configurationObject)
@@ -487,7 +487,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
   private async createExtensionInstance(
     type: string,
-    configurationObject: unknown,
+    configurationObject: object,
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
