@@ -37,7 +37,6 @@ describe('editor_extension_collection', async () => {
       specification,
       configurationPath,
       entryPath: '',
-      appConfiguration: placeholderAppConfiguration,
     })
   }
 
@@ -68,6 +67,7 @@ describe('editor_extension_collection', async () => {
         const deployConfig = await extensionCollection.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         expect(deployConfig).toStrictEqual({
@@ -103,6 +103,7 @@ describe('editor_extension_collection', async () => {
         const deployConfig = await extensionCollection.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         expect(deployConfig).toStrictEqual({
@@ -134,6 +135,7 @@ describe('editor_extension_collection', async () => {
         const deployConfig = await extensionCollection.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         expect(deployConfig).toStrictEqual({

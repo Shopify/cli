@@ -20,7 +20,6 @@ describe('flowTemplateExtensionFiles', () => {
         configurationPath: '',
         directory: tmpDir,
         specification,
-        appConfiguration: {scopes: ''},
       })
 
       await mkdir(joinPath(tmpDir, 'myDir'))

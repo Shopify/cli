@@ -48,7 +48,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   handle: string
   specification: ExtensionSpecification
   uid: string
-  appConfiguration: AppConfigurationWithoutPath
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -120,7 +119,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     entryPath?: string
     directory: string
     specification: ExtensionSpecification
-    appConfiguration: AppConfigurationWithoutPath
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -142,8 +140,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const config = this.configuration as unknown as FunctionConfigType
       this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
-
-    this.appConfiguration = options.appConfiguration
   }
 
   get draftMessages() {
@@ -180,9 +176,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async deployConfig({
     apiKey,
     developerPlatformClient,
+    appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient})
-    return this.commonDeployConfig(apiKey)
+    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient, appConfiguration})
+    return this.commonDeployConfig(apiKey, appConfiguration)
   }
 
   async functionDeployConfig({
@@ -193,9 +190,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
-  async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
+  async commonDeployConfig(
+    apiKey: string,
+    appConfiguration: AppConfigurationWithoutPath,
+  ): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, this.appConfiguration) as
+    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
@@ -342,8 +342,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     identifiers,
     developerPlatformClient,
     apiKey,
+    appConfiguration,
   }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
-    const configValue = await this.deployConfig({apiKey, developerPlatformClient})
+    const configValue = await this.deployConfig({apiKey, developerPlatformClient, appConfiguration})
     if (!configValue) return undefined
 
     const result = {
@@ -383,12 +384,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 interface ExtensionDeployConfigOptions {
   apiKey: string
   developerPlatformClient: DeveloperPlatformClient
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 interface BundleConfig {

@@ -46,7 +46,6 @@ describe('ui_extension', async () => {
       specification,
       configurationPath,
       entryPath: '',
-      appConfiguration: placeholderAppConfiguration,
     })
   }
 
@@ -276,6 +275,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         // Then
