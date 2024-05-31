@@ -1,9 +1,8 @@
 import {AppEventData} from './poll-app-logs.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
-
-import {Writable} from 'stream'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {Writable} from 'stream'
 
 export const writeAppLogsToFile = async ({
   appLog,

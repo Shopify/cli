@@ -3,7 +3,7 @@ import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {selectLogPrompt} from '../../prompts/dev.js'
+import {selectFunctionRunPrompt} from '../../prompts/dev.js'
 
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -20,8 +20,8 @@ interface ReplayOptions {
   export: string
 }
 
-export interface LogData {
-  shop_id: string
+export interface FunctionRunData {
+  shop_id: number
   api_client_id: number
   payload: {
     input: string
@@ -41,10 +41,10 @@ export interface LogData {
 
 export async function replay(options: ReplayOptions) {
   const {apiKey} = await ensureConnectedAppFunctionContext(options)
-  const logsDir = joinPath(getLogsDir, apiKey)
+  const functionRunsDir = joinPath(getLogsDir, apiKey)
 
-  const logs = await getFunctionLogData(logsDir)
-  const selectedRun = await selectLogPrompt(logs.reverse())
+  const functionRuns = await getFunctionRunData(functionRunsDir)
+  const selectedRun = await selectFunctionRunPrompt(functionRuns.reverse())
 
   await inTemporaryDirectory(async (tmpDir) => {
     // create file to pass to runner
@@ -60,22 +60,22 @@ export async function replay(options: ReplayOptions) {
   })
 }
 
-async function getFunctionLogData(logsFolder: string): Promise<LogData[]> {
-  const logFileNames = readdirSync(logsFolder)
-  const logFilePaths = logFileNames.map((logFile) => joinPath(logsFolder, logFile))
+async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunData[]> {
+  const functionRunFileNames = readdirSync(functionRunsDir)
+  const functionRunFilePaths = functionRunFileNames.map((functionRunFile) => joinPath(functionRunsDir, functionRunFile))
 
-  const logData = await Promise.all(
-    logFilePaths.map(async (logFilePath) => {
-      const fileData = await readFile(logFilePath)
+  const functionRunData = await Promise.all(
+    functionRunFilePaths.map(async (functionRunFilePath) => {
+      const fileData = await readFile(functionRunFilePath)
       const parsedData = JSON.parse(fileData)
       return {
         ...parsedData,
-        identifier: getIdentifierFromFilename(logFilePath) || 'no identifier',
+        identifier: getIdentifierFromFilename(functionRunFilePath) || 'no identifier',
       }
     }),
   )
 
-  return logData
+  return functionRunData
 }
 
 function getIdentifierFromFilename(fileName: string): string | undefined {

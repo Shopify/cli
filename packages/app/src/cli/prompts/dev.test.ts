@@ -4,11 +4,12 @@ import {
   reloadStoreListPrompt,
   selectAppPrompt,
   selectOrganizationPrompt,
-  selectRunPrompt,
+  selectFunctionRunPrompt,
   selectStorePrompt,
   updateURLsPrompt,
 } from './dev.js'
-import {MinimalRunEvent, Organization, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationStore} from '../models/organization.js'
+import {FunctionRunData} from '../services/function/replay.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
@@ -50,22 +51,42 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
-const RUN1: MinimalRunEvent = {
-  type: 'function-run',
+const RUN1: FunctionRunData = {
+  shop_id: 69665030382,
+  api_client_id: 124042444801,
   payload: {
-    input:
-      '{"cart":{"lines":[{"quantity":1,"merchandise":{"__typename":"ProductVariant","id":"gid:\\/\\/shopify\\/ProductVariant\\/1"}}]}}',
-    invocationId: '11111111-ed53-4377-b30f-14e8f4653cfe',
+    input: '{}',
+    input_bytes: 136,
+    output: '{}',
+    output_bytes: 195,
+    function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
+    logs: '',
+    fuel_consumed: 458206,
   },
+  event_type: 'function_run',
+  cursor: '2024-05-31T15:29:47.291530Z',
+  status: 'success',
+  log_timestamp: '2024-05-31T15:29:46.741270Z',
+  identifier: 'abcdef',
 }
 
-const RUN2: MinimalRunEvent = {
-  type: 'function-run',
+const RUN2: FunctionRunData = {
+  shop_id: 69665030382,
+  api_client_id: 124042444801,
   payload: {
-    input:
-      '{"cart":{"lines":[{"quantity":1,"merchandise":{"__typename":"ProductVariant","id":"gid:\\/\\/shopify\\/ProductVariant\\/1"}}]}}',
-    invocationId: '22222222-ed53-4377-b30f-14e8f4653cfe',
+    input: '{}',
+    input_bytes: 136,
+    output: '{}',
+    output_bytes: 195,
+    function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
+    logs: '',
+    fuel_consumed: 458206,
   },
+  event_type: 'function_run',
+  cursor: '2024-05-31T15:29:47.291530Z',
+  status: 'success',
+  log_timestamp: '2024-05-31T15:29:46.741270Z',
+  identifier: 'abc123',
 }
 
 beforeEach(() => {
@@ -104,22 +125,22 @@ describe('selectOrganization', () => {
   })
 })
 
-describe('selectRun', () => {
+describe('selectFunctionRun', () => {
   test('returns run if user selects one', async () => {
     // Given
     const runs = [RUN1, RUN2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(RUN2)
 
     // When
-    const got = await selectRunPrompt(runs)
+    const got = await selectFunctionRunPrompt(runs)
 
     // Then
     expect(got).toEqual(RUN2)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: 'Which run would you like to replay?',
       choices: [
-        {label: RUN1.payload.invocationId, value: RUN1},
-        {label: RUN2.payload.invocationId, value: RUN2},
+        {label: `${RUN1.log_timestamp} (${RUN1.status}) - ${RUN1.identifier}`, value: RUN1},
+        {label: `${RUN2.log_timestamp} (${RUN2.status}) - ${RUN2.identifier}`, value: RUN1},
       ],
     })
   })
