@@ -696,7 +696,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    const appId = numberFromGid(id)
+    const variables: ActiveAppReleaseQueryVariables = {appId}
     return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
@@ -704,7 +705,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     id,
     organizationId,
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    const appId = numberFromGid(id)
+    const variables: ActiveAppReleaseQueryVariables = {appId}
     return appManagementRequest<ActiveAppReleaseQuerySchema>(
       organizationId,
       ActiveAppReleaseQuery,
@@ -1562,7 +1564,13 @@ function encodedGidFromId(id: string): string {
 
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
-  return Buffer.from(gid, 'base64').toString('ascii').match(/\d+$/)![0]
+  const decodedGid = Buffer.from(gid, 'base64').toString('ascii')
+  return numberFromGid(decodedGid).toString()
+}
+
+// gid://organization/Organization/1234 => 1234
+function numberFromGid(gid: string): number {
+  return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }
 
 interface DiffAppModulesInput {
