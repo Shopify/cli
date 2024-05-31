@@ -1,9 +1,15 @@
+import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../../app/app.js'
 import {WebhooksConfig, NormalizedWebhookSubscription, WebhookSubscription} from '../types/app_config_webhook.js'
 import {deepCompare, deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 
-export function transformFromWebhookConfig(content: object) {
+export function transformFromWebhookConfig(content: object, appConfiguration: AppConfigurationWithoutPath) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
+
+  let appUrl: string | undefined
+  if ('application_url' in appConfiguration) {
+    appUrl = (appConfiguration as CurrentAppConfiguration).application_url
+  }
 
   const webhookSubscriptions = []
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -11,7 +17,10 @@ export function transformFromWebhookConfig(content: object) {
 
   // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
   for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
-    if (topics) webhookSubscriptions.push(topics.map((topic) => ({uri, topic, ...optionalFields})))
+    if (topics) {
+      const uriWithRelativePath = uri.startsWith('/') && appUrl ? `${appUrl}${uri}` : uri
+      webhookSubscriptions.push(topics.map((topic) => ({uri: uriWithRelativePath, topic, ...optionalFields})))
+    }
   }
 
   return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions.flat(), api_version} : {api_version}
