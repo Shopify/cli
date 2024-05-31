@@ -119,6 +119,7 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {randomUUID} from 'node:crypto'
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -434,7 +435,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           message: '',
           appModuleVersions: result2.app.version.modules.map((mod: AppModuleReturnType) => {
             return {
-              registrationId: mod.gid,
+              registrationId: mod.key,
               registrationUid: mod.uid,
               registrationUuid: mod.uid,
               registrationTitle: mod.handle,
@@ -501,7 +502,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
         return {
-          registrationId: mod.gid,
+          registrationId: mod.key,
           registrationUid: mod.uid,
           registrationUuid: mod.uid,
           registrationTitle: mod.handle,
@@ -738,34 +739,37 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
   return {
-    appModules: [
-      {
-        uid: 'app_home',
-        specificationIdentifier: 'app_home',
-        config: JSON.stringify({
-          app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-          embedded: isLaunchable,
-        }),
-      },
-      {
-        uid: 'branding',
-        specificationIdentifier: 'branding',
-        config: JSON.stringify({name}),
-      },
-      {
-        uid: 'webhooks',
-        specificationIdentifier: 'webhooks',
-        config: JSON.stringify({api_version: '2024-01'}),
-      },
-      {
-        uid: 'app_access',
-        specificationIdentifier: 'app_access',
-        config: JSON.stringify({
-          redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
-          ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
-        }),
-      },
-    ],
+    appSource: {
+      modules: [
+        {
+          uid: randomUUID(),
+          specificationIdentifier: 'app_home',
+          config: JSON.stringify({
+            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+            embedded: isLaunchable,
+          }),
+        },
+        {
+          uid: randomUUID(),
+          specificationIdentifier: 'branding',
+          config: JSON.stringify({name}),
+        },
+        {
+          uid: randomUUID(),
+          specificationIdentifier: 'webhooks',
+          config: JSON.stringify({api_version: '2024-01'}),
+        },
+        {
+          uid: randomUUID(),
+          specificationIdentifier: 'app_access',
+          config: JSON.stringify({
+            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+            ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+          }),
+        },
+      ],
+    },
+    name,
   }
 }
 

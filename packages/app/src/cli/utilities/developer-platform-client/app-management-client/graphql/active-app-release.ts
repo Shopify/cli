@@ -2,14 +2,14 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const ActiveAppReleaseQuery = gql`
-  query activeAppRelease($appId: ID!) {
+  query activeAppRelease($appId: Int!) {
     app(id: $appId) {
       id
       activeRelease {
         id
         version {
           modules {
-            gid
+            key
             uid
             handle
             config
@@ -17,7 +17,6 @@ export const ActiveAppReleaseQuery = gql`
               identifier
               externalIdentifier
               name
-              experience
             }
           }
         }
@@ -27,7 +26,7 @@ export const ActiveAppReleaseQuery = gql`
 `
 
 export interface ActiveAppReleaseQueryVariables {
-  appId: string
+  appId: number
 }
 
 interface AppModuleSpecification {
@@ -38,7 +37,7 @@ interface AppModuleSpecification {
 }
 
 interface AppModule {
-  gid: string
+  key: string
   uid: string
   handle: string
   config: JsonMapType

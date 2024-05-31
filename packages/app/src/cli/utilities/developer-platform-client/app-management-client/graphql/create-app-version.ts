@@ -3,7 +3,7 @@ import {gql} from 'graphql-request'
 export const CreateAppVersionMutation = gql`
   mutation CreateAppVersion(
     $appId: ID!
-    $appModules: [NewModuleVersion!]!
+    $appModules: [AppSourceInput!]!
     $assetsUrl: String
     $versionTag: String
     $gitUrl: String
@@ -18,7 +18,7 @@ export const CreateAppVersionMutation = gql`
       version {
         id
         modules {
-          gid
+          key
           uid
           handle
           config
@@ -57,7 +57,7 @@ interface AppModuleSpecification {
 }
 
 interface AppModule {
-  gid: string
+  key: string
   uid: string
   handle: string
   config: {
