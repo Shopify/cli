@@ -71,7 +71,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * If required, convert configuration from the platform to the format used locally in the filesystem.
    *
    * @param remoteContent - Platform provided content taken from an instance of this module
-   * @param existingAppConfiguration - Existing app configuration on the filesystem that this trasnformed content may be merged with
+   * @param existingAppConfiguration - Existing app configuration on the filesystem that this transformed content may be merged with
    * @param options - Additional options to be used in the transformation
    * @returns Transformed configuration to use in place of the platform provided content
    */
