@@ -3,6 +3,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 
 import {Writable} from 'stream'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export const writeAppLogsToFile = async ({
   appLog,
@@ -13,7 +14,8 @@ export const writeAppLogsToFile = async ({
   apiKey: string
   stdout: Writable
 }) => {
-  const fileName = `app_logs_${appLog.log_timestamp}.json`
+  const identifier = randomUUID().substring(0, 6)
+  const fileName = `${appLog.log_timestamp}_${identifier}.json`
   const path = joinPath(apiKey, fileName)
   const fullOutputPath = joinPath(getLogsDir, path)
 

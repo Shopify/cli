@@ -36,6 +36,7 @@ export interface LogData {
   cursor: string
   status: string
   log_timestamp: string
+  identifier: string
 }
 
 export async function replay(options: ReplayOptions) {
@@ -62,11 +63,21 @@ export async function replay(options: ReplayOptions) {
 async function getFunctionLogData(logsFolder: string): Promise<LogData[]> {
   const logFileNames = readdirSync(logsFolder)
   const logFilePaths = logFileNames.map((logFile) => joinPath(logsFolder, logFile))
+
   const logData = await Promise.all(
-    logFilePaths.map((logFile) => {
-      return readFile(logFile)
+    logFilePaths.map(async (logFilePath) => {
+      const fileData = await readFile(logFilePath)
+      const parsedData = JSON.parse(fileData)
+      return {
+        ...parsedData,
+        identifier: getIdentifierFromFilename(logFilePath) || 'no identifier',
+      }
     }),
   )
-  const logs = logData.map((log) => JSON.parse(log))
-  return logs
+
+  return logData
+}
+
+function getIdentifierFromFilename(fileName: string): string | undefined {
+  return fileName.split('_').pop()?.substring(0, 6)
 }

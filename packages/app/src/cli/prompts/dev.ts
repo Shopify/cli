@@ -19,7 +19,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 
 export async function selectLogPrompt(logs: LogData[]): Promise<LogData> {
   const toAnswer = (log: LogData) => {
-    return {label: `${log.log_timestamp} (${log.status})`, value: log}
+    return {label: `${log.log_timestamp} (${log.status}) - ${log.identifier}`, value: log}
   }
 
   const logsList = logs.map(toAnswer)
