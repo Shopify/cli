@@ -52,6 +52,26 @@ export interface DevServerContext {
    * theme.
    */
   themeEditorSync: boolean
+
+  /**
+   * Additional options for the development server.
+   */
+  options: {
+    /**
+     * Prevents deletion of local files.
+     */
+    noDelete: boolean
+
+    /**
+     * Glob patterns ignore-list for file reconciliation and sychronization.
+     */
+    ignore: string[]
+
+    /**
+     * Glob patterns allow-list for file reconciliation and sychronization.
+     */
+    only: string[]
+  }
 }
 
 /**

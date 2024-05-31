@@ -1,3 +1,4 @@
+import {applyIgnoreFilters} from '../asset-ignore.js'
 import {Checksum, Theme, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -7,18 +8,25 @@ import {renderError, renderText} from '@shopify/cli-kit/node/ui'
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
+export interface PollingOptions {
+  noDelete: boolean
+  only: string[]
+  ignore: string[]
+}
+
 export function pollThemeEditorChanges(
   targetTheme: Theme,
   session: AdminSession,
   remoteChecksum: Checksum[],
   localFileSystem: ThemeFileSystem,
+  options: PollingOptions,
 ) {
   outputDebug('Listening for changes in the theme editor')
 
   return setTimeout(() => {
-    pollRemoteJsonChanges(targetTheme, session, remoteChecksum, localFileSystem)
+    pollRemoteJsonChanges(targetTheme, session, remoteChecksum, localFileSystem, options)
       .then((latestChecksums) => {
-        pollThemeEditorChanges(targetTheme, session, latestChecksums, localFileSystem)
+        pollThemeEditorChanges(targetTheme, session, latestChecksums, localFileSystem, options)
       })
       .catch((err) => {
         if (err instanceof PollingError) {
@@ -35,19 +43,24 @@ export async function pollRemoteJsonChanges(
   currentSession: AdminSession,
   remoteChecksums: Checksum[],
   localFileSystem: ThemeFileSystem,
+  options: PollingOptions,
 ): Promise<Checksum[]> {
-  const latestChecksums = await fetchChecksums(targetTheme.id, currentSession)
+  const filteredRemoteChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
 
-  const previousChecksums = new Map(remoteChecksums.map((checksum) => [checksum.key, checksum]))
+  const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
+    applyFileFilters(checksums, localFileSystem, options),
+  )
+
+  const previousChecksumsMap = new Map(filteredRemoteChecksums.map((checksum) => [checksum.key, checksum]))
   const assetsChangedOnRemote = latestChecksums.filter((latestAsset) => {
-    const previousAsset = previousChecksums.get(latestAsset.key)
+    const previousAsset = previousChecksumsMap.get(latestAsset.key)
     if (!previousAsset || previousAsset.checksum !== latestAsset.checksum) {
       return true
     }
   })
 
   const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
-  const assetsDeletedFromRemote = remoteChecksums.filter((previousChecksum) => {
+  const assetsDeletedFromRemote = filteredRemoteChecksums.filter((previousChecksum) => {
     return latestChecksumsMap.get(previousChecksum.key) === undefined
   })
 
@@ -56,30 +69,30 @@ export async function pollRemoteJsonChanges(
   await abortIfMultipleSourcesChange(previousFileValues, localFileSystem, assetsChangedOnRemote)
 
   await Promise.all(
-    assetsChangedOnRemote
-      .filter((file) => file.key.endsWith('.json'))
-      .map(async (file) => {
-        if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
-          return
-        }
-        const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
-        if (asset) {
-          return localFileSystem.write(asset).then(() => {
-            renderText({text: `Synced: get '${asset.key}' from remote theme`})
-          })
-        }
-      }),
+    assetsChangedOnRemote.map(async (file) => {
+      if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
+        return
+      }
+      const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
+      if (asset) {
+        return localFileSystem.write(asset).then(() => {
+          renderText({text: `Synced: get '${asset.key}' from remote theme`})
+        })
+      }
+    }),
   )
 
-  await Promise.all(
-    assetsDeletedFromRemote
-      .filter((file) => file.key.endsWith('.json'))
-      .map((file) =>
-        localFileSystem.delete(file.key).then(() => {
-          renderText({text: `Synced: remove '${file.key}' from local theme`})
-        }),
-      ),
-  )
+  if (!options.noDelete) {
+    await Promise.all(
+      assetsDeletedFromRemote
+        .filter((file) => file.key.endsWith('.json'))
+        .map((file) =>
+          localFileSystem.delete(file.key).then(() => {
+            renderText({text: `Synced: remove '${file.key}' from local theme`})
+          }),
+        ),
+    )
+  }
   return latestChecksums
 }
 
@@ -97,4 +110,9 @@ async function abortIfMultipleSourcesChange(
       )
     }
   }
+}
+
+async function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem, options: PollingOptions) {
+  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
+  return filteredFiles.filter((file) => file.key.endsWith('.json'))
 }

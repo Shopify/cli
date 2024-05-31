@@ -4,6 +4,7 @@ import {
   BuyerLabelSchema,
   ConfirmationSchema,
   DeferredPaymentsSchema,
+  SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
 import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
@@ -17,6 +18,7 @@ export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
   .merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
+  .merge(SupportedBuyerContextsSchema)
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CUSTOM_ONSITE_TARGET)})).length(1),
     update_payment_session_url: zod.string().url().optional(),
@@ -90,6 +92,7 @@ export function customOnsiteDeployConfigToCLIConfig(
     supports_deferred_payments: config.supports_deferred_payments,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     buyer_label: config.default_buyer_label,
@@ -118,6 +121,7 @@ export async function customOnsitePaymentsAppExtensionDeployConfig(
     supports_deferred_payments: config.supports_deferred_payments,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     default_buyer_label: config.buyer_label,

@@ -6,6 +6,7 @@ import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
+import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
@@ -17,6 +18,7 @@ import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -31,6 +33,7 @@ type DevProcessDefinition =
   | DraftableExtensionProcess
   | GraphiQLServerProcess
   | DevSessionProcess
+  | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -79,7 +82,10 @@ export async function setupDevProcesses({
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
+  const env = getEnvironmentVariables()
+  const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
+  const shouldPerformAppLogPolling = isTruthy(env[environmentVariableNames.enableAppLogPolling])
+
   const processes = [
     ...(await setupWebProcesses({
       webs: localApp.webs,
@@ -148,6 +154,15 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
+    shouldPerformAppLogPolling
+      ? await setupAppLogsPollingProcess({
+          developerPlatformClient,
+          subscription: {
+            shopIds: [storeId],
+            apiKey,
+          },
+        })
+      : undefined,
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it

@@ -18,12 +18,17 @@ export async function reconcileAndPollThemeEditorChanges(
   session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
+  options: {
+    noDelete: boolean
+    ignore: string[]
+    only: string[]
+  },
 ) {
   outputDebug('Initiating theme asset reconciliation process')
-  await reconcileJsonFiles(targetTheme, session, remoteChecksums, localThemeFileSystem)
+  await reconcileJsonFiles(targetTheme, session, remoteChecksums, localThemeFileSystem, options)
 
   const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
 
   const themeFileSystem = await mountThemeFileSystem(localThemeFileSystem.root)
-  pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, themeFileSystem)
+  pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, themeFileSystem, options)
 }

@@ -20,6 +20,7 @@ const AppAccessSchema = zod.object({
         .string()
         .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
         .optional(),
+      optional_scopes: zod.array(zod.string()).optional(),
       use_legacy_install_flow: zod.boolean().optional(),
     })
     .optional(),
@@ -33,6 +34,7 @@ export const AppAccessSpecIdentifier = 'app_access'
 const AppAccessTransformConfig: TransformationConfig = {
   access: 'access',
   scopes: 'access_scopes.scopes',
+  optional_scopes: 'access_scopes.optional_scopes',
   use_legacy_install_flow: 'access_scopes.use_legacy_install_flow',
   redirect_url_allowlist: 'auth.redirect_urls',
 }

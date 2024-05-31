@@ -319,6 +319,7 @@ export async function launchDevProcesses({
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
     developerPlatformClient,
+    extensions: config.localApp.allExtensions,
   }
 
   return renderDev({

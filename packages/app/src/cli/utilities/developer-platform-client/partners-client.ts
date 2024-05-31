@@ -138,6 +138,12 @@ import {
   MigrateAppModuleVariables,
 } from '../../api/graphql/extension_migrate_app_module.js'
 import {DevSessionDeploySchema} from '../../api/graphql/dev_session_create.js'
+import {
+  AppLogsSubscribeVariables,
+  AppLogsSubscribeMutation,
+  AppLogsSubscribeResponse,
+} from '../../api/graphql/subscribe_to_app_logs.js'
+
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -465,5 +471,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   toExtensionGraphQLType(input: string) {
     return input.toUpperCase()
+  }
+
+  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
+    return this.request(AppLogsSubscribeMutation, input)
   }
 }
