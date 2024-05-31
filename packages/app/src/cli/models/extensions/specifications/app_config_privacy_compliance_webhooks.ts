@@ -26,7 +26,10 @@ export default appPrivacyComplienceSpec
 
 function transformToPrivacyComplianceWebhooksModule(content: object, appConfiguration: AppConfigurationWithoutPath) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
-  const appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+  let appUrl: string | undefined
+  if ('application_url' in appConfiguration) {
+    appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+  }
 
   return compact({
     customers_redact_url: relativeUri(getCustomersDeletionUri(webhooks), appUrl),

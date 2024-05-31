@@ -6,10 +6,14 @@ export function transformFromWebhookConfig(content: object, appConfiguration: Ap
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
+  let appUrl: string | undefined
+  if ('application_url' in appConfiguration) {
+    appUrl = (appConfiguration as CurrentAppConfiguration).application_url
+  }
+
   const webhookSubscriptions = []
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const {api_version, subscriptions = []} = webhooks
-  const appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
 
   // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
   for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {

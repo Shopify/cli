@@ -76,7 +76,10 @@ function transformToWebhookSubscriptionConfig(content: object) {
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
   forward: (content, appConfiguration) => {
     const webhookConfig = content as WebhookSubscription
-    const appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+    let appUrl: string | undefined
+    if ('application_url' in appConfiguration) {
+      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+    }
     return {
       ...webhookConfig,
       uri: appUrl && webhookConfig.uri.startsWith('/') ? `${appUrl}${webhookConfig.uri}` : webhookConfig.uri,
