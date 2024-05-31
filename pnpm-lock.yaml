@@ -131,16 +131,16 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../cli-kit
       '@shopify/create-app':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -246,22 +246,22 @@ importers:
         specifier: 2.4.1
         version: 2.4.1
       '@shopify/app':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: 0.0.0-next-ca7f288-20240530103543
         version: 0.0.0-next-ca7f288-20240530103543(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../theme
       esbuild:
         specifier: 0.19.8
@@ -506,7 +506,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -631,7 +631,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -647,7 +647,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -666,7 +666,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.60.0
+        specifier: 3.61.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 2.5.1

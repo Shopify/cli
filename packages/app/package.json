@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.60.0",
+  "version": "3.61.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "private": true,
@@ -50,10 +50,10 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.60.0",
-    "@shopify/create-app": "3.60.0",
+    "@shopify/cli-kit": "3.61.0",
+    "@shopify/create-app": "3.61.0",
     "@shopify/function-runner": "4.1.1",
-    "@shopify/plugin-cloudflare": "3.60.0",
+    "@shopify/plugin-cloudflare": "3.61.0",
     "@shopify/polaris": "12.10.0",
     "@shopify/polaris-icons": "8.0.0",
     "@shopify/theme-check-node": "2.5.1",
