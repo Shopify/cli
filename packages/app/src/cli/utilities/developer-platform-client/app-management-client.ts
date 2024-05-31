@@ -714,7 +714,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    const variables: ActiveAppReleaseQueryVariables = {appId: Number(id)}
     return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
@@ -722,7 +722,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     id,
     organizationId,
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
+    const variables: ActiveAppReleaseQueryVariables = {appId: Number(id)}
     return appManagementRequest<ActiveAppReleaseQuerySchema>(
       organizationId,
       ActiveAppReleaseQuery,
