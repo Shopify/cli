@@ -10,7 +10,7 @@ const arnRegex =
 export const removeTrailingSlash = (arg: unknown) =>
   typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
 
-export const UriValidation = zod.string({invalid_type_error: 'Value must be string'}).refine(
+export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 'Value must be string'}).refine(
   (uri) => {
     if (uri.startsWith('/')) return true
 

@@ -1,4 +1,4 @@
-import {UriValidation, removeTrailingSlash} from './validation/common.js'
+import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
@@ -21,7 +21,7 @@ interface TransformedWebhookSubscription {
 export const SingleWebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
   api_version: zod.string(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
+  uri: zod.preprocess(removeTrailingSlash, WebhookSubscriptionUriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
