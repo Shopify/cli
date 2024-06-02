@@ -33,6 +33,7 @@ export async function businessPlatformRequest<T>(
  *
  * @param query - GraphQL query to execute.
  * @param token - Business Platform token.
+ * @param organizationId - Organization ID as a numeric value.
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */

@@ -47,6 +47,16 @@ import {
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
 } from './app-management-client/graphql/app-version-by-id.js'
+import {
+  DevStoresQuery,
+  DevStoresQuerySchema,
+  DevStoresQueryVariables,
+} from './app-management-client/graphql/dev-stores.js'
+import {
+  DevStoreByDomainQuery,
+  DevStoreByDomainQuerySchema,
+  DevStoreByDomainQueryVariables,
+} from './app-management-client/graphql/dev-store-by-domain.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -111,10 +121,11 @@ import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partn
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
-import {businessPlatformOrganizationsRequest, businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformRequest,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {DevStoresQuery, DevStoresQuerySchema, DevStoresQueryVariables} from './app-management-client/graphql/dev-stores.js'
-import {DevStoreByDomainQuery, DevStoreByDomainQuerySchema, DevStoreByDomainQueryVariables} from './app-management-client/graphql/dev-store-by-domain.js'
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -671,17 +682,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
             businessName: organization.name,
             website: 'N/A',
             stores: {
-              nodes: organization.properties.edges.filter(edge => edge.node.primaryDomain === domain).map((edge) => {
-                const store = edge.node
-                return {
-                  shopId: store.externalId,
-                  link: store.primaryDomain,
-                  shopDomain: store.primaryDomain,
-                  shopName: store.name,
-                  transferDisabled: true,
-                  convertableToPartnerTest: true,
-                }
-              }),
+              nodes: organization.properties.edges
+                .filter((edge) => edge.node.primaryDomain === domain)
+                .map((edge) => {
+                  const store = edge.node
+                  return {
+                    shopId: store.externalId,
+                    link: store.primaryDomain,
+                    shopDomain: store.primaryDomain,
+                    shopName: store.name,
+                    transferDisabled: true,
+                    convertableToPartnerTest: true,
+                  }
+                }),
             },
           },
         ],
