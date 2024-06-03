@@ -116,10 +116,7 @@ import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
-const templateJsonUrls = [
-  'https://raw.githubusercontent.com/Shopify/extensions-templates/templates-json/templates.json',
-  'https://raw.githubusercontent.com/Shopify/function-examples/templates-json/templates.json',
-]
+const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/templates-json/templates.json'
 
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
@@ -299,30 +296,31 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    const allExtensions = await Promise.all(
-      templateJsonUrls.map(async (url) => {
-        try {
-          const response = await fetch(url)
-          return response.json() as Promise<GatedExtensionTemplate[]>
-        } catch (_e) {
-          throw new AbortError(
-            [
-              'Failed to fetch extension templates from',
-              {link: {url}},
-              {char: '.'},
-              'This likely means a problem with GitHub.',
-            ],
-            [
-              {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
-              'or try again later.',
-            ],
-          )
-        }
-      }),
-    ).then((templates2DArray) => templates2DArray.flat(1))
-    return allowedTemplates(allExtensions, async (betaFlags: string[]) =>
-      this.organizationBetaFlags(organizationId, betaFlags),
-    )
+    let response, templates: GatedExtensionTemplate[]
+    try {
+      response = await fetch(TEMPLATE_JSON_URL)
+      templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+    } catch (_e) {
+      throw new AbortError(
+        [
+          'Failed to fetch extension templates from',
+          {link: {url: TEMPLATE_JSON_URL}},
+          {char: '.'},
+          'This likely means a problem with GitHub.',
+        ],
+        [
+          {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
+          'or try again later.',
+        ],
+      )
+    }
+    // Fake the sortPriority as ascending, since the templates are already sorted
+    // in the static JSON file. This can be removed once PartnersClient, which
+    // uses sortPriority, is gone.
+    let counter = 0
+    return (await allowedTemplates(templates, async (betaFlags: string[]) =>
+      this.organizationBetaFlags(organizationId, betaFlags)
+    )).map(template => ({ ...template, sortPriority: counter++ }))
   }
 
   async createApp(
