@@ -77,10 +77,24 @@ function mergeLocalAndRemoteSpecs(
   // Log the specs that were defined locally but aren't in the result
   // This usually means the spec is a gated one and the caller doesn't have adequate access. Or, we're in a test and
   // the mocked specification set is missing something.
-  const missing = local.filter((spec) => !result.find((result) => result.identifier === spec.identifier))
-  if (missing.length > 0) {
+  const presentLocalMissingRemote = local.filter(
+    (spec) => !result.find((result) => result.identifier === spec.identifier),
+  )
+  if (presentLocalMissingRemote.length > 0) {
     outputDebug(
-      `The following extension specifications were defined locally but not found in the remote specifications: ${missing
+      `The following extension specifications were defined locally but not found in the remote specifications: ${presentLocalMissingRemote
+        .map((spec) => spec.identifier)
+        .sort()
+        .join(', ')}`,
+    )
+  }
+
+  const presentRemoteMissingLocal = remote.filter(
+    (spec) => !result.find((result) => result.identifier === spec.identifier),
+  )
+  if (presentRemoteMissingLocal.length > 0) {
+    outputDebug(
+      `The following extension specifications were found in the remote specifications but not defined locally: ${presentRemoteMissingLocal
         .map((spec) => spec.identifier)
         .sort()
         .join(', ')}`,
