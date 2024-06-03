@@ -11,7 +11,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export default class FunctionReplay extends Command {
   static hidden = true
-  static summary = 'Replays a function locally based on a FunctionRunEvent.'
+  static summary = 'Replays a function run from an app log.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
 
@@ -23,27 +23,27 @@ export default class FunctionReplay extends Command {
     ...functionFlags,
     'api-key': Flags.string({
       hidden: true,
-      description: "Application's API key that will be exposed at build time.",
+      description: "Application's API key",
       env: 'SHOPIFY_FLAG_API_KEY',
       exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
-      description: "Application's Client ID that will be exposed at build time.",
+      description: "Application's Client ID",
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
     export: Flags.string({
       char: 'e',
       hidden: false,
-      description: 'Name of the wasm export to invoke.',
+      description: 'Name of the Web Assembly export to invoke.',
       default: '_start',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
     json: Flags.boolean({
       char: 'j',
       hidden: false,
-      description: 'Log the run result as a JSON object.',
+      description: 'Output the function runner result as a JSON object.',
       env: 'SHOPIFY_FLAG_JSON',
     }),
   }
