@@ -1128,7 +1128,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 api_version = "2023-07"
 
   [[webhooks.subscriptions]]
-  uri = "https://example.com/customers"
+  uri = "/customers"
   compliance_topics = [ "customers/redact", "customers/data_request" ]
 
 [pos]
@@ -1171,7 +1171,7 @@ embedded = false
         subscriptions: [
           {
             compliance_topics: ['customers/redact', 'customers/data_request'],
-            uri: 'https://example.com/customers',
+            uri: '/customers',
           },
         ],
       },

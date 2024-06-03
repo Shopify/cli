@@ -1,5 +1,7 @@
 import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
+import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
@@ -24,34 +26,18 @@ export const SingleWebhookSubscriptionSchema = zod.object({
 /* this transforms webhooks remotely to be accepted by the TOML
 ie.
   given:
-  {
-    subscriptions: [
-      { topic: 'products/create', uri: 'https://example.com/webhooks/products'},
-      { topic: 'orders/delete', uri: https://example.com/webhooks/orderss'},
-      { topic: 'orders/create', uri: 'https://example.com/webhooks/orders'},
-    ]
-  }
+    { api_version: "2024-01", topic: 'products/create', uri: 'https://example.com/webhooks/products'},
   the function should return:
-  {
-    webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['orders/delete', 'orders/create'],
-              uri: 'https://example.com/webhooks/orders',
-            },
-            {
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks/products',
-            },
-          ]
-      }
-  }
+    { topics: ['products/create'], uri: 'https://example.com/webhooks/products'},
+
   */
 function transformToWebhookSubscriptionConfig(content: object) {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const {api_version, topic, ...otherFields} = content as TransformedWebhookSubscription
-  const subscription = {topics: [topic], ...otherFields}
+  const {api_version: _, topic, ...otherFields} = content as TransformedWebhookSubscription
+  const subscription = {
+    topics: [topic],
+    ...otherFields,
+  }
+
   return {
     webhooks: {
       subscriptions: [subscription],
@@ -60,8 +46,18 @@ function transformToWebhookSubscriptionConfig(content: object) {
 }
 
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
-  forward: (content) => content,
-  reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
+  forward: (content, appConfiguration) => {
+    const webhookConfig = content as WebhookSubscription
+    let appUrl: string | undefined
+    if ('application_url' in appConfiguration) {
+      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+    }
+    return {
+      ...webhookConfig,
+      uri: appUrl && webhookConfig.uri.startsWith('/') ? `${appUrl}${webhookConfig.uri}` : webhookConfig.uri,
+    }
+  },
+  reverse: transformToWebhookSubscriptionConfig,
 }
 
 const appWebhookSubscriptionSpec = createConfigExtensionSpecification({

@@ -10,7 +10,7 @@ describe('webhook_subscription', () => {
         sub_topic: 'type:metaobject_one',
         topic: 'metaobjects/create',
         uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-        compliance_topics: ['shops/redact'],
+        compliance_topics: ['shop/redact'],
       }
 
       const webhookSpec = spec

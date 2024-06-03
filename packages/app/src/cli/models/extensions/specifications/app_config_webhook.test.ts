@@ -11,11 +11,11 @@ describe('webhooks', () => {
           api_version: '2024-01',
           subscriptions: [
             {
-              topic: 'orders/create',
+              topics: ['orders/create'],
               uri: 'https://example.com/webhooks/orders',
             },
             {
-              topic: 'products/create',
+              topics: ['products/create'],
               uri: 'https://example.com/webhooks/products',
             },
           ],
