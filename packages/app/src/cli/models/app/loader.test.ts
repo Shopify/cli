@@ -3055,51 +3055,6 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
-  test('does not allow identical topic and uri and sub_topic in different subscriptions', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-        },
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-        },
-      ],
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
-      fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'metaobjects/create'],
-    }
-
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
-
-  test('allows identical topic and uri if sub_topic is different', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-        },
-        {
-          topics: ['products/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_two',
-        },
-      ],
-    }
-  })
-
   test('does not allow identical topic and uri and filter in different subscriptions', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
