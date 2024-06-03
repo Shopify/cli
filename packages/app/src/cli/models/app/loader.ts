@@ -834,7 +834,7 @@ async function loadAppConfigurationFromState<
           ...configState.basicConfiguration,
         }
         delete file.path
-        const appVersionedSchema = getAppVersionedSchema(specifications, dynamicallySpecifiedConfigs.enabled)
+        const appVersionedSchema = getAppVersionedSchema(specifications)
         appSchema = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
         break
       }
@@ -842,12 +842,12 @@ async function loadAppConfigurationFromState<
 
     const parseStrictSchemaEnabled = specifications.length > 0
     schemaForConfigurationFile = appSchema
-    if (parseStrictSchemaEnabled && !dynamicallySpecifiedConfigs) {
+    if (parseStrictSchemaEnabled) {
       schemaForConfigurationFile = deepStrict(appSchema)
     }
   }
 
-  let configuration = (await parseConfigurationFile(
+  const configuration = (await parseConfigurationFile(
     schemaForConfigurationFile,
     configState.configurationPath,
     abort,
