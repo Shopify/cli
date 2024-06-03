@@ -31,6 +31,7 @@ const RUN1: FunctionRunData = {
   log_timestamp: '2024-05-31T15:29:46.741270Z',
   identifier: 'abcdef',
 }
+const RUN1_FILENAME = RUN1.log_timestamp.replace(/:/g, '_')
 
 const RUN2: FunctionRunData = {
   shop_id: 69665030382,
@@ -50,6 +51,7 @@ const RUN2: FunctionRunData = {
   log_timestamp: '2024-05-31T15:29:50.741270Z',
   identifier: '123456',
 }
+const RUN2_FILENAME = RUN2.log_timestamp.replace(/:/g, '_')
 
 describe('replay', () => {
   test('reads the app log directory, parses the function runs, and invokes function-runner ', async () => {
@@ -63,8 +65,8 @@ describe('replay', () => {
       // setup a directory with function run log
       const functionRunsDir = joinPath(tmpDir, apiKey)
       await mkdir(functionRunsDir)
-      await writeFile(joinPath(functionRunsDir, `${RUN1.log_timestamp}_${RUN1.identifier}.json`), JSON.stringify(RUN1))
-      await writeFile(joinPath(functionRunsDir, `${RUN2.log_timestamp}_${RUN2.identifier}.json`), JSON.stringify(RUN2))
+      await writeFile(joinPath(functionRunsDir, `${RUN1_FILENAME}_${RUN1.identifier}.json`), JSON.stringify(RUN1))
+      await writeFile(joinPath(functionRunsDir, `${RUN2_FILENAME}_${RUN2.identifier}.json`), JSON.stringify(RUN2))
 
       const options = {
         app,
