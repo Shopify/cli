@@ -16,15 +16,11 @@ import {
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
 } from './app.js'
-import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {
-  ExtensionSpecification,
-  RemoteAwareExtensionSpecification,
-  createConfigExtensionSpecification,
-} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {Flag} from '../../services/dev/fetch.js'
@@ -52,7 +48,6 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -224,26 +219,16 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
     specifications: TModuleSpec[]
     remoteFlags?: Flag[]
   },
-  env = process.env,
 ): Promise<AppInterface<AppConfiguration, TModuleSpec>> {
   const specifications = options.specifications
-  const dynamicConfigOptions = getDynamicConfigOptionsFromEnvironment(env)
 
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
-  const loadedConfiguration = await loadAppConfigurationFromState(
-    state,
-    specifications,
-    options.remoteFlags ?? [],
-    dynamicConfigOptions,
-  )
+  const loadedConfiguration = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
 
-  const loader = new AppLoader<AppConfiguration, TModuleSpec>(
-    {
-      mode: options.mode,
-      loadedConfiguration,
-    },
-    dynamicConfigOptions,
-  )
+  const loader = new AppLoader<AppConfiguration, TModuleSpec>({
+    mode: options.mode,
+    loadedConfiguration,
+  })
   return loader.loaded()
 }
 
@@ -265,59 +250,14 @@ export async function loadAppUsingConfigurationState<TConfig extends AppConfigur
     remoteFlags?: Flag[]
     mode: AppLoaderMode
   },
-  env = process.env,
 ): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
-  const dynamicConfigOptions = getDynamicConfigOptionsFromEnvironment(env)
+  const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
 
-  const loadedConfiguration = await loadAppConfigurationFromState(
-    configState,
-    specifications,
-    remoteFlags ?? [],
-    dynamicConfigOptions,
-  )
-
-  const loader = new AppLoader(
-    {
-      mode,
-      loadedConfiguration,
-    },
-    dynamicConfigOptions,
-  )
+  const loader = new AppLoader({
+    mode,
+    loadedConfiguration,
+  })
   return loader.loaded()
-}
-
-function getDynamicConfigOptionsFromEnvironment(env = process.env): DynamicallySpecifiedConfigLoading {
-  const dynamicConfigEnabled = env[environmentVariableNames.useDynamicConfigSpecifications]
-
-  // not set at all
-  if (!dynamicConfigEnabled) {
-    return {enabled: false}
-  }
-
-  // set, but no remapping
-  if (isTruthy(dynamicConfigEnabled)) {
-    return {enabled: true, remapToNewParent: undefined}
-  }
-
-  try {
-    // split it by commas
-    const divided = dynamicConfigEnabled
-      .split(',')
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0)
-
-    // first item is the parent, everything else is the things to remap
-    const [newParentName, ...sectionsToRemap] = divided
-    return {
-      enabled: true,
-      remapToNewParent: {
-        newParentName: newParentName!,
-        sectionsToRemap,
-      },
-    }
-  } catch {
-    throw new AbortError(`Invalid value for ${environmentVariableNames.useDynamicConfigSpecifications}`)
-  }
 }
 
 export function getDotEnvFileName(configurationPath: string) {
@@ -334,31 +274,17 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-type DynamicallySpecifiedConfigLoading =
-  | {
-      enabled: false
-    }
-  | {
-      enabled: true
-      remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
-    }
-
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private mode: AppLoaderMode
   private errors: AppErrors = new AppErrors()
   private specifications: TModuleSpec[]
   private remoteFlags: Flag[]
-  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
   private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 
-  constructor(
-    {mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>,
-    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
-  ) {
+  constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'
     this.specifications = loadedConfiguration.specifications
     this.remoteFlags = loadedConfiguration.remoteFlags
-    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
     this.loadedConfiguration = loadedConfiguration
   }
 
@@ -491,19 +417,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    let specification = this.findSpecificationForType(type)
+    const specification = this.findSpecificationForType(type)
     let entryPath
     let usedKnownSpecification = false
 
     if (specification) {
       usedKnownSpecification = true
-    } else if (this.dynamicallySpecifiedConfigs.enabled) {
-      // if dynamic configs are enabled, then create an automatically validated specification, with the same
-      // identifier as the type
-      specification = createConfigExtensionSpecification({
-        identifier: type,
-        schema: zod.object({}).passthrough(),
-      }) as TModuleSpec
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -691,27 +610,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         return !configKeysThatAreNeverModules.includes(key)
       })
 
-    if (!this.dynamicallySpecifiedConfigs) {
-      if (unusedKeys.length > 0) {
-        throw new Error('Not all of the config was consumed')
-      }
-      return extensionInstancesWithKeys
-        .filter(([instance]) => instance)
-        .map(([instance]) => instance as ExtensionInstance)
+    if (unusedKeys.length > 0) {
+      throw new Error('Not all of the config was consumed')
     }
-
-    // make some extension instances for the unused keys
-    const unusedExtensionInstances = unusedKeys.map((key) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const specConfiguration = {[key]: (appConfiguration as any)[key]}
-      return this.createExtensionInstance(key, specConfiguration, appConfiguration.path, directory)
-    })
-
-    // return all the non null extension instances, plus the unused ones
-    const nonNullExtensionInstances: ExtensionInstance[] = extensionInstancesWithKeys
+    return extensionInstancesWithKeys
       .filter(([instance]) => instance)
       .map(([instance]) => instance as ExtensionInstance)
-    return [...nonNullExtensionInstances, ...unusedExtensionInstances]
   }
 
   private async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
@@ -770,16 +674,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
  */
 export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
-  env = process.env,
 ): Promise<AppConfigurationInterface> {
   const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
-  const result = await loadAppConfigurationFromState(
-    state,
-    specifications,
-    options.remoteFlags ?? [],
-    getDynamicConfigOptionsFromEnvironment(env),
-  )
+  const result = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
 }
@@ -917,7 +815,6 @@ async function loadAppConfigurationFromState<
   configState: TConfig,
   specifications: TModuleSpec[],
   remoteFlags: Flag[],
-  dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
 ): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState<TConfig>, TModuleSpec>> {
   let file: JsonMapType
   let schemaForConfigurationFile: SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
@@ -995,8 +892,6 @@ async function loadAppConfigurationFromState<
     }
   }
 
-  configuration = remapDynamicConfigToNewParents(configuration, dynamicallySpecifiedConfigs)
-
   return {
     directory: configState.appDirectory,
     configuration,
@@ -1005,39 +900,6 @@ async function loadAppConfigurationFromState<
     specifications,
     remoteFlags,
   }
-}
-
-/**
- * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
- * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
- *
- * Returns the updated configuration object
- */
-function remapDynamicConfigToNewParents<T>(
-  configuration: T,
-  dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
-): T {
-  // remap configuration keys to their new parent, if needed
-  // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
-  if (dynamicallySpecifiedConfigs.enabled && dynamicallySpecifiedConfigs.remapToNewParent) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const newConfig = {...configuration} as any
-    const {newParentName, sectionsToRemap} = dynamicallySpecifiedConfigs.remapToNewParent
-
-    // get the keys that need to be remapped
-    const remappedKeys = Object.keys(newConfig).filter((key) => sectionsToRemap.includes(key))
-
-    remappedKeys.forEach((key) => {
-      newConfig[newParentName] = newConfig[newParentName] ?? {}
-      newConfig[newParentName] = {
-        ...newConfig[newParentName],
-        [key]: newConfig[key],
-      }
-      delete newConfig[key]
-    })
-    return newConfig
-  }
-  return configuration
 }
 
 async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
