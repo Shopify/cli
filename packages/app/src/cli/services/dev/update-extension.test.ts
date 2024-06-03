@@ -20,7 +20,6 @@ vi.mock('../../models/app/loader.js', async () => {
   return {
     ...actual,
     parseConfigurationFile: vi.fn(),
-    parseConfigurationObject2: vi.fn(),
   }
 })
 
