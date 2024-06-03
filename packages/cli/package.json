@@ -96,6 +96,10 @@
     ]
   },
   "dependencies": {
+    "@ast-grep/napi": "0.11.0",
+    "esbuild": "0.19.8"
+  },
+  "devDependencies": {
     "@oclif/core": "3.26.5",
     "@oclif/plugin-commands": "3.3.2",
     "@oclif/plugin-plugins": "5.1.2",
@@ -105,18 +109,12 @@
     "@shopify/plugin-did-you-mean": "3.60.0",
     "@shopify/theme": "3.60.0",
     "@shopify/cli-hydrogen": "0.0.0-next-ca7f288-20240530103543",
-    "@ast-grep/napi": "0.11.0",
-    "esbuild": "0.19.8",
-    "zod-to-json-schema": "3.21.4"
-  },
-  "devDependencies": {
-    "@shopify/app": "3.60.0",
-    "@shopify/theme": "3.60.0",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^0.34.3",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1",
-    "vitest": "^0.34.3"
+    "vitest": "^0.34.3",
+    "zod-to-json-schema": "3.21.4"
   },
   "optionalDependencies": {
     "@parcel/watcher": "2.4.1"
