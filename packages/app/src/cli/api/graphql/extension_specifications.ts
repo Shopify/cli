@@ -47,7 +47,7 @@ export interface RemoteSpecification {
 export interface FlattenedRemoteSpecification extends RemoteSpecification {
   surface?: string
   registrationLimit: number
-  contract?: string
+  contract: never
 }
 
 export interface ExtensionSpecificationsQuerySchema {
