@@ -1,4 +1,5 @@
 import spec from './app_config_webhook.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhooks', () => {
@@ -48,7 +49,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.transformLocalToRemote!(object)
+      const result = webhookSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toEqual({
@@ -128,7 +129,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.transformLocalToRemote!(object)
+      const result = webhookSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toEqual({

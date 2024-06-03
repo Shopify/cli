@@ -1,4 +1,5 @@
 import spec from './app_config_app_access.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('app_config_app_access', () => {
@@ -21,7 +22,7 @@ describe('app_config_app_access', () => {
       const appAccessSpec = spec
 
       // When
-      const result = appAccessSpec.transformLocalToRemote!(object)
+      const result = appAccessSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toMatchObject({

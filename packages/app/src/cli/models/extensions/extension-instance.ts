@@ -14,6 +14,7 @@ import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -175,9 +176,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async deployConfig({
     apiKey,
     developerPlatformClient,
+    appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient})
-    return this.commonDeployConfig(apiKey)
+    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient, appConfiguration})
+    return this.commonDeployConfig(apiKey, appConfiguration)
   }
 
   async functionDeployConfig({
@@ -188,9 +190,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
-  async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
+  async commonDeployConfig(
+    apiKey: string,
+    appConfiguration: AppConfigurationWithoutPath,
+  ): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration) as
+    const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
@@ -337,8 +342,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     identifiers,
     developerPlatformClient,
     apiKey,
+    appConfiguration,
   }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
-    const configValue = await this.deployConfig({apiKey, developerPlatformClient})
+    const configValue = await this.deployConfig({apiKey, developerPlatformClient, appConfiguration})
     if (!configValue) return undefined
 
     const result = {
@@ -378,12 +384,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 interface ExtensionDeployConfigOptions {
   apiKey: string
   developerPlatformClient: DeveloperPlatformClient
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 interface BundleConfig {

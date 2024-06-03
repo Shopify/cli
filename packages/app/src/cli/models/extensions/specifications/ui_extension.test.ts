@@ -2,7 +2,7 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -275,6 +275,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         // Then
