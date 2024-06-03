@@ -16,7 +16,7 @@ export const writeAppLogsToFile = async ({
   const identifier = randomUUID().substring(0, 6)
   const fileName = `${appLog.log_timestamp}_${identifier}.json`
   const path = joinPath(apiKey, fileName)
-  const fullOutputPath = joinPath(getLogsDir, path)
+  const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
     const toSaveData = {

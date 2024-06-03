@@ -41,7 +41,7 @@ export interface FunctionRunData {
 
 export async function replay(options: ReplayOptions) {
   const {apiKey} = await ensureConnectedAppFunctionContext(options)
-  const functionRunsDir = joinPath(getLogsDir, apiKey)
+  const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
   const functionRuns = await getFunctionRunData(functionRunsDir)
   const selectedRun = await selectFunctionRunPrompt(functionRuns.reverse())
