@@ -7,11 +7,13 @@ import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi} from 'vitest'
+import {exec} from '@shopify/cli-kit/node/system'
 
 vi.mock('../generate-schema.js')
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/logs')
 vi.mock('./build.js')
+vi.mock('@shopify/cli-kit/node/system')
 
 const RUN1: FunctionRunData = {
   shop_id: 69665030382,
@@ -98,9 +100,25 @@ describe('replay', () => {
       expect(selectFunctionRunPrompt).toHaveBeenCalledWith([RUN2, RUN1])
 
       // expect it to call function runner with that run
-      // not sure how to mock the inner "inTemporaryDirectory"
-      // expect(runFunctionRunner).toHaveBeenCalledWith(options.extension, { json: true, input: })
-      expect(runFunctionRunner).toHaveBeenCalledOnce()
+      expect(exec).toHaveBeenCalledWith(
+        'npm',
+        [
+          'exec',
+          '--',
+          'function-runner',
+          '-f',
+          '/tmp/project/extensions/my-function/dist/index.wasm',
+          '--json',
+          '--export',
+          'run',
+        ],
+        {
+          cwd: '/tmp/project/extensions/my-function',
+          input: RUN1.payload.input,
+          stdout: 'inherit',
+          stderr: 'inherit',
+        },
+      )
     })
   })
 })

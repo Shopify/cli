@@ -1,4 +1,3 @@
-import {runFunctionRunner} from './build.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -6,8 +5,10 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {selectFunctionRunPrompt} from '../../prompts/dev.js'
 
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
+import {exec} from '@shopify/cli-kit/node/system'
+
 import {readdirSync} from 'fs'
 
 interface ReplayOptions {
@@ -45,18 +46,22 @@ export async function replay(options: ReplayOptions) {
 
   const functionRuns = await getFunctionRunData(functionRunsDir)
   const selectedRun = await selectFunctionRunPrompt(functionRuns.reverse())
+  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input)
+}
 
-  await inTemporaryDirectory(async (tmpDir) => {
-    // create file to pass to runner
-    const inputPath = joinPath(tmpDir, 'input_for_runner.json')
-    await writeFile(inputPath, selectedRun.payload.input)
+async function runFunctionRunnerWithLogInput(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: ReplayOptions,
+  input: string,
+) {
+  const outputAsJson = options.json ? ['--json'] : []
+  const exportName = options.export ? ['--export', options.export] : []
 
-    // invoke the existing run command with the input from the file
-    await runFunctionRunner(options.extension, {
-      json: options.json,
-      input: inputPath,
-      export: options.export,
-    })
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...exportName], {
+    cwd: fun.directory,
+    input,
+    stdout: 'inherit',
+    stderr: 'inherit',
   })
 }
 
