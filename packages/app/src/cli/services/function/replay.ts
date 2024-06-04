@@ -2,7 +2,7 @@ import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {selectFunctionRunPrompt} from '../../prompts/dev.js'
+import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'

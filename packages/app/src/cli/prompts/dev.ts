@@ -17,23 +17,6 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): Promise<FunctionRunData> {
-  const toAnswer = (functionRun: FunctionRunData) => {
-    return {
-      label: `${functionRun.log_timestamp} (${functionRun.status}) - ${functionRun.identifier}`,
-      value: functionRun,
-    }
-  }
-
-  const functionRunsList = functionRuns.map(toAnswer)
-
-  const selectedRun = await renderAutocompletePrompt({
-    message: 'Which function run would you like to replay locally?',
-    choices: functionRunsList,
-  })
-  return selectedRun
-}
-
 export async function selectAppPrompt(
   onSearchForAppsByName: (term: string) => Promise<{apps: MinimalOrganizationApp[]; hasMorePages: boolean}>,
   apps: MinimalOrganizationApp[],

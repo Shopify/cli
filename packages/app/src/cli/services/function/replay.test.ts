@@ -2,7 +2,7 @@ import {FunctionRunData, replay} from './replay.js'
 import {runFunctionRunner} from './build.js'
 import {testApp, testFunctionExtension, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
-import {selectFunctionRunPrompt} from '../../prompts/dev.js'
+import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
@@ -10,7 +10,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 
 vi.mock('../generate-schema.js')
-vi.mock('../../prompts/dev.js')
+vi.mock('../../prompts/function/replay.js')
 vi.mock('@shopify/cli-kit/node/logs')
 vi.mock('./build.js')
 vi.mock('@shopify/cli-kit/node/system')
