@@ -99,12 +99,16 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
-
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {ListOrganizations} from '../../api/graphql/business-platform/generated/organizations.js'
+import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
+import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
+import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
+import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -115,7 +119,6 @@ import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
-import {randomUUID} from 'node:crypto'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
@@ -294,7 +297,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             managementExperience: 'cli',
             registrationLimit: spec.appModuleLimit,
           },
-          experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
+          experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
         }),
       )
   }
@@ -534,6 +537,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.activeAppVersionRawResult(app)
     return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
+        const experience = CONFIG_EXTENSION_IDS.includes(mod.uid) ? 'configuration' : 'extension'
         return {
           registrationId: mod.key,
           registrationUid: mod.uid,
@@ -545,7 +549,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             ...mod.specification,
             identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
-            experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+            experience,
           },
         }
       }),
@@ -784,26 +788,26 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
     appSource: {
       modules: [
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'app_home',
+          uid: '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9', // TODO: change to AppHomeSpecIdentifier
+          specificationIdentifier: AppHomeSpecIdentifier,
           config: JSON.stringify({
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
             embedded: isLaunchable,
           }),
         },
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'branding',
+          uid: '10457bd6-aeea-4f92-ab90-a9ab1e471276', // TODO: change to BrandingSpecIdentifier
+          specificationIdentifier: BrandingSpecIdentifier,
           config: JSON.stringify({name}),
         },
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'webhooks',
+          uid: '0ea86845-466c-4f0e-b7f1-9d9496d93f4a', // TODO: change to WebhooksSpecIdentifier
+          specificationIdentifier: WebhooksSpecIdentifier,
           config: JSON.stringify({api_version: '2024-01'}),
         },
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'app_access',
+          uid: '406bb2df-eaa4-44bc-860d-c714f4b65def', // TODO: change to AppAccessSpecIdentifier
+          specificationIdentifier: AppAccessSpecIdentifier,
           config: JSON.stringify({
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
