@@ -52,32 +52,32 @@ export default class FunctionReplay extends Command {
     const env = getEnvironmentVariables()
     const logPollingEnabled = isTruthy(env[environmentVariableNames.enableAppLogPolling])
 
-    if (logPollingEnabled) {
-      const {flags} = await this.parse(FunctionReplay)
-      if (flags['api-key']) {
-        await showApiKeyDeprecationWarning()
-      }
-      const apiKey = flags['client-id'] || flags['api-key']
-
-      await inFunctionContext({
-        path: flags.path,
-        userProvidedConfigName: flags.config,
-        callback: async (app, ourFunction) => {
-          await replay({
-            app,
-            extension: ourFunction,
-            apiKey,
-            stdout: flags.stdout,
-            path: flags.path,
-            json: flags.json,
-            export: flags.export,
-          })
-        },
-      })
-    } else {
+    if (!logPollingEnabled) {
       throw new Error(
         'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
       )
     }
+
+    const {flags} = await this.parse(FunctionReplay)
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
+    const apiKey = flags['client-id'] || flags['api-key']
+
+    await inFunctionContext({
+      path: flags.path,
+      userProvidedConfigName: flags.config,
+      callback: async (app, ourFunction) => {
+        await replay({
+          app,
+          extension: ourFunction,
+          apiKey,
+          stdout: flags.stdout,
+          path: flags.path,
+          json: flags.json,
+          export: flags.export,
+        })
+      },
+    })
   }
 }
