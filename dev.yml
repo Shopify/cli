@@ -2,7 +2,7 @@ name: shopify-cli-next
 
 up:
   - node:
-      version: v18.16.1
+      version: v22.2.0
       pnpm: 8.15.7
       package_manager: pnpm@8.15.7
       packages: []
