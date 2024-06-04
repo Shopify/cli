@@ -36,14 +36,14 @@ export default class FunctionReplay extends Command {
     export: Flags.string({
       char: 'e',
       hidden: false,
-      description: 'Name of the Web Assembly export to invoke.',
+      description: 'Name of the WebAssembly export to invoke.',
       default: '_start',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
     json: Flags.boolean({
       char: 'j',
       hidden: false,
-      description: 'Output the function runner result as a JSON object.',
+      description: 'Output the function run result as a JSON object.',
       env: 'SHOPIFY_FLAG_JSON',
     }),
   }

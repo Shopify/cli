@@ -831,7 +831,7 @@
         "export": {
           "char": "e",
           "default": "_start",
-          "description": "Name of the Web Assembly export to invoke.",
+          "description": "Name of the WebAssembly export to invoke.",
           "env": "SHOPIFY_FLAG_EXPORT",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -842,7 +842,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the function runner result as a JSON object.",
+          "description": "Output the function run result as a JSON object.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -907,7 +907,7 @@
         "export": {
           "char": "e",
           "default": "_start",
-          "description": "Name of the wasm export to invoke.",
+          "description": "Name of the WebAssembly export to invoke.",
           "env": "SHOPIFY_FLAG_EXPORT",
           "hasDynamicHelp": false,
           "hidden": false,
