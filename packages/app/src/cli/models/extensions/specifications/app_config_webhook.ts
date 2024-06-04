@@ -5,7 +5,7 @@ import {CustomTransformationConfig, createConfigExtensionSpecification} from '..
 export const WebhooksSpecIdentifier = 'webhooks'
 
 const WebhookTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformFromWebhookConfig(content),
+  forward: transformFromWebhookConfig,
   reverse: (content: object) => transformToWebhookConfig(content),
 }
 

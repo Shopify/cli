@@ -192,15 +192,17 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           <Box flexDirection="column" key={index}>
             {chunk.lines.map((line, index) => (
               <Box key={index} flexDirection="row">
-                {showTimestamps ? (
-                  <Text>
-                    {currentTime()} {lineVertical}{' '}
-                  </Text>
-                ) : null}
-                <Text color={chunk.color}>{formatPrefix(chunk.prefix)}</Text>
                 <Text>
-                  {' '}
-                  {lineVertical} {line}
+                  {showTimestamps ? (
+                    <Text>
+                      {currentTime()} {lineVertical}{' '}
+                    </Text>
+                  ) : null}
+                  <Text color={chunk.color}>{formatPrefix(chunk.prefix)}</Text>
+                  <Text>
+                    {' '}
+                    {lineVertical} {line}
+                  </Text>
                 </Text>
               </Box>
             ))}

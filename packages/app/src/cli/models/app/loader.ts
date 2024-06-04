@@ -475,7 +475,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return extensionInstance
   }
 
-  private async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+  private async loadExtensions(appDirectory: string, appConfiguration: TConfig): Promise<ExtensionInstance[]> {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
@@ -565,7 +565,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     })
   }
 
-  private createWebhookSubscriptionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+  private createWebhookSubscriptionInstances(directory: string, appConfiguration: TConfig) {
     const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
     if (!specification) return []
     const specConfiguration = parseConfigurationObject(
@@ -595,7 +595,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return instances
   }
 
-  private async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
@@ -615,7 +615,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
             appConfiguration.path,
             directory,
           ).then((extensionInstance) =>
-            this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+            this.validateConfigurationExtensionInstance(
+              appConfiguration.client_id,
+              appConfiguration,
+              extensionInstance,
+            ),
           )
           return [instance, Object.keys(specConfiguration)] as const
         }),
@@ -649,10 +653,14 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return [...nonNullExtensionInstances, ...unusedExtensionInstances]
   }
 
-  private async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
+  private async validateConfigurationExtensionInstance(
+    apiKey: string,
+    appConfiguration: TConfig,
+    extensionInstance?: ExtensionInstance,
+  ) {
     if (!extensionInstance) return
 
-    const configContent = await extensionInstance.commonDeployConfig(apiKey)
+    const configContent = await extensionInstance.commonDeployConfig(apiKey, appConfiguration)
     return configContent ? extensionInstance : undefined
   }
 

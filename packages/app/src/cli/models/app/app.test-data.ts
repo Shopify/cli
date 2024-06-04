@@ -2,6 +2,7 @@ import {
   App,
   AppConfiguration,
   AppConfigurationSchema,
+  AppConfigurationWithoutPath,
   AppInterface,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
@@ -178,6 +179,8 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   }
   return {...defaultApp, ...app}
 }
+
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {

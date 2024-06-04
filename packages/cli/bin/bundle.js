@@ -3,7 +3,6 @@
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
 import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
-import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
@@ -96,5 +95,3 @@ esBuild({
     }),
   ],
 })
-
-cleanBundledDependencies(external)

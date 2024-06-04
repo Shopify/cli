@@ -19,6 +19,7 @@ export class GraphQLClientError extends RequestClientError {
   public constructor(message: string, statusCode: number, errors?: any[]) {
     super(message, statusCode)
     this.errors = errors
+    this.stack = undefined
   }
 }
 

@@ -33,7 +33,8 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
-  async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
+  async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
+    error.skipOclifErrorHandling = true
     await errorHandler(error, this.config)
     return Errors.handle(error)
   }
