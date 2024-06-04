@@ -906,7 +906,6 @@
         },
         "export": {
           "char": "e",
-          "default": "_start",
           "description": "Name of the WebAssembly export to invoke.",
           "env": "SHOPIFY_FLAG_EXPORT",
           "hasDynamicHelp": false,
