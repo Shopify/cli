@@ -3,6 +3,14 @@ import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
+import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
+import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
+import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
+import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
+import appPrivacyComplienceSpec from './specifications/app_config_privacy_compliance_webhooks.js'
+import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
+import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
   buildFlowTemplateExtension,
@@ -23,6 +31,21 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+
+export const CONFIG_EXTENSION_IDS = [
+  AppAccessSpecIdentifier,
+  AppHomeSpecIdentifier,
+  AppProxySpecIdentifier,
+  BrandingSpecIdentifier,
+  PosSpecIdentifier,
+  appPrivacyComplienceSpec,
+  WebhookSubscriptionSpecIdentifier,
+  WebhooksSpecIdentifier,
+  '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9',
+  '10457bd6-aeea-4f92-ab90-a9ab1e471276',
+  '0ea86845-466c-4f0e-b7f1-9d9496d93f4a',
+  '406bb2df-eaa4-44bc-860d-c714f4b65def',
+]
 
 /**
  * Class that represents an instance of a local extension
