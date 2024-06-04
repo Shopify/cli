@@ -120,7 +120,7 @@
     "zod-to-json-schema": "3.21.4"
   },
   "engines": {
-    "node": ">=18.12.0"
+    "node": ">=18.20.0"
   },
   "os": [
     "darwin",
