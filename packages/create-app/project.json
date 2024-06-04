@@ -23,6 +23,7 @@
     },
     "bundle": {
       "executor": "nx:run-commands",
+      "dependsOn": ["build", "cli:build"],
       "options": {
         "command": "node bin/bundle",
         "cwd": "packages/create-app"
