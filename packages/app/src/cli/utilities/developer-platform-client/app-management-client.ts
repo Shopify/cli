@@ -269,6 +269,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+    // TODO: remove when the endpoint is available
+    return stubbedExtensionSpecifications()
+
     const query = SpecificationsQuery
     const variables: SpecificationsQueryVariables = {appId}
     const result = await appManagementRequest<SpecificationsQuerySchema>(
@@ -1607,4 +1610,69 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
   const addedUids = added.map((mod) => mod.uid)
   const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
   return {added, removed, updated}
+}
+
+async function stubbedExtensionSpecifications(): Promise<RemoteSpecification[]> {
+  return [
+    {
+      name: 'App access',
+      externalName: 'App access',
+      externalIdentifier: 'app_access',
+      identifier: 'app_access',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+    {
+      name: 'App Home',
+      externalName: 'App Home',
+      externalIdentifier: 'app_home',
+      identifier: 'app_home',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+    {
+      name: 'Branding',
+      externalName: 'Branding',
+      externalIdentifier: 'branding',
+      identifier: 'branding',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+    {
+      name: 'Webhooks',
+      externalName: 'Webhooks',
+      externalIdentifier: 'webhooks',
+      identifier: 'webhooks',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+  ]
 }
