@@ -6,9 +6,11 @@ import {Box, Static, Text, TextProps, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
+import {AsyncLocalStorage} from 'node:async_hooks'
 
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
+  prefixColumnSize?: number
   abortSignal: AbortSignal
   showTimestamps?: boolean
   keepRunningAfterProcessesResolve?: boolean
@@ -34,6 +36,16 @@ function currentTime() {
   const minutes = addLeadingZero(currentDateTime.getMinutes())
   const seconds = addLeadingZero(currentDateTime.getSeconds())
   return `${hours}:${minutes}:${seconds}`
+}
+
+interface ConcurrentOutputContext {
+  outputPrefix: string
+}
+
+const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()
+
+function useConcurrentOutputContext<T>(context: ConcurrentOutputContext, callback: () => T): T {
+  return outputContextStore.run(context, callback)
 }
 
 /**
@@ -71,32 +83,60 @@ function currentTime() {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
+  prefixColumnSize,
   abortSignal,
   showTimestamps = true,
   keepRunningAfterProcessesResolve = false,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
-  const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
+
+  const calculatedPrefixColumnSize = useMemo(() => {
+    const maxColumnSize = 25
+
+    // If the prefixColumnSize is not provided, we calculate it based on the longest process prefix
+    const columnSize =
+      prefixColumnSize ??
+      processes.reduce((maxPrefixLength, process) => Math.max(maxPrefixLength, process.prefix.length), 0)
+
+    // Apply overall limit to the prefix column size
+    return Math.min(columnSize, maxColumnSize)
+  }, [processes, prefixColumnSize])
+
+  const addPrefix = (prefix: string, prefixes: string[]) => {
+    const index = prefixes.indexOf(prefix)
+    if (index !== -1) {
+      return index
+    }
+    prefixes.push(prefix)
+    return prefixes.length - 1
+  }
+
   const lineColor = useCallback(
     (index: number) => {
-      const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-      return concurrentColors[colorIndex]!
+      const colorIndex = index % concurrentColors.length
+      return concurrentColors[colorIndex]
     },
     [concurrentColors],
   )
+
   const writableStream = useCallback(
-    (process: OutputProcess, index: number) => {
+    (process: OutputProcess, prefixes: string[]) => {
       return new Writable({
         write(chunk, _encoding, next) {
-          const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-          addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')})
+          const context = outputContextStore.getStore()
+          const prefix = context?.outputPrefix ?? process.prefix
+          const log = chunk.toString('utf8')
+
+          const index = addPrefix(prefix, prefixes)
+          const lines = stripAnsi(log.replace(/(\n)$/, '')).split(/\n/)
+          addOrUpdateConcurrentUIEventOutput({prefix, index, output: lines.join('\n')})
           setProcessOutput((previousProcessOutput) => [
             ...previousProcessOutput,
             {
               color: lineColor(index),
-              prefix: process.prefix,
+              prefix,
               lines,
             },
           ])
@@ -107,13 +147,24 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     [lineColor],
   )
 
+  const formatPrefix = (prefix: string) => {
+    // Truncate prefix if needed
+    if (prefix.length > calculatedPrefixColumnSize) {
+      return prefix.substring(0, calculatedPrefixColumnSize)
+    }
+
+    return `${prefix}${' '.repeat(calculatedPrefixColumnSize - prefix.length)}`
+  }
+
   useEffect(() => {
     const runProcesses = async () => {
+      const prefixes: string[] = []
+
       try {
         await Promise.all(
-          processes.map(async (process, index) => {
-            const stdout = writableStream(process, index)
-            const stderr = writableStream(process, index)
+          processes.map(async (process) => {
+            const stdout = writableStream(process, prefixes)
+            const stderr = writableStream(process, prefixes)
             await process.action(stdout, stderr, abortSignal)
           }),
         )
@@ -137,20 +188,20 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   return (
     <Static items={processOutput}>
       {(chunk, index) => {
-        const prefixBuffer = ' '.repeat(prefixColumnSize - chunk.prefix.length)
         return (
           <Box flexDirection="column" key={index}>
             {chunk.lines.map((line, index) => (
               <Box key={index} flexDirection="row">
-                <Text color={chunk.color}>
+                <Text>
                   {showTimestamps ? (
                     <Text>
                       {currentTime()} {lineVertical}{' '}
                     </Text>
                   ) : null}
+                  <Text color={chunk.color}>{formatPrefix(chunk.prefix)}</Text>
                   <Text>
-                    {chunk.prefix}
-                    {prefixBuffer} {lineVertical} {line}
+                    {' '}
+                    {lineVertical} {line}
                   </Text>
                 </Text>
               </Box>
@@ -161,4 +212,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput}
+export {ConcurrentOutput, ConcurrentOutputContext, useConcurrentOutputContext}

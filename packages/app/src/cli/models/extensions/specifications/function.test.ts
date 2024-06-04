@@ -1,5 +1,9 @@
 import {FunctionConfigType} from './function.js'
-import {testDeveloperPlatformClient, testFunctionExtension} from '../../app/app.test-data.js'
+import {
+  placeholderAppConfiguration,
+  testDeveloperPlatformClient,
+  testFunctionExtension,
+} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -65,7 +69,11 @@ describe('functionConfiguration', () => {
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const got = await extension.deployConfig({apiKey, developerPlatformClient})
+      const got = await extension.deployConfig({
+        apiKey,
+        developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
+      })
 
       // Then
       expect(got).toEqual({
@@ -103,7 +111,11 @@ describe('functionConfiguration', () => {
       extension.configuration.ui = undefined
 
       // When
-      const got = await extension.deployConfig({apiKey, developerPlatformClient})
+      const got = await extension.deployConfig({
+        apiKey,
+        developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
+      })
 
       // Then
       expect(got).toEqual({
@@ -136,7 +148,11 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
 
       // When
-      const got = await extension.deployConfig({apiKey, developerPlatformClient})
+      const got = await extension.deployConfig({
+        apiKey,
+        developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
+      })
 
       // Then
       expect(getPathValue(got!, 'targets')).toEqual([
@@ -151,7 +167,9 @@ describe('functionConfiguration', () => {
     extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
 
     // When & Then
-    await expect(() => extension.deployConfig({apiKey, developerPlatformClient})).rejects.toThrowError(AbortError)
+    await expect(() =>
+      extension.deployConfig({apiKey, developerPlatformClient, appConfiguration: placeholderAppConfiguration}),
+    ).rejects.toThrowError(AbortError)
   })
 
   describe('with legacy type', async () => {
@@ -174,7 +192,11 @@ describe('functionConfiguration', () => {
         await writeFile(extension.inputQueryPath, inputQuery)
 
         // When
-        const got = await extension.deployConfig({apiKey, developerPlatformClient})
+        const got = await extension.deployConfig({
+          apiKey,
+          developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
+        })
 
         // Then
         expect(got).toEqual({
@@ -212,7 +234,11 @@ describe('functionConfiguration', () => {
         extension.configuration.ui = undefined
 
         // When
-        const got = await extension.deployConfig({apiKey, developerPlatformClient})
+        const got = await extension.deployConfig({
+          apiKey,
+          developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
+        })
 
         // Then
         expect(got).toEqual({
@@ -249,7 +275,11 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(localesDir, 'en.default.json'), JSON.stringify(enLocale))
 
       // When
-      const got = await extension.deployConfig({apiKey, developerPlatformClient})
+      const got = await extension.deployConfig({
+        apiKey,
+        developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
+      })
 
       // Then
       const expectedLocalization = {
@@ -273,6 +303,7 @@ describe('functionConfiguration', () => {
       const got = (await extension.deployConfig({
         apiKey,
         developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
       // Then
@@ -290,6 +321,7 @@ describe('functionConfiguration', () => {
       const got = (await extension.deployConfig({
         apiKey,
         developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
       // Then

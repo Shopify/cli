@@ -47,7 +47,7 @@
         "type": "Generic",
         "anchorLink": "requirements-themes",
         "title": "Requirements for themes",
-        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
+        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.5 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
         "codeblock": {
           "title": "Installation requirements for themes",
           "tabs": [

@@ -72,7 +72,8 @@ You can run this command only in a directory that matches the [default Shopify t
     }),
     nodelete: Flags.boolean({
       char: 'n',
-      description: 'Runs the dev command without deleting local files.',
+      description:
+        'Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.',
       env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({
@@ -144,6 +145,7 @@ You can run this command only in a directory that matches the [default Shopify t
 
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
+    const {ignore = [], only = []} = flags
 
     const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
 
@@ -177,6 +179,9 @@ You can run this command only in a directory that matches the [default Shopify t
       flagsToPass,
       'dev-preview': flags['dev-preview'],
       'theme-editor-sync': flags['theme-editor-sync'],
+      noDelete: flags.nodelete,
+      ignore,
+      only,
     })
   }
 }

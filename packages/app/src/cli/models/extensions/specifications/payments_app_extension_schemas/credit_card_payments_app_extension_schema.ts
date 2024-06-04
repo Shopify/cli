@@ -4,6 +4,7 @@ import {
   ConfirmationSchema,
   DeferredPaymentsSchema,
   MultipleCaptureSchema,
+  SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
 import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
@@ -12,11 +13,13 @@ import {zod} from '@shopify/cli-kit/node/schema'
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
 
 export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
+// If updating this limit, also update the limit in the Partners Web Platform (https://github.com/Shopify/partners-web-platform/) - MAX_CHECKOUT_PAYMENT_METHOD_FIELDS
 export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
 export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
   .merge(MultipleCaptureSchema)
+  .merge(SupportedBuyerContextsSchema)
   .required({
     refund_session_url: true,
     capture_session_url: true,
@@ -100,6 +103,7 @@ export function creditCardDeployConfigToCLIConfig(
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
     supports_deferred_payments: config.supports_deferred_payments,
@@ -125,6 +129,7 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
     supports_deferred_payments: config.supports_deferred_payments,

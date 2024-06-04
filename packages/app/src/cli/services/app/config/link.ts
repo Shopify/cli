@@ -32,6 +32,7 @@ import {fetchSpecifications} from '../../generate/fetch-extension-specifications
 import {SpecsAppConfiguration} from '../../../models/extensions/specifications/types/app_config.js'
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {reduceWebhooks} from '../../../models/extensions/specifications/transform/app_config_webhook.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
@@ -326,6 +327,26 @@ async function loadConfigurationFileName(
 }
 
 /**
+ * When we merge webhooks, we have the privacy and non-privacy compliance subscriptions
+ * separated for matching remote/local config purposes,
+ * but when we link we want to condense all webhooks together
+ * so we have to do an additional reduce here
+ */
+function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
+  const webhooksConfig = config.webhooks
+  if (webhooksConfig?.subscriptions?.length) {
+    const appUrl = config?.application_url as string | undefined
+    webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
+    webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({
+      uri: appUrl && uri.includes(appUrl) ? uri.replace(appUrl, '') : uri,
+      ...subscription,
+    }))
+  }
+
+  return config
+}
+
+/**
  * Build a new app configuration object based on the remote app's modules, and write it to the filesystem, merging
  * with the existing local file.
  */
@@ -375,13 +396,17 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
       linkedAppWasNewlyCreated: Boolean(remoteApp.newApp),
     }),
   }
+  // we need to condense the compliance and non-compliance webhooks again
+  // so compliance topics and topics with the same uri are under
+  // the same [[webhooks.subscriptions]] in the TOML
+  const condensedWebhooksAppConfiguration = condenseComplianceAndNonComplianceWebhooks(mergedAppConfiguration)
 
   // Always output using the canonical schema
   const schema = getAppVersionedSchema(specifications)
-  await writeAppConfigurationFile(mergedAppConfiguration, schema)
-  setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
+  await writeAppConfigurationFile(condensedWebhooksAppConfiguration, schema)
+  setCurrentConfigPreference(condensedWebhooksAppConfiguration, {configFileName, directory: appDirectory})
 
-  return mergedAppConfiguration
+  return condensedWebhooksAppConfiguration
 }
 
 /**

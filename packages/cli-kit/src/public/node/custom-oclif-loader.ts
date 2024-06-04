@@ -1,5 +1,5 @@
-import {cwd, joinPath} from './path.js'
 import {fileExistsSync} from './fs.js'
+import {cwd, joinPath} from './path.js'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
 
@@ -7,12 +7,16 @@ export class ShopifyConfig extends Config {
   constructor(options: Options) {
     const path = sniffForPath() ?? cwd()
     if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
+      // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
+      // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
+      // 2. To allow the Hydrogen team to load a local version for testing.
       options.pluginAdditions = {
         core: ['@shopify/cli-hydrogen'],
         path,
       }
     }
     super(options)
+
     // eslint-disable-next-line dot-notation
     this['determinePriority'] = this.customPriority
   }
@@ -27,7 +31,7 @@ export class ShopifyConfig extends Config {
       const aIndex = oclifPlugins.indexOf(pluginAliasA)
       const bIndex = oclifPlugins.indexOf(pluginAliasB)
 
-      // Hydrogen has higher priority than core plugins to override the custom init method.
+      // If there is an external cli-hydrogen plugin, its commands should take priority over bundled ('core') commands
       if (aCommand.pluginType === 'core' && bCommand.pluginAlias === '@shopify/cli-hydrogen') {
         // If b is hydrogen and a is core sort b first
         return 1
@@ -77,7 +81,7 @@ export class ShopifyConfig extends Config {
  *
  * @returns The value of the `--path` argument, if provided.
  */
-function sniffForPath(): string | undefined {
+export function sniffForPath(): string | undefined {
   const pathFlagIndex = process.argv.indexOf('--path')
   if (pathFlagIndex === -1) return
   const pathFlag = process.argv[pathFlagIndex + 1]

@@ -21,28 +21,72 @@ describe('startDevServer', () => {
     remoteChecksums: [],
     localThemeFileSystem,
     themeEditorSync: false,
+    options: {
+      ignore: ['assets/*.json'],
+      only: ['templates/*.liquid'],
+      noDelete: true,
+    },
   }
 
-  test('should upload the development theme to remote if themeEditorSync is false', async () => {
+  test('should upload the development theme to remote', async () => {
     // Given
-    const context = defaultServerContext
+    const context = {
+      ...defaultServerContext,
+    }
 
     // When
     await startDevServer(developmentTheme, context, () => {})
 
     // Then
-    expect(uploadTheme).toHaveBeenCalled()
+    expect(uploadTheme).toHaveBeenCalledWith(
+      developmentTheme,
+      context.session,
+      context.remoteChecksums,
+      context.localThemeFileSystem,
+      {
+        ignore: ['assets/*.json'],
+        nodelete: true,
+        only: ['templates/*.liquid'],
+      },
+    )
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
     // Given
-    const context = {...defaultServerContext, themeEditorSync: true}
+    const context = {
+      ...defaultServerContext,
+      themeEditorSync: true,
+    }
 
     // When
     await startDevServer(developmentTheme, context, () => {})
 
     // Then
-    expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalled()
-    expect(uploadTheme).toHaveBeenCalled()
+    expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
+      developmentTheme,
+      context.session,
+      context.remoteChecksums,
+      context.localThemeFileSystem,
+      {
+        ignore: ['assets/*.json'],
+        noDelete: true,
+        only: ['templates/*.liquid'],
+      },
+    )
+  })
+
+  test('should skip deletion of remote files if noDelete flag is passed', async () => {
+    // Given
+    const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
+
+    // When
+    await startDevServer(developmentTheme, context, () => {})
+
+    // Then
+    expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
+      ignore: ['assets/*.json'],
+      nodelete: true,
+      only: ['templates/*.liquid'],
+    })
   })
 })

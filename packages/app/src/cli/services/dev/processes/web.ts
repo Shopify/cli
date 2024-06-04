@@ -6,6 +6,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {exec} from '@shopify/cli-kit/node/system'
+import {isVerbose} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 interface LaunchWebOptions {
@@ -17,6 +18,7 @@ interface LaunchWebOptions {
   frontendServerPort?: number
   directory: string
   devCommand: string
+  preDevCommand?: string
   scopes?: string
   shopCustomDomain?: string
   hmrServerOptions?: {port: number; httpPaths: string[]}
@@ -60,7 +62,7 @@ export async function setupWebProcesses({
           }
         : undefined
 
-    return {
+    const process: WebProcess = {
       type: 'web',
       prefix: web.configuration.name ?? ['web', ...web.configuration.roles].join('-'),
       function: launchWebProcess,
@@ -75,11 +77,13 @@ export async function setupWebProcesses({
         frontendServerPort: frontendPort,
         directory: web.directory,
         devCommand: web.configuration.commands.dev,
+        preDevCommand: web.configuration.commands.predev,
         scopes,
         shopCustomDomain,
         hmrServerOptions,
       },
-    } as WebProcess
+    }
+    return process
   })
   return Promise.all(webProcessSetups)
 }
@@ -103,7 +107,7 @@ async function getWebProcessPort({
 }
 
 export async function launchWebProcess(
-  {stdout, stderr, abortSignal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
+  {stdout, stderr, abortSignal: signal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
   {
     port,
     apiKey,
@@ -113,6 +117,7 @@ export async function launchWebProcess(
     frontendServerPort,
     directory,
     devCommand,
+    preDevCommand,
     scopes,
     shopCustomDomain,
     hmrServerOptions,
@@ -140,16 +145,48 @@ export async function launchWebProcess(
     REMIX_DEV_ORIGIN: hostname,
   }
 
+  const baseCommandRunConfig = {signal, directory, port, env, stdout, stderr}
+
   // Support for multiple sequential commands: `echo "hello" && echo "world"`
-  const devCommands = devCommand.split('&&').map((cmd) => cmd.trim()) ?? []
-  for (const command of devCommands) {
+  // Pre-dev commands are run before the dev command, but without any output
+  if (preDevCommand) {
+    stdout.write(`Running pre-dev command: "${preDevCommand}"`)
+    await runCommands({...baseCommandRunConfig, command: preDevCommand, showOutput: isVerbose()})
+  }
+  await runCommands({...baseCommandRunConfig, command: devCommand, showOutput: true})
+}
+
+interface RunArrayOfCommandsOptions {
+  command: string
+  signal: AbortSignal
+  directory: string
+  port: number
+  showOutput: boolean
+  env: {[key: string]: string | undefined}
+  stdout?: Writable
+  stderr?: Writable
+}
+
+async function runCommands({
+  command,
+  signal,
+  directory,
+  port,
+  env,
+  showOutput,
+  stdout,
+  stderr,
+}: RunArrayOfCommandsOptions) {
+  const commands = command.split('&&').map((cmd) => cmd.trim()) ?? []
+  for (const command of commands) {
     const [cmd, ...args] = command.split(' ')
+    if (cmd?.length === 0) continue
     // eslint-disable-next-line no-await-in-loop
     await exec(cmd!, args, {
       cwd: directory,
-      stdout,
+      stdout: showOutput ? stdout : undefined,
       stderr,
-      signal: abortSignal,
+      signal,
       env: {
         ...env,
         PORT: `${port}`,

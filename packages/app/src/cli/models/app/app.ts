@@ -67,6 +67,8 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  */
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
 
+export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchema>
+
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
@@ -179,6 +181,7 @@ const baseWebConfigurationSchema = zod.object({
   port: zod.number().max(65536).min(0).optional(),
   commands: zod.object({
     build: zod.string().optional(),
+    predev: zod.string().optional(),
     dev: zod.string(),
   }),
   name: zod.string().optional(),

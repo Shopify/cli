@@ -1,5 +1,6 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -31,10 +32,18 @@ export interface DevProps {
     developmentStorePreviewEnabled?: boolean
     apiKey: string
     developerPlatformClient: DeveloperPlatformClient
+    extensions: ExtensionInstance[]
   }
   pollingTime?: number
   developerPreview: DeveloperPreviewController
   isEditionWeek?: boolean
+}
+
+const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: ExtensionInstance[]) => {
+  return Math.max(
+    ...processes.map((process) => process.prefix.length),
+    ...extensions.map((extension) => extension.handle.length),
+  )
 }
 
 const Dev: FunctionComponent<DevProps> = ({
@@ -197,6 +206,7 @@ const Dev: FunctionComponent<DevProps> = ({
     <>
       <ConcurrentOutput
         processes={errorHandledProcesses}
+        prefixColumnSize={calculatePrefixColumnSize(errorHandledProcesses, app.extensions)}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
       />
@@ -252,4 +262,4 @@ const Dev: FunctionComponent<DevProps> = ({
   )
 }
 
-export {Dev}
+export {Dev, calculatePrefixColumnSize}

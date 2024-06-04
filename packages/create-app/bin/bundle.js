@@ -1,4 +1,3 @@
-import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import {build as esBuild} from 'esbuild'
 import glob from 'fast-glob'
@@ -36,5 +35,3 @@ esBuild({
     }),
   ],
 })
-
-cleanBundledDependencies(external)

@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 3.61.0
+
+### Minor Changes
+
+- caa015042: Add optional_scopes to the app_access module
+- 79a951f3c: Allow empty names in config link
+- 87a6cc590: Dev stores are no longer automatically made transfer-disabled
+
+### Patch Changes
+
+- 0c117d0f4: Updated the output of `app dev` to include extension handles in log messages.
+- b2b041f56: Create new remote only extension app includes the access scopes
+- Updated dependencies [65be1de87]
+- Updated dependencies [79a951f3c]
+- Updated dependencies [87a6cc590]
+- Updated dependencies [0c117d0f4]
+- Updated dependencies [009a43078]
+  - @shopify/create-app@3.61.0
+  - @shopify/cli-kit@3.61.0
+  - @shopify/plugin-cloudflare@3.61.0
+
 ## 3.60.0
 
 ### Minor Changes

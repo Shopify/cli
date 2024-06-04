@@ -7,10 +7,10 @@ export interface hydrogengenerateroutes {
   '--adapter <value>'?: string
 
   /**
-   * Generate TypeScript files
-   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT
+   * Overwrites the destination directory and files if they already exist.
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
-  '--typescript'?: ''
+  '-f, --force'?: ''
 
   /**
    * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).
@@ -19,14 +19,14 @@ export interface hydrogengenerateroutes {
   '--locale-param <value>'?: string
 
   /**
-   * Overwrites the destination directory and files if they already exist.
-   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
-   */
-  '-f, --force'?: ''
-
-  /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
    * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
   '--path <value>'?: string
+
+  /**
+   * Generate TypeScript files
+   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT
+   */
+  '--typescript'?: ''
 }

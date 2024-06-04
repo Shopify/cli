@@ -34,7 +34,7 @@ export interface themedev {
   '--no-color'?: ''
 
   /**
-   * Runs the dev command without deleting local files.
+   * Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.
    * @environment SHOPIFY_FLAG_NODELETE
    */
   '-n, --nodelete'?: ''

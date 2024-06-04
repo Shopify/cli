@@ -1,4 +1,5 @@
 import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
+import {subscribeAndStartPolling} from './app-logs-polling.js'
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
@@ -22,10 +23,12 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
+vi.mock('@shopify/cli-kit/node/environment')
 
 beforeEach(() => {
   // mocked for draft extensions
@@ -42,6 +45,7 @@ beforeEach(() => {
     token: 'admin-token',
   })
   vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
+  vi.mocked(getEnvironmentVariables).mockReturnValue({})
 })
 
 describe('setup-dev-processes', () => {
@@ -190,7 +194,7 @@ describe('setup-dev-processes', () => {
     })
     expect(res.processes[4]).toMatchObject({
       type: 'theme-app-extensions',
-      prefix: 'extensions',
+      prefix: 'theme-extensions',
       function: runThemeAppExtensionsServer,
       options: {
         adminSession: {
@@ -234,6 +238,99 @@ describe('setup-dev-processes', () => {
           '/ping': `http://localhost:${hmrPort}`,
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,
+        },
+      },
+    })
+  })
+
+  test('process list includes app polling when envVar is enabled', async () => {
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_ENABLE_APP_LOG_POLLING: '1'})
+
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      subscriptionProductUrl: '/products/999999',
+      checkoutCartUrl: '/cart/999999:1',
+      theme: '1',
+      directory: '',
+      reset: false,
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      noTunnel: false,
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
+    const draftable = await testTaxCalculationExtension()
+    const theme = await testThemeExtensions()
+    const localApp = testAppWithConfig({
+      config: {},
+      app: {
+        webs: [
+          {
+            directory: 'web',
+            configuration: {
+              roles: [WebType.Backend, WebType.Frontend],
+              commands: {dev: 'npm exec remix dev'},
+              webhooks_path: '/webhooks',
+              hmr_server: {
+                http_paths: ['/ping'],
+              },
+            },
+          },
+        ],
+        allExtensions: [previewable, draftable, theme],
+      },
+    })
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecret: 'api-secret',
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+    }
+
+    const graphiqlKey = 'somekey'
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey,
+    })
+
+    expect(res.processes[6]).toMatchObject({
+      type: 'app-logs-subscribe',
+      prefix: 'app-logs',
+      function: subscribeAndStartPolling,
+      options: {
+        developerPlatformClient,
+        appLogsSubscribeVariables: {
+          shopIds: ['123456789'],
+          apiKey: 'api-key',
+          token: 'token',
         },
       },
     })

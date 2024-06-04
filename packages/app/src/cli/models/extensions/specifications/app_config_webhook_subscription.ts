@@ -1,6 +1,8 @@
-import {WebhookSimplifyConfig} from './app_config_webhook.js'
-import {UriValidation, removeTrailingSlash} from './validation/common.js'
+import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
+import {mergeAllWebhooks} from './transform/app_config_webhook.js'
+import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {CurrentAppConfiguration} from '../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -19,7 +21,7 @@ interface TransformedWebhookSubscription {
 export const SingleWebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
   api_version: zod.string(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation, {required_error: 'Missing value at'}),
+  uri: zod.preprocess(removeTrailingSlash, WebhookSubscriptionUriValidation, {required_error: 'Missing value at'}),
   sub_topic: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
@@ -66,13 +68,23 @@ function transformToWebhookSubscriptionConfig(content: object) {
 
   return {
     webhooks: {
-      subscriptions: subscriptionsArray,
+      subscriptions: mergeAllWebhooks(subscriptionsArray),
     },
   }
 }
 
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => content,
+  forward: (content, appConfiguration) => {
+    const webhookConfig = content as WebhookSubscription
+    let appUrl: string | undefined
+    if ('application_url' in appConfiguration) {
+      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+    }
+    return {
+      ...webhookConfig,
+      uri: appUrl && webhookConfig.uri.startsWith('/') ? `${appUrl}${webhookConfig.uri}` : webhookConfig.uri,
+    }
+  },
   reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
 }
 
@@ -80,7 +92,6 @@ const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
   identifier: WebhookSubscriptionSpecIdentifier,
   schema: SingleWebhookSubscriptionSchema,
   transformConfig: WebhookSubscriptionTransformConfig,
-  simplify: WebhookSimplifyConfig,
   uidStrategy: 'dynamic',
 })
 

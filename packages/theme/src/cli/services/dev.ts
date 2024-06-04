@@ -1,7 +1,7 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {startDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerSession} from '../utilities/theme-environment/types.js'
+import {DevServerContext, DevServerSession} from '../utilities/theme-environment/types.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -30,6 +30,9 @@ interface DevOptions {
   flagsToPass: string[]
   'dev-preview': boolean
   'theme-editor-sync': boolean
+  noDelete: boolean
+  ignore: string[]
+  only: string[]
 }
 
 export async function dev(options: DevOptions) {
@@ -57,11 +60,16 @@ export async function dev(options: DevOptions) {
     storefrontToken: options.storefrontToken,
     expiresAt: new Date(),
   }
-  const ctx = {
+  const ctx: DevServerContext = {
     session,
     remoteChecksums,
     localThemeFileSystem,
     themeEditorSync: options['theme-editor-sync'],
+    options: {
+      noDelete: options.noDelete,
+      ignore: options.ignore,
+      only: options.only,
+    },
   }
 
   await startDevServer(options.theme, ctx, () => {

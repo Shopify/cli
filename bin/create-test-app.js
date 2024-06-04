@@ -147,8 +147,12 @@ program
       await nodeExec(commands, args, { ...defaults, ...options });
     };
 
-    const appDev = async () => {
-      await appNodeExec(["shopify", "app", "dev"], []);
+    const appDev = async (reset=false) => {
+      if (reset) {
+        await appNodeExec(["shopify", "app", "dev"], ["--reset"]);
+      } else {
+        await appNodeExec(["shopify", "app", "dev"], []);
+      }
     };
 
     const installGlobally = async (packageManager, install) => {
@@ -273,7 +277,7 @@ program
         "--name=sub-ui-ext",
         "--flavor=vanilla-js",
       ]);
-      await appDev();
+      await appDev(true);
     }
 
     if (extensions.has("theme")) {

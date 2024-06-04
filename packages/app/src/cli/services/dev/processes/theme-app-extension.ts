@@ -99,7 +99,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
 
   return {
     type: 'theme-app-extensions',
-    prefix: 'extensions',
+    prefix: 'theme-extensions',
     function: runThemeAppExtensionsServer,
     options: {
       adminSession,

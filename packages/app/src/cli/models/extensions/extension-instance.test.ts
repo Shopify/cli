@@ -11,6 +11,7 @@ import {
   testFlowActionExtension,
   testDeveloperPlatformClient,
   testSingleWebhookSubscriptionExtension,
+  placeholderAppConfiguration,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -141,7 +142,11 @@ describe('deployConfig', async () => {
   test('returns deployConfig when defined', async () => {
     const extensionInstance = await testThemeExtensions()
 
-    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
+    const got = await extensionInstance.deployConfig({
+      developerPlatformClient,
+      apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
+    })
 
     expect(got).toMatchObject({theme_extension: {files: {}}})
   })
@@ -149,7 +154,11 @@ describe('deployConfig', async () => {
   test('returns transformed config when defined', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
-    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
+    const got = await extensionInstance.deployConfig({
+      developerPlatformClient,
+      apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
+    })
 
     expect(got).toMatchObject({embedded: true})
   })
@@ -157,7 +166,11 @@ describe('deployConfig', async () => {
   test('returns undefined when the transformed config is empty', async () => {
     const extensionInstance = await testAppConfigExtensions(true)
 
-    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
+    const got = await extensionInstance.deployConfig({
+      developerPlatformClient,
+      apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
+    })
 
     expect(got).toBeUndefined()
   })
@@ -176,6 +189,7 @@ describe('bundleConfig', async () => {
       },
       developerPlatformClient,
       apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
     })
 
     expect(got).toEqual(
@@ -198,6 +212,7 @@ describe('bundleConfig', async () => {
       },
       developerPlatformClient,
       apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
     })
 
     expect(got).toEqual(
@@ -220,6 +235,7 @@ describe('bundleConfig', async () => {
       },
       developerPlatformClient,
       apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
     })
 
     expect(got).toEqual(
@@ -241,6 +257,7 @@ describe('bundleConfig', async () => {
       },
       developerPlatformClient,
       apiKey: 'apiKey',
+      appConfiguration: placeholderAppConfiguration,
     })
 
     expect(got).toEqual(

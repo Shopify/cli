@@ -473,6 +473,51 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(/Duplicated handle/)
   })
 
+  test('throws an error if the app has more than one print action with the same target', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "ui_extension"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.print-action.render"
+
+      [[extensions]]
+      type = "ui_extension"
+      handle = "handle-2"
+      name = "my_extension_2"
+      description = "custom description"
+
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.print-action.render"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+
+    // Create a temporary ActionExtension.js file
+    const extensionDirectory = joinPath(tmpDir, 'extensions', 'my_extension_1', 'src')
+    await mkdir(extensionDirectory)
+
+    const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+    await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+    // When
+    await expect(loadTestingApp()).rejects.toThrow(
+      'Duplicated print action target "admin.product-details.print-action.render" in extensions "my_extension_1" and "my_extension_2". You can only have one print action extension per target in an app. Please remove the duplicates.',
+    )
+  })
+
   test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
     // Given
     await writeConfig(appConfiguration, {
@@ -1917,11 +1962,7 @@ wrong = "property"
           api_version: '2024-01',
           subscriptions: [
             {
-              topics: ['orders/create'],
-              uri: 'https://example.com',
-            },
-            {
-              topics: ['orders/delete'],
+              topics: ['orders/create', 'orders/delete'],
               uri: 'https://example.com',
             },
           ],
@@ -2727,9 +2768,8 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2755,9 +2795,8 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2822,27 +2861,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const expectedParsedConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          topics: ['products/create'],
-        },
-        {
-          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          topics: ['products/update'],
-        },
-        {uri: 'https://example.com', topics: ['products/create']},
-        {uri: 'https://example.com', topics: ['products/update']},
-        {uri: 'pubsub://my-project-123:my-topic', topics: ['products/create']},
-        {uri: 'pubsub://my-project-123:my-topic', topics: ['products/update']},
-      ],
-    }
-
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(expectedParsedConfig)
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
@@ -2857,7 +2878,7 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2868,15 +2889,15 @@ describe('WebhooksSchema', () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
         {uri: 'https://example.com', topics: ['products/create']},
+        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 2, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2896,11 +2917,8 @@ describe('WebhooksSchema', () => {
     const expectedParsedConfig = {
       api_version: '2021-07',
       subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create']},
-        {uri: 'https://example.com', topics: ['products/update']},
-        {uri: 'https://example.com2', topics: ['products/create']},
-        {uri: 'https://example.com2', topics: ['products/update']},
-        {uri: 'https://example.com', topics: ['products/delete']},
+        {uri: 'https://example.com', topics: ['products/create', 'products/delete', 'products/update']},
+        {uri: 'https://example.com2', topics: ['products/create', 'products/update']},
       ],
     }
 
@@ -2937,9 +2955,8 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2981,7 +2998,7 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -3006,7 +3023,7 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -3031,7 +3048,7 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -3058,7 +3075,7 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'metaobjects/create'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'metaobjects/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -3103,7 +3120,7 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/update'],
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/update'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
