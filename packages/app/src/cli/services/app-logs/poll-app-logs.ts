@@ -26,10 +26,12 @@ export const pollAppLogs = async ({
   stdout,
   appLogsFetchInput: {jwtToken, cursor},
   apiKey,
+  resubscribeCallback,
 }: {
   stdout: Writable
   appLogsFetchInput: {jwtToken: string; cursor?: string}
   apiKey: string
+  resubscribeCallback: () => Promise<void>
 }) => {
   const url = await generateFetchAppLogUrl(cursor)
   const response = await fetch(url, {
@@ -38,6 +40,11 @@ export const pollAppLogs = async ({
       Authorization: `Bearer ${jwtToken}`,
     },
   })
+
+  if (response.status === 401) {
+    await resubscribeCallback()
+    return
+  }
 
   if (!response.ok) {
     // We should add some exponential backoff here to not spam partners
@@ -92,6 +99,7 @@ export const pollAppLogs = async ({
         cursor: cursorFromResponse,
       },
       apiKey,
+      resubscribeCallback,
     }).catch((error) => {
       throw new Error(`${error} error while fetching.`)
     })

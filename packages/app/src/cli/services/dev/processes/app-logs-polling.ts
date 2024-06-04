@@ -46,7 +46,7 @@ export async function setupAppLogsPollingProcess({
 }
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
-  {stdout},
+  {stdout, stderr, abortSignal},
   {developerPlatformClient, appLogsSubscribeVariables},
 ) => {
   const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
@@ -65,5 +65,15 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
 
   const apiKey = appLogsSubscribeVariables.apiKey
   await createLogsDir(apiKey)
-  await pollAppLogs({stdout, appLogsFetchInput: {jwtToken}, apiKey})
+  await pollAppLogs({
+    stdout,
+    appLogsFetchInput: {jwtToken},
+    apiKey,
+    resubscribeCallback: () => {
+      return subscribeAndStartPolling(
+        {stdout, stderr, abortSignal},
+        {developerPlatformClient, appLogsSubscribeVariables},
+      )
+    },
+  })
 }
