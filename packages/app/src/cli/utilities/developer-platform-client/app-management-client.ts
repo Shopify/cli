@@ -174,7 +174,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    return this.token()
+    const newToken = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const session = await this.session()
+    if (newToken) {
+      session.token = newToken
+    }
+    return session.token
   }
 
   async businessPlatformToken(): Promise<string> {
