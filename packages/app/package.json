@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
-    "@oclif/core": "3.26.5",
+    "@oclif/core": "3.26.9",
     "@shopify/cli-kit": "3.61.0",
     "@shopify/create-app": "3.61.0",
     "@shopify/function-runner": "4.1.1",
