@@ -14,7 +14,7 @@ on:
         default: '18.20.3'
         type: choice
         options:
-          - 18.20.3
+          - 18.20.2
           - 20.14.0
           - 22.2.0
       os:
