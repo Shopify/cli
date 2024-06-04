@@ -54,6 +54,8 @@ export function isAddressAllowedForDeliveryMethod(address: string, deliveryMetho
 }
 
 function isLocal(address: string): boolean {
+  if (!isAnyHttp(address)) return false
+
   const url = new URL(address.toLowerCase())
   return url.hostname === 'localhost'
 }
