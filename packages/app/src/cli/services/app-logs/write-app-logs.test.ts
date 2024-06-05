@@ -13,6 +13,8 @@ const APP_LOG: AppEventData = {
   event_type: 'function_run',
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
+  source: 'my-function',
+  source_namespace: 'extensions',
   log_timestamp: '2024-05-22T15:06:41.827379Z',
 }
 const API_KEY = 'apiKey'

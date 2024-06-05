@@ -1,4 +1,5 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
@@ -17,6 +18,8 @@ export interface AppEventData {
   api_client_id: number
   payload: string
   event_type: string
+  source: string
+  source_namespace: string
   cursor: string
   status: 'success' | 'failure'
   log_timestamp: string
@@ -61,23 +64,25 @@ export const pollAppLogs = async ({
       const payload = JSON.parse(functionLog.payload)
       const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
 
-      if (functionLog.status === 'success') {
-        stdout.write(`Function executed successfully using ${fuel}M instructions.`)
-      } else if (functionLog.status === 'failure') {
-        stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
-      }
-
-      // print the logs from the appLogs as well
-      const logs = JSON.parse(functionLog.payload).logs
-      if (logs.length > 0) {
-        stdout.write(logs)
-      }
-
       // eslint-disable-next-line no-await-in-loop
-      await writeAppLogsToFile({
-        appLog: functionLog,
-        apiKey,
-        stdout,
+      await useConcurrentOutputContext({outputPrefix: functionLog.source}, async () => {
+        if (functionLog.status === 'success') {
+          stdout.write(`Function executed successfully using ${fuel}M instructions.`)
+        } else if (functionLog.status === 'failure') {
+          stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
+        }
+
+        // print the logs from the appLogs as well
+        const logs = JSON.parse(functionLog.payload).logs
+        if (logs.length > 0) {
+          stdout.write(logs)
+        }
+
+        await writeAppLogsToFile({
+          appLog: functionLog,
+          apiKey,
+          stdout,
+        })
       })
     }
   }
