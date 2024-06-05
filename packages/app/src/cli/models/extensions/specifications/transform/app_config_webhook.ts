@@ -95,7 +95,6 @@ function findSubscription(subscriptions: WebhookSubscription[], subscription: We
   return subscriptions.find(
     (sub) =>
       sub.uri === subscription.uri &&
-      sub.sub_topic === subscription.sub_topic &&
       deepCompare(sub.include_fields ?? [], subscription.include_fields ?? []) &&
       sub.filter === subscription.filter,
   )

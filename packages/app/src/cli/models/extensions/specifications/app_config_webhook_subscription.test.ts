@@ -21,12 +21,6 @@ describe('webhook_subscription', () => {
           },
           {
             api_version: '2024-01',
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/create',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
-            api_version: '2024-01',
             include_fields: ['variants', 'title'],
             topic: 'orders/create',
             uri: 'https://valid-url',
@@ -69,12 +63,6 @@ describe('webhook_subscription', () => {
               include_fields: ['variants', 'title'],
               topics: ['orders/create'],
               uri: 'https://valid-url',
-            },
-            {
-              api_version: '2024-01',
-              sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create'],
-              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
           ],
         },
