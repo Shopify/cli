@@ -4,7 +4,6 @@ import {appFlags} from '../../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
 export default class FunctionRun extends Command {
   static summary = 'Run a function locally for testing.'
@@ -39,7 +38,6 @@ export default class FunctionRun extends Command {
 
   public async run() {
     const {flags} = await this.parse(FunctionRun)
-    currentProcessIsGlobal()
     await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
