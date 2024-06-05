@@ -92,7 +92,7 @@ FLAGS
       --no-color                        Disable color output.
       --path=<value>                    The path to your app directory.
       --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
-      --verbose                         Increase the verbosity of the logs.
+      --verbose                         Increase the verbosity of the output.
 
 DESCRIPTION
   Build the app, including extensions.
@@ -119,7 +119,7 @@ FLAGS
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Fetch your app configuration from the Partner Dashboard.
@@ -146,7 +146,7 @@ FLAGS
   --no-color      Disable color output.
   --path=<value>  The path to your app directory.
   --reset         Reset current configuration.
-  --verbose       Increase the verbosity of the logs.
+  --verbose       Increase the verbosity of the output.
 
 DESCRIPTION
   Activate an app configuration.
@@ -175,7 +175,7 @@ FLAGS
       --path=<value>                The path to your app directory.
       --reset                       Reset all your settings.
       --source-control-url=<value>  URL associated with the new app version.
-      --verbose                     Increase the verbosity of the logs.
+      --verbose                     Increase the verbosity of the output.
       --version=<value>             Optional version tag that will be associated with this app version. If not provided,
                                     an auto-generated identifier will be generated for this app version.
 
@@ -222,7 +222,7 @@ FLAGS
       --theme-app-extension-port=<value>  Local port of the theme app extension development server.
       --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
                                           "https://my-tunnel-url:port".
-      --verbose                           Increase the verbosity of the logs.
+      --verbose                           Increase the verbosity of the output.
 
 DESCRIPTION
   Run the app.
@@ -278,7 +278,7 @@ FLAGS
       --env-file=<value>  Specify an environment file to update if the update flag is set
       --no-color          Disable color output.
       --path=<value>      The path to your app directory.
-      --verbose           Increase the verbosity of the logs.
+      --verbose           Increase the verbosity of the output.
 
 DESCRIPTION
   Pull app and extensions environment variables.
@@ -301,7 +301,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
       --no-color        Disable color output.
       --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Display app and extensions environment variables.
@@ -321,7 +321,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Compile a function to wasm.
@@ -344,7 +344,7 @@ FLAGS
   -j, --json            Log the run result as a JSON object.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Run a function locally for testing.
@@ -368,7 +368,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your function directory.
       --stdout             Output the schema to stdout instead of writing to a file.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -392,7 +392,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
@@ -422,7 +422,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
       --reset              Reset all your settings.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Generate a new app Extension.
@@ -452,7 +452,7 @@ FLAGS
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Import dashboard-managed extensions into your app.
@@ -471,7 +471,7 @@ FLAGS
       --json            format output as JSON
       --no-color        Disable color output.
       --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
       --web-env         Outputs environment variables necessary for running and deploying web/.
 
 DESCRIPTION
@@ -506,7 +506,7 @@ FLAGS
                                   - <remix|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
-      --verbose                   Increase the verbosity of the logs.
+      --verbose                   Increase the verbosity of the output.
 ```
 
 ## `shopify app:release --version <version>`
@@ -524,7 +524,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
       --reset              Reset all your settings.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
       --version=<value>    (required) The name of the app version to release.
 
 DESCRIPTION
@@ -548,7 +548,7 @@ FLAGS
       --json               Output the versions list as JSON.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   List deployed versions of your app.
@@ -1583,7 +1583,7 @@ FLAGS
       --no-color             Disable color output.
       --path=<value>         The path to your theme directory.
       --print                Output active config to STDOUT
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Validate the theme.
@@ -1610,7 +1610,7 @@ FLAGS
       --password=<value>     Password generated from the Theme Access app.
       --port=<value>         [default: 9293] Local port to serve authentication service.
       --url=<value>          [default: /] The url to be used as context
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool
@@ -1640,7 +1640,7 @@ FLAGS
   -t, --theme=<value>...     Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Delete remote themes from the connected store. This command can't be undone.
@@ -1721,7 +1721,7 @@ FLAGS
       Synchronize Theme Editor updates in the local theme files.
 
   --verbose
-      Increase the verbosity of the logs.
+      Increase the verbosity of the output.
 
 DESCRIPTION
   Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to
@@ -1776,7 +1776,7 @@ FLAGS
       --json                 Output the theme info as JSON.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
@@ -1800,7 +1800,7 @@ FLAGS
                            Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
       --no-color           Disable color output.
       --path=<value>       The path to your theme directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Clones a Git repository to use as a starting point for building a new theme.
@@ -1827,7 +1827,7 @@ USAGE
 
 FLAGS
   --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  --verbose   Increase the verbosity of the output.
 
 DESCRIPTION
   Start a Language Server Protocol server.
@@ -1855,7 +1855,7 @@ FLAGS
       --password=<value>     Password generated from the Theme Access app.
       --role=<option>        Only list themes with the given role.
                              <options: live|unpublished|development>
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
@@ -1880,7 +1880,7 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Opens the preview of your remote theme.
@@ -1907,7 +1907,7 @@ USAGE
 FLAGS
   --no-color      Disable color output.
   --path=<value>  The path to your theme directory.
-  --verbose       Increase the verbosity of the logs.
+  --verbose       Increase the verbosity of the output.
 
 DESCRIPTION
   Package your theme into a .zip file, ready to upload to the Online Store.
@@ -1937,7 +1937,7 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Set a remote theme as the live theme.
@@ -1976,7 +1976,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Download your remote theme files locally.
@@ -2012,7 +2012,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
@@ -2070,7 +2070,7 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Renames an existing theme.
@@ -2096,7 +2096,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name.
