@@ -161,7 +161,11 @@ function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance)
   const remoteVersionConfig = remoteSource.activeVersion?.config
   const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : {}
   const localConfig = extension.configuration as unknown as SingleWebhookSubscriptionType
-  return remoteVersionConfigObj.topic === localConfig.topic && remoteVersionConfigObj.uri === localConfig.uri
+  return (
+    remoteVersionConfigObj.topic === localConfig.topic &&
+    remoteVersionConfigObj.uri === localConfig.uri &&
+    remoteVersionConfigObj.filter === localConfig.filter
+  )
 }
 
 function loadExtensionIds(
