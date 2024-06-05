@@ -14,6 +14,7 @@ export const writeAppLogsToFile = async ({
   stdout: Writable
 }) => {
   const identifier = randomUUID().substring(0, 6)
+
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
   const fileName = `${formattedTimestamp}_${identifier}.json`
   const path = joinPath(apiKey, fileName)
@@ -35,11 +36,14 @@ export const writeAppLogsToFile = async ({
   }
 }
 
-function formatTimestampToFilename(timestamp: string): string {
-  // 2024-05-22T15:06:41.827379Z
-  const year = timestamp.substring(0, 10).replace(/-/g, '')
-  const time = timestamp.substring(11, 19).replace(/:/g, '')
-  const microseconds = timestamp.substring(20, 26)
-  const timezone = timestamp.substring(26)
-  return `${year}_${time}_${microseconds}${timezone}`
+function formatTimestampToFilename(logTimestamp: string): string {
+  const date = new Date(logTimestamp)
+  const year = date.getUTCFullYear()
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
+  const day = date.getUTCDate().toString().padStart(2, '0')
+  const hours = date.getUTCHours().toString().padStart(2, '0')
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+  const seconds = date.getUTCSeconds().toString().padStart(2, '0')
+  const milliseconds = date.getUTCMilliseconds().toString().padStart(3, '0')
+  return `${year}${month}${day}_${hours}${minutes}${seconds}_${milliseconds}Z`
 }

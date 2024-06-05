@@ -29,7 +29,7 @@ describe('writeAppLogsToFile', () => {
     const logData = expectedLogDataFromAppEvent(APP_LOG)
 
     // determine the fileName and path
-    const fileName = '20240522_150641_827379Z'
+    const fileName = '20240522_150641_827Z'
     const path = joinPath(API_KEY, fileName)
 
     // When

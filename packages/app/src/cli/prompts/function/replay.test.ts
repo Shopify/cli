@@ -1,7 +1,7 @@
 import {selectFunctionRunPrompt} from './replay.js'
+import {FunctionRunData} from '../../services/function/replay.js'
 import {describe, expect, vi, test} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {FunctionRunData} from '../../services/function/replay.js'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
