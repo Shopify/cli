@@ -1,5 +1,8 @@
+import {isUnitTest} from './context/local.js'
+import {sniffForPath} from './custom-oclif-loader.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
+import {cwd} from './path.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {execaSync} from 'execa'
@@ -8,25 +11,33 @@ let _isGlobal: boolean | undefined
 
 /**
  * Returns true if the current process is running in a global context.
- * Caches the value so that subsequent calls don't need to re-run the check.
  *
+ * @param argv - The arguments passed to the process.
  * @returns `true` if the current process is running in a global context.
  */
-export function currentProcessIsGlobal(): boolean {
-  // Cache the value so that we don't run `execaSync` multiple times in the same process.
-  if (_isGlobal !== undefined) return _isGlobal
+export function currentProcessIsGlobal(argv = process.argv): boolean {
+  // If we are running tests, we need to disable the cache
+  if (_isGlobal !== undefined && !isUnitTest()) return _isGlobal
 
-  // Directory where the global CLI would be installed
-  const npmGlobalPrefix = execaSync('npm', ['prefix', '-g']).stdout.trim()
+  // Path where the current project is (app/hydrogen)
+  const path = sniffForPath() ?? cwd()
 
-  // Path to the shopify binary used to run the CLI
-  const binDir = process.argv[1] ?? ''
+  // Closest parent directory to contain a package.json file or node_modules directory
+  // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
+  const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
 
-  // If binDir starts with npmPrefix, then we are running a global binary
-  const isGlobal = binDir.startsWith(npmGlobalPrefix.trim())
+  // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
+  const binDir = argv[1] ?? ''
 
-  _isGlobal = isGlobal
-  return isGlobal
+  // If binDir starts with npmPrefix, then we are running a local CLI
+  const isLocal = binDir.startsWith(npmPrefix.trim())
+
+  console.log('npmPrefix', npmPrefix)
+  console.log('binDir', binDir)
+  console.log('isLocal', isLocal)
+
+  _isGlobal = !isLocal
+  return _isGlobal
 }
 
 /**
@@ -86,11 +97,10 @@ export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptRe
  * Infers the package manager used by the global CLI.
  *
  * @param argv - The arguments passed to the process.
- * @param env - The environment to check. Defaults to `process.env`.
  * @returns The package manager used by the global CLI.
  */
-export function inferPackageManagerForGlobalCLI(argv = process.argv, env = process.env): PackageManager {
-  if (!currentProcessIsGlobal(env)) return 'unknown'
+export function inferPackageManagerForGlobalCLI(argv = process.argv): PackageManager {
+  if (!currentProcessIsGlobal(argv)) return 'unknown'
 
   // argv[1] contains the path of the executed binary
   const processArgv = argv[1] ?? ''
