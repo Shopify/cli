@@ -335,13 +335,14 @@ export class App<
   async manifest(): Promise<JsonMapType> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
-        const config = await module.commonDeployConfig('')
+        const config = await module.commonDeployConfig('', this.configuration)
         return {
           type: module.type,
           name: module.name,
           handle: module.handle,
           uid: module.devUUID,
-          config,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          config: config ?? ({} as {[key: string]: any}),
         }
       }),
     )

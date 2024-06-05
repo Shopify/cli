@@ -128,6 +128,7 @@ export async function setupDevProcesses({
           developerPlatformClient,
           url: network.proxyUrl,
           organizationId: remoteApp.organizationId,
+          storeFqdn,
         })
       : await setupDraftableExtensionsProcess({
           localApp,

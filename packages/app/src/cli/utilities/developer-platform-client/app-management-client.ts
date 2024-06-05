@@ -117,6 +117,7 @@ import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partn
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
+import {devSessionRequest} from '@shopify/cli-kit/node/api/dev-session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {randomUUID} from 'node:crypto'
@@ -607,10 +608,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return versionResult
   }
 
-  async devSessionDeploy({appId, url, organizationId}: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
+  async devSessionDeploy({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
     const query = DevSessionDeploy
-    const variables: DevSessionDeployVariables = {appId, url}
-    return appManagementRequest<DevSessionDeploySchema>(organizationId, query, await this.token(), variables)
+    const variables: DevSessionDeployVariables = {appId, assetsUrl}
+    return devSessionRequest<DevSessionDeploySchema>(shopName, query, await this.token(), variables)
   }
 
   async release({

@@ -24,6 +24,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     userProvidedConfigName: commandOptions.configName,
   })
   let developerPlatformClient = selectDeveloperPlatformClient({configuration})
+
   const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {
     storeFqdn,

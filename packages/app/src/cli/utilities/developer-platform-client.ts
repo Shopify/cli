@@ -161,9 +161,9 @@ export type AppDeployOptions = AppDeployVariables & {
 }
 
 export interface DevSessionDeployOptions {
-  organizationId: string
+  shopName: string
   appId: string
-  url: string
+  assetsUrl: string
 }
 
 type WithUserErrors<T> = T & {

@@ -14,6 +14,7 @@ import {Writable} from 'stream'
 export interface DevSessionOptions {
   extensions: ExtensionInstance[]
   developerPlatformClient: DeveloperPlatformClient
+  storeFqdn: string
   apiKey: string
   url: string
   app: AppInterface
@@ -151,14 +152,16 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
   // })
 
   // API TODO: Deploy the GCS URL to the Dev Session
-  // const result = await options.developerPlatformClient.devSessionDeploy({
-  //   organizationId: options.organizationId,
-  //   appId: options.apiKey,
-  //   url: signedURL,
-  // })
+  console.log('>>>>> Deploying to Dev Session')
+  const result = await options.developerPlatformClient.devSessionDeploy({
+    shopName: options.storeFqdn,
+    appId: options.apiKey,
+    assetsUrl: 'signedURL',
+  })
+  console.log('>>>>> Deployed to Dev Session')
 
-  // if (result.devSession.userErrors) {
-  //   options.stderr.write('Dev Session Error')
-  //   options.stderr.write(JSON.stringify(result.devSession.userErrors, null, 2))
-  // }
+  if (result.devSession.userErrors) {
+    options.stderr.write('Dev Session Error')
+    options.stderr.write(JSON.stringify(result.devSession.userErrors, null, 2))
+  }
 }

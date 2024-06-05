@@ -1,13 +1,10 @@
 import {gql} from 'graphql-request'
 
 export const DevSessionDeploy = gql`
-  mutation DevSessionDeploy($appId: String!, $url: String!) {
-    devSessionCreate(input: {appId: $appId, url: $url}) {
+  mutation DevSessionDeploy($appId: String!, $assetsUrl: String!) {
+    devSessionCreate(appId: $appId, assetsUrl: $assetsUrl) {
       userErrors {
         message
-        field
-        category
-        details
       }
     }
   }
@@ -20,7 +17,7 @@ interface ErrorDetail {
 
 export interface DevSessionDeployVariables {
   appId: string
-  url: string
+  assetsUrl: string
 }
 
 export interface DevSessionDeploySchema {
