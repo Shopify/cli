@@ -1,11 +1,8 @@
 import generateExtensionPrompts, {buildChoices} from './extension.js'
-import {testApp, testLocalExtensionTemplates, testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
+import {testApp, testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
-import themeExtension from '../../models/templates/theme-specifications/theme.js'
-import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
-import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -19,17 +16,15 @@ beforeEach(() => {
 })
 
 describe('extension prompt', async () => {
-  const allUITemplates = testLocalExtensionTemplates
-  const allFunctionTemplates = testRemoteExtensionTemplates
-  const allTemplates = allFunctionTemplates.concat(allUITemplates)
+  const allTemplates = testRemoteExtensionTemplates
 
   const extensionTypeQuestion = {
     message: 'Type of extension?',
-    choices: buildChoices(allUITemplates),
+    choices: buildChoices(allTemplates),
   }
   const extensionNameQuestion = {
     message: 'Name your extension:',
-    defaultValue: expect.stringMatching(/^\w+-\w+$/),
+    defaultValue: expect.stringMatching(/^\w+-\w+(-\w+)?$/),
   }
 
   test('when name is not passed', async () => {
@@ -38,10 +33,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionTemplates: allUITemplates,
+      extensionTemplates: allTemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('subscription_ui', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('subscription_ui', allTemplates)
 
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce(answers.extensionType)
@@ -66,10 +61,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionTemplates: allUITemplates,
+      extensionTemplates: allTemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('subscription_ui', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('subscription_ui', allTemplates)
 
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce(answers.extensionType)
@@ -85,7 +80,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  test('when scaffolding a UI extension type prompts for language/framework preference', async () => {
+  test('when scaffolding a UI extension with multiple flavors prompts for language/framework preference', async () => {
     const answers = {extensionFlavor: 'react'}
     const options = {
       name: 'my-special-extension',
@@ -93,10 +88,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionTemplates: allUITemplates,
+      extensionTemplates: allTemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('subscription_ui', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('subscription_ui', allTemplates)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
@@ -122,7 +117,7 @@ describe('extension prompt', async () => {
     })
   })
 
-  test('when scaffolding a theme extension type does not prompt for language/framework preference', async () => {
+  test('when scaffolding an extension with only 1 flavor does not prompt for language/framework preference', async () => {
     const options = {
       name: 'my-special-extension',
       templateType: 'theme_app_extension',
@@ -132,6 +127,7 @@ describe('extension prompt', async () => {
       extensionTemplates: allTemplates,
       unavailableExtensions: [],
     }
+    const extensionTemplate = findExtensionTemplate('theme_app_extension', allTemplates)
 
     // When
     const got = await generateExtensionPrompts(options)
@@ -139,7 +135,7 @@ describe('extension prompt', async () => {
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(got).toEqual({
-      extensionTemplate: themeExtension,
+      extensionTemplate,
       extensionContent: [{name: 'my-special-extension', index: 0, flavor: 'liquid'}],
     })
   })
@@ -156,10 +152,10 @@ describe('extension prompt', async () => {
       directory: '/',
       app: testApp(),
       reset: false,
-      extensionTemplates: allFunctionTemplates,
+      extensionTemplates: allTemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = allFunctionTemplates.find((template) => template.identifier === 'product_discounts')
+    const extensionTemplate = allTemplates.find((template) => template.identifier === 'product_discounts')
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
@@ -192,12 +188,15 @@ describe('extension prompt', async () => {
       extensionTemplates: allTemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = allFunctionTemplates.find((template) => template.identifier === 'product_discounts')
+    const extensionTemplate = allTemplates.find((template) => template.identifier === 'product_discounts')
+    const rustTemplates = allTemplates.filter((template) =>
+      template.types[0]!.supportedFlavors.some((flavor) => flavor.value === extensionFlavor),
+    )
 
     // only function types should be shown if flavor is rust
     const functionTypes = {
       message: 'Type of extension?',
-      choices: buildChoices(allFunctionTemplates),
+      choices: buildChoices(rustTemplates),
     }
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('product_discounts')
 
@@ -216,73 +215,122 @@ describe('extension prompt', async () => {
 describe('build choices', async () => {
   test('when none of the extensions has sortPriority then choices should be sorted ok', async () => {
     // Given
-    const theme = {...themeExtension, sortPriority: undefined}
-    const productSubscription = {...productSubscriptionUIExtension, sortPriority: undefined}
-    const webPixel = {...webPixelUIExtension, sortPriority: undefined}
-    const extensions = [theme, productSubscription, webPixel]
+    const templates = testRemoteExtensionTemplates.map((template) => ({...template, sortPriority: undefined}))
+    const sortedTemplateLabels = templates.map((template) => template.name).sort()
 
     // When
-    const got = buildChoices(extensions)
+    const got = buildChoices(templates)
 
     // Then
-    expect(got.length).equals(3)
-    expect(got[0]?.label).equals(productSubscription.name)
-    expect(got[1]?.label).equals(themeExtension.name)
-    expect(got[2]?.label).equals(webPixel.name)
+    expect(got.length).equals(sortedTemplateLabels.length)
+    expect(got.map((choice) => choice.label)).toEqual(sortedTemplateLabels)
   })
 
-  test('when some of the extensions has sortPriority then choices should be sorted ok', async () => {
+  test('when some of the extensions have sortPriority then those extensions should be listed first', async () => {
     // Given
-    const theme = {...themeExtension, sortPriority: undefined}
-    const productSubscription = {...productSubscriptionUIExtension, sortPriority: undefined}
-    const webPixel = {...webPixelUIExtension, sortPriority: 1}
-    const extensions = [theme, productSubscription, webPixel]
+    const extensions = [
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'aaaaa',
+        sortPriority: undefined,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'bbbbb',
+        sortPriority: undefined,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'ccccc',
+        sortPriority: 1,
+      },
+      // cast because ... makes TS think each property is "key?: type | undefined" instead of "key?: type"
+    ] as ExtensionTemplate[]
 
     // When
     const got = buildChoices(extensions)
 
     // Then
     expect(got.length).equals(3)
-    expect(got[0]?.label).equals(webPixel.name)
-    expect(got[1]?.label).equals(productSubscription.name)
-    expect(got[2]?.label).equals(theme.name)
+    expect(got[0]?.label).equals('ccccc')
+    expect(got[1]?.label).equals('aaaaa')
+    expect(got[2]?.label).equals('bbbbb')
   })
 
-  test('when some of the extensions has the same sortPriority then choices should be sorted ok', async () => {
+  test('when some of the extensions has the same sortPriority then choices should be sorted based on priority followed by alphabetization', async () => {
     // Given
-    const theme = {...themeExtension, sortPriority: undefined}
-    const productSubscription = {...productSubscriptionUIExtension, sortPriority: 1}
-    const webPixel = {...webPixelUIExtension, sortPriority: 1}
-    const extensions = [theme, productSubscription, webPixel]
+    const extensions = [
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'ddddd',
+        sortPriority: 1,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'ccccc',
+        sortPriority: 1,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'bbbbb',
+        sortPriority: undefined,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'aaaaa',
+        sortPriority: 1,
+      },
+      // cast because ... makes TS think each property is "key?: type | undefined" instead of "key?: type"
+    ] as ExtensionTemplate[]
 
     // When
     const got = buildChoices(extensions)
 
     // Then
-    expect(got.length).equals(3)
-    expect(got[0]?.label).equals(productSubscription.name)
-    expect(got[1]?.label).equals(webPixel.name)
-    expect(got[2]?.label).equals(theme.name)
+    expect(got.length).equals(4)
+    expect(got[0]?.label).equals('aaaaa')
+    expect(got[1]?.label).equals('ccccc')
+    expect(got[2]?.label).equals('ddddd')
+    expect(got[3]?.label).equals('bbbbb')
   })
 
-  test('when all the extensions has different sortPriority then choices should be sorted ok', async () => {
+  test('when all the extensions have different sortPriority then choices should be sorted based on priority only', async () => {
     // Given
-    const theme = {...themeExtension, sortPriority: 3}
-    const productSubscription = {...productSubscriptionUIExtension, sortPriority: 2}
-    const webPixel = {...webPixelUIExtension, sortPriority: 1}
-    const extensions = [theme, productSubscription, webPixel]
+    const extensions = [
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'aaaaa',
+        sortPriority: 3,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'bbbbb',
+        sortPriority: 2,
+      },
+      {
+        ...testRemoteExtensionTemplates[0],
+        name: 'ccccc',
+        sortPriority: 1,
+      },
+      // cast because ... makes TS think each property is "key?: type | undefined" instead of "key?: type"
+    ] as ExtensionTemplate[]
 
     // When
     const got = buildChoices(extensions)
 
     // Then
     expect(got.length).equals(3)
-    expect(got[0]?.label).equals(webPixel.name)
-    expect(got[1]?.label).equals(productSubscription.name)
-    expect(got[2]?.label).equals(theme.name)
+    expect(got[0]?.label).equals('ccccc')
+    expect(got[1]?.label).equals('bbbbb')
+    expect(got[2]?.label).equals('aaaaa')
   })
 })
 
 function findExtensionTemplate(type: string | undefined, extensionTemplates: ExtensionTemplate[]) {
-  return extensionTemplates.find((extension) => extension.identifier === type)
+  const template = extensionTemplates.find((extension) => extension.identifier === type)
+  if (template) {
+    return template
+  }
+  const identifiers = extensionTemplates.map((extension) => extension.identifier).join(', ')
+  throw new Error(`Extension template not found for type: ${type}, available identifiers: ${identifiers}`)
 }
