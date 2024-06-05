@@ -1,5 +1,7 @@
+import {sniffForPath} from './custom-oclif-loader.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
+import {cwd} from './path.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {execaSync} from 'execa'
@@ -19,8 +21,10 @@ export function currentProcessIsGlobal(env = process.env): boolean {
   // - shopify <command> -> global (npm_config_user_agent=undefined, binary is global)
   // - h2 <command> -> local (npm_config_user_agent=undefined, binary can be local or global)
 
+  const path = sniffForPath() ?? cwd()
+
   // Directory where the closest package.json is (it should be the curernt app/hydrogen project)
-  const npmPrefix = execaSync('npm', ['prefix']).stdout.trim()
+  const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
 
   // Path to the binary used to run the CLI
   const binDir = process.argv[1] ?? ''
