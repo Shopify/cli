@@ -2,6 +2,7 @@ import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
+import {execaSync} from 'execa'
 
 /**
  * Returns true if the current process is running in a global context.
@@ -12,7 +13,27 @@ import {renderSelectPrompt} from './ui.js'
 export function currentProcessIsGlobal(env = process.env): boolean {
   // npm, yarn, pnpm and bun define this if run locally.
   // If undefined, we can assume it's global (But there is no foolproof way to know)
-  return env.npm_config_user_agent === undefined
+  // Different forms of running a CLI command:
+  // - npm run <command> -> local or global (npm_config_user_agent=defined, binary can be local or global)
+  // - npx shopify <command> -> local or global (npm_config_user_agent=defined, binary can be local or global)
+  // - shopify <command> -> global (npm_config_user_agent=undefined, binary is global)
+  // - h2 <command> -> local (npm_config_user_agent=undefined, binary can be local or global)
+
+  // Directory where the closest package.json is (it should be the curernt app/hydrogen project)
+  const npmPrefix = execaSync('npm', ['prefix']).stdout.trim()
+
+  // Path to the binary used to run the CLI
+  const binDir = process.argv[1] ?? ''
+
+  // If binDir starts with npmPrefix, then we are running a local binary
+  const isLocal = binDir.startsWith(npmPrefix.trim())
+
+  console.log('npmPrefix', npmPrefix)
+  console.log('binDir', binDir)
+  console.log('isLocal', isLocal)
+
+  return !isLocal
+  // return env.npm_config_user_agent === undefined
 }
 
 /**
