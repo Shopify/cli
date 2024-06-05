@@ -111,7 +111,11 @@ import {
   DevSessionDeployVariables,
 } from '../../api/graphql/dev_session_create.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
-
+import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
+import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
+import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
+import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -120,7 +124,6 @@ import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {devSessionRequest} from '@shopify/cli-kit/node/api/dev-session'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {randomUUID} from 'node:crypto'
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -171,7 +174,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    return this.token()
+    const newToken = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const session = await this.session()
+    if (newToken) {
+      session.token = newToken
+    }
+    return session.token
   }
 
   async businessPlatformToken(): Promise<string> {
@@ -268,6 +276,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+    // TODO: remove when the endpoint is available
+    return stubbedExtensionSpecifications()
+
     const query = SpecificationsQuery
     const variables: SpecificationsQueryVariables = {appId}
     const result = await appManagementRequest<SpecificationsQuerySchema>(
@@ -289,7 +300,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             managementExperience: 'cli',
             registrationLimit: spec.appModuleLimit,
           },
-          experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
+          experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
         }),
       )
   }
@@ -502,6 +513,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.activeAppVersionRawResult(app)
     return {
       appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
+        const experience = CONFIG_EXTENSION_IDS.includes(mod.uid) ? 'configuration' : 'extension'
         return {
           registrationId: mod.key,
           registrationUid: mod.uid,
@@ -513,7 +525,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             ...mod.specification,
             identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
-            experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+            experience,
           },
         }
       }),
@@ -745,26 +757,26 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
     appSource: {
       modules: [
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'app_home',
+          uid: '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9', // TODO: change to AppHomeSpecIdentifier
+          specificationIdentifier: AppHomeSpecIdentifier,
           config: JSON.stringify({
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
             embedded: isLaunchable,
           }),
         },
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'branding',
+          uid: '10457bd6-aeea-4f92-ab90-a9ab1e471276', // TODO: change to BrandingSpecIdentifier
+          specificationIdentifier: BrandingSpecIdentifier,
           config: JSON.stringify({name}),
         },
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'webhooks',
+          uid: '0ea86845-466c-4f0e-b7f1-9d9496d93f4a', // TODO: change to WebhooksSpecIdentifier
+          specificationIdentifier: WebhooksSpecIdentifier,
           config: JSON.stringify({api_version: '2024-01'}),
         },
         {
-          uid: randomUUID(),
-          specificationIdentifier: 'app_access',
+          uid: '406bb2df-eaa4-44bc-860d-c714f4b65def', // TODO: change to AppAccessSpecIdentifier
+          specificationIdentifier: AppAccessSpecIdentifier,
           config: JSON.stringify({
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
@@ -1611,4 +1623,69 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
   const addedUids = added.map((mod) => mod.uid)
   const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
   return {added, removed, updated}
+}
+
+async function stubbedExtensionSpecifications(): Promise<RemoteSpecification[]> {
+  return [
+    {
+      name: 'App access',
+      externalName: 'App access',
+      externalIdentifier: 'app_access',
+      identifier: 'app_access',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+    {
+      name: 'App Home',
+      externalName: 'App Home',
+      externalIdentifier: 'app_home',
+      identifier: 'app_home',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+    {
+      name: 'Branding',
+      externalName: 'Branding',
+      externalIdentifier: 'branding',
+      identifier: 'branding',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+    {
+      name: 'Webhooks',
+      externalName: 'Webhooks',
+      externalIdentifier: 'webhooks',
+      identifier: 'webhooks',
+      gated: false,
+      experience: 'configuration',
+      options: {
+        managementExperience: 'cli',
+        registrationLimit: 1,
+      },
+      features: {
+        argo: undefined,
+      },
+    },
+  ]
 }
