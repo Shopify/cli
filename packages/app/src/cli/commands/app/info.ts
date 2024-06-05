@@ -7,7 +7,6 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
 export default class AppInfo extends Command {
   static summary = 'Print basic information about your app and extensions.'
@@ -39,7 +38,6 @@ export default class AppInfo extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
-    currentProcessIsGlobal()
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({
       specifications,

@@ -1212,8 +1212,7 @@ export const testPartnersServiceSession: PartnersSession = {
   },
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function buildVersionedAppSchema(): Promise<any> {
+export async function buildVersionedAppSchema() {
   const configSpecifications = await configurationSpecifications()
   return {
     schema: getAppVersionedSchema(configSpecifications),
