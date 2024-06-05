@@ -83,9 +83,12 @@ export default class Logs extends Command {
       apiKey,
       json: flags.json,
       path: flags.path,
-      store: flags.store,
+      storeIds: flags.store,
       source: flags.source,
       status: flags.status,
+      configName: flags.config,
+      directory: flags.path,
+      remoteFlags: [],
     }
 
     await logs(logOptions)
