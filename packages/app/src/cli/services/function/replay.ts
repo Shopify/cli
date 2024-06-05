@@ -8,6 +8,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 import {readdirSync} from 'fs'
 
@@ -50,7 +51,7 @@ export async function replay(options: ReplayOptions) {
   const selectedRun = await selectFunctionRunPrompt(functionRuns)
 
   if (selectedRun === undefined) {
-    throw new Error(`No logs found in ${functionRunsDir}`)
+    throw new AbortError(`No logs found in ${functionRunsDir}`)
   }
 
   await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input)

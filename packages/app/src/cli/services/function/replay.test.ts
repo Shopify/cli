@@ -56,7 +56,7 @@ const RUN2: FunctionRunData = {
 const RUN2_FILENAME = RUN2.log_timestamp.replace(/:/g, '_')
 
 describe('replay', () => {
-  test('reads the app log directory, parses the function runs, and invokes function-runner aa', async () => {
+  test('reads the app log directory, parses the function runs, and invokes function-runner', async () => {
     // Given
     const app = testApp()
     const extension = await testFunctionExtension({})
