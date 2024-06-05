@@ -11,6 +11,8 @@ import {exec} from '@shopify/cli-kit/node/system'
 
 import {readdirSync} from 'fs'
 
+const LOG_SELECTOR_LIMIT = 100
+
 interface ReplayOptions {
   app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
@@ -45,7 +47,7 @@ export async function replay(options: ReplayOptions) {
   const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
   const functionRuns = await getFunctionRunData(functionRunsDir)
-  const selectedRun = await selectFunctionRunPrompt(functionRuns.reverse())
+  const selectedRun = await selectFunctionRunPrompt(functionRuns)
   await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input)
 }
 
@@ -66,8 +68,11 @@ async function runFunctionRunnerWithLogInput(
 }
 
 async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunData[]> {
-  const functionRunFileNames = readdirSync(functionRunsDir)
-  const functionRunFilePaths = functionRunFileNames.map((functionRunFile) => joinPath(functionRunsDir, functionRunFile))
+  const allFunctionRunFileNames = readdirSync(functionRunsDir).reverse()
+  const latestFunctionRunFileNames = allFunctionRunFileNames.slice(0, LOG_SELECTOR_LIMIT)
+  const functionRunFilePaths = latestFunctionRunFileNames.map((functionRunFile) =>
+    joinPath(functionRunsDir, functionRunFile),
+  )
 
   const functionRunData = await Promise.all(
     functionRunFilePaths.map(async (functionRunFilePath) => {

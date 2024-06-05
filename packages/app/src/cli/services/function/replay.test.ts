@@ -56,7 +56,7 @@ const RUN2: FunctionRunData = {
 const RUN2_FILENAME = RUN2.log_timestamp.replace(/:/g, '_')
 
 describe('replay', () => {
-  test('reads the app log directory, parses the function runs, and invokes function-runner ', async () => {
+  test('reads the app log directory, parses the function runs, and invokes function-runner aa', async () => {
     // Given
     const app = testApp()
     const extension = await testFunctionExtension({})
@@ -64,10 +64,18 @@ describe('replay', () => {
     const apiKey = 'apiKey'
 
     await inTemporaryDirectory(async (tmpDir) => {
-      // setup a directory with function run log
+      // setup a directory with function run logs
       const functionRunsDir = joinPath(tmpDir, apiKey)
       await mkdir(functionRunsDir)
-      await writeFile(joinPath(functionRunsDir, `${RUN1_FILENAME}_${RUN1.identifier}.json`), JSON.stringify(RUN1))
+
+      await Promise.all(
+        [...Array(100).keys()].map(async (index) => {
+          return writeFile(
+            joinPath(functionRunsDir, `${RUN1_FILENAME}_${index}_${RUN1.identifier}.json`),
+            JSON.stringify(RUN1),
+          )
+        }),
+      )
       await writeFile(joinPath(functionRunsDir, `${RUN2_FILENAME}_${RUN2.identifier}.json`), JSON.stringify(RUN2))
 
       const options = {
@@ -94,10 +102,10 @@ describe('replay', () => {
       // expect it to determine the directory from the apiKey
       expect(getLogsDir).toHaveBeenCalledOnce()
 
-      // expect it to read the data
-
-      // expect it to call the selector and receive a specific run
-      expect(selectFunctionRunPrompt).toHaveBeenCalledWith([RUN2, RUN1])
+      // expect it to call the selector with a subset of the runs
+      const expectedRuns = Array(100).fill(RUN1)
+      expectedRuns[0] = RUN2
+      expect(selectFunctionRunPrompt).toHaveBeenCalledWith(expectedRuns)
 
       // expect it to call function runner with that run
       expect(exec).toHaveBeenCalledWith(
