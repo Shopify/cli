@@ -141,3 +141,16 @@ export function cwd(): string {
   // eslint-disable-next-line @shopify/cli/no-process-cwd
   return normalize(process.env.INIT_CWD ? process.env.INIT_CWD : process.cwd())
 }
+
+/**
+ * Tries to get the value of the `--path` argument, if provided.
+ *
+ * @returns The value of the `--path` argument, if provided.
+ */
+export function sniffForPath(): string | undefined {
+  const pathFlagIndex = process.argv.indexOf('--path')
+  if (pathFlagIndex === -1) return
+  const pathFlag = process.argv[pathFlagIndex + 1]
+  if (!pathFlag || pathFlag.startsWith('-')) return
+  return pathFlag
+}

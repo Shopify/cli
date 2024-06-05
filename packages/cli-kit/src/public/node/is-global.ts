@@ -1,8 +1,7 @@
 import {isUnitTest} from './context/local.js'
-import {sniffForPath} from './custom-oclif-loader.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
-import {cwd} from './path.js'
+import {cwd, sniffForPath} from './path.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {execaSync} from 'execa'
@@ -31,10 +30,6 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
   // If binDir starts with npmPrefix, then we are running a local CLI
   const isLocal = binDir.startsWith(npmPrefix.trim())
-
-  console.log('npmPrefix', npmPrefix)
-  console.log('binDir', binDir)
-  console.log('isLocal', isLocal)
 
   _isGlobal = !isLocal
   return _isGlobal

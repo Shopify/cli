@@ -1,5 +1,5 @@
 import {fileExistsSync} from './fs.js'
-import {cwd, joinPath} from './path.js'
+import {cwd, joinPath, sniffForPath} from './path.js'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
 
@@ -74,17 +74,4 @@ export class ShopifyConfig extends Config {
     })
     return commandPlugins[0]
   }
-}
-
-/**
- * Tries to get the value of the `--path` argument, if provided.
- *
- * @returns The value of the `--path` argument, if provided.
- */
-export function sniffForPath(): string | undefined {
-  const pathFlagIndex = process.argv.indexOf('--path')
-  if (pathFlagIndex === -1) return
-  const pathFlag = process.argv[pathFlagIndex + 1]
-  if (!pathFlag || pathFlag.startsWith('-')) return
-  return pathFlag
 }

@@ -1,7 +1,6 @@
 import {Hook} from '@oclif/core'
-import {sniffForPath} from '@shopify/cli-kit/node/custom-oclif-loader'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, sniffForPath} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {readFileSync} from 'fs'
 
