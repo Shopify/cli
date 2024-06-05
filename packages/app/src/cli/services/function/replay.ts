@@ -75,7 +75,7 @@ async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunD
       const parsedData = JSON.parse(fileData)
       return {
         ...parsedData,
-        identifier: getIdentifierFromFilename(functionRunFilePath) || 'no identifier',
+        identifier: getIdentifierFromFilename(functionRunFilePath),
       }
     }),
   )
@@ -83,6 +83,6 @@ async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunD
   return functionRunData
 }
 
-function getIdentifierFromFilename(fileName: string): string | undefined {
-  return fileName.split('_').pop()?.substring(0, 6)
+function getIdentifierFromFilename(fileName: string): string {
+  return fileName.split('_').pop()!.substring(0, 6)
 }
