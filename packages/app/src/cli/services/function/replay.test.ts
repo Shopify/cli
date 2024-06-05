@@ -129,4 +129,35 @@ describe('replay', () => {
       )
     })
   })
+
+  test('throws an error if invoked with no logs available', async () => {
+    // Given
+    const app = testApp()
+    const extension = await testFunctionExtension({})
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const apiKey = 'apiKey'
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      // setup a directory with function run logs
+      const functionRunsDir = joinPath(tmpDir, apiKey)
+      await mkdir(functionRunsDir)
+
+      const options = {
+        app,
+        extension,
+        apiKey: undefined,
+        stdout: false,
+        path: functionRunsDir,
+        json: true,
+        export: 'run',
+      }
+
+      vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValueOnce({apiKey, developerPlatformClient})
+      vi.mocked(getLogsDir).mockReturnValue(tmpDir)
+      vi.mocked(selectFunctionRunPrompt).mockResolvedValue(undefined)
+
+      // When/Then
+      await expect(() => replay(options)).rejects.toThrowError('No logs found')
+    })
+  })
 })

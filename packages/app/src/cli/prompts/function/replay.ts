@@ -1,7 +1,8 @@
 import {FunctionRunData} from '../../services/function/replay.js'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
-export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): Promise<FunctionRunData> {
+export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): Promise<FunctionRunData | undefined> {
+  if (functionRuns.length === 0) return undefined
   const toAnswer = (functionRun: FunctionRunData) => {
     return {
       label: `${functionRun.log_timestamp} (${functionRun.status}) - ${functionRun.identifier}`,

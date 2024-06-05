@@ -62,4 +62,15 @@ describe('selectFunctionRun', () => {
       ],
     })
   })
+
+  test('returns undefined if no runs', async () => {
+    // Given
+    const runs: FunctionRunData[] = []
+
+    // When
+    const got = await selectFunctionRunPrompt(runs)
+
+    // Then
+    expect(got).toEqual(undefined)
+  })
 })

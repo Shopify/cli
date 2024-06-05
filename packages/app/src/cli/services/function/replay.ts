@@ -48,6 +48,11 @@ export async function replay(options: ReplayOptions) {
 
   const functionRuns = await getFunctionRunData(functionRunsDir)
   const selectedRun = await selectFunctionRunPrompt(functionRuns)
+
+  if (selectedRun === undefined) {
+    throw new Error(`No logs found in ${functionRunsDir}`)
+  }
+
   await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input)
 }
 
