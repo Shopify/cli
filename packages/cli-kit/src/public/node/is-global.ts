@@ -8,37 +8,25 @@ let _isGlobal: boolean | undefined
 
 /**
  * Returns true if the current process is running in a global context.
+ * Caches the value so that subsequent calls don't need to re-run the check.
  *
- * @param env - The environment to check. Defaults to `process.env`.
  * @returns `true` if the current process is running in a global context.
  */
-export function currentProcessIsGlobal(env = process.env): boolean {
+export function currentProcessIsGlobal(): boolean {
   // Cache the value so that we don't run `execaSync` multiple times in the same process.
   if (_isGlobal !== undefined) return _isGlobal
-  // npm, yarn, pnpm and bun define this if run locally.
-  // If undefined, we can assume it's global (But there is no foolproof way to know)
-  // Different forms of running a CLI command:
-  // - npm run <command> -> local or global (npm_config_user_agent=defined, binary can be local or global)
-  // - npx shopify <command> -> local or global (npm_config_user_agent=defined, binary can be local or global)
-  // - shopify <command> -> global (npm_config_user_agent=undefined, binary is global)
-  // - h2 <command> -> local (npm_config_user_agent=undefined, binary can be local or global)
 
   // Directory where the global CLI would be installed
   const npmGlobalPrefix = execaSync('npm', ['prefix', '-g']).stdout.trim()
 
-  // Path to the binary used to run the CLI
+  // Path to the shopify binary used to run the CLI
   const binDir = process.argv[1] ?? ''
 
   // If binDir starts with npmPrefix, then we are running a global binary
   const isGlobal = binDir.startsWith(npmGlobalPrefix.trim())
 
-  console.log('npmPrefix', npmGlobalPrefix)
-  console.log('binDir', binDir)
-  console.log('isLocal', isGlobal)
-
   _isGlobal = isGlobal
   return isGlobal
-  // return env.npm_config_user_agent === undefined
 }
 
 /**
