@@ -24,7 +24,7 @@ export default class FunctionRun extends Command {
     export: Flags.string({
       char: 'e',
       hidden: false,
-      description: 'Name of the wasm export to invoke.',
+      description: 'Name of the WebAssembly export to invoke.',
       default: '_start',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),

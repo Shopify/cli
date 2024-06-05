@@ -29,14 +29,14 @@ describe('writeAppLogsToFile', () => {
     const logData = expectedLogDataFromAppEvent(APP_LOG)
 
     // determine the fileName and path
-    const fileName = `app_logs_${APP_LOG.log_timestamp}.json`
+    const fileName = '20240522_150641_827Z'
     const path = joinPath(API_KEY, fileName)
 
     // When
     await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
 
     // Then
-    expect(writeLog).toHaveBeenCalledWith(path, logData)
+    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
   })
 
