@@ -8,8 +8,6 @@ overrides:
   '@types/react': 17.0.2
   vite: 4.4.9
   '@oclif/core': 3.26.5
-  '@shopify/cli-kit': 3.61.0
-  '@shopify/plugin-cloudflare': 3.61.0
 
 importers:
 
@@ -4904,9 +4902,9 @@ packages:
     dependencies:
       '@ast-grep/napi': 0.11.0
       '@oclif/core': 3.26.5
-      '@shopify/cli-kit': 3.61.0
-      '@shopify/oxygen-cli': 4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@3.61.0)
-      '@shopify/plugin-cloudflare': 3.61.0
+      '@shopify/cli-kit': 3.60.0
+      '@shopify/oxygen-cli': 4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@3.60.0)
+      '@shopify/plugin-cloudflare': 3.60.0
       ansi-escapes: 6.2.0
       cli-truncate: 4.0.0
       diff: 5.1.0
@@ -4934,8 +4932,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@shopify/cli-kit@3.61.0:
-    resolution: {integrity: sha512-yEnMpTr6ODqMEWdta2SdMGThwnAownI8YeT/I4V5BTmT7+2sRgCfjsBK96I+mESWbkUbvWA2PjVJzKyTtjb0Dg==}
+  /@shopify/cli-kit@3.60.0:
+    resolution: {integrity: sha512-+XJmEPqKy+ZBa6EMYr06Z5O8RhgTl/LaCya+rQWdenBNlXkJNkmsQ571nglOZdfPakjuRcFfWKe5jL8yj2vonA==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     dependencies:
@@ -5091,30 +5089,30 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@3.61.0):
+  /@shopify/oxygen-cli@4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@3.60.0):
     resolution: {integrity: sha512-bh9deBzXYs3wa45o+87kD3MZPQcDbEHgfb76jOiOtf0oz1p1YOZzWXehg2UlaYP4h/uJjkmriXivPlwNRVoAVg==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
     peerDependencies:
       '@oclif/core': 3.26.5
-      '@shopify/cli-kit': 3.61.0
+      '@shopify/cli-kit': ^3.58.0
     dependencies:
       '@bugsnag/core': 7.22.7
       '@bugsnag/js': 7.22.7
       '@bugsnag/node': 7.23.0
       '@oclif/core': 3.26.5
-      '@shopify/cli-kit': 3.61.0
+      '@shopify/cli-kit': 3.60.0
       async: 3.2.5
     dev: true
 
-  /@shopify/plugin-cloudflare@3.61.0:
-    resolution: {integrity: sha512-clT6ylySu3/w76EtOH1nPn187tuRA13+DgoWSKuLzv/Mpc+gb4bxGT7+3otiWjDnyR8VUZ69YTbdWYGWdFpZJQ==}
+  /@shopify/plugin-cloudflare@3.60.0:
+    resolution: {integrity: sha512-L3NT8Z9s4nzPgFt84cgNOjgzN5uoI7yZ3XGOFgTmJOHahq3FwxwGXQuI5GytuJOVxnS5hmloUy570Ca/jGw9dA==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     dependencies:
       '@oclif/core': 3.26.5
-      '@shopify/cli-kit': 3.61.0
+      '@shopify/cli-kit': 3.60.0
     transitivePeerDependencies:
       - '@types/react'
       - bufferutil
