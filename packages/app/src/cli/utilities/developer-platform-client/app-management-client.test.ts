@@ -51,9 +51,7 @@ describe('diffAppModules', () => {
 describe('templateSpecifications', () => {
   test('returns the templates with sortPriority to enforce order', async () => {
     // Given
-    const mockedFetch = vi
-      .fn()
-      .mockResolvedValueOnce(Response.json(testRemoteExtensionTemplates))
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(testRemoteExtensionTemplates))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When

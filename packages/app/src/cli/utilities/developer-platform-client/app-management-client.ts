@@ -297,7 +297,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    let response, templates: GatedExtensionTemplate[]
+    let response
+    let templates: GatedExtensionTemplate[]
     try {
       response = await fetch(TEMPLATE_JSON_URL)
       templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
@@ -319,9 +320,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // in the static JSON file. This can be removed once PartnersClient, which
     // uses sortPriority, is gone.
     let counter = 0
-    return (await allowedTemplates(templates, async (betaFlags: string[]) =>
-      this.organizationBetaFlags(organizationId, betaFlags)
-    )).map(template => ({ ...template, sortPriority: counter++ }))
+    return (
+      await allowedTemplates(templates, async (betaFlags: string[]) =>
+        this.organizationBetaFlags(organizationId, betaFlags),
+      )
+    ).map((template) => ({...template, sortPriority: counter++}))
   }
 
   async createApp(
