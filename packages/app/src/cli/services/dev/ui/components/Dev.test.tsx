@@ -93,9 +93,9 @@ describe('Dev', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "00:00:00 │ backend  │ first backend message
-      00:00:00 │ backend  │ second backend message
-      00:00:00 │ backend  │ third backend message
+      "00:00:00 │  backend │ first backend message
+      00:00:00 │  backend │ second backend message
+      00:00:00 │  backend │ third backend message
       00:00:00 │ frontend │ first frontend message
       00:00:00 │ frontend │ second frontend message
       00:00:00 │ frontend │ third frontend message
@@ -174,9 +174,9 @@ describe('Dev', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "00:00:00 │ backend  │ first backend message
-      00:00:00 │ backend  │ second backend message
-      00:00:00 │ backend  │ third backend message
+      "00:00:00 │  backend │ first backend message
+      00:00:00 │  backend │ second backend message
+      00:00:00 │  backend │ third backend message
       00:00:00 │ frontend │ first frontend message
       00:00:00 │ frontend │ second frontend message
       00:00:00 │ frontend │ third frontend message
