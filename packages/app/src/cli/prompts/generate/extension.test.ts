@@ -229,21 +229,9 @@ describe('build choices', async () => {
   test('when some of the extensions have sortPriority then those extensions should be listed first', async () => {
     // Given
     const extensions = [
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'aaaaa',
-        sortPriority: undefined,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'bbbbb',
-        sortPriority: undefined,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'ccccc',
-        sortPriority: 1,
-      },
+      {...testRemoteExtensionTemplates[0], name: 'aaaaa', sortPriority: undefined},
+      {...testRemoteExtensionTemplates[0], name: 'bbbbb', sortPriority: undefined},
+      {...testRemoteExtensionTemplates[0], name: 'ccccc', sortPriority: 1},
       // cast because ... makes TS think each property is "key?: type | undefined" instead of "key?: type"
     ] as ExtensionTemplate[]
 
@@ -260,26 +248,10 @@ describe('build choices', async () => {
   test('when some of the extensions has the same sortPriority then choices should be sorted based on priority followed by alphabetization', async () => {
     // Given
     const extensions = [
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'ddddd',
-        sortPriority: 1,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'ccccc',
-        sortPriority: 1,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'bbbbb',
-        sortPriority: undefined,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'aaaaa',
-        sortPriority: 1,
-      },
+      {...testRemoteExtensionTemplates[0], name: 'ddddd', sortPriority: 1},
+      {...testRemoteExtensionTemplates[0], name: 'ccccc', sortPriority: 1},
+      {...testRemoteExtensionTemplates[0], name: 'bbbbb', sortPriority: undefined},
+      {...testRemoteExtensionTemplates[0], name: 'aaaaa', sortPriority: 1},
       // cast because ... makes TS think each property is "key?: type | undefined" instead of "key?: type"
     ] as ExtensionTemplate[]
 
@@ -297,21 +269,9 @@ describe('build choices', async () => {
   test('when all the extensions have different sortPriority then choices should be sorted based on priority only', async () => {
     // Given
     const extensions = [
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'aaaaa',
-        sortPriority: 3,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'bbbbb',
-        sortPriority: 2,
-      },
-      {
-        ...testRemoteExtensionTemplates[0],
-        name: 'ccccc',
-        sortPriority: 1,
-      },
+      {...testRemoteExtensionTemplates[0], name: 'aaaaa', sortPriority: 3},
+      {...testRemoteExtensionTemplates[0], name: 'bbbbb', sortPriority: 2},
+      {...testRemoteExtensionTemplates[0], name: 'ccccc', sortPriority: 1},
       // cast because ... makes TS think each property is "key?: type | undefined" instead of "key?: type"
     ] as ExtensionTemplate[]
 
