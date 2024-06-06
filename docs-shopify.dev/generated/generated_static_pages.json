@@ -98,7 +98,7 @@
           "title": "terminal",
           "tabs": [
             {
-              "code": "shopify version\n&gt; Current Shopify CLI version: 3.50.0\n&gt; 💡 Version 3.51.0 available!\n\nnpm install @shopify/cli -g\n",
+              "code": "shopify version\n&gt; Current Shopify CLI version: 3.50.0\n&gt; 💡 Version 3.51.0 available!\n\nnpm install -g @shopify/cli@latest\n",
               "language": "bash"
             }
           ]
