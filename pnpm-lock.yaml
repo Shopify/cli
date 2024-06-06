@@ -256,8 +256,8 @@ importers:
         specifier: 3.61.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-ca7f288-20240530103543
-        version: 0.0.0-next-ca7f288-20240530103543(react-dom@17.0.2)(react@17.0.2)
+        specifier: 0.0.0-next-a8b9c6c-20240606114114
+        version: 0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: link:../cli-kit
         version: link:../cli-kit
@@ -4900,15 +4900,15 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-ca7f288-20240530103543(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-o99z894Dl/vFCxuVMNggMmgUh9tXowqhJyW2yRm+oCgud/bS2hlHCIQNUeFeUF7TuuSDCAIpRhEw4VKphehuIg==}
+  /@shopify/cli-hydrogen@0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-9QXz83USgzl930WCnppOAWoGznKfq4b5GLClW3LWb4Z4LDYmmDJ1XT1cpfFFrDM7nA5O1BV0mpLGBg3W+/zobQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-ca7f288-20240530103543
-      '@shopify/mini-oxygen': 0.0.0-next-ca7f288-20240530103543
+      '@shopify/hydrogen-codegen': 0.0.0-next-a8b9c6c-20240606114114
+      '@shopify/mini-oxygen': ^3.0.3
       graphql-config: ^5.0.3
       vite: 4.4.9
     peerDependenciesMeta:
@@ -4928,7 +4928,7 @@ packages:
       '@ast-grep/napi': 0.11.0
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.4.9(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.0
       cli-truncate: 4.0.0
@@ -5038,8 +5038,8 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.4.7(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-bh9deBzXYs3wa45o+87kD3MZPQcDbEHgfb76jOiOtf0oz1p1YOZzWXehg2UlaYP4h/uJjkmriXivPlwNRVoAVg==}
+  /@shopify/oxygen-cli@4.4.9(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+    resolution: {integrity: sha512-NCpMyRyXaBtLMSSIDuJsX4hYCiudyMCMeoqvtN7HYgjCZNsC5F2dvZLpu0mVOSqXrNB89PG/QnaXlcZZW+3IjQ==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true

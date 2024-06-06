@@ -111,7 +111,7 @@
     "@shopify/plugin-cloudflare": "3.61.0",
     "@shopify/plugin-did-you-mean": "3.61.0",
     "@shopify/theme": "3.61.0",
-    "@shopify/cli-hydrogen": "0.0.0-next-ca7f288-20240530103543",
+    "@shopify/cli-hydrogen": "0.0.0-next-a8b9c6c-20240606114114",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^0.34.3",
     "esbuild-plugin-copy": "^2.1.1",
@@ -176,7 +176,6 @@
     ],
     "hooks": {
       "init": [
-        "./dist/hooks/init.js",
         {
           "target": "./dist/index.js",
           "identifier": "AppInitHook"
