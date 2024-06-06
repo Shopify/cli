@@ -68,6 +68,7 @@ export const pollAppLogs = async ({
     for (const log of appLogs) {
       const payload = JSON.parse(log.payload)
 
+      // eslint-disable-next-line no-await-in-loop
       await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
         if (log.event_type === 'function_run') {
           const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
