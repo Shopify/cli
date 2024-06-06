@@ -117,7 +117,7 @@ import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
-const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/templates-json/templates.json'
+const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
