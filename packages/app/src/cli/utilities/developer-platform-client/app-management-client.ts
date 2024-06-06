@@ -110,6 +110,7 @@ import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} f
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
