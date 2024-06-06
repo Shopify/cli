@@ -269,7 +269,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
-    // TODO: remove when the endpoint is available
+    // remove when the endpoint is available
     return stubbedExtensionSpecifications()
 
     const query = SpecificationsQuery
@@ -744,7 +744,8 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
     appSource: {
       modules: [
         {
-          uid: '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9', // TODO: change to AppHomeSpecIdentifier
+          // Change the uid to AppHomeSpecIdentifier
+          uid: '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9',
           specificationIdentifier: AppHomeSpecIdentifier,
           config: JSON.stringify({
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
@@ -752,17 +753,20 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           }),
         },
         {
-          uid: '10457bd6-aeea-4f92-ab90-a9ab1e471276', // TODO: change to BrandingSpecIdentifier
+          // Change the uid to BrandingSpecIdentifier
+          uid: '10457bd6-aeea-4f92-ab90-a9ab1e471276',
           specificationIdentifier: BrandingSpecIdentifier,
           config: JSON.stringify({name}),
         },
         {
-          uid: '0ea86845-466c-4f0e-b7f1-9d9496d93f4a', // TODO: change to WebhooksSpecIdentifier
+          // Change the uid to WebhooksSpecIdentifier
+          uid: '0ea86845-466c-4f0e-b7f1-9d9496d93f4a',
           specificationIdentifier: WebhooksSpecIdentifier,
           config: JSON.stringify({api_version: '2024-01'}),
         },
         {
-          uid: '406bb2df-eaa4-44bc-860d-c714f4b65def', // TODO: change to AppAccessSpecIdentifier
+          // Change the uid to AppAccessSpecIdentifier
+          uid: '406bb2df-eaa4-44bc-860d-c714f4b65def',
           specificationIdentifier: AppAccessSpecIdentifier,
           config: JSON.stringify({
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
