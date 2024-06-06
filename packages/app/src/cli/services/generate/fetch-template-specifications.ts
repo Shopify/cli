@@ -7,7 +7,6 @@ export async function fetchExtensionTemplates(
   availableSpecifications: string[],
 ): Promise<ExtensionTemplate[]> {
   const remoteTemplates: ExtensionTemplate[] = await developerPlatformClient.templateSpecifications(apiKey)
-  // Filter out local templates that are already available remotely to avoid duplicates
   return remoteTemplates.filter(
     (template) =>
       availableSpecifications.includes(template.identifier) ||
