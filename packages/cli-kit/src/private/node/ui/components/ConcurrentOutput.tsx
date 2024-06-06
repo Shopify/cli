@@ -153,7 +153,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
       return prefix.substring(0, calculatedPrefixColumnSize)
     }
 
-    return `${prefix}${' '.repeat(calculatedPrefixColumnSize - prefix.length)}`
+    return `${' '.repeat(calculatedPrefixColumnSize - prefix.length)}${prefix}`
   }
 
   useEffect(() => {
