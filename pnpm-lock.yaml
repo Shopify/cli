@@ -254,8 +254,8 @@ importers:
         specifier: 3.61.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe31d5007f1c7fde79f1eee71cdbc28b3c494aae
-        version: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe31d5007f1c7fde79f1eee71cdbc28b3c494aae(react-dom@17.0.2)(react@18.3.1)'
+        specifier: 0.0.0-next-a8b9c6c-20240606114114
+        version: 0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.61.0
         version: link:../cli-kit
@@ -4873,6 +4873,63 @@ packages:
     dependencies:
       estree-walker: 2.0.2
       picomatch: 2.3.1
+    dev: true
+
+  /@shopify/cli-hydrogen@0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-9QXz83USgzl930WCnppOAWoGznKfq4b5GLClW3LWb4Z4LDYmmDJ1XT1cpfFFrDM7nA5O1BV0mpLGBg3W+/zobQ==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@graphql-codegen/cli': ^5.0.2
+      '@remix-run/dev': ^2.1.0
+      '@shopify/hydrogen-codegen': 0.0.0-next-a8b9c6c-20240606114114
+      '@shopify/mini-oxygen': ^3.0.3
+      graphql-config: ^5.0.3
+      vite: 4.4.9
+    peerDependenciesMeta:
+      '@graphql-codegen/cli':
+        optional: true
+      '@remix-run/dev':
+        optional: true
+      '@shopify/hydrogen-codegen':
+        optional: true
+      '@shopify/mini-oxygen':
+        optional: true
+      graphql-config:
+        optional: true
+      vite:
+        optional: true
+    dependencies:
+      '@ast-grep/napi': 0.11.0
+      '@oclif/core': 3.26.5
+      '@shopify/cli-kit': 3.61.0
+      '@shopify/oxygen-cli': 4.4.9(@oclif/core@3.26.5)(@shopify/cli-kit@3.61.0)
+      '@shopify/plugin-cloudflare': 3.61.0
+      ansi-escapes: 6.2.0
+      cli-truncate: 4.0.0
+      diff: 5.1.0
+      fs-extra: 11.1.0
+      get-port: 7.1.0
+      gunzip-maybe: 1.4.2
+      prettier: 2.8.8
+      semver: 7.5.4
+      source-map: 0.7.4
+      source-map-support: 0.5.21
+      tar-fs: 2.1.1
+      tempy: 3.0.0
+      ts-morph: 20.0.0
+      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
+    optionalDependencies:
+      '@parcel/watcher': 2.4.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - bufferutil
+      - encoding
+      - react
+      - react-devtools-core
+      - react-dom
+      - supports-color
+      - utf-8-validate
     dev: true
 
   /@shopify/cli-kit@3.61.0:
@@ -11734,17 +11791,6 @@ packages:
       react: 17.0.2
       scheduler: 0.20.2
 
-  /react-dom@17.0.2(react@18.3.1):
-    resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
-    peerDependencies:
-      react: 17.0.2
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 18.3.1
-      scheduler: 0.20.2
-    dev: true
-
   /react-dom@18.2.0(react@18.2.0):
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -13422,15 +13468,15 @@ packages:
       querystringify: 2.2.0
       requires-port: 1.0.0
 
-  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@18.3.1):
+  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
       react: 16.8.0 - 18
       react-dom: 16.8.0 - 18
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      react: 18.3.1
-      react-dom: 17.0.2(react@18.3.1)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
     dev: true
 
   /util-arity@1.1.0:
@@ -14104,66 +14150,6 @@ packages:
 
   /zod@3.23.5:
     resolution: {integrity: sha512-fkwiq0VIQTksNNA131rDOsVJcns0pfVUjHzLrNBiF/O/Xxb5lQyEXkhZWcJ7npWsYlvs+h0jFWXXy4X46Em1JA==}
-    dev: true
-
-  '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe31d5007f1c7fde79f1eee71cdbc28b3c494aae(react-dom@17.0.2)(react@18.3.1)':
-    resolution: {tarball: https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe31d5007f1c7fde79f1eee71cdbc28b3c494aae}
-    id: '@gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe31d5007f1c7fde79f1eee71cdbc28b3c494aae'
-    name: '@shopify/cli-hydrogen'
-    version: 8.1.0
-    engines: {node: '>=18.0.0'}
-    hasBin: true
-    peerDependencies:
-      '@graphql-codegen/cli': ^5.0.2
-      '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': ^0.3.1
-      '@shopify/mini-oxygen': ^3.0.3
-      graphql-config: ^5.0.3
-      vite: 4.4.9
-    peerDependenciesMeta:
-      '@graphql-codegen/cli':
-        optional: true
-      '@remix-run/dev':
-        optional: true
-      '@shopify/hydrogen-codegen':
-        optional: true
-      '@shopify/mini-oxygen':
-        optional: true
-      graphql-config:
-        optional: true
-      vite:
-        optional: true
-    dependencies:
-      '@ast-grep/napi': 0.11.0
-      '@oclif/core': 3.26.5
-      '@shopify/cli-kit': 3.61.0
-      '@shopify/oxygen-cli': 4.4.9(@oclif/core@3.26.5)(@shopify/cli-kit@3.61.0)
-      '@shopify/plugin-cloudflare': 3.61.0
-      ansi-escapes: 6.2.0
-      cli-truncate: 4.0.0
-      diff: 5.1.0
-      fs-extra: 11.1.0
-      get-port: 7.1.0
-      gunzip-maybe: 1.4.2
-      prettier: 2.8.8
-      semver: 7.5.4
-      source-map: 0.7.4
-      source-map-support: 0.5.21
-      tar-fs: 2.1.1
-      tempy: 3.0.0
-      ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@18.3.1)
-    optionalDependencies:
-      '@parcel/watcher': 2.4.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - bufferutil
-      - encoding
-      - react
-      - react-devtools-core
-      - react-dom
-      - supports-color
-      - utf-8-validate
     dev: true
 
   file:packages/eslint-plugin-cli(eslint@8.57.0)(prettier@2.8.8)(typescript@5.2.2)(vitest@0.34.6):

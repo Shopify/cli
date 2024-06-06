@@ -107,7 +107,7 @@
     "@oclif/plugin-commands": "3.3.2",
     "@oclif/plugin-plugins": "5.1.2",
     "@shopify/app": "3.61.0",
-    "@shopify/cli-hydrogen": "https://gitpkg.now.sh/Shopify/hydrogen/packages/cli?fe31d5007f1c7fde79f1eee71cdbc28b3c494aae",
+    "@shopify/cli-hydrogen": "0.0.0-next-a8b9c6c-20240606114114",
     "@shopify/cli-kit": "3.61.0",
     "@shopify/plugin-cloudflare": "3.61.0",
     "@shopify/plugin-did-you-mean": "3.61.0",
