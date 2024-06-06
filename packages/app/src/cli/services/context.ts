@@ -59,12 +59,29 @@ export interface DevContextOptions {
   developerPlatformClient: DeveloperPlatformClient
 }
 
+export interface LogsContextOptions {
+  directory: string
+  apiKey?: string
+  storeFqdn?: string
+  reset: boolean
+  developerPlatformClient: DeveloperPlatformClient
+}
+
 interface DevContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   remoteAppUpdated: boolean
   storeFqdn: string
   storeId: string
   updateURLs: boolean | undefined
+  localApp: AppInterface
+}
+
+interface LogsContextOutput {
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
+  // remoteAppUpdated: boolean
+  storeFqdn: string
+  storeId: string
+  // updateURLs: boolean | undefined
   localApp: AppInterface
 }
 
@@ -144,6 +161,109 @@ export async function ensureGenerateContext(options: GenerateContextOptions): Pr
     })
     return selectedApp
   }
+}
+
+export async function ensureLogsContext(options: LogsContextOptions): Promise<LogsContextOutput> {
+  let developerPlatformClient = options.developerPlatformClient
+
+  const {configuration, cachedInfo, remoteApp} = await getAppContext({
+    ...options,
+    promptLinkingApp: !options.apiKey,
+  })
+  developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
+
+  let orgId = getOrganization() || cachedInfo?.orgId
+  if (!orgId) {
+    const org = await selectOrg()
+    developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+    orgId = org.id
+  }
+
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
+  const organization = await fetchOrgFromId(orgId, developerPlatformClient)
+
+  if (!selectedApp || !selectedStore) {
+    // if we have selected an app or a dev store from a command flag, we keep them
+    // if not, we try to load the app or the dev store from the current config or cache
+    // if that's not available, we prompt the user to choose an existing one or create a new one
+    const [_selectedApp, _selectedStore] = await Promise.all([
+      selectedApp ||
+        remoteApp ||
+        (cachedInfo?.appId && appFromId({apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
+      selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
+    ])
+
+    if (_selectedApp) {
+      selectedApp = _selectedApp
+    } else {
+      const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
+      // get toml names somewhere close to here
+      const localAppName = await loadAppName(options.directory)
+      selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
+    }
+
+    if (_selectedStore) {
+      selectedStore = _selectedStore
+    } else {
+      const allStores = await developerPlatformClient.devStoresForOrg(orgId)
+      selectedStore = await selectStore(allStores, organization, developerPlatformClient)
+    }
+  }
+
+  const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
+
+  selectedApp = {
+    ...selectedApp,
+    configuration: await fetchAppRemoteConfiguration(
+      selectedApp,
+      developerPlatformClient,
+      specifications,
+      selectedApp.flags,
+    ),
+  }
+
+  const localApp = await loadApp({
+    directory: options.directory,
+    specifications,
+    userProvidedConfigName: getAppConfigurationShorthand(configuration.path),
+    remoteFlags: selectedApp.flags,
+  })
+
+  const rightApp = selectedApp.apiKey === cachedInfo?.appId
+  if (isCurrentAppSchema(configuration) && rightApp) {
+    if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
+    const newConfiguration = {
+      ...configuration,
+      build: {
+        ...configuration.build,
+        dev_store_url: selectedStore?.shopDomain,
+      },
+    }
+    localApp.configuration = newConfiguration
+    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
+  } else if (!cachedInfo || rightApp) {
+    setCachedAppInfo({
+      appId: selectedApp.apiKey,
+      title: selectedApp.title,
+      directory: options.directory,
+      storeFqdn: selectedStore?.shopDomain,
+      orgId,
+    })
+  }
+
+  showReusedDevValues({
+    selectedApp,
+    selectedStore,
+    cachedInfo,
+    organization,
+  })
+
+  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
+  await logMetadataForLoadedContext({
+    organizationId: result.remoteApp.organizationId,
+    apiKey: result.remoteApp.apiKey,
+  })
+  return result
 }
 
 /**

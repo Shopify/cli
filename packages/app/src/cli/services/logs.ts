@@ -1,6 +1,9 @@
-import {loadAppConfiguration} from '../models/app/loader.js'
+import {LogsContextOptions, ensureLogsContext} from './context.js'
+import {AppInterface} from '../models/app/app.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
-import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {OrganizationApp} from '../models/organization.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
 
 export enum Flag {
   DeclarativeWebhooks,
@@ -8,42 +11,59 @@ export enum Flag {
 
 export interface LogsOptions {
   apiKey?: string
-  storeIds?: string[]
+  storeFqdn?: string
   path?: string
   source?: string
   status?: string
-  // maybe? - to get the developer platform client
   configName?: string
   directory: string
   userProvidedConfigName?: string
   specifications?: ExtensionSpecification[]
-  // remote flag?
   remoateFlags?: Flag[]
+  reset: boolean
 }
 
 export async function logs(commandOptions: LogsOptions) {
-  const {apiKey, storeIds, path, source, status} = commandOptions
+  const config = await prepareForLogs(commandOptions)
+  // We should have everything in here we need to create the process and start polling
+  console.log(config)
 
-  // Step 0: Load the App Configuration, to get the developer platform client
-  // Needed for requesting logs
+  // Nexct steps: Create / re-use the app polling process
+}
+
+interface LogsConfig {
+  localApp: AppInterface
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {
+    apiSecret?: string | undefined
+  }
+  developerPlatformClient: DeveloperPlatformClient
+  storeFqdn: string
+  storeId: string
+  commandOptions: LogsOptions
+  apiKey: string
+}
+
+async function prepareForLogs(commandOptions: LogsOptions): Promise<LogsConfig> {
   const {configuration} = await loadAppConfiguration({
     ...commandOptions,
     userProvidedConfigName: commandOptions.configName,
   })
+  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
 
-  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  const devContextOptions: LogsContextOptions = {...commandOptions, developerPlatformClient}
+  const {storeFqdn, storeId, remoteApp, localApp} = await ensureLogsContext(devContextOptions)
 
-  const {token: partnersSessionToken} = await developerPlatformClient.session()
+  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
-  console.log('starting the app log command with these flags and dev platform client:', {
+  const apiKey = remoteApp.apiKey
+
+  return {
+    storeFqdn,
+    storeId,
+    remoteApp,
+    localApp,
+    developerPlatformClient,
+    commandOptions,
     apiKey,
-    storeIds,
-    path,
-    source,
-    status,
-    myTokenNeeded: partnersSessionToken,
-  })
-  // Step 1: Subscribe to log streaming
-
-  // Step 2: Poll app logs with the JWT token and cursor
+  }
 }

@@ -57,7 +57,6 @@ export default class Logs extends Command {
       hidden: false,
       description: 'Filters output to the specified development store URL (Multiple flags allowed).',
       env: 'SHOPIFY_FLAG_STORE',
-      multiple: true,
     }),
   }
 
@@ -83,12 +82,13 @@ export default class Logs extends Command {
       apiKey,
       json: flags.json,
       path: flags.path,
-      storeIds: flags.store,
+      storeFqdn: flags.store,
       source: flags.source,
       status: flags.status,
       configName: flags.config,
       directory: flags.path,
       remoteFlags: [],
+      reset: flags.reset,
     }
 
     await logs(logOptions)
