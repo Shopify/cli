@@ -21,6 +21,8 @@ const RUN1: FunctionRunData = {
   event_type: 'function_run',
   cursor: '2024-05-31T15:29:47.291530Z',
   status: 'success',
+  source: 'my-function',
+  source_namespace: 'extensions',
   log_timestamp: '2024-05-31T15:29:46.741270Z',
   identifier: 'abcdef',
 }
@@ -41,6 +43,8 @@ const RUN2: FunctionRunData = {
   event_type: 'function_run',
   cursor: '2024-05-31T15:29:47.291530Z',
   status: 'success',
+  source: 'my-function',
+  source_namespace: 'extensions',
   log_timestamp: '2024-05-31T15:29:46.741270Z',
   identifier: 'abc123',
 }
