@@ -69,6 +69,7 @@ const RESPONSE_DATA = {
   ],
   cursor: RETURNED_CURSOR,
 }
+const MOCKED_RESUBSCRIBE_CALLBACK = vi.fn()
 
 describe('pollAppLogs', () => {
   let stdout: any
@@ -97,7 +98,12 @@ describe('pollAppLogs', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When
-    await pollAppLogs({stdout, appLogsFetchInput: {jwtToken: JWT_TOKEN}, apiKey: API_KEY})
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
     await vi.advanceTimersToNextTimerAsync()
 
     // Then
@@ -127,6 +133,25 @@ describe('pollAppLogs', () => {
     expect(vi.getTimerCount()).toEqual(1)
   })
 
+  test('calls resubscribe callback if a 401 is received', async () => {
+    // Given
+    const url = `https://${FQDN}/app_logs/poll`
+
+    const response = new Response('errorMessage', {status: 401})
+    const mockedFetch = vi.fn().mockResolvedValueOnce(response)
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When/Then
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+
+    expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
+  })
+
   test('throws error if response is not ok', async () => {
     // Given
     const url = `https://${FQDN}/app_logs/poll`
@@ -137,7 +162,12 @@ describe('pollAppLogs', () => {
 
     // When/Then
     await expect(() =>
-      pollAppLogs({stdout, appLogsFetchInput: {jwtToken: JWT_TOKEN}, apiKey: API_KEY}),
+      pollAppLogs({
+        stdout,
+        appLogsFetchInput: {jwtToken: JWT_TOKEN},
+        apiKey: API_KEY,
+        resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      }),
     ).rejects.toThrowError('Error while fetching: errorMessage')
 
     expect(fetch).toHaveBeenCalledWith(url, {
