@@ -90,6 +90,7 @@
     "@types/react": "17.0.2",
     "vite": "4.4.9",
     "@oclif/core": "3.26.5",
+    "whatwg-url": "14.0.0",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
     "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
   },
