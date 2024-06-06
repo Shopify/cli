@@ -33,13 +33,6 @@ export default class FunctionReplay extends Command {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
-    export: Flags.string({
-      char: 'e',
-      hidden: false,
-      description: 'Name of the WebAssembly export to invoke.',
-      default: '_start',
-      env: 'SHOPIFY_FLAG_EXPORT',
-    }),
     json: Flags.boolean({
       char: 'j',
       hidden: false,
@@ -75,7 +68,6 @@ export default class FunctionReplay extends Command {
           stdout: flags.stdout,
           path: flags.path,
           json: flags.json,
-          export: flags.export,
         })
       },
     })

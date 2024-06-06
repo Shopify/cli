@@ -22,6 +22,7 @@ const RUN1: FunctionRunData = {
     input: '{}',
     input_bytes: 136,
     output: '{}',
+    export: 'run',
     output_bytes: 195,
     function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
     logs: '',
@@ -42,6 +43,7 @@ const RUN2: FunctionRunData = {
     input: '{}',
     input_bytes: 136,
     output: '{}',
+    export: 'run',
     output_bytes: 195,
     function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
     logs: '',
@@ -85,7 +87,6 @@ describe('replay', () => {
         stdout: false,
         path: functionRunsDir,
         json: true,
-        export: 'run',
       }
 
       vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValueOnce({apiKey, developerPlatformClient})
