@@ -190,7 +190,7 @@ describe('extension prompt', async () => {
     }
     const extensionTemplate = allTemplates.find((template) => template.identifier === 'product_discounts')
     const rustTemplates = allTemplates.filter((template) =>
-      template.types[0]!.supportedFlavors.some((flavor) => flavor.value === extensionFlavor),
+      template.supportedFlavors.some((flavor) => flavor.value === extensionFlavor),
     )
 
     // only function types should be shown if flavor is rust

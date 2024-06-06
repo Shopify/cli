@@ -835,33 +835,29 @@ export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
   defaultName: 'subscription-ui',
   group: 'Admin',
   supportLinks: [],
-  types: [
+  url: 'https://github.com/Shopify/cli',
+  type: 'product_subscription',
+  extensionPoints: [],
+  supportedFlavors: [
     {
-      url: 'https://github.com/Shopify/cli',
-      type: 'product_subscription',
-      extensionPoints: [],
-      supportedFlavors: [
-        {
-          name: 'JavaScript React',
-          value: 'react',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-        {
-          name: 'JavaScript',
-          value: 'vanilla-js',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-        {
-          name: 'TypeScript React',
-          value: 'typescript-react',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-        {
-          name: 'TypeScript',
-          value: 'typescript',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-      ],
+      name: 'JavaScript React',
+      value: 'react',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'JavaScript',
+      value: 'vanilla-js',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'TypeScript React',
+      value: 'typescript-react',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'TypeScript',
+      value: 'typescript',
+      path: 'templates/ui-extensions/projects/product_subscription',
     },
   ],
 }
@@ -872,18 +868,14 @@ const themeAppExtensionTemplate: ExtensionTemplate = {
   defaultName: 'theme-extension',
   group: 'Online store',
   supportLinks: [],
-  types: [
+  url: 'https://github.com/Shopify/cli',
+  type: 'theme',
+  extensionPoints: [],
+  supportedFlavors: [
     {
-      url: 'https://github.com/Shopify/cli',
-      type: 'theme',
-      extensionPoints: [],
-      supportedFlavors: [
-        {
-          name: 'Liquid',
-          value: 'liquid',
-          path: 'templates/theme-extension',
-        },
-      ],
+      name: 'Liquid',
+      value: 'liquid',
+      path: 'templates/theme-extension',
     },
   ],
 }
