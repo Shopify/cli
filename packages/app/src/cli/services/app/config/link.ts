@@ -335,12 +335,7 @@ async function loadConfigurationFileName(
 function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
   const webhooksConfig = config.webhooks
   if (webhooksConfig?.subscriptions?.length) {
-    const appUrl = config?.application_url as string | undefined
     webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
-    webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({
-      uri: appUrl && uri.includes(appUrl) ? uri.replace(appUrl, '') : uri,
-      ...subscription,
-    }))
   }
 
   return config

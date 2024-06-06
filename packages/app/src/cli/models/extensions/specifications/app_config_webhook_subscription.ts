@@ -1,8 +1,6 @@
 import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
-import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {CurrentAppConfiguration} from '../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -72,17 +70,7 @@ function transformToWebhookSubscriptionConfig(content: object) {
 }
 
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
-  forward: (content, appConfiguration) => {
-    const webhookConfig = content as WebhookSubscription
-    let appUrl: string | undefined
-    if ('application_url' in appConfiguration) {
-      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
-    }
-    return {
-      ...webhookConfig,
-      uri: appUrl && webhookConfig.uri.startsWith('/') ? `${appUrl}${webhookConfig.uri}` : webhookConfig.uri,
-    }
-  },
+  forward: (content) => content,
   reverse: (content: object) => transformToWebhookSubscriptionConfig(content),
 }
 

@@ -1,5 +1,4 @@
 import spec from './app_config_webhook_subscription.js'
-import {AppConfigurationWithoutPath} from '../../app/app.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhook_subscription', () => {
@@ -66,26 +65,6 @@ describe('webhook_subscription', () => {
             },
           ],
         },
-      })
-    })
-  })
-
-  describe('forwardTransform', () => {
-    test('when a relative URI is used, it inherits the application_url', () => {
-      const object = {
-        topics: ['products/create'],
-        uri: '/products',
-      }
-
-      const webhookSpec = spec
-
-      const result = webhookSpec.transformLocalToRemote!(object, {
-        application_url: 'https://my-app-url.com',
-      } as unknown as AppConfigurationWithoutPath)
-
-      expect(result).toEqual({
-        uri: 'https://my-app-url.com/products',
-        topics: ['products/create'],
       })
     })
   })
