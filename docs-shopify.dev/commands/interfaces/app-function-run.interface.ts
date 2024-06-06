@@ -7,7 +7,7 @@ export interface appfunctionrun {
   '-c, --config <value>'?: string
 
   /**
-   * Name of the wasm export to invoke.
+   * Name of the WebAssembly export to invoke.
    * @environment SHOPIFY_FLAG_EXPORT
    */
   '-e, --export <value>'?: string
