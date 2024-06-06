@@ -1,9 +1,11 @@
 import {LogsContextOptions, ensureLogsContext} from './context.js'
+import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './dev/processes/app-logs-polling.js'
 import {AppInterface} from '../models/app/app.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 
 export enum Flag {
   DeclarativeWebhooks,
@@ -24,11 +26,20 @@ export interface LogsOptions {
 }
 
 export async function logs(commandOptions: LogsOptions) {
-  const config = await prepareForLogs(commandOptions)
   // We should have everything in here we need to create the process and start polling
-  console.log(config)
+  const config = await prepareForLogs(commandOptions)
 
-  // Nexct steps: Create / re-use the app polling process
+  // We only need 1 process - ??
+  const process = await setupAppLogsPollingProcess({
+    developerPlatformClient: config.developerPlatformClient,
+    subscription: {
+      shopIds: [config.storeId],
+      apiKey: config.apiKey,
+    },
+  })
+
+  // Launch this process
+  await launchLogsProcess({process, config})
 }
 
 interface LogsConfig {
@@ -66,4 +77,36 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<LogsConfig> 
     commandOptions,
     apiKey,
   }
+}
+
+async function launchLogsProcess({process, config}: {process: AppLogsSubscribeProcess; config: LogsConfig}) {
+  const abortController = new AbortController()
+  // console.log(config)
+  // console.log(process)
+
+  // Create a OutputProcess from the process, needed for React component
+  const outputProcess: OutputProcess = {
+    prefix: process.prefix,
+    action: async (stdout, stderr, signal) => {
+      const fn = process.function
+      return fn({stdout, stderr, abortSignal: signal}, process.options)
+    },
+  }
+  // console.log(outputProcess)
+
+  const apiKey = config.remoteApp.apiKey
+  const developerPlatformClient = config.developerPlatformClient
+  const app = {
+    apiKey,
+    developerPlatformClient,
+    extensions: config.localApp.allExtensions,
+  }
+
+  const renderLogParams = {
+    process: outputProcess,
+    app,
+    abortController,
+  }
+
+  console.log('renderLog() params - this will render the react component', renderLogParams)
 }
