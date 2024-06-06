@@ -93,8 +93,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@shopify/cli-kit": "link:./packages/cli-kit",
-      "@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
+      "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
+      "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
     }
   },
   "knip": {
