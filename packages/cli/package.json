@@ -119,12 +119,6 @@
     "vitest": "^0.34.3",
     "zod-to-json-schema": "3.21.4"
   },
-  "pnpm": {
-    "overrides": {
-      "@shopify/cli-hydrogen>@shopify/cli-kit": "link:../cli-kit",
-      "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:../plugin-cloudflare"
-    }
-  },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"
   },
