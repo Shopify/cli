@@ -1,11 +1,13 @@
 import {LogsContextOptions, ensureLogsContext} from './context.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './dev/processes/app-logs-polling.js'
+import {renderLogs} from './app-logs/ui.js'
 import {AppInterface} from '../models/app/app.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 export enum Flag {
   DeclarativeWebhooks,
@@ -38,7 +40,7 @@ export async function logs(commandOptions: LogsOptions) {
     },
   })
 
-  // Launch this process
+  // Launch the process
   await launchLogsProcess({process, config})
 }
 
@@ -85,7 +87,7 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
   // console.log(process)
 
   // Create a OutputProcess from the process, needed for React component
-  const outputProcess: OutputProcess = {
+  const logsProcess: OutputProcess = {
     prefix: process.prefix,
     action: async (stdout, stderr, signal) => {
       const fn = process.function
@@ -103,10 +105,11 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
   }
 
   const renderLogParams = {
-    process: outputProcess,
+    logsProcess,
     app,
     abortController,
   }
 
   console.log('renderLog() params - this will render the react component', renderLogParams)
+  return renderLogs(renderLogParams)
 }
