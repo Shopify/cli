@@ -22,17 +22,17 @@
           "tabs": [
             {
               "title": "npm",
-              "code": "npm install -g @shopify/cli\n",
+              "code": "npm install -g @shopify/cli@latest\n",
               "language": "bash"
             },
             {
               "title": "yarn",
-              "code": "yarn global add @shopify/cli\n",
+              "code": "yarn global add @shopify/cli@latest\n",
               "language": "bash"
             },
             {
               "title": "pnpm",
-              "code": "pnpm install -g @shopify/cli\n",
+              "code": "pnpm install -g @shopify/cli@latest\n",
               "language": "bash"
             },
             {

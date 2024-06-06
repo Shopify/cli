@@ -1,1 +1,1 @@
-pnpm install -g @shopify/cli
+pnpm install -g @shopify/cli@latest
