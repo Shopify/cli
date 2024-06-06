@@ -91,6 +91,12 @@
     "vite": "4.4.9",
     "@oclif/core": "3.26.5"
   },
+  "pnpm": {
+    "overrides": {
+      "@shopify/cli-kit": "link:./packages/cli-kit",
+      "@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
+    }
+  },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
     "rules": {
