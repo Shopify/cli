@@ -51,7 +51,7 @@ export async function exchangeAccessForApplicationTokens(
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
-  const appManagementEnabled = isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)
+  const appManagementEnabled = isTruthy(process.env.USE_APP_MANAGEMENT_API)
 
   const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
     requestAppToken('partners', token, scopes.partners),

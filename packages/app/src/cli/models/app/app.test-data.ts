@@ -2,6 +2,7 @@ import {
   App,
   AppConfiguration,
   AppConfigurationSchema,
+  AppConfigurationWithoutPath,
   AppInterface,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
@@ -10,13 +11,10 @@ import {
 } from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
-import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
-import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
@@ -179,6 +177,8 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   }
   return {...defaultApp, ...app}
 }
+
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {
@@ -833,6 +833,65 @@ const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
+export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
+  identifier: 'subscription_ui',
+  name: 'Subscription UI',
+  defaultName: 'subscription-ui',
+  group: 'Admin',
+  supportLinks: [],
+  types: [
+    {
+      url: 'https://github.com/Shopify/cli',
+      type: 'product_subscription',
+      extensionPoints: [],
+      supportedFlavors: [
+        {
+          name: 'JavaScript React',
+          value: 'react',
+          path: 'templates/ui-extensions/projects/product_subscription',
+        },
+        {
+          name: 'JavaScript',
+          value: 'vanilla-js',
+          path: 'templates/ui-extensions/projects/product_subscription',
+        },
+        {
+          name: 'TypeScript React',
+          value: 'typescript-react',
+          path: 'templates/ui-extensions/projects/product_subscription',
+        },
+        {
+          name: 'TypeScript',
+          value: 'typescript',
+          path: 'templates/ui-extensions/projects/product_subscription',
+        },
+      ],
+    },
+  ],
+}
+
+const themeAppExtensionTemplate: ExtensionTemplate = {
+  identifier: 'theme_app_extension',
+  name: 'Theme app extension',
+  defaultName: 'theme-extension',
+  group: 'Online store',
+  supportLinks: [],
+  types: [
+    {
+      url: 'https://github.com/Shopify/cli',
+      type: 'theme',
+      extensionPoints: [],
+      supportedFlavors: [
+        {
+          name: 'Liquid',
+          value: 'liquid',
+          path: 'templates/theme-extension',
+        },
+      ],
+    },
+  ],
+}
+
 export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_checkout_validation',
@@ -938,12 +997,8 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
       },
     ],
   },
-]
-
-export const testLocalExtensionTemplates: ExtensionTemplate[] = [
-  themeExtension,
-  productSubscriptionUIExtension,
-  webPixelUIExtension,
+  productSubscriptionUIExtensionTemplate,
+  themeAppExtensionTemplate,
 ]
 
 export const testPartnersUserSession: PartnersSession = {

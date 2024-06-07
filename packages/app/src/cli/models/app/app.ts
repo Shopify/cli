@@ -67,15 +67,17 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  */
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
 
+export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchema>
+
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
 export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
 
 /**
- * The build options section for a normal, linked app.
+ * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
  */
-export type BuildOptions = BasicAppConfigurationWithoutModules['build']
+export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
 
 /**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
@@ -176,6 +178,7 @@ const baseWebConfigurationSchema = zod.object({
   port: zod.number().max(65536).min(0).optional(),
   commands: zod.object({
     build: zod.string().optional(),
+    predev: zod.string().optional(),
     dev: zod.string(),
   }),
   name: zod.string().optional(),
@@ -235,6 +238,11 @@ export interface AppInterface<
    * @returns true if the app can be launched, false otherwise
    */
   appIsLaunchable: () => boolean
+
+  /**
+   * If creating an app on the platform based on this app and its configuration, what default options should the app take?
+   */
+  creationDefaultOptions(): AppCreationDefaultOptions
 }
 
 type AppConstructor<
@@ -368,6 +376,14 @@ export class App<
     return Boolean(frontendConfig || backendConfig)
   }
 
+  creationDefaultOptions(): AppCreationDefaultOptions {
+    return {
+      isLaunchable: this.appIsLaunchable(),
+      scopesArray: getAppScopesArray(this.configuration),
+      name: this.name,
+    }
+  }
+
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.build?.include_config_on_deploy
@@ -484,4 +500,10 @@ export async function getDependencyVersion(dependency: string, directory: string
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: dependency, version: packageContent.version}
+}
+
+export interface AppCreationDefaultOptions {
+  isLaunchable: boolean
+  scopesArray: string[]
+  name: string
 }

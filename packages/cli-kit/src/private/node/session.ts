@@ -244,7 +244,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  * @param partnersToken - Partners token.
  */
 async function ensureUserHasPartnerAccount(partnersToken: string) {
-  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) return
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
 
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken))) {

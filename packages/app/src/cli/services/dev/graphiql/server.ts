@@ -22,6 +22,16 @@ class TokenRefreshError extends AbortError {
   }
 }
 
+function corsMiddleware(_req: express.Request, res: express.Response, next: (err?: Error) => unknown) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, ngrok-skip-browser-warning',
+  )
+  next()
+}
+
 interface SetupGraphiQLServerOptions {
   stdout: Writable
   port: number
@@ -85,7 +95,7 @@ export function setupGraphiQLServer({
     }
   }
 
-  app.get('/graphiql/ping', (_req, res) => {
+  app.get('/graphiql/ping', corsMiddleware, (_req, res) => {
     res.send('pong')
   })
 

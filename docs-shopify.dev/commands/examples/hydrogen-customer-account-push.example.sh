@@ -1,1 +1,1 @@
-shopify hydrogen customer-account push [flags]
+shopify hydrogen customer-account-push [flags]

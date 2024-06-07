@@ -8,6 +8,10 @@ const cacheFolder = () => {
   return envPaths(identifier).cache
 }
 
+export const logsFolder = () => {
+  return envPaths(identifier).log
+}
+
 export const environmentVariables = {
   alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
   alwaysLogMetrics: 'SHOPIFY_CLI_ALWAYS_LOG_METRICS',

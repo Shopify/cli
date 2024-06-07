@@ -89,7 +89,7 @@ describe('isAddressAllowedForDeliveryMethod', () => {
 })
 
 describe('validateAddressMethod', () => {
-  test('returns an array with address-method when they are valid', async () => {
+  test('returns an array with address-method for http', async () => {
     // When Then
     expect(validateAddressMethod('https://example.org', 'http')).toEqual(['https://example.org', 'http'])
   })
@@ -99,6 +99,19 @@ describe('validateAddressMethod', () => {
     expect(validateAddressMethod('http://localhost:3000/webhooks', 'http')).toEqual([
       'http://localhost:3000/webhooks',
       'localhost',
+    ])
+  })
+
+  test('returns an array with address-method for pubsub', async () => {
+    // When Then
+    expect(validateAddressMethod(pubsubAddress, 'google-pub-sub')).toEqual([pubsubAddress, DELIVERY_METHOD.PUBSUB])
+  })
+
+  test('returns an array with address-method for event-bridge', async () => {
+    // When Then
+    expect(validateAddressMethod(eventbridgeAddress, 'event-bridge')).toEqual([
+      eventbridgeAddress,
+      DELIVERY_METHOD.EVENTBRIDGE,
     ])
   })
 

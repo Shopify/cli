@@ -4,9 +4,10 @@ import {
   CurrentAppConfiguration,
   getAppVersionedSchema,
   isCurrentAppSchema,
-  BuildOptions,
+  CliBuildPreferences,
   getAppScopes,
   LegacyAppConfiguration,
+  AppCreationDefaultOptions,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -15,9 +16,7 @@ import {
   fetchOrCreateOrganizationApp,
   logMetadataForLoadedContext,
   appFromId,
-  appCreationDefaultOptions,
   InvalidApiKeyErrorMessage,
-  AppCreationDefaultOptions,
 } from '../../context.js'
 import {Flag} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -33,6 +32,7 @@ import {fetchSpecifications} from '../../generate/fetch-extension-specifications
 import {AppConfigurationUsedByCli} from '../../../models/extensions/specifications/types/app_config.js'
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {reduceWebhooks} from '../../../models/extensions/specifications/transform/app_config_webhook.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
@@ -167,7 +167,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
     const configuration = app.configuration
 
     if (!isCurrentAppSchema(configuration)) {
-      return {creationOptions: appCreationDefaultOptions(app), appDirectory: app.directory}
+      return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
     }
     return {creationOptions: appCreationDefaults}
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -192,7 +192,7 @@ type LocalAppOptions =
       configFormat: 'current'
       scopes: string
       localAppIdMatchedRemote: true
-      existingBuildOptions: BuildOptions
+      existingBuildOptions: CliBuildPreferences
       existingConfig: CurrentAppConfiguration
       appDirectory: string
       packageManager: PackageManager
@@ -327,6 +327,26 @@ async function loadConfigurationFileName(
 }
 
 /**
+ * When we merge webhooks, we have the privacy and non-privacy compliance subscriptions
+ * separated for matching remote/local config purposes,
+ * but when we link we want to condense all webhooks together
+ * so we have to do an additional reduce here
+ */
+function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
+  const webhooksConfig = config.webhooks
+  if (webhooksConfig?.subscriptions?.length) {
+    const appUrl = config?.application_url as string | undefined
+    webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
+    webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({
+      uri: appUrl && uri.includes(appUrl) ? uri.replace(appUrl, '') : uri,
+      ...subscription,
+    }))
+  }
+
+  return config
+}
+
+/**
  * Build a new app configuration object based on the remote app's modules, and write it to the filesystem, merging
  * with the existing local file.
  */
@@ -376,23 +396,27 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
       linkedAppWasNewlyCreated: Boolean(remoteApp.newApp),
     }),
   }
+  // we need to condense the compliance and non-compliance webhooks again
+  // so compliance topics and topics with the same uri are under
+  // the same [[webhooks.subscriptions]] in the TOML
+  const condensedWebhooksAppConfiguration = condenseComplianceAndNonComplianceWebhooks(mergedAppConfiguration)
 
   // Always output using the canonical schema
   const schema = getAppVersionedSchema(specifications)
-  await writeAppConfigurationFile(mergedAppConfiguration, schema)
-  setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
+  await writeAppConfigurationFile(condensedWebhooksAppConfiguration, schema)
+  setCurrentConfigPreference(condensedWebhooksAppConfiguration, {configFileName, directory: appDirectory})
 
-  return mergedAppConfiguration
+  return condensedWebhooksAppConfiguration
 }
 
 /**
  * Put together the default options for the `build` section in an app configuration.
  */
 function buildOptionsForGeneratedConfigFile(options: {
-  existingBuildOptions: BuildOptions
+  existingBuildOptions: CliBuildPreferences
   linkedAppAndClientIdFromFileAreInSync: boolean
   linkedAppWasNewlyCreated: boolean
-}): BuildOptions {
+}): CliBuildPreferences {
   const {existingBuildOptions, linkedAppAndClientIdFromFileAreInSync, linkedAppWasNewlyCreated} = options
   const buildOptions = {
     ...(linkedAppWasNewlyCreated ? {include_config_on_deploy: true} : {}),

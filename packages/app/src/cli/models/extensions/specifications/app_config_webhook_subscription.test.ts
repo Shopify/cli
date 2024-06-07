@@ -1,4 +1,5 @@
 import spec from './app_config_webhook_subscription.js'
+import {AppConfigurationWithoutPath} from '../../app/app.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhook_subscription', () => {
@@ -17,12 +18,6 @@ describe('webhook_subscription', () => {
             api_version: '2024-01',
             topic: 'products/create',
             uri: 'https://example.com/webhooks/products',
-          },
-          {
-            api_version: '2024-01',
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/create',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
             api_version: '2024-01',
@@ -48,30 +43,49 @@ describe('webhook_subscription', () => {
         webhooks: {
           subscriptions: [
             {
+              api_version: '2024-01',
               topics: ['orders/create'],
               uri: 'https://example.com/webhooks/orders',
             },
             {
+              api_version: '2024-01',
               topics: ['products/create'],
               uri: 'https://example.com/webhooks/products',
             },
             {
-              sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create'],
-              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-            },
-            {
-              include_fields: ['variants', 'title'],
-              topics: ['orders/create'],
-              uri: 'https://valid-url',
-            },
-            {
+              api_version: '2024-01',
               filter: 'title:shoes',
               topics: ['products/update'],
               uri: 'https://example.com/webhooks/products',
             },
+            {
+              api_version: '2024-01',
+              include_fields: ['variants', 'title'],
+              topics: ['orders/create'],
+              uri: 'https://valid-url',
+            },
           ],
         },
+      })
+    })
+  })
+
+  describe('forwardTransform', () => {
+    test('when a relative URI is used, it inherits the application_url', () => {
+      const object = {
+        topics: ['products/create'],
+        uri: '/products',
+      }
+
+      const webhookSpec = spec
+
+      const result = webhookSpec.transformLocalToRemote!(object, {
+        application_url: 'https://my-app-url.com',
+      } as unknown as AppConfigurationWithoutPath)
+
+      expect(result).toEqual({
+        uri: 'https://my-app-url.com/products',
+        topics: ['products/create'],
       })
     })
   })

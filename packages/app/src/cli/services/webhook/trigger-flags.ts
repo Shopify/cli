@@ -35,31 +35,17 @@ const PROTOCOL = {
  * @returns true if compatible (eg: pubsub://projectid/topicid and google-pub-sub), false otherwise
  */
 export function isAddressAllowedForDeliveryMethod(address: string, deliveryMethod: string): boolean {
-  if (deliveryMethod === DELIVERY_METHOD.PUBSUB) {
-    return PROTOCOL.PUBSUB.test(address)
-  }
+  const expectedDeliveryMethod = deliveryMethodForAddress(address)
+  if (expectedDeliveryMethod === DELIVERY_METHOD.LOCALHOST && deliveryMethod === DELIVERY_METHOD.HTTP) return true
 
-  if (deliveryMethod === DELIVERY_METHOD.EVENTBRIDGE) {
-    return PROTOCOL.EVENTBRIDGE.test(address)
-  }
-
-  if (deliveryMethod === DELIVERY_METHOD.HTTP && isAnyHttp(address)) {
-    if (isLocal(address)) {
-      return true
-    }
-    return PROTOCOL.HTTP.test(address)
-  }
-
-  return false
+  return expectedDeliveryMethod === deliveryMethod
 }
 
 function isLocal(address: string): boolean {
+  if (!PROTOCOL.LOCALHOST.test(address)) return false
+
   const url = new URL(address.toLowerCase())
   return url.hostname === 'localhost'
-}
-
-function isAnyHttp(address: string): boolean {
-  return PROTOCOL.LOCALHOST.test(address) || PROTOCOL.HTTP.test(address)
 }
 
 /**
@@ -164,7 +150,7 @@ export function deliveryMethodForAddress(address: string | undefined): string | 
     return DELIVERY_METHOD.EVENTBRIDGE
   }
 
-  if (isAnyHttp(address) && isLocal(address)) {
+  if (isLocal(address)) {
     return DELIVERY_METHOD.LOCALHOST
   }
 

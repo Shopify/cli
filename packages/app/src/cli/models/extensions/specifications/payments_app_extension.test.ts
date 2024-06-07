@@ -1,6 +1,10 @@
 import {PaymentsAppExtensionConfigType} from './payments_app_extension.js'
 import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
-import {testDeveloperPlatformClient, testPaymentsAppExtension} from '../../app/app.test-data.js'
+import {
+  placeholderAppConfiguration,
+  testDeveloperPlatformClient,
+  testPaymentsAppExtension,
+} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
@@ -65,7 +69,11 @@ describe('PaymentsAppExtension', () => {
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const result = await extension.deployConfig({apiKey, developerPlatformClient})
+      const result = await extension.deployConfig({
+        apiKey,
+        developerPlatformClient,
+        appConfiguration: placeholderAppConfiguration,
+      })
       const extensionConfiguration = extension.configuration as OffsitePaymentsAppExtensionConfigType
 
       // Then

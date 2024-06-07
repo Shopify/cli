@@ -11,11 +11,12 @@ on:
       node-version:
         description: 'Node version'
         required: true
-        default: '18.12.0'
+        default: '18.20.3'
         type: choice
         options:
-          - 18.12.0
-          - 20.2.0
+          - 18.20.3
+          - 20.14.0
+          - 22.2.0
       os:
         description: 'Operating system'
         required: true
@@ -59,7 +60,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['18.12.0', '20.2.0']
+        node: ['18.20.3', '20.14.0', '22.2.0']
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -71,20 +72,20 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache  --target=build
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache  --target=lint
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Type-check
         run: pnpm nx run-many --all --skip-nx-cache  --target=type-check
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Bundle
         run: pnpm nx run-many --all --skip-nx-cache  --target=bundle
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Unit tests
         run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
-        if: ${{ matrix.node == '18.12.0' }}
+        if: ${{ matrix.node == '18.20.3' }}
         run: pnpm nx run features:test
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
@@ -98,7 +99,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
         with:
           branch-name: ${{ github.ref_name }}
 
@@ -110,7 +111,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['18.12.0']
+        node: ['18.20.3']
         target: ['build', 'type-check', 'lint']
     steps:
       - uses: actions/checkout@v3
@@ -133,7 +134,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['18.12.0']
+        node: ['18.20.3']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -157,7 +158,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['18.12.0']
+        node: ['18.20.3']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -187,7 +188,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.12.0
+          node-version: 18.20.3
       - name: Build
         run: pnpm build
       - name: Refresh manifests
@@ -215,7 +216,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['18.12.0', '20.2.0']
+        node: ['18.20.3', '20.14.0', '22.2.0']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -237,7 +238,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        node: ['18.12.0']
+        node: ['18.20.3']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -259,7 +260,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['18.12.0']
+        node: ['18.20.3']
     steps:
       - uses: actions/checkout@v3
         with:

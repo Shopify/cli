@@ -2,7 +2,7 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -120,7 +120,7 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('targeting object accepts a default_placement_reference', async () => {
+    test('targeting object accepts a default_placement', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
@@ -128,7 +128,7 @@ describe('ui_extension', async () => {
           {
             target: 'EXTENSION::POINT::A',
             module: './src/ExtensionPointA.js',
-            default_placement_reference: 'PLACEMENT_REFERENCE1',
+            default_placement: 'PLACEMENT_REFERENCE1',
           },
         ],
         api_version: '2023-01' as const,
@@ -285,6 +285,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         // Then

@@ -1,5 +1,5 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
-import {ShopifyDevelopersClient} from './developer-platform-client/shopify-developers-client.js'
+import {AppManagementClient} from './developer-platform-client/app-management-client.js'
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
@@ -44,6 +44,7 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
+import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphql/subscribe_to_app_logs.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
@@ -67,7 +68,7 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) clients.push(new ShopifyDevelopersClient())
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
   return clients
 }
 
@@ -107,7 +108,7 @@ export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) {
     if (organization) return selectDeveloperPlatformClientByOrg(organization)
     return selectDeveloperPlatformClientByConfig(configuration)
   }
@@ -115,13 +116,13 @@ export function selectDeveloperPlatformClient({
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
-  if (organization.source === OrganizationSource.BusinessPlatform) return new ShopifyDevelopersClient()
+  if (organization.source === OrganizationSource.BusinessPlatform) return new AppManagementClient()
   return new PartnersClient()
 }
 
 function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
   if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
-    return new ShopifyDevelopersClient()
+    return new AppManagementClient()
   return new PartnersClient()
 }
 
@@ -213,4 +214,5 @@ export interface DeveloperPlatformClient {
   apiSchemaDefinition: (input: ApiSchemaDefinitionQueryVariables) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
+  subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
 }

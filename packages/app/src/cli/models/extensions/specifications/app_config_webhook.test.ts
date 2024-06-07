@@ -1,5 +1,5 @@
 import spec from './app_config_webhook.js'
-import {AppConfigurationUsedByCli} from './types/app_config.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhooks', () => {
@@ -20,13 +20,13 @@ describe('webhooks', () => {
             },
             {
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-              sub_topic: 'type:metaobject_one',
+              filter: 'type:metaobject_one',
               topics: ['metaobjects/create', 'metaobjects/update'],
             },
             {
               topics: ['metaobjects/create', 'metaobjects/update'],
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-              sub_topic: 'type:metaobject_two',
+              filter: 'type:metaobject_two',
             },
             {
               topics: ['orders/create'],
@@ -36,7 +36,7 @@ describe('webhooks', () => {
             {
               topics: ['metaobjects/create', 'metaobjects/delete'],
               uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-              sub_topic: 'type:metaobject_one',
+              filter: 'type:metaobject_one',
             },
             {
               topics: ['products/create', 'products/update'],
@@ -49,7 +49,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.transformLocalToRemote!(object)
+      const result = webhookSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toEqual({
@@ -72,22 +72,22 @@ describe('webhooks', () => {
             uri: 'https://example.com/webhooks/products',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/create',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/update',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_two',
+            filter: 'type:metaobject_two',
             topic: 'metaobjects/create',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_two',
+            filter: 'type:metaobject_two',
             topic: 'metaobjects/update',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
@@ -97,12 +97,12 @@ describe('webhooks', () => {
             uri: 'https://valid-url',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/create',
             uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/delete',
             uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
@@ -129,7 +129,7 @@ describe('webhooks', () => {
       const webhookSpec = spec
 
       // When
-      const result = webhookSpec.transformLocalToRemote!(object)
+      const result = webhookSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toEqual({
@@ -152,7 +152,11 @@ describe('webhooks', () => {
             uri: 'https://example.com/webhooks/products',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            topic: 'products/delete',
+            uri: 'https://example.com/webhooks/products',
+          },
+          {
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/create',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
@@ -183,13 +187,13 @@ describe('webhooks', () => {
               uri: 'https://example.com/webhooks/orders',
             },
             {
-              topics: ['products/create'],
+              topics: ['products/create', 'products/delete'],
               uri: 'https://example.com/webhooks/products',
             },
             {
-              sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create'],
-              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              filter: 'title:shoes',
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks/products',
             },
             {
               include_fields: ['variants', 'title'],
@@ -197,9 +201,9 @@ describe('webhooks', () => {
               uri: 'https://valid-url',
             },
             {
-              filter: 'title:shoes',
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks/products',
+              filter: 'type:metaobject_one',
+              topics: ['metaobjects/create'],
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
           ],
         },
@@ -220,110 +224,6 @@ describe('webhooks', () => {
         webhooks: {
           api_version: '2021-01',
         },
-      })
-    })
-  })
-
-  describe('simplify', () => {
-    test('simplifies all webhooks, including privacy compliance webhooks, under the same [[webhook.subscription]] if they have the same fields', () => {
-      // Given
-      const remoteApp = {
-        name: 'test-app',
-        handle: 'test-app',
-        access_scopes: {scopes: 'write_products'},
-        auth: {
-          redirect_urls: [
-            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/callback',
-            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/shopify/callback',
-            'https://decided-tabs-chevrolet-stating.trycloudflare.com/api/auth/callback',
-          ],
-        },
-        webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks',
-            },
-            {
-              compliance_topics: ['customers/redact'],
-              uri: 'https://example.com/webhooks',
-            },
-            {
-              compliance_topics: ['customers/data_request'],
-              uri: 'https://example.com/webhooks',
-            },
-            {
-              topics: ['metaobjects/create'],
-              sub_topic: 'subtopic',
-              uri: 'https://example.com/webhooks',
-            },
-            {
-              topics: ['products/create'],
-              uri: 'https://example.com/webhooks',
-              filter: 'title:shoes',
-            },
-            {
-              topics: ['products/update'],
-              uri: 'https://example.com/webhooks',
-              filter: 'title:shoes',
-            },
-            {
-              topics: ['products/update'],
-              uri: 'https://example.com/webhooks',
-              filter: 'title:shirts',
-            },
-          ],
-          privacy_compliance: undefined,
-        },
-        pos: {embedded: false},
-        application_url: 'https://decided-tabs-chevrolet-stating.trycloudflare.com',
-        embedded: true,
-      } as unknown as AppConfigurationUsedByCli
-      const webhookSpec = spec
-      // When
-      const result = webhookSpec.simplifyMergedRemoteConfig!(remoteApp)
-      // Then
-      expect(result).toMatchObject({
-        name: 'test-app',
-        handle: 'test-app',
-        access_scopes: {scopes: 'write_products'},
-        auth: {
-          redirect_urls: [
-            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/callback',
-            'https://decided-tabs-chevrolet-stating.trycloudflare.com/auth/shopify/callback',
-            'https://decided-tabs-chevrolet-stating.trycloudflare.com/api/auth/callback',
-          ],
-        },
-        webhooks: {
-          api_version: '2024-01',
-          subscriptions: [
-            {
-              topics: ['products/create'],
-              compliance_topics: ['customers/redact', 'customers/data_request'],
-              uri: 'https://example.com/webhooks',
-            },
-            {
-              topics: ['metaobjects/create'],
-              sub_topic: 'subtopic',
-              uri: 'https://example.com/webhooks',
-            },
-            {
-              topics: ['products/create', 'products/update'],
-              uri: 'https://example.com/webhooks',
-              filter: 'title:shoes',
-            },
-            {
-              topics: ['products/update'],
-              uri: 'https://example.com/webhooks',
-              filter: 'title:shirts',
-            },
-          ],
-          privacy_compliance: undefined,
-        },
-        pos: {embedded: false},
-        application_url: 'https://decided-tabs-chevrolet-stating.trycloudflare.com',
-        embedded: true,
       })
     })
   })

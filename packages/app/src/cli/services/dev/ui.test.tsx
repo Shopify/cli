@@ -151,6 +151,7 @@ describe('ui', () => {
         developmentStorePreviewEnabled: false,
         apiKey: '123',
         developerPlatformClient,
+        extensions: [],
       }
 
       const abortController = new AbortController()
@@ -182,6 +183,7 @@ describe('ui', () => {
         developmentStorePreviewEnabled: false,
         apiKey: '123',
         developerPlatformClient,
+        extensions: [],
       }
 
       const abortController = new AbortController()
@@ -209,6 +211,7 @@ describe('ui', () => {
         developmentStorePreviewEnabled: false,
         apiKey: '123',
         developerPlatformClient,
+        extensions: [],
       }
 
       const abortController = new AbortController()
@@ -236,6 +239,7 @@ describe('ui', () => {
         developmentStorePreviewEnabled: false,
         apiKey: '123',
         developerPlatformClient,
+        extensions: [],
       }
 
       const abortController = new AbortController()

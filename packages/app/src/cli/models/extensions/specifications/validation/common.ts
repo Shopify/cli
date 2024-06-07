@@ -10,17 +10,13 @@ const arnRegex =
 export const removeTrailingSlash = (arg: unknown) =>
   typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
 
-export const UriValidation = zod.union(
-  [
-    zod.string({invalid_type_error: 'Value must be string'}).regex(httpsRegex, {
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
-    }),
-    zod.string({invalid_type_error: 'Value must be string'}).regex(pubSubRegex, {
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
-    }),
-    zod.string({invalid_type_error: 'Value must be string'}).regex(arnRegex, {
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
-    }),
-  ],
-  {invalid_type_error: 'Invalid URI format'},
+export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 'Value must be string'}).refine(
+  (uri) => {
+    if (uri.startsWith('/')) return true
+
+    return httpsRegex.test(uri) || pubSubRegex.test(uri) || arnRegex.test(uri)
+  },
+  {
+    message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+  },
 )
