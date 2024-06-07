@@ -251,7 +251,7 @@ export async function ensureLogsContext(options: LogsContextOptions): Promise<Lo
     })
   }
 
-  showReusedDevValues({
+  showReusedLogsValues({
     selectedApp,
     selectedStore,
     cachedInfo,
@@ -1002,6 +1002,17 @@ function showReusedDevValues({organization, selectedApp, selectedStore, cachedIn
     updateURLs,
     configFile: cachedInfo.configFile,
     resetMessage: resetHelpMessage,
+  })
+}
+
+function showReusedLogsValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+  if (!cachedInfo) return
+
+  renderCurrentlyUsedConfigInfo({
+    org: organization.businessName,
+    appName: selectedApp.title,
+    devStore: selectedStore.shopDomain,
+    configFile: cachedInfo.configFile,
   })
 }
 

@@ -62,7 +62,6 @@ export default class Logs extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Logs)
-
     await addPublicMetadata(() => ({
       cmd_logs_flag_json_used: Boolean(flags.json),
       cmd_app_reset_used: flags.reset,
@@ -77,7 +76,6 @@ export default class Logs extends Command {
     const apiKey = flags['client-id'] || flags['api-key']
 
     await checkFolderIsValidApp(flags.path)
-
     const logOptions = {
       apiKey,
       json: flags.json,

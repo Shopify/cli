@@ -30,7 +30,6 @@ export interface LogsOptions {
 export async function logs(commandOptions: LogsOptions) {
   // We should have everything in here we need to create the process and start polling
   const config = await prepareForLogs(commandOptions)
-
   // We only need 1 process - ??
   const process = await setupAppLogsPollingProcess({
     developerPlatformClient: config.developerPlatformClient,
@@ -39,7 +38,6 @@ export async function logs(commandOptions: LogsOptions) {
       apiKey: config.apiKey,
     },
   })
-
   // Launch the process
   await launchLogsProcess({process, config})
 }
@@ -62,7 +60,6 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<LogsConfig> 
     userProvidedConfigName: commandOptions.configName,
   })
   let developerPlatformClient = selectDeveloperPlatformClient({configuration})
-
   const devContextOptions: LogsContextOptions = {...commandOptions, developerPlatformClient}
   const {storeFqdn, storeId, remoteApp, localApp} = await ensureLogsContext(devContextOptions)
 
@@ -95,7 +92,6 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
     },
   }
   // console.log(outputProcess)
-
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
@@ -103,7 +99,6 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
     developerPlatformClient,
     extensions: config.localApp.allExtensions,
   }
-
   const renderLogParams = {
     logsProcess,
     app,
