@@ -6,6 +6,7 @@ import {useExtensions} from './hooks/useExtensions'
 import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
 import {useApp} from './hooks/useApp'
 import {useI18n} from '@shopify/react-i18n'
+import {ExtensionPoint} from '@shopify/ui-extensions-server-kit'
 import React from 'react'
 import {isEmbedded} from '@/utilities/embedded'
 
@@ -27,7 +28,17 @@ export function Extensions() {
     )
   }
 
-  const introMessage = i18n.translate('intro', {
+  const customerAccountTarget = extensionIds.some((element) => {
+    return (element.extensionPoints as ExtensionPoint[])?.some((extensionPoint) => {
+      const target = extensionPoint.target
+      const domain = target.toLowerCase().replace(/(::|\.).+$/, '')
+      return domain === 'customer-account'
+    })
+  })
+
+  const intro = customerAccountTarget ? 'customerAccountTargetIntro' : 'intro'
+
+  const introMessage = i18n.translate(intro, {
     installLink: (
       <a href={app?.url} target={'_blank'} aria-label={i18n.translate('introInstallCta')}>
         {i18n.translate('introInstallCta')}

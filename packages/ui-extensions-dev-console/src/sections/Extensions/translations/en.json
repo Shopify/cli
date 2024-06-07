@@ -1,5 +1,6 @@
 {
   "intro": "{installLink} to see changes live. Share preview links with teammates or clients.",
+  "customerAccountTargetIntro": "{installLink} to see changes live. If your extension is calling the Customer Account API, you must install your app to preview your customer account extension. Share preview links with teammates or clients.",
   "introInstallCta": "Install your app",
   "extensionList": {
     "handle": "Handle",

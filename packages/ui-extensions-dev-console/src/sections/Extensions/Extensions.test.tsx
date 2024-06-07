@@ -43,6 +43,35 @@ describe('<Extensions/>', () => {
     expect(container).toContainReactComponent(AppHomeRow)
   })
 
+  test('renders contains app installation info if extensions contain customer account targets', async () => {
+    const extension1 = mockExtension({
+      type: 'ui_extension',
+      extensionPoints: [{target: 'customer-account.page.render'}],
+    })
+    const extension2 = mockExtension()
+    const extensions = [extension1, extension2]
+
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
+      state: {extensions, store: 'shop1.myshopify.io'},
+    })
+    expect(container).toContainReactText(
+      'If your extension is calling the Customer Account API, you must install your app to preview your customer account extension.',
+    )
+  })
+
+  test('renders doesnt contain app installation info if extensions dont contain customer account targets', async () => {
+    const extension1 = mockExtension()
+    const extension2 = mockExtension()
+    const extensions = [extension1, extension2]
+
+    const container = render(<Extensions />, withProviders(DefaultProviders), {
+      state: {extensions, store: 'shop1.myshopify.io'},
+    })
+    expect(container).not.toContainReactText(
+      'If your extension is calling the Customer Account API, you must install your app to preview your customer account extension.',
+    )
+  })
+
   test('renders a <PostPurchaseRow/> for the checkout_post_purchase extension', async () => {
     const extension1 = {...mockExtension(), type: 'checkout_post_purchase'}
 

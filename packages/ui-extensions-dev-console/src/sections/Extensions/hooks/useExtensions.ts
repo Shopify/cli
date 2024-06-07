@@ -6,9 +6,10 @@ export function useExtensions() {
 
   return useMemo(
     () =>
-      extensionServer.state.extensions.map(({uuid, type}) => ({
+      extensionServer.state.extensions.map(({uuid, type, extensionPoints}) => ({
         uuid,
         type,
+        extensionPoints,
       })),
     [extensionServer.state.extensions.length],
   )
