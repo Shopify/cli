@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.61.1
+
+### Patch Changes
+
+- ffdd867cc: Update the minimun Node version to ^18.20 or >=20.10
+- Updated dependencies [ffdd867cc]
+  - @shopify/cli-kit@3.61.1
+
 ## 3.61.0
 
 ### Patch Changes
