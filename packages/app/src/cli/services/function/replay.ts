@@ -39,6 +39,8 @@ export interface FunctionRunData {
   event_type: string
   cursor: string
   status: string
+  source: string
+  source_namespace: string
   log_timestamp: string
   identifier: string
 }
@@ -47,7 +49,7 @@ export async function replay(options: ReplayOptions) {
   const {apiKey} = await ensureConnectedAppFunctionContext(options)
   const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
-  const functionRuns = await getFunctionRunData(functionRunsDir)
+  const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
   const selectedRun = await selectFunctionRunPrompt(functionRuns)
 
   if (selectedRun === undefined) {
@@ -77,8 +79,14 @@ async function runFunctionRunnerWithLogInput(
   )
 }
 
-async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunData[]> {
-  const allFunctionRunFileNames = readdirSync(functionRunsDir).reverse()
+async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
+  const allFunctionRunFileNames = readdirSync(functionRunsDir)
+    .filter((filename) => {
+      // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
+      const splitFilename = filename.split('_')
+      return splitFilename[3] === 'extensions' && splitFilename[4] === functionHandle
+    })
+    .reverse()
   const latestFunctionRunFileNames = allFunctionRunFileNames.slice(0, LOG_SELECTOR_LIMIT)
   const functionRunFilePaths = latestFunctionRunFileNames.map((functionRunFile) =>
     joinPath(functionRunsDir, functionRunFile),
