@@ -110,7 +110,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 export interface SetupExtensionWatcherOptions {
   extension: ExtensionInstance
   app: AppInterface
-  url: string
+  url?: string
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
