@@ -49,7 +49,6 @@ export const pollAppLogs = async ({
     const responseText = await response.text()
     if (response.status === 401) {
       await resubscribeCallback()
-      return
     } else if (response.status === 429 || response.status >= 500) {
       stdout.write(`Received an error while polling for app logs.`)
       stdout.write(`${response.status}: ${response.statusText}`)
@@ -68,9 +67,10 @@ export const pollAppLogs = async ({
           throw new Error(`${error} error while fetching.`)
         })
       }, POLLING_BACKOFF_INTERVAL_MS)
-      return
+    } else {
+      throw new Error(`Error while fetching: ${responseText}`)
     }
-    throw new Error(`Error while fetching: ${responseText}`)
+    return
   }
 
   const data = (await response.json()) as {
