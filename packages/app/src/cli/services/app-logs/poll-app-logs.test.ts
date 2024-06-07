@@ -47,7 +47,7 @@ const OUTPUT = {
   ],
 }
 const SOURCE = 'my-function'
-const PAYLOAD = {
+const FUNCTION_PAYLOAD = {
   input: JSON.stringify(INPUT),
   input_bytes: 123,
   output: JSON.stringify(OUTPUT),
@@ -56,18 +56,28 @@ const PAYLOAD = {
   logs: LOGS,
   fuel_consumed: 512436,
 }
+const OTHER_PAYLOAD = {some: 'arbitrary payload'}
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'
 const RESPONSE_DATA = {
   app_logs: [
     {
       shop_id: 1,
       api_client_id: 1830457,
-      payload: JSON.stringify(PAYLOAD),
+      payload: JSON.stringify(FUNCTION_PAYLOAD),
       event_type: 'function_run',
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
       source: SOURCE,
       source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(OTHER_PAYLOAD),
+      event_type: 'some arbitrary event type',
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'failure',
       log_timestamp: '2024-05-23T19:17:00.240053Z',
     },
   ],
@@ -132,11 +142,18 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
     })
+    expect(writeAppLogsToFile).toHaveBeenCalledWith({
+      appLog: RESPONSE_DATA.app_logs[1],
+      apiKey: API_KEY,
+      stdout,
+    })
 
     expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
     expect(stdout.write).toHaveBeenCalledWith(LOGS)
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith({outputPrefix: SOURCE}, expect.any(Function))
+
+    expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
 
     expect(vi.getTimerCount()).toEqual(1)
   })

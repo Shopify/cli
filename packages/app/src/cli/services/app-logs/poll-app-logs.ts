@@ -65,28 +65,30 @@ export const pollAppLogs = async ({
   if (data.app_logs) {
     const {app_logs: appLogs} = data
 
-    const functionLogs = appLogs.filter((appLog) => appLog.event_type === 'function_run')
-
-    for (const functionLog of functionLogs) {
-      const payload = JSON.parse(functionLog.payload)
-      const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
+    for (const log of appLogs) {
+      const payload = JSON.parse(log.payload)
 
       // eslint-disable-next-line no-await-in-loop
-      await useConcurrentOutputContext({outputPrefix: functionLog.source}, async () => {
-        if (functionLog.status === 'success') {
-          stdout.write(`Function executed successfully using ${fuel}M instructions.`)
-        } else if (functionLog.status === 'failure') {
-          stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
-        }
+      await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
+        if (log.event_type === 'function_run') {
+          const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
 
-        // print the logs from the appLogs as well
-        const logs = JSON.parse(functionLog.payload).logs
-        if (logs.length > 0) {
-          stdout.write(logs)
+          if (log.status === 'success') {
+            stdout.write(`Function executed successfully using ${fuel}M instructions.`)
+          } else if (log.status === 'failure') {
+            stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
+          }
+
+          const logs = payload.logs
+          if (logs.length > 0) {
+            stdout.write(logs)
+          }
+        } else {
+          stdout.write(JSON.stringify(payload))
         }
 
         await writeAppLogsToFile({
-          appLog: functionLog,
+          appLog: log,
           apiKey,
           stdout,
         })
