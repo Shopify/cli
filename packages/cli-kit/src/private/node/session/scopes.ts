@@ -1,5 +1,6 @@
 import {allAPIs, API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 /**
  * Generate a flat array with all the default scopes for all the APIs plus
@@ -7,8 +8,8 @@ import {BugError} from '../../../public/node/error.js'
  * @param extraScopes - custom user-defined scopes
  * @returns Array of scopes
  */
-export function allDefaultScopes(extraScopes: string[] = []): string[] {
-  let scopes = allAPIs.map(defaultApiScopes).flat()
+export function allDefaultScopes(extraScopes: string[] = [], systemEnvironment = process.env): string[] {
+  let scopes = allAPIs.map((api) => defaultApiScopes(api, systemEnvironment)).flat()
   scopes = ['openid', ...scopes, ...extraScopes].map(scopeTransform)
   return Array.from(new Set(scopes))
 }
@@ -20,12 +21,12 @@ export function allDefaultScopes(extraScopes: string[] = []): string[] {
  * @param extraScopes - custom user-defined scopes
  * @returns Array of scopes
  */
-export function apiScopes(api: API, extraScopes: string[] = []): string[] {
-  const scopes = [...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
+export function apiScopes(api: API, extraScopes: string[] = [], systemEnvironment = process.env): string[] {
+  const scopes = [...defaultApiScopes(api, systemEnvironment), ...extraScopes.map(scopeTransform)].map(scopeTransform)
   return Array.from(new Set(scopes))
 }
 
-function defaultApiScopes(api: API): string[] {
+function defaultApiScopes(api: API, systemEnvironment = process.env): string[] {
   switch (api) {
     case 'admin':
       return ['graphql', 'themes', 'collaborator']
@@ -36,7 +37,7 @@ function defaultApiScopes(api: API): string[] {
     case 'business-platform':
       return ['destinations']
     case 'app-management':
-      return ['app-management']
+      return isTruthy(systemEnvironment.USE_APP_MANAGEMENT_API) ? ['app-management'] : []
     default:
       throw new BugError(`Unknown API: ${api}`)
   }
