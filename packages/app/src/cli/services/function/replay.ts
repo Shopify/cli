@@ -21,7 +21,6 @@ interface ReplayOptions {
   stdout: boolean
   path: string
   json: boolean
-  export: string
 }
 
 export interface FunctionRunData {
@@ -33,6 +32,7 @@ export interface FunctionRunData {
     output: string
     output_bytes: number
     function_id: string
+    export: string
     logs: string
     fuel_consumed: number
   }
@@ -54,23 +54,27 @@ export async function replay(options: ReplayOptions) {
     throw new AbortError(`No logs found in ${functionRunsDir}`)
   }
 
-  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input)
+  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input, selectedRun.payload.export)
 }
 
 async function runFunctionRunnerWithLogInput(
   fun: ExtensionInstance<FunctionConfigType>,
   options: ReplayOptions,
   input: string,
+  exportName: string,
 ) {
   const outputAsJson = options.json ? ['--json'] : []
-  const exportName = options.export ? ['--export', options.export] : []
 
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...exportName], {
-    cwd: fun.directory,
-    input,
-    stdout: 'inherit',
-    stderr: 'inherit',
-  })
+  return exec(
+    'npm',
+    ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...['--export', exportName]],
+    {
+      cwd: fun.directory,
+      input,
+      stdout: 'inherit',
+      stderr: 'inherit',
+    },
+  )
 }
 
 async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunData[]> {

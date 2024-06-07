@@ -828,17 +828,6 @@
           "name": "config",
           "type": "option"
         },
-        "export": {
-          "char": "e",
-          "default": "_start",
-          "description": "Name of the WebAssembly export to invoke.",
-          "env": "SHOPIFY_FLAG_EXPORT",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "export",
-          "type": "option"
-        },
         "json": {
           "allowNo": false,
           "char": "j",
