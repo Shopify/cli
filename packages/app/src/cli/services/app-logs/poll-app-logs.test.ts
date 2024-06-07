@@ -3,6 +3,7 @@ import {writeAppLogsToFile} from './write-app-logs.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
+import * as components from '@shopify/cli-kit/node/ui/components'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -45,6 +46,7 @@ const OUTPUT = {
     },
   ],
 }
+const SOURCE = 'my-function'
 const PAYLOAD = {
   input: JSON.stringify(INPUT),
   input_bytes: 123,
@@ -64,6 +66,8 @@ const RESPONSE_DATA = {
       event_type: 'function_run',
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
+      source: SOURCE,
+      source_namespace: 'extensions',
       log_timestamp: '2024-05-23T19:17:00.240053Z',
     },
   ],
@@ -90,6 +94,8 @@ describe('pollAppLogs', () => {
 
     // Given
     vi.mocked(writeAppLogsToFile)
+
+    vi.spyOn(components, 'useConcurrentOutputContext')
 
     const mockedFetch = vi
       .fn()
@@ -129,6 +135,8 @@ describe('pollAppLogs', () => {
 
     expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
     expect(stdout.write).toHaveBeenCalledWith(LOGS)
+
+    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith({outputPrefix: SOURCE}, expect.any(Function))
 
     expect(vi.getTimerCount()).toEqual(1)
   })
