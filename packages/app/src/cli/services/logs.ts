@@ -110,6 +110,6 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
     abortController,
   }
 
-  console.log('renderLog() params - this will render the react component', renderLogParams)
+  // console.log('renderLog() params - this will render the react component', renderLogParams)
   return renderLogs(renderLogParams)
 }
