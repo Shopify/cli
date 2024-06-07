@@ -177,11 +177,35 @@ describe('pollAppLogs', () => {
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
   })
 
-  test('throws error if response is not ok', async () => {
+  test('displays error, waits, and retries if status is 429 or >500', async () => {
     // Given
     const url = `https://${FQDN}/app_logs/poll`
 
-    const response = new Response('errorMessage', {status: 500})
+    const mockedFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('error for 429', {status: 429}))
+      .mockResolvedValueOnce(new Response('error for 500', {status: 500}))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When/Then
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+    await vi.advanceTimersToNextTimerAsync()
+
+    expect(stdout.write).toHaveBeenCalledWith('error for 429')
+    expect(stdout.write).toHaveBeenCalledWith('error for 500')
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('throws error if response is not ok and not handled', async () => {
+    // Given
+    const url = `https://${FQDN}/app_logs/poll`
+
+    const response = new Response('errorMessage', {status: 422})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
 

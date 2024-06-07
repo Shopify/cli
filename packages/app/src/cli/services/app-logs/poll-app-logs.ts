@@ -5,6 +5,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
 const POLLING_INTERVAL_MS = 450
+const POLLING_BACKOFF_INTERVAL_MS = 10000
 const ONE_MILLION = 1000000
 
 const generateFetchAppLogUrl = async (cursor?: string) => {
@@ -44,15 +45,31 @@ export const pollAppLogs = async ({
     },
   })
 
-  if (response.status === 401) {
-    await resubscribeCallback()
-    return
-  }
-
   if (!response.ok) {
-    // We should add some exponential backoff here to not spam partners
-
     const responseText = await response.text()
+    if (response.status === 401) {
+      await resubscribeCallback()
+      return
+    } else if (response.status === 429 || response.status >= 500) {
+      stdout.write(`Received an error while polling for app logs.`)
+      stdout.write(`${response.status}: ${response.statusText}`)
+      stdout.write(responseText)
+      stdout.write(`Retrying in 10 seconds`)
+      setTimeout(() => {
+        pollAppLogs({
+          stdout,
+          appLogsFetchInput: {
+            jwtToken,
+            cursor: undefined,
+          },
+          apiKey,
+          resubscribeCallback,
+        }).catch((error) => {
+          throw new Error(`${error} error while fetching.`)
+        })
+      }, POLLING_BACKOFF_INTERVAL_MS)
+      return
+    }
     throw new Error(`Error while fetching: ${responseText}`)
   }
 
