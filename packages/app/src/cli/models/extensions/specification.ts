@@ -113,10 +113,6 @@ export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigT
     loadedRemoteSpecs: true
   }
 
-export function isRemoteAware(spec: ExtensionSpecification): spec is RemoteAwareExtensionSpecification {
-  return (spec as RemoteAwareExtensionSpecification).loadedRemoteSpecs === true
-}
-
 /**
  * These fields are forbidden when creating a new ExtensionSpec
  * They belong to the ExtensionSpec interface, but the values are obtained from the API
