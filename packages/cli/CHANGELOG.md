@@ -1,5 +1,20 @@
 # @shopify/cli
 
+## 3.61.1
+
+### Patch Changes
+
+- ffdd867cc: Update the minimun Node version to ^18.20 or >=20.10
+- 357d76ade: Update hydrogen version
+- ffdd867cc: Remove punycode warning in Node 22
+- Updated dependencies [ffdd867cc]
+- Updated dependencies [4fb2b9212]
+  - @shopify/plugin-did-you-mean@3.61.1
+  - @shopify/plugin-cloudflare@3.61.1
+  - @shopify/cli-kit@3.61.1
+  - @shopify/theme@3.61.1
+  - @shopify/app@3.61.1
+
 ## 3.61.0
 
 ### Minor Changes

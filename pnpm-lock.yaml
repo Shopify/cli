@@ -132,16 +132,16 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../cli-kit
       '@shopify/create-app':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -247,22 +247,22 @@ importers:
         specifier: 2.4.1
         version: 2.4.1
       '@shopify/app':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: 0.0.0-next-a8b9c6c-20240606114114
-        version: 0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@18.3.1)
+        version: 0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../theme
       esbuild:
         specifier: 0.19.8
@@ -507,7 +507,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -632,7 +632,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -648,7 +648,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -667,7 +667,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.61.0
+        specifier: 3.61.1
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 2.5.1
@@ -4921,7 +4921,7 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@18.3.1):
+  /@shopify/cli-hydrogen@0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-9QXz83USgzl930WCnppOAWoGznKfq4b5GLClW3LWb4Z4LDYmmDJ1XT1cpfFFrDM7nA5O1BV0mpLGBg3W+/zobQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
@@ -4964,7 +4964,7 @@ packages:
       tar-fs: 2.1.1
       tempy: 3.0.0
       ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
     optionalDependencies:
       '@parcel/watcher': 2.4.1
     transitivePeerDependencies:
@@ -11916,17 +11916,6 @@ packages:
       react: 17.0.2
       scheduler: 0.20.2
 
-  /react-dom@17.0.2(react@18.3.1):
-    resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
-    peerDependencies:
-      react: 17.0.2
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 18.3.1
-      scheduler: 0.20.2
-    dev: false
-
   /react-dom@18.2.0(react@18.2.0):
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -13621,15 +13610,15 @@ packages:
       querystringify: 2.2.0
       requires-port: 1.0.0
 
-  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@18.3.1):
+  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
       react: 16.8.0 - 18
       react-dom: 16.8.0 - 18
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      react: 18.3.1
-      react-dom: 17.0.2(react@18.3.1)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
     dev: false
 
   /util-arity@1.1.0:
