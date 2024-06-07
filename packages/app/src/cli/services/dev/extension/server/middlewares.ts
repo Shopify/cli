@@ -6,6 +6,19 @@ import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/no
 import {IncomingMessage, ServerResponse, sendRedirect, send} from 'h3'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
+import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {encode as queryStringEncode} from 'node:querystring'
+import {fetch} from '@shopify/cli-kit/node/http'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {unauthorizedTemplate} from '../templates/unauthorized.js'
+import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
+
+class TokenRefreshError extends AbortError {
+  constructor() {
+    super('Failed to refresh credentials. Check that your app is installed, and try again.')
+  }
+}
 
 export function corsMiddleware(_request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Access-Control-Allow-Origin', '*')
@@ -101,26 +114,77 @@ export function getExtensionsPayloadMiddleware({payloadStore}: GetExtensionsMidd
 }
 
 export async function devConsoleIndexMiddleware(
-  request: IncomingMessage,
-  response: ServerResponse,
-  next: (err?: Error) => unknown,
+  {devOptions}: GetExtensionsMiddlewareOptions
 ) {
-  const rootDirectory = await findPathUp(joinPath('assets', 'dev-console'), {
-    type: 'directory',
-    cwd: moduleDirectory(import.meta.url),
-  })
+  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
+    const rootDirectory = await findPathUp(joinPath('assets', 'dev-console'), {
+      type: 'directory',
+      cwd: moduleDirectory(import.meta.url),
+    })
 
-  if (!rootDirectory) {
-    return sendError(response, {
-      statusCode: 404,
-      statusMessage: `Could not find root directory for dev console`,
+    if (!rootDirectory) {
+      return sendError(response, {
+        statusCode: 404,
+        statusMessage: `Could not find root directory for dev console`,
+      })
+    }
+
+    try {
+      await fetchApiVersionsWithTokenRefresh()
+    } catch (err) {
+      if (err instanceof TokenRefreshError) {
+        const body = await renderLiquidTemplate(unauthorizedTemplate, {
+          previewUrl: devOptions.appUrl,
+          url: devOptions.appUrl,
+        })
+        await send(response.event, body)
+        return
+      }
+      throw err
+    }
+
+    return fileServerMiddleware(request, response, next, {
+      filePath: rootDirectory,
     })
   }
-
-  return fileServerMiddleware(request, response, next, {
-    filePath: rootDirectory,
-  })
 }
+
+async function refreshToken(): Promise<string> {
+  try {
+    outputDebug('refreshing token', stdout)
+    _token = undefined
+    const queryString = queryStringEncode({
+      client_id: devOptions.apiKey,
+      client_secret: devOptions.apiSecret,
+      grant_type: 'client_credentials',
+    })
+    const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token?${queryString}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    const tokenJson = (await tokenResponse.json()) as {access_token: string}
+    return tokenJson.access_token
+  } catch (_error) {
+    throw new TokenRefreshError()
+  }
+}
+
+async function token(): Promise<string> {
+  if (!_token) {
+    // eslint-disable-next-line require-atomic-updates
+    _token = await refreshToken()
+  }
+  return _token
+}
+
+
+async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
+  return performActionWithRetryAfterRecovery(
+    async () => supportedApiVersions({storeFqdn, token: await token()}),
+    refreshToken,
+  )
 
 export async function devConsoleAssetsMiddleware(
   request: IncomingMessage,

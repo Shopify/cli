@@ -27,7 +27,7 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpApp.use(getLogMiddleware(options))
   httpApp.use(corsMiddleware)
   httpApp.use(noCacheMiddleware)
-  httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
+  httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware(options))
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)
   httpRouter.use('/extensions/:extensionId', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/', getExtensionPayloadMiddleware(options))

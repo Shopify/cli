@@ -103,11 +103,14 @@ export async function setupDevProcesses({
           storeFqdn,
         })
       : undefined,
+      //
     await setupPreviewableExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,
       storeId,
       apiKey,
+      apiSecret,
+      appUrl: appPreviewUrl,
       subscriptionProductUrl: commandOptions.subscriptionProductUrl,
       checkoutCartUrl: commandOptions.checkoutCartUrl,
       proxyUrl: network.proxyUrl,
