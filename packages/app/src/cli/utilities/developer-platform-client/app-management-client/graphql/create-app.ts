@@ -1,3 +1,4 @@
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const CreateAppMutation = gql`
@@ -20,7 +21,7 @@ export interface CreateAppMutationVariables {
     modules: {
       uid: string
       specificationIdentifier: string
-      config: string
+      config: JsonMapType
     }[]
     assetsUrl?: string
   }

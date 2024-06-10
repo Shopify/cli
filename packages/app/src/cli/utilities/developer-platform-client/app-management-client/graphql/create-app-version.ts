@@ -1,19 +1,18 @@
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const CreateAppVersionMutation = gql`
   mutation CreateAppVersion(
     $appId: ID!
-    $appModules: [AppSourceInput!]!
-    $assetsUrl: String
-    $versionTag: String
-    $gitUrl: String
+    $appSource: [AppSourceInput!]!
+    $name: String
+    $metadata: VersionMetadataInput
   ) {
-    versionCreate(
+    appVersionCreate(
       appId: $appId
-      modules: $appModules
-      assetsUrl: $assetsUrl
-      versionTag: $versionTag
-      gitUrl: $gitUrl
+      appSource: $appSource
+      name: $name
+      metadata: $metadata
     ) {
       version {
         id
@@ -25,10 +24,8 @@ export const CreateAppVersionMutation = gql`
           specification {
             identifier
             name
-            experience
           }
         }
-        versionTag
       }
       userErrors {
         field
@@ -40,20 +37,25 @@ export const CreateAppVersionMutation = gql`
 
 export interface CreateAppVersionMutationVariables {
   appId: string
-  appModules: {
-    uid: string
-    specificationIdentifier?: string
-    config: string
-  }[]
-  assetsUrl?: string
-  versionTag?: string
-  gitUrl?: string
+  appSource: {
+    assetsUrl?: string
+    modules: {
+      uid: string
+      specificationIdentifier?: string
+      config: JsonMapType
+    }[]
+  }
+  name?: string
+  metadata?: {
+    message?: string
+    sourceControlUrl?: string
+    versionTag?: string
+  }
 }
 
 interface AppModuleSpecification {
   identifier: string
   name: string
-  experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
 interface AppModule {
@@ -67,11 +69,10 @@ interface AppModule {
 }
 
 export interface CreateAppVersionMutationSchema {
-  versionCreate: {
+  appVersionCreate: {
     version: {
       id: string
       modules: AppModule[]
-      versionTag: string
     }
     userErrors: {
       field: string[]
