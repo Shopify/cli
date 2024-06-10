@@ -104,7 +104,7 @@
     "@shopify/plugin-cloudflare": "3.61.1",
     "@shopify/plugin-did-you-mean": "3.61.1",
     "@shopify/theme": "3.61.1",
-    "@shopify/cli-hydrogen": "0.0.0-next-a8b9c6c-20240606114114",
+    "@shopify/cli-hydrogen": "0.0.0-next-9eb60d7-20240607102913",
     "@ast-grep/napi": "0.11.0",
     "@parcel/watcher": "2.4.1",
     "esbuild": "0.19.8",
