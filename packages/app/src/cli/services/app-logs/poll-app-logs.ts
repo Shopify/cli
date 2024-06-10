@@ -100,17 +100,24 @@ export const pollAppLogs = async ({
 
             const logs = payload.logs
             if (logs.length > 0) {
-              stdout.write(logs)
+              stdout.write(
+                logs
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((line: string) => `├ ${line}`)
+                  .join('\n'),
+              )
             }
           } else {
             stdout.write(JSON.stringify(payload))
           }
 
-          await writeAppLogsToFile({
+          const logPath = await writeAppLogsToFile({
             appLog: log,
             apiKey,
             stdout,
           })
+          stdout.write(`└ Log: ${logPath}\n`)
         })
       }
     }
