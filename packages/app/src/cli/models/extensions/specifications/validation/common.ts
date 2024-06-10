@@ -12,8 +12,6 @@ export const removeTrailingSlash = (arg: unknown) =>
 
 export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 'Value must be string'}).refine(
   (uri) => {
-    if (uri.startsWith('/')) return true
-
     return httpsRegex.test(uri) || pubSubRegex.test(uri) || arnRegex.test(uri)
   },
   {
