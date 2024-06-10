@@ -86,10 +86,7 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<LogsConfig> 
 
 async function launchLogsProcess({process, config}: {process: AppLogsSubscribeProcess; config: LogsConfig}) {
   const abortController = new AbortController()
-  // console.log(config)
-  // console.log(process)
 
-  // Create a OutputProcess from the process, needed for React component
   const logsProcess: OutputProcess = {
     prefix: process.prefix,
     action: async (stdout, stderr, signal) => {
@@ -97,7 +94,6 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
       return fn({stdout, stderr, abortSignal: signal}, process.options)
     },
   }
-  // console.log(outputProcess)
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
@@ -111,6 +107,5 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
     abortController,
   }
 
-  // console.log('renderLog() params - this will render the react component', renderLogParams)
   return renderLogs(renderLogParams)
 }

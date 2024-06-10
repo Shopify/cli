@@ -78,10 +78,8 @@ interface DevContextOutput {
 
 interface LogsContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
-  // remoteAppUpdated: boolean
   storeFqdn: string
   storeId: string
-  // updateURLs: boolean | undefined
   localApp: AppInterface
 }
 
@@ -183,9 +181,6 @@ export async function ensureLogsContext(options: LogsContextOptions): Promise<Lo
   const organization = await fetchOrgFromId(orgId, developerPlatformClient)
 
   if (!selectedApp || !selectedStore) {
-    // if we have selected an app or a dev store from a command flag, we keep them
-    // if not, we try to load the app or the dev store from the current config or cache
-    // if that's not available, we prompt the user to choose an existing one or create a new one
     const [_selectedApp, _selectedStore] = await Promise.all([
       selectedApp ||
         remoteApp ||
@@ -197,7 +192,6 @@ export async function ensureLogsContext(options: LogsContextOptions): Promise<Lo
       selectedApp = _selectedApp
     } else {
       const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
-      // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
     }
