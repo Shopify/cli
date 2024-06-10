@@ -23,7 +23,7 @@ export const writeAppLogsToFile = async ({
   try {
     const toSaveData = {
       ...appLog,
-      payload: JSON.parse(appLog.payload),
+      payload: appLog.payload,
     }
 
     const logData = JSON.stringify(toSaveData, null, 2)

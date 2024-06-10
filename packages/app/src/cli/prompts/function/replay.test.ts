@@ -31,9 +31,9 @@ const RUN2: FunctionRunData = {
   shop_id: 69665030382,
   api_client_id: 124042444801,
   payload: {
-    input: '{}',
+    input: {},
     input_bytes: 136,
-    output: '{}',
+    output: {},
     output_bytes: 195,
     function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
     export: 'run',

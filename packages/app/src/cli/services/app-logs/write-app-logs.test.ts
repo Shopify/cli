@@ -9,7 +9,7 @@ vi.mock('@shopify/cli-kit/node/logs')
 const APP_LOG: AppEventData = {
   shop_id: 1,
   api_client_id: 2,
-  payload: JSON.stringify({someJson: 'someJSOn'}),
+  payload: {someJson: 'someJSOn'},
   event_type: 'function_run',
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
@@ -41,24 +41,12 @@ describe('writeAppLogsToFile', () => {
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
   })
-
-  test('prints and re-throws parsing errors', async () => {
-    // Given
-    const appLog = {
-      ...APP_LOG,
-      payload: 'invalid JSON',
-    }
-
-    // When/Then
-    await expect(writeAppLogsToFile({appLog, apiKey: API_KEY, stdout})).rejects.toThrow()
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error while writing log to file: '))
-  })
 })
 
 function expectedLogDataFromAppEvent(event: AppEventData): string {
   const data = {
     ...event,
-    payload: JSON.parse(event.payload),
+    payload: event.payload,
   }
   return JSON.stringify(data, null, 2)
 }

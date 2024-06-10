@@ -24,24 +24,10 @@ interface ReplayOptions {
 }
 
 export interface FunctionRunData {
-  shop_id: number
-  api_client_id: number
-  payload: {
-    input: string
-    input_bytes: number
-    output: string
-    output_bytes: number
-    function_id: string
-    export: string
-    logs: string
-    fuel_consumed: number
-  }
-  event_type: string
-  cursor: string
-  status: string
-  source: string
-  source_namespace: string
+  input: unknown
+  export: string
   log_timestamp: string
+  status: string
   identifier: string
 }
 
@@ -56,7 +42,7 @@ export async function replay(options: ReplayOptions) {
     throw new AbortError(`No logs found in ${functionRunsDir}`)
   }
 
-  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input, selectedRun.payload.export)
+  await runFunctionRunnerWithLogInput(options.extension, options, JSON.stringify(selectedRun.input), selectedRun.export)
 }
 
 async function runFunctionRunnerWithLogInput(
@@ -97,7 +83,10 @@ async function getFunctionRunData(functionRunsDir: string, functionHandle: strin
       const fileData = await readFile(functionRunFilePath)
       const parsedData = JSON.parse(fileData)
       return {
-        ...parsedData,
+        input: parsedData.payload.input,
+        export: parsedData.payload.export as string,
+        status: parsedData.status as string,
+        log_timestamp: (parsedData.log_timestamp || parsedData.event_timestamp) as string,
         identifier: getIdentifierFromFilename(functionRunFilePath),
       }
     }),

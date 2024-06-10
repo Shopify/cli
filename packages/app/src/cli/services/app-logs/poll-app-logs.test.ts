@@ -4,12 +4,14 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
 
 vi.mock('./write-app-logs.js')
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/output')
 
 const FQDN = await partnersFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
@@ -63,7 +65,7 @@ const RESPONSE_DATA = {
     {
       shop_id: 1,
       api_client_id: 1830457,
-      payload: JSON.stringify(FUNCTION_PAYLOAD),
+      payload: FUNCTION_PAYLOAD,
       event_type: 'function_run',
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
@@ -74,7 +76,7 @@ const RESPONSE_DATA = {
     {
       shop_id: 1,
       api_client_id: 1830457,
-      payload: JSON.stringify(OTHER_PAYLOAD),
+      payload: OTHER_PAYLOAD,
       event_type: 'some arbitrary event type',
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'failure',
@@ -177,29 +179,57 @@ describe('pollAppLogs', () => {
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
   })
 
-  test('throws error if response is not ok', async () => {
+  test('displays error, waits, and retries if status is 429 or >500', async () => {
     // Given
     const url = `https://${FQDN}/app_logs/poll`
 
-    const response = new Response('errorMessage', {status: 500})
-    const mockedFetch = vi.fn().mockResolvedValueOnce(response)
+    const mockedFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('error for 429', {status: 429}))
+      .mockResolvedValueOnce(new Response('error for 500', {status: 500}))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
-    await expect(() =>
-      pollAppLogs({
-        stdout,
-        appLogsFetchInput: {jwtToken: JWT_TOKEN},
-        apiKey: API_KEY,
-        resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
-      }),
-    ).rejects.toThrowError('Error while fetching: errorMessage')
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+    await vi.advanceTimersToNextTimerAsync()
 
+    expect(stdout.write).toHaveBeenCalledWith('error for 429')
+    expect(stdout.write).toHaveBeenCalledWith('error for 500')
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('stops polling when unexpected error occurs instead of throwing ', async () => {
+    // Given
+    const url = `https://${FQDN}/app_logs/poll`
+
+    // An unexpected error response
+    const response = new Response('errorMessage', {status: 422})
+    const mockedFetch = vi.fn().mockResolvedValueOnce(response)
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+
+    // Then
     expect(fetch).toHaveBeenCalledWith(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${JWT_TOKEN}`,
       },
     })
+    expect(stdout.write).toHaveBeenCalledWith('Error while retrieving app logs.')
+    expect(stdout.write).toHaveBeenCalledWith('App log streaming is no longer available in this `dev` session.')
+    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
+    expect(vi.getTimerCount()).toEqual(0)
   })
 })
