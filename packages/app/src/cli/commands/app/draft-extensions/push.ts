@@ -11,7 +11,7 @@ export default class DraftExtensionsPush extends Command {
   static flags = {
     verbose: Flags.boolean({
       hidden: false,
-      description: 'Increase the verbosity of the logs.',
+      description: 'Increase the verbosity of the output.',
       env: 'SHOPIFY_FLAG_VERBOSE',
     }),
     path: Flags.string({

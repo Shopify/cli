@@ -69,7 +69,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -132,7 +132,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -188,7 +188,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -312,7 +312,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -524,7 +524,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -597,7 +597,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -660,7 +660,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -714,7 +714,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -769,7 +769,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -857,7 +857,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -941,7 +941,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1028,7 +1028,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1083,7 +1083,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1235,7 +1235,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1322,7 +1322,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1387,7 +1387,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1448,7 +1448,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1547,7 +1547,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1642,7 +1642,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -1744,7 +1744,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4289,7 +4289,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4377,7 +4377,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4475,7 +4475,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4679,7 +4679,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4763,7 +4763,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4829,7 +4829,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4865,7 +4865,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -4961,7 +4961,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5054,7 +5054,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5098,7 +5098,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5176,7 +5176,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5332,7 +5332,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5517,7 +5517,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5617,7 +5617,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5821,7 +5821,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
@@ -5903,7 +5903,7 @@
         },
         "verbose": {
           "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
+          "description": "Increase the verbosity of the output.",
           "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
           "name": "verbose",
