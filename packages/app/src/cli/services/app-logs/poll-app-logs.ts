@@ -1,4 +1,3 @@
-import {writeAppLogsToFile} from './write-app-logs.js'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -35,6 +34,48 @@ const generateFetchAppLogUrl = async (
   return url
 }
 
+export const appLogsDevOutput = ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string}) => {
+  const payload = JSON.parse(log.payload)
+  if (log.event_type === 'function_run') {
+    const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
+
+    if (log.status === 'success') {
+      stdout.write(`Function executed successfully using ${fuel}M instructions.`)
+    } else if (log.status === 'failure') {
+      stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
+    }
+
+    const logs = payload.logs
+    if (logs.length > 0) {
+      stdout.write(logs)
+    }
+  } else {
+    stdout.write(JSON.stringify(payload))
+  }
+}
+
+export const appLogsLogsOutput = ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string}) => {
+  const payload = JSON.parse(log.payload)
+  const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
+  const status = log.status
+  const parsedPayload = JSON.parse(log.payload)
+  const {logs, input, input_bytes: inputBytes, function_id: functionId} = parsedPayload
+
+  const needed = {
+    source: log.source,
+    status,
+    functionId,
+    fuelConsumed: fuel,
+    logs,
+    input,
+    inputBytes,
+  }
+
+  if (logs.length > 0) {
+    stdout.write(JSON.stringify(needed))
+  }
+}
+
 export interface AppEventData {
   shop_id: number
   api_client_id: number
@@ -49,17 +90,19 @@ export interface AppEventData {
 
 export const pollAppLogs = async ({
   stdout,
-  appLogsFetchInput: {jwtToken, cursor},
+  appLogsFetchInput: {jwtToken, cursor, filters},
   apiKey,
   resubscribeCallback,
+  outputCallback,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string}
+  appLogsFetchInput: {jwtToken: string; cursor?: string; filters?: {status?: string; source?: string}}
   apiKey: string
   resubscribeCallback: () => Promise<void>
+  outputCallback: ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string}) => void
 }) => {
   try {
-    const url = await generateFetchAppLogUrl(cursor)
+    const url = await generateFetchAppLogUrl(cursor, filters)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -82,9 +125,11 @@ export const pollAppLogs = async ({
             appLogsFetchInput: {
               jwtToken,
               cursor: undefined,
+              filters,
             },
             apiKey,
             resubscribeCallback,
+            outputCallback,
           }).catch((error) => {
             outputDebug(`Unexpected error during polling: ${error}}\n`)
           })
@@ -100,37 +145,13 @@ export const pollAppLogs = async ({
       cursor?: string
       errors?: string[]
     }
-
     if (data.app_logs) {
       const {app_logs: appLogs} = data
 
       for (const log of appLogs) {
-        const payload = JSON.parse(log.payload)
-
         // eslint-disable-next-line no-await-in-loop
         await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
-          if (log.event_type === 'function_run') {
-            const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
-
-            if (log.status === 'success') {
-              stdout.write(`Function executed successfully using ${fuel}M instructions.`)
-            } else if (log.status === 'failure') {
-              stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
-            }
-
-            const logs = payload.logs
-            if (logs.length > 0) {
-              stdout.write(logs)
-            }
-          } else {
-            stdout.write(JSON.stringify(payload))
-          }
-
-          await writeAppLogsToFile({
-            appLog: log,
-            apiKey,
-            stdout,
-          })
+          outputCallback({stdout, log, apiKey})
         })
       }
     }
@@ -143,9 +164,11 @@ export const pollAppLogs = async ({
         appLogsFetchInput: {
           jwtToken,
           cursor: cursorFromResponse,
+          filters,
         },
         apiKey,
         resubscribeCallback,
+        outputCallback,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -156,87 +179,4 @@ export const pollAppLogs = async ({
     stdout.write('App log streaming is no longer available in this `dev` session.')
     outputDebug(`${error}}\n`)
   }
-}
-
-export const pollAppLogs2 = async ({
-  stdout,
-  appLogsFetchInput: {jwtToken, cursor, filters},
-  apiKey,
-}: {
-  stdout: Writable
-  appLogsFetchInput: {
-    jwtToken: string
-    cursor?: string
-    filters?: {
-      status?: string
-      source?: string
-    }
-  }
-  apiKey: string
-}) => {
-  const url = await generateFetchAppLogUrl(cursor, filters)
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${jwtToken}`,
-    },
-  })
-
-  if (!response.ok) {
-    // We should add some exponential backoff here to not spam partners
-
-    const responseText = await response.text()
-    throw new Error(`Error while fetching: ${responseText}`)
-  }
-
-  const data = (await response.json()) as {
-    app_logs?: AppEventData[]
-    cursor?: string
-    errors?: string[]
-  }
-
-  if (data.app_logs) {
-    const {app_logs: appLogs} = data
-
-    const functionLogs = appLogs.filter((appLog) => appLog.event_type === 'function_run')
-
-    for (const functionLog of functionLogs) {
-      const payload = JSON.parse(functionLog.payload)
-      const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
-      const status = functionLog.status
-      const parsedPayload = JSON.parse(functionLog.payload)
-      const {logs, input, input_bytes: inputBytes, function_id: functionId} = parsedPayload
-
-      const needed = {
-        source: functionLog.source,
-        status,
-        functionId,
-        fuelConsumed: fuel,
-        logs,
-        input,
-        inputBytes,
-      }
-
-      if (logs.length > 0) {
-        stdout.write(JSON.stringify(needed))
-      }
-    }
-  }
-
-  const cursorFromResponse = data?.cursor
-
-  setTimeout(() => {
-    pollAppLogs2({
-      stdout,
-      appLogsFetchInput: {
-        jwtToken,
-        cursor: cursorFromResponse,
-        filters,
-      },
-      apiKey,
-    }).catch((error) => {
-      throw new Error(`${error} error while fetching.`)
-    })
-  }, POLLING_INTERVAL_MS)
 }

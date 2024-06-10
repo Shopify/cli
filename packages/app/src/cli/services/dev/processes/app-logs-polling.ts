@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {pollAppLogs, pollAppLogs2} from '../../app-logs/poll-app-logs.js'
+import {pollAppLogs, appLogsDevOutput, appLogsLogsOutput} from '../../app-logs/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
 
@@ -90,6 +90,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
         {developerPlatformClient, appLogsSubscribeVariables},
       )
     },
+    outputCallback: appLogsDevOutput,
   })
 }
 
@@ -113,5 +114,16 @@ export const subscribeAndStartPolling2: DevProcessFunction<SubscribeAndStartPoll
 
   const apiKey = appLogsSubscribeVariables.apiKey
   await createLogsDir(apiKey)
-  await pollAppLogs2({stdout, appLogsFetchInput: {jwtToken, filters}, apiKey})
+  await pollAppLogs({
+    stdout,
+    appLogsFetchInput: {jwtToken, filters},
+    apiKey,
+    resubscribeCallback: () => {
+      return subscribeAndStartPolling(
+        {stdout, stderr, abortSignal},
+        {developerPlatformClient, appLogsSubscribeVariables},
+      )
+    },
+    outputCallback: appLogsLogsOutput,
+  })
 }
