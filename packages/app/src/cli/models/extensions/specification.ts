@@ -6,7 +6,7 @@ import {Flag} from '../../services/dev/fetch.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 
 export type ExtensionFeature =
@@ -29,18 +29,6 @@ export interface CustomTransformationConfig {
 
 type ExtensionExperience = 'extension' | 'configuration'
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
-
-export type ParseConfigurationResult<TConfiguration> =
-  | {
-      state: 'ok'
-      data: TConfiguration
-      errors: undefined
-    }
-  | {
-      state: 'error'
-      data: undefined
-      errors: Pick<zod.ZodIssueBase, 'path' | 'message'>[]
-    }
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

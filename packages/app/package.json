@@ -57,7 +57,6 @@
     "@shopify/polaris": "12.10.0",
     "@shopify/polaris-icons": "8.0.0",
     "@shopify/theme-check-node": "2.5.1",
-    "ajv": "8.13.0",
     "body-parser": "1.20.2",
     "chokidar": "3.5.3",
     "diff": "5.1.0",

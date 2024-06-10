@@ -44,3 +44,21 @@ export function errorsToString(errors: z.ZodIssueBase[]): string {
     )
     .join('\n')
 }
+
+/**
+ * A neutral type for the result of a parsing/validation operation.
+ *
+ * As some validation can happen via JSON Schema, we prefer to use a type that isn't wholly dependent on Zod (or
+ * JSON Schema).
+ */
+export type ParseConfigurationResult<TConfiguration> =
+  | {
+      state: 'ok'
+      data: TConfiguration
+      errors: undefined
+    }
+  | {
+      state: 'error'
+      data: undefined
+      errors: Pick<z.ZodIssueBase, 'path' | 'message'>[]
+    }
