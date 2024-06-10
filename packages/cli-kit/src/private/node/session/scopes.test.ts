@@ -19,8 +19,27 @@ describe('allDefaultScopes', () => {
       'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
       'https://api.shopify.com/auth/partners.app.cli.access',
       'https://api.shopify.com/auth/destinations.readonly',
-      'https://api.shopify.com/auth/organization.apps.manage',
       ...customScopes,
+    ])
+  })
+
+  test('includes the App Management one when the required env var is defined', async () => {
+    // Given
+    const envVars = {USE_APP_MANAGEMENT_API: 'true'}
+
+    // When
+    const got = allDefaultScopes([], envVars)
+
+    // Then
+    expect(got).toEqual([
+      'openid',
+      'https://api.shopify.com/auth/shop.admin.graphql',
+      'https://api.shopify.com/auth/shop.admin.themes',
+      'https://api.shopify.com/auth/partners.collaborator-relationships.readonly',
+      'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
+      'https://api.shopify.com/auth/partners.app.cli.access',
+      'https://api.shopify.com/auth/destinations.readonly',
+      'https://api.shopify.com/auth/organization.apps.manage',
     ])
   })
 })

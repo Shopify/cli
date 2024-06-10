@@ -21,7 +21,6 @@ interface ReplayOptions {
   stdout: boolean
   path: string
   json: boolean
-  export: string
 }
 
 export interface FunctionRunData {
@@ -33,12 +32,15 @@ export interface FunctionRunData {
     output: string
     output_bytes: number
     function_id: string
+    export: string
     logs: string
     fuel_consumed: number
   }
   event_type: string
   cursor: string
   status: string
+  source: string
+  source_namespace: string
   log_timestamp: string
   identifier: string
 }
@@ -47,34 +49,44 @@ export async function replay(options: ReplayOptions) {
   const {apiKey} = await ensureConnectedAppFunctionContext(options)
   const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
-  const functionRuns = await getFunctionRunData(functionRunsDir)
+  const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
   const selectedRun = await selectFunctionRunPrompt(functionRuns)
 
   if (selectedRun === undefined) {
     throw new AbortError(`No logs found in ${functionRunsDir}`)
   }
 
-  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input)
+  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input, selectedRun.payload.export)
 }
 
 async function runFunctionRunnerWithLogInput(
   fun: ExtensionInstance<FunctionConfigType>,
   options: ReplayOptions,
   input: string,
+  exportName: string,
 ) {
   const outputAsJson = options.json ? ['--json'] : []
-  const exportName = options.export ? ['--export', options.export] : []
 
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...exportName], {
-    cwd: fun.directory,
-    input,
-    stdout: 'inherit',
-    stderr: 'inherit',
-  })
+  return exec(
+    'npm',
+    ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...['--export', exportName]],
+    {
+      cwd: fun.directory,
+      input,
+      stdout: 'inherit',
+      stderr: 'inherit',
+    },
+  )
 }
 
-async function getFunctionRunData(functionRunsDir: string): Promise<FunctionRunData[]> {
-  const allFunctionRunFileNames = readdirSync(functionRunsDir).reverse()
+async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
+  const allFunctionRunFileNames = readdirSync(functionRunsDir)
+    .filter((filename) => {
+      // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
+      const splitFilename = filename.split('_')
+      return splitFilename[3] === 'extensions' && splitFilename[4] === functionHandle
+    })
+    .reverse()
   const latestFunctionRunFileNames = allFunctionRunFileNames.slice(0, LOG_SELECTOR_LIMIT)
   const functionRunFilePaths = latestFunctionRunFileNames.map((functionRunFile) =>
     joinPath(functionRunsDir, functionRunFile),
