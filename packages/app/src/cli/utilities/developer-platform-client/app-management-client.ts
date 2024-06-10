@@ -110,9 +110,19 @@ import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} f
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+
+const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
+
+export interface GatedExtensionTemplate extends ExtensionTemplate {
+  organizationBetaFlags?: string[]
+  minimumCliVersion?: string
+}
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public requiresOrganization = true
@@ -286,8 +296,35 @@ export class AppManagementClient implements DeveloperPlatformClient {
       )
   }
 
-  async templateSpecifications(_appId: string): Promise<ExtensionTemplate[]> {
-    return stubbedExtensionTemplates()
+  async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
+    let response
+    let templates: GatedExtensionTemplate[]
+    try {
+      response = await fetch(TEMPLATE_JSON_URL)
+      templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+    } catch (_e) {
+      throw new AbortError(
+        [
+          'Failed to fetch extension templates from',
+          {link: {url: TEMPLATE_JSON_URL}},
+          {char: '.'},
+          'This likely means a problem with GitHub.',
+        ],
+        [
+          {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
+          'or try again later.',
+        ],
+      )
+    }
+    // Fake the sortPriority as ascending, since the templates are already sorted
+    // in the static JSON file. This can be removed once PartnersClient, which
+    // uses sortPriority, is gone.
+    let counter = 0
+    return (
+      await allowedTemplates(templates, async (betaFlags: string[]) =>
+        this.organizationBetaFlags(organizationId, betaFlags),
+      )
+    ).map((template) => ({...template, sortPriority: counter++}))
   }
 
   async createApp(
@@ -717,6 +754,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
     )
   }
+
+  private async organizationBetaFlags(
+    _organizationId: string,
+    allBetaFlags: string[],
+  ): Promise<{[key: string]: boolean}> {
+    // For now, stub everything as false
+    const stub: {[flag: string]: boolean} = {}
+    allBetaFlags.forEach((flag) => {
+      stub[flag] = false
+    })
+    return stub
+  }
 }
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
@@ -757,802 +806,6 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
   }
 }
 
-async function stubbedExtensionTemplates(): Promise<ExtensionTemplate[]> {
-  return [
-    {
-      identifier: 'order_discounts',
-      name: 'Discount orders - Function',
-      defaultName: 'order-discount',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'discounts/javascript/order-discounts/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'discounts/javascript/order-discounts/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'discounts/rust/order-discounts/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'discounts/wasm/order-discounts/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'cart_checkout_validation',
-      name: 'Cart and checkout validation - Function',
-      defaultName: 'cart-checkout-validation',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'checkout/javascript/cart-checkout-validation/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'checkout/javascript/cart-checkout-validation/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'checkout/rust/cart-checkout-validation/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'checkout/wasm/cart-checkout-validation/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'cart_transform',
-      name: 'Cart transformer - Function',
-      defaultName: 'cart-transformer',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'checkout/javascript/cart-transform/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'checkout/javascript/cart-transform/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'checkout/rust/cart-transform/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'checkout/wasm/cart-transform/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'delivery_customization',
-      name: 'Delivery customization - Function',
-      defaultName: 'delivery-customization',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'checkout/javascript/delivery-customization/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'checkout/javascript/delivery-customization/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'checkout/rust/delivery-customization/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'checkout/wasm/delivery-customization/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'payment_customization',
-      name: 'Payment customization - Function',
-      defaultName: 'payment-customization',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'checkout/javascript/payment-customization/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'checkout/javascript/payment-customization/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'checkout/rust/payment-customization/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'checkout/wasm/payment-customization/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'product_discounts',
-      name: 'Discount products - Function',
-      defaultName: 'product-discount',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'discounts/javascript/product-discounts/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'discounts/javascript/product-discounts/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'discounts/rust/product-discounts/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'discounts/wasm/product-discounts/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'shipping_discounts',
-      name: 'Discount shipping - Function',
-      defaultName: 'shipping-discount',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'discounts/javascript/shipping-discounts/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'discounts/javascript/shipping-discounts/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'discounts/rust/shipping-discounts/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'discounts/wasm/shipping-discounts/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'fulfillment_constraints',
-      name: 'Fulfillment constraints - Function',
-      defaultName: 'fulfillment-constraints',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'order-routing/javascript/fulfillment-constraints/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'order-routing/javascript/fulfillment-constraints/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'order-routing/rust/fulfillment-constraints/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'order-routing/wasm/fulfillment-constraints/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'local_pickup_delivery_option_generator',
-      name: 'Local pickup delivery option generators — Function',
-      defaultName: 'local-pickup-delivery-option-generators',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'order-routing/javascript/local-pickup-delivery-option-generators/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'order-routing/javascript/local-pickup-delivery-option-generators/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'order-routing/rust/local-pickup-delivery-option-generators/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'order-routing/wasm/local-pickup-delivery-option-generators/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'discounts_allocator',
-      name: 'Discounts allocator — Function',
-      defaultName: 'discounts-allocator',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'discounts/javascript/discounts-allocator/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'discounts/javascript/discounts-allocator/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'discounts/rust/discounts-allocator/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'discounts/wasm/discounts-allocator/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'pickup_point_delivery_option_generator',
-      name: 'Pickup point delivery option generators — Function',
-      defaultName: 'pickup-point-delivery-option-generators',
-      group: 'Discounts and checkout',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/function-examples',
-          type: 'function',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'order-routing/javascript/pickup-point-delivery-option-generators/default',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'order-routing/typescript/pickup-point-delivery-option-generators/default',
-            },
-            {
-              name: 'Rust',
-              value: 'rust',
-              path: 'order-routing/rust/pickup-point-delivery-option-generators/default',
-            },
-            {
-              name: 'Wasm',
-              value: 'wasm',
-              path: 'order-routing/wasm/pickup-point-delivery-option-generators/default',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'admin_action',
-      name: 'Admin action',
-      defaultName: 'admin-action',
-      group: 'Admin',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'admin-action',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'admin-action',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'admin-action',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'admin-action',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'admin_block',
-      name: 'Admin block',
-      defaultName: 'admin-block',
-      group: 'Admin',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'admin-block',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'admin-block',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'admin-block',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'admin-block',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'checkout_ui',
-      name: 'Checkout UI',
-      defaultName: 'checkout-ui',
-      group: 'Discounts and checkout',
-      sortPriority: 0,
-      supportLinks: ['https://shopify.dev/api/checkout-extensions/checkout/configuration'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'checkout-extension',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'checkout-extension',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'checkout-extension',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'checkout-extension',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'product_configuration',
-      name: 'Product configuration',
-      defaultName: 'product-configuration',
-      group: 'Admin',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/apps/selling-strategies/bundles/product-config'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'product-configuration-extension',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'product-configuration-extension',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'product-configuration-extension',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'product-configuration-extension',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'customer_account_ui',
-      name: 'Customer account UI (preview for dev stores only)',
-      defaultName: 'customer-account-ui',
-      group: 'Customer account',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'customer-account-extension',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'customer-account-extension',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'customer-account-extension',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'customer-account-extension',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'pos_ui',
-      name: 'POS UI',
-      defaultName: 'pos-ui',
-      group: 'Point-of-Sale',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'pos_ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'pos-ui-extension',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'pos-ui-extension',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'pos-ui-extension',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'pos-ui-extension',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'tax_calculation',
-      name: 'Tax calculation',
-      defaultName: 'tax-calculation',
-      group: 'Admin',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'tax_calculation',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'Config only',
-              value: 'config-only',
-              path: 'tax-calculation',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'flow_action',
-      name: 'Flow action',
-      defaultName: 'Flow action',
-      group: 'Automations',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'flow_action',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'Config only',
-              value: 'config-only',
-              path: 'flow-action',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'flow_trigger',
-      name: 'Flow trigger',
-      defaultName: 'Flow trigger',
-      group: 'Automations',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'flow_trigger',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'Config only',
-              value: 'config-only',
-              path: 'flow-trigger',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'post_purchase_ui',
-      name: 'Post-purchase UI',
-      defaultName: 'post-purchase-ui',
-      group: 'Discounts and checkout',
-      sortPriority: 1,
-      supportLinks: ['https://shopify.dev/docs/apps/checkout/post-purchase'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'checkout_post_purchase',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'checkout-post-purchase',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'checkout-post-purchase',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'checkout-post-purchase',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'checkout-post-purchase',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'validation_settings_ui',
-      name: 'Validation Settings - UI Extension',
-      defaultName: 'validation-settings-ui',
-      group: 'Admin',
-      sortPriority: undefined,
-      supportLinks: ['https://shopify.dev/docs/apps/checkout/validation/server-side'],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'ui_extension',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'JavaScript React',
-              value: 'react',
-              path: 'validation-settings',
-            },
-            {
-              name: 'JavaScript',
-              value: 'vanilla-js',
-              path: 'validation-settings',
-            },
-            {
-              name: 'TypeScript React',
-              value: 'typescript-react',
-              path: 'validation-settings',
-            },
-            {
-              name: 'TypeScript',
-              value: 'typescript',
-              path: 'validation-settings',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      identifier: 'flow_template',
-      name: 'Flow template',
-      defaultName: 'Flow template',
-      group: 'Automations',
-      sortPriority: undefined,
-      supportLinks: [],
-      types: [
-        {
-          url: 'https://github.com/Shopify/extensions-templates',
-          type: 'flow_template',
-          extensionPoints: [],
-          supportedFlavors: [
-            {
-              name: 'Config only',
-              value: 'config-only',
-              path: 'flow-template',
-            },
-          ],
-        },
-      ],
-    },
-  ]
-}
-
 // Business platform uses base64-encoded GIDs, while App Management uses
 // just the integer portion of that ID. These functions convert between the two.
 
@@ -1586,4 +839,19 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
   const addedUids = added.map((mod) => mod.uid)
   const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
   return {added, removed, updated}
+}
+
+export async function allowedTemplates(
+  templates: GatedExtensionTemplate[],
+  betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>,
+): Promise<GatedExtensionTemplate[]> {
+  const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
+  const enabledBetaFlags = await betaFlagsFetcher(allBetaFlags)
+  return templates.filter((ext) => {
+    const hasAnyNeededBetas =
+      !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
+    const satisfiesMinCliVersion =
+      !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
+    return hasAnyNeededBetas && satisfiesMinCliVersion
+  })
 }
