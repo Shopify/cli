@@ -45,8 +45,6 @@ export interface AppEventData {
   cursor: string
   status: 'success' | 'failure'
   log_timestamp: string
-  source?: string
-  source_namespace?: string
 }
 
 export const pollAppLogs = async ({
