@@ -337,17 +337,15 @@ export class App<
       this.realExtensions.map(async (module) => {
         const config = await module.commonDeployConfig('', this.configuration)
         return {
-          type: module.type,
+          type: module.externalType,
           handle: module.handle,
           uid: module.devUUID,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          config: config ?? ({} as {[key: string]: any}),
+          config: (config ?? {}) as JsonMapType,
         }
       }),
     )
     const realModules = getArrayRejectingUndefined(modules)
     return {
-      client_id: this.configuration.client_id,
       name: this.name,
       handle: '',
       modules: realModules,
