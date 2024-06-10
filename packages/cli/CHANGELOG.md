@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 3.61.2
+
+### Patch Changes
+
+- 3c7a211c2: Update hydrogen
+  - @shopify/app@3.61.2
+  - @shopify/cli-kit@3.61.2
+  - @shopify/theme@3.61.2
+  - @shopify/plugin-cloudflare@3.61.2
+  - @shopify/plugin-did-you-mean@3.61.2
+
 ## 3.61.1
 
 ### Patch Changes
