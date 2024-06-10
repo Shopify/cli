@@ -1,4 +1,4 @@
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {gql} from 'graphql-request'
 
 export const RemoteTemplateSpecificationsQuery = gql`
@@ -24,8 +24,27 @@ export const RemoteTemplateSpecificationsQuery = gql`
   }
 `
 
+interface ExtensionType {
+  url: string
+  type: string
+  extensionPoints: string[]
+  supportedFlavors: {
+    name: string
+    value: ExtensionFlavorValue
+    path: string
+  }[]
+}
+
 export interface RemoteTemplateSpecificationsSchema {
-  templateSpecifications: ExtensionTemplate[]
+  templateSpecifications: {
+    identifier: string
+    name: string
+    defaultName: string
+    group: string
+    sortPriority: number
+    supportLinks: string[]
+    types: [ExtensionType, ...ExtensionType[]]
+  }[]
 }
 
 export interface RemoteTemplateSpecificationsVariables {

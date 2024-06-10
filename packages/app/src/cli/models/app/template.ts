@@ -6,13 +6,6 @@ export interface ExtensionFlavor {
   path?: string
 }
 
-export interface TemplateType {
-  type: string
-  extensionPoints: string[]
-  supportedFlavors: ExtensionFlavor[]
-  url: string
-}
-
 export interface ExtensionTemplate {
   identifier: string
   name: string
@@ -20,5 +13,8 @@ export interface ExtensionTemplate {
   sortPriority?: number
   group: string
   supportLinks: string[]
-  types: TemplateType[]
+  type: string
+  extensionPoints: string[]
+  supportedFlavors: ExtensionFlavor[]
+  url: string
 }

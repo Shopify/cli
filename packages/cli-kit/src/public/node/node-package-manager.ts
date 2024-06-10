@@ -6,7 +6,7 @@ import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import latestVersion from 'latest-version'
-import {SemVer} from 'semver'
+import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -263,6 +263,16 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
   } catch (error) {
     return undefined
   }
+}
+
+/**
+ * Utility function used to check whether a package version satisfies some requirements
+ * @param version - The version to check
+ * @param requirements - The requirements to check against, e.g. "\>=1.0.0" - see https://www.npmjs.com/package/semver#ranges
+ * @returns A boolean indicating whether the version satisfies the requirements
+ */
+export function versionSatisfies(version: string, requirements: string): boolean {
+  return semverSatisfies(version, requirements)
 }
 
 /**
