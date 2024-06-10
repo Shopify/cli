@@ -6,7 +6,8 @@ export async function versionService(): Promise<void> {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
   outputInfo(outputContent`Current Shopify CLI version: ${outputToken.yellow(currentVersion)}`.value)
-  const lastVersion = await checkForNewVersion(cliDependency, currentVersion)
+  // Check a max of once daily
+  const lastVersion = await checkForNewVersion(cliDependency, currentVersion, 24 * 3600)
   if (lastVersion) {
     const packageManager = packageManagerFromUserAgent()
     outputInfo(getOutputUpdateCLIReminder(packageManager, lastVersion))
