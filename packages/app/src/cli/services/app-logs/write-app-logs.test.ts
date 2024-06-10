@@ -13,6 +13,8 @@ const APP_LOG: AppEventData = {
   event_type: 'function_run',
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
+  source: 'my-function',
+  source_namespace: 'extensions',
   log_timestamp: '2024-05-22T15:06:41.827379Z',
 }
 const API_KEY = 'apiKey'
@@ -29,14 +31,14 @@ describe('writeAppLogsToFile', () => {
     const logData = expectedLogDataFromAppEvent(APP_LOG)
 
     // determine the fileName and path
-    const fileName = `app_logs_${APP_LOG.log_timestamp}.json`
+    const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
     const path = joinPath(API_KEY, fileName)
 
     // When
     await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
 
     // Then
-    expect(writeLog).toHaveBeenCalledWith(path, logData)
+    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
   })
 

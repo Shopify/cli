@@ -1,1 +1,1 @@
-npm install -g @shopify/cli
+npm install -g @shopify/cli@latest

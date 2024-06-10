@@ -28,7 +28,7 @@ export async function setupAppLogsPollingProcess({
   developerPlatformClient,
   subscription: {shopIds, apiKey},
 }: Props): Promise<AppLogsSubscribeProcess> {
-  const {token: partnersSessionToken} = await developerPlatformClient.session()
+  const {token} = await developerPlatformClient.session()
 
   return {
     type: 'app-logs-subscribe',
@@ -39,14 +39,14 @@ export async function setupAppLogsPollingProcess({
       appLogsSubscribeVariables: {
         shopIds,
         apiKey,
-        token: partnersSessionToken,
+        token,
       },
     },
   }
 }
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
-  {stdout},
+  {stdout, stderr, abortSignal},
   {developerPlatformClient, appLogsSubscribeVariables},
 ) => {
   const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
@@ -55,9 +55,9 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
   outputDebug(`API Key: ${appLogsSubscribeVariables.apiKey}\n`)
 
   if (errors && errors.length > 0) {
-    errors.forEach((error) => {
-      stdout.write(`Error: ${error}\n`)
-    })
+    stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
+    stdout.write('App log streaming is not available in this `dev` session.')
+    return
   } else {
     outputDebug(`Subscribed to App Events for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
     outputDebug(`Success: ${success}\n`)
@@ -65,5 +65,15 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
 
   const apiKey = appLogsSubscribeVariables.apiKey
   await createLogsDir(apiKey)
-  await pollAppLogs({stdout, appLogsFetchInput: {jwtToken}, apiKey})
+  await pollAppLogs({
+    stdout,
+    appLogsFetchInput: {jwtToken},
+    apiKey,
+    resubscribeCallback: () => {
+      return subscribeAndStartPolling(
+        {stdout, stderr, abortSignal},
+        {developerPlatformClient, appLogsSubscribeVariables},
+      )
+    },
+  })
 }

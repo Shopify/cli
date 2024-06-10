@@ -189,7 +189,7 @@ export interface DeveloperPlatformClient {
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
-  templateSpecifications: (appId: string) => Promise<ExtensionTemplate[]>
+  templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>

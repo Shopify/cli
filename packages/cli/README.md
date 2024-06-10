@@ -339,7 +339,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-  -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
+  -e, --export=<value>  Name of the WebAssembly export to invoke.
   -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
   -j, --json            Log the run result as a JSON object.
       --no-color        Disable color output.

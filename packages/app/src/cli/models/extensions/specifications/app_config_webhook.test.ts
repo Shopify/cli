@@ -20,13 +20,13 @@ describe('webhooks', () => {
             },
             {
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-              sub_topic: 'type:metaobject_one',
+              filter: 'type:metaobject_one',
               topics: ['metaobjects/create', 'metaobjects/update'],
             },
             {
               topics: ['metaobjects/create', 'metaobjects/update'],
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-              sub_topic: 'type:metaobject_two',
+              filter: 'type:metaobject_two',
             },
             {
               topics: ['orders/create'],
@@ -36,7 +36,7 @@ describe('webhooks', () => {
             {
               topics: ['metaobjects/create', 'metaobjects/delete'],
               uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-              sub_topic: 'type:metaobject_one',
+              filter: 'type:metaobject_one',
             },
             {
               topics: ['products/create', 'products/update'],
@@ -72,22 +72,22 @@ describe('webhooks', () => {
             uri: 'https://example.com/webhooks/products',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/create',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/update',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_two',
+            filter: 'type:metaobject_two',
             topic: 'metaobjects/create',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_two',
+            filter: 'type:metaobject_two',
             topic: 'metaobjects/update',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
@@ -97,12 +97,12 @@ describe('webhooks', () => {
             uri: 'https://valid-url',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/create',
             uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/delete',
             uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
@@ -156,7 +156,7 @@ describe('webhooks', () => {
             uri: 'https://example.com/webhooks/products',
           },
           {
-            sub_topic: 'type:metaobject_one',
+            filter: 'type:metaobject_one',
             topic: 'metaobjects/create',
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
@@ -201,7 +201,7 @@ describe('webhooks', () => {
               uri: 'https://valid-url',
             },
             {
-              sub_topic: 'type:metaobject_one',
+              filter: 'type:metaobject_one',
               topics: ['metaobjects/create'],
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },

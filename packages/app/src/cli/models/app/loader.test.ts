@@ -514,7 +514,7 @@ wrong = "property"
 
     // When
     await expect(loadTestingApp()).rejects.toThrow(
-      'Duplicated print action target "admin.product-details.print-action.render" in extensions "my_extension_1" and "my_extension_2". You can only have one print action extension per target in an app. Please remove the duplicates.',
+      `A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target admin.product-details.print-action.render:\n  · handle-1\n  · handle-2`,
     )
   })
 
@@ -3053,51 +3053,6 @@ describe('WebhooksSchema', () => {
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
-
-  test('does not allow identical topic and uri and sub_topic in different subscriptions', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-        },
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-        },
-      ],
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
-      fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'metaobjects/create'],
-    }
-
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
-
-  test('allows identical topic and uri if sub_topic is different', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['metaobjects/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
-        },
-        {
-          topics: ['products/create'],
-          uri: 'https://example.com',
-          sub_topic: 'type:metaobject_two',
-        },
-      ],
-    }
   })
 
   test('does not allow identical topic and uri and filter in different subscriptions', async () => {

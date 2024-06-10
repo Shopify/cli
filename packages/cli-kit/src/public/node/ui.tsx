@@ -60,9 +60,9 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * @example
- * 00:00:00 │ backend  │ first backend message
- * 00:00:00 │ backend  │ second backend message
- * 00:00:00 │ backend  │ third backend message
+ * 00:00:00 │  backend │ first backend message
+ * 00:00:00 │  backend │ second backend message
+ * 00:00:00 │  backend │ third backend message
  * 00:00:00 │ frontend │ first frontend message
  * 00:00:00 │ frontend │ second frontend message
  * 00:00:00 │ frontend │ third frontend message
@@ -686,6 +686,15 @@ export const keypress = async (stdin = process.stdin, uiDebugOptions: UIDebugOpt
   })
 }
 
+interface IsTTYOptions {
+  stdin?: NodeJS.ReadStream
+  uiDebugOptions?: UIDebugOptions
+}
+
+export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions) {
+  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode())
+}
+
 interface ThrowInNonTTYOptions {
   message: TokenItem
   stdin?: NodeJS.ReadStream
@@ -693,7 +702,7 @@ interface ThrowInNonTTYOptions {
 
 // eslint-disable-next-line max-params
 function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
-  if (uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode()) return
+  if (isTTY({stdin, uiDebugOptions})) return
 
   const promptText = tokenItemToString(message)
   const errorMessage = `Failed to prompt:

@@ -6,10 +6,9 @@ import {
   testAppWithConfig,
   testDeveloperPlatformClient,
   testFunctionExtension,
-  testLocalExtensionTemplates,
   testOrganizationApp,
   testRemoteExtensionTemplates,
-  testThemeExtensions,
+  testUIExtension,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
@@ -116,8 +115,7 @@ describe('generate', () => {
   })
 
   test('throws error if trying to generate a non existing type', async () => {
-    // Given
-    await mockSuccessfulCommandExecution('unknown_type')
+    await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
     const got = generate({
@@ -133,14 +131,14 @@ describe('generate', () => {
 
   test('throws error if trying to generate a extension over the registration limit', async () => {
     // Given
-    const themeExtension = await testThemeExtensions()
-    await mockSuccessfulCommandExecution('theme_app_extension', [themeExtension])
+    const productSubscriptionExtension = await testUIExtension({type: 'product_subscription'})
+    await mockSuccessfulCommandExecution('subscription_ui', [productSubscriptionExtension])
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
-      template: 'theme_app_extension',
+      template: 'subscription_ui',
       developerPlatformClient: testDeveloperPlatformClient(),
     })
 
@@ -167,13 +165,13 @@ describe('generate', () => {
 
   test('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('subscription_ui')
+    await mockSuccessfulCommandExecution('cart_checkout_validation')
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
-      template: 'subscription_ui',
+      template: 'cart_checkout_validation',
       flavor: 'unknown',
       developerPlatformClient: testDeveloperPlatformClient(),
     })
@@ -195,23 +193,25 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     config: {path: joinPath(appRoot, 'shopify.app.toml')},
   })
 
-  const allExtensionTemplates = testRemoteExtensionTemplates.concat(testLocalExtensionTemplates)
+  const allExtensionTemplates = testRemoteExtensionTemplates
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
+  if (!extensionTemplate) {
+    const availableTemplates = allExtensionTemplates.map((spec) => spec.identifier).join(', ')
+    throw new Error(`Unknown extension template: ${identifier} (available: ${availableTemplates})`)
+  }
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(ensureGenerateContext).mockResolvedValue(testOrganizationApp({developerPlatformClient, apiKey: 'api-key'}))
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
-    extensionContent: [
-      {
-        index: 0,
-        name: identifier,
-        flavor: 'vanilla-js',
-      },
-    ],
+    extensionContent: {
+      name: identifier,
+      flavor: 'vanilla-js',
+    },
   })
-  vi.mocked(generateExtensionTemplate).mockResolvedValue([
-    {directory: joinPath('extensions', 'name'), extensionTemplate},
-  ])
+  vi.mocked(generateExtensionTemplate).mockResolvedValue({
+    directory: joinPath('extensions', 'name'),
+    extensionTemplate,
+  })
   return mockAndCaptureOutput()
 }

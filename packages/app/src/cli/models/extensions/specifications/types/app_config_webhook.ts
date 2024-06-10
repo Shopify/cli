@@ -2,7 +2,6 @@ export interface WebhookSubscription {
   uri: string
   topics?: string[]
   compliance_topics?: string[]
-  sub_topic?: string
   include_fields?: string[]
   filter?: string
 }

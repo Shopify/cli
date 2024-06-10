@@ -6,29 +6,41 @@ import {
 } from './is-global.js'
 import {captureOutput, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
-import {describe, expect, test, vi} from 'vitest'
+import * as execa from 'execa'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
 vi.mock('./ui.js')
+vi.mock('execa')
+
+const globalNPMPath = '/path/to/global/npm'
+const globalYarnPath = '/path/to/global/yarn'
+const globalPNPMPath = '/path/to/global/pnpm'
+const unknownGlobalPath = '/path/to/global/unknown'
+const localProjectPath = '/path/local'
+
+beforeEach(() => {
+  ;(vi.mocked(execa.execaSync) as any).mockReturnValue({stdout: localProjectPath})
+})
 
 describe('currentProcessIsGlobal', () => {
-  test('returns true if npm_config_user_agent is undefined', () => {
+  test('returns true if argv point to the global npm path', () => {
     // Given
-    const env = {}
+    const argv = ['node', globalNPMPath, 'shopify']
 
     // When
-    const got = currentProcessIsGlobal(env)
+    const got = currentProcessIsGlobal(argv)
 
     // Then
     expect(got).toBeTruthy()
   })
 
-  test('returns pnpm if the npm_config_user_agent variable contains pnpm', () => {
+  test('returns false if argv points to a local path', () => {
     // Given
-    const env = {npm_config_user_agent: 'pnpm'}
+    const argv = ['node', localProjectPath, 'shopify']
 
     // When
-    const got = currentProcessIsGlobal(env)
+    const got = currentProcessIsGlobal(argv)
 
     // Then
     expect(got).toBeFalsy()
@@ -38,10 +50,10 @@ describe('currentProcessIsGlobal', () => {
 describe('inferPackageManagerForGlobalCLI', () => {
   test('returns yarn if yarn is in path', async () => {
     // Given
-    const argv = ['node', 'path/to/yarn', 'shopify']
+    const argv = ['node', globalYarnPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv, {})
+    const got = await inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('yarn')
@@ -49,10 +61,10 @@ describe('inferPackageManagerForGlobalCLI', () => {
 
   test('returns pnpm is pnpm is in path', async () => {
     // Given
-    const argv = ['node', 'path/to/pnpm/something', 'shopify']
+    const argv = ['node', globalPNPMPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv, {})
+    const got = await inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('pnpm')
@@ -60,10 +72,10 @@ describe('inferPackageManagerForGlobalCLI', () => {
 
   test('returns npm if nothing else is in path', async () => {
     // Given
-    const argv = ['node', 'path/to/package/manager', 'shopify']
+    const argv = ['node', unknownGlobalPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv, {})
+    const got = await inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('npm')
@@ -71,10 +83,10 @@ describe('inferPackageManagerForGlobalCLI', () => {
 
   test('returns unknown if current process is not global', async () => {
     // Given
-    const argv = ['node', 'path/to/package/manager', 'shopify']
+    const argv = ['node', localProjectPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv, {npm_config_user_agent: 'npm'})
+    const got = await inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('unknown')
