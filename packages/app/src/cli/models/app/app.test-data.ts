@@ -326,6 +326,7 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
     ? ({} as unknown as BaseConfigType)
     : ({
         webhooks: {
+          api_version: '2024-01',
           subscriptions: [
             {
               topics: ['orders/delete'],

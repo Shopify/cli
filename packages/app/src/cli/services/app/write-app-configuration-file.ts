@@ -1,4 +1,5 @@
 import {CurrentAppConfiguration} from '../../models/app/app.js'
+import {reduceWebhooks} from '../../models/extensions/specifications/transform/app_config_webhook.js'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -11,7 +12,14 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
-  const sorted = rewriteConfiguration(schema, configuration) as {[key: string]: string | boolean | object}
+  // we need to condense the compliance and non-compliance webhooks again
+  // so compliance topics and topics with the same uri are under
+  // the same [[webhooks.subscriptions]] in the TOML
+  const condensedWebhooksAppConfiguration = condenseComplianceAndNonComplianceWebhooks(configuration)
+
+  const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as {
+    [key: string]: string | boolean | object
+  }
   const fileSplit = encodeToml(sorted as JsonMapType).split(/(\r\n|\r|\n)/)
 
   fileSplit.unshift('\n')
@@ -66,5 +74,20 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
 
     return result
   }
+  return config
+}
+
+/**
+ * When we merge webhooks, we have the privacy and non-privacy compliance subscriptions
+ * separated for matching remote/local config purposes,
+ * but when we link we want to condense all webhooks together
+ * so we have to do an additional reduce here
+ */
+function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
+  const webhooksConfig = config.webhooks
+  if (webhooksConfig?.subscriptions?.length) {
+    webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
+  }
+
   return config
 }

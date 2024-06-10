@@ -17,7 +17,3 @@ export interface WebhooksConfig {
   privacy_compliance?: PrivacyComplianceConfig
   subscriptions?: WebhookSubscription[]
 }
-
-export type NormalizedWebhookSubscription = Omit<WebhookSubscription, 'topics'> & {
-  topic: string
-}
