@@ -374,16 +374,19 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
 export async function testSingleWebhookSubscriptionExtension({
   emptyConfig = false,
   topic = 'orders/delete',
+  config = {
+    topic,
+    api_version: '2024-01',
+    uri: 'https://my-app.com/webhooks',
+  },
+}: {
+  emptyConfig?: boolean
+  topic?: string
+  config?: object
 } = {}): Promise<ExtensionInstance> {
   // configuration should be a single webhook subscription because of how
   // we create the extension instances in loader
-  const configuration = emptyConfig
-    ? ({} as unknown as BaseConfigType)
-    : ({
-        topic,
-        api_version: '2024-01',
-        uri: 'https://my-app.com/webhooks',
-      } as unknown as BaseConfigType)
+  const configuration = emptyConfig ? ({} as unknown as BaseConfigType) : (config as unknown as BaseConfigType)
 
   const webhooksExtension = new ExtensionInstance({
     configuration,
