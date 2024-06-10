@@ -595,16 +595,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }: AppDeployOptions): Promise<AppDeploySchema> {
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
-      appModules: (appModules ?? []).map((mod) => {
-        return {
-          uid: mod.uid ?? mod.uuid ?? mod.handle,
-          specificationIdentifier: mod.specificationIdentifier,
-          handle: mod.handle,
-          config: mod.config,
-        }
-      }),
-      versionTag,
-      assetsUrl: bundleUrl,
+      appSource: {
+        assetsUrl: bundleUrl,
+        modules: (appModules ?? []).map((mod) => {
+          return {
+            uid: mod.uid ?? mod.uuid ?? mod.handle,
+            specificationIdentifier: mod.specificationIdentifier,
+            handle: mod.handle,
+            config: JSON.parse(mod.config),
+          }
+        }),
+      },
+      metadata: {
+        versionTag,
+      },
     }
 
     const result = await appManagementRequest<CreateAppVersionMutationSchema>(
@@ -613,7 +617,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
     )
-    const {version, userErrors} = result.versionCreate
+    const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
     const devDashFqdn = (await appManagementFqdn()).replace('app.', 'developers.')
@@ -623,7 +627,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           uuid: version.id,
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
-          versionTag: version.versionTag,
+          versionTag: versionTag ?? 'VERSION TAG NOT RETURNED FROM API YET',
           location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
           appModuleVersions: version.modules.map((mod) => {
             return {
@@ -803,30 +807,34 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
     appSource: {
       modules: [
         {
-          uid: '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9', // TODO: change to AppHomeSpecIdentifier
+          // Change the uid to AppHomeSpecIdentifier
+          uid: 'app_home',
           specificationIdentifier: AppHomeSpecIdentifier,
-          config: JSON.stringify({
+          config: {
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
             embedded: isLaunchable,
-          }),
+          },
         },
         {
-          uid: '10457bd6-aeea-4f92-ab90-a9ab1e471276', // TODO: change to BrandingSpecIdentifier
+          // Change the uid to BrandingSpecIdentifier
+          uid: 'branding',
           specificationIdentifier: BrandingSpecIdentifier,
-          config: JSON.stringify({name}),
+          config: {name},
         },
         {
-          uid: '0ea86845-466c-4f0e-b7f1-9d9496d93f4a', // TODO: change to WebhooksSpecIdentifier
+          // Change the uid to WebhooksSpecIdentifier
+          uid: 'webhooks',
           specificationIdentifier: WebhooksSpecIdentifier,
-          config: JSON.stringify({api_version: '2024-01'}),
+          config: {api_version: '2024-01'},
         },
         {
-          uid: '406bb2df-eaa4-44bc-860d-c714f4b65def', // TODO: change to AppAccessSpecIdentifier
+          // Change the uid to AppAccessSpecIdentifier
+          uid: 'app_access',
           specificationIdentifier: AppAccessSpecIdentifier,
-          config: JSON.stringify({
+          config: {
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
-          }),
+          },
         },
       ],
     },
