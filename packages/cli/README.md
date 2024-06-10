@@ -69,6 +69,7 @@
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
+* [`shopify theme profile`](#shopify-theme-profile)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme:push`](#shopify-themepush)
@@ -1919,6 +1920,29 @@ DESCRIPTION
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
+```
+
+## `shopify theme profile`
+
+TODO
+
+```
+USAGE
+  $ shopify theme profile [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
+
+FLAGS
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --path=<value>         The path to your theme directory.
+      --verbose              Increase the verbosity of the logs.
+
+DESCRIPTION
+  TODO
+
+  TODO
 ```
 
 ## `shopify theme publish`
