@@ -338,7 +338,6 @@ export class App<
         const config = await module.commonDeployConfig('', this.configuration)
         return {
           type: module.type,
-          name: module.name,
           handle: module.handle,
           uid: module.devUUID,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
