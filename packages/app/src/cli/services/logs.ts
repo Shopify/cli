@@ -32,6 +32,7 @@ export async function logs(commandOptions: LogsOptions) {
   const config = await prepareForLogs(commandOptions)
   // We only need 1 process - ??
   const process = await setupAppLogsPollingProcess({
+    mode: 'logs',
     developerPlatformClient: config.developerPlatformClient,
     subscription: {
       shopIds: [config.storeId],

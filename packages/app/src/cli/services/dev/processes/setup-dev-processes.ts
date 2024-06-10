@@ -144,6 +144,7 @@ export async function setupDevProcesses({
     }),
     shouldPerformAppLogPolling
       ? await setupAppLogsPollingProcess({
+          mode: 'dev',
           developerPlatformClient,
           subscription: {
             shopIds: [storeId],
