@@ -6,7 +6,7 @@ import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {execaSync} from 'execa'
 
-let _isGlobal: boolean | undefined = false
+let _isGlobal: boolean | undefined
 
 /**
  * Returns true if the current process is running in a global context.

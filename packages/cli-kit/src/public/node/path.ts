@@ -158,3 +158,14 @@ export function sniffForPath(argv = process.argv): string | undefined {
   if (!pathFlag || pathFlag.startsWith('-')) return
   return pathFlag
 }
+
+/**
+ * Returns whether the `--json` flag is present in the arguments.
+ *
+ * @param argv - The arguments to search for the `--json` flag.
+ * @returns Whether the `--json` flag is present in the arguments.
+ */
+export function sniffForJson(argv = process.argv): boolean {
+  const jsonFlagIndex = argv.indexOf('--json')
+  return jsonFlagIndex !== -1
+}
