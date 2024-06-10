@@ -113,15 +113,5 @@ export const subscribeAndStartPolling2: DevProcessFunction<SubscribeAndStartPoll
 
   const apiKey = appLogsSubscribeVariables.apiKey
   await createLogsDir(apiKey)
-  await pollAppLogs2({
-    stdout,
-    appLogsFetchInput: {
-      jwtToken,
-      filters: {
-        status: filters?.status,
-        source: filters?.source,
-      },
-    },
-    apiKey,
-  })
+  await pollAppLogs2({stdout, appLogsFetchInput: {jwtToken, filters}, apiKey})
 }

@@ -3,14 +3,8 @@ import {ExtensionInstance} from '../../../../models/extensions/extension-instanc
 import React, {useState, FunctionComponent, useEffect, useCallback} from 'react'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {Box, Text, TextProps} from 'ink'
+import {Box, Text} from '@shopify/cli-kit/node/ink'
 import {Writable} from 'stream'
-
-interface Chunk {
-  color: TextProps['color']
-  prefix: string
-  lines: string[]
-}
 
 export interface LogsProps {
   logsProcess: OutputProcess
@@ -37,36 +31,23 @@ export interface DetailsFunctionRunLogEvent {
   source: string
 }
 
-// tod o
-const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: ExtensionInstance[]) => {
-  return Math.max(
-    ...processes.map((process) => process.prefix.length),
-    ...extensions.map((extension) => extension.handle.length),
-  )
-}
-
-const Logs: FunctionComponent<LogsProps> = ({logsProcess, app, abortController}) => {
+const Logs: FunctionComponent<LogsProps> = ({logsProcess, abortController}) => {
   const [logs, setLogs] = useState<DetailsFunctionRunLogEvent[]>([])
 
   const writableStream = useCallback(() => {
     return new Writable({
       write(chunk, _encoding, next) {
         const log = chunk.toString('utf8')
-        try {
-          const parsedLog = JSON.parse(log)
-          // Mock for now
-          setLogs((prevLogs) => [
-            ...prevLogs,
-            {
-              ...parsedLog,
-              status: parsedLog.status === 'success' ? 'Success' : 'Failure',
-              source: parsedLog.source,
-            },
-          ])
-        } catch (error) {
-          console.error('Failed to parse log:', error)
-          throw error
-        }
+        const parsedLog = JSON.parse(log)
+        // Mock for now
+        setLogs((prevLogs) => [
+          ...prevLogs,
+          {
+            ...parsedLog,
+            status: parsedLog.status === 'success' ? 'Success' : 'Failure',
+            source: parsedLog.source,
+          },
+        ])
 
         next()
       },
@@ -86,15 +67,14 @@ const Logs: FunctionComponent<LogsProps> = ({logsProcess, app, abortController})
 
   return (
     <>
-      {/* TODO - update to use <Static /> */}
       {logs.map((log: DetailsFunctionRunLogEvent, index: number) => (
         <Box flexDirection="column" key={index}>
           {/* use inviocation id here (as key) */}
           <Box flexDirection="row" rowGap={2}>
             <Text color="green">{currentTime()} </Text>
-            <Text color="blueBright"> {` ${log.source}`}</Text>
+            <Text color="blueBright"> {`${log.source}`}</Text>
             <Text color={log.status === 'Success' ? 'green' : 'red'}> {` ${log.status}`}</Text>
-            <Text> {` ${log.functionId}`}</Text>
+            <Text> {`${log.functionId}`}</Text>
             <Text> in {log.fuelConsumed}M instructions</Text>
           </Box>
           <Text>{log.logs}</Text>
