@@ -5,11 +5,11 @@ import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
+import {PackageVersionKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
-import {PackageVersionKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 
 /** The name of the Yarn lock file */
 export const yarnLockfile = 'yarn.lock'
@@ -253,7 +253,11 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * refresh the cache. Defaults to always refreshing.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
-export async function checkForNewVersion(dependency: string, currentVersion: string, refreshIfOlderThanSeconds = 0): Promise<string | undefined> {
+export async function checkForNewVersion(
+  dependency: string,
+  currentVersion: string,
+  refreshIfOlderThanSeconds = 0,
+): Promise<string | undefined> {
   const getLatestVersion = async () => {
     outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
     return getLatestNPMPackageVersion(dependency)
@@ -262,11 +266,7 @@ export async function checkForNewVersion(dependency: string, currentVersion: str
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   let lastVersion
   try {
-    lastVersion = await cacheRetrieveOrRepopulate(
-      cacheKey,
-      getLatestVersion,
-      refreshIfOlderThanSeconds * 1000
-    )
+    lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, refreshIfOlderThanSeconds * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return undefined
