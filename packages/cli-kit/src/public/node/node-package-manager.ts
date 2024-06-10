@@ -9,6 +9,7 @@ import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
+import {PackageVersionKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 
 /** The name of the Yarn lock file */
 export const yarnLockfile = 'yarn.lock'
@@ -248,19 +249,32 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
  * @param dependency - The dependency name (e.g. react)
  * @param currentVersion - The current version.
+ * @param refreshIfOlderThanSeconds - If the last check was done more than this amount of seconds ago, it will
+ * refresh the cache. Defaults to always refreshing.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
-export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
-  outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+export async function checkForNewVersion(dependency: string, currentVersion: string, refreshIfOlderThanSeconds = 0): Promise<string | undefined> {
+  const getLatestVersion = async () => {
+    outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+    return getLatestNPMPackageVersion(dependency)
+  }
+
+  const cacheKey: PackageVersionKey = `npm-package-${dependency}`
+  let lastVersion
   try {
-    const lastVersion = await getLatestNPMPackageVersion(dependency)
-    if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
-      return lastVersion
-    } else {
-      return undefined
-    }
+    lastVersion = await cacheRetrieveOrRepopulate(
+      cacheKey,
+      getLatestVersion,
+      refreshIfOlderThanSeconds * 1000
+    )
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    return undefined
+  }
+
+  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+    return lastVersion
+  } else {
     return undefined
   }
 }
