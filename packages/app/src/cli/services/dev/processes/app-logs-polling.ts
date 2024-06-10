@@ -1,11 +1,12 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {pollAppLogs, appLogsDevOutput, appLogsLogsOutput} from '../../app-logs/poll-app-logs.js'
+import {AppEventData, pollAppLogs} from '../../app-logs/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
 
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {Writable} from 'stream'
 
 interface SubscribeAndStartPollingOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -21,7 +22,7 @@ export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPo
 }
 
 interface Props {
-  mode: 'dev' | 'logs'
+  outputCallback: ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string}) => void
   developerPlatformClient: DeveloperPlatformClient
   subscription: {
     shopIds: string[]
@@ -34,20 +35,17 @@ interface Props {
 }
 
 export async function setupAppLogsPollingProcess({
-  mode,
+  outputCallback,
   developerPlatformClient,
   subscription: {shopIds, apiKey},
   filters,
 }: Props): Promise<AppLogsSubscribeProcess> {
   const {token} = await developerPlatformClient.session()
 
-  // workaroudn for now, refactor needed
-  const processFunction = mode === 'dev' ? subscribeAndStartPolling : subscribeAndStartPolling2
-
   return {
     type: 'app-logs-subscribe',
     prefix: 'app-logs',
-    function: processFunction,
+    function: createSubscribeAndStartPolling(outputCallback),
     options: {
       developerPlatformClient,
       appLogsSubscribeVariables: {
@@ -60,70 +58,37 @@ export async function setupAppLogsPollingProcess({
   }
 }
 
-export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
-  {stdout, stderr, abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables},
-) => {
-  const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
-  const {jwtToken, success, errors} = result.appLogsSubscribe
-  outputDebug(`Token: ${jwtToken}\n`)
-  outputDebug(`API Key: ${appLogsSubscribeVariables.apiKey}\n`)
+const createSubscribeAndStartPolling = (
+  outputCallback: ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string | undefined}) => void,
+): DevProcessFunction<SubscribeAndStartPollingOptions> => {
+  return async ({stdout, stderr, abortSignal}, {developerPlatformClient, appLogsSubscribeVariables, filters}) => {
+    const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
+    const {jwtToken, success, errors} = result.appLogsSubscribe
+    outputDebug(`Token: ${jwtToken}\n`)
+    outputDebug(`API Key: ${appLogsSubscribeVariables.apiKey}\n`)
 
-  if (errors && errors.length > 0) {
-    stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
-    stdout.write('App log streaming is not available in this `dev` session.')
-    return
-  } else {
-    outputDebug(`Subscribed to App Events for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
-    outputDebug(`Success: ${success}\n`)
+    if (errors && errors.length > 0) {
+      stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
+      stdout.write('App log streaming is not available in this `dev` session.')
+      return
+    } else {
+      outputDebug(`Subscribed to App Events for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
+      outputDebug(`Success: ${success}\n`)
+    }
+
+    const apiKey = appLogsSubscribeVariables.apiKey
+    await createLogsDir(apiKey)
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken, filters},
+      apiKey,
+      resubscribeCallback: () => {
+        return createSubscribeAndStartPolling(outputCallback)(
+          {stdout, stderr, abortSignal},
+          {developerPlatformClient, appLogsSubscribeVariables, filters},
+        )
+      },
+      outputCallback,
+    })
   }
-
-  const apiKey = appLogsSubscribeVariables.apiKey
-  await createLogsDir(apiKey)
-  await pollAppLogs({
-    stdout,
-    appLogsFetchInput: {jwtToken},
-    apiKey,
-    resubscribeCallback: () => {
-      return subscribeAndStartPolling(
-        {stdout, stderr, abortSignal},
-        {developerPlatformClient, appLogsSubscribeVariables},
-      )
-    },
-    outputCallback: appLogsDevOutput,
-  })
-}
-
-export const subscribeAndStartPolling2: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
-  {stdout, stderr, abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables, filters},
-) => {
-  const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
-  const {jwtToken, success, errors} = result.appLogsSubscribe
-  outputDebug(`Token: ${jwtToken}\n`)
-  outputDebug(`API Key: ${appLogsSubscribeVariables.apiKey}\n`)
-
-  if (errors && errors.length > 0) {
-    stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
-    stdout.write('App log streaming is not available in this `dev` session.')
-    return
-  } else {
-    outputDebug(`Subscribed to App Events for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
-    outputDebug(`Success: ${success}\n`)
-  }
-
-  const apiKey = appLogsSubscribeVariables.apiKey
-  await createLogsDir(apiKey)
-  await pollAppLogs({
-    stdout,
-    appLogsFetchInput: {jwtToken, filters},
-    apiKey,
-    resubscribeCallback: () => {
-      return subscribeAndStartPolling(
-        {stdout, stderr, abortSignal},
-        {developerPlatformClient, appLogsSubscribeVariables},
-      )
-    },
-    outputCallback: appLogsLogsOutput,
-  })
 }

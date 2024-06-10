@@ -1,6 +1,7 @@
 import {LogsContextOptions, ensureLogsContext} from './context.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './dev/processes/app-logs-polling.js'
 import {renderLogs} from './app-logs/ui.js'
+import {appLogsLogsOutput} from './app-logs/poll-app-logs.js'
 import {AppInterface} from '../models/app/app.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -32,7 +33,7 @@ export async function logs(commandOptions: LogsOptions) {
   const config = await prepareForLogs(commandOptions)
   // We only need 1 process - ??
   const process = await setupAppLogsPollingProcess({
-    mode: 'logs',
+    outputCallback: appLogsLogsOutput,
     developerPlatformClient: config.developerPlatformClient,
     subscription: {
       shopIds: [config.storeId],
