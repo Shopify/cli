@@ -10,6 +10,10 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 interface SubscribeAndStartPollingOptions {
   developerPlatformClient: DeveloperPlatformClient
   appLogsSubscribeVariables: AppLogsSubscribeVariables
+  filters?: {
+    status?: string
+    source?: string
+  }
 }
 
 export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPollingOptions> {
@@ -22,11 +26,16 @@ interface Props {
     shopIds: string[]
     apiKey: string
   }
+  filters?: {
+    status?: string
+    source?: string
+  }
 }
 
 export async function setupAppLogsPollingProcess({
   developerPlatformClient,
   subscription: {shopIds, apiKey},
+  filters,
 }: Props): Promise<AppLogsSubscribeProcess> {
   const {token} = await developerPlatformClient.session()
 
@@ -41,6 +50,7 @@ export async function setupAppLogsPollingProcess({
         apiKey,
         token,
       },
+      filters,
     },
   }
 }

@@ -37,6 +37,10 @@ export async function logs(commandOptions: LogsOptions) {
       shopIds: [config.storeId],
       apiKey: config.apiKey,
     },
+    filters: {
+      source: commandOptions.source,
+      status: commandOptions.status,
+    },
   })
   // Launch the process
   await launchLogsProcess({process, config})

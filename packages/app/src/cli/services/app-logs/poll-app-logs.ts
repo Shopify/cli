@@ -9,10 +9,30 @@ const POLLING_INTERVAL_MS = 450
 const POLLING_BACKOFF_INTERVAL_MS = 10000
 const ONE_MILLION = 1000000
 
-const generateFetchAppLogUrl = async (cursor?: string) => {
+const generateFetchAppLogUrl = async (
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
   const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/app_logs/poll`
-  return url + (cursor ? `?cursor=${cursor}` : '')
+  let url = `https://${fqdn}/app_logs/poll`
+
+  if (!cursor) {
+    return url
+  }
+
+  url += `?cursor=${cursor}`
+
+  if (filters?.status) {
+    url += `&status=${filters.status}`
+  }
+  if (filters?.source) {
+    url += `&source=${filters.source}`
+  }
+
+  return url
 }
 
 export interface AppEventData {
@@ -142,14 +162,22 @@ export const pollAppLogs = async ({
 
 export const pollAppLogs2 = async ({
   stdout,
-  appLogsFetchInput: {jwtToken, cursor},
+  appLogsFetchInput: {jwtToken, cursor, filters},
   apiKey,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string}
+  appLogsFetchInput: {
+    jwtToken: string
+    cursor?: string
+    filters?: {
+      status?: string
+      source?: string
+    }
+  }
   apiKey: string
 }) => {
-  const url = await generateFetchAppLogUrl(cursor)
+  const url = await generateFetchAppLogUrl(cursor, filters)
+
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -206,6 +234,7 @@ export const pollAppLogs2 = async ({
       appLogsFetchInput: {
         jwtToken,
         cursor: cursorFromResponse,
+        filters,
       },
       apiKey,
     }).catch((error) => {
