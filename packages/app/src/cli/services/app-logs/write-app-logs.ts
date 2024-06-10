@@ -16,7 +16,7 @@ export const writeAppLogsToFile = async ({
   const identifier = randomUUID().substring(0, 6)
 
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
-  const fileName = `${formattedTimestamp}_${identifier}.json`
+  const fileName = `${formattedTimestamp}_${appLog.source_namespace}_${appLog.source}_${identifier}.json`
   const path = joinPath(apiKey, fileName)
   const fullOutputPath = joinPath(getLogsDir(), path)
 

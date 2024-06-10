@@ -255,8 +255,8 @@ importers:
         specifier: 3.61.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-a8b9c6c-20240606114114
-        version: 0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2)
+        specifier: 0.0.0-next-9eb60d7-20240607102913
+        version: 0.0.0-next-9eb60d7-20240607102913(react-dom@17.0.2)(react@18.3.1)
       '@shopify/cli-kit':
         specifier: 3.61.0
         version: link:../cli-kit
@@ -4879,14 +4879,14 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-a8b9c6c-20240606114114(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-9QXz83USgzl930WCnppOAWoGznKfq4b5GLClW3LWb4Z4LDYmmDJ1XT1cpfFFrDM7nA5O1BV0mpLGBg3W+/zobQ==}
+  /@shopify/cli-hydrogen@0.0.0-next-9eb60d7-20240607102913(react-dom@17.0.2)(react@18.3.1):
+    resolution: {integrity: sha512-LL6wCeP9iZymXKxQp/7xEAR3oDWFZlXcdEpnHB2SDMkwMLbmjvJK9mBEpCNROeO1pC3xh31hrTbKSBTlIGJZHw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-a8b9c6c-20240606114114
+      '@shopify/hydrogen-codegen': 0.0.0-next-9eb60d7-20240607102913
       '@shopify/mini-oxygen': ^3.0.3
       graphql-config: ^5.0.3
       vite: 4.4.9
@@ -4922,7 +4922,7 @@ packages:
       tar-fs: 2.1.1
       tempy: 3.0.0
       ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
+      use-resize-observer: 9.1.0(react-dom@17.0.2)(react@18.3.1)
     optionalDependencies:
       '@parcel/watcher': 2.4.1
     transitivePeerDependencies:
@@ -11795,6 +11795,17 @@ packages:
       react: 17.0.2
       scheduler: 0.20.2
 
+  /react-dom@17.0.2(react@18.3.1):
+    resolution: {integrity: sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==}
+    peerDependencies:
+      react: 17.0.2
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+      react: 18.3.1
+      scheduler: 0.20.2
+    dev: true
+
   /react-dom@18.2.0(react@18.2.0):
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
@@ -13469,15 +13480,15 @@ packages:
       querystringify: 2.2.0
       requires-port: 1.0.0
 
-  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@17.0.2):
+  /use-resize-observer@9.1.0(react-dom@17.0.2)(react@18.3.1):
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
       react: 16.8.0 - 18
       react-dom: 16.8.0 - 18
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      react: 17.0.2
-      react-dom: 17.0.2(react@17.0.2)
+      react: 18.3.1
+      react-dom: 17.0.2(react@18.3.1)
     dev: true
 
   /util-arity@1.1.0:

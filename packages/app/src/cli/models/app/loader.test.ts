@@ -514,7 +514,7 @@ wrong = "property"
 
     // When
     await expect(loadTestingApp()).rejects.toThrow(
-      'Duplicated print action target "admin.product-details.print-action.render" in extensions "my_extension_1" and "my_extension_2". You can only have one print action extension per target in an app. Please remove the duplicates.',
+      `A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target admin.product-details.print-action.render:\n  · handle-1\n  · handle-2`,
     )
   })
 

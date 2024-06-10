@@ -240,7 +240,7 @@ describe('initialize a extension', async () => {
       )
       const name = 'my-ext-1'
       const specification = productSubscriptionUIExtensionTemplate
-      specification.types[0]!.supportedFlavors[1]!.path = 'path/to/custom/template'
+      specification.supportedFlavors[1]!.path = 'path/to/custom/template'
       const extensionFlavor = 'vanilla-js'
       const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
@@ -275,7 +275,7 @@ describe('initialize a extension', async () => {
 
       const name = 'my-ext-1'
       const specification = allFunctionTemplates.find((spec) => spec.identifier === 'order_discounts')!
-      specification.types[0]!.url = 'custom/template/url'
+      specification.url = 'custom/template/url'
       const extensionFlavor = 'rust'
 
       // When
@@ -470,10 +470,10 @@ async function createFromTemplate({
   const result = await generateExtensionTemplate({
     extensionTemplate: specification,
     app: await loadApp({directory: appDirectory, specifications, userProvidedConfigName: undefined}),
-    extensionChoices: [{index: 0, name, flavor: extensionFlavor}],
+    extensionChoices: {name, flavor: extensionFlavor},
     developerPlatformClient: testDeveloperPlatformClient(),
   })
-  return result[0]!.directory
+  return result.directory
 }
 async function withTemporaryApp(
   callback: (tmpDir: string) => Promise<void> | void,

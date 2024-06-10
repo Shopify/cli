@@ -57,6 +57,7 @@ import {
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
+import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -839,33 +840,29 @@ export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
   defaultName: 'subscription-ui',
   group: 'Admin',
   supportLinks: [],
-  types: [
+  url: 'https://github.com/Shopify/cli',
+  type: 'product_subscription',
+  extensionPoints: [],
+  supportedFlavors: [
     {
-      url: 'https://github.com/Shopify/cli',
-      type: 'product_subscription',
-      extensionPoints: [],
-      supportedFlavors: [
-        {
-          name: 'JavaScript React',
-          value: 'react',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-        {
-          name: 'JavaScript',
-          value: 'vanilla-js',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-        {
-          name: 'TypeScript React',
-          value: 'typescript-react',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-        {
-          name: 'TypeScript',
-          value: 'typescript',
-          path: 'templates/ui-extensions/projects/product_subscription',
-        },
-      ],
+      name: 'JavaScript React',
+      value: 'react',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'JavaScript',
+      value: 'vanilla-js',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'TypeScript React',
+      value: 'typescript-react',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'TypeScript',
+      value: 'typescript',
+      path: 'templates/ui-extensions/projects/product_subscription',
     },
   ],
 }
@@ -876,18 +873,14 @@ const themeAppExtensionTemplate: ExtensionTemplate = {
   defaultName: 'theme-extension',
   group: 'Online store',
   supportLinks: [],
-  types: [
+  url: 'https://github.com/Shopify/cli',
+  type: 'theme',
+  extensionPoints: [],
+  supportedFlavors: [
     {
-      url: 'https://github.com/Shopify/cli',
-      type: 'theme',
-      extensionPoints: [],
-      supportedFlavors: [
-        {
-          name: 'Liquid',
-          value: 'liquid',
-          path: 'templates/theme-extension',
-        },
-      ],
+      name: 'Liquid',
+      value: 'liquid',
+      path: 'templates/theme-extension',
     },
   ],
 }
@@ -899,18 +892,14 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'cart-checkout-validation',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'checkout/rust/cart-checkout-validation/default',
-          },
-        ],
+        name: 'Rust',
+        value: 'rust',
+        path: 'checkout/rust/cart-checkout-validation/default',
       },
     ],
   },
@@ -920,23 +909,19 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'cart-transformer',
     group: 'Discounts and checkout',
     supportLinks: [],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'checkout/wasm/cart-transform/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'checkout/rust/cart-transform/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'checkout/wasm/cart-transform/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'checkout/rust/cart-transform/default',
       },
     ],
   },
@@ -946,23 +931,19 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'product-discounts',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'discounts/wasm/product-discounts/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'discounts/rust/product-discounts/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'discounts/wasm/product-discounts/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'discounts/rust/product-discounts/default',
       },
     ],
   },
@@ -972,28 +953,24 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'order-discounts',
     group: 'Discounts and checkout',
     supportLinks: [],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'discounts/wasm/order-discounts/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'discounts/rust/order-discounts/default',
-          },
-          {
-            name: 'JavaScript',
-            value: 'vanilla-js',
-            path: 'discounts/javascript/order-discounts/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'discounts/wasm/order-discounts/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'discounts/rust/order-discounts/default',
+      },
+      {
+        name: 'JavaScript',
+        value: 'vanilla-js',
+        path: 'discounts/javascript/order-discounts/default',
       },
     ],
   },
@@ -1202,8 +1179,15 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   },
 }
 
+const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
+  appLogsSubscribe: {
+    success: true,
+    jwtToken: 'jwttoken',
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  const clientStub = {
+  const clientStub: DeveloperPlatformClient = {
     clientName: 'test',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
@@ -1215,7 +1199,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
-    templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
+    templateSpecifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
@@ -1249,6 +1233,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
+    subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub

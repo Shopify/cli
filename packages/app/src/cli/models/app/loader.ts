@@ -673,9 +673,9 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           duplicates[target] = targetExtensions
 
           if (targetExtensions.length > 1) {
-            const extensionNames = joinWithAnd(targetExtensions.map((ext) => ext.configuration.name))
+            const extensionHandles = ['', ...targetExtensions.map((ext) => ext.configuration.handle)].join('\n  · ')
             this.abortOrReport(
-              outputContent`Duplicated print action target "${target}" in extensions ${extensionNames}. You can only have one print action extension per target in an app. Please remove the duplicates.`,
+              outputContent`A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target ${target}:${extensionHandles}`,
               undefined,
               extension.configurationPath,
             )
