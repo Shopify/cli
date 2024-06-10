@@ -1,18 +1,38 @@
+import {isUnitTest} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
+import {cwd, sniffForPath} from './path.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
 import {renderSelectPrompt} from './ui.js'
+import {execaSync} from 'execa'
+
+let _isGlobal: boolean | undefined
 
 /**
  * Returns true if the current process is running in a global context.
  *
- * @param env - The environment to check. Defaults to `process.env`.
+ * @param argv - The arguments passed to the process.
  * @returns `true` if the current process is running in a global context.
  */
-export function currentProcessIsGlobal(env = process.env): boolean {
-  // npm, yarn, pnpm and bun define this if run locally.
-  // If undefined, we can assume it's global (But there is no foolproof way to know)
-  return env.npm_config_user_agent === undefined
+export function currentProcessIsGlobal(argv = process.argv): boolean {
+  // If we are running tests, we need to disable the cache
+  if (_isGlobal !== undefined && !isUnitTest()) return _isGlobal
+
+  // Path where the current project is (app/hydrogen)
+  const path = sniffForPath() ?? cwd()
+
+  // Closest parent directory to contain a package.json file or node_modules directory
+  // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
+  const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
+
+  // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
+  const binDir = argv[1] ?? ''
+
+  // If binDir starts with npmPrefix, then we are running a local CLI
+  const isLocal = binDir.startsWith(npmPrefix.trim())
+
+  _isGlobal = !isLocal
+  return _isGlobal
 }
 
 /**
@@ -72,11 +92,10 @@ export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptRe
  * Infers the package manager used by the global CLI.
  *
  * @param argv - The arguments passed to the process.
- * @param env - The environment to check. Defaults to `process.env`.
  * @returns The package manager used by the global CLI.
  */
-export function inferPackageManagerForGlobalCLI(argv = process.argv, env = process.env): PackageManager {
-  if (!currentProcessIsGlobal(env)) return 'unknown'
+export function inferPackageManagerForGlobalCLI(argv = process.argv): PackageManager {
+  if (!currentProcessIsGlobal(argv)) return 'unknown'
 
   // argv[1] contains the path of the executed binary
   const processArgv = argv[1] ?? ''

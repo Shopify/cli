@@ -38,7 +38,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath, relativizePath, sniffForJson} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
@@ -359,7 +359,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
   private showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
     const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
-    if (currentProcessIsGlobal() && hasLocalCLI) {
+    // Show the warning IFF:
+    // - The current process is global
+    // - The project has a local CLI
+    // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
+    if (currentProcessIsGlobal() && hasLocalCLI && !sniffForJson()) {
       const warningContent = {
         headline: 'You are running a global installation of Shopify CLI',
         body: [
