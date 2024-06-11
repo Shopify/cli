@@ -599,7 +599,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       })
 
     if (unusedKeys.length > 0) {
-      throw new Error('Not all of the config was consumed')
+      outputDebug(outputContent`Unused keys in app configuration: ${outputToken.json(unusedKeys)}`)
     }
     return extensionInstancesWithKeys
       .filter(([instance]) => instance)
