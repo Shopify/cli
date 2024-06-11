@@ -77,6 +77,9 @@ export const outputToken = {
   green(value: OutputMessage): ColorContentToken {
     return new ColorContentToken(value, colors.green)
   },
+  gray(value: OutputMessage): ColorContentToken {
+    return new ColorContentToken(value, colors.gray)
+  },
   packagejsonScript(packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]): CommandContentToken {
     return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, ...scriptArgs))
   },

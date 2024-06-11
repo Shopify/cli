@@ -104,7 +104,7 @@ export const pollAppLogs = async ({
                 logs
                   .split('\n')
                   .filter(Boolean)
-                  .map((line: string) => `├ ${line}`)
+                  .map((line: string) => outputContent`${outputToken.gray('│ ')}${line}`.value)
                   .join('\n'),
               )
             }
@@ -118,7 +118,11 @@ export const pollAppLogs = async ({
             stdout,
           })
           stdout.write(
-            outputContent`└ ${outputToken.link('Open log file', `file://${logPath}`, `Log: ${logPath}`)}\n`.value,
+            outputContent`${outputToken.gray('└ ')}${outputToken.link(
+              'Open log file',
+              `file://${logPath}`,
+              `Log: ${logPath}`,
+            )}\n`.value,
           )
         })
       }
