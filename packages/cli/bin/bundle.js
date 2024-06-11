@@ -24,6 +24,8 @@ const external = [
 
 const generateSourcemaps = process.argv.includes('--sourcemaps')
 
+console.log(`Building CLI with sourcemaps: ${generateSourcemaps}`)
+
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
