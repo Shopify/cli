@@ -19,5 +19,3 @@ deploy:
     #    This will prevent publishes from being tagged as latest.
     # 2. Remove the following line, which updates Homebrew
     - bash -i -c "./bin/package.js"
-  post:
-    - bash -i -c "pnpm run update-bugsnag"
