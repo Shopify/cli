@@ -22,6 +22,7 @@ deploy:
     - bash -i -c "if [ -f '.changeset/pre.json' ]; then npm_config_loglevel=verbose pnpm changeset pre exit; fi"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot experimental"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-build-no-docs"
+    - bash -i -c "npm_config_loglevel=verbose pnpm bundle"
+    - bash -i -c "npm_config_loglevel=verbose pnpm run update-bugsnag"
+    - bash -i -c "npm_config_loglevel=verbose pnpm run clean-sourcemaps"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
-  post:
-    - bash -i -c "pnpm run update-bugsnag"

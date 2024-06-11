@@ -14,9 +14,12 @@ const __dirname = path.dirname(__filename);
 const appVersion = JSON.parse(fs.readFileSync(`${__dirname}/../packages/cli/package.json`)).version;
 const apiKey = '9e1e6889176fd0c795d5c659225e0fae';
 
+const publishedPackages = ['cli', 'create-app', 'cli-kit']
+
 (async () => {
   try {
-    const packageFolders = glob.sync(`${__dirname}/../packages/*`, {onlyDirectories: true})
+    // only report the build for the packages that are published
+    const packageFolders = glob.sync(`${__dirname}/../packages/{${publishedPackages.join(',')}}`, {onlyDirectories: true})
 
     // Process each package, and upload to Bugsnag as `@shopify/package-name/dist/file.js`
     for (const sourceDirectory of packageFolders) {
