@@ -1,5 +1,4 @@
-import {writeAppLogsToFile} from './write-app-logs.js'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {AppEventData, AppLogsOnFunctionRunCallback, AppLogsOnErrorCallback} from './types.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -7,39 +6,50 @@ import {Writable} from 'stream'
 
 const POLLING_INTERVAL_MS = 450
 const POLLING_BACKOFF_INTERVAL_MS = 10000
-const ONE_MILLION = 1000000
 
-const generateFetchAppLogUrl = async (cursor?: string) => {
+const generateFetchAppLogUrl = async (
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
   const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/app_logs/poll`
-  return url + (cursor ? `?cursor=${cursor}` : '')
-}
+  let url = `https://${fqdn}/app_logs/poll`
 
-export interface AppEventData {
-  shop_id: number
-  api_client_id: number
-  payload: string
-  event_type: string
-  source: string
-  source_namespace: string
-  cursor: string
-  status: 'success' | 'failure'
-  log_timestamp: string
+  if (!cursor) {
+    return url
+  }
+
+  url += `?cursor=${cursor}`
+
+  if (filters?.status) {
+    url += `&status=${filters.status}`
+  }
+  if (filters?.source) {
+    url += `&source=${filters.source}`
+  }
+
+  return url
 }
 
 export const pollAppLogs = async ({
   stdout,
-  appLogsFetchInput: {jwtToken, cursor},
+  appLogsFetchInput: {jwtToken, cursor, filters},
   apiKey,
   resubscribeCallback,
+  onFunctionRunCallback,
+  onErrorCallback,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string}
+  appLogsFetchInput: {jwtToken: string; cursor?: string; filters?: {status?: string; source?: string}}
   apiKey: string
   resubscribeCallback: () => Promise<void>
+  onFunctionRunCallback: AppLogsOnFunctionRunCallback
+  onErrorCallback: AppLogsOnErrorCallback
 }) => {
   try {
-    const url = await generateFetchAppLogUrl(cursor)
+    const url = await generateFetchAppLogUrl(cursor, filters)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -52,19 +62,23 @@ export const pollAppLogs = async ({
       if (response.status === 401) {
         await resubscribeCallback()
       } else if (response.status === 429 || response.status >= 500) {
-        stdout.write(`Received an error while polling for app logs.`)
-        stdout.write(`${response.status}: ${response.statusText}`)
-        stdout.write(responseText)
-        stdout.write(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
+        outputDebug(`Received an error while polling for app logs.`)
+        outputDebug(`${response.status}: ${response.statusText}`)
+        outputDebug(responseText)
+        outputDebug(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
+
         setTimeout(() => {
           pollAppLogs({
             stdout,
             appLogsFetchInput: {
               jwtToken,
               cursor: undefined,
+              filters,
             },
             apiKey,
             resubscribeCallback,
+            onFunctionRunCallback,
+            onErrorCallback,
           }).catch((error) => {
             outputDebug(`Unexpected error during polling: ${error}}\n`)
           })
@@ -80,38 +94,12 @@ export const pollAppLogs = async ({
       cursor?: string
       errors?: string[]
     }
-
     if (data.app_logs) {
       const {app_logs: appLogs} = data
 
       for (const log of appLogs) {
-        const payload = JSON.parse(log.payload)
-
         // eslint-disable-next-line no-await-in-loop
-        await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
-          if (log.event_type === 'function_run') {
-            const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
-
-            if (log.status === 'success') {
-              stdout.write(`Function executed successfully using ${fuel}M instructions.`)
-            } else if (log.status === 'failure') {
-              stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
-            }
-
-            const logs = payload.logs
-            if (logs.length > 0) {
-              stdout.write(logs)
-            }
-          } else {
-            stdout.write(JSON.stringify(payload))
-          }
-
-          await writeAppLogsToFile({
-            appLog: log,
-            apiKey,
-            stdout,
-          })
-        })
+        await onFunctionRunCallback({stdout, log, apiKey})
       }
     }
 
@@ -123,17 +111,19 @@ export const pollAppLogs = async ({
         appLogsFetchInput: {
           jwtToken,
           cursor: cursorFromResponse,
+          filters,
         },
         apiKey,
         resubscribeCallback,
+        onFunctionRunCallback,
+        onErrorCallback,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
     }, POLLING_INTERVAL_MS)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    stdout.write(`Error while retrieving app logs.`)
-    stdout.write('App log streaming is no longer available in this `dev` session.')
+    onErrorCallback({stdout})
     outputDebug(`${error}}\n`)
   }
 }

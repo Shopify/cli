@@ -6,6 +6,7 @@ import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
+import {DEV_OUTPUT_CALLBACKS} from '../../app-logs/services/output-functions.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
@@ -144,6 +145,7 @@ export async function setupDevProcesses({
     }),
     shouldPerformAppLogPolling
       ? await setupAppLogsPollingProcess({
+          outputCallbacks: DEV_OUTPUT_CALLBACKS,
           developerPlatformClient,
           subscription: {
             shopIds: [storeId],

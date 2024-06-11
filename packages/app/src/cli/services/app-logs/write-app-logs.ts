@@ -1,4 +1,4 @@
-import {AppEventData} from './poll-app-logs.js'
+import {AppEventData} from './types.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
