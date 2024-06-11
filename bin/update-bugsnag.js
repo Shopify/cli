@@ -18,7 +18,7 @@ const publishedPackages = ['cli', 'create-app', 'cli-kit'];
 
 (async () => {
   try {
-    // only report the build for the packages that are published
+    // only upload sourcemaps for published packages
     const packageFolders = glob.sync(`${__dirname}/../packages/{${publishedPackages.join(',')}}`, {onlyDirectories: true})
 
     // Process each package, and upload to Bugsnag as `@shopify/package-name/dist/file.js`
