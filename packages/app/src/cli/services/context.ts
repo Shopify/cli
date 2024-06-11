@@ -59,12 +59,27 @@ export interface DevContextOptions {
   developerPlatformClient: DeveloperPlatformClient
 }
 
+export interface LogsContextOptions {
+  directory: string
+  apiKey?: string
+  storeFqdn?: string
+  reset: boolean
+  developerPlatformClient: DeveloperPlatformClient
+}
+
 interface DevContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   remoteAppUpdated: boolean
   storeFqdn: string
   storeId: string
   updateURLs: boolean | undefined
+  localApp: AppInterface
+}
+
+interface LogsContextOutput {
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
+  storeFqdn: string
+  storeId: string
   localApp: AppInterface
 }
 
@@ -144,6 +159,105 @@ export async function ensureGenerateContext(options: GenerateContextOptions): Pr
     })
     return selectedApp
   }
+}
+
+export async function ensureLogsContext(options: LogsContextOptions): Promise<LogsContextOutput> {
+  let developerPlatformClient = options.developerPlatformClient
+
+  const {configuration, cachedInfo, remoteApp} = await getAppContext({
+    ...options,
+    promptLinkingApp: !options.apiKey,
+  })
+  developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
+
+  let orgId = getOrganization() || cachedInfo?.orgId
+  if (!orgId) {
+    const org = await selectOrg()
+    developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+    orgId = org.id
+  }
+
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
+  const organization = await fetchOrgFromId(orgId, developerPlatformClient)
+
+  if (!selectedApp || !selectedStore) {
+    const [_selectedApp, _selectedStore] = await Promise.all([
+      selectedApp ||
+        remoteApp ||
+        (cachedInfo?.appId && appFromId({apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
+      selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
+    ])
+
+    if (_selectedApp) {
+      selectedApp = _selectedApp
+    } else {
+      const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
+      const localAppName = await loadAppName(options.directory)
+      selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
+    }
+
+    if (_selectedStore) {
+      selectedStore = _selectedStore
+    } else {
+      const allStores = await developerPlatformClient.devStoresForOrg(orgId)
+      selectedStore = await selectStore(allStores, organization, developerPlatformClient)
+    }
+  }
+
+  const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
+
+  selectedApp = {
+    ...selectedApp,
+    configuration: await fetchAppRemoteConfiguration(
+      selectedApp,
+      developerPlatformClient,
+      specifications,
+      selectedApp.flags,
+    ),
+  }
+
+  const localApp = await loadApp({
+    directory: options.directory,
+    specifications,
+    userProvidedConfigName: getAppConfigurationShorthand(configuration.path),
+    remoteFlags: selectedApp.flags,
+  })
+
+  const rightApp = selectedApp.apiKey === cachedInfo?.appId
+  if (isCurrentAppSchema(configuration) && rightApp) {
+    if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
+    const newConfiguration = {
+      ...configuration,
+      build: {
+        ...configuration.build,
+        dev_store_url: selectedStore?.shopDomain,
+      },
+    }
+    localApp.configuration = newConfiguration
+    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
+  } else if (!cachedInfo || rightApp) {
+    setCachedAppInfo({
+      appId: selectedApp.apiKey,
+      title: selectedApp.title,
+      directory: options.directory,
+      storeFqdn: selectedStore?.shopDomain,
+      orgId,
+    })
+  }
+
+  showReusedLogsValues({
+    selectedApp,
+    selectedStore,
+    cachedInfo,
+    organization,
+  })
+
+  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
+  await logMetadataForLoadedContext({
+    organizationId: result.remoteApp.organizationId,
+    apiKey: result.remoteApp.apiKey,
+  })
+  return result
 }
 
 /**
@@ -882,6 +996,17 @@ function showReusedDevValues({organization, selectedApp, selectedStore, cachedIn
     updateURLs,
     configFile: cachedInfo.configFile,
     resetMessage: resetHelpMessage,
+  })
+}
+
+function showReusedLogsValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+  if (!cachedInfo) return
+
+  renderCurrentlyUsedConfigInfo({
+    org: organization.businessName,
+    appName: selectedApp.title,
+    devStore: selectedStore.shopDomain,
+    configFile: cachedInfo.configFile,
   })
 }
 

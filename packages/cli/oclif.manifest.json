@@ -541,6 +541,104 @@
       "strict": true,
       "summary": "Run the app."
     },
+    "app:logs": {
+      "aliases": [],
+      "args": {},
+      "description": "Streams logs from your app.\n\nOpens a real-time stream of detailed log events from the selected app and store. Use the `--source` argument to limit output to a particular log source, such as a Shopify Function or webhook topic. Use the `sources` subcommand to list available sources.\n\nThe `--json` argument can be used to receive log entries as line-delimited JSON (JSONL). By piping the output to tools like `jq`, you can filter the output to specific information.\n\n```\nshopify app logs --json | jq .payload.input\n```",
+      "descriptionWithMarkdown": "Streams logs from your app.\n\nOpens a real-time stream of detailed log events from the selected app and store. Use the `--source` argument to limit output to a particular log source, such as a Shopify Function or webhook topic. Use the `sources` subcommand to list available sources.\n\nThe `--json` argument can be used to receive log entries as line-delimited JSON (JSONL). By piping the output to tools like `jq`, you can filter the output to specific information.\n\n```\nshopify app logs --json | jq .payload.input\n```",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "char": "j",
+          "allowNo": false,
+          "description": "Output the command result as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": ["config"],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "source": {
+          "description": "Filters output to the specified log source (Multiple flags allowed).",
+          "env": "SHOPIFY_FLAG_SOURCE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": true,
+          "name": "source",
+          "type": "option"
+        },
+        "status": {
+          "description": "Filters output to the specified status (success or failure).",
+          "env": "SHOPIFY_FLAG_STATUS",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "status",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Filters output to the specified development store URL (Multiple flags allowed).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": true,
+          "name": "store",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "app:logs",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Stream logs from your app."
+    },
     "app:draft-extensions:push": {
       "aliases": [
       ],
