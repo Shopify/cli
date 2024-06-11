@@ -49,7 +49,7 @@ esBuild({
   external,
   sourcemap: true,
   loader: {'.node': 'copy'},
-  splitting: true,
+  splitting: false,
   plugins: [
     ShopifyVSCodePlugin,
     GraphiQLImportsPlugin,
