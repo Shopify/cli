@@ -54,6 +54,15 @@ const publishedPackages = ['cli', 'create-app', 'cli-kit'];
           }
         });
       });
+
+      console.log(`Cleaning sourcemaps from @shopify/${packageName}`);
+
+      const packageDist = path.join(sourceDirectory, 'dist');
+      const sourcemaps = glob.sync(`${packageDist}/**/*.map`, {onlyFiles: true});
+
+      for (const sourcemap of sourcemaps) {
+        fs.rmSync(sourcemap);
+      }
     }
 
     await reportBuild({apiKey, appVersion}, {})
