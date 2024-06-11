@@ -437,7 +437,6 @@ test('creates a new shopify.app.staging.toml file when shopify.app.toml already 
         client_id: '12345',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
-        embedded: true,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
@@ -559,7 +558,6 @@ test('the local configuration is discarded if the client_id is different from th
         scopes: 'write_products',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
-        embedded: true,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
@@ -861,7 +859,6 @@ test('skips config name question if re-linking to existing current app schema', 
         client_id: '12345',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
-        embedded: true,
         access_scopes: {
           scopes: 'write_products',
         },
@@ -1202,10 +1199,6 @@ test('the api client configuration is deep merged with the remote app_config ext
           api_version: '2023-04',
         },
         application_url: 'https://myapp.com',
-        embedded: true,
-        pos: {
-          embedded: false,
-        },
       } as CurrentAppConfiguration,
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))

@@ -25,6 +25,7 @@ import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
+import customDataSpec, {CustomDataSpecIdentifier} from './specifications/custom_data.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -35,6 +36,7 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   AppProxySpecIdentifier,
   PosSpecIdentifier,
   AppHomeSpecIdentifier,
+  CustomDataSpecIdentifier,
 ]
 
 /**
@@ -57,6 +59,7 @@ function loadSpecifications() {
     appPrivacyComplienceSpec,
     appWebhooksSpec,
     appWebhookSubscriptionSpec,
+    customDataSpec,
   ]
   const moduleSpecs = [
     checkoutPostPurchaseSpec,

@@ -206,7 +206,6 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
     api_version: '2023-04',
   },
   application_url: 'https://myapp.com',
-  embedded: true,
   build: {
     include_config_on_deploy: true,
   },

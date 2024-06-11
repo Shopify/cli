@@ -39,7 +39,6 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     },
   },
   application_url: 'http://example.com',
-  embedded: true,
   auth: {
     redirect_urls: ['https://google.com'],
   },
@@ -47,12 +46,6 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     url: 'https://google.com',
     subpath: 'https://google.com',
     prefix: 'https://google.com',
-  },
-  pos: {
-    embedded: false,
-  },
-  app_preferences: {
-    url: 'https://google.com',
   },
   build: {
     automatically_update_urls_on_dev: true,

@@ -6,7 +6,7 @@ import {
   testThemeExtensions,
   testUIExtension,
 } from '../../models/app/app.test-data.js'
-import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
+import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftInput} from '../../api/graphql/update_draft.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -21,7 +21,7 @@ vi.mock('../../models/app/loader.js', async () => {
   return {
     ...actual,
     parseConfigurationFile: vi.fn(),
-    parseConfigurationObject: vi.fn(),
+    parseConfigurationObjectAgainstSpecification: vi.fn(),
   }
 })
 
@@ -269,7 +269,7 @@ another = "setting"
         type: 'web_pixel_extension',
       } as any)
 
-      vi.mocked(parseConfigurationObject).mockResolvedValue(parsedConfig)
+      vi.mocked(parseConfigurationObjectAgainstSpecification).mockResolvedValue(parsedConfig)
 
       await writeFile(mockExtension.outputPath, 'test content')
 

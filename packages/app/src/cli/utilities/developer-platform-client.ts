@@ -171,6 +171,7 @@ export type AssetUrlSchema = WithUserErrors<{
 }>
 
 export interface DeveloperPlatformClient {
+  clientName: string
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
   session: () => Promise<PartnersSession>

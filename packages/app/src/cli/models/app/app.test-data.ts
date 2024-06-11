@@ -104,7 +104,8 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    configSchema: app.configSchema ?? AppConfigurationSchema,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
   })
 
@@ -507,11 +508,15 @@ export async function testEditorExtensionCollection({
   )
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'editor_extension_collection')!
-  const configuration = specification.schema.parse({
+  const parsed = specification.parseConfigurationObject({
     ...passedConfig,
     type: 'editor_extension_collection',
     metafields: [],
   })
+  if (parsed.state !== 'ok') {
+    throw new Error('Failed to parse configuration')
+  }
+  const configuration = parsed.data
 
   return new ExtensionInstance({
     configuration,
@@ -1187,6 +1192,7 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
+    clientName: 'test',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
@@ -1237,9 +1243,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
-      retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi
-        .fn()
-        .mockImplementation(value)
+      retVal[
+        key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName'>
+      ] = vi.fn().mockImplementation(value)
     }
   }
   return retVal as DeveloperPlatformClient

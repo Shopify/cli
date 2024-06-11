@@ -29,7 +29,7 @@ import {
 } from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
-import {SpecsAppConfiguration} from '../../../models/extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../../../models/extensions/specifications/types/app_config.js'
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -440,7 +440,7 @@ function renderSuccessMessage(configFileName: string, appName: string, packageMa
 function buildAppConfigurationFromRemoteAppProperties(
   remoteApp: OrganizationApp,
   locallyProvidedScopes: string,
-): SpecsAppConfiguration {
+): AppConfigurationUsedByCli {
   return {
     ...addBrandingConfig(remoteApp),
     ...addPosConfig(remoteApp),

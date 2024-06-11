@@ -12,12 +12,15 @@ import {
   getAppVersionedSchema,
   isCurrentAppSchema,
   AppSchema,
+  LegacyAppConfiguration,
+  BasicAppConfigurationWithoutModules,
+  SchemaForConfig,
 } from './app.js'
-import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification, createConfigExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {Flag} from '../../services/dev/fetch.js'
@@ -46,18 +49,17 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
-type AbortOrReport = <T>(
-  errorMessage: OutputMessage,
-  fallback: T,
-  configurationPath: string,
-  rawErrors?: zod.ZodIssueBase[],
-) => T
+type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
+
+const abort: AbortOrReport = (errorMessage) => {
+  throw new AbortError(errorMessage)
+}
+
 const noopAbortOrReport: AbortOrReport = (_errorMessage, fallback, _configurationPath) => fallback
 
 /**
@@ -65,9 +67,7 @@ const noopAbortOrReport: AbortOrReport = (_errorMessage, fallback, _configuratio
  */
 export async function loadConfigurationFileContent(
   filepath: string,
-  abortOrReport: AbortOrReport = (errorMessage) => {
-    throw new AbortError(errorMessage)
-  },
+  abortOrReport: AbortOrReport = abort,
   decode: (input: string) => JsonMapType = decodeToml,
 ): Promise<JsonMapType> {
   if (!(await fileExists(filepath))) {
@@ -100,14 +100,13 @@ export async function loadConfigurationFileContent(
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
-  abortOrReport: AbortOrReport = (errorMessage) => {
-    throw new AbortError(errorMessage)
-  },
+  abortOrReport: AbortOrReport = abort,
   decode: (input: string) => JsonMapType = decodeToml,
+  preloadedContent?: JsonMapType,
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
-  const configurationObject = await loadConfigurationFileContent(filepath, abortOrReport, decode)
+  const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport, decode))
 
   if (!configurationObject) return fallbackOutput
 
@@ -115,7 +114,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   return {...configuration, path: filepath}
 }
 
-export function parseHumanReadableError(issues: zod.ZodIssueBase[]) {
+export function parseHumanReadableError(issues: Pick<zod.ZodIssueBase, 'path' | 'message'>[]) {
   let humanReadableError = ''
   issues.forEach((issue) => {
     const path = issue.path ? issue?.path.join('.') : 'n/a'
@@ -131,7 +130,7 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
   configurationObject: unknown,
-  abortOrReport: AbortOrReport,
+  abortOrReport: AbortOrReport = abort,
 ): zod.TypeOf<TSchema> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
@@ -143,10 +142,36 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
       )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
       fallbackOutput,
       filepath,
-      parseResult.error.issues,
     )
   }
   return parseResult.data
+}
+
+/**
+ * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
+ */
+export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
+  spec: ExtensionSpecification,
+  filepath: string,
+  configurationObject: object,
+  abortOrReport: AbortOrReport,
+): zod.TypeOf<TSchema> {
+  const parsed = spec.parseConfigurationObject(configurationObject)
+  switch (parsed.state) {
+    case 'ok': {
+      return parsed.data
+    }
+    case 'error': {
+      const fallbackOutput = {} as zod.TypeOf<TSchema>
+      return abortOrReport(
+        outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
+          filepath,
+        )}:\n\n${parseHumanReadableError(parsed.errors)}`,
+        fallbackOutput,
+        filepath,
+      )
+    }
+  }
 }
 
 export class AppErrors {
@@ -195,64 +220,25 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
     specifications: TModuleSpec[]
     remoteFlags?: Flag[]
   },
-  env = process.env,
 ): Promise<AppInterface<AppConfiguration, TModuleSpec>> {
   const specifications = options.specifications
-  const dynamicConfigOptions = getDynamicConfigOptionsFromEnvironment(env)
-  const configurationLoader = new AppConfigurationLoader<TModuleSpec>(
-    {
-      directory: options.directory,
-      userProvidedConfigName: options.userProvidedConfigName,
-      specifications,
-      remoteFlags: options.remoteFlags,
-    },
-    dynamicConfigOptions,
-  )
-  const loadedConfiguration = await configurationLoader.loaded()
 
-  const loader = new AppLoader<AppConfiguration, TModuleSpec>(
-    {
-      mode: options.mode,
-      loadedConfiguration,
-    },
-    dynamicConfigOptions,
-  )
+  const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
+  const loadedConfiguration = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
+
+  const loader = new AppLoader<AppConfiguration, TModuleSpec>({
+    mode: options.mode,
+    loadedConfiguration,
+  })
   return loader.loaded()
 }
 
-function getDynamicConfigOptionsFromEnvironment(env = process.env): DynamicallySpecifiedConfigLoading {
-  const dynamicConfigEnabled = env[environmentVariableNames.useDynamicConfigSpecifications]
-
-  // not set at all
-  if (!dynamicConfigEnabled) {
-    return {enabled: false}
-  }
-
-  // set, but no remapping
-  if (isTruthy(dynamicConfigEnabled)) {
-    return {enabled: true, remapToNewParent: undefined}
-  }
-
-  try {
-    // split it by commas
-    const divided = dynamicConfigEnabled
-      .split(',')
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0)
-
-    // first item is the parent, everything else is the things to remap
-    const [newParentName, ...sectionsToRemap] = divided
-    return {
-      enabled: true,
-      remapToNewParent: {
-        newParentName: newParentName!,
-        sectionsToRemap,
-      },
-    }
-  } catch {
-    throw new AbortError(`Invalid value for ${environmentVariableNames.useDynamicConfigSpecifications}`)
-  }
-}
+/**
+ * Given basic information about an app's configuration state, what should the validated configuration type be?
+ */
+type LoadedAppConfigFromConfigState<TConfigState> = TConfigState extends AppConfigurationStateLinked
+  ? CurrentAppConfiguration
+  : LegacyAppConfiguration
 
 export function getDotEnvFileName(configurationPath: string) {
   const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
@@ -268,31 +254,17 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-type DynamicallySpecifiedConfigLoading =
-  | {
-      enabled: false
-    }
-  | {
-      enabled: true
-      remapToNewParent?: {newParentName: string; sectionsToRemap: string[]}
-    }
-
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private mode: AppLoaderMode
   private errors: AppErrors = new AppErrors()
   private specifications: TModuleSpec[]
   private remoteFlags: Flag[]
-  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
   private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 
-  constructor(
-    {mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>,
-    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
-  ) {
+  constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'
     this.specifications = loadedConfiguration.specifications
     this.remoteFlags = loadedConfiguration.remoteFlags
-    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
     this.loadedConfiguration = loadedConfiguration
   }
 
@@ -425,23 +397,16 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
   private async createExtensionInstance(
     type: string,
-    configurationObject: unknown,
+    configurationObject: object,
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    let specification = this.findSpecificationForType(type)
+    const specification = this.findSpecificationForType(type)
     let entryPath
     let usedKnownSpecification = false
 
     if (specification) {
       usedKnownSpecification = true
-    } else if (this.dynamicallySpecifiedConfigs.enabled) {
-      // if dynamic configs are enabled, then create an automatically validated specification, with the same
-      // identifier as the type
-      specification = createConfigExtensionSpecification({
-        identifier: type,
-        schema: zod.object({}).passthrough(),
-      }) as TModuleSpec
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -450,8 +415,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       )
     }
 
-    const configuration = parseConfigurationObject(
-      specification.schema,
+    const configuration = parseConfigurationObjectAgainstSpecification(
+      specification,
       configurationPath,
       configurationObject,
       this.abortOrReport.bind(this),
@@ -604,8 +569,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
-          const specConfiguration = parseConfigurationObject(
-            specification.schema,
+          const specConfiguration = parseConfigurationObjectAgainstSpecification(
+            specification,
             appConfiguration.path,
             appConfiguration,
             this.abortOrReport.bind(this),
@@ -629,12 +594,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         }),
     )
 
-    if (!this.dynamicallySpecifiedConfigs) {
-      return extensionInstancesWithKeys
-        .filter(([instance]) => instance)
-        .map(([instance]) => instance as ExtensionInstance)
-    }
-
     // get all the keys from appConfiguration that aren't used by any of the results
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
@@ -643,18 +602,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         return !configKeysThatAreNeverModules.includes(key)
       })
 
-    // make some extension instances for the unused keys
-    const unusedExtensionInstances = unusedKeys.map((key) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const specConfiguration = {[key]: (appConfiguration as any)[key]}
-      return this.createExtensionInstance(key, specConfiguration, appConfiguration.path, directory)
-    })
-
-    // return all the non null extension instances, plus the unused ones
-    const nonNullExtensionInstances: ExtensionInstance[] = extensionInstancesWithKeys
+    if (unusedKeys.length > 0) {
+      outputDebug(outputContent`Unused keys in app configuration: ${outputToken.json(unusedKeys)}`)
+    }
+    return extensionInstancesWithKeys
       .filter(([instance]) => instance)
       .map(([instance]) => instance as ExtensionInstance)
-    return [...nonNullExtensionInstances, ...unusedExtensionInstances]
   }
 
   private async validateConfigurationExtensionInstance(
@@ -742,11 +695,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
  */
 export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
-  env = process.env,
 ): Promise<AppConfigurationInterface> {
   const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
-  const loader = new AppConfigurationLoader({...options, specifications}, getDynamicConfigOptionsFromEnvironment(env))
-  const result = await loader.loaded()
+  const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
+  const result = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
 }
@@ -786,74 +738,164 @@ type ConfigurationLoaderResult<
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
 }
 
-class AppConfigurationLoader<TModuleSpec extends ExtensionSpecification> {
-  private directory: string
-  private userProvidedConfigName?: string
-  private specifications: TModuleSpec[]
-  private dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading
-  private remoteFlags: Flag[]
+interface AppConfigurationStateBasics {
+  appDirectory: string
+  configurationPath: string
+  configSource: LinkedConfigurationSource
+  configurationFileName: AppConfigurationFileName
+}
 
-  constructor(
-    {
-      directory,
-      userProvidedConfigName,
-      specifications,
-      remoteFlags,
-    }: Omit<AppConfigurationLoaderConstructorArgs, 'specifications'> & {specifications: TModuleSpec[]},
-    dynamicallySpecifiedConfigs: DynamicallySpecifiedConfigLoading,
-  ) {
-    this.directory = directory
-    this.userProvidedConfigName = userProvidedConfigName
-    this.specifications = specifications
-    this.dynamicallySpecifiedConfigs = dynamicallySpecifiedConfigs
-    this.remoteFlags = remoteFlags ?? []
+type AppConfigurationStateLinked = AppConfigurationStateBasics & {
+  state: 'connected-app'
+  basicConfiguration: BasicAppConfigurationWithoutModules
+}
+
+type AppConfigurationStateTemplate = AppConfigurationStateBasics & {
+  state: 'template-only'
+  startingOptions: Omit<LegacyAppConfiguration, 'client_id'>
+}
+
+type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
+
+/**
+ * Get the app configuration state from the file system.
+ *
+ * This takes a shallow look at the app folder, and indicates if the app has been linked or is still in template form.
+ *
+ * @param workingDirectory - Typically either the CWD or came from the `--path` argument. The function will find the root folder of the app.
+ * @param userProvidedConfigName - Some commands allow the manual specification of the config name to use. Otherwise, the function may prompt/use the cached preference.
+ * @returns Detail about the app configuration state.
+ */
+export async function getAppConfigurationState(
+  workingDirectory: string,
+  userProvidedConfigName?: string,
+): Promise<AppConfigurationState> {
+  // partially loads the app config. doesn't actually check for config validity beyond the absolute minimum
+  let configName = userProvidedConfigName
+
+  const appDirectory = await getAppDirectory(workingDirectory)
+  const configSource: LinkedConfigurationSource = configName ? 'flag' : 'cached'
+
+  const cachedCurrentConfigName = getCachedAppInfo(appDirectory)?.configFile
+  const cachedCurrentConfigPath = cachedCurrentConfigName ? joinPath(appDirectory, cachedCurrentConfigName) : null
+  if (!configName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
+    const warningContent = {
+      headline: `Couldn't find ${cachedCurrentConfigName}`,
+      body: [
+        "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+      ],
+    }
+    configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
   }
 
-  async loaded(): Promise<ConfigurationLoaderResult<AppConfiguration, TModuleSpec>> {
-    const specifications = this.specifications
-    const appDirectory = await getAppDirectory(this.directory)
-    const configSource: LinkedConfigurationSource = this.userProvidedConfigName ? 'flag' : 'cached'
-    const cachedCurrentConfigName = getCachedAppInfo(appDirectory)?.configFile
-    const cachedCurrentConfigPath = cachedCurrentConfigName ? joinPath(appDirectory, cachedCurrentConfigName) : null
+  configName = configName ?? cachedCurrentConfigName
 
-    if (!this.userProvidedConfigName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
-      const warningContent = {
-        headline: `Couldn't find ${cachedCurrentConfigName}`,
-        body: [
-          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
-        ],
+  const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, configName)
+  const file = await loadConfigurationFileContent(configurationPath)
+
+  const configFileHasBeenLinked = isCurrentAppSchema(file as AppConfiguration)
+
+  if (configFileHasBeenLinked) {
+    const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
+    return {
+      state: 'connected-app',
+      appDirectory,
+      configurationPath,
+      basicConfiguration: {
+        ...file,
+        ...parsedConfig,
+      },
+      configSource,
+      configurationFileName,
+    }
+  } else {
+    const parsedConfig = await parseConfigurationFile(LegacyAppSchema, configurationPath)
+    return {
+      appDirectory,
+      configurationPath,
+      state: 'template-only',
+      startingOptions: {
+        ...file,
+        ...parsedConfig,
+      },
+      configSource,
+      configurationFileName,
+    }
+  }
+}
+
+/**
+ * Given app configuration state, load the app configuration.
+ *
+ * This is typically called after getting remote-aware extension specifications. The app configuration is validated acordingly.
+ */
+async function loadAppConfigurationFromState<
+  TConfig extends AppConfigurationState,
+  TModuleSpec extends ExtensionSpecification,
+>(
+  configState: TConfig,
+  specifications: TModuleSpec[],
+  remoteFlags: Flag[],
+): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState<TConfig>, TModuleSpec>> {
+  let file: JsonMapType
+  let schemaForConfigurationFile: SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
+  {
+    let appSchema
+    switch (configState.state) {
+      case 'template-only': {
+        file = {
+          ...configState.startingOptions,
+        }
+        delete file.path
+        appSchema = LegacyAppSchema as unknown as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
+        break
       }
-      this.userProvidedConfigName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
+      case 'connected-app': {
+        file = {
+          ...configState.basicConfiguration,
+        }
+        delete file.path
+        const appVersionedSchema = getAppVersionedSchema(specifications)
+        appSchema = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
+        break
+      }
     }
 
-    this.userProvidedConfigName = this.userProvidedConfigName ?? cachedCurrentConfigName
-
-    const {configurationPath, configurationFileName} = await getConfigurationPath(
-      appDirectory,
-      this.userProvidedConfigName,
-    )
-    const file = await loadConfigurationFileContent(configurationPath)
-    const appVersionedSchema = getAppVersionedSchema(specifications, this.dynamicallySpecifiedConfigs.enabled)
-    const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
     const parseStrictSchemaEnabled = specifications.length > 0
-
-    let schemaForConfigurationFile = appSchema
-    if (parseStrictSchemaEnabled && !this.dynamicallySpecifiedConfigs) {
+    schemaForConfigurationFile = appSchema
+    if (parseStrictSchemaEnabled) {
       schemaForConfigurationFile = deepStrict(appSchema)
     }
+  }
 
-    let configuration = await parseConfigurationFile(schemaForConfigurationFile, configurationPath)
-    const allClientIdsByConfigName = await getAllLinkedConfigClientIds(appDirectory)
+  const configuration = (await parseConfigurationFile(
+    schemaForConfigurationFile,
+    configState.configurationPath,
+    abort,
+    decodeToml,
+    file,
+  )) as LoadedAppConfigFromConfigState<TConfig>
+  const allClientIdsByConfigName = await getAllLinkedConfigClientIds(configState.appDirectory, {
+    [configState.configurationFileName]: configuration.client_id,
+  })
 
-    let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
-      usesLinkedConfig: false,
-      allClientIdsByConfigName,
+  let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
+    usesLinkedConfig: false,
+    allClientIdsByConfigName,
+  }
+
+  // enhance metadata based on the config type
+  switch (configState.state) {
+    case 'template-only': {
+      // nothing to add
+      break
     }
-
-    if (isCurrentAppSchema(configuration)) {
+    case 'connected-app': {
       let gitTracked = false
       try {
-        gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
+        gitTracked = !(
+          await checkIfIgnoredInGitRepository(configState.appDirectory, [configState.configurationPath])
+        )[0]
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
         // leave as false
@@ -862,53 +904,22 @@ class AppConfigurationLoader<TModuleSpec extends ExtensionSpecification> {
       configurationLoadResultMetadata = {
         ...configurationLoadResultMetadata,
         usesLinkedConfig: true,
-        name: configurationFileName,
+        name: configState.configurationFileName,
         gitTracked,
-        source: configSource,
-        usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
+        source: configState.configSource,
+        usesCliManagedUrls: (configuration as LoadedAppConfigFromConfigState<AppConfigurationStateLinked>).build
+          ?.automatically_update_urls_on_dev,
       }
-    }
-
-    configuration = this.remapDynamicConfigToNewParents(configuration)
-
-    return {
-      directory: appDirectory,
-      configuration,
-      configurationLoadResultMetadata,
-      configSchema: appVersionedSchema,
-      specifications,
-      remoteFlags: this.remoteFlags,
     }
   }
 
-  /**
-   * Remap configuration keys to a new parent, if needed. Used for dynamic config specifications.
-   * e.g. converts [bar] and [baz] to [foo.bar], [foo.baz]
-   *
-   * Returns the updated configuration object
-   */
-  private remapDynamicConfigToNewParents<T>(configuration: T): T {
-    // remap configuration keys to their new parent, if needed
-    // e.g. convert [bar] and [baz] to [foo.bar], [foo.baz]
-    if (this.dynamicallySpecifiedConfigs.enabled && this.dynamicallySpecifiedConfigs.remapToNewParent) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newConfig = {...configuration} as any
-      const {newParentName, sectionsToRemap} = this.dynamicallySpecifiedConfigs.remapToNewParent
-
-      // get the keys that need to be remapped
-      const remappedKeys = Object.keys(newConfig).filter((key) => sectionsToRemap.includes(key))
-
-      remappedKeys.forEach((key) => {
-        newConfig[newParentName] = newConfig[newParentName] ?? {}
-        newConfig[newParentName] = {
-          ...newConfig[newParentName],
-          [key]: newConfig[key],
-        }
-        delete newConfig[key]
-      })
-      return newConfig
-    }
-    return configuration
+  return {
+    directory: configState.appDirectory,
+    configuration,
+    configurationLoadResultMetadata,
+    configSchema: schemaForConfigurationFile,
+    specifications,
+    remoteFlags,
   }
 }
 
@@ -961,14 +972,22 @@ async function getAppDirectory(directory: string) {
 
 /**
  * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
+ *
+ * @param prefetchedConfigs - A mapping of config names to client IDs that have already been fetched from the filesystem.
  */
-async function getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
-  const configNamesToClientId: {[key: string]: string} = {}
+async function getAllLinkedConfigClientIds(
+  appDirectory: string,
+  prefetchedConfigs: {[key: string]: string | number | undefined},
+): Promise<{[key: string]: string}> {
   const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
 
   const entries = (
     await Promise.all(
       candidates.map(async (candidateFile) => {
+        const configName = basename(candidateFile)
+        if (prefetchedConfigs[configName] !== undefined && typeof prefetchedConfigs[configName] === 'string') {
+          return [configName, prefetchedConfigs[configName]] as [string, string]
+        }
         try {
           const configuration = await parseConfigurationFile(
             // we only care about the client ID, so no need to parse the entire file
@@ -978,8 +997,7 @@ async function getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key:
             noopAbortOrReport,
           )
           if (configuration.client_id !== undefined) {
-            configNamesToClientId[basename(candidateFile)] = configuration.client_id
-            return [basename(candidateFile), configuration.client_id] as [string, string]
+            return [configName, configuration.client_id] as [string, string]
           }
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {

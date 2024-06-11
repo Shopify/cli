@@ -17,7 +17,7 @@ import {
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
-import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -154,7 +154,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
-  const remoteConfig: Partial<SpecsAppConfiguration> =
+  const remoteConfig: Partial<AppConfigurationUsedByCli> =
     (await fetchAppRemoteConfiguration(
       remoteApp,
       developerPlatformClient,
@@ -209,7 +209,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
 
 function buildDiffConfigContent(
   localConfig: CurrentAppConfiguration,
-  remoteConfig: Partial<SpecsAppConfiguration>,
+  remoteConfig: Partial<AppConfigurationUsedByCli>,
   schema: zod.ZodTypeAny,
 ) {
   const [updated, baseline] = deepDifference(
