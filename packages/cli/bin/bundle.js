@@ -47,6 +47,7 @@ esBuild({
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
+  sourcemap: true,
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [

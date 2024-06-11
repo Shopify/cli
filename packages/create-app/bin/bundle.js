@@ -17,6 +17,7 @@ esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
+  sourcemap: true,
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
