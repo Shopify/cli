@@ -6,7 +6,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -87,19 +87,26 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     env.APP_URL = options.appURL
   }
 
-  await bundleExtension({
-    minify: true,
-    outputPath: extension.outputPath,
-    stdin: {
-      contents: extension.getBundleExtensionStdinContent(),
-      resolveDir: extension.directory,
-      loader: 'tsx',
-    },
-    environment: options.environment,
-    env,
-    stderr: options.stderr,
-    stdout: options.stdout,
-  })
+  try {
+    await bundleExtension({
+      minify: true,
+      outputPath: extension.outputPath,
+      stdin: {
+        contents: extension.getBundleExtensionStdinContent(),
+        resolveDir: extension.directory,
+        loader: 'tsx',
+      },
+      environment: options.environment,
+      env,
+      stderr: options.stderr,
+      stdout: options.stdout,
+    })
+  } catch (extensionBundlingError) {
+    // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
+    throw new AbortError(
+      `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
+    )
+  }
 
   await extension.buildValidation()
 
