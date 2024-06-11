@@ -12,7 +12,8 @@ dependencies:
 deploy:
   override:
     - bash -i -c "npm_config_loglevel=verbose pnpm clean"
-    - bash -i -c "npm_config_loglevel=verbose pnpm build"
+    - bash -i -c "npm_config_loglevel=verbose pnpm bundle --sourcemaps"
+    - bash -i -c "npm_config_loglevel=verbose pnpm run update-bugsnag"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
     # When this is no longer the latest stable version, do 2 things:
     # 1. Replace the previous line with this, replacing 3.x with the actual version:

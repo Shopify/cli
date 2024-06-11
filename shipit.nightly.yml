@@ -22,8 +22,7 @@ deploy:
     - bash -i -c "if [ -f '.changeset/pre.json' ]; then npm_config_loglevel=verbose pnpm changeset pre exit; fi"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot nightly"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-manifests"
-    - bash -i -c "npm_config_loglevel=verbose pnpm nx run cli-kit:build"
+    - bash -i -c "npm_config_loglevel=verbose pnpm bundle --sourcemaps"
+    - bash -i -c "npm_config_loglevel=verbose pnpm run update-bugsnag"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag nightly"
     - bash -i -c "./bin/package.js"
-  post:
-    - bash -i -c "pnpm run update-bugsnag"
