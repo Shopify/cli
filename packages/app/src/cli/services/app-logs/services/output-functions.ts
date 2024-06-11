@@ -12,7 +12,7 @@ import {Writable} from 'stream'
 const POLLING_BACKOFF_INTERVAL_MS = 10000
 const ONE_MILLION = 1000000
 
-export const appLogsDevOutput: AppLogsPollingCommandOutputFunction = async ({stdout, log, apiKey}) => {
+const appLogsDevOutput: AppLogsPollingCommandOutputFunction = async ({stdout, log, apiKey}) => {
   await createLogsDir(apiKey!)
 
   await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
@@ -42,7 +42,7 @@ export const appLogsDevOutput: AppLogsPollingCommandOutputFunction = async ({std
   })
 }
 
-export const appLogsDevRetryOutput: AppLogsPollingCommandRetryOutputFunction = async ({
+const appLogsDevRetryOutput: AppLogsPollingCommandRetryOutputFunction = async ({
   stdout,
   response,
 }: {
@@ -57,12 +57,12 @@ export const appLogsDevRetryOutput: AppLogsPollingCommandRetryOutputFunction = a
   stdout.write(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
 }
 
-export const appLogsDevErrorOutput: AppLogsPollingCommandErrorOutputFunction = ({stdout}: {stdout: Writable}) => {
+const appLogsDevErrorOutput: AppLogsPollingCommandErrorOutputFunction = ({stdout}: {stdout: Writable}) => {
   stdout.write(`Error while retrieving app logs.`)
   stdout.write('App log streaming is no longer available in this `dev` session.')
 }
 
-export const appLogsLogsRetryOutput: AppLogsPollingCommandRetryOutputFunction = async ({
+const appLogsLogsRetryOutput: AppLogsPollingCommandRetryOutputFunction = async ({
   stdout,
   response,
 }: {
@@ -77,12 +77,12 @@ export const appLogsLogsRetryOutput: AppLogsPollingCommandRetryOutputFunction = 
   // stdout.write(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
 }
 
-export const appLogsLogsErrorOutput: AppLogsPollingCommandErrorOutputFunction = ({stdout}: {stdout: Writable}) => {
+const appLogsLogsErrorOutput: AppLogsPollingCommandErrorOutputFunction = ({stdout}: {stdout: Writable}) => {
   // stdout.write(`Error while retrieving app logs.`)
   // stdout.write('App log streaming is no longer available in this `dev` session.')
 }
 
-export const appLogsLogsOutput: AppLogsPollingCommandOutputFunction = ({stdout, log, apiKey}) => {
+const appLogsLogsOutput: AppLogsPollingCommandOutputFunction = ({stdout, log, apiKey}) => {
   const {status} = log
   const parsedPayload = JSON.parse(log.payload)
   const {logs, input, input_bytes: inputBytes, function_id: functionId, fuel_consumed: fuelConsumed} = parsedPayload

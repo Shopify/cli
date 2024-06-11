@@ -16,7 +16,7 @@ export interface LogsProps {
   }
 }
 
-export interface DetailsFunctionRunLogEvent {
+interface DetailsFunctionRunLogEvent {
   input: string
   inputBytes: number
   invocationId: string

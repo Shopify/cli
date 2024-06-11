@@ -24,7 +24,7 @@ export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPo
   type: 'app-logs-subscribe'
 }
 
-export interface CommandOutputOptions {
+interface CommandOutputOptions {
   commandOutputFunction: AppLogsPollingCommandOutputFunction
   retryOutputFunction: AppLogsPollingCommandRetryOutputFunction
   errorOutputFunction: AppLogsPollingCommandErrorOutputFunction
