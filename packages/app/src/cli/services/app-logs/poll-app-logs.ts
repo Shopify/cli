@@ -2,7 +2,7 @@ import {writeAppLogsToFile} from './write-app-logs.js'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 const POLLING_INTERVAL_MS = 450
@@ -88,7 +88,7 @@ export const pollAppLogs = async ({
         const payload = JSON.parse(log.payload)
 
         // eslint-disable-next-line no-await-in-loop
-        await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
+        await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
           if (log.event_type === 'function_run') {
             const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
 
@@ -117,7 +117,9 @@ export const pollAppLogs = async ({
             apiKey,
             stdout,
           })
-          stdout.write(`└ Log: ${logPath}\n`)
+          stdout.write(
+            outputContent`└ ${outputToken.link('Open log file', `file://${logPath}`, `Log: ${logPath}`)}\n`.value,
+          )
         })
       }
     }

@@ -3,8 +3,8 @@ import {AbortSignal} from '../../../../public/node/abort.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, Static, Text, TextProps, useApp} from 'ink'
-import stripAnsi from 'strip-ansi'
 import figures from 'figures'
+import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import {AsyncLocalStorage} from 'node:async_hooks'
 
@@ -40,6 +40,7 @@ function currentTime() {
 
 interface ConcurrentOutputContext {
   outputPrefix: string
+  stripAnsi?: boolean
 }
 
 const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()
@@ -127,10 +128,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         write(chunk, _encoding, next) {
           const context = outputContextStore.getStore()
           const prefix = context?.outputPrefix ?? process.prefix
-          const log = chunk.toString('utf8')
+          const shouldStripAnsi = context?.stripAnsi ?? true
+          const log = chunk.toString('utf8').replace(/(\n)$/, '')
 
           const index = addPrefix(prefix, prefixes)
-          const lines = stripAnsi(log.replace(/(\n)$/, '')).split(/\n/)
+
+          const lines = shouldStripAnsi ? stripAnsi(log).split(/\n/) : log.split(/\n/)
           addOrUpdateConcurrentUIEventOutput({prefix, index, output: lines.join('\n')})
           setProcessOutput((previousProcessOutput) => [
             ...previousProcessOutput,

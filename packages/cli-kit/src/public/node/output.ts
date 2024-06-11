@@ -50,8 +50,8 @@ export const outputToken = {
   path(value: OutputMessage): PathContentToken {
     return new PathContentToken(value)
   },
-  link(value: OutputMessage, link: string): LinkContentToken {
-    return new LinkContentToken(value, link)
+  link(value: OutputMessage, link: string, fallback?: string | undefined): LinkContentToken {
+    return new LinkContentToken(value, link, fallback)
   },
   heading(value: OutputMessage): HeadingContentToken {
     return new HeadingContentToken(value)
