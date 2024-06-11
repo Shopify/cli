@@ -10,11 +10,11 @@ import {loadAppConfiguration} from '../models/app/loader.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
-export enum Flag {
+enum Flag {
   DeclarativeWebhooks,
 }
 
-export interface LogsOptions {
+interface LogsOptions {
   apiKey?: string
   storeFqdn?: string
   path?: string
