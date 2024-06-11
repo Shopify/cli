@@ -8,8 +8,6 @@ const external = [
   'react-devtools-core',
 ]
 
-const generateSourcemaps = true
-
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
@@ -19,7 +17,7 @@ esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
-  sourcemap: generateSourcemaps,
+  sourcemap: true,
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
