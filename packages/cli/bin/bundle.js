@@ -22,7 +22,7 @@ const external = [
   '@parcel/watcher',
 ]
 
-const generateSourcemaps = process.argv.includes('--sourcemaps')
+const generateSourcemaps = true
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]

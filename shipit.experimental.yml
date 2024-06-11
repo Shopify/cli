@@ -23,6 +23,6 @@ deploy:
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot experimental"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-build-no-docs"
     # Uncomment if you need to upload sourcemaps to bugsnag for your experimental version
-    - bash -i -c "npm_config_loglevel=verbose pnpm bundle --sourcemaps"
-    - bash -i -c "npm_config_loglevel=verbose pnpm run update-bugsnag"
+    # - bash -i -c "npm_config_loglevel=verbose pnpm bundle --sourcemaps"
+    # - bash -i -c "npm_config_loglevel=verbose pnpm run update-bugsnag"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
