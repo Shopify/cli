@@ -4,7 +4,6 @@
   "scripts": {
     "package": "bin/package.js",
     "update-bugsnag": "bin/update-bugsnag.js",
-    "clean-sourcemaps": "node bin/clean-sourcemaps.js",
     "graph": "nx graph",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "shopify:run": "node packages/cli/bin/dev.js",
