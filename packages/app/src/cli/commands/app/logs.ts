@@ -85,7 +85,6 @@ export default class Logs extends Command {
       status: flags.status,
       configName: flags.config,
       directory: flags.path,
-      remoteFlags: [],
       reset: flags.reset,
     }
 

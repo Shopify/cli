@@ -1,19 +1,12 @@
-import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import React, {useState, FunctionComponent, useEffect, useCallback} from 'react'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {Box, Text} from '@shopify/cli-kit/node/ink'
+import {Static, Box, Text} from '@shopify/cli-kit/node/ink'
 import {Writable} from 'stream'
 
 export interface LogsProps {
   logsProcess: OutputProcess
   abortController: AbortController
-  app: {
-    apiKey: string
-    developerPlatformClient: DeveloperPlatformClient
-    extensions: ExtensionInstance[]
-  }
 }
 
 interface DetailsFunctionRunLogEvent {
@@ -27,7 +20,7 @@ interface DetailsFunctionRunLogEvent {
   fuelConsumed: number
   errorMessage: string | null
   errorType: string | null
-  status?: string
+  status: string
   source: string
 }
 
@@ -66,22 +59,23 @@ const Logs: FunctionComponent<LogsProps> = ({logsProcess, abortController}) => {
 
   return (
     <>
-      {logs.map((log: DetailsFunctionRunLogEvent, index: number) => (
-        <Box flexDirection="column" key={index}>
-          {/* use inviocation id here (as key) */}
-          <Box flexDirection="row" rowGap={2}>
-            <Text color="green">{currentTime()} </Text>
-            <Text color="blueBright"> {`${log.source}`}</Text>
-            <Text color={log.status === 'Success' ? 'green' : 'red'}> {` ${log.status}`}</Text>
-            <Text> {`${log.functionId}`}</Text>
-            <Text> in {log.fuelConsumed}M instructions</Text>
+      <Static items={logs}>
+        {(log: DetailsFunctionRunLogEvent, index: number) => (
+          <Box flexDirection="column" key={index}>
+            {/* update: use invocationId after https://github.com/Shopify/shopify-functions/issues/235 */}
+            <Box flexDirection="row" gap={0.5}>
+              <Text color="green">{currentTime()} </Text>
+              <Text color="blueBright">{`${log.source}`}</Text>
+              <Text color={log.status === 'Success' ? 'green' : 'red'}>{`${log.status}`}</Text>
+              <Text> {`${log.functionId}`}</Text>
+              <Text>in {log.fuelConsumed}M instructions</Text>
+            </Box>
+            <Text>{log.logs}</Text>
+            <Text>Input ({log.inputBytes} bytes):</Text>
+            <Text>{prettyPrintJson(log.input)}</Text>
           </Box>
-          <Text>{log.logs}</Text>
-          <Text>Input ({log.inputBytes} bytes):</Text>
-          <Text>{prettyPrintJson(log.input)}</Text>
-        </Box>
-      ))}
-      <Text color="blueBright">{'[Polling is active] hello from <Log />'}</Text>
+        )}
+      </Static>
     </>
   )
 }
@@ -110,7 +104,6 @@ function prettyPrintJson(jsonString: string) {
     const jsonObject = JSON.parse(jsonString)
     return JSON.stringify(jsonObject, null, 2)
   } catch (error) {
-    console.error('Failed to parse JSON:', error)
-    return jsonString
+    throw new Error(`Failed to parse JSON: ${error}`)
   }
 }

@@ -24,7 +24,7 @@ export interface LogsOptions {
   directory: string
   userProvidedConfigName?: string
   specifications?: ExtensionSpecification[]
-  remoateFlags?: Flag[]
+  remoteFlags?: Flag[]
   reset: boolean
 }
 
@@ -42,7 +42,7 @@ export async function logs(commandOptions: LogsOptions) {
     },
     outputFunctions: LOG_OUTPUT_FUNCTIONS,
   })
-  await launchLogsProcess({process, config})
+  await launchLogsProcess({process})
 }
 
 interface LogsConfig {
@@ -81,7 +81,7 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<LogsConfig> 
   }
 }
 
-async function launchLogsProcess({process, config}: {process: AppLogsSubscribeProcess; config: LogsConfig}) {
+async function launchLogsProcess({process}: {process: AppLogsSubscribeProcess}) {
   const abortController = new AbortController()
 
   const logsProcess: OutputProcess = {
@@ -91,16 +91,9 @@ async function launchLogsProcess({process, config}: {process: AppLogsSubscribePr
       return fn({stdout, stderr, abortSignal: signal}, process.options)
     },
   }
-  const apiKey = config.remoteApp.apiKey
-  const developerPlatformClient = config.developerPlatformClient
-  const app = {
-    apiKey,
-    developerPlatformClient,
-    extensions: config.localApp.allExtensions,
-  }
+
   const renderLogParams = {
     logsProcess,
-    app,
     abortController,
   }
 
