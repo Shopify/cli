@@ -39,7 +39,6 @@ const Logs: FunctionComponent<LogsProps> = ({logsProcess, abortController}) => {
       write(chunk, _encoding, next) {
         const log = chunk.toString('utf8')
         const parsedLog = JSON.parse(log)
-        // Mock for now
         setLogs((prevLogs) => [
           ...prevLogs,
           {

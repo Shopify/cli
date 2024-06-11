@@ -1,7 +1,7 @@
 import {LogsContextOptions, ensureLogsContext} from './context.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './dev/processes/app-logs-polling.js'
 import {renderLogs} from './app-logs/ui.js'
-import {appLogsLogsOutput} from './app-logs/poll-app-logs.js'
+import {LOG_OUTPUT_FUNCTIONS} from './app-logs/services/output-functions.js'
 import {AppInterface} from '../models/app/app.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -29,11 +29,8 @@ export interface LogsOptions {
 }
 
 export async function logs(commandOptions: LogsOptions) {
-  // We should have everything in here we need to create the process and start polling
   const config = await prepareForLogs(commandOptions)
-  // We only need 1 process - ??
   const process = await setupAppLogsPollingProcess({
-    outputCallback: appLogsLogsOutput,
     developerPlatformClient: config.developerPlatformClient,
     subscription: {
       shopIds: [config.storeId],
@@ -43,8 +40,8 @@ export async function logs(commandOptions: LogsOptions) {
       source: commandOptions.source,
       status: commandOptions.status,
     },
+    outputFunctions: LOG_OUTPUT_FUNCTIONS,
   })
-  // Launch the process
   await launchLogsProcess({process, config})
 }
 

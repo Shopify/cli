@@ -1,12 +1,17 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {AppEventData, pollAppLogs} from '../../app-logs/poll-app-logs.js'
+import {pollAppLogs} from '../../app-logs/poll-app-logs.js'
+import {
+  AppEventData,
+  AppLogsPollingCommandOutputFunction,
+  AppLogsPollingCommandRetryOutputFunction,
+  AppLogsPollingCommandErrorOutputFunction,
+} from '../../app-logs/types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
 
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {Writable} from 'stream'
 
 interface SubscribeAndStartPollingOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -21,8 +26,14 @@ export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPo
   type: 'app-logs-subscribe'
 }
 
+export interface CommandOutputOptions {
+  commandOutputFunction: AppLogsPollingCommandOutputFunction
+  retryOutputFunction: AppLogsPollingCommandRetryOutputFunction
+  errorOutputFunction: AppLogsPollingCommandErrorOutputFunction
+}
+
 interface Props {
-  outputCallback: ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string}) => void
+  outputFunctions: CommandOutputOptions
   developerPlatformClient: DeveloperPlatformClient
   subscription: {
     shopIds: string[]
@@ -32,20 +43,27 @@ interface Props {
     status?: string
     source?: string
   }
+  appEventData?: AppEventData
 }
 
 export async function setupAppLogsPollingProcess({
-  outputCallback,
+  outputFunctions: {commandOutputFunction, retryOutputFunction, errorOutputFunction},
   developerPlatformClient,
   subscription: {shopIds, apiKey},
   filters,
 }: Props): Promise<AppLogsSubscribeProcess> {
   const {token} = await developerPlatformClient.session()
+  const processFunction = createSubscribeAndStartPolling(
+    commandOutputFunction,
+    retryOutputFunction,
+    errorOutputFunction,
+  )
 
   return {
     type: 'app-logs-subscribe',
     prefix: 'app-logs',
-    function: createSubscribeAndStartPolling(outputCallback),
+    // this starts polling, and uses the output function's to write to stdout once it polls
+    function: processFunction,
     options: {
       developerPlatformClient,
       appLogsSubscribeVariables: {
@@ -59,7 +77,9 @@ export async function setupAppLogsPollingProcess({
 }
 
 const createSubscribeAndStartPolling = (
-  outputCallback: ({stdout, log}: {stdout: Writable; log: AppEventData; apiKey?: string | undefined}) => void,
+  commandOutputFunction: AppLogsPollingCommandOutputFunction,
+  retryOutputFunction: AppLogsPollingCommandRetryOutputFunction,
+  errorOutputFunction: AppLogsPollingCommandErrorOutputFunction,
 ): DevProcessFunction<SubscribeAndStartPollingOptions> => {
   return async ({stdout, stderr, abortSignal}, {developerPlatformClient, appLogsSubscribeVariables, filters}) => {
     const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
@@ -69,26 +89,29 @@ const createSubscribeAndStartPolling = (
 
     if (errors && errors.length > 0) {
       stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
-      stdout.write('App log streaming is not available in this `dev` session.')
+      stdout.write('App log streaming is not available in this session.')
       return
     } else {
-      outputDebug(`Subscribed to App Events for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
+      outputDebug(`Subscribed to App Logs for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
       outputDebug(`Success: ${success}\n`)
     }
-
     const apiKey = appLogsSubscribeVariables.apiKey
     await createLogsDir(apiKey)
+
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken, filters},
       apiKey,
       resubscribeCallback: () => {
-        return createSubscribeAndStartPolling(outputCallback)(
-          {stdout, stderr, abortSignal},
-          {developerPlatformClient, appLogsSubscribeVariables, filters},
-        )
+        return createSubscribeAndStartPolling(
+          commandOutputFunction,
+          retryOutputFunction,
+          errorOutputFunction,
+        )({stdout, stderr, abortSignal}, {developerPlatformClient, appLogsSubscribeVariables, filters})
       },
-      outputCallback,
+      commandOutputFunction,
+      retryOutputFunction,
+      errorOutputFunction,
     })
   }
 }
