@@ -1,4 +1,4 @@
-import {jsonSchemaValidate} from './json-schema.js'
+import {jsonSchemaValidate, normaliseJsonSchema} from './json-schema.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -168,5 +168,48 @@ describe('jsonSchemaValidate', () => {
         message: 'Invalid input',
       },
     ])
+  })
+})
+
+describe('normaliseJsonSchema', () => {
+  test('dereferences schemas with internal $ref pointers', async () => {
+    const schema = {
+      $id: 'https://example.com/schema.json',
+      definitions: {
+        foo: {type: 'object', properties: {bar: {type: 'string'}}},
+      },
+      type: 'object',
+      properties: {
+        foo: {$ref: '#/definitions/foo'},
+      },
+      required: ['foo'],
+    }
+
+    const dereferenced = await normaliseJsonSchema(JSON.stringify(schema))
+    expect(dereferenced).toEqual({
+      $id: 'https://example.com/schema.json',
+      definitions: {
+        foo: {type: 'object', properties: {bar: {type: 'string'}}},
+      },
+      type: 'object',
+      properties: {
+        foo: schema.definitions.foo,
+      },
+      required: ['foo'],
+    })
+  })
+
+  test("doesn't de-reference external $ref pointers", async () => {
+    const schema = {
+      $id: 'https://example.com/schema.json',
+      type: 'object',
+      properties: {
+        foo: {$ref: 'https://example.com/external.json#/definitions/foo'},
+      },
+      required: ['foo'],
+    }
+
+    const dereferenced = await normaliseJsonSchema(JSON.stringify(schema))
+    expect(dereferenced).toEqual(schema)
   })
 })

@@ -2,20 +2,22 @@ import {FlattenedRemoteSpecification} from '../api/graphql/extension_specificati
 import {BaseConfigType} from '../models/extensions/schemas.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
-import {jsonSchemaValidate} from '@shopify/cli-kit/node/json-schema'
+import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
+import {isEmpty} from '@shopify/cli-kit/common/object'
 
 /**
  * Factory returning a function that can parse a configuration object against a locally defined zod schema, and a remotely defined JSON schema based contract
  * @param merged - The merged specification object from the remote and local sources
  * @returns A function that can parse a configuration object
  */
-export function unifiedConfigurationParserFactory(
+export async function unifiedConfigurationParserFactory(
   merged: RemoteAwareExtensionSpecification & FlattenedRemoteSpecification,
 ) {
-  if (merged.contract === undefined) {
+  const contractJsonSchema = merged.validationSchema?.jsonSchema
+  if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
     return merged.parseConfigurationObject
   }
-  const contract = JSON.parse(merged.contract)
+  const contract = await normaliseJsonSchema(contractJsonSchema)
 
   const parseConfigurationObject = (config: object): ParseConfigurationResult<BaseConfigType> => {
     // First we parse with zod. This may also change the format of the data.

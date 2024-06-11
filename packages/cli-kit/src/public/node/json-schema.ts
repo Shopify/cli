@@ -2,8 +2,24 @@ import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject} from 'ajv'
+import $RefParser from '@apidevtools/json-schema-ref-parser'
 
 type AjvError = ErrorObject<string, {[key: string]: unknown}, unknown>
+
+/**
+ * Normalises a JSON Schema by standardising it's internal implementation.
+ *
+ * We prefer to not use $ref elements in our schemas, so we inline them; it's easier then to process errors.
+ *
+ * @param schema - The JSON schema (as a string) to normalise.
+ * @returns The normalised JSON schema.
+ */
+export async function normaliseJsonSchema(schema: string): Promise<SchemaObject> {
+  // we want to modify the schema, removing any $ref elements and inlining with their source
+  const parsedSchema = JSON.parse(schema)
+  await $RefParser.dereference(parsedSchema, {resolve: {external: false}})
+  return parsedSchema
+}
 
 /**
  * Given a subject object and a JSON schema contract, validate the subject against the contract.
