@@ -6,12 +6,15 @@ import {
 import {writeAppLogsToFile} from '../write-app-logs.js'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Response} from 'node-fetch'
+import {createLogsDir} from '@shopify/cli-kit/node/logs'
 import {Writable} from 'stream'
 
 const POLLING_BACKOFF_INTERVAL_MS = 10000
 const ONE_MILLION = 1000000
 
 export const appLogsDevOutput: AppLogsPollingCommandOutputFunction = async ({stdout, log, apiKey}) => {
+  await createLogsDir(apiKey!)
+
   await useConcurrentOutputContext({outputPrefix: log.source}, async () => {
     const payload = JSON.parse(log.payload)
     if (log.event_type === 'function_run') {

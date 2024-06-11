@@ -69,7 +69,7 @@ export const pollAppLogs = async ({
       if (response.status === 401) {
         await resubscribeCallback()
       } else if (response.status === 429 || response.status >= 500) {
-        // Custom Dev Logic: Retry
+        // Custom Logic: Retry
         await retryOutputFunction({stdout, response})
         setTimeout(() => {
           pollAppLogs({
@@ -103,6 +103,7 @@ export const pollAppLogs = async ({
       const {app_logs: appLogs} = data
 
       for (const log of appLogs) {
+        // Custom Logic: Output for CLI
         // eslint-disable-next-line no-await-in-loop
         await commandOutputFunction({stdout, log, apiKey})
       }
@@ -129,6 +130,7 @@ export const pollAppLogs = async ({
     }, POLLING_INTERVAL_MS)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    // Custom Logic: Error
     errorOutputFunction({stdout})
     outputDebug(`${error}}\n`)
   }

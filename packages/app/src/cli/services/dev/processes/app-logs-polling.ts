@@ -9,8 +9,6 @@ import {
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
 
-import {createLogsDir} from '@shopify/cli-kit/node/logs'
-
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface SubscribeAndStartPollingOptions {
@@ -96,7 +94,6 @@ const createSubscribeAndStartPolling = (
       outputDebug(`Success: ${success}\n`)
     }
     const apiKey = appLogsSubscribeVariables.apiKey
-    await createLogsDir(apiKey)
 
     await pollAppLogs({
       stdout,
