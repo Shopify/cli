@@ -7,6 +7,8 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import lockfile from 'proper-lockfile'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -124,10 +126,17 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  if (extension.isJavaScript) {
-    return runCommandOrBuildJSFunction(extension, options)
-  } else {
-    return buildOtherFunction(extension, options)
+  const lockfilePath = joinPath(extension.directory, '.build-lock')
+  const releaseLock = await lockfile.lock(extension.directory, {retries: 10, lockfilePath})
+
+  try {
+    if (extension.isJavaScript) {
+      await runCommandOrBuildJSFunction(extension, options)
+    } else {
+      await buildOtherFunction(extension, options)
+    }
+  } finally {
+    await releaseLock()
   }
 }
 

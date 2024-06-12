@@ -5,9 +5,11 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
+import lockfile from 'proper-lockfile'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
+vi.mock('proper-lockfile')
 
 describe('buildFunctionExtension', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -35,6 +37,7 @@ describe('buildFunctionExtension', () => {
     signal = vi.fn()
     app = {}
     extension = await testFunctionExtension({config: defaultConfig})
+    vi.mocked(lockfile.lock).mockResolvedValue(vi.fn())
   })
 
   test('delegates the build to system when the build command is present', async () => {
