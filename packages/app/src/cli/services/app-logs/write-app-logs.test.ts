@@ -55,12 +55,11 @@ describe('writeAppLogsToFile', () => {
     const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
     const path = joinPath(API_KEY, fileName)
 
-    // When
-    await writeAppLogsToFile({appLog, apiKey: API_KEY, stdout})
+    const returnedPath = await writeAppLogsToFile({appLog: appLog, apiKey: API_KEY, stdout})
 
     // Then
+    expect(returnedPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
   })
 
   test('prints and re-throws parsing errors', async () => {
