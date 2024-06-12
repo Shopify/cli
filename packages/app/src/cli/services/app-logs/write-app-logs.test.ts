@@ -55,7 +55,7 @@ describe('writeAppLogsToFile', () => {
     const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
     const path = joinPath(API_KEY, fileName)
 
-    const returnedPath = await writeAppLogsToFile({appLog: appLog, apiKey: API_KEY, stdout})
+    const returnedPath = await writeAppLogsToFile({appLog, apiKey: API_KEY, stdout})
 
     // Then
     expect(returnedPath.startsWith(path)).toBe(true)
