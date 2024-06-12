@@ -33,7 +33,6 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
-import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -477,60 +476,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   })
   return result
 }
-
-export interface DraftExtensionsPushOptions {
-  directory: string
-  apiKey?: string
-  reset: boolean
-  config?: string
-  enableDeveloperPreview: boolean
-  developerPlatformClient?: DeveloperPlatformClient
-}
-
-export async function ensureDraftExtensionsPushContext(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
-  const specifications = await loadLocalExtensionsSpecifications()
-  const app: AppInterface = await loadApp({
-    specifications,
-    directory: draftExtensionsPushOptions.directory,
-    userProvidedConfigName: draftExtensionsPushOptions.config,
-  })
-  let developerPlatformClient =
-    draftExtensionsPushOptions.developerPlatformClient ??
-    selectDeveloperPlatformClient({configuration: app.configuration})
-  const [remoteApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, developerPlatformClient)
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-
-  const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
-
-  await ensureIncludeConfigOnDeploy({
-    org,
-    app,
-    remoteApp,
-    reset: draftExtensionsPushOptions.reset,
-    force: true,
-  })
-
-  const prodEnvIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
-
-  const {extensionIds: remoteExtensionIds} = await ensureDeploymentIdsPresence({
-    app,
-    remoteApp,
-    appId: remoteApp.apiKey,
-    appName: remoteApp.title,
-    force: true,
-    release: true,
-    developerPlatformClient,
-    envIdentifiers: prodEnvIdentifiers,
-  })
-
-  await logMetadataForLoadedContext({
-    organizationId: remoteApp.organizationId,
-    apiKey: remoteApp.apiKey,
-  })
-
-  return {app, developerPlatformClient, remoteExtensionIds, remoteApp}
-}
-
 interface ShouldOrPromptIncludeConfigDeployOptions {
   appDirectory: string
   localApp: AppInterface
