@@ -23,33 +23,63 @@ Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [n
 
 When you’re building a Shopify app, you can initialize your project using your preferred package manager. A single command will install all the dependencies you need — including Shopify CLI itself.
 
-Initialize your project using one of the following commands:
+Initialize your project by running:
+`npx shopify app init`
+
+Learn more in the docs: [Getting Started with Apps](https://shopify.dev/docs/apps/build/scaffold-app)
+
+---
+
+Alternatively you can use one of the following commands:
+
 - `npm init @shopify/app@latest` (installed by default with Node)
 - `pnpm create @shopify/create-app@latest`
 - `yarn create @shopify/app`
 - `bun create @shopify/app@latest` (experimental)
 
-Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started/create)
+---
 
 <p>&nbsp;</p>
 
-## Developing themes with Shopify CLI
+## Developing Liquid themes with Shopify CLI
 
-To work with themes, the CLI needs to be installed globally with:
+To start working on a Liquid theme, you can use the following command:
 
-- `npm install -g @shopify/cli @shopify/theme`
+- `npx shopify theme init`
+
+Learn more in the docs: [Getting Started with Themes](https://shopify.dev/docs/storefronts/themes/getting-started/create)
+
+---
+
+Alternatively, you can install the CLI globally with:
+
+`npm install -g @shopify/cli`
 
 You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
 
-Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/themes/tools/cli)
+and then run:
+
+`shopify theme init`
+
+---
 
 <p>&nbsp;</p>
 
-## Developing Hydrogen custom storefronts with Shopify CLI ##
+## Developing Hydrogen storefronts with Shopify CLI ##
 
-The Hydrogen code lives here: https://github.com/Shopify/hydrogen/tree/main/packages/cli
+To start working on a Hydrogen storefront, you can use the following command:
 
-Learn more in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.dev/docs/custom-storefronts/hydrogen/cli)
+- `npx shopify hydrogen init`
+
+Learn more in the docs: [Getting Started with Hydrogen](https://shopify.dev/docs/storefronts/headless/hydrogen/getting-started)
+
+---
+
+To contribute to Hydrogen's CLI plugin, you can find the code and contribution instructions in the Hydrogen repo here: https://github.com/Shopify/hydrogen/tree/main/packages/cli
+
+Learn more about the CLI in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.dev/docs/api/shopify-cli/hydrogen)
+
+---
 
 <p>&nbsp;</p>
 
