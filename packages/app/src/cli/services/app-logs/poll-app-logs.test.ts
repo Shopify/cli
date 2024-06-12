@@ -4,14 +4,13 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/node/output'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
 
 vi.mock('./write-app-logs.js')
 vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/output')
 
 const FQDN = await partnersFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
@@ -151,9 +150,13 @@ describe('pollAppLogs', () => {
     })
 
     expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(LOGS)
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
 
-    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith({outputPrefix: SOURCE}, expect.any(Function))
+    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: SOURCE, stripAnsi: false},
+      expect.any(Function),
+    )
 
     expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
 
@@ -206,6 +209,7 @@ describe('pollAppLogs', () => {
   test('stops polling when unexpected error occurs instead of throwing ', async () => {
     // Given
     const url = `https://${FQDN}/app_logs/poll`
+    const outputDebugSpy = vi.spyOn(output, 'outputDebug')
 
     // An unexpected error response
     const response = new Response('errorMessage', {status: 422})
@@ -229,7 +233,7 @@ describe('pollAppLogs', () => {
     })
     expect(stdout.write).toHaveBeenCalledWith('Error while retrieving app logs.')
     expect(stdout.write).toHaveBeenCalledWith('App log streaming is no longer available in this `dev` session.')
-    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
     expect(vi.getTimerCount()).toEqual(0)
   })
 })

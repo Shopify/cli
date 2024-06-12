@@ -39,7 +39,7 @@ function currentTime() {
 }
 
 interface ConcurrentOutputContext {
-  outputPrefix: string
+  outputPrefix?: string
   stripAnsi?: boolean
 }
 
