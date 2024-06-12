@@ -27,9 +27,9 @@ export interface FunctionRunData {
   shop_id: number
   api_client_id: number
   payload: {
-    input: string
+    input: unknown
     input_bytes: number
-    output: string
+    output: unknown
     output_bytes: number
     function_id: string
     export: string
@@ -56,7 +56,12 @@ export async function replay(options: ReplayOptions) {
     throw new AbortError(`No logs found in ${functionRunsDir}`)
   }
 
-  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input, selectedRun.payload.export)
+  await runFunctionRunnerWithLogInput(
+    options.extension,
+    options,
+    JSON.stringify(selectedRun.payload.input),
+    selectedRun.payload.export,
+  )
 }
 
 async function runFunctionRunnerWithLogInput(
