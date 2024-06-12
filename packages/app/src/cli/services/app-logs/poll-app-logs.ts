@@ -8,6 +8,7 @@ import {Writable} from 'stream'
 const POLLING_INTERVAL_MS = 450
 const POLLING_BACKOFF_INTERVAL_MS = 10000
 const ONE_MILLION = 1000000
+const LOG_TYPE_FUNCTION_RUN = 'function_run'
 
 const generateFetchAppLogUrl = async (cursor?: string) => {
   const fqdn = await partnersFqdn()
@@ -20,6 +21,7 @@ export interface AppEventData {
   api_client_id: number
   payload: string
   event_type: string
+  log_type?: string
   source: string
   source_namespace: string
   cursor: string
@@ -89,7 +91,8 @@ export const pollAppLogs = async ({
 
         // eslint-disable-next-line no-await-in-loop
         await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
-          if (log.event_type === 'function_run') {
+          // Use only log.log_type after https://github.com/Shopify/partners/pull/55178
+          if ((log.log_type ?? log.event_type) === LOG_TYPE_FUNCTION_RUN) {
             const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
 
             if (log.status === 'success') {
