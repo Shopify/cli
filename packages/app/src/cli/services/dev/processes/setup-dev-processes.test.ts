@@ -1,11 +1,12 @@
 import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
-import {subscribeAndStartPolling} from './app-logs-polling.js'
+import {createSubscribeAndStartPolling} from './app-logs-polling.js'
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
+import {DEV_OUTPUT_CALLBACKS} from '../../app-logs/services/output-callbacks.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -321,17 +322,17 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    expect(res.processes[6]).toMatchObject({
-      type: 'app-logs-subscribe',
-      prefix: 'app-logs',
-      function: subscribeAndStartPolling,
-      options: {
-        developerPlatformClient,
-        appLogsSubscribeVariables: {
-          shopIds: ['123456789'],
-          apiKey: 'api-key',
-          token: 'token',
-        },
+    expect(res.processes[6]?.type).toBe('app-logs-subscribe')
+    expect(res.processes[6]?.prefix).toBe('app-logs')
+    expect(res.processes[6]?.function).toMatchSnapshot(
+      createSubscribeAndStartPolling(DEV_OUTPUT_CALLBACKS.onFunctionRunCallback, DEV_OUTPUT_CALLBACKS.onErrorCallback),
+    )
+    expect(res.processes[6]?.options).toMatchObject({
+      developerPlatformClient,
+      appLogsSubscribeVariables: {
+        shopIds: ['123456789'],
+        apiKey: 'api-key',
+        token: 'token',
       },
     })
   })

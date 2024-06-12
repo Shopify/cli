@@ -1,55 +1,35 @@
 import {AppEventData, AppLogsOnFunctionRunCallback, AppLogsOnErrorCallback} from './types.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 const POLLING_INTERVAL_MS = 450
 const POLLING_BACKOFF_INTERVAL_MS = 10000
 
-const generateFetchAppLogUrl = async (
-  cursor?: string,
-  filters?: {
-    status?: string
-    source?: string
-  },
-) => {
+const generateFetchAppLogUrl = async (cursor?: string) => {
   const fqdn = await partnersFqdn()
-  let url = `https://${fqdn}/app_logs/poll`
-
-  if (!cursor) {
-    return url
-  }
-
-  url += `?cursor=${cursor}`
-
-  if (filters?.status) {
-    url += `&status=${filters.status}`
-  }
-  if (filters?.source) {
-    url += `&source=${filters.source}`
-  }
-
-  return url
+  const url = `https://${fqdn}/app_logs/poll`
+  return url + (cursor ? `?cursor=${cursor}` : '')
 }
 
 export const pollAppLogs = async ({
   stdout,
-  appLogsFetchInput: {jwtToken, cursor, filters},
+  appLogsFetchInput: {jwtToken, cursor},
   apiKey,
   resubscribeCallback,
   onFunctionRunCallback,
   onErrorCallback,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string; filters?: {status?: string; source?: string}}
+  appLogsFetchInput: {jwtToken: string; cursor?: string}
   apiKey: string
   resubscribeCallback: () => Promise<void>
   onFunctionRunCallback: AppLogsOnFunctionRunCallback
   onErrorCallback: AppLogsOnErrorCallback
 }) => {
   try {
-    const url = await generateFetchAppLogUrl(cursor, filters)
+    const url = await generateFetchAppLogUrl(cursor)
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -62,10 +42,10 @@ export const pollAppLogs = async ({
       if (response.status === 401) {
         await resubscribeCallback()
       } else if (response.status === 429 || response.status >= 500) {
-        outputDebug(`Received an error while polling for app logs.`)
+        outputWarn(`Received an error while polling for app logs.`)
         outputDebug(`${response.status}: ${response.statusText}`)
         outputDebug(responseText)
-        outputDebug(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
+        outputWarn(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
 
         setTimeout(() => {
           pollAppLogs({
@@ -73,7 +53,6 @@ export const pollAppLogs = async ({
             appLogsFetchInput: {
               jwtToken,
               cursor: undefined,
-              filters,
             },
             apiKey,
             resubscribeCallback,
@@ -111,7 +90,6 @@ export const pollAppLogs = async ({
         appLogsFetchInput: {
           jwtToken,
           cursor: cursorFromResponse,
-          filters,
         },
         apiKey,
         resubscribeCallback,

@@ -4,7 +4,7 @@ import {AppEventData, AppLogsOnFunctionRunCallback, AppLogsOnErrorCallback} from
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
 
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface SubscribeAndStartPollingOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -31,10 +31,6 @@ interface Props {
     shopIds: string[]
     apiKey: string
   }
-  filters?: {
-    status?: string
-    source?: string
-  }
   appEventData?: AppEventData
 }
 
@@ -42,15 +38,14 @@ export async function setupAppLogsPollingProcess({
   outputCallbacks: {onFunctionRunCallback, onErrorCallback},
   developerPlatformClient,
   subscription: {shopIds, apiKey},
-  filters,
 }: Props): Promise<AppLogsSubscribeProcess> {
   const {token} = await developerPlatformClient.session()
-  const processFunction = createSubscribeAndStartPolling(onFunctionRunCallback, onErrorCallback)
+  const subscribeAndStartPolling = createSubscribeAndStartPolling(onFunctionRunCallback, onErrorCallback)
 
   return {
     type: 'app-logs-subscribe',
     prefix: 'app-logs',
-    function: processFunction,
+    function: subscribeAndStartPolling,
     options: {
       developerPlatformClient,
       appLogsSubscribeVariables: {
@@ -58,24 +53,23 @@ export async function setupAppLogsPollingProcess({
         apiKey,
         token,
       },
-      filters,
     },
   }
 }
 
-const createSubscribeAndStartPolling = (
+export const createSubscribeAndStartPolling = (
   onFunctionRunCallback: AppLogsOnFunctionRunCallback,
   onErrorCallback: AppLogsOnErrorCallback,
 ): DevProcessFunction<SubscribeAndStartPollingOptions> => {
-  return async ({stdout, stderr, abortSignal}, {developerPlatformClient, appLogsSubscribeVariables, filters}) => {
+  return async ({stdout, stderr, abortSignal}, {developerPlatformClient, appLogsSubscribeVariables}) => {
     const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
     const {jwtToken, success, errors} = result.appLogsSubscribe
     outputDebug(`Token: ${jwtToken}\n`)
     outputDebug(`API Key: ${appLogsSubscribeVariables.apiKey}\n`)
 
     if (errors && errors.length > 0) {
-      stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
-      stdout.write('App log streaming is not available in this session.')
+      outputWarn(`Errors subscribing to app logs: ${errors.join(', ')}`)
+      outputWarn('App log streaming is not available in this session.')
       return
     } else {
       outputDebug(`Subscribed to App Logs for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
@@ -85,12 +79,12 @@ const createSubscribeAndStartPolling = (
 
     await pollAppLogs({
       stdout,
-      appLogsFetchInput: {jwtToken, filters},
+      appLogsFetchInput: {jwtToken},
       apiKey,
       resubscribeCallback: () => {
         return createSubscribeAndStartPolling(onFunctionRunCallback, onErrorCallback)(
           {stdout, stderr, abortSignal},
-          {developerPlatformClient, appLogsSubscribeVariables, filters},
+          {developerPlatformClient, appLogsSubscribeVariables},
         )
       },
       onFunctionRunCallback,

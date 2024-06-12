@@ -86,6 +86,8 @@ const RESPONSE_DATA = {
   cursor: RETURNED_CURSOR,
 }
 const MOCKED_RESUBSCRIBE_CALLBACK = vi.fn()
+const MOCKED_ON_FUNCTION_RUN_CALLBACK = vi.fn()
+const MOCKED_ON_ERROR_CALLBACK = vi.fn()
 
 describe('pollAppLogs', () => {
   let stdout: any
@@ -121,6 +123,8 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      onFunctionRunCallback: MOCKED_ON_FUNCTION_RUN_CALLBACK,
+      onErrorCallback: MOCKED_ON_ERROR_CALLBACK,
     })
     await vi.advanceTimersToNextTimerAsync()
 
@@ -139,23 +143,7 @@ describe('pollAppLogs', () => {
       },
     })
 
-    expect(writeAppLogsToFile).toHaveBeenCalledWith({
-      appLog: RESPONSE_DATA.app_logs[0],
-      apiKey: API_KEY,
-      stdout,
-    })
-    expect(writeAppLogsToFile).toHaveBeenCalledWith({
-      appLog: RESPONSE_DATA.app_logs[1],
-      apiKey: API_KEY,
-      stdout,
-    })
-
-    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(LOGS)
-
-    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith({outputPrefix: SOURCE}, expect.any(Function))
-
-    expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
+    expect(MOCKED_ON_FUNCTION_RUN_CALLBACK).toHaveBeenCalled()
 
     expect(vi.getTimerCount()).toEqual(1)
   })
@@ -174,6 +162,8 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      onFunctionRunCallback: MOCKED_ON_FUNCTION_RUN_CALLBACK,
+      onErrorCallback: MOCKED_ON_ERROR_CALLBACK,
     })
 
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
@@ -195,11 +185,13 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      onFunctionRunCallback: MOCKED_ON_FUNCTION_RUN_CALLBACK,
+      onErrorCallback: MOCKED_ON_ERROR_CALLBACK,
     })
     await vi.advanceTimersToNextTimerAsync()
 
-    expect(stdout.write).toHaveBeenCalledWith('error for 429')
-    expect(stdout.write).toHaveBeenCalledWith('error for 500')
+    expect(outputDebug).toHaveBeenCalledWith('error for 429')
+    expect(outputDebug).toHaveBeenCalledWith('error for 500')
     expect(vi.getTimerCount()).toEqual(1)
   })
 
@@ -218,6 +210,8 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      onFunctionRunCallback: MOCKED_ON_FUNCTION_RUN_CALLBACK,
+      onErrorCallback: MOCKED_ON_ERROR_CALLBACK,
     })
 
     // Then
@@ -227,8 +221,7 @@ describe('pollAppLogs', () => {
         Authorization: `Bearer ${JWT_TOKEN}`,
       },
     })
-    expect(stdout.write).toHaveBeenCalledWith('Error while retrieving app logs.')
-    expect(stdout.write).toHaveBeenCalledWith('App log streaming is no longer available in this `dev` session.')
+    expect(MOCKED_ON_ERROR_CALLBACK).toHaveBeenCalled()
     expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
     expect(vi.getTimerCount()).toEqual(0)
   })

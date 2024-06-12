@@ -6,7 +6,7 @@ import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
-import {DEV_OUTPUT_CALLBACKS} from '../../app-logs/services/output-functions.js'
+import {DEV_OUTPUT_CALLBACKS} from '../../app-logs/services/output-callbacks.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
