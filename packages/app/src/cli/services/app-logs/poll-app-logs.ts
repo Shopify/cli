@@ -8,7 +8,7 @@ import {Writable} from 'stream'
 const POLLING_INTERVAL_MS = 450
 const POLLING_BACKOFF_INTERVAL_MS = 10000
 const ONE_MILLION = 1000000
-const LOG_TYPE_FUNCTION_RUN = "function_run"
+const LOG_TYPE_FUNCTION_RUN = 'function_run'
 
 const generateFetchAppLogUrl = async (cursor?: string) => {
   const fqdn = await partnersFqdn()

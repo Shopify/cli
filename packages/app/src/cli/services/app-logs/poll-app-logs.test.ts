@@ -67,7 +67,7 @@ const FAILURE_PAYLOAD = {
   output_bytes: 182,
   function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
   logs: LOGS,
-  error_type: FUNCTION_ERROR
+  error_type: FUNCTION_ERROR,
 }
 const OTHER_PAYLOAD = {some: 'arbitrary payload'}
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'

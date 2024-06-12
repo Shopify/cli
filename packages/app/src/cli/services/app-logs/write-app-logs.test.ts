@@ -56,7 +56,7 @@ describe('writeAppLogsToFile', () => {
     const path = joinPath(API_KEY, fileName)
 
     // When
-    await writeAppLogsToFile({appLog: appLog, apiKey: API_KEY, stdout})
+    await writeAppLogsToFile({appLog, apiKey: API_KEY, stdout})
 
     // Then
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
