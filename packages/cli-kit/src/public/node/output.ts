@@ -50,8 +50,8 @@ export const outputToken = {
   path(value: OutputMessage): PathContentToken {
     return new PathContentToken(value)
   },
-  link(value: OutputMessage, link: string): LinkContentToken {
-    return new LinkContentToken(value, link)
+  link(value: OutputMessage, link: string, fallback?: string | undefined): LinkContentToken {
+    return new LinkContentToken(value, link, fallback)
   },
   heading(value: OutputMessage): HeadingContentToken {
     return new HeadingContentToken(value)
@@ -76,6 +76,9 @@ export const outputToken = {
   },
   green(value: OutputMessage): ColorContentToken {
     return new ColorContentToken(value, colors.green)
+  },
+  gray(value: OutputMessage): ColorContentToken {
+    return new ColorContentToken(value, colors.gray)
   },
   packagejsonScript(packageManager: PackageManager, scriptName: string, ...scriptArgs: string[]): CommandContentToken {
     return new CommandContentToken(formatPackageManagerCommand(packageManager, scriptName, ...scriptArgs))

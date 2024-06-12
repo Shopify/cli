@@ -70,6 +70,59 @@ describe('ConcurrentOutput', () => {
     `)
   })
 
+  test('strips ansi codes from the output by default', async () => {
+    const output = 'foo'
+
+    // Given
+    const processSync = new Synchronizer()
+    const processes = [
+      {
+        prefix: '1',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write(`\u001b[32m${output}\u001b[39m`)
+          processSync.resolve()
+        },
+      },
+    ]
+
+    // When
+    const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
+    await processSync.promise
+
+    // Then
+    const logColumns = renderInstance.lastFrame()!.split('│')
+    expect(logColumns?.length).toBe(3)
+    expect(logColumns[2]?.trim()).toEqual(output)
+  })
+
+  test('does not strip ansi codes from the output when stripAnsi is false', async () => {
+    const output = '\u001b[32mfoo\u001b[39m'
+
+    // Given
+    const processSync = new Synchronizer()
+    const processes = [
+      {
+        prefix: '1',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          useConcurrentOutputContext({stripAnsi: false}, () => {
+            stdout.write(output)
+          })
+          processSync.resolve()
+        },
+      },
+    ]
+
+    // When
+    const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
+    await processSync.promise
+
+    // Then
+    const logColumns = renderInstance.lastFrame()!.split('│')
+    expect(logColumns?.length).toBe(3)
+    expect(logColumns[2]?.trim()).toEqual(output)
+  })
+
   test('renders custom prefixes on log lines', async () => {
     // Given
     const processSync = new Synchronizer()
