@@ -11,6 +11,7 @@ const APP_LOG: AppEventData = {
   api_client_id: 2,
   payload: JSON.stringify({someJson: 'someJSOn'}),
   event_type: 'function_run',
+  log_type: undefined,
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
   source: 'my-function',
