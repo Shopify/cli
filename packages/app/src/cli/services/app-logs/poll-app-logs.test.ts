@@ -14,6 +14,9 @@ vi.mock('@shopify/cli-kit/node/http')
 
 const FQDN = await partnersFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
+const FUNCTION_ERROR = 'function_error'
+const FUNCTION_RUN = 'function_run'
+
 const INPUT = {
   cart: {
     lines: [
@@ -57,6 +60,15 @@ const FUNCTION_PAYLOAD = {
   logs: LOGS,
   fuel_consumed: 512436,
 }
+const FAILURE_PAYLOAD = {
+  input: JSON.stringify(INPUT),
+  input_bytes: 123,
+  output: JSON.stringify(OUTPUT),
+  output_bytes: 182,
+  function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
+  logs: LOGS,
+  error_type: FUNCTION_ERROR
+}
 const OTHER_PAYLOAD = {some: 'arbitrary payload'}
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'
 const RESPONSE_DATA = {
@@ -65,7 +77,29 @@ const RESPONSE_DATA = {
       shop_id: 1,
       api_client_id: 1830457,
       payload: JSON.stringify(FUNCTION_PAYLOAD),
-      event_type: 'function_run',
+      event_type: FUNCTION_RUN,
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'success',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(FAILURE_PAYLOAD),
+      event_type: FUNCTION_RUN,
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'failure',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(FUNCTION_PAYLOAD),
+      log_type: FUNCTION_RUN,
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
       source: SOURCE,
@@ -148,16 +182,43 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
     })
+    expect(writeAppLogsToFile).toHaveBeenCalledWith({
+      appLog: RESPONSE_DATA.app_logs[2],
+      apiKey: API_KEY,
+      stdout,
+    })
+    expect(writeAppLogsToFile).toHaveBeenCalledWith({
+      appLog: RESPONSE_DATA.app_logs[3],
+      apiKey: API_KEY,
+      stdout,
+    })
 
+    // app_logs[0]
     expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
-
+    expect(stdout.write).toHaveBeenCalledWith(LOGS)
+    // expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
       {outputPrefix: SOURCE, stripAnsi: false},
       expect.any(Function),
     )
 
+    // app_logs[1]
+    expect(stdout.write).toHaveBeenCalledWith(`❌ Function failed to execute with error: ${FUNCTION_ERROR}`)
+    expect(stdout.write).toHaveBeenCalledWith(LOGS)
+    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: SOURCE, stripAnsi: false},
+      expect.any(Function),
+    )
+
+    // app_logs[2]
+    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenCalledWith(LOGS)
+    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: SOURCE, stripAnsi: false},
+      expect.any(Function),
+    )
+
+    // app_logs[3]
     expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
 
     expect(vi.getTimerCount()).toEqual(1)

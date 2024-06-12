@@ -27,7 +27,7 @@ describe('writeAppLogsToFile', () => {
     stdout = {write: vi.fn()}
   })
 
-  test('calls writeLog with the right data', async () => {
+  test('calls writeLog with the right data with log_type === undefined', async () => {
     // Given
     const logData = expectedLogDataFromAppEvent(APP_LOG)
 
@@ -41,6 +41,26 @@ describe('writeAppLogsToFile', () => {
     // Then
     expect(returnedPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
+  })
+
+  test('calls writeLog with the right data with log_type !== undefined', async () => {
+    // Given
+    const appLog = {
+      ...APP_LOG,
+      log_type: 'function_run',
+    }
+    const logData = expectedLogDataFromAppEvent(appLog)
+
+    // determine the fileName and path
+    const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
+    const path = joinPath(API_KEY, fileName)
+
+    // When
+    await writeAppLogsToFile({appLog: appLog, apiKey: API_KEY, stdout})
+
+    // Then
+    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
   })
 
   test('prints and re-throws parsing errors', async () => {
