@@ -22,17 +22,17 @@
           "tabs": [
             {
               "title": "npm",
-              "code": "npm install -g @shopify/cli\n",
+              "code": "npm install -g @shopify/cli@latest\n",
               "language": "bash"
             },
             {
               "title": "yarn",
-              "code": "yarn global add @shopify/cli\n",
+              "code": "yarn global add @shopify/cli@latest\n",
               "language": "bash"
             },
             {
               "title": "pnpm",
-              "code": "pnpm install -g @shopify/cli\n",
+              "code": "pnpm install -g @shopify/cli@latest\n",
               "language": "bash"
             },
             {
@@ -47,7 +47,7 @@
         "type": "Generic",
         "anchorLink": "requirements-themes",
         "title": "Requirements for themes",
-        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.2 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
+        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.5 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
         "codeblock": {
           "title": "Installation requirements for themes",
           "tabs": [
@@ -98,7 +98,7 @@
           "title": "terminal",
           "tabs": [
             {
-              "code": "shopify version\n&gt; Current Shopify CLI version: 3.50.0\n&gt; 💡 Version 3.51.0 available!\n\nnpm install @shopify/cli -g\n",
+              "code": "shopify version\n&gt; Current Shopify CLI version: 3.50.0\n&gt; 💡 Version 3.51.0 available!\n\nnpm install -g @shopify/cli@latest\n",
               "language": "bash"
             }
           ]

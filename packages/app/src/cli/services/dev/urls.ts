@@ -8,7 +8,7 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
-import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
@@ -226,7 +226,7 @@ export async function updateURLs(
   }
 }
 
-export async function getURLs(remoteAppConfig?: SpecsAppConfiguration): Promise<PartnersURLs> {
+export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Promise<PartnersURLs> {
   const result: PartnersURLs = {
     applicationUrl: remoteAppConfig?.application_url ?? '',
     redirectUrlWhitelist: remoteAppConfig?.auth?.redirect_urls ?? [],

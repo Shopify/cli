@@ -30,7 +30,7 @@ import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
-import {SpecsAppConfiguration} from '../models/extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -82,7 +82,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const {configuration} = await loadAppConfiguration(commandOptions)
+  const {configuration} = await loadAppConfiguration({
+    ...commandOptions,
+    userProvidedConfigName: commandOptions.configName,
+  })
   let developerPlatformClient = selectDeveloperPlatformClient({configuration})
   const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
   const {
@@ -243,7 +246,7 @@ async function setupNetworkingOptions(
   graphiqlPort: number,
   frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl'>,
   tunnelClient?: TunnelClient,
-  remoteAppConfig?: SpecsAppConfiguration,
+  remoteAppConfig?: AppConfigurationUsedByCli,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
@@ -315,6 +318,7 @@ async function launchDevProcesses({
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
     developerPlatformClient,
+    extensions: config.localApp.allExtensions,
   }
 
   return renderDev({

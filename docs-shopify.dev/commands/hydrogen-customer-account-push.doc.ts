@@ -2,7 +2,7 @@
 import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
-  name: 'hydrogen customer-account push',
+  name: 'hydrogen customer-account-push',
   description: `Push project configuration to admin`,
   overviewPreviewDescription: `Push project configuration to admin`,
   type: 'command',
@@ -11,18 +11,18 @@ const data: ReferenceEntityTemplateSchema = {
     codeblock: {
       tabs: [
         {
-          title: 'hydrogen customer-account push',
+          title: 'hydrogen customer-account-push',
           code: './examples/hydrogen-customer-account-push.example.sh',
           language: 'bash',
         },
       ],
-      title: 'hydrogen customer-account push',
+      title: 'hydrogen customer-account-push',
     },
   },
   definitions: [
   {
     title: 'Flags',
-    description: 'The following flags are available for the `hydrogen customer-account push` command:',
+    description: 'The following flags are available for the `hydrogen customer-account-push` command:',
     type: 'hydrogencustomeraccountpush',
   },
   ],

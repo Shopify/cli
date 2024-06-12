@@ -10,6 +10,7 @@ import {
 import {Organization, OrganizationStore} from '../models/organization.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
+import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -92,7 +93,7 @@ describe('selectApp', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(APP2.apiKey)
 
     // When
-    const got = await selectAppPrompt(testDeveloperPlatformClient(), apps, true, ORG1.id)
+    const got = await selectAppPrompt(searchForAppsByNameFactory(testDeveloperPlatformClient(), ORG1.id), apps, true)
 
     // Then
     expect(got).toEqual(APP2)
@@ -116,7 +117,7 @@ describe('selectApp', () => {
     const apps = [APP1, APP2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(APP2.apiKey)
 
-    const got = await selectAppPrompt(testDeveloperPlatformClient(), apps, true, ORG1.id, {
+    const got = await selectAppPrompt(searchForAppsByNameFactory(testDeveloperPlatformClient(), ORG1.id), apps, true, {
       directory: '/',
     })
 

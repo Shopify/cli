@@ -1,19 +1,19 @@
 import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
 import {generateExtensionTemplate} from './generate/extension.js'
-import {loadApp, loadAppConfiguration} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import {
   testAppWithConfig,
   testDeveloperPlatformClient,
   testFunctionExtension,
-  testLocalExtensionTemplates,
-  testRemoteExtensionTemplates,
-  testThemeExtensions,
   testOrganizationApp,
+  testRemoteExtensionTemplates,
+  testUIExtension,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
-import {EmptyApp} from '../models/app/app.js'
+import * as developerPlatformClient from '../utilities/developer-platform-client.js'
+import {PartnersClient} from '../utilities/developer-platform-client/partners-client.js'
 import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -37,7 +37,10 @@ vi.mock('../services/context.js')
 vi.mock('./local-storage.js')
 
 beforeEach(() => {
-  vi.mocked(loadAppConfiguration).mockResolvedValue(new EmptyApp([]))
+  // Never bother loading the app just to get a platform client
+  vi.spyOn(developerPlatformClient, 'sniffServiceOptionsAndAppConfigToSelectPlatformClient').mockResolvedValue(
+    new PartnersClient(),
+  )
 })
 
 afterEach(() => {
@@ -112,8 +115,7 @@ describe('generate', () => {
   })
 
   test('throws error if trying to generate a non existing type', async () => {
-    // Given
-    await mockSuccessfulCommandExecution('unknown_type')
+    await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
     const got = generate({
@@ -129,14 +131,14 @@ describe('generate', () => {
 
   test('throws error if trying to generate a extension over the registration limit', async () => {
     // Given
-    const themeExtension = await testThemeExtensions()
-    await mockSuccessfulCommandExecution('theme_app_extension', [themeExtension])
+    const productSubscriptionExtension = await testUIExtension({type: 'product_subscription'})
+    await mockSuccessfulCommandExecution('subscription_ui', [productSubscriptionExtension])
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
-      template: 'theme_app_extension',
+      template: 'subscription_ui',
       developerPlatformClient: testDeveloperPlatformClient(),
     })
 
@@ -163,13 +165,13 @@ describe('generate', () => {
 
   test('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('subscription_ui')
+    await mockSuccessfulCommandExecution('cart_checkout_validation')
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
-      template: 'subscription_ui',
+      template: 'cart_checkout_validation',
       flavor: 'unknown',
       developerPlatformClient: testDeveloperPlatformClient(),
     })
@@ -191,23 +193,25 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     config: {path: joinPath(appRoot, 'shopify.app.toml')},
   })
 
-  const allExtensionTemplates = testRemoteExtensionTemplates.concat(testLocalExtensionTemplates)
+  const allExtensionTemplates = testRemoteExtensionTemplates
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
+  if (!extensionTemplate) {
+    const availableTemplates = allExtensionTemplates.map((spec) => spec.identifier).join(', ')
+    throw new Error(`Unknown extension template: ${identifier} (available: ${availableTemplates})`)
+  }
 
   vi.mocked(loadApp).mockResolvedValue(app)
   vi.mocked(ensureGenerateContext).mockResolvedValue(testOrganizationApp({developerPlatformClient, apiKey: 'api-key'}))
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
     extensionTemplate,
-    extensionContent: [
-      {
-        index: 0,
-        name: identifier,
-        flavor: 'vanilla-js',
-      },
-    ],
+    extensionContent: {
+      name: identifier,
+      flavor: 'vanilla-js',
+    },
   })
-  vi.mocked(generateExtensionTemplate).mockResolvedValue([
-    {directory: joinPath('extensions', 'name'), extensionTemplate},
-  ])
+  vi.mocked(generateExtensionTemplate).mockResolvedValue({
+    directory: joinPath('extensions', 'name'),
+    extensionTemplate,
+  })
   return mockAndCaptureOutput()
 }

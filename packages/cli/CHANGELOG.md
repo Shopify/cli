@@ -1,5 +1,27 @@
 # @shopify/cli
 
+## 3.61.0
+
+### Minor Changes
+
+- 95d534387: Rename unreleased default_placement_reference extension property to default_placement.
+- d85e7adb4: Include hydrogen commands in the bundle
+
+### Patch Changes
+
+- Updated dependencies [caa015042]
+- Updated dependencies [79a951f3c]
+- Updated dependencies [79a951f3c]
+- Updated dependencies [87a6cc590]
+- Updated dependencies [0c117d0f4]
+- Updated dependencies [009a43078]
+- Updated dependencies [b2b041f56]
+  - @shopify/app@3.61.0
+  - @shopify/cli-kit@3.61.0
+  - @shopify/plugin-cloudflare@3.61.0
+  - @shopify/plugin-did-you-mean@3.61.0
+  - @shopify/theme@3.61.0
+
 ## 3.60.0
 
 ### Minor Changes

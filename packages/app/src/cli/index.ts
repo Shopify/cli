@@ -7,6 +7,7 @@ import DraftExtensionsPush from './commands/app/draft-extensions/push.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import FunctionBuild from './commands/app/function/build.js'
+import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
@@ -38,6 +39,7 @@ export const commands = {
   'app:env:show': EnvShow,
   'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
+  'app:function:replay': FunctionReplay,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
   'app:function:typegen': FunctionTypegen,

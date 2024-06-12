@@ -1,6 +1,6 @@
-import {Dev} from './Dev.js'
+import {calculatePrefixColumnSize, Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
-import {testDeveloperPlatformClient} from '../../../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -28,6 +28,7 @@ const testApp = {
   developmentStorePreviewEnabled: false,
   apiKey: '123',
   developerPlatformClient,
+  extensions: [],
 }
 
 const developerPreview = {
@@ -92,9 +93,9 @@ describe('Dev', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "00:00:00 │ backend  │ first backend message
-      00:00:00 │ backend  │ second backend message
-      00:00:00 │ backend  │ third backend message
+      "00:00:00 │  backend │ first backend message
+      00:00:00 │  backend │ second backend message
+      00:00:00 │  backend │ third backend message
       00:00:00 │ frontend │ first frontend message
       00:00:00 │ frontend │ second frontend message
       00:00:00 │ frontend │ third frontend message
@@ -173,9 +174,9 @@ describe('Dev', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "00:00:00 │ backend  │ first backend message
-      00:00:00 │ backend  │ second backend message
-      00:00:00 │ backend  │ third backend message
+      "00:00:00 │  backend │ first backend message
+      00:00:00 │  backend │ second backend message
+      00:00:00 │  backend │ third backend message
       00:00:00 │ frontend │ first frontend message
       00:00:00 │ frontend │ second frontend message
       00:00:00 │ frontend │ third frontend message
@@ -946,5 +947,27 @@ describe('Dev', () => {
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
+  })
+})
+
+describe('calculatePrefixColumnSize', () => {
+  test('returns max size of processes and extensions', async () => {
+    // Given
+    const processes = [
+      {prefix: '1', action: async () => {}},
+      {prefix: '12', action: async () => {}},
+      {prefix: '123', action: async () => {}},
+    ]
+    const extensions = [
+      await testUIExtension({configuration: {name: 'Extension 1', handle: '1234', type: 'ui_extension'}}),
+      await testUIExtension({configuration: {name: 'Extension 2', handle: '12345', type: 'ui_extension'}}),
+      await testUIExtension({configuration: {name: 'Extension 3', handle: '123456', type: 'ui_extension'}}),
+    ]
+
+    // When
+    const result = calculatePrefixColumnSize(processes, extensions)
+
+    // Then
+    expect(result).toBe(6)
   })
 })

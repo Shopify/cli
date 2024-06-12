@@ -14,43 +14,54 @@ const __dirname = path.dirname(__filename);
 const appVersion = JSON.parse(fs.readFileSync(`${__dirname}/../packages/cli/package.json`)).version;
 const apiKey = '9e1e6889176fd0c795d5c659225e0fae';
 
+const packageName = process.argv[2];
+if (!packageName) {
+  console.log('Please provide a package name to upload sourcemaps for.');
+  process.exit(1);
+}
+
 (async () => {
   try {
-    const packageFolders = glob.sync(`${__dirname}/../packages/*`, {onlyDirectories: true})
+    // only upload sourcemaps for published packages
+    const sourceDirectory = path.join(__dirname, '..', 'packages', packageName);
 
-    // Process each package, and upload to Bugsnag as `@shopify/package-name/dist/file.js`
-    for (const sourceDirectory of packageFolders) {
-      const packageName = path.basename(sourceDirectory);
+    console.log(`Preparing @shopify/${packageName}`);
 
-      console.log(`Preparing @shopify/${packageName}`);
+    await new Promise((resolve, reject) => {
+      tmp.dir({unsafeCleanup: true}, async (err, temporaryDirectory) => {
+        if (err) {
+          reject(err);
+        }
+        try {
+          const temporaryShopifyPackage = await fsPromise.mkdir(path.join(temporaryDirectory, '@shopify'), { recursive: true});
+          const temporaryPackageCopy = await fsPromise.mkdir(path.join(temporaryShopifyPackage, `${packageName}`), { recursive: true });
 
-      await new Promise((resolve, reject) => {
-        tmp.dir({unsafeCleanup: true}, async (err, temporaryDirectory) => {
-          if (err) {
-            reject(err);
-          }
-          try {
-            const temporaryShopifyPackage = await fsPromise.mkdir(path.join(temporaryDirectory, '@shopify'), { recursive: true});
-            const temporaryPackageCopy = await fsPromise.mkdir(path.join(temporaryShopifyPackage, `${packageName}`), { recursive: true });
+          console.log('Copying to temporary directory');
+          fs.cpSync(sourceDirectory, temporaryPackageCopy, {recursive: true});
 
-            console.log('Copying to temporary directory');
-            fs.cpSync(sourceDirectory, temporaryPackageCopy, {recursive: true});
+          console.log('Uploading to Bugsnag');
+          process.chdir(temporaryDirectory);
+          await node.uploadMultiple({
+            apiKey,
+            appVersion,
+            overwrite: true,
+            directory: '.',
+          });
 
-            console.log('Uploading to Bugsnag');
-            process.chdir(temporaryDirectory);
-            await node.uploadMultiple({
-              apiKey,
-              appVersion,
-              overwrite: true,
-              directory: '.',
-            });
-
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        });
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
       });
+    });
+
+    console.log(`Cleaning sourcemaps from @shopify/${packageName}`);
+
+    const packageDist = path.join(sourceDirectory, 'dist');
+    const sourcemaps = glob.sync(`${packageDist}/**/*.map`, {onlyFiles: true});
+
+    for (const sourcemap of sourcemaps) {
+      fs.rmSync(sourcemap);
     }
 
     await reportBuild({apiKey, appVersion}, {})

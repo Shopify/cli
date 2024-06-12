@@ -1,4 +1,5 @@
 import spec from './app_config_app_access.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('app_config_app_access', () => {
@@ -11,6 +12,7 @@ describe('app_config_app_access', () => {
         },
         access_scopes: {
           scopes: 'read_products,write_products',
+          optional_scopes: ['read_customers'],
           use_legacy_install_flow: true,
         },
         auth: {
@@ -20,7 +22,7 @@ describe('app_config_app_access', () => {
       const appAccessSpec = spec
 
       // When
-      const result = appAccessSpec.transform!(object)
+      const result = appAccessSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toMatchObject({
@@ -28,6 +30,7 @@ describe('app_config_app_access', () => {
           admin: {direct_api_mode: 'online'},
         },
         scopes: 'read_products,write_products',
+        optional_scopes: ['read_customers'],
         use_legacy_install_flow: true,
         redirect_url_allowlist: ['https://example.com/auth/callback'],
       })
@@ -42,13 +45,14 @@ describe('app_config_app_access', () => {
           admin: {direct_api_mode: 'offline'},
         },
         scopes: 'read_products,write_products',
+        optional_scopes: ['read_customers'],
         use_legacy_install_flow: true,
         redirect_url_allowlist: ['https://example.com/auth/callback'],
       }
       const appAccessSpec = spec
 
       // When
-      const result = appAccessSpec.reverseTransform!(object)
+      const result = appAccessSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -57,6 +61,7 @@ describe('app_config_app_access', () => {
         },
         access_scopes: {
           scopes: 'read_products,write_products',
+          optional_scopes: ['read_customers'],
           use_legacy_install_flow: true,
         },
         auth: {

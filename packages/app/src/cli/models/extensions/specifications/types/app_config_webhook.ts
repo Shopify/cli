@@ -2,8 +2,8 @@ export interface WebhookSubscription {
   uri: string
   topics?: string[]
   compliance_topics?: string[]
-  sub_topic?: string
   include_fields?: string[]
+  filter?: string
 }
 
 interface PrivacyComplianceConfig {
@@ -16,8 +16,4 @@ export interface WebhooksConfig {
   api_version: string
   privacy_compliance?: PrivacyComplianceConfig
   subscriptions?: WebhookSubscription[]
-}
-
-export type NormalizedWebhookSubscription = Omit<WebhookSubscription, 'topics'> & {
-  topic: string
 }

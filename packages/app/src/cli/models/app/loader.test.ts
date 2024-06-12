@@ -5,8 +5,9 @@ import {
   loadDotEnv,
   parseConfigurationObject,
   parseHumanReadableError,
-  loadAppConfiguration,
   checkFolderIsValidApp,
+  AppLoaderMode,
+  getAppConfigurationState,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -18,6 +19,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -44,6 +46,11 @@ describe('load', () => {
   let specifications: ExtensionSpecification[] = []
 
   let tmpDir: string
+
+  function loadTestingApp(extras?: {remoteFlags?: Flag[]; mode?: AppLoaderMode}) {
+    return loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined, ...extras})
+  }
+
   const appConfiguration = `
 scopes = "read_products"
 `
@@ -73,7 +80,7 @@ automatically_update_urls_on_dev = true
 
   afterEach(async () => {
     if (tmpDir) {
-      await rmdir(tmpDir)
+      await rmdir(tmpDir, {force: true})
     }
   })
 
@@ -150,7 +157,9 @@ automatically_update_urls_on_dev = true
       await rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(loadApp({directory: tmp, specifications})).rejects.toThrow(`Couldn't find directory ${tmp}`)
+      await expect(loadApp({directory: tmp, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
+        `Couldn't find directory ${tmp}`,
+      )
     })
   })
 
@@ -159,7 +168,7 @@ automatically_update_urls_on_dev = true
     const currentDir = cwd()
 
     // When/Then
-    await expect(loadApp({directory: currentDir, specifications})).rejects.toThrow(
+    await expect(loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
       `Couldn't find an app toml file at ${currentDir}`,
     )
   })
@@ -172,7 +181,7 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     // When/Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when the configuration is valid and has no blocks', async () => {
@@ -180,7 +189,7 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -200,7 +209,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When/Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when the configuration file has invalid nested elements but the schema isnt generated from the specifications', async () => {
@@ -217,7 +226,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications: []})
+    const app = await loadApp({directory: tmpDir, specifications: [], userProvidedConfigName: undefined})
 
     // Then
     expect(app.name).toBe('my_app')
@@ -228,7 +237,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.packageManager).toBe('npm')
@@ -241,7 +250,7 @@ wrong = "property"
     await writeFile(yarnLockPath, '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.packageManager).toBe('yarn')
@@ -254,7 +263,7 @@ wrong = "property"
     await writeFile(pnpmLockPath, '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.packageManager).toBe('pnpm')
@@ -265,7 +274,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(false)
@@ -281,7 +290,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -300,7 +309,7 @@ wrong = "property"
     })
 
     // When
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
@@ -333,7 +342,7 @@ wrong = "property"
     })
 
     // When
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     // Then
     expect(mockOutput.warn()).toBe('')
@@ -347,7 +356,7 @@ wrong = "property"
     await writeFile(pnpmWorkspaceFilePath, '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -363,7 +372,7 @@ wrong = "property"
     })
 
     // When
-    let app = await loadApp({directory: tmpDir, specifications})
+    let app = await loadTestingApp()
     const web = app.webs[0]!
     // Force npm to symlink the workspace directory
     await writeFile(
@@ -374,7 +383,7 @@ wrong = "property"
       directory: app.directory,
       packageManager: 'npm',
     })
-    app = await loadApp({directory: tmpDir, specifications})
+    app = await loadTestingApp()
 
     // Then
     expect(app.usesWorkspaces).toBe(true)
@@ -386,7 +395,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -408,7 +417,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Validation errors in/)
+    await expect(loadTestingApp()).rejects.toThrow(/Validation errors in/)
   })
 
   test('throws an error if the extension type is invalid', async () => {
@@ -431,7 +440,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type "invalid_type"/)
+    await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type "invalid_type"/)
   })
 
   test('throws if 2 or more extensions have the same handle', async () => {
@@ -461,7 +470,52 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Duplicated handle/)
+    await expect(loadTestingApp()).rejects.toThrow(/Duplicated handle/)
+  })
+
+  test('throws an error if the app has more than one print action with the same target', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "ui_extension"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.print-action.render"
+
+      [[extensions]]
+      type = "ui_extension"
+      handle = "handle-2"
+      name = "my_extension_2"
+      description = "custom description"
+
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.print-action.render"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+
+    // Create a temporary ActionExtension.js file
+    const extensionDirectory = joinPath(tmpDir, 'extensions', 'my_extension_1', 'src')
+    await mkdir(extensionDirectory)
+
+    const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+    await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+    // When
+    await expect(loadTestingApp()).rejects.toThrow(
+      `A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target admin.product-details.print-action.render:\n  · handle-1\n  · handle-2`,
+    )
   })
 
   test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
@@ -486,9 +540,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-      /Missing handle for extension "my_extension"/,
-    )
+    await expect(loadTestingApp()).rejects.toThrow(/Missing handle for extension "my_extension"/)
   })
 
   test('throws an error if the extension configuration is missing both extensions and type', async () => {
@@ -510,7 +562,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type/)
+    await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type/)
   })
 
   test('loads the app with web blocks', async () => {
@@ -519,7 +571,7 @@ wrong = "property"
     await moveFile(webDirectory, joinPath(tmpDir, 'we_check_everywhere'))
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -535,7 +587,7 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'backend'})
 
     // Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('throws an error if there are multiple frontends', async () => {
@@ -547,7 +599,7 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'frontend'})
 
     // Then
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app with custom located web blocks', async () => {
@@ -559,7 +611,7 @@ wrong = "property"
     await moveFile(webDirectory, joinPath(tmpDir, 'must_be_here'))
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.webs.length).toBe(1)
@@ -574,7 +626,7 @@ wrong = "property"
     await moveFile(webDirectory, joinPath(tmpDir, 'cannot_be_here'))
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.webs.length).toBe(0)
@@ -598,7 +650,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
@@ -624,7 +676,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
@@ -653,7 +705,7 @@ wrong = "property"
     await writeFile(joinPath(customExtensionDirectory, 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
@@ -675,7 +727,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: blockDir, specifications})
+    const app = await loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})
 
     // Then
     expect(app.name).toBe('my_app')
@@ -708,7 +760,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my_extension_2'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
@@ -756,7 +808,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
@@ -795,7 +847,7 @@ wrong = "property"
     )
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).resolves.not.toBeUndefined()
+    await expect(loadTestingApp()).resolves.not.toBeUndefined()
   })
 
   test(`throws an error if the extension doesn't have a source file`, async () => {
@@ -811,7 +863,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: blockDir, specifications})).rejects.toThrow(
+    await expect(loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
       /Couldn't find an index.{js,jsx,ts,tsx} file in the directories/,
     )
   })
@@ -828,7 +880,7 @@ wrong = "property"
     })
 
     // When
-    await expect(() => loadApp({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
   test("throws an error if the configuration file doesn't exist", async () => {
@@ -836,7 +888,7 @@ wrong = "property"
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
   })
 
   test('throws an error if the function configuration file is invalid', async () => {
@@ -850,7 +902,7 @@ wrong = "property"
     })
 
     // When
-    await expect(() => loadApp({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
   test('throws an error if the function has a type non included in the specs', async () => {
@@ -866,7 +918,7 @@ wrong = "property"
     })
 
     // When
-    await expect(() => loadApp({directory: tmpDir, specifications})).rejects.toThrowError()
+    await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
   test('loads the app when it has a function with a valid configuration', async () => {
@@ -890,7 +942,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-function'), 'src', 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
     const myFunction = app.allExtensions[0]!
 
     // Then
@@ -926,7 +978,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -989,7 +1041,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1062,7 +1114,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1141,7 +1193,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1212,7 +1264,7 @@ wrong = "property"
     await writeFile(tempFilePath, '/* ActionExtension.js content */')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1318,7 +1370,7 @@ wrong = "property"
     )
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1423,7 +1475,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-checkout-post-purchase'), 'index.js'), '/** content **/')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1473,7 +1525,7 @@ wrong = "property"
     await writeFile(tempFilePath, `/** content **/`)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1515,7 +1567,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1574,7 +1626,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1645,7 +1697,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1733,7 +1785,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-checkout-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1797,7 +1849,7 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-product-subscription'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(1)
@@ -1834,7 +1886,7 @@ wrong = "property"
     await writeConfig(linkedAppConfigurationWithPosConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(5)
@@ -1863,6 +1915,73 @@ wrong = "property"
         application_url: 'https://example.com/lala',
         embedded: true,
       }),
+    ])
+  })
+
+  test('loads the app with webhook subscription extensions created individually', async () => {
+    // Given
+    const appConfigurationWithWebhooks = `
+    name = "for-testing-webhooks"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [build]
+    include_config_on_deploy = true
+
+    [webhooks]
+    api_version = "2024-01"
+
+    [[webhooks.subscriptions]]
+      topics = ["orders/create", "orders/delete"]
+      uri = "https://example.com"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+    `
+    await writeConfig(appConfigurationWithWebhooks)
+
+    // When
+    const app = await loadTestingApp({remoteFlags: [Flag.DeclarativeWebhooks]})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(6)
+    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(extensionsConfig).toEqual([
+      {
+        name: 'for-testing-webhooks',
+      },
+      {
+        auth: {
+          redirect_urls: ['https://example.com/api/auth'],
+        },
+      },
+      // this is the webhooks extension
+      {
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {topics: ['orders/create'], uri: 'https://example.com'},
+            {topics: ['orders/delete'], uri: 'https://example.com'},
+          ],
+        },
+      },
+      {
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      },
+      // this is a webhook subscription extension
+      {
+        api_version: '2024-01',
+        topic: 'orders/create',
+        uri: 'https://example.com',
+      },
+      // this is a webhook subscription extension
+      {
+        api_version: '2024-01',
+        topic: 'orders/delete',
+        uri: 'https://example.com',
+      },
     ])
   })
 
@@ -1898,7 +2017,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
@@ -1931,7 +2050,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
@@ -1954,7 +2073,7 @@ wrong = "property"
     })
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.allExtensions[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
@@ -1964,7 +2083,7 @@ wrong = "property"
     const {webDirectory} = await writeConfig(appConfiguration)
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
@@ -1982,7 +2101,7 @@ wrong = "property"
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
@@ -1998,10 +2117,10 @@ wrong = "property"
     vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
     // When
-    const result = loadApp({directory: tmpDir, specifications, configName: 'non-existent'})
+    const result = loadApp({directory: tmpDir, specifications, userProvidedConfigName: 'non-existent'})
 
     // Then
-    await expect(result).rejects.toThrow(`Couldn't find shopify.app.non-existent.toml in ${tmpDir}.`)
+    await expect(result).rejects.toThrow()
     expect(use).not.toHaveBeenCalled()
   })
 
@@ -2025,7 +2144,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2051,7 +2170,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2077,7 +2196,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   test('loads the app when access.admin.embedded_app_direct_api_access = true', async () => {
@@ -2100,7 +2219,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2126,7 +2245,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications})
+    const app = await loadTestingApp()
 
     // Then
     expect(app.name).toBe('my_app')
@@ -2152,189 +2271,7 @@ wrong = "property"
     await writeConfig(config)
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
-  })
-
-  test('loads the app when using dynamically specified config sections with remapping', async () => {
-    // Given
-    const config = `
-    name = "my_app"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [build]
-    include_config_on_deploy = true
-
-    [bar]
-    this_is_unknown = true
-
-    [baz]
-    and_so_is_this = 123
-
-    [xyz]
-    this_isnt_remapped = false
-    `
-    await writeConfig(config)
-
-    // When
-    const app = await loadApp(
-      {
-        directory: tmpDir,
-        specifications,
-      },
-      {
-        SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
-        ...process.env,
-      },
-    )
-    expect((app.configuration as any).foo).toEqual({
-      bar: {
-        this_is_unknown: true,
-      },
-      baz: {
-        and_so_is_this: 123,
-      },
-    })
-
-    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
-      'app_access',
-      'app_home',
-      'branding',
-      'foo',
-      'webhooks',
-      'xyz',
-    ])
-
-    const fooExtension = app.allExtensions.filter((ext) => ext.handle === 'foo')
-    expect(fooExtension.length).toBe(1)
-    expect(fooExtension[0]?.configuration).toEqual({
-      foo: {
-        bar: {
-          this_is_unknown: true,
-        },
-        baz: {
-          and_so_is_this: 123,
-        },
-      },
-    })
-
-    const xyzExtension = app.allExtensions.filter((ext) => ext.handle === 'xyz')
-    expect(xyzExtension.length).toBe(1)
-    expect(xyzExtension[0]?.configuration).toEqual({
-      xyz: {
-        this_isnt_remapped: false,
-      },
-    })
-  })
-
-  test('loads the app when using dynamically specified config sections without remapping', async () => {
-    // Given
-    const config = `
-    name = "my_app"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [build]
-    include_config_on_deploy = true
-
-    [bar]
-    this_is_unknown = true
-
-    [baz]
-    and_so_is_this = 123
-
-    [xyz]
-    this_isnt_remapped = false
-    `
-    await writeConfig(config)
-
-    // When
-    const app = await loadApp(
-      {
-        directory: tmpDir,
-        specifications,
-      },
-      {
-        SHOPIFY_CLI_DYNAMIC_CONFIG: '1',
-        ...process.env,
-      },
-    )
-
-    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
-      'app_access',
-      'app_home',
-      'bar',
-      'baz',
-      'branding',
-      'webhooks',
-      'xyz',
-    ])
-  })
-
-  test('loads the app when using dynamically specified config sections, and only interested in app config', async () => {
-    const config = `
-    name = "my_app"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [build]
-    include_config_on_deploy = true
-
-    [bar]
-    this_is_unknown = true
-
-    [baz]
-    and_so_is_this = 123
-
-    [xyz]
-    this_isnt_remapped = false
-    `
-    await writeConfig(config)
-
-    const appConfig = await loadAppConfiguration(
-      {
-        directory: tmpDir,
-        specifications,
-      },
-      {
-        SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
-        ...process.env,
-      },
-    )
-
-    expect((appConfig.configuration as any).foo).toEqual({
-      bar: {
-        this_is_unknown: true,
-      },
-      baz: {
-        and_so_is_this: 123,
-      },
-    })
-
-    expect((appConfig.configuration as any).xyz).toEqual({
-      this_isnt_remapped: false,
-    })
+    await expect(loadTestingApp()).rejects.toThrow()
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
@@ -2348,7 +2285,7 @@ wrong = "property"
       vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
       // When
-      await loadApp({directory: tmpDir, specifications})
+      await loadTestingApp()
 
       // Then
       expect(use).toHaveBeenCalledWith({
@@ -2373,7 +2310,7 @@ wrong = "property"
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await loadApp({directory: tmpDir, specifications})
+    await loadTestingApp()
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
@@ -2383,8 +2320,28 @@ wrong = "property"
       cmd_app_all_configs_any: true,
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
-      cmd_app_linked_config_git_tracked: true,
+      cmd_app_linked_config_git_tracked: false,
       cmd_app_linked_config_source: 'cached',
+      cmd_app_warning_api_key_deprecation_displayed: false,
+      app_extensions_any: false,
+      app_extensions_breakdown: {},
+      app_extensions_count: 0,
+      app_extensions_custom_layout: false,
+      app_extensions_function_any: false,
+      app_extensions_function_count: 0,
+      app_extensions_theme_any: false,
+      app_extensions_theme_count: 0,
+      app_extensions_ui_any: false,
+      app_extensions_ui_count: 0,
+      app_name_hash: expect.any(String),
+      app_path_hash: expect.any(String),
+      app_scopes: '[]',
+      app_web_backend_any: true,
+      app_web_backend_count: 1,
+      app_web_custom_layout: false,
+      app_web_framework: 'unknown',
+      app_web_frontend_any: false,
+      app_web_frontend_count: 0,
     })
   })
 })
@@ -2536,7 +2493,7 @@ describe('parseConfigurationObject', () => {
     const {path, ...toParse} = configurationObject
     await parseConfigurationObject(schema, 'tmp', toParse, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', errorObject)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if fields are missing in a legacy schema TOML file', async () => {
@@ -2559,7 +2516,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', errorObject)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if fields are missing in a frontend config web TOML file', async () => {
@@ -2608,7 +2565,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', expect.anything())
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 })
 
@@ -2624,14 +2581,13 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('removes trailing slashes on uri', async () => {
@@ -2652,14 +2608,13 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('accepts an https uri', async () => {
@@ -2719,9 +2674,39 @@ describe('WebhooksSchema', () => {
       ],
     }
 
+    const expandedWebhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/update'],
+        },
+        {
+          uri: 'https://example.com',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'https://example.com',
+          topics: ['products/update'],
+        },
+        {
+          uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/update'],
+        },
+      ],
+    }
+
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
@@ -2734,47 +2719,32 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if we have duplicate subscriptions in different topics array', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
         {uri: 'https://example.com', topics: ['products/create']},
+        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
-
-  test('allows unique topics in both same topic array and different subscriptions', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
-        {uri: 'https://example.com2', topics: ['products/create', 'products/update']},
-        {uri: 'https://example.com', topics: ['products/delete']},
-      ],
-    }
-
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('removes trailing forward slash', async () => {
@@ -2805,14 +2775,13 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: "URI isn't correct URI format of https://, pubsub://{project}:topic or Eventbridge ARN",
+      code: zod.ZodIssueCode.custom,
+      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('accepts a pub sub config with both project and topic', async () => {
@@ -2847,13 +2816,13 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if we have duplicate pub sub subscriptions', async () => {
@@ -2872,13 +2841,13 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if we have duplicate arn subscriptions', async () => {
@@ -2897,55 +2866,55 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
       path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('does not allow identical topic and uri and sub_topic in different subscriptions', async () => {
+  test('does not allow identical topic and uri and filter in different subscriptions', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
+          topics: ['products/update'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
+          filter: 'title:shoes',
         },
         {
-          topics: ['metaobjects/create'],
+          topics: ['products/update'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
+          filter: 'title:shoes',
         },
       ],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'metaobjects/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/update'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('allows identical topic and uri if sub_topic is different', async () => {
+  test('allows identical topic and uri if filter is different', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
         {
-          topics: ['metaobjects/create'],
+          topics: ['products/update'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_one',
+          filter: 'title:shoes',
         },
         {
-          topics: ['products/create'],
+          topics: ['products/update'],
           uri: 'https://example.com',
-          sub_topic: 'type:metaobject_two',
+          filter: 'title:shirts',
         },
       ],
     }
@@ -2975,7 +2944,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if neither topics nor compliance_topics are added', async () => {
@@ -2994,7 +2963,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error when there are duplicated compliance topics', async () => {
@@ -3019,7 +2988,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
@@ -3033,4 +3002,57 @@ describe('WebhooksSchema', () => {
     const parsedConfiguration = await parseConfigurationObject(WebhooksSchema, 'tmp', toParse, abortOrReport)
     return {abortOrReport, expectedFormatted, parsedConfiguration}
   }
+})
+
+describe('getAppConfigurationState', () => {
+  test.each([
+    [
+      `scopes = "  write_xyz,     write_abc    "`,
+      {
+        state: 'template-only',
+        configSource: 'cached',
+        configurationFileName: 'shopify.app.toml',
+        appDirectory: expect.any(String),
+        configurationPath: expect.stringMatching(/shopify.app.toml$/),
+        startingOptions: {
+          path: expect.stringMatching(/shopify.app.toml$/),
+          scopes: 'write_abc,write_xyz',
+        },
+      },
+    ],
+    [
+      `client_id="abcdef"`,
+      {
+        state: 'connected-app',
+      },
+    ],
+    [
+      ``,
+      {
+        state: 'template-only',
+      },
+    ],
+    [
+      `client_id="abcdef"
+      something_extra="keep"`,
+      {
+        state: 'connected-app',
+        basicConfiguration: {
+          path: expect.stringMatching(/shopify.app.toml$/),
+          client_id: 'abcdef',
+          something_extra: 'keep',
+        },
+      },
+    ],
+  ])('loads from %s', async (content, resultShouldContain) => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const appConfigPath = joinPath(tmpDir, 'shopify.app.toml')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await writeFile(appConfigPath, content)
+      await writeFile(packageJsonPath, '{}')
+
+      const state = await getAppConfigurationState(tmpDir, undefined)
+      expect(state).toMatchObject(resultShouldContain)
+    })
+  })
 })

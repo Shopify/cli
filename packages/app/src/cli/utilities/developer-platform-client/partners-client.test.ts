@@ -78,12 +78,15 @@ describe('createApp', () => {
       title: LOCAL_APP.name,
       appUrl: 'https://shopify.dev/apps/default-app-home',
       redir: ['https://shopify.dev/apps/default-app-home/api/auth'],
-      requestedAccessScopes: [],
+      requestedAccessScopes: ['write_products'],
       type: 'undecided',
     }
 
     // When
-    const got = await partnersClient.createApp(ORG1, LOCAL_APP.name, {isLaunchable: false})
+    const got = await partnersClient.createApp(ORG1, LOCAL_APP.name, {
+      isLaunchable: false,
+      scopesArray: ['write_products'],
+    })
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})

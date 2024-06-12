@@ -54,7 +54,9 @@ async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputM
       allExtensions: extensionsInfo,
     }
     if ('realExtensions' in appWithSupportedExtensions) {
-      appWithSupportedExtensions.realExtensions = withPurgedSchemas(appWithSupportedExtensions.realExtensions)
+      appWithSupportedExtensions.realExtensions = withPurgedSchemas(
+        appWithSupportedExtensions.realExtensions,
+      ) as ExtensionInstance[]
     }
     if ('specifications' in appWithSupportedExtensions) {
       appWithSupportedExtensions = {
@@ -79,15 +81,18 @@ async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputM
   }
 }
 
-function objectWithoutSchema<T extends {schema?: unknown}>(obj: T): Omit<T, 'schema'> {
-  const {schema, ...rest} = obj
-  return rest
+function objectWithoutSchema(obj: object): object {
+  if ('schema' in obj) {
+    const {schema, ...rest} = obj
+    return rest
+  }
+  return obj
 }
 
-function withPurgedSchemas<T extends {specification?: {schema?: unknown}}>(extensions: T[]): T[] {
+function withPurgedSchemas(extensions: object[]): object[] {
   return extensions.map((ext) => {
-    if ('specification' in ext) {
-      const specification = ext.specification!
+    if ('specification' in ext && ext.specification) {
+      const specification = ext.specification
       const specificationWithoutSchema = objectWithoutSchema(specification)
       return {...ext, specification: specificationWithoutSchema}
     } else {

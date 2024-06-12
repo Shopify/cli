@@ -2,7 +2,7 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -102,7 +102,12 @@ describe('ui_extension', async () => {
       }
 
       // When
-      const got = specification.schema.parse(configuration)
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
 
       // Then
       expect(got.extension_points).toStrictEqual([
@@ -115,7 +120,7 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('targeting object accepts a default_placement_reference', async () => {
+    test('targeting object accepts a default_placement', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
@@ -123,7 +128,7 @@ describe('ui_extension', async () => {
           {
             target: 'EXTENSION::POINT::A',
             module: './src/ExtensionPointA.js',
-            default_placement_reference: 'PLACEMENT_REFERENCE1',
+            default_placement: 'PLACEMENT_REFERENCE1',
           },
         ],
         api_version: '2023-01' as const,
@@ -143,7 +148,12 @@ describe('ui_extension', async () => {
       }
 
       // When
-      const got = specification.schema.parse(configuration)
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
 
       // Then
       expect(got.extension_points).toStrictEqual([
@@ -179,15 +189,15 @@ describe('ui_extension', async () => {
       }
 
       // When/Then
-      expect(() => specification.schema.parse(configuration)).toThrowError(
-        new zod.ZodError([
-          {
-            code: zod.ZodIssueCode.custom,
-            message: 'No extension targets defined, add a `targeting` field to your configuration',
-            path: [],
-          },
-        ]),
-      )
+      const parsed = specification.parseConfigurationObject(configuration)
+      expect(parsed.state).toBe('error')
+      expect(parsed.errors).toEqual([
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'No extension targets defined, add a `targeting` field to your configuration',
+          path: [],
+        },
+      ])
     })
 
     test('returns err(message) when extensionPoints[n].module does not map to a file', async () => {
@@ -275,6 +285,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         // Then

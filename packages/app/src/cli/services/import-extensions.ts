@@ -66,8 +66,12 @@ export async function importExtensions(options: ImportOptions) {
   renderSuccessMessages(generatedExtensions)
   await updateAppIdentifiers({
     app: options.app,
-    identifiers: {extensions: extensionUuids, app: remoteApp.apiKey},
+    identifiers: {
+      extensions: extensionUuids,
+      app: remoteApp.apiKey,
+    },
     command: 'deploy',
+    developerPlatformClient,
   })
 }
 

@@ -20,13 +20,10 @@ export interface ManualMatchResult {
  * @param remote - The remote sources to match
  * @returns The result of the manual matching
  */
-export async function manualMatchIds(
-  options: {
-    local: LocalSource[]
-    remote: RemoteSource[]
-  },
-  remoteIdField: 'id' | 'uuid',
-): Promise<ManualMatchResult> {
+export async function manualMatchIds(options: {
+  local: LocalSource[]
+  remote: RemoteSource[]
+}): Promise<ManualMatchResult> {
   const identifiers: {[key: string]: string} = {}
   let pendingRemote = options.remote
   let pendingLocal = options.local
@@ -37,11 +34,11 @@ export async function manualMatchIds(
     )
     if (remoteSourcesOfSameType.length === 0) continue
     // eslint-disable-next-line no-await-in-loop
-    const selected = await selectRemoteSourcePrompt(currentLocal, remoteSourcesOfSameType, remoteIdField)
+    const selected = await selectRemoteSourcePrompt(currentLocal, remoteSourcesOfSameType)
     if (!selected) continue
 
-    identifiers[currentLocal.localIdentifier] = selected[remoteIdField]
-    pendingRemote = pendingRemote.filter((remote) => remote[remoteIdField] !== selected[remoteIdField])
+    identifiers[currentLocal.localIdentifier] = selected.uuid
+    pendingRemote = pendingRemote.filter((remote) => remote.uuid !== selected.uuid)
     pendingLocal = pendingLocal.filter((local) => local.localIdentifier !== currentLocal.localIdentifier)
   }
 

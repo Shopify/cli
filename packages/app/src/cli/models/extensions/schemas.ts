@@ -31,7 +31,7 @@ const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
   metafields: zod.array(MetafieldSchema).optional(),
-  default_placement_reference: zod.string().optional(),
+  default_placement: zod.string().optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
@@ -65,6 +65,7 @@ export const BaseSchema = zod.object({
   name: zod.string(),
   type: zod.string(),
   handle: HandleSchema.optional(),
+  uid: zod.string().optional(),
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),

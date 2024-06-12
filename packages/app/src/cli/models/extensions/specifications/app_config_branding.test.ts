@@ -1,4 +1,5 @@
 import spec from './app_config_branding.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('branding', () => {
@@ -12,7 +13,7 @@ describe('branding', () => {
       const appConfigSpec = spec
 
       // When
-      const result = appConfigSpec.transform!(object)
+      const result = appConfigSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toMatchObject({
@@ -32,7 +33,7 @@ describe('branding', () => {
       const appConfigSpec = spec
 
       // When
-      const result = appConfigSpec.reverseTransform!(object)
+      const result = appConfigSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({

@@ -8,6 +8,7 @@ import {
   ensureExtensionDirectoryExists,
   ensureLocalExtensionFlavorExists,
 } from '../extensions/common.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -21,12 +22,14 @@ import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppInterface
   cloneUrl?: string
-  extensionChoices: GenerateExtensionContentOutput[]
+  extensionChoices: GenerateExtensionContentOutput
   extensionTemplate: ExtensionTemplate
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export type ExtensionFlavorValue =
@@ -67,30 +70,31 @@ interface ExtensionInitOptions {
   type: string
   name: string
   extensionFlavor: ExtensionFlavor | undefined
+  uid: string | undefined
 }
 
 export async function generateExtensionTemplate(
   options: GenerateExtensionTemplateOptions,
-): Promise<GeneratedExtension[]> {
-  return Promise.all(
-    options.extensionTemplate.types.flatMap(async (spec, index) => {
-      const extensionName: string = options.extensionChoices[index]!.name
-      const extensionFlavorValue = options.extensionChoices[index]?.flavor
-      const extensionFlavor = spec.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
-      const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
-      const url = options.cloneUrl || spec.url
-      const initOptions: ExtensionInitOptions = {
-        directory,
-        url,
-        app: options.app,
-        type: spec.type,
-        name: extensionName,
-        extensionFlavor,
-      }
-      await extensionInit(initOptions)
-      return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
-    }),
+): Promise<GeneratedExtension> {
+  const extensionName: string = options.extensionChoices.name
+  const extensionFlavorValue = options.extensionChoices.flavor
+  const extensionFlavor = options.extensionTemplate.supportedFlavors.find(
+    (flavor) => flavor.value === extensionFlavorValue,
   )
+  const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
+  const url = options.cloneUrl || options.extensionTemplate.url
+  const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
+  const initOptions: ExtensionInitOptions = {
+    directory,
+    url,
+    app: options.app,
+    type: options.extensionTemplate.type,
+    name: extensionName,
+    extensionFlavor,
+    uid,
+  }
+  await extensionInit(initOptions)
+  return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
 }
 
 async function extensionInit(options: ExtensionInitOptions) {
@@ -112,10 +116,10 @@ async function extensionInit(options: ExtensionInitOptions) {
   }
 }
 
-async function themeExtensionInit({directory, url, type, name, extensionFlavor}: ExtensionInitOptions) {
+async function themeExtensionInit({directory, url, type, name, extensionFlavor, uid}: ExtensionInitOptions) {
   return inTemporaryDirectory(async (tmpDir) => {
     const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type})
+    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type, uid})
   })
 }
 

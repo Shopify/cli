@@ -135,7 +135,6 @@ describe('versions-list', () => {
               status: 'active',
               createdAt: '2021-01-01',
               createdBy: {displayName: 'createdBy'},
-              distributionPercentage: 100,
             },
             {
               message: 'message 2',
@@ -143,7 +142,6 @@ describe('versions-list', () => {
               status: 'released',
               createdAt: '2021-01-01',
               createdBy: {displayName: 'createdBy 2'},
-              distributionPercentage: 0,
             },
             {
               message: 'long message with more than 15 characters',
@@ -151,7 +149,6 @@ describe('versions-list', () => {
               status: 'released',
               createdAt: '2021-01-01',
               createdBy: {displayName: 'createdBy 3'},
-              distributionPercentage: 0,
             },
           ],
           pageInfo: {totalResults: 31},
@@ -200,7 +197,6 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
               status: 'active',
               createdAt: '2021-01-01',
               createdBy: {displayName: 'createdBy'},
-              distributionPercentage: 100,
             },
             {
               message: 'long message with more than 15 characters',
@@ -208,7 +204,6 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
               status: 'released',
               createdAt: '2021-01-01',
               createdBy: {displayName: 'createdBy 3'},
-              distributionPercentage: 0,
             },
           ],
           pageInfo: {totalResults: 31},
@@ -237,16 +232,14 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
           \\"versionTag\\": \\"versionTag\\",
           \\"status\\": \\"active\\",
           \\"createdAt\\": \\"2021-01-01 00:00:00\\",
-          \\"createdBy\\": \\"createdBy\\",
-          \\"distributionPercentage\\": 100
+          \\"createdBy\\": \\"createdBy\\"
         },
         {
           \\"message\\": \\"long message with more than 15 characters\\",
           \\"versionTag\\": \\"versionTag 3\\",
           \\"status\\": \\"released\\",
           \\"createdAt\\": \\"2021-01-01 00:00:00\\",
-          \\"createdBy\\": \\"createdBy 3\\",
-          \\"distributionPercentage\\": 0
+          \\"createdBy\\": \\"createdBy 3\\"
         }
       ]"
     `)

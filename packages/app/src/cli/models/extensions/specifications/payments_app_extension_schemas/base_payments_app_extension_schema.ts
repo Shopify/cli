@@ -12,6 +12,7 @@ export interface BasePaymentsAppExtensionDeployConfigType {
   merchant_label: string
   supported_countries: string[]
   supported_payment_methods: string[]
+  supported_buyer_contexts?: {currency: string; countries?: [string, ...string[]]}[]
   test_mode_available: boolean
   supports_oversell_protection?: boolean
 }
@@ -59,4 +60,15 @@ export const MultipleCaptureSchema = zod.object({
 export const ConfirmationSchema = zod.object({
   confirmation_callback_url: zod.string().url().optional(),
   supports_3ds: zod.boolean(),
+})
+
+export const SupportedBuyerContextsSchema = zod.object({
+  supported_buyer_contexts: zod
+    .array(
+      zod.object({
+        currency: zod.string(),
+        countries: zod.array(zod.string()).nonempty().optional(),
+      }),
+    )
+    .optional(),
 })

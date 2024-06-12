@@ -21,13 +21,13 @@ interface GenerateSchemaOptions {
   developerPlatformClient?: DeveloperPlatformClient
 }
 
-export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, app} = options
+export async function ensureConnectedAppFunctionContext(
+  options: Pick<GenerateSchemaOptions, 'developerPlatformClient' | 'app' | 'apiKey'>,
+): Promise<{apiKey: string; developerPlatformClient: DeveloperPlatformClient}> {
+  const {app} = options
   const developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  const {api_version: version, type, targeting} = extension.configuration
-  let apiKey = options.apiKey || getAppIdentifiers({app}).app
-  const stdout = options.stdout
+  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
 
   if (!apiKey) {
     if (!isTerminalInteractive()) {
@@ -37,9 +37,16 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app)).apiKey
+    apiKey = (await fetchOrCreateOrganizationApp(app.creationDefaultOptions())).apiKey
   }
+  return {apiKey, developerPlatformClient}
+}
 
+export async function generateSchemaService(options: GenerateSchemaOptions) {
+  const {extension, stdout} = options
+  const {apiKey, developerPlatformClient} = await ensureConnectedAppFunctionContext(options)
+
+  const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
   const definition = await (usingTargets
     ? generateSchemaFromTarget({

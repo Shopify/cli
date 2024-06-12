@@ -1,27 +1,36 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
+import {
+  App,
+  AppConfiguration,
+  AppConfigurationSchema,
+  AppConfigurationWithoutPath,
+  AppInterface,
+  CurrentAppConfiguration,
+  LegacyAppConfiguration,
+  WebType,
+  getAppVersionedSchema,
+} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
-import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
-import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {ActiveAppVersion, CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {
+  ActiveAppVersion,
+  AppVersionIdentifiers,
+  AssetUrlSchema,
+  CreateAppOptions,
+  DeveloperPlatformClient,
+} from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrlSchema,
-  GenerateSignedUploadUrlVariables,
-} from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
+import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
@@ -30,7 +39,7 @@ import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/g
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
-import {AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -46,6 +55,9 @@ import {
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
+import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
+import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
+import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -74,7 +86,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 
   const newApp = new App({
     name: app.name ?? 'App',
-    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     directory: app.directory ?? '/tmp/project',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
@@ -92,9 +103,10 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
     errors: app.errors,
-    specifications: app.specifications,
-    configSchema: app.configSchema,
-    remoteFlags: app.remoteFlags,
+    specifications: app.specifications ?? [],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
+    remoteFlags: app.remoteFlags ?? [],
   })
 
   if (app.updateDependencies) {
@@ -111,7 +123,10 @@ interface TestAppWithConfigOptions {
   config: object
 }
 
-export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+export function testAppWithLegacyConfig({
+  app = {},
+  config = {},
+}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
     path: '',
     scopes: '',
@@ -119,17 +134,17 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
     extension_directories: [],
     ...config,
   }
-  return testApp({...app, configuration})
+  return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
   const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app
+  return app as AppInterface<CurrentAppConfiguration>
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -163,6 +178,8 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   }
   return {...defaultApp, ...app}
 }
+
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {
@@ -201,6 +218,7 @@ export async function testUIExtension(
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+  extension.uid = uiExtension?.uid ?? 'test-ui-extension-uid'
 
   return extension
 }
@@ -247,6 +265,32 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   return extension
 }
 
+export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        access: {
+          admin: {direct_api_mode: 'online'},
+        },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      } as unknown as BaseConfigType)
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: 'shopify.app.toml',
+    directory: './',
+    specification: appAccessSpec,
+  })
+
+  return extension
+}
+
 export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'Payment Extension Name',
@@ -283,6 +327,7 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
     ? ({} as unknown as BaseConfigType)
     : ({
         webhooks: {
+          api_version: '2024-01',
           subscriptions: [
             {
               topics: ['orders/delete'],
@@ -326,6 +371,33 @@ export async function testWebhookExtensions({emptyConfig = false, complianceTopi
   })
 
   return complianceTopics ? [webhooksExtension, privacyExtension] : webhooksExtension
+}
+
+export async function testSingleWebhookSubscriptionExtension({
+  emptyConfig = false,
+  topic = 'orders/delete',
+  config = {
+    topic,
+    api_version: '2024-01',
+    uri: 'https://my-app.com/webhooks',
+  },
+}: {
+  emptyConfig?: boolean
+  topic?: string
+  config?: object
+} = {}): Promise<ExtensionInstance> {
+  // configuration should be a single webhook subscription because of how
+  // we create the extension instances in loader
+  const configuration = emptyConfig ? ({} as unknown as BaseConfigType) : (config as unknown as BaseConfigType)
+
+  const webhooksExtension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification: appWebhookSubscriptionSpec,
+  })
+
+  return webhooksExtension
 }
 
 export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
@@ -436,11 +508,15 @@ export async function testEditorExtensionCollection({
   )
   const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'editor_extension_collection')!
-  const configuration = specification.schema.parse({
+  const parsed = specification.parseConfigurationObject({
     ...passedConfig,
     type: 'editor_extension_collection',
     metafields: [],
   })
+  if (parsed.state !== 'ok') {
+    throw new Error('Failed to parse configuration')
+  }
+  const configuration = parsed.data
 
   return new ExtensionInstance({
     configuration,
@@ -616,7 +692,202 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       registrationLimit: 100,
     },
   },
+  {
+    name: 'Flow Action',
+    externalName: 'Flow Action',
+    identifier: 'flow_action',
+    externalIdentifier: 'flow_action',
+    gated: true,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 100,
+    },
+  },
+  {
+    name: 'Flow Template',
+    externalName: 'Flow Template',
+    externalIdentifier: 'flow_template',
+    identifier: 'flow_template',
+    gated: true,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 300,
+    },
+  },
+  {
+    name: 'Flow Trigger',
+    externalName: 'Flow Trigger',
+    externalIdentifier: 'flow_trigger',
+    identifier: 'flow_trigger',
+    gated: true,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 100,
+    },
+  },
+  {
+    name: 'POS UI Extension',
+    externalName: 'POS UI',
+    externalIdentifier: 'pos_ui',
+    identifier: 'pos_ui_extension',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 50,
+    },
+  },
+  {
+    name: 'Web Pixel Extension',
+    externalName: 'Web Pixel',
+    externalIdentifier: 'web_pixel',
+    identifier: 'web_pixel_extension',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Branding',
+    externalName: 'Branding',
+    externalIdentifier: 'branding',
+    identifier: 'branding',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'App access',
+    externalName: 'App access',
+    externalIdentifier: 'app_access',
+    identifier: 'app_access',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Webhooks',
+    externalName: 'Webhooks',
+    externalIdentifier: 'webhooks',
+    identifier: 'webhooks',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Privacy Compliance Webhooks',
+    externalName: 'Privacy Compliance Webhooks',
+    externalIdentifier: 'privacy_compliance_webhooks',
+    identifier: 'privacy_compliance_webhooks',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'App Proxy',
+    externalName: 'App Proxy',
+    externalIdentifier: 'app_proxy',
+    identifier: 'app_proxy',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Point Of Sale Configuration',
+    externalName: 'Point Of Sale Configuration',
+    externalIdentifier: 'point_of_sale',
+    identifier: 'point_of_sale',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'App Home',
+    externalName: 'App Home',
+    externalIdentifier: 'app_home',
+    identifier: 'app_home',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
 ]
+
+export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
+  identifier: 'subscription_ui',
+  name: 'Subscription UI',
+  defaultName: 'subscription-ui',
+  group: 'Admin',
+  supportLinks: [],
+  url: 'https://github.com/Shopify/cli',
+  type: 'product_subscription',
+  extensionPoints: [],
+  supportedFlavors: [
+    {
+      name: 'JavaScript React',
+      value: 'react',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'JavaScript',
+      value: 'vanilla-js',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'TypeScript React',
+      value: 'typescript-react',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+    {
+      name: 'TypeScript',
+      value: 'typescript',
+      path: 'templates/ui-extensions/projects/product_subscription',
+    },
+  ],
+}
+
+const themeAppExtensionTemplate: ExtensionTemplate = {
+  identifier: 'theme_app_extension',
+  name: 'Theme app extension',
+  defaultName: 'theme-extension',
+  group: 'Online store',
+  supportLinks: [],
+  url: 'https://github.com/Shopify/cli',
+  type: 'theme',
+  extensionPoints: [],
+  supportedFlavors: [
+    {
+      name: 'Liquid',
+      value: 'liquid',
+      path: 'templates/theme-extension',
+    },
+  ],
+}
 
 export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
@@ -625,18 +896,14 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'cart-checkout-validation',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'checkout/rust/cart-checkout-validation/default',
-          },
-        ],
+        name: 'Rust',
+        value: 'rust',
+        path: 'checkout/rust/cart-checkout-validation/default',
       },
     ],
   },
@@ -646,23 +913,19 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'cart-transformer',
     group: 'Discounts and checkout',
     supportLinks: [],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'checkout/wasm/cart-transform/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'checkout/rust/cart-transform/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'checkout/wasm/cart-transform/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'checkout/rust/cart-transform/default',
       },
     ],
   },
@@ -672,23 +935,19 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'product-discounts',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/apps/discounts'],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'discounts/wasm/product-discounts/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'discounts/rust/product-discounts/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'discounts/wasm/product-discounts/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'discounts/rust/product-discounts/default',
       },
     ],
   },
@@ -698,37 +957,29 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
     defaultName: 'order-discounts',
     group: 'Discounts and checkout',
     supportLinks: [],
-    types: [
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
       {
-        type: 'function',
-        url: 'https://github.com/Shopify/function-examples',
-        extensionPoints: [],
-        supportedFlavors: [
-          {
-            name: 'Wasm',
-            value: 'wasm',
-            path: 'discounts/wasm/order-discounts/default',
-          },
-          {
-            name: 'Rust',
-            value: 'rust',
-            path: 'discounts/rust/order-discounts/default',
-          },
-          {
-            name: 'JavaScript',
-            value: 'vanilla-js',
-            path: 'discounts/javascript/order-discounts/default',
-          },
-        ],
+        name: 'Wasm',
+        value: 'wasm',
+        path: 'discounts/wasm/order-discounts/default',
+      },
+      {
+        name: 'Rust',
+        value: 'rust',
+        path: 'discounts/rust/order-discounts/default',
+      },
+      {
+        name: 'JavaScript',
+        value: 'vanilla-js',
+        path: 'discounts/javascript/order-discounts/default',
       },
     ],
   },
-]
-
-export const testLocalExtensionTemplates: ExtensionTemplate[] = [
-  themeExtension,
-  productSubscriptionUIExtension,
-  webPixelUIExtension,
+  productSubscriptionUIExtensionTemplate,
+  themeAppExtensionTemplate,
 ]
 
 export const testPartnersUserSession: PartnersSession = {
@@ -850,14 +1101,12 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
-const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
-  appVersionGenerateSignedUploadUrl: {
-    signedUploadUrl: 'signed-upload-url',
-    userErrors: [],
-  },
+const generateSignedUploadUrlResponse: AssetUrlSchema = {
+  assetUrl: 'signed-upload-url',
+  userErrors: [],
 }
 
-const convertedToTestStoreResponse = {
+const convertedToTransferDisabledStoreResponse = {
   convertDevToTestStore: {
     convertedToTestStore: true,
     userErrors: [],
@@ -934,8 +1183,16 @@ const migrateToUiExtensionResponse: MigrateToUiExtensionSchema = {
   },
 }
 
+const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
+  appLogsSubscribe: {
+    success: true,
+    jwtToken: 'jwttoken',
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
-  const clientStub = {
+  const clientStub: DeveloperPlatformClient = {
+    clientName: 'test',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
@@ -945,8 +1202,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
-    specifications: (_appId: string) => Promise.resolve(testRemoteSpecifications),
-    templateSpecifications: (_appId: string) => Promise.resolve(testRemoteExtensionTemplates),
+    specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
+    templateSpecifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
@@ -954,7 +1211,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
-    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
@@ -962,10 +1219,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
-    release: (_input: AppReleaseVariables) => Promise.resolve(releaseResponse),
-    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
-      Promise.resolve(generateSignedUploadUrlResponse),
-    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
+    release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
+    generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
+      Promise.resolve(convertedToTransferDisabledStoreResponse),
     updateDeveloperPreview: (_input: DevelopmentStorePreviewUpdateInput) =>
       Promise.resolve(updateDeveloperPreviewResponse),
     appPreviewMode: (_input: FindAppPreviewModeVariables) => Promise.resolve(appPreviewModeResponse),
@@ -980,14 +1237,15 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
+    subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
     ...stubs,
   }
-  const retVal: Partial<DeveloperPlatformClient> = {}
+  const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
-      retVal[key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments'>] = vi
-        .fn()
-        .mockImplementation(value)
+      retVal[
+        key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName'>
+      ] = vi.fn().mockImplementation(value)
     }
   }
   return retVal as DeveloperPlatformClient
@@ -1010,5 +1268,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
 }

@@ -2,7 +2,7 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -29,7 +29,12 @@ describe('editor_extension_collection', async () => {
       metafields: [],
     }
 
-    const config = specification.schema.parse(configuration)
+    const parsed = specification.parseConfigurationObject(configuration)
+    if (parsed.state !== 'ok') {
+      throw new Error("Couldn't parse configuration")
+    }
+
+    const config = parsed.data
 
     return new ExtensionInstance({
       configuration: config,
@@ -67,6 +72,7 @@ describe('editor_extension_collection', async () => {
         const deployConfig = await extensionCollection.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         expect(deployConfig).toStrictEqual({
@@ -102,6 +108,7 @@ describe('editor_extension_collection', async () => {
         const deployConfig = await extensionCollection.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         expect(deployConfig).toStrictEqual({
@@ -133,6 +140,7 @@ describe('editor_extension_collection', async () => {
         const deployConfig = await extensionCollection.deployConfig({
           apiKey: 'apiKey',
           developerPlatformClient,
+          appConfiguration: placeholderAppConfiguration,
         })
 
         expect(deployConfig).toStrictEqual({

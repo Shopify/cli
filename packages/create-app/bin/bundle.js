@@ -1,4 +1,3 @@
-import cleanBundledDependencies from '../../../bin/bundling/clean-bundled-dependencies.js'
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import {build as esBuild} from 'esbuild'
 import glob from 'fast-glob'
@@ -18,6 +17,7 @@ esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
+  sourcemap: true,
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
@@ -36,5 +36,3 @@ esBuild({
     }),
   ],
 })
-
-cleanBundledDependencies(external)

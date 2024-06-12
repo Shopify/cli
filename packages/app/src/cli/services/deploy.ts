@@ -97,7 +97,9 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const appModules = await Promise.all(
-              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, developerPlatformClient, apiKey})),
+              app.allExtensions.flatMap((ext) =>
+                ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
+              ),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
@@ -118,7 +120,7 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
             }
 
-            app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+            app = await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
           },
         },
       ]
@@ -137,7 +139,7 @@ export async function deploy(options: DeployOptions) {
        * If deployment fails when uploading we want the identifiers to be persisted
        * for the next run.
        */
-      await updateAppIdentifiers({app, identifiers, command: 'deploy'})
+      await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
       throw error
     }
   })

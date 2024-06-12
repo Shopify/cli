@@ -4,6 +4,7 @@ import {
   customOnsitePaymentsAppExtensionDeployConfig,
   MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './custom_onsite_payments_app_extension_schema.js'
+import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -20,6 +21,11 @@ const config: CustomOnsitePaymentsAppExtensionConfigType = {
   merchant_label: 'some-label',
   supported_countries: ['CA'],
   supported_payment_methods: ['visa'],
+  supported_buyer_contexts: [
+    {currency: 'USD'},
+    {currency: 'CAD', countries: ['CA']},
+    {currency: 'EUR', countries: ['DE', 'FR']},
+  ],
   supports_oversell_protection: true,
   supports_3ds: true,
   supports_installments: true,
@@ -94,38 +100,7 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
     expect(() =>
       CustomOnsitePaymentsAppExtensionSchema.parse({
         ...config,
-        checkout_payment_method_fields: [
-          {
-            key: 'key1',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key2',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key3',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key4',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key5',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key6',
-            type: 'string',
-            required: true,
-          },
-        ],
+        checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
     ).toThrowError(
       new zod.ZodError([
@@ -164,6 +139,7 @@ describe('customOnsitePaymentsAppExtensionDeployConfig', () => {
       supports_deferred_payments: config.supports_deferred_payments,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
+      supported_buyer_contexts: config.supported_buyer_contexts,
       test_mode_available: config.test_mode_available,
       multiple_capture: config.multiple_capture,
       default_buyer_label: config.buyer_label,

@@ -4,6 +4,7 @@ import {
   creditCardPaymentsAppExtensionDeployConfig,
   MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './credit_card_payments_app_extension_schema.js'
+import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -19,6 +20,11 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   merchant_label: 'some-label',
   supported_countries: ['CA'],
   supported_payment_methods: ['PAYMENT_METHOD'],
+  supported_buyer_contexts: [
+    {currency: 'USD'},
+    {currency: 'CAD', countries: ['CA']},
+    {currency: 'EUR', countries: ['DE', 'FR']},
+  ],
   supports_3ds: false,
   test_mode_available: true,
   supports_deferred_payments: false,
@@ -87,6 +93,49 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
     )
   })
 
+  test('returns an error if encryption certificate fingerprint is blank', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        encryption_certificate_fingerprint: '',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_small,
+          minimum: 1,
+          type: 'string',
+          inclusive: true,
+          exact: false,
+          message: "Encryption certificate fingerprint can't be blank",
+          path: ['encryption_certificate_fingerprint'],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if encryption certificate fingerprint is not present', async () => {
+    // When/Then
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {encryption_certificate_fingerprint, ...rest} = config
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...rest,
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'string',
+          received: 'undefined',
+          path: ['encryption_certificate_fingerprint'],
+          message: 'Required',
+        },
+      ]),
+    )
+  })
+
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
     // When/Then
     expect(() =>
@@ -111,38 +160,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
     expect(() =>
       CreditCardPaymentsAppExtensionSchema.parse({
         ...config,
-        checkout_payment_method_fields: [
-          {
-            key: 'key1',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key2',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key3',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key4',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key5',
-            type: 'string',
-            required: true,
-          },
-          {
-            key: 'key6',
-            type: 'string',
-            required: true,
-          },
-        ],
+        checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
     ).toThrowError(
       new zod.ZodError([
@@ -178,6 +196,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       multiple_capture: config.multiple_capture,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
+      supported_buyer_contexts: config.supported_buyer_contexts,
       test_mode_available: config.test_mode_available,
       supports_3ds: config.supports_3ds,
       supports_deferred_payments: config.supports_deferred_payments,

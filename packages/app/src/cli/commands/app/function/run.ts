@@ -4,6 +4,10 @@ import {appFlags} from '../../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+
+const DEFAULT_FUNCTION_EXPORT = '_start'
 
 export default class FunctionRun extends Command {
   static summary = 'Run a function locally for testing.'
@@ -24,8 +28,7 @@ export default class FunctionRun extends Command {
     export: Flags.string({
       char: 'e',
       hidden: false,
-      description: 'Name of the wasm export to invoke.',
-      default: '_start',
+      description: 'Name of the WebAssembly export to invoke.',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
     json: Flags.boolean({
@@ -40,12 +43,45 @@ export default class FunctionRun extends Command {
     const {flags} = await this.parse(FunctionRun)
     await inFunctionContext({
       path: flags.path,
-      configName: flags.config,
+      userProvidedConfigName: flags.config,
       callback: async (_app, ourFunction) => {
+        let functionExport = DEFAULT_FUNCTION_EXPORT
+
+        if (flags.export !== undefined) {
+          outputDebug(`Using export ${flags.export} from the --export flag.`)
+          functionExport = flags.export
+        } else if (
+          ourFunction.configuration.targeting !== undefined &&
+          ourFunction.configuration.targeting.length > 0
+        ) {
+          const targeting = ourFunction.configuration.targeting
+
+          if (targeting.length > 1 && isTTY({})) {
+            const targets = targeting.map((target) => ({
+              label: target.target,
+              value: target.export || DEFAULT_FUNCTION_EXPORT,
+            }))
+
+            functionExport = await renderAutocompletePrompt({
+              message: `Which target would you like to execute?`,
+              choices: targets,
+            })
+          } else {
+            functionExport = targeting?.[0]?.export || DEFAULT_FUNCTION_EXPORT
+            outputDebug(
+              `Using export '${functionExport}'. Use the --export flag or an interactive terminal to select a different export.`,
+            )
+          }
+        } else {
+          outputDebug(
+            `No targeting information found. Using the default export '${functionExport}'. Use the --export flag or an interactive terminal to select a different export.`,
+          )
+        }
+
         await runFunctionRunner(ourFunction, {
           json: flags.json,
           input: flags.input,
-          export: flags.export,
+          export: functionExport,
         })
       },
     })

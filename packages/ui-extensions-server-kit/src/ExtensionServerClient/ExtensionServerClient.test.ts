@@ -10,12 +10,15 @@ const defaultOptions = {
 describe('ExtensionServerClient', () => {
   let socket: WS
 
-  function setup(options: ExtensionServer.Options = defaultOptions) {
+  async function setup(options: ExtensionServer.Options = defaultOptions) {
     if (!options.connection.url) {
       throw new Error('Please set a URL')
     }
     socket = new WS(options.connection.url, {jsonProtocol: true})
     const client = new ExtensionServerClient(options)
+    if (options.connection.automaticConnect !== false) {
+      await socket.connected
+    }
 
     return {socket, client, options}
   }
@@ -26,7 +29,7 @@ describe('ExtensionServerClient', () => {
 
   describe('initialization', () => {
     test('connects to the target websocket', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
 
       expect(client.connection).toBeDefined()
       expect(socket.server.clients()).toHaveLength(1)
@@ -35,7 +38,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('does not connect to the target websocket if "automaticConnect" is false', async () => {
-      const {client, socket} = setup({
+      const {client, socket} = await setup({
         connection: {automaticConnect: false, url: 'ws://example-host.com:8000/extensions/'},
       })
 
@@ -48,7 +51,7 @@ describe('ExtensionServerClient', () => {
 
   describe('on()', () => {
     test('sends data with extensions filtered by surface option on "connected" event', async () => {
-      const {socket, client} = setup({...defaultOptions, surface: 'admin'})
+      const {socket, client} = await setup({...defaultOptions, surface: 'admin'})
       const connectSpy = vi.fn()
       const data = {
         app: mockApp(),
@@ -76,7 +79,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with all extensions when surface option is not valid on "connected" event', async () => {
-      const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
+      const {socket, client} = await setup({...defaultOptions, surface: 'abc' as any})
       const connectSpy = vi.fn()
       const data = {
         app: mockApp(),
@@ -100,7 +103,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with translatable props as-is for UI extensions when locales option is not provided on "connected" event', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const connectSpy = vi.fn()
       const localization: Localization = {
         defaultLocale: 'en',
@@ -146,7 +149,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with translated props for UI extensions when locales option is provided on "connected" event', async () => {
-      const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
+      const {socket, client} = await setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
       const connectSpy = vi.fn()
       const localization: Localization = {
         defaultLocale: 'en',
@@ -232,7 +235,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with extensions filtered by surface option on "update" event', async () => {
-      const {socket, client} = setup({...defaultOptions, surface: 'admin'})
+      const {socket, client} = await setup({...defaultOptions, surface: 'admin'})
       const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
@@ -260,7 +263,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with all extensions when surface option is not valid on "update" event', async () => {
-      const {socket, client} = setup({...defaultOptions, surface: 'abc' as any})
+      const {socket, client} = await setup({...defaultOptions, surface: 'abc' as any})
       const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
@@ -284,7 +287,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with translatable props as-is when locales option is not provided on "update" event', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const updateSpy = vi.fn()
       const localization: Localization = {
         defaultLocale: 'en',
@@ -341,7 +344,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with translated props when locales option is provided on "update" event', async () => {
-      const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
+      const {socket, client} = await setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
       const updateSpy = vi.fn()
       const localization: Localization = {
         defaultLocale: 'en',
@@ -425,7 +428,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('sends data with translated props when locales option is provided on subsequent "update" events', async () => {
-      const {socket, client} = setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
+      const {socket, client} = await setup({...defaultOptions, locales: {user: 'ja', shop: 'fr'}})
       const updateSpy = vi.fn()
       const localization: Localization = {
         defaultLocale: 'en',
@@ -510,7 +513,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('listens to persist events', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const updateSpy = vi.fn()
       const data = {
         app: mockApp(),
@@ -526,7 +529,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('unsubscribes from persist events', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const updateSpy = vi.fn()
       const unsubscribe = client.on('update', updateSpy)
 
@@ -544,7 +547,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('listens to dispatch events', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const unfocusSpy = vi.fn()
 
       client.on('unfocus', unfocusSpy)
@@ -559,7 +562,7 @@ describe('ExtensionServerClient', () => {
 
   describe('emit()', () => {
     test('emits an event', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const data = {data: {type: 'unfocus'}, event: 'dispatch'}
 
       client.emit('unfocus')
@@ -571,7 +574,7 @@ describe('ExtensionServerClient', () => {
 
     test('warns if trying to "emit" a persist event', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
 
       client.emit('update' as any, {})
 
@@ -584,7 +587,7 @@ describe('ExtensionServerClient', () => {
 
   describe('persist()', () => {
     test('persists a mutation', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const data = {event: 'update', data: {extensions: [{uuid: '123'}]}}
 
       client.persist('update', {extensions: [{uuid: '123'}]})
@@ -596,7 +599,7 @@ describe('ExtensionServerClient', () => {
 
     test('warns if trying to "persist" a dispatch event', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
 
       client.persist('unfocus' as any, {})
 
@@ -607,7 +610,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('remove translated props from the UI extensions payload when locales are provided in the client options', async () => {
-      const {socket, client} = setup({connection: defaultOptions.connection, locales: {user: 'ja', shop: 'fr'}})
+      const {socket, client} = await setup({connection: defaultOptions.connection, locales: {user: 'ja', shop: 'fr'}})
       const data = {
         event: 'update',
         data: {
@@ -634,7 +637,7 @@ describe('ExtensionServerClient', () => {
     })
 
     test('leave translatable props as-is in the UI extensions payload when locales are not provided in the client options', async () => {
-      const {socket, client} = setup()
+      const {socket, client} = await setup()
       const data = {
         event: 'update',
         data: {

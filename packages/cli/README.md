@@ -24,7 +24,31 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMAND]`](#shopify-help-command)
+* [`shopify hydrogen build`](#shopify-hydrogen-build)
+* [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
+* [`shopify hydrogen codegen`](#shopify-hydrogen-codegen)
+* [`shopify hydrogen customer-account-push`](#shopify-hydrogen-customer-account-push)
+* [`shopify hydrogen debug cpu`](#shopify-hydrogen-debug-cpu)
+* [`shopify hydrogen deploy`](#shopify-hydrogen-deploy)
+* [`shopify hydrogen dev`](#shopify-hydrogen-dev)
+* [`shopify hydrogen env list`](#shopify-hydrogen-env-list)
+* [`shopify hydrogen env pull`](#shopify-hydrogen-env-pull)
+* [`shopify hydrogen env push`](#shopify-hydrogen-env-push)
+* [`shopify hydrogen generate route ROUTENAME`](#shopify-hydrogen-generate-route-routename)
+* [`shopify hydrogen generate routes`](#shopify-hydrogen-generate-routes)
 * [`shopify hydrogen init`](#shopify-hydrogen-init)
+* [`shopify hydrogen link`](#shopify-hydrogen-link)
+* [`shopify hydrogen list`](#shopify-hydrogen-list)
+* [`shopify hydrogen login`](#shopify-hydrogen-login)
+* [`shopify hydrogen logout`](#shopify-hydrogen-logout)
+* [`shopify hydrogen preview`](#shopify-hydrogen-preview)
+* [`shopify hydrogen setup`](#shopify-hydrogen-setup)
+* [`shopify hydrogen setup css [STRATEGY]`](#shopify-hydrogen-setup-css-strategy)
+* [`shopify hydrogen setup markets [STRATEGY]`](#shopify-hydrogen-setup-markets-strategy)
+* [`shopify hydrogen setup vite`](#shopify-hydrogen-setup-vite)
+* [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
+* [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
+* [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins install PLUGIN`](#shopify-plugins-install-plugin)
@@ -68,7 +92,7 @@ FLAGS
       --no-color                        Disable color output.
       --path=<value>                    The path to your app directory.
       --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
-      --verbose                         Increase the verbosity of the logs.
+      --verbose                         Increase the verbosity of the output.
 
 DESCRIPTION
   Build the app, including extensions.
@@ -95,7 +119,7 @@ FLAGS
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Fetch your app configuration from the Partner Dashboard.
@@ -122,7 +146,7 @@ FLAGS
   --no-color      Disable color output.
   --path=<value>  The path to your app directory.
   --reset         Reset current configuration.
-  --verbose       Increase the verbosity of the logs.
+  --verbose       Increase the verbosity of the output.
 
 DESCRIPTION
   Activate an app configuration.
@@ -151,7 +175,7 @@ FLAGS
       --path=<value>                The path to your app directory.
       --reset                       Reset all your settings.
       --source-control-url=<value>  URL associated with the new app version.
-      --verbose                     Increase the verbosity of the logs.
+      --verbose                     Increase the verbosity of the output.
       --version=<value>             Optional version tag that will be associated with this app version. If not provided,
                                     an auto-generated identifier will be generated for this app version.
 
@@ -198,7 +222,7 @@ FLAGS
       --theme-app-extension-port=<value>  Local port of the theme app extension development server.
       --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
                                           "https://my-tunnel-url:port".
-      --verbose                           Increase the verbosity of the logs.
+      --verbose                           Increase the verbosity of the output.
 
 DESCRIPTION
   Run the app.
@@ -254,7 +278,7 @@ FLAGS
       --env-file=<value>  Specify an environment file to update if the update flag is set
       --no-color          Disable color output.
       --path=<value>      The path to your app directory.
-      --verbose           Increase the verbosity of the logs.
+      --verbose           Increase the verbosity of the output.
 
 DESCRIPTION
   Pull app and extensions environment variables.
@@ -277,7 +301,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
       --no-color        Disable color output.
       --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Display app and extensions environment variables.
@@ -297,7 +321,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Compile a function to wasm.
@@ -315,12 +339,12 @@ USAGE
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-  -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
+  -e, --export=<value>  Name of the WebAssembly export to invoke.
   -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
   -j, --json            Log the run result as a JSON object.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Run a function locally for testing.
@@ -344,7 +368,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your function directory.
       --stdout             Output the schema to stdout instead of writing to a file.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -368,7 +392,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
 
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
@@ -398,7 +422,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
       --reset              Reset all your settings.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Generate a new app Extension.
@@ -428,7 +452,7 @@ FLAGS
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Import dashboard-managed extensions into your app.
@@ -447,7 +471,7 @@ FLAGS
       --json            format output as JSON
       --no-color        Disable color output.
       --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
+      --verbose         Increase the verbosity of the output.
       --web-env         Outputs environment variables necessary for running and deploying web/.
 
 DESCRIPTION
@@ -482,7 +506,7 @@ FLAGS
                                   - <remix|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
-      --verbose                   Increase the verbosity of the logs.
+      --verbose                   Increase the verbosity of the output.
 ```
 
 ## `shopify app:release --version <version>`
@@ -500,7 +524,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
       --reset              Reset all your settings.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
       --version=<value>    (required) The name of the app version to release.
 
 DESCRIPTION
@@ -524,7 +548,7 @@ FLAGS
       --json               Output the versions list as JSON.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   List deployed versions of your app.
@@ -729,13 +753,554 @@ DESCRIPTION
   Display help for Shopify CLI
 ```
 
-## `shopify hydrogen init`
+## `shopify hydrogen build`
 
-Create a new hydrogen project
+Builds a Hydrogen storefront for production.
 
 ```
 USAGE
-  $ shopify hydrogen init
+  $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
+    [--entry <value>] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
+
+FLAGS
+  --[no-]bundle-stats            [Classic Remix Compiler] Show a bundle size summary after building. Defaults to true,
+                                 use `--no-bundle-stats` to disable.
+  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
+  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
+                                 this file exists.
+  --disable-route-warning        Disables any warnings about missing standard routes.
+  --entry=<value>                Entry file for the worker. Defaults to `./server`.
+  --[no-]lockfile-check          Checks that there is exactly one valid lockfile in the project. Defaults to `true`.
+                                 Deactivate with `--no-lockfile-check`.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
+                                 `--no-sourcemaps`.
+  --watch                        Watches for changes and rebuilds the project writing output to disk.
+
+DESCRIPTION
+  Builds a Hydrogen storefront for production.
+```
+
+## `shopify hydrogen check RESOURCE`
+
+Returns diagnostic information about a Hydrogen storefront.
+
+```
+USAGE
+  $ shopify hydrogen check RESOURCE [--path <value>]
+
+ARGUMENTS
+  RESOURCE  (routes) The resource to check. Currently only 'routes' is supported.
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  Returns diagnostic information about a Hydrogen storefront.
+```
+
+## `shopify hydrogen codegen`
+
+Generate types for the Storefront API queries found in your project.
+
+```
+USAGE
+  $ shopify hydrogen codegen [--codegen-config-path <value>] [--path <value>] [--watch]
+
+FLAGS
+  --codegen-config-path=<value>  Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it
+                                 exists.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --watch                        Watch the project for changes to update types on file save.
+
+DESCRIPTION
+  Generate types for the Storefront API queries found in your project.
+```
+
+## `shopify hydrogen customer-account-push`
+
+Push project configuration to admin
+
+```
+USAGE
+  $ shopify hydrogen customer-account-push --dev-origin <value> [--path <value>] [--relative-logout-uri <value>]
+    [--relative-redirect-uri <value>] [--storefront-id <value>]
+
+FLAGS
+  --dev-origin=<value>             (required) The development domain of your application.
+  --path=<value>                   The path to the directory of the Hydrogen storefront. Defaults to the current
+                                   directory where the command is run.
+  --relative-logout-uri=<value>    The relative url of allowed url that will be redirected to post-logout for Customer
+                                   Account API OAuth flow. Default to nothing.
+  --relative-redirect-uri=<value>  The relative url of allowed callback url for Customer Account API OAuth flow. Default
+                                   is '/account/authorize'
+  --storefront-id=<value>          The id of the storefront the configuration should be pushed to. Must start with
+                                   'gid://shopify/HydrogenStorefront/'
+
+DESCRIPTION
+  Push project configuration to admin
+```
+
+## `shopify hydrogen debug cpu`
+
+Builds and profiles the server startup time the app.
+
+```
+USAGE
+  $ shopify hydrogen debug cpu [--entry <value>] [--output <value>] [--path <value>]
+
+FLAGS
+  --entry=<value>   Entry file for the worker. Defaults to `./server`.
+  --output=<value>  [default: startup.cpuprofile] Specify a path to generate the profile file. Defaults to
+                    "startup.cpuprofile".
+  --path=<value>    The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                    command is run.
+
+DESCRIPTION
+  Builds and profiles the server startup time the app.
+```
+
+## `shopify hydrogen deploy`
+
+Builds and deploys a Hydrogen storefront to Oxygen.
+
+```
+USAGE
+  $ shopify hydrogen deploy [--auth-bypass-token] [--build-command <value>] [--entry <value>] [--env <value> |
+    --env-branch <value>] [--env-file <value>] [-f] [--json-output] [--lockfile-check] [--metadata-description <value>]
+    [--metadata-user <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>]
+
+FLAGS
+  -f, --force                         Forces a deployment to proceed if there are uncommited changes in its Git
+                                      repository.
+  -s, --shop=<value>                  Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL
+                                      (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
+  -t, --token=<value>                 Oxygen deployment token. Defaults to the linked storefront's token if available.
+      --auth-bypass-token             Generate an authentication bypass token, which can be used to perform end-to-end
+                                      tests against the deployment.
+      --build-command=<value>         Specify a build command to run before deploying. If not specified, `shopify
+                                      hydrogen build` will be used.
+      --entry=<value>                 Entry file for the worker. Defaults to `./server`.
+      --env=<value>                   Specifies the environment to perform the operation using its handle. Fetch the
+                                      handle using the `env list` command.
+      --env-branch=<value>            Specifies the environment to perform the operation using its Git branch name.
+      --env-file=<value>              Path to an environment file to override existing environment variables for the
+                                      deployment.
+      --[no-]json-output              Create a JSON file containing the deployment details in CI environments. Defaults
+                                      to true, use `--no-json-output` to disable.
+      --[no-]lockfile-check           Checks that there is exactly one valid lockfile in the project. Defaults to
+                                      `true`. Deactivate with `--no-lockfile-check`.
+      --metadata-description=<value>  Description of the changes in the deployment. Defaults to the commit message of
+                                      the latest commit if there are no uncommited changes.
+      --metadata-user=<value>         User that initiated the deployment. Will be saved and displayed in the Shopify
+                                      admin
+      --no-verify                     Skip the routability verification step after deployment.
+      --path=<value>                  The path to the directory of the Hydrogen storefront. Defaults to the current
+                                      directory where the command is run.
+      --preview                       Deploys to the Preview environment. Overrides --env-branch and Git metadata.
+
+DESCRIPTION
+  Builds and deploys a Hydrogen storefront to Oxygen.
+```
+
+## `shopify hydrogen dev`
+
+Runs Hydrogen storefront in an Oxygen worker for development.
+
+```
+USAGE
+  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
+    [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
+    [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>] [--sourcemap] [--verbose]
+
+FLAGS
+  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
+  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
+                                 this file exists.
+  --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
+                                 or Chrome DevTools.
+  --disable-deps-optimizer       Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically
+  --disable-version-check        Skip the version check when running `hydrogen dev`
+  --disable-virtual-routes       Disable rendering fallback routes when a route file doesn't exist.
+  --entry=<value>                Entry file for the worker. Defaults to `./server`.
+  --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
+                                 using the `env list` command.
+  --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --host                         Expose the server to the local network
+  --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
+  --legacy-runtime               [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --port=<value>                 The port to run the server on. Defaults to 3000.
+  --[no-]sourcemap               [Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`.
+                                 Deactivate `--no-sourcemaps`.
+  --verbose                      Outputs more information about the command's execution.
+
+DESCRIPTION
+  Runs Hydrogen storefront in an Oxygen worker for development.
+```
+
+## `shopify hydrogen env list`
+
+List the environments on your linked Hydrogen storefront.
+
+```
+USAGE
+  $ shopify hydrogen env list [--path <value>]
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  List the environments on your linked Hydrogen storefront.
+```
+
+## `shopify hydrogen env pull`
+
+Populate your .env with variables from your Hydrogen storefront.
+
+```
+USAGE
+  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [-f] [--path <value>]
+
+FLAGS
+  -f, --force               Overwrites the destination directory and files if they already exist.
+      --env=<value>         Specifies the environment to perform the operation using its handle. Fetch the handle using
+                            the `env list` command.
+      --env-branch=<value>  Specifies the environment to perform the operation using its Git branch name.
+      --path=<value>        The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                            where the command is run.
+
+DESCRIPTION
+  Populate your .env with variables from your Hydrogen storefront.
+```
+
+## `shopify hydrogen env push`
+
+Push environment variables from the local .env file to your linked Hydrogen storefront.
+
+```
+USAGE
+  $ shopify hydrogen env push [--env <value> | ] [--env-file <value>] [--path <value>]
+
+FLAGS
+  --env=<value>       Specifies the environment to perform the operation using its handle. Fetch the handle using the
+                      `env list` command.
+  --env-file=<value>  Path to an environment file to override existing environment variables for the selected
+                      environment. Defaults to the '.env' located in your project path `--path`.
+  --path=<value>      The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                      command is run.
+
+DESCRIPTION
+  Push environment variables from the local .env file to your linked Hydrogen storefront.
+```
+
+## `shopify hydrogen generate route ROUTENAME`
+
+Generates a standard Shopify route.
+
+```
+USAGE
+  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--locale-param <value>] [--path <value>]
+    [--typescript]
+
+ARGUMENTS
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
+             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
+
+FLAGS
+  -f, --force                 Overwrites the destination directory and files if they already exist.
+      --adapter=<value>       Remix adapter used in the route. The default is `@shopify/remix-oxygen`.
+      --locale-param=<value>  The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes
+                              ($locale).
+      --path=<value>          The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                              where the command is run.
+      --typescript            Generate TypeScript files
+
+DESCRIPTION
+  Generates a standard Shopify route.
+```
+
+## `shopify hydrogen generate routes`
+
+Generates all supported standard shopify routes.
+
+```
+USAGE
+  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--locale-param <value>] [--path <value>] [--typescript]
+
+FLAGS
+  -f, --force                 Overwrites the destination directory and files if they already exist.
+      --adapter=<value>       Remix adapter used in the route. The default is `@shopify/remix-oxygen`.
+      --locale-param=<value>  The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes
+                              ($locale).
+      --path=<value>          The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                              where the command is run.
+      --typescript            Generate TypeScript files
+
+DESCRIPTION
+  Generates all supported standard shopify routes.
+```
+
+## `shopify hydrogen init`
+
+Creates a new Hydrogen storefront.
+
+```
+USAGE
+  $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
+    [--path <value>] [--quickstart] [--routes] [--shortcut] [--template <value>]
+
+FLAGS
+  -f, --force              Overwrites the destination directory and files if they already exist.
+      --[no-]git           Init Git and create initial commits.
+      --[no-]install-deps  Auto installs dependencies using the active package manager.
+      --language=<value>   Sets the template language to use. One of `js` or `ts`.
+      --markets=<value>    Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`,
+                           `subdomains`, `none`. Example: `--markets subfolders`.
+      --mock-shop          Use mock.shop as the data source for the storefront.
+      --path=<value>       The path to the directory of the new Hydrogen storefront.
+      --quickstart         Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify
+                           hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes
+                           --markets none`
+      --[no-]routes        Generate routes for all pages.
+      --[no-]shortcut      Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with
+                           `--no-shortcut`.
+      --template=<value>   Scaffolds project based on an existing template or example from the Hydrogen repository.
+
+DESCRIPTION
+  Creates a new Hydrogen storefront.
+```
+
+## `shopify hydrogen link`
+
+Link a local project to one of your shop's Hydrogen storefronts.
+
+```
+USAGE
+  $ shopify hydrogen link [-f] [--path <value>] [--storefront <value>]
+
+FLAGS
+  -f, --force               Overwrites the destination directory and files if they already exist.
+      --path=<value>        The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                            where the command is run.
+      --storefront=<value>  The name of a Hydrogen Storefront (e.g. "Jane's Apparel")
+
+DESCRIPTION
+  Link a local project to one of your shop's Hydrogen storefronts.
+```
+
+## `shopify hydrogen list`
+
+Returns a list of Hydrogen storefronts available on a given shop.
+
+```
+USAGE
+  $ shopify hydrogen list [--path <value>]
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  Returns a list of Hydrogen storefronts available on a given shop.
+```
+
+## `shopify hydrogen login`
+
+Login to your Shopify account.
+
+```
+USAGE
+  $ shopify hydrogen login [--path <value>] [-s <value>]
+
+FLAGS
+  -s, --shop=<value>  Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL
+                      (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
+      --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                      command is run.
+
+DESCRIPTION
+  Login to your Shopify account.
+```
+
+## `shopify hydrogen logout`
+
+Logout of your local session.
+
+```
+USAGE
+  $ shopify hydrogen logout [--path <value>]
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  Logout of your local session.
+```
+
+## `shopify hydrogen preview`
+
+Runs a Hydrogen storefront in an Oxygen worker for production.
+
+```
+USAGE
+  $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
+    <value> | --env-branch <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
+    [--verbose] [--watch ]
+
+FLAGS
+  --build                        Builds the app before starting the preview server.
+  --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
+  --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
+                                 this file exists.
+  --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
+                                 or Chrome DevTools.
+  --entry=<value>                Entry file for the worker. Defaults to `./server`.
+  --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
+                                 using the `env list` command.
+  --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
+  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
+  --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
+                                 where the command is run.
+  --port=<value>                 The port to run the server on. Defaults to 3000.
+  --verbose                      Outputs more information about the command's execution.
+  --watch                        Watches for changes and rebuilds the project.
+
+DESCRIPTION
+  Runs a Hydrogen storefront in an Oxygen worker for production.
+```
+
+## `shopify hydrogen setup`
+
+Scaffold routes and core functionality.
+
+```
+USAGE
+  $ shopify hydrogen setup [-f] [--install-deps] [--markets <value>] [--path <value>] [--shortcut]
+
+FLAGS
+  -f, --force              Overwrites the destination directory and files if they already exist.
+      --[no-]install-deps  Auto installs dependencies using the active package manager.
+      --markets=<value>    Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`,
+                           `subdomains`, `none`. Example: `--markets subfolders`.
+      --path=<value>       The path to the directory of the Hydrogen storefront. Defaults to the current directory where
+                           the command is run.
+      --[no-]shortcut      Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with
+                           `--no-shortcut`.
+
+DESCRIPTION
+  Scaffold routes and core functionality.
+```
+
+## `shopify hydrogen setup css [STRATEGY]`
+
+Setup CSS strategies for your project.
+
+```
+USAGE
+  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--path <value>]
+
+ARGUMENTS
+  STRATEGY  (tailwind|css-modules|vanilla-extract|postcss) The CSS strategy to setup. One of
+            tailwind,css-modules,vanilla-extract,postcss
+
+FLAGS
+  -f, --force              Overwrites the destination directory and files if they already exist.
+      --[no-]install-deps  Auto installs dependencies using the active package manager.
+      --path=<value>       The path to the directory of the Hydrogen storefront. Defaults to the current directory where
+                           the command is run.
+
+DESCRIPTION
+  Setup CSS strategies for your project.
+```
+
+## `shopify hydrogen setup markets [STRATEGY]`
+
+Setup support for multiple markets in your project.
+
+```
+USAGE
+  $ shopify hydrogen setup markets [STRATEGY] [--path <value>]
+
+ARGUMENTS
+  STRATEGY  (subfolders|domains|subdomains) The URL structure strategy to setup multiple markets. One of
+            subfolders,domains,subdomains
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  Setup support for multiple markets in your project.
+```
+
+## `shopify hydrogen setup vite`
+
+EXPERIMENTAL: Upgrades the project to use Vite.
+
+```
+USAGE
+  $ shopify hydrogen setup vite [--path <value>]
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  EXPERIMENTAL: Upgrades the project to use Vite.
+```
+
+## `shopify hydrogen shortcut`
+
+Creates a global `h2` shortcut for the Hydrogen CLI
+
+```
+USAGE
+  $ shopify hydrogen shortcut
+
+DESCRIPTION
+  Creates a global `h2` shortcut for the Hydrogen CLI
+```
+
+## `shopify hydrogen unlink`
+
+Unlink a local project from a Hydrogen storefront.
+
+```
+USAGE
+  $ shopify hydrogen unlink [--path <value>]
+
+FLAGS
+  --path=<value>  The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
+                  command is run.
+
+DESCRIPTION
+  Unlink a local project from a Hydrogen storefront.
+```
+
+## `shopify hydrogen upgrade`
+
+Upgrade Remix and Hydrogen npm dependencies.
+
+```
+USAGE
+  $ shopify hydrogen upgrade [-f] [--path <value>] [-v <value>]
+
+FLAGS
+  -f, --force            Ignore warnings and force the upgrade to the target version
+  -v, --version=<value>  A target hydrogen version to update to
+      --path=<value>     The path to the directory of the Hydrogen storefront. Defaults to the current directory where
+                         the command is run.
+
+DESCRIPTION
+  Upgrade Remix and Hydrogen npm dependencies.
 ```
 
 ## `shopify plugins add PLUGIN`
@@ -1018,7 +1583,7 @@ FLAGS
       --no-color             Disable color output.
       --path=<value>         The path to your theme directory.
       --print                Output active config to STDOUT
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Validate the theme.
@@ -1045,7 +1610,7 @@ FLAGS
       --password=<value>     Password generated from the Theme Access app.
       --port=<value>         [default: 9293] Local port to serve authentication service.
       --url=<value>          [default: /] The url to be used as context
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool
@@ -1075,7 +1640,7 @@ FLAGS
   -t, --theme=<value>...     Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Delete remote themes from the connected store. This command can't be undone.
@@ -1104,7 +1669,8 @@ FLAGS
       The environment to apply to the current command.
 
   -n, --nodelete
-      Runs the dev command without deleting local files.
+      Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files
+      that are deleted while the command is running, and files that have been deleted locally before the command is run.
 
   -o, --only=<value>...
       Hot reload only files that match the specified pattern.
@@ -1155,7 +1721,7 @@ FLAGS
       Synchronize Theme Editor updates in the local theme files.
 
   --verbose
-      Increase the verbosity of the logs.
+      Increase the verbosity of the output.
 
 DESCRIPTION
   Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to
@@ -1210,7 +1776,7 @@ FLAGS
       --json                 Output the theme info as JSON.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
@@ -1234,7 +1800,7 @@ FLAGS
                            Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
       --no-color           Disable color output.
       --path=<value>       The path to your theme directory.
-      --verbose            Increase the verbosity of the logs.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Clones a Git repository to use as a starting point for building a new theme.
@@ -1261,7 +1827,7 @@ USAGE
 
 FLAGS
   --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  --verbose   Increase the verbosity of the output.
 
 DESCRIPTION
   Start a Language Server Protocol server.
@@ -1289,7 +1855,7 @@ FLAGS
       --password=<value>     Password generated from the Theme Access app.
       --role=<option>        Only list themes with the given role.
                              <options: live|unpublished|development>
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
@@ -1314,7 +1880,7 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Opens the preview of your remote theme.
@@ -1341,7 +1907,7 @@ USAGE
 FLAGS
   --no-color      Disable color output.
   --path=<value>  The path to your theme directory.
-  --verbose       Increase the verbosity of the logs.
+  --verbose       Increase the verbosity of the output.
 
 DESCRIPTION
   Package your theme into a .zip file, ready to upload to the Online Store.
@@ -1371,7 +1937,7 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Set a remote theme as the live theme.
@@ -1410,7 +1976,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Download your remote theme files locally.
@@ -1446,7 +2012,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
@@ -1504,7 +2070,7 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Renames an existing theme.
@@ -1530,7 +2096,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name.

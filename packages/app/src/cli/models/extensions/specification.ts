@@ -1,12 +1,12 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {SpecsAppConfiguration} from './specifications/types/app_config.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../services/dev/fetch.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 
 export type ExtensionFeature =
@@ -23,15 +23,12 @@ export interface TransformationConfig {
 }
 
 export interface CustomTransformationConfig {
-  forward?: (obj: object, options?: {flags?: Flag[]}) => object
+  forward?: (obj: object, appConfiguration: AppConfigurationWithoutPath, options?: {flags?: Flag[]}) => object
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
-export interface SimplifyConfig {
-  simplify?: (obj: SpecsAppConfiguration) => SpecsAppConfiguration
-}
-
 type ExtensionExperience = 'extension' | 'configuration'
+type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -48,7 +45,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
-  schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,
@@ -61,19 +57,64 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  transform?: (content: object) => object
-  reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
-  simplify?: (remoteConfig: SpecsAppConfiguration) => SpecsAppConfiguration
-  extensionManagedInToml?: boolean
-  multipleModuleConfigPath?: string
+
+  /**
+   * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
+   *
+   * @param localContent - Content taken from the local filesystem
+   * @returns Transformed configuration to send to the platform in place of the locally provided content
+   */
+  transformLocalToRemote?: (localContent: object, appConfiguration: AppConfigurationWithoutPath) => object
+
+  /**
+   * If required, convert configuration from the platform to the format used locally in the filesystem.
+   *
+   * @param remoteContent - Platform provided content taken from an instance of this module
+   * @param existingAppConfiguration - Existing app configuration on the filesystem that this transformed content may be merged with
+   * @param options - Additional options to be used in the transformation
+   * @returns Transformed configuration to use in place of the platform provided content
+   */
+  transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
+
+  uidStrategy: UidStrategy
+
+  /**
+   * Have this specification contribute to the schema used to validate app configuration. For specifications that don't
+   * form part of app config, they can return the schema unchanged.
+   *
+   * @param appConfigSchema - The schema used to validate app configuration. This will usually be the output from calling this function for another specification
+   * @returns The schema used to validate app configuration, with this specification's schema merged in
+   */
+  contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => ZodSchemaType<unknown>
+
+  /**
+   * Parse some provided configuration into a valid configuration object for this extension.
+   */
+  parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
 }
+
+/**
+ * Extension specification, explicitly marked as having taken remote configuration values into account.
+ */
+export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> =
+  ExtensionSpecification<TConfiguration> & {
+    loadedRemoteSpecs: true
+  }
 
 /**
  * These fields are forbidden when creating a new ExtensionSpec
  * They belong to the ExtensionSpec interface, but the values are obtained from the API
  * and should not be set by us locally
  */
-type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name' | 'surface'
+type ForbiddenFields =
+  | 'registrationLimit'
+  | 'category'
+  | 'externalIdentifier'
+  | 'externalName'
+  | 'name'
+  | 'surface'
+  | 'contributeToAppConfigurationSchema'
+  | 'parseConfigurationObject'
 
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
@@ -82,6 +123,7 @@ interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseCo
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  schema?: ZodSchemaType<TConfiguration>
 }
 
 /**
@@ -116,14 +158,39 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    transform: spec.transform,
-    reverseTransform: spec.reverseTransform,
-    simplify: spec.simplify,
+    transform: spec.transformLocalToRemote,
+    reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
-    extensionManagedInToml: spec.extensionManagedInToml ?? false,
-    multipleModuleConfigPath: spec.multipleModuleConfigPath,
+    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
   }
-  return {...defaults, ...spec}
+  const merged = {...defaults, ...spec}
+
+  return {
+    ...merged,
+    contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => {
+      if (merged.uidStrategy !== 'single') {
+        // no change
+        return appConfigSchema
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (appConfigSchema as any).merge(merged.schema)
+    },
+    parseConfigurationObject: (configurationObject: unknown) => {
+      const parseResult = merged.schema.safeParse(configurationObject)
+      if (!parseResult.success) {
+        return {
+          state: 'error',
+          data: undefined,
+          errors: parseResult.error.errors,
+        }
+      }
+      return {
+        state: 'ok',
+        data: parseResult.data,
+        errors: undefined,
+      }
+    },
+  }
 }
 
 /**
@@ -139,9 +206,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   schema: zod.ZodObject<any>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
-  simplify?: SimplifyConfig
-  extensionManagedInToml?: boolean
-  multipleModuleConfigPath?: string
+  uidStrategy?: UidStrategy
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -150,18 +215,52 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures,
-    transform: resolveAppConfigTransform(spec.transformConfig),
-    reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
-    simplify: resolveSimplifyAppConfig(spec.simplify),
-    extensionManagedInToml: spec.extensionManagedInToml,
-    multipleModuleConfigPath: spec.multipleModuleConfigPath,
+    transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
+    transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
+    uidStrategy: spec.uidStrategy ?? 'single',
   })
 }
 
-function resolveSimplifyAppConfig(simplifyConfig?: SimplifyConfig) {
-  // returns the configuration if there is no simplify function defined in the specification
-  return simplifyConfig?.simplify ?? ((content: SpecsAppConfiguration) => content)
+/**
+ * Create a zod object schema based on keys, but neutral as to content.
+ *
+ * Used for schemas that are supplemented by JSON schema contracts, but need to register top-level keys.
+ */
+function neutralTopLevelSchema<TKey extends string>(...keys: TKey[]): zod.ZodObject<{[k in TKey]: zod.ZodAny}> {
+  return zod.object(
+    Object.fromEntries(
+      keys.map((key) => {
+        return [key, zod.any()]
+      }),
+    ),
+  ) as zod.ZodObject<{[k in TKey]: zod.ZodAny}>
+}
+
+/**
+ * Create a new app config extension spec that uses contract-based validation.
+ *
+ * See {@link createConfigExtensionSpecification} for more about app config extensions.
+ */
+export function createContractBasedConfigModuleSpecification<TKey extends string>(
+  identifier: string,
+  ...topLevelKeys: TKey[]
+): ExtensionSpecification {
+  const schema = neutralTopLevelSchema(...topLevelKeys)
+  return createConfigExtensionSpecification({
+    identifier,
+    schema,
+    transformConfig: {
+      // outgoing config is already scoped to this module and passed directly along
+      forward(obj) {
+        return obj
+      },
+      // incoming config from the platform is included in app config as-is
+      reverse(obj) {
+        return obj
+      },
+    },
+  })
 }
 
 function resolveAppConfigTransform(transformConfig?: TransformationConfig | CustomTransformationConfig) {

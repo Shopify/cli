@@ -4,6 +4,7 @@ import {
   ConfirmationSchema,
   DeferredPaymentsSchema,
   MultipleCaptureSchema,
+  SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
 import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
@@ -12,11 +13,13 @@ import {zod} from '@shopify/cli-kit/node/schema'
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
 
 export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
-export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 5
+// If updating this limit, also update the limit in the Partners Web Platform (https://github.com/Shopify/partners-web-platform/) - MAX_CHECKOUT_PAYMENT_METHOD_FIELDS
+export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
 export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(DeferredPaymentsSchema)
   .merge(ConfirmationSchema)
   .merge(MultipleCaptureSchema)
+  .merge(SupportedBuyerContextsSchema)
   .required({
     refund_session_url: true,
     capture_session_url: true,
@@ -26,7 +29,9 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
     targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
     verification_session_url: zod.string().url().optional(),
     ui_extension_handle: zod.string().optional(),
-    encryption_certificate_fingerprint: zod.string().optional(),
+    encryption_certificate_fingerprint: zod
+      .string()
+      .min(1, {message: "Encryption certificate fingerprint can't be blank"}),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -70,7 +75,7 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
   start_verification_session_url?: string
   ui_extension_registration_uuid?: string
   ui_extension_handle?: string
-  encryption_certificate?: {
+  encryption_certificate: {
     fingerprint: string
     certificate: string
   }
@@ -98,12 +103,13 @@ export function creditCardDeployConfigToCLIConfig(
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
     supports_deferred_payments: config.supports_deferred_payments,
     supports_installments: config.supports_installments,
     verification_session_url: config.start_verification_session_url,
-    encryption_certificate_fingerprint: config.encryption_certificate?.fingerprint,
+    encryption_certificate_fingerprint: config.encryption_certificate.fingerprint,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     ui_extension_handle: uiExtensionHandle,
   }
@@ -123,6 +129,7 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     merchant_label: config.merchant_label,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
     supports_deferred_payments: config.supports_deferred_payments,

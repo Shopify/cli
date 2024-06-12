@@ -2,6 +2,7 @@ import {
   BasePaymentsAppExtensionSchema,
   BasePaymentsAppExtensionDeployConfigType,
   ConfirmationSchema,
+  SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
 import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
@@ -12,9 +13,10 @@ export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
 >
 
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
-export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 5
+export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
 export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(ConfirmationSchema)
+  .merge(SupportedBuyerContextsSchema)
   .required({
     refund_session_url: true,
     capture_session_url: true,
@@ -26,7 +28,9 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
     ui_extension_handle: zod.string().optional(),
-    encryption_certificate_fingerprint: zod.string().optional(),
+    encryption_certificate_fingerprint: zod
+      .string()
+      .min(1, {message: "Encryption certificate fingerprint can't be blank"}),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -56,7 +60,7 @@ export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends Ba
   checkout_hosted_fields?: string[]
   ui_extension_registration_uuid?: string
   ui_extension_handle?: string
-  encryption_certificate?: {
+  encryption_certificate: {
     fingerprint: string
     certificate: string
   }
@@ -84,7 +88,8 @@ export function customCreditCardDeployConfigToCLIConfig(
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
-    encryption_certificate_fingerprint: config.encryption_certificate?.fingerprint,
+    supported_buyer_contexts: config.supported_buyer_contexts,
+    encryption_certificate_fingerprint: config.encryption_certificate.fingerprint,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
@@ -106,6 +111,7 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     merchant_label: config.merchant_label,
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
+    supported_buyer_contexts: config.supported_buyer_contexts,
     encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     supported_payment_methods: config.supported_payment_methods,
     test_mode_available: config.test_mode_available,

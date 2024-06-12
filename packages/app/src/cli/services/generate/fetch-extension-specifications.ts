@@ -1,12 +1,15 @@
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
-  apiKey: string
+  app: MinimalAppIdentifiers
 }
 /**
  * Returns all extension specifications the user has access to.
@@ -15,16 +18,17 @@ interface FetchSpecificationsOptions {
  * - Theme extensions
  *
  * Will return a merge of the local and remote specifications (remote values override local ones)
- * Will only return the specifications that are also defined locally
+ * - Will only return the specifications that are defined in both places.
+ * - "deprecated" extension specifications aren't included
  *
  * @param developerPlatformClient - The client to access the platform API
  * @returns List of extension specifications
  */
 export async function fetchSpecifications({
   developerPlatformClient,
-  apiKey,
-}: FetchSpecificationsOptions): Promise<ExtensionSpecification[]> {
-  const result: RemoteSpecification[] = await developerPlatformClient.specifications(apiKey)
+  app,
+}: FetchSpecificationsOptions): Promise<RemoteAwareExtensionSpecification[]> {
+  const result: RemoteSpecification[] = await developerPlatformClient.specifications(app)
 
   const extensionSpecifications: FlattenedRemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
@@ -51,12 +55,51 @@ export async function fetchSpecifications({
 function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
-): ExtensionSpecification[] {
+): RemoteAwareExtensionSpecification[] {
   const updated = local.map((spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
+    if (remoteSpec) {
+      const merged = {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
+        FlattenedRemoteSpecification
+
+      const parseConfigurationObject = unifiedConfigurationParserFactory(merged)
+
+      return {
+        ...merged,
+        parseConfigurationObject,
+      }
+    }
     return undefined
   })
 
-  return getArrayRejectingUndefined<ExtensionSpecification>(updated)
+  const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(updated)
+
+  // Log the specs that were defined locally but aren't in the result
+  // This usually means the spec is a gated one and the caller doesn't have adequate access. Or, we're in a test and
+  // the mocked specification set is missing something.
+  const presentLocalMissingRemote = local.filter(
+    (spec) => !result.find((result) => result.identifier === spec.identifier),
+  )
+  if (presentLocalMissingRemote.length > 0) {
+    outputDebug(
+      `The following extension specifications were defined locally but not found in the remote specifications: ${presentLocalMissingRemote
+        .map((spec) => spec.identifier)
+        .sort()
+        .join(', ')}`,
+    )
+  }
+
+  const presentRemoteMissingLocal = remote.filter(
+    (spec) => !result.find((result) => result.identifier === spec.identifier),
+  )
+  if (presentRemoteMissingLocal.length > 0) {
+    outputDebug(
+      `The following extension specifications were found in the remote specifications but not defined locally: ${presentRemoteMissingLocal
+        .map((spec) => spec.identifier)
+        .sort()
+        .join(', ')}`,
+    )
+  }
+
+  return result
 }

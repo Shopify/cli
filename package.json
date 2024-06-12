@@ -27,6 +27,7 @@
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
+    "changeset-build-no-docs": "changeset version && pnpm install --no-frozen-lockfile && pnpm build && bin/update-cli-kit-version.js",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "build-docs": "sh ./bin/docs/build-docs.sh",
@@ -88,7 +89,10 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "4.4.9",
-    "@oclif/core": "3.26.5"
+    "@oclif/core": "3.26.5",
+    "whatwg-url": "14.0.0",
+    "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
+    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
@@ -110,9 +114,9 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
-      "esbuild",
       "@shopify/cli-hydrogen",
-      "@shopify/theme-check-node"
+      "@shopify/theme-check-node",
+      "@shopify/theme-check-docs-updater"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
@@ -171,10 +175,8 @@
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
-          "@oclif/plugin-commands",
-          "@shopify/plugin-did-you-mean",
-          "@shopify/app",
-          "@shopify/theme"
+          "@ast-grep/napi",
+          "@parcel/watcher"
         ],
         "vite": {
           "config": [
@@ -284,7 +286,6 @@
         ],
         "project": "**/*.ts",
         "ignoreDependencies": [
-          "@cucumber/pretty-formatter",
           "@cucumber/messages"
         ],
         "ignoreBinaries": [
@@ -292,8 +293,5 @@
         ]
       }
     }
-  },
-  "dependencies": {
-    "@shopify/cli-hydrogen": "8.0.1"
   }
 }

@@ -1,5 +1,6 @@
 import spec from './app_config_privacy_compliance_webhooks.js'
 import {Flag} from '../../../services/dev/fetch.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {isEmpty} from '@shopify/cli-kit/common/object'
 import {describe, expect, test} from 'vitest'
 
@@ -19,7 +20,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.transform!(object)
+      const result = privacyComplianceSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toMatchObject({
@@ -48,7 +49,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.transform!(object)
+      const result = privacyComplianceSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toMatchObject({
@@ -73,7 +74,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.transform!(object)
+      const result = privacyComplianceSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(isEmpty(result)).toBeTruthy()
@@ -91,19 +92,21 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object, {
+        flags: [Flag.DeclarativeWebhooks],
+      })
 
       // Then
       expect(result).toMatchObject({
         webhooks: {
           subscriptions: [
             {
-              compliance_topics: ['customers/redact'],
-              uri: 'https://example.com/customer-deletion',
-            },
-            {
               compliance_topics: ['customers/data_request'],
               uri: 'https://example.com/customer-data-request',
+            },
+            {
+              compliance_topics: ['customers/redact'],
+              uri: 'https://example.com/customer-deletion',
             },
             {
               compliance_topics: ['shop/redact'],
@@ -124,7 +127,9 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object, {
+        flags: [Flag.DeclarativeWebhooks],
+      })
 
       // Then
       expect(result).toEqual({
@@ -149,7 +154,9 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object, {
+        flags: [Flag.DeclarativeWebhooks],
+      })
 
       // Then
       expect(isEmpty(result)).toBeTruthy()
@@ -167,7 +174,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object)
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({
@@ -191,7 +198,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object)
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toEqual({
@@ -213,7 +220,7 @@ describe('privacy_compliance_webhooks', () => {
       const privacyComplianceSpec = spec
 
       // When
-      const result = privacyComplianceSpec.reverseTransform!(object)
+      const result = privacyComplianceSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(isEmpty(result)).toBeTruthy()

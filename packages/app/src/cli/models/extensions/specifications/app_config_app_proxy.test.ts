@@ -1,4 +1,5 @@
 import spec from './app_config_app_proxy.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 describe('app_config_app_proxy', () => {
@@ -15,7 +16,7 @@ describe('app_config_app_proxy', () => {
       const appConfigSpec = spec
 
       // When
-      const result = appConfigSpec.transform!(object)
+      const result = appConfigSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       // Then
       expect(result).toMatchObject({
@@ -37,7 +38,7 @@ describe('app_config_app_proxy', () => {
       const appConfigSpec = spec
 
       // When
-      const result = appConfigSpec.reverseTransform!(object)
+      const result = appConfigSpec.transformRemoteToLocal!(object)
 
       // Then
       expect(result).toMatchObject({

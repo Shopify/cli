@@ -1,8 +1,9 @@
 import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {AppConfigurationWithoutPath} from '../../models/app/app.js'
 import {
   loadConfigurationFileContent,
   parseConfigurationFile,
-  parseConfigurationObject,
+  parseConfigurationObjectAgainstSpecification,
 } from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
@@ -22,6 +23,7 @@ interface UpdateExtensionDraftOptions {
   registrationId: string
   stdout: Writable
   stderr: Writable
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 export async function updateExtensionDraft({
@@ -31,6 +33,7 @@ export async function updateExtensionDraft({
   registrationId,
   stdout,
   stderr,
+  appConfiguration,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
@@ -44,7 +47,7 @@ export async function updateExtensionDraft({
     // When updating just the theme extension draft, upload the files as part of the config.
     config = await themeExtensionConfig(extension)
   } else {
-    config = (await extension.deployConfig({apiKey, developerPlatformClient})) || {}
+    config = (await extension.deployConfig({apiKey, developerPlatformClient, appConfiguration})) || {}
   }
 
   const extensionInput: ExtensionUpdateDraftInput = {
@@ -105,8 +108,8 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     configObject = {...configuration, ...extensionConfig}
   }
 
-  const newConfig = await parseConfigurationObject(
-    extension.specification.schema,
+  const newConfig = await parseConfigurationObjectAgainstSpecification(
+    extension.specification,
     extension.configurationPath,
     configObject,
     abort,

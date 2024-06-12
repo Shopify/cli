@@ -38,7 +38,7 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
   }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  for (const [i, {uri, topics = [], compliance_topics = [], sub_topic = ''}] of subscriptions.entries()) {
+  for (const [i, {uri, topics = [], compliance_topics = [], filter = ''}] of subscriptions.entries()) {
     const path = ['subscriptions', i]
 
     if (!topics.length && !compliance_topics.length) {
@@ -50,12 +50,12 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
     }
 
     for (const [j, topic] of topics.entries()) {
-      const key = `${topic}::${sub_topic}::${uri}`
+      const key = `${topic}::${uri}::${filter}`
 
       if (uniqueSubscriptionSet.has(key)) {
         return {
           code: zod.ZodIssueCode.custom,
-          message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+          message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
           fatal: true,
           path: [...path, 'topics', j, topic],
         }

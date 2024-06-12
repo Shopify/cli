@@ -141,3 +141,31 @@ export function cwd(): string {
   // eslint-disable-next-line @shopify/cli/no-process-cwd
   return normalize(process.env.INIT_CWD ? process.env.INIT_CWD : process.cwd())
 }
+
+/**
+ * Tries to get the value of the `--path` argument, if provided.
+ *
+ * @param argv - The arguments to search for the `--path` argument.
+ * @returns The value of the `--path` argument, if provided.
+ */
+export function sniffForPath(argv = process.argv): string | undefined {
+  const pathFlagIndex = argv.indexOf('--path')
+  if (pathFlagIndex === -1) {
+    const pathArg = argv.find((arg) => arg.startsWith('--path='))
+    return pathArg?.split('=')[1]
+  }
+  const pathFlag = argv[pathFlagIndex + 1]
+  if (!pathFlag || pathFlag.startsWith('-')) return
+  return pathFlag
+}
+
+/**
+ * Returns whether the `--json` flag is present in the arguments.
+ *
+ * @param argv - The arguments to search for the `--json` flag.
+ * @returns Whether the `--json` flag is present in the arguments.
+ */
+export function sniffForJson(argv = process.argv): boolean {
+  const jsonFlagIndex = argv.indexOf('--json')
+  return jsonFlagIndex !== -1
+}

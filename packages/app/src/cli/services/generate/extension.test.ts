@@ -8,11 +8,14 @@ import * as extensionsCommon from '../extensions/common.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {loadApp} from '../../models/app/loader.js'
 import * as functionBuild from '../function/build.js'
-import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
+import {
+  productSubscriptionUIExtensionTemplate,
+  testDeveloperPlatformClient,
+  testRemoteExtensionTemplates,
+} from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {
@@ -38,7 +41,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
 })
 
 describe('initialize a extension', async () => {
-  const allUITemplates = [productSubscriptionUIExtension]
+  const allUITemplates = [productSubscriptionUIExtensionTemplate]
   const allFunctionTemplates = testRemoteExtensionTemplates
   const specifications = await loadLocalExtensionsSpecifications()
 
@@ -46,7 +49,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
       const name = 'my-ext-1'
-      const specification = productSubscriptionUIExtension
+      const specification = productSubscriptionUIExtensionTemplate
       const extensionFlavor = 'vanilla-js'
       const extensionDir = await createFromTemplate({
         name,
@@ -55,7 +58,7 @@ describe('initialize a extension', async () => {
         appDirectory: tmpDir,
         specifications,
       })
-      const app = await loadApp({directory: tmpDir, specifications})
+      const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       const generatedExtension = app.allExtensions[0]!
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
@@ -86,7 +89,7 @@ describe('initialize a extension', async () => {
 
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
-      const loadedApp = await loadApp({directory: tmpDir, specifications})
+      const loadedApp = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       expect(loadedApp.allExtensions.length).toEqual(2)
     })
   })
@@ -236,8 +239,8 @@ describe('initialize a extension', async () => {
         async () => 'path/to/custom/template',
       )
       const name = 'my-ext-1'
-      const specification = productSubscriptionUIExtension
-      specification.types[0]!.supportedFlavors[1]!.path = 'path/to/custom/template'
+      const specification = productSubscriptionUIExtensionTemplate
+      specification.supportedFlavors[1]!.path = 'path/to/custom/template'
       const extensionFlavor = 'vanilla-js'
       const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
 
@@ -272,7 +275,7 @@ describe('initialize a extension', async () => {
 
       const name = 'my-ext-1'
       const specification = allFunctionTemplates.find((spec) => spec.identifier === 'order_discounts')!
-      specification.types[0]!.url = 'custom/template/url'
+      specification.url = 'custom/template/url'
       const extensionFlavor = 'rust'
 
       // When
@@ -326,7 +329,7 @@ describe('initialize a extension', async () => {
       })
 
       // Then
-      const app = await loadApp({directory: tmpDir, specifications})
+      const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       const generatedFunction = app.allExtensions[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
@@ -367,7 +370,7 @@ describe('initialize a extension', async () => {
         })
 
         // Then
-        const app = await loadApp({directory: tmpDir, specifications})
+        const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
         const generatedFunction = app.allExtensions[0]!
         expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedFunction.configuration.name).toBe(name)
@@ -466,10 +469,11 @@ async function createFromTemplate({
 }: CreateFromTemplateOptions): Promise<string> {
   const result = await generateExtensionTemplate({
     extensionTemplate: specification,
-    app: await loadApp({directory: appDirectory, specifications}),
-    extensionChoices: [{index: 0, name, flavor: extensionFlavor}],
+    app: await loadApp({directory: appDirectory, specifications, userProvidedConfigName: undefined}),
+    extensionChoices: {name, flavor: extensionFlavor},
+    developerPlatformClient: testDeveloperPlatformClient(),
   })
-  return result[0]!.directory
+  return result.directory
 }
 async function withTemporaryApp(
   callback: (tmpDir: string) => Promise<void> | void,
