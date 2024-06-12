@@ -199,23 +199,23 @@ describe('pollAppLogs', () => {
     )
 
     // app_logs[0]
-    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(1, 'Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(3, expect.stringContaining('Log: '))
 
     // app_logs[1]
-    expect(stdout.write).toHaveBeenCalledWith(`❌ Function failed to execute with error: ${FUNCTION_ERROR}`)
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(4, `❌ Function failed to execute with error: ${FUNCTION_ERROR}`)
+    expect(stdout.write).toHaveBeenNthCalledWith(5, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining('Log: '))
 
     // app_logs[2]
-    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(7, 'Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(9, expect.stringContaining('Log: '))
 
     // app_logs[3]
-    expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(10, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(11, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })
