@@ -17,6 +17,7 @@ describe('buildFunctionExtension', () => {
   let stderr: any
   let signal: any
   let app: any
+  let releaseLock: any
   const defaultConfig = {
     name: 'MyFunction',
     type: 'product_discounts',
@@ -31,13 +32,14 @@ describe('buildFunctionExtension', () => {
   }
 
   beforeEach(async () => {
+    releaseLock = vi.fn()
     stdout = vi.fn()
     stderr = {write: vi.fn()}
     stdout = {write: vi.fn()}
     signal = vi.fn()
     app = {}
     extension = await testFunctionExtension({config: defaultConfig})
-    vi.mocked(lockfile.lock).mockResolvedValue(vi.fn())
+    vi.mocked(lockfile.lock).mockResolvedValue(releaseLock)
   })
 
   test('delegates the build to system when the build command is present', async () => {
@@ -62,6 +64,7 @@ describe('buildFunctionExtension', () => {
       cwd: extension.directory,
       signal,
     })
+    expect(releaseLock).toHaveBeenCalled()
   })
 
   test('fails when is not a JS function and build command is not present', async () => {
@@ -78,6 +81,7 @@ describe('buildFunctionExtension', () => {
         environment: 'production',
       }),
     ).rejects.toThrow()
+    expect(releaseLock).toHaveBeenCalled()
   })
 
   test('succeeds when is a JS function and build command is not present', async () => {
@@ -104,6 +108,7 @@ describe('buildFunctionExtension', () => {
       app,
       environment: 'production',
     })
+    expect(releaseLock).toHaveBeenCalled()
   })
 
   test('succeeds when is a JS function and build command is present', async () => {
@@ -129,5 +134,6 @@ describe('buildFunctionExtension', () => {
       cwd: extension.directory,
       signal,
     })
+    expect(releaseLock).toHaveBeenCalled()
   })
 })
