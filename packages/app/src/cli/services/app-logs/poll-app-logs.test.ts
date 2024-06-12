@@ -193,33 +193,29 @@ describe('pollAppLogs', () => {
       stdout,
     })
 
-    // app_logs[0]
-    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(LOGS)
-    // expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
       {outputPrefix: SOURCE, stripAnsi: false},
       expect.any(Function),
     )
+
+    // app_logs[0]
+    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
 
     // app_logs[1]
     expect(stdout.write).toHaveBeenCalledWith(`❌ Function failed to execute with error: ${FUNCTION_ERROR}`)
-    expect(stdout.write).toHaveBeenCalledWith(LOGS)
-    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
-      {outputPrefix: SOURCE, stripAnsi: false},
-      expect.any(Function),
-    )
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
 
     // app_logs[2]
     expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(LOGS)
-    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
-      {outputPrefix: SOURCE, stripAnsi: false},
-      expect.any(Function),
-    )
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
 
     // app_logs[3]
     expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })
