@@ -222,8 +222,6 @@ describe('pollAppLogs', () => {
 
   test('calls resubscribe callback if a 401 is received', async () => {
     // Given
-    const url = `https://${FQDN}/app_logs/poll`
-
     const response = new Response('errorMessage', {status: 401})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
@@ -239,14 +237,10 @@ describe('pollAppLogs', () => {
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
   })
 
-  test('displays error, waits, and retries if status is 429 or >500', async () => {
+  test('displays throttle message, waits, and retries if status is 429', async () => {
     // Given
-    const url = `https://${FQDN}/app_logs/poll`
-
-    const mockedFetch = vi
-      .fn()
-      .mockResolvedValueOnce(new Response('error for 429', {status: 429}))
-      .mockResolvedValueOnce(new Response('error for 500', {status: 500}))
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const mockedFetch = vi.fn().mockResolvedValueOnce(new Response('error for 429', {status: 429}))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
@@ -256,17 +250,16 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
     })
-    await vi.advanceTimersToNextTimerAsync()
 
-    expect(stdout.write).toHaveBeenCalledWith('error for 429')
-    expect(stdout.write).toHaveBeenCalledWith('error for 500')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 60 seconds.')
     expect(vi.getTimerCount()).toEqual(1)
   })
 
-  test('stops polling when unexpected error occurs instead of throwing ', async () => {
+  test('displays error message, waits, and retries if error occured', async () => {
     // Given
-    const url = `https://${FQDN}/app_logs/poll`
     const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
 
     // An unexpected error response
     const response = new Response('errorMessage', {status: 422})
@@ -282,15 +275,9 @@ describe('pollAppLogs', () => {
     })
 
     // Then
-    expect(fetch).toHaveBeenCalledWith(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${JWT_TOKEN}`,
-      },
-    })
-    expect(stdout.write).toHaveBeenCalledWith('Error while retrieving app logs.')
-    expect(stdout.write).toHaveBeenCalledWith('App log streaming is no longer available in this `dev` session.')
-    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
-    expect(vi.getTimerCount()).toEqual(0)
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Unhandled bad response: ${response.status}`))
+    expect(vi.getTimerCount()).toEqual(1)
   })
 })
