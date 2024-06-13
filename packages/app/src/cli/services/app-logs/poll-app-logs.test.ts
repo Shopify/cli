@@ -77,28 +77,6 @@ const RESPONSE_DATA = {
       shop_id: 1,
       api_client_id: 1830457,
       payload: JSON.stringify(FUNCTION_PAYLOAD),
-      event_type: FUNCTION_RUN,
-      cursor: '2024-05-23T19:17:02.321773Z',
-      status: 'success',
-      source: SOURCE,
-      source_namespace: 'extensions',
-      log_timestamp: '2024-05-23T19:17:00.240053Z',
-    },
-    {
-      shop_id: 1,
-      api_client_id: 1830457,
-      payload: JSON.stringify(FAILURE_PAYLOAD),
-      event_type: FUNCTION_RUN,
-      cursor: '2024-05-23T19:17:02.321773Z',
-      status: 'failure',
-      source: SOURCE,
-      source_namespace: 'extensions',
-      log_timestamp: '2024-05-23T19:17:00.240053Z',
-    },
-    {
-      shop_id: 1,
-      api_client_id: 1830457,
-      payload: JSON.stringify(FUNCTION_PAYLOAD),
       log_type: FUNCTION_RUN,
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
@@ -109,8 +87,19 @@ const RESPONSE_DATA = {
     {
       shop_id: 1,
       api_client_id: 1830457,
+      payload: JSON.stringify(FAILURE_PAYLOAD),
+      log_type: FUNCTION_RUN,
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'failure',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
       payload: JSON.stringify(OTHER_PAYLOAD),
-      event_type: 'some arbitrary event type',
+      log_type: 'some arbitrary event type',
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'failure',
       log_timestamp: '2024-05-23T19:17:00.240053Z',
@@ -187,11 +176,6 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
     })
-    expect(writeAppLogsToFile).toHaveBeenCalledWith({
-      appLog: RESPONSE_DATA.app_logs[3],
-      apiKey: API_KEY,
-      stdout,
-    })
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
       {outputPrefix: SOURCE, stripAnsi: false},
@@ -209,13 +193,8 @@ describe('pollAppLogs', () => {
     expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining('Log: '))
 
     // app_logs[2]
-    expect(stdout.write).toHaveBeenNthCalledWith(7, 'Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenNthCalledWith(9, expect.stringContaining('Log: '))
-
-    // app_logs[3]
-    expect(stdout.write).toHaveBeenNthCalledWith(10, JSON.stringify(OTHER_PAYLOAD))
-    expect(stdout.write).toHaveBeenNthCalledWith(11, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(7, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })
