@@ -47,36 +47,30 @@ interface WatcherEvent {
 
 export async function startFileWatcher(app: AppInterface, onChange: (events: WatcherEvent) => void) {
   const {default: chokidar} = await import('chokidar')
-  const appConfigurationPath = app.configuration.path
 
-  // Watch the extensions folder and the app configuration file, nothing else.
+  const appConfigurationPath = app.configuration.path
   const extensionDirectories = [...(app.configuration.extension_directories ?? ['extensions'])].map((directory) => {
     return joinPath(app.directory, directory)
   })
 
-  // All existing extension paths sorted by length.
-  // Sorting by length allows us to use `startsWith` to find the extension that was changed
-  // while avoiding false positives.
+  // All existing extension paths sorted by length. This allows us to use `startsWith` to find the extension
+  // that was changed while avoiding false positives.
   const extensionPaths = app.realExtensions
     .map((ext) => ext.directory)
     .filter((dir) => dir !== app.directory)
     .sort((extA, extB) => extB.length - extA.length)
-  // const extensionWatcherPaths = extensionDirectories // .map((extension) => joinPath(extension, '**/*'))
+
+  // Watch the extensions root folder and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
-  console.log(extensionPaths)
-  console.log(watchPaths)
-
-  // Ignore changes in node_modules, git, dist, and test files.
-  const ignored = ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**']
-
+  // Create a debouncer for each extension directory to avoid multiple events for the same extension
   const debouncers = new Map<string, (event: WatcherEvent) => void>()
   extensionPaths.forEach((path) => {
     debouncers.set(path, debounce(onChange, 500))
   })
 
   const watcher = chokidar.watch(watchPaths, {
-    ignored,
+    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**'],
     persistent: true,
     ignoreInitial: true,
   })
@@ -103,15 +97,10 @@ export async function startFileWatcher(app: AppInterface, onChange: (events: Wat
     // When adding/deleting an extension, we get multiple events for the same extension
     switch (event) {
       case 'change':
-        if (path === appConfigurationPath) {
-          onChange({type: 'app_config_updated', path})
-        } else {
-          onChange({type: 'file_updated', path})
-        }
-        // Updated a file, could be ExtensionChange if it happened inside an extension directory or app configuration file
+        onChange({type: isConfigAppPath ? 'app_config_updated' : 'file_updated', path})
         break
       case 'add':
-        // Added new file, could be ExtensionChange if it happened inside an extension directory
+        // This event will be ignored for new extensions until the extension is added to `extensionPaths`.
         onChange({type: 'file_created', path})
         break
       case 'addDir':
@@ -125,7 +114,7 @@ export async function startFileWatcher(app: AppInterface, onChange: (events: Wat
         }, 5000)
         break
       case 'unlink':
-        if (path === appConfigurationPath) {
+        if (isConfigAppPath) {
           onChange({type: 'app_config_deleted', path})
         } else {
           // When deleting a file, debounce the event to avoid multiple events for the same extension
