@@ -3,9 +3,9 @@ import {AppInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {startFileWatcher} from '../../services/dev/processes/events-interface.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {OutputContextOptions, startFileWatcher} from '../../services/dev/processes/dev-session/file-watcher.js'
 
 export default class AppInfo extends Command {
   static summary = 'Print basic information about your app and extensions.'
@@ -45,7 +45,13 @@ export default class AppInfo extends Command {
       mode: 'report',
     })
     let index = 0
-    await startFileWatcher(app, (events) => {
+
+    const options: OutputContextOptions = {
+      stderr: process.stderr,
+      stdout: process.stdout,
+      signal: new AbortSignal(),
+    }
+    await startFileWatcher(app, options, (events) => {
       console.log(`${index}: ${events.type} -> ${events.path}`)
       index += 1
     })

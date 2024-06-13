@@ -1,11 +1,9 @@
+/* eslint-disable no-case-declarations */
+import {OutputContextOptions, WatcherEvent, startFileWatcher} from './dev-session/file-watcher.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {FSWatcher} from 'chokidar'
-import * as pathActions from '@shopify/cli-kit/node/path'
-import {debounce} from '@shopify/cli-kit/common/function'
-import {Writable} from 'stream'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {loadApp} from '../../../models/app/loader.js'
 
 interface ExtensionEvent {
   type: 'updated' | 'deleted' | 'created'
@@ -29,124 +27,92 @@ interface AppEvent {
 //                => NewExtensionEvent (reloadApp) =>
 //                => ExtensionChangeEvent (reloadsExtension) => ExtensionEvents
 
-function subscribeToAppEvents(app: AppInterface, handler: (event: AppEvent) => void) {
-  // ...
+type Handler = (
+  event: WatcherEvent,
+  app: AppInterface,
+  extensions: ExtensionInstance[],
+  onChange: (event: AppEvent) => void,
+) => Promise<void>
+
+const handlers: Record<WatcherEvent['type'], Handler> = {
+  extension_folder_deleted: ExtensionFolderDeletedHandler,
+  extension_folder_created: ExtensionFolderCreatedHandler,
+  file_created: FileChangeHandler,
+  file_deleted: FileChangeHandler,
+  file_updated: FileChangeHandler,
+  app_config_updated: AppConfigUpdatedHandler,
+  app_config_deleted: AppConfigDeletedHandler,
 }
 
-interface WatcherEvent {
-  type:
-    | 'extension_folder_created'
-    | 'extension_folder_deleted'
-    | 'file_created'
-    | 'file_updated'
-    | 'file_deleted'
-    | 'app_config_updated'
-    | 'app_config_deleted'
-  path: string
+export async function subscribeToAppEvents(
+  app: AppInterface,
+  options: OutputContextOptions,
+  onChange: (event: AppEvent) => void,
+) {
+  await startFileWatcher(app, options, (event) => {
+    // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
+    const extensions = app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
+    handlers[event.type](event, app, extensions, onChange)
+  })
 }
 
-export async function startFileWatcher(app: AppInterface, onChange: (events: WatcherEvent) => void) {
-  const {default: chokidar} = await import('chokidar')
-
-  const appConfigurationPath = app.configuration.path
-  const extensionDirectories = [...(app.configuration.extension_directories ?? ['extensions'])].map((directory) => {
-    return joinPath(app.directory, directory)
-  })
-
-  // All existing extension paths sorted by length. This allows us to use `startsWith` to find the extension
-  // that was changed while avoiding false positives.
-  const extensionPaths = app.realExtensions
-    .map((ext) => ext.directory)
-    .filter((dir) => dir !== app.directory)
-    .sort((extA, extB) => extB.length - extA.length)
-
-  // Watch the extensions root folder and the app configuration file, nothing else.
-  const watchPaths = [appConfigurationPath, ...extensionDirectories]
-
-  // Create a debouncer for each extension directory to avoid multiple events for the same extension
-  const debouncers = new Map<string, (event: WatcherEvent) => void>()
-  extensionPaths.forEach((path) => {
-    debouncers.set(path, debounce(onChange, 500))
-  })
-
-  const watcher = chokidar.watch(watchPaths, {
-    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**'],
-    persistent: true,
-    ignoreInitial: true,
-  })
-
-  console.log('Watcher ready!')
-
-  watcher.on('all', (event, path) => {
-    // console.log(event, path)
-    const isConfigAppPath = path === appConfigurationPath
-    const isRootExtensionDirectory = extensionDirectories.some((dir) => pathActions.dirname(path) === dir)
-    const extensionRootDirectory = extensionPaths.find((dir) => path.startsWith(dir)) ?? 'unknown'
-
-    if (extensionRootDirectory === 'unknown' && !isConfigAppPath) {
-      // Change detected in a folder that is not in the list of extensions -> it could be an extension being created
-      // We should ignore these changes.
-      console.log('Detected change in UNKNOWN path: ', path)
-      return
-    }
-
-    console.log('Detected change in', extensionRootDirectory)
-    const extensionDebouncedChange = debouncers.get(extensionRootDirectory)
-
-    // We need to debounce events of type add, addDir, unlink, unlinkDir to avoid multiple events for the same extension
-    // When adding/deleting an extension, we get multiple events for the same extension
-    switch (event) {
-      case 'change':
-        onChange({type: isConfigAppPath ? 'app_config_updated' : 'file_updated', path})
-        break
-      case 'add':
-        // This event will be ignored for new extensions until the extension is added to `extensionPaths`.
-        onChange({type: 'file_created', path})
-        break
-      case 'addDir':
-        // Adding a root folder of a extension triggers a 'extension_folder_created'
-        // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
-        if (!isRootExtensionDirectory) break
-        // Wait 5 seconds to report the new extension to give time to the extension to be created
-        setTimeout(() => {
-          onChange({type: 'extension_folder_created', path})
-          extensionPaths.push(path)
-        }, 5000)
-        break
-      case 'unlink':
-        if (isConfigAppPath) {
-          onChange({type: 'app_config_deleted', path})
-        } else {
-          // When deleting a file, debounce the event to avoid multiple events for the same extension
-          // Ultimately, multiple deletion events could mean that the extension is being deleted
-          extensionDebouncedChange?.({type: 'file_deleted', path})
-        }
-        break
-      case 'unlinkDir':
-        // Deleting the root folder of a extension triggers a 'extension_folder_deleted'
-        // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
-        if (!isRootExtensionDirectory) break
-        // 'unlink'  and 'unlinkDir' use the same debouncer, when deleting an extension, the last event will always
-        // be a deletion of the root directory, so that's the last (and only) event we need to trigger.
-        extensionDebouncedChange?.({type: 'extension_folder_deleted', path})
-        debouncers.delete(path)
-        break
-    }
-  })
-  // listenForAbortOnWatchera(signal, functionRebuildAndRedeployWatcher, stdout, stderr)
+async function ExtensionFolderDeletedHandler(
+  event: WatcherEvent,
+  app: AppInterface,
+  extensions: ExtensionInstance[],
+  onChange: (event: AppEvent) => void,
+) {
+  if (extensions.length === 0) return
+  app.realExtensions = app.realExtensions.filter((ext) => ext.directory !== event.path)
+  const events = extensions.map((ext) => ({type: 'deleted', extension: ext})) as ExtensionEvent[]
+  onChange({app, extensionEvents: events})
 }
 
-const listenForAbortOnWatchera = (signal: AbortSignal, watcher: FSWatcher, stdout: Writable, stderr: Writable) => {
-  signal.addEventListener('abort', () => {
-    outputDebug(`Closing file watcher`, stdout)
-    watcher
-      .close()
-      .then(() => {
-        outputDebug(`File watching closed`, stdout)
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((error: any) => {
-        outputDebug(`File watching failed to close: ${error.message}`, stderr)
-      })
+async function FileChangeHandler(
+  event: WatcherEvent,
+  app: AppInterface,
+  extensions: ExtensionInstance[],
+  onChange: (event: AppEvent) => void,
+) {
+  // Decide if we need to re-build the extensions
+  const events = extensions.map((ext) => ({type: 'updated', extension: ext})) as ExtensionEvent[]
+  onChange({app, extensionEvents: events})
+}
+
+async function ExtensionFolderCreatedHandler(
+  event: WatcherEvent,
+  app: AppInterface,
+  extensions: ExtensionInstance[],
+  onChange: (event: AppEvent) => void,
+) {
+  // We need to reload the app
+  const newApp = await reloadApp(app)
+  // const events = extensions.map((ext) => ({type: 'created', extension: ext})) as ExtensionEvent[]
+  // TODO: Try to detect which extensions were created here
+  onChange({app: newApp, extensionEvents: []})
+}
+
+async function AppConfigUpdatedHandler(
+  event: WatcherEvent,
+  app: AppInterface,
+  extensions: ExtensionInstance[],
+  onChange: (event: AppEvent) => void,
+) {
+  const newApp = await reloadApp(app)
+  // TODO: Try to detect which extensions were created, deleted or updated here
+  onChange({app: newApp, extensionEvents: []})
+}
+
+async function AppConfigDeletedHandler() {
+  // The user deleted the active app.toml, why would they do that? :(
+  throw new AbortError('The active app.toml was deleted, exiting')
+}
+
+async function reloadApp(app: AppInterface): Promise<AppInterface> {
+  return loadApp({
+    specifications: app.specifications,
+    directory: app.directory,
+    userProvidedConfigName: undefined,
+    remoteFlags: app.remoteFlags,
   })
 }
