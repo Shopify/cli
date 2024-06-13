@@ -572,8 +572,8 @@ describe('checkForNewVersion', () => {
     vi.mocked(latestVersion).mockResolvedValue(newestVersion)
 
     // When
-    await checkForNewVersion(dependency, currentVersion, 0)
-    const result = await checkForNewVersion(dependency, currentVersion, 1000)
+    await checkForNewVersion(dependency, currentVersion)
+    const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
 
     // Then
     expect(result).toBe(newestVersion)

@@ -256,7 +256,7 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
 export async function checkForNewVersion(
   dependency: string,
   currentVersion: string,
-  refreshIfOlderThanSeconds = 0,
+  {cacheExpiryInHours = 0} = {},
 ): Promise<string | undefined> {
   const getLatestVersion = async () => {
     outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
@@ -266,7 +266,7 @@ export async function checkForNewVersion(
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   let lastVersion
   try {
-    lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, refreshIfOlderThanSeconds * 1000)
+    lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 24 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return undefined
