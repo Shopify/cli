@@ -9,6 +9,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 import {readdirSync} from 'fs'
 
 vi.mock('fs')
@@ -17,6 +18,7 @@ vi.mock('../generate-schema.js')
 vi.mock('../../prompts/function/replay.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../dev/extension/bundler.js')
+vi.mock('@shopify/cli-kit/node/output')
 
 describe('replay', () => {
   const developerPlatformClient = testDeveloperPlatformClient()
@@ -199,6 +201,29 @@ describe('replay', () => {
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expectExecToBeCalledWithInput(file.run.payload.input)
     expect(exec).toHaveBeenCalledTimes(2)
+  })
+
+  test('file watcher onReloadAndBuildError outputs error', async () => {
+    // Given
+    const expectedError = new Error('uh oh!')
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
+
+    // Then
+    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
+    expect(outputWarn).toHaveBeenCalledWith(`Failed to replay function: ${expectedError.message}`)
   })
 })
 

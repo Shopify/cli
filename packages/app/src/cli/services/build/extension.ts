@@ -9,6 +9,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -127,7 +128,14 @@ export async function buildFunctionExtension(
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
   const lockfilePath = joinPath(extension.directory, '.build-lock')
-  const releaseLock = await lockfile.lock(extension.directory, {retries: 10, lockfilePath})
+  let releaseLock
+  try {
+    releaseLock = await lockfile.lock(extension.directory, {retries: 10, lockfilePath})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    outputDebug(`Failed to acquire function build lock: ${error.message}`)
+    throw new Error('Failed to build function due to another in-progress build.')
+  }
 
   try {
     if (extension.isJavaScript) {

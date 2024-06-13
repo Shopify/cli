@@ -12,6 +12,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
+import {outputWarn} from '@shopify/cli-kit/node/output'
 import {readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
@@ -74,6 +75,9 @@ export async function replay(options: ReplayOptions) {
         stderr: process.stderr,
         onChange: async () => {
           await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+        },
+        onReloadAndBuildError: async (error) => {
+          outputWarn(`Failed to replay function: ${error.message}`)
         },
         signal: abortController.signal,
       })
