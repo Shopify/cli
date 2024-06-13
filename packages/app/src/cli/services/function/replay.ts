@@ -36,7 +36,7 @@ export interface FunctionRunData {
     logs: string
     fuel_consumed: number
   }
-  event_type: string
+  log_type: string
   cursor: string
   status: string
   source: string

@@ -1,4 +1,4 @@
-import {AppEventData} from './poll-app-logs.js'
+import {AppLogData} from './poll-app-logs.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -9,7 +9,7 @@ export const writeAppLogsToFile = async ({
   apiKey,
   stdout,
 }: {
-  appLog: AppEventData
+  appLog: AppLogData
   apiKey: string
   stdout: Writable
 }): Promise<string> => {
