@@ -18,7 +18,7 @@ import {
   PackageJsonNotFoundError,
   UnknownPackageManagerError,
 } from './node-package-manager.js'
-import {exec} from './system.js'
+import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
 import latestVersion from 'latest-version'
@@ -29,6 +29,7 @@ vi.mock('./system.js')
 vi.mock('latest-version')
 
 const mockedExec = vi.mocked(exec)
+const mockedCaptureOutput = vi.mocked(captureOutput)
 
 describe('installNPMDependenciesRecursively', () => {
   test('runs install in all the directories containing a package.json', async () => {
@@ -603,6 +604,7 @@ describe('addResolutionOrOverride', () => {
   test('when no package.json then an abort exception is thrown', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given/When
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
@@ -620,6 +622,7 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'yarn.lock'))
 
       // When
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -640,6 +643,7 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'pnpm-lock.yaml'))
 
       // When
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -660,6 +664,7 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'pnpm-workspace.yaml'))
 
       // When
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -680,6 +685,7 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'yarn.lock'))
 
       // When
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -700,6 +706,7 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'yarn.lock'))
 
       // When
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -733,10 +740,10 @@ describe('getPackageManager', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
-      const filePath = joinPath(tmpDir, 'package.json')
 
       // When
       await writePackageJSON(tmpDir, packageJSON)
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -748,12 +755,12 @@ describe('getPackageManager', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
-      const filePath = joinPath(tmpDir, 'package.json')
       const yarnLock = joinPath(tmpDir, 'yarn.lock')
 
       // When
       await writePackageJSON(tmpDir, packageJSON)
       await writeFile(yarnLock, '')
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -765,12 +772,12 @@ describe('getPackageManager', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const packageJSON = {name: 'mock name'}
-      const filePath = joinPath(tmpDir, 'package.json')
       const pnpmLock = joinPath(tmpDir, 'pnpm-lock.yaml')
 
       // When
       await writePackageJSON(tmpDir, packageJSON)
       await writeFile(pnpmLock, '')
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -783,6 +790,7 @@ describe('getPackageManager', () => {
       // Given
       const subDirectory = joinPath(tmpDir, 'subdir')
       await mkdir(subDirectory)
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // When/Then
       const packageManager = await getPackageManager(tmpDir)
