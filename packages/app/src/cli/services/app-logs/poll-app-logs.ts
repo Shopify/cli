@@ -17,7 +17,7 @@ const generateFetchAppLogUrl = async (cursor?: string) => {
   return url + (cursor ? `?cursor=${cursor}` : '')
 }
 
-export interface AppEventData {
+export interface AppLogData {
   shop_id: number
   api_client_id: number
   payload: string
@@ -75,7 +75,7 @@ export const pollAppLogs = async ({
     }
 
     const data = (await response.json()) as {
-      app_logs?: AppEventData[]
+      app_logs?: AppLogData[]
       cursor?: string
       errors?: string[]
     }

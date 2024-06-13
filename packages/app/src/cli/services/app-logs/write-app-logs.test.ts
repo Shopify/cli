@@ -1,12 +1,12 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {AppEventData} from './poll-app-logs.js'
+import {AppLogData} from './poll-app-logs.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/logs')
 
-const APP_LOG: AppEventData = {
+const APP_LOG: AppLogData = {
   shop_id: 1,
   api_client_id: 2,
   payload: JSON.stringify({someJson: 'someJSOn'}),
@@ -55,7 +55,7 @@ describe('writeAppLogsToFile', () => {
   })
 })
 
-function expectedLogDataFromAppEvent(event: AppEventData): string {
+function expectedLogDataFromAppEvent(event: AppLogData): string {
   const data = {
     ...event,
     payload: JSON.parse(event.payload),
