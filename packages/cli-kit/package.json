@@ -105,6 +105,7 @@
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@bugsnag/js": "7.21.0",
+    "@graphql-typed-document-node/core": "3.2.0",
     "@iarna/toml": "2.2.5",
     "@oclif/core": "3.26.5",
     "@opentelemetry/api": "1.6.0",

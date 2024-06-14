@@ -1,10 +1,11 @@
-import {graphqlRequest} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {debugLogResponseInfo} from '../../../private/node/api.js'
 import * as debugRequest from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import {GraphQLClient} from 'graphql-request'
 import {test, vi, describe, expect, beforeEach} from 'vitest'
 import {Headers} from 'node-fetch'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 vi.mock('../../../private/node/api.js')
 vi.mock('graphql-request', async () => {
@@ -55,5 +56,39 @@ describe('graphqlRequest', () => {
       url: mockedAddress,
     }
     expect(debugLogResponseInfo).toHaveBeenCalledWith(receivedObject, expect.any(Function))
+  })
+})
+
+describe('graphqlRequestDoc', () => {
+  test('converts document before querying', async () => {
+    const document = {
+      kind: 'Document',
+      definitions: [
+        {
+          kind: 'OperationDefinition',
+          operation: 'query',
+          name: {kind: 'Name', value: 'QueryName'},
+          selectionSet: {
+            kind: 'SelectionSet',
+            selections: [
+              {
+                kind: 'Field',
+                name: {kind: 'Name', value: 'example'},
+              },
+            ],
+          },
+        },
+      ],
+    } as unknown as TypedDocumentNode<unknown, unknown>
+
+    await graphqlRequestDoc({
+      query: document,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      addedHeaders: mockedAddedHeaders,
+      variables: mockVariables,
+    })
+    expect(GraphQLClient.prototype.rawRequest).toHaveBeenCalledWith('query QueryName {\n  example\n}', mockVariables)
   })
 })
