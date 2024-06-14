@@ -1,22 +1,45 @@
 import {gql} from 'graphql-request'
 
+/* TODO deal with permissions better https://docs.google.com/document/d/1RoR_xkr6gAbXNKs3yeWssU5BcIXBYPaIao-5QHgX3fc/edit#heading=h.7nn4amay3dyy */
+/* TODO for more options like pagination/sort/search see https://github.com/Shopify/business-platform/pull/19676#issuecomment-2165895156 */
 export const DevStoresQuery = gql`
-  query ListDevStores($organizationId: OrganizationID!) {
-    organization(organizationId: $organizationId) {
+  query ListAppDevStores {
+    organization {
       id
-      properties(offeringHandles: ["shop"]) {
+      properties(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, offeringHandles: ["shop"]) {
         edges {
           node {
             id
             externalId
             ... on Shop {
               name
-              hasPendingTransfer
-              primaryDomain
               storeType
+              primaryDomain
               shortName
+              identificationSettings {
+                internalName
+                code
+                logoImageUrl
+              }
+              url
+              status
+              usersCount
+              ownerDetails {
+                id
+                email
+                givenName
+                familyName
+                avatarUrl
+              }
+              hasPendingTransfer
             }
           }
+        }
+        pageInfo {
+          startCursor
+          endCursor
+          hasNextPage
+          hasPreviousPage
         }
       }
     }
