@@ -51,6 +51,15 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
         run: envs.CI_RUNNER_ID,
         url: envs.CI_PIPELINE_URL,
       }
+    case 'buildkite':
+      return {
+        branch: envs.BUILDKITE_BRANCH,
+        build: envs.BUILDKITE_BUILD_NUMBER,
+        commitSha: envs.BUILDKITE_COMMIT,
+        commitMessage: envs.BUILDKITE_MESSAGE,
+        run: envs.BUILDKITE_BUILD_NUMBER,
+        url: envs.BUILDKITE_BUILD_URL,
+      }
     default:
       return {}
   }
