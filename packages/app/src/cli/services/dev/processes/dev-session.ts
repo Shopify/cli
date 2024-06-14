@@ -153,6 +153,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
 
   // API TODO: Deploy the GCS URL to the Dev Session
   console.log('>>>>> Deploying to Dev Session')
+
   const result = await options.developerPlatformClient.devSessionDeploy({
     shopName: options.storeFqdn,
     appId: options.apiKey,

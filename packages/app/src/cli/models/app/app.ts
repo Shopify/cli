@@ -336,7 +336,7 @@ export class App<
         return {
           type: module.externalType,
           handle: module.handle,
-          uid: module.devUUID,
+          uid: module.uid,
           config: (config ?? {}) as JsonMapType,
         }
       }),

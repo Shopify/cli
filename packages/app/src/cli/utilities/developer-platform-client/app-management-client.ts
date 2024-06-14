@@ -209,9 +209,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     return {
-      id: '123',
+      id: 'gid://shopify/app/130918678529',
       title: 'title',
-      apiKey: 'apiKey',
+      apiKey: 'gid://shopify/app/130918678529',
       organizationId: '109300',
       apiSecretKeys: [],
       grantedScopes: [],
@@ -674,7 +674,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionDeploy({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
     const query = DevSessionDeploy
-    const variables: DevSessionDeployVariables = {appId, assetsUrl}
+    const variables: DevSessionDeployVariables = {appId: String(numberFromGid(appId)), assetsUrl}
     return devSessionRequest<DevSessionDeploySchema>(shopName, query, await this.token(), variables)
   }
 
@@ -873,6 +873,7 @@ function idFromEncodedGid(gid: string): string {
 
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
+  console.log('GID: ', gid)
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }
 
