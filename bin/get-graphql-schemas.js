@@ -85,8 +85,10 @@ async function fetchFileForSchema(schema, octokit) {
     fs.writeFileSync(localFilePath, content)
 
     console.log(`File downloaded successfully to ${localFilePath}`)
+    return true
   } catch (error) {
     console.error(`Error fetching file: ${error.message}`)
+    return false
   }
 }
 
@@ -98,15 +100,21 @@ async function fetchFiles() {
     const output = await runCommand('/opt/dev/bin/dev', ['github', 'print-auth'])
     password = extractPassword(output)
   }
-
   const authToken = password || tokenFromEnv
+
   console.log(`Using token: ${authToken}`)
   const octokit = new Octokit({
     auth: authToken,
   })
 
+  let allSuccess = true
   for (const schema of schemas) {
-    await fetchFileForSchema(schema, octokit)
+    allSuccess = await fetchFileForSchema(schema, octokit) && allSuccess
+  }
+
+  if (!allSuccess) {
+    console.error('Failed to fetch all files')
+    process.exit(1)
   }
 }
 
