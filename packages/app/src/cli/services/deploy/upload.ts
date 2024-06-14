@@ -265,12 +265,20 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
     const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
+    const specificationIdentifier = error.details.find(
+      (detail) => typeof detail.specification_identifier !== 'undefined',
+    )?.specification_identifier
     const extensionIdentifier = error.details
       .find((detail) => typeof detail.extension_id !== 'undefined')
       ?.extension_id.toString()
 
     const handle = Object.keys(identifiers).find((key) => identifiers[key] === extensionIdentifier)
-    const extensionName = handle ?? remoteTitle
+    let extensionName = handle ?? remoteTitle
+
+    if (specificationIdentifier === 'webhook_subscription') {
+      // The remote title is a random identifier in this case
+      extensionName = 'Webhook Subscription'
+    }
 
     const existingSection = sections.find((section) => section.title === extensionName)
 
