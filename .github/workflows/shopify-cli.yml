@@ -229,6 +229,9 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Unit tests
         run: pnpm test:unit
+      - name: Flush test output
+        if: always()
+        run: 'echo "tests complete"'
 
   pr-acceptance-tests:
     name: '[PR] Accept. Test with Node ${{ matrix.node }} in ${{ matrix.os }}'

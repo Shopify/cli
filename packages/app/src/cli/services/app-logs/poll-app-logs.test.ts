@@ -197,6 +197,8 @@ describe('pollAppLogs', () => {
     expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
+
+    expect(false).toBeTruthy()
   })
 
   test('calls resubscribe callback if a 401 is received', async () => {
