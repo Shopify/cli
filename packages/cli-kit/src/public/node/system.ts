@@ -2,6 +2,7 @@ import {AbortSignal} from './abort.js'
 import {ExternalError} from './error.js'
 import {cwd} from './path.js'
 import {treeKill} from './tree-kill.js'
+import {isTruthy} from './context/utilities.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import {ReadStream} from 'tty'
@@ -133,9 +134,13 @@ export async function sleep(seconds: number): Promise<void> {
  * will be used.
  *
  * @param stdin - The standard input stream to check.
+ * @param env - Environmemnt variables.
  * @returns True in the selected input stream support raw mode.
  */
-export function terminalSupportsRawMode(stdin?: ReadStream): boolean {
+export function terminalSupportsRawMode(stdin?: ReadStream, env = process.env): boolean {
+  if (isTruthy(env.CI)) {
+    return false
+  }
   if (stdin) return Boolean(stdin.isTTY)
   return process.stdin.isTTY
 }
