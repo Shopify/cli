@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features --output-style=stream
       - name: Type-diff
         working-directory: workspace
         id: type-diff
