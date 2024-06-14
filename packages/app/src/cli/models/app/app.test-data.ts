@@ -27,7 +27,6 @@ import {
   DeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
-import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
@@ -58,6 +57,10 @@ import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graph
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
 import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
+import {
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateDraftMutationVariables,
+} from '../../api/graphql/partners/generated/update-draft.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -1069,9 +1072,8 @@ export const extensionCreateResponse: ExtensionCreateSchema = {
   },
 }
 
-const extensionUpdateResponse: ExtensionUpdateSchema = {
+const extensionUpdateResponse: ExtensionUpdateDraftMutation = {
   extensionUpdateDraft: {
-    clientMutationId: 'client-mutation-id',
     userErrors: [],
   },
 }
@@ -1217,7 +1219,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
-    updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
+    updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),

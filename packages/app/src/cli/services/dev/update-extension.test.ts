@@ -8,7 +8,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {ExtensionUpdateDraftInput} from '../../api/graphql/update_draft.js'
+import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
@@ -197,7 +197,7 @@ describe('updateExtensionDraft()', () => {
       },
     }
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftInput) => Promise.resolve(errorResponse),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.resolve(errorResponse),
     })
     await inTemporaryDirectory(async (tmpDir) => {
       const mockExtension = await testUIExtension({
