@@ -82,7 +82,7 @@ describe('create app command', () => {
     const expectedError = new AbortError(
       outputContent`Only ${initPrompt.visibleTemplates
         .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
-        .join(', ')} template aliases are supported`,
+        .join(', ')} template aliases are supported, please provide a valid URL`,
     )
     expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
   })
