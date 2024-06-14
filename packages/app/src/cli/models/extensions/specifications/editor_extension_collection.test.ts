@@ -29,7 +29,12 @@ describe('editor_extension_collection', async () => {
       metafields: [],
     }
 
-    const config = specification.schema.parse(configuration)
+    const parsed = specification.parseConfigurationObject(configuration)
+    if (parsed.state !== 'ok') {
+      throw new Error("Couldn't parse configuration")
+    }
+
+    const config = parsed.data
 
     return new ExtensionInstance({
       configuration: config,

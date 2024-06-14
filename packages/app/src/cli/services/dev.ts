@@ -30,7 +30,7 @@ import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
-import {SpecsAppConfiguration} from '../models/extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -248,7 +248,7 @@ export async function setupNetworkingOptions(
   graphiqlPort: number,
   frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl'>,
   tunnelClient?: TunnelClient,
-  remoteAppConfig?: SpecsAppConfiguration,
+  remoteAppConfig?: AppConfigurationUsedByCli,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 

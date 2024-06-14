@@ -187,6 +187,7 @@ function getAppVars(
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
+  public clientName = 'partners'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
   private _session: PartnersSession | undefined

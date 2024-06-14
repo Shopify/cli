@@ -18,6 +18,9 @@ export const ExtensionSpecificationsQuery = gql`
           surface
         }
       }
+      validationSchema {
+        jsonSchema
+      }
     }
   }
 `
@@ -41,6 +44,9 @@ export interface RemoteSpecification {
     argo?: {
       surface: string
     }
+  }
+  validationSchema?: {
+    jsonSchema: string
   }
 }
 

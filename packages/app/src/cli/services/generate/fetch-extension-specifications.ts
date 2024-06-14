@@ -3,6 +3,7 @@ import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graph
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -47,29 +48,53 @@ export async function fetchSpecifications({
     })
 
   const local = await loadLocalExtensionsSpecifications()
-  const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  const updatedSpecs = await mergeLocalAndRemoteSpecs(local, extensionSpecifications)
   return [...updatedSpecs]
 }
 
-function mergeLocalAndRemoteSpecs(
+async function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
-): RemoteAwareExtensionSpecification[] {
-  const updated = local.map((spec) => {
+): Promise<RemoteAwareExtensionSpecification[]> {
+  const updated = local.map(async (spec) => {
     const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification
+    if (remoteSpec) {
+      const merged = {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
+        FlattenedRemoteSpecification
+
+      const parseConfigurationObject = await unifiedConfigurationParserFactory(merged)
+
+      return {
+        ...merged,
+        parseConfigurationObject,
+      }
+    }
     return undefined
   })
 
-  const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(updated)
+  const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(await Promise.all(updated))
 
   // Log the specs that were defined locally but aren't in the result
   // This usually means the spec is a gated one and the caller doesn't have adequate access. Or, we're in a test and
   // the mocked specification set is missing something.
-  const missing = local.filter((spec) => !result.find((result) => result.identifier === spec.identifier))
-  if (missing.length > 0) {
+  const presentLocalMissingRemote = local.filter(
+    (spec) => !result.find((result) => result.identifier === spec.identifier),
+  )
+  if (presentLocalMissingRemote.length > 0) {
     outputDebug(
-      `The following extension specifications were defined locally but not found in the remote specifications: ${missing
+      `The following extension specifications were defined locally but not found in the remote specifications: ${presentLocalMissingRemote
+        .map((spec) => spec.identifier)
+        .sort()
+        .join(', ')}`,
+    )
+  }
+
+  const presentRemoteMissingLocal = remote.filter(
+    (spec) => !result.find((result) => result.identifier === spec.identifier),
+  )
+  if (presentRemoteMissingLocal.length > 0) {
+    outputDebug(
+      `The following extension specifications were found in the remote specifications but not defined locally: ${presentRemoteMissingLocal
         .map((spec) => spec.identifier)
         .sort()
         .join(', ')}`,

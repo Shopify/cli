@@ -23,5 +23,3 @@ deploy:
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot experimental"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-build-no-docs"
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
-  post:
-    - bash -i -c "pnpm run update-bugsnag"

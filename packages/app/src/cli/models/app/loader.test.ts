@@ -5,9 +5,9 @@ import {
   loadDotEnv,
   parseConfigurationObject,
   parseHumanReadableError,
-  loadAppConfiguration,
   checkFolderIsValidApp,
   AppLoaderMode,
+  getAppConfigurationState,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -1948,42 +1948,40 @@ wrong = "property"
     expect(app.allExtensions).toHaveLength(6)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
-      expect.objectContaining({
+      {
         name: 'for-testing-webhooks',
-      }),
-      expect.objectContaining({
+      },
+      {
         auth: {
           redirect_urls: ['https://example.com/api/auth'],
         },
-      }),
+      },
       // this is the webhooks extension
-      expect.objectContaining({
+      {
         webhooks: {
           api_version: '2024-01',
           subscriptions: [
-            {
-              topics: ['orders/create', 'orders/delete'],
-              uri: 'https://example.com',
-            },
+            {topics: ['orders/create'], uri: 'https://example.com'},
+            {topics: ['orders/delete'], uri: 'https://example.com'},
           ],
         },
-      }),
-      expect.objectContaining({
+      },
+      {
         application_url: 'https://example.com/lala',
         embedded: true,
-      }),
+      },
       // this is a webhook subscription extension
-      expect.objectContaining({
+      {
         api_version: '2024-01',
         topic: 'orders/create',
         uri: 'https://example.com',
-      }),
+      },
       // this is a webhook subscription extension
-      expect.objectContaining({
+      {
         api_version: '2024-01',
         topic: 'orders/delete',
         uri: 'https://example.com',
-      }),
+      },
     ])
   })
 
@@ -2276,191 +2274,6 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
-  test('loads the app when using dynamically specified config sections with remapping', async () => {
-    // Given
-    const config = `
-    name = "my_app"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [build]
-    include_config_on_deploy = true
-
-    [bar]
-    this_is_unknown = true
-
-    [baz]
-    and_so_is_this = 123
-
-    [xyz]
-    this_isnt_remapped = false
-    `
-    await writeConfig(config)
-
-    // When
-    const app = await loadApp(
-      {
-        directory: tmpDir,
-        specifications,
-        userProvidedConfigName: undefined,
-      },
-      {
-        SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
-        ...process.env,
-      },
-    )
-    expect((app.configuration as any).foo).toEqual({
-      bar: {
-        this_is_unknown: true,
-      },
-      baz: {
-        and_so_is_this: 123,
-      },
-    })
-
-    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
-      'app_access',
-      'app_home',
-      'branding',
-      'foo',
-      'webhooks',
-      'xyz',
-    ])
-
-    const fooExtension = app.allExtensions.filter((ext) => ext.handle === 'foo')
-    expect(fooExtension.length).toBe(1)
-    expect(fooExtension[0]?.configuration).toEqual({
-      foo: {
-        bar: {
-          this_is_unknown: true,
-        },
-        baz: {
-          and_so_is_this: 123,
-        },
-      },
-    })
-
-    const xyzExtension = app.allExtensions.filter((ext) => ext.handle === 'xyz')
-    expect(xyzExtension.length).toBe(1)
-    expect(xyzExtension[0]?.configuration).toEqual({
-      xyz: {
-        this_isnt_remapped: false,
-      },
-    })
-  })
-
-  test('loads the app when using dynamically specified config sections without remapping', async () => {
-    // Given
-    const config = `
-    name = "my_app"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [build]
-    include_config_on_deploy = true
-
-    [bar]
-    this_is_unknown = true
-
-    [baz]
-    and_so_is_this = 123
-
-    [xyz]
-    this_isnt_remapped = false
-    `
-    await writeConfig(config)
-
-    // When
-    const app = await loadApp(
-      {
-        directory: tmpDir,
-        specifications,
-        userProvidedConfigName: undefined,
-      },
-      {
-        SHOPIFY_CLI_DYNAMIC_CONFIG: '1',
-        ...process.env,
-      },
-    )
-
-    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
-      'app_access',
-      'app_home',
-      'bar',
-      'baz',
-      'branding',
-      'webhooks',
-      'xyz',
-    ])
-  })
-
-  test('loads the app when using dynamically specified config sections, and only interested in app config', async () => {
-    const config = `
-    name = "my_app"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [build]
-    include_config_on_deploy = true
-
-    [bar]
-    this_is_unknown = true
-
-    [baz]
-    and_so_is_this = 123
-
-    [xyz]
-    this_isnt_remapped = false
-    `
-    await writeConfig(config)
-
-    const appConfig = await loadAppConfiguration(
-      {
-        directory: tmpDir,
-        specifications,
-        userProvidedConfigName: undefined,
-      },
-      {
-        SHOPIFY_CLI_DYNAMIC_CONFIG: ' foo, bar, baz, ',
-        ...process.env,
-      },
-    )
-
-    expect((appConfig.configuration as any).foo).toEqual({
-      bar: {
-        this_is_unknown: true,
-      },
-      baz: {
-        and_so_is_this: 123,
-      },
-    })
-
-    expect((appConfig.configuration as any).xyz).toEqual({
-      this_isnt_remapped: false,
-    })
-  })
-
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)(
@@ -2680,7 +2493,7 @@ describe('parseConfigurationObject', () => {
     const {path, ...toParse} = configurationObject
     await parseConfigurationObject(schema, 'tmp', toParse, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', errorObject)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if fields are missing in a legacy schema TOML file', async () => {
@@ -2703,7 +2516,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', errorObject)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if fields are missing in a frontend config web TOML file', async () => {
@@ -2752,7 +2565,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', expect.anything())
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 })
 
@@ -2774,7 +2587,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('removes trailing slashes on uri', async () => {
@@ -2801,7 +2614,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('accepts an https uri', async () => {
@@ -2861,9 +2674,39 @@ describe('WebhooksSchema', () => {
       ],
     }
 
+    const expandedWebhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/update'],
+        },
+        {
+          uri: 'https://example.com',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'https://example.com',
+          topics: ['products/update'],
+        },
+        {
+          uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create'],
+        },
+        {
+          uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/update'],
+        },
+      ],
+    }
+
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
@@ -2878,11 +2721,11 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if we have duplicate subscriptions in different topics array', async () => {
@@ -2897,34 +2740,11 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
-
-  test('allows unique topics in both same topic array and different subscriptions', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
-        {uri: 'https://example.com2', topics: ['products/create', 'products/update']},
-        {uri: 'https://example.com', topics: ['products/delete']},
-      ],
-    }
-
-    const expectedParsedConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/delete', 'products/update']},
-        {uri: 'https://example.com2', topics: ['products/create', 'products/update']},
-      ],
-    }
-
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(expectedParsedConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('removes trailing forward slash', async () => {
@@ -2961,7 +2781,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('accepts a pub sub config with both project and topic', async () => {
@@ -2998,11 +2818,11 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if we have duplicate pub sub subscriptions', async () => {
@@ -3023,11 +2843,11 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if we have duplicate arn subscriptions', async () => {
@@ -3048,11 +2868,11 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('does not allow identical topic and uri and filter in different subscriptions', async () => {
@@ -3075,11 +2895,11 @@ describe('WebhooksSchema', () => {
       code: zod.ZodIssueCode.custom,
       message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
       fatal: true,
-      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/update'],
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/update'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('allows identical topic and uri if filter is different', async () => {
@@ -3124,7 +2944,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error if neither topics nor compliance_topics are added', async () => {
@@ -3143,7 +2963,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   test('throws an error when there are duplicated compliance topics', async () => {
@@ -3168,7 +2988,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
@@ -3182,4 +3002,57 @@ describe('WebhooksSchema', () => {
     const parsedConfiguration = await parseConfigurationObject(WebhooksSchema, 'tmp', toParse, abortOrReport)
     return {abortOrReport, expectedFormatted, parsedConfiguration}
   }
+})
+
+describe('getAppConfigurationState', () => {
+  test.each([
+    [
+      `scopes = "  write_xyz,     write_abc    "`,
+      {
+        state: 'template-only',
+        configSource: 'cached',
+        configurationFileName: 'shopify.app.toml',
+        appDirectory: expect.any(String),
+        configurationPath: expect.stringMatching(/shopify.app.toml$/),
+        startingOptions: {
+          path: expect.stringMatching(/shopify.app.toml$/),
+          scopes: 'write_abc,write_xyz',
+        },
+      },
+    ],
+    [
+      `client_id="abcdef"`,
+      {
+        state: 'connected-app',
+      },
+    ],
+    [
+      ``,
+      {
+        state: 'template-only',
+      },
+    ],
+    [
+      `client_id="abcdef"
+      something_extra="keep"`,
+      {
+        state: 'connected-app',
+        basicConfiguration: {
+          path: expect.stringMatching(/shopify.app.toml$/),
+          client_id: 'abcdef',
+          something_extra: 'keep',
+        },
+      },
+    ],
+  ])('loads from %s', async (content, resultShouldContain) => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const appConfigPath = joinPath(tmpDir, 'shopify.app.toml')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await writeFile(appConfigPath, content)
+      await writeFile(packageJsonPath, '{}')
+
+      const state = await getAppConfigurationState(tmpDir, undefined)
+      expect(state).toMatchObject(resultShouldContain)
+    })
+  })
 })

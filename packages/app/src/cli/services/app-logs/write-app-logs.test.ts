@@ -11,6 +11,7 @@ const APP_LOG: AppEventData = {
   api_client_id: 2,
   payload: JSON.stringify({someJson: 'someJSOn'}),
   event_type: 'function_run',
+  log_type: undefined,
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
   source: 'my-function',
@@ -26,7 +27,7 @@ describe('writeAppLogsToFile', () => {
     stdout = {write: vi.fn()}
   })
 
-  test('calls writeLog with the right data', async () => {
+  test('calls writeLog with the right data with log_type === undefined', async () => {
     // Given
     const logData = expectedLogDataFromAppEvent(APP_LOG)
 
@@ -35,11 +36,31 @@ describe('writeAppLogsToFile', () => {
     const path = joinPath(API_KEY, fileName)
 
     // When
-    await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
+    const returnedPath = await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
 
     // Then
+    expect(returnedPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
+  })
+
+  test('calls writeLog with the right data with log_type !== undefined', async () => {
+    // Given
+    const appLog = {
+      ...APP_LOG,
+      log_type: 'function_run',
+    }
+    const logData = expectedLogDataFromAppEvent(appLog)
+
+    // determine the fileName and path
+    const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
+    const path = joinPath(API_KEY, fileName)
+
+    // When
+    const returnedPath = await writeAppLogsToFile({appLog, apiKey: API_KEY, stdout})
+
+    // Then
+    expect(returnedPath.startsWith(path)).toBe(true)
+    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
   })
 
   test('prints and re-throws parsing errors', async () => {

@@ -102,7 +102,12 @@ describe('ui_extension', async () => {
       }
 
       // When
-      const got = specification.schema.parse(configuration)
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
 
       // Then
       expect(got.extension_points).toStrictEqual([
@@ -143,7 +148,12 @@ describe('ui_extension', async () => {
       }
 
       // When
-      const got = specification.schema.parse(configuration)
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
 
       // Then
       expect(got.extension_points).toStrictEqual([
@@ -179,15 +189,15 @@ describe('ui_extension', async () => {
       }
 
       // When/Then
-      expect(() => specification.schema.parse(configuration)).toThrowError(
-        new zod.ZodError([
-          {
-            code: zod.ZodIssueCode.custom,
-            message: 'No extension targets defined, add a `targeting` field to your configuration',
-            path: [],
-          },
-        ]),
-      )
+      const parsed = specification.parseConfigurationObject(configuration)
+      expect(parsed.state).toBe('error')
+      expect(parsed.errors).toEqual([
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'No extension targets defined, add a `targeting` field to your configuration',
+          path: [],
+        },
+      ])
     })
 
     test('returns err(message) when extensionPoints[n].module does not map to a file', async () => {

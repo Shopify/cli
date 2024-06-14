@@ -4,6 +4,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
+import * as output from '@shopify/cli-kit/node/output'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -13,6 +14,9 @@ vi.mock('@shopify/cli-kit/node/http')
 
 const FQDN = await partnersFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
+const FUNCTION_ERROR = 'function_error'
+const FUNCTION_RUN = 'function_run'
+
 const INPUT = {
   cart: {
     lines: [
@@ -56,6 +60,15 @@ const FUNCTION_PAYLOAD = {
   logs: LOGS,
   fuel_consumed: 512436,
 }
+const FAILURE_PAYLOAD = {
+  input: JSON.stringify(INPUT),
+  input_bytes: 123,
+  output: JSON.stringify(OUTPUT),
+  output_bytes: 182,
+  function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
+  logs: LOGS,
+  error_type: FUNCTION_ERROR,
+}
 const OTHER_PAYLOAD = {some: 'arbitrary payload'}
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'
 const RESPONSE_DATA = {
@@ -64,7 +77,29 @@ const RESPONSE_DATA = {
       shop_id: 1,
       api_client_id: 1830457,
       payload: JSON.stringify(FUNCTION_PAYLOAD),
-      event_type: 'function_run',
+      event_type: FUNCTION_RUN,
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'success',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(FAILURE_PAYLOAD),
+      event_type: FUNCTION_RUN,
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'failure',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(FUNCTION_PAYLOAD),
+      log_type: FUNCTION_RUN,
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
       source: SOURCE,
@@ -147,13 +182,40 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
     })
+    expect(writeAppLogsToFile).toHaveBeenCalledWith({
+      appLog: RESPONSE_DATA.app_logs[2],
+      apiKey: API_KEY,
+      stdout,
+    })
+    expect(writeAppLogsToFile).toHaveBeenCalledWith({
+      appLog: RESPONSE_DATA.app_logs[3],
+      apiKey: API_KEY,
+      stdout,
+    })
 
-    expect(stdout.write).toHaveBeenCalledWith('Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenCalledWith(LOGS)
+    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: SOURCE, stripAnsi: false},
+      expect.any(Function),
+    )
 
-    expect(components.useConcurrentOutputContext).toHaveBeenCalledWith({outputPrefix: SOURCE}, expect.any(Function))
+    // app_logs[0]
+    expect(stdout.write).toHaveBeenNthCalledWith(1, 'Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(3, expect.stringContaining('Log: '))
 
-    expect(stdout.write).toHaveBeenCalledWith(JSON.stringify(OTHER_PAYLOAD))
+    // app_logs[1]
+    expect(stdout.write).toHaveBeenNthCalledWith(4, `❌ Function failed to execute with error: ${FUNCTION_ERROR}`)
+    expect(stdout.write).toHaveBeenNthCalledWith(5, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining('Log: '))
+
+    // app_logs[2]
+    expect(stdout.write).toHaveBeenNthCalledWith(7, 'Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(9, expect.stringContaining('Log: '))
+
+    // app_logs[3]
+    expect(stdout.write).toHaveBeenNthCalledWith(10, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(11, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })
@@ -177,29 +239,58 @@ describe('pollAppLogs', () => {
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
   })
 
-  test('throws error if response is not ok', async () => {
+  test('displays error, waits, and retries if status is 429 or >500', async () => {
     // Given
     const url = `https://${FQDN}/app_logs/poll`
 
-    const response = new Response('errorMessage', {status: 500})
-    const mockedFetch = vi.fn().mockResolvedValueOnce(response)
+    const mockedFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('error for 429', {status: 429}))
+      .mockResolvedValueOnce(new Response('error for 500', {status: 500}))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
-    await expect(() =>
-      pollAppLogs({
-        stdout,
-        appLogsFetchInput: {jwtToken: JWT_TOKEN},
-        apiKey: API_KEY,
-        resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
-      }),
-    ).rejects.toThrowError('Error while fetching: errorMessage')
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+    await vi.advanceTimersToNextTimerAsync()
 
+    expect(stdout.write).toHaveBeenCalledWith('error for 429')
+    expect(stdout.write).toHaveBeenCalledWith('error for 500')
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('stops polling when unexpected error occurs instead of throwing ', async () => {
+    // Given
+    const url = `https://${FQDN}/app_logs/poll`
+    const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+
+    // An unexpected error response
+    const response = new Response('errorMessage', {status: 422})
+    const mockedFetch = vi.fn().mockResolvedValueOnce(response)
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+
+    // Then
     expect(fetch).toHaveBeenCalledWith(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${JWT_TOKEN}`,
       },
     })
+    expect(stdout.write).toHaveBeenCalledWith('Error while retrieving app logs.')
+    expect(stdout.write).toHaveBeenCalledWith('App log streaming is no longer available in this `dev` session.')
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
+    expect(vi.getTimerCount()).toEqual(0)
   })
 })

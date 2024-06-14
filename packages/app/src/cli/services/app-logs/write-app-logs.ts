@@ -12,7 +12,7 @@ export const writeAppLogsToFile = async ({
   appLog: AppEventData
   apiKey: string
   stdout: Writable
-}) => {
+}): Promise<string> => {
   const identifier = randomUUID().substring(0, 6)
 
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
@@ -29,7 +29,7 @@ export const writeAppLogsToFile = async ({
     const logData = JSON.stringify(toSaveData, null, 2)
 
     await writeLog(path, logData)
-    stdout.write(`Log: ${fullOutputPath}\n`)
+    return fullOutputPath
   } catch (error) {
     stdout.write(`Error while writing log to file: ${error}\n`)
     throw error

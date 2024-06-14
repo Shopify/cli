@@ -11,7 +11,6 @@ import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 vi.mock('../../../services/deploy/upload.js')
 
@@ -104,12 +103,10 @@ describe('PaymentsAppExtension', () => {
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
-    // When/Then
-    expect(() =>
-      specification.schema.parse({
-        ...config,
-        targeting: [{target: undefined}],
-      }),
-    ).toThrowError(zod.ZodError)
+    const parsed = specification.parseConfigurationObject({
+      ...config,
+      targeting: [{target: undefined}],
+    })
+    expect(parsed.state).toBe('error')
   })
 })

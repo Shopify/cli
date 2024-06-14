@@ -91,7 +91,7 @@ export interface themepush {
   '-u, --unpublished'?: ''
 
   /**
-   * Increase the verbosity of the logs.
+   * Increase the verbosity of the output.
    * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''

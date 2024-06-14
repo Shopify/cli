@@ -2,7 +2,7 @@ import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization
 import {selectAppPrompt} from '../../prompts/dev.js'
 import {Flag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {
   AppModuleVersion,
   DeveloperPlatformClient,
@@ -60,7 +60,7 @@ export async function fetchAppRemoteConfiguration(
     appModuleVersionsConfig,
     specifications,
     flags,
-  ) as unknown as SpecsAppConfiguration
+  ) as unknown as AppConfigurationUsedByCli
   return remoteConfiguration
 }
 

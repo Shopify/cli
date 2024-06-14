@@ -1,4 +1,4 @@
-import {SpecsAppConfiguration} from './extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
 import {Flag} from '../services/dev/fetch.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
@@ -49,7 +49,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
     subPathPrefix: string
     url: string
   }
-  configuration?: SpecsAppConfiguration
+  configuration?: AppConfigurationUsedByCli
   flags: Flag[]
   developerPlatformClient?: DeveloperPlatformClient
 }

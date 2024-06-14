@@ -4,12 +4,12 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
+import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
@@ -84,7 +84,7 @@ export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
 /**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
  */
-export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & SpecsAppConfiguration
+export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppConfigurationUsedByCli
 
 /**
  * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
@@ -92,17 +92,14 @@ export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & Spec
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 
 /** Validation schema that produces a provided app configuration type */
-type SchemaForConfig<TConfig extends {path: string}> = zod.ZodType<Omit<TConfig, 'path'>>
+export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
   allowDynamicallySpecifiedConfigs = false,
-): typeof AppSchema {
-  const isConfigSpecification = (spec: ExtensionSpecification) => spec.uidStrategy === 'single'
-  const schema = specs
-    .filter(isConfigSpecification)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .reduce((schema, spec) => schema.merge(spec.schema), AppSchema as any)
+): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const schema = specs.reduce((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema as any)
 
   if (allowDynamicallySpecifiedConfigs) {
     return schema.passthrough()
@@ -283,7 +280,7 @@ export class App<
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: TModuleSpec[]
-  configSchema: zod.ZodTypeAny
+  configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
 

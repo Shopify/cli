@@ -31,7 +31,7 @@ export interface themeshare {
   '-s, --store <value>'?: string
 
   /**
-   * Increase the verbosity of the logs.
+   * Increase the verbosity of the output.
    * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''

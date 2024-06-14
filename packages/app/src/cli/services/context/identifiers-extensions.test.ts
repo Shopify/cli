@@ -1150,22 +1150,34 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
 
   test('if there are possible matches, creates the extension for those that dont match', async () => {
     // Given
+    const config = {
+      topic: 'orders/delete',
+      api_version: '2024-01',
+      uri: 'https://my-app.com/webhooks',
+      include_fields: ['id'],
+      filter: 'id:*',
+    }
+    const sameTopicConfig = {
+      topic: 'orders/delete',
+      api_version: '2024-01',
+      uri: 'https://my-app.com/webhooks',
+      include_fields: ['id'],
+      filter: 'id:1234',
+    }
+
     const webhookSubscriptionExtension = {
       uuid: 'webhook-subscription-uuid',
       id: 'webhook-subscription-id',
       title: 'Webhook Subscription',
       type: 'WEBHOOK_SUBSCRIPTION',
       activeVersion: {
-        config: JSON.stringify({
-          api_version: '2024-01',
-          topic: 'orders/delete',
-          uri: 'https://my-app.com/webhooks',
-        }),
+        config: JSON.stringify(config),
       },
     }
 
     const localSources = [
-      await testSingleWebhookSubscriptionExtension(),
+      await testSingleWebhookSubscriptionExtension({config}),
+      await testSingleWebhookSubscriptionExtension({config: sameTopicConfig}),
       await testSingleWebhookSubscriptionExtension({topic: 'products/create'}),
       await testSingleWebhookSubscriptionExtension({topic: 'products/update'}),
       await testSingleWebhookSubscriptionExtension({topic: 'products/delete'}),
@@ -1202,13 +1214,14 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     )
 
     // Then
-    expect(developerPlatformClient.createExtension).toBeCalledTimes(3)
+    expect(developerPlatformClient.createExtension).toBeCalledTimes(4)
     expect(Object.values(extensionsNonUuidManaged)).toEqual([
       'webhook-subscription-uuid',
       'webhook-subscription-1',
       'webhook-subscription-2',
       'webhook-subscription-3',
+      'webhook-subscription-4',
     ])
-    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(['webhook-subscription-id', '1', '2', '3'])
+    expect(Object.values(extensionsIdsNonUuidManaged)).toEqual(['webhook-subscription-id', '1', '2', '3', '4'])
   })
 })

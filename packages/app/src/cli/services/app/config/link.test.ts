@@ -437,7 +437,6 @@ test('creates a new shopify.app.staging.toml file when shopify.app.toml already 
         client_id: '12345',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
-        embedded: true,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
@@ -559,7 +558,6 @@ test('the local configuration is discarded if the client_id is different from th
         scopes: 'write_products',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
-        embedded: true,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
@@ -861,7 +859,6 @@ test('skips config name question if re-linking to existing current app schema', 
         client_id: '12345',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
-        embedded: true,
         access_scopes: {
           scopes: 'write_products',
         },
@@ -1128,7 +1125,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 api_version = "2023-07"
 
   [[webhooks.subscriptions]]
-  uri = "/customers"
+  uri = "https://example.com/customers"
   compliance_topics = [ "customers/redact", "customers/data_request" ]
 
 [pos]
@@ -1171,139 +1168,13 @@ embedded = false
         subscriptions: [
           {
             compliance_topics: ['customers/redact', 'customers/data_request'],
-            uri: '/customers',
+            uri: 'https://example.com/customers',
           },
         ],
       },
       pos: {
         embedded: false,
       },
-      path: expect.stringMatching(/\/shopify.app.toml$/),
-    })
-    expect(content).toEqual(expectedContent)
-  })
-})
-
-test('simplifies the webhook config using relative paths', async () => {
-  await inTemporaryDirectory(async (tmp) => {
-    // Given
-    const developerPlatformClient = testDeveloperPlatformClient({
-      appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-    })
-    const remoteExtensionRegistrations = {
-      app: {
-        extensionRegistrations: [],
-        configurationRegistrations: [
-          {
-            type: 'WEBHOOK_SUBSCRIPTION',
-            id: '123',
-            uuid: '123',
-            title: 'Webhook subscription',
-            activeVersion: {
-              config: JSON.stringify({
-                api_version: '2024-01',
-                topic: 'products/create',
-                uri: 'https://my-app-url.com/webhooks',
-              }),
-            },
-          },
-          {
-            type: 'WEBHOOK_SUBSCRIPTION',
-            id: '1234',
-            uuid: '1234',
-            title: 'Webhook subscription',
-            activeVersion: {
-              config: JSON.stringify({
-                api_version: '2024-01',
-                topic: 'products/update',
-                uri: 'https://my-app-url.com/webhooks',
-              }),
-            },
-          },
-        ],
-        dashboardManagedExtensionRegistrations: [],
-      },
-    }
-    const options: LinkOptions = {
-      directory: tmp,
-      developerPlatformClient,
-    }
-
-    vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
-    const remoteConfiguration = {
-      ...DEFAULT_REMOTE_CONFIGURATION,
-      application_url: 'https://my-app-url.com',
-      webhooks: {
-        api_version: '2023-07',
-        subscriptions: [
-          {
-            topics: ['products/create'],
-            uri: 'https://my-app-url.com/webhooks',
-          },
-          {
-            topics: ['products/update'],
-            uri: 'https://my-app-url.com/webhooks',
-          },
-        ],
-      },
-    }
-    vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
-
-    // When
-    const configuration = await link(options)
-
-    // Then
-    const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-    const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://my-app-url.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create", "products/update" ]
-  uri = "/webhooks"
-
-[pos]
-embedded = false
-`
-
-    expect(configuration).toEqual({
-      client_id: '12345',
-      name: 'app1',
-      application_url: 'https://my-app-url.com',
-      embedded: true,
-      access_scopes: {
-        use_legacy_install_flow: true,
-      },
-      build: undefined,
-      auth: {
-        redirect_urls: ['https://example.com/callback1'],
-      },
-      webhooks: {
-        api_version: '2023-07',
-        subscriptions: [
-          {
-            topics: ['products/create', 'products/update'],
-            uri: '/webhooks',
-          },
-        ],
-      },
-      pos: {
-        embedded: false,
-      },
-      scopes: undefined,
       path: expect.stringMatching(/\/shopify.app.toml$/),
     })
     expect(content).toEqual(expectedContent)
@@ -1328,10 +1199,6 @@ test('the api client configuration is deep merged with the remote app_config ext
           api_version: '2023-04',
         },
         application_url: 'https://myapp.com',
-        embedded: true,
-        pos: {
-          embedded: false,
-        },
       } as CurrentAppConfiguration,
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))

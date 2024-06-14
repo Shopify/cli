@@ -7,7 +7,6 @@ import {
   testThemeExtensions,
   testPaymentExtensions,
   testUIExtension,
-  testWebhookExtensions,
   testFlowActionExtension,
   testDeveloperPlatformClient,
   testSingleWebhookSubscriptionExtension,
@@ -241,28 +240,6 @@ describe('bundleConfig', async () => {
     expect(got).toEqual(
       expect.objectContaining({
         uuid: 'uuid',
-      }),
-    )
-  })
-
-  test('returns arrays formatted properly inside the config', async () => {
-    const extensionInstance = await testWebhookExtensions()
-
-    const got = await extensionInstance.bundleConfig({
-      identifiers: {
-        extensions: {},
-        extensionIds: {},
-        app: 'My app',
-        extensionsNonUuidManaged: {webhooks: 'uuid'},
-      },
-      developerPlatformClient,
-      apiKey: 'apiKey',
-      appConfiguration: placeholderAppConfiguration,
-    })
-
-    expect(got).toEqual(
-      expect.objectContaining({
-        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}]}',
       }),
     )
   })
