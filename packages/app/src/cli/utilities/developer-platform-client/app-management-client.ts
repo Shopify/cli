@@ -207,6 +207,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+    return {
+      id: '123',
+      title: 'title',
+      apiKey: 'apiKey',
+      organizationId: '109300',
+      apiSecretKeys: [],
+      grantedScopes: [],
+      flags: [],
+      developerPlatformClient: this,
+    }
     const {app} = await this.fetchApp(appIdentifiers)
     const {modules} = app.activeRelease.version
     const brandingModule = modules.find((mod) => mod.specification.externalIdentifier === 'branding')!
@@ -294,22 +304,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
     )
-    return result.specifications
-      .filter((spec) => spec.experience !== 'DEPRECATED')
-      .map(
-        (spec): RemoteSpecification => ({
-          name: spec.name,
-          externalName: spec.name,
-          identifier: spec.identifier,
-          externalIdentifier: spec.externalIdentifier,
-          gated: false,
-          options: {
-            managementExperience: 'cli',
-            registrationLimit: spec.appModuleLimit,
-          },
-          experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
-        }),
-      )
+    return result.specifications.map(
+      (spec): RemoteSpecification => ({
+        name: spec.name,
+        externalName: spec.name,
+        identifier: spec.identifier,
+        externalIdentifier: spec.externalIdentifier,
+        gated: false,
+        options: {
+          managementExperience: 'cli',
+          registrationLimit: spec.appModuleLimit,
+        },
+        experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
+      }),
+    )
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {

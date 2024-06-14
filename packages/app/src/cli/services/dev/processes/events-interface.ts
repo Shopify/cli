@@ -74,7 +74,10 @@ async function FileChangeHandler(
   extensions: ExtensionInstance[],
   onChange: (event: AppEvent) => void,
 ) {
-  // Decide if we need to re-build the extensions
+  // TODO: Build the extensions if necessary
+  extensions.forEach((ext) => {
+    // ext.buildForBundle({app, environment: 'development'}, app.directory, undefined)
+  })
   const events = extensions.map((ext) => ({type: 'updated', extension: ext})) as ExtensionEvent[]
   onChange({app, extensionEvents: events})
 }
@@ -89,6 +92,7 @@ async function ExtensionFolderCreatedHandler(
   const newApp = await reloadApp(app)
   // const events = extensions.map((ext) => ({type: 'created', extension: ext})) as ExtensionEvent[]
   // TODO: Try to detect which extensions were created here
+  // TODO: Build the extensions if necessary
   onChange({app: newApp, extensionEvents: []})
 }
 
@@ -100,6 +104,7 @@ async function AppConfigUpdatedHandler(
 ) {
   const newApp = await reloadApp(app)
   // TODO: Try to detect which extensions were created, deleted or updated here
+  // TODO: Build extensions if necessary
   onChange({app: newApp, extensionEvents: []})
 }
 

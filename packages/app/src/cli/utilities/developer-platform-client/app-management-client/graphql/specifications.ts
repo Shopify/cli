@@ -6,7 +6,6 @@ export const SpecificationsQuery = gql`
       name
       identifier
       externalIdentifier
-      experience
       features
       appModuleLimit
     }
