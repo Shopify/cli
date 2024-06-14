@@ -182,7 +182,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: ['ubuntu-latest']
+        os: ['macos-latest'] # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
         node: ['18.20.3']
     steps:
       - uses: actions/checkout@v3
