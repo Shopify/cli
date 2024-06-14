@@ -140,7 +140,8 @@
           "configurations/vite.config.ts",
           "docs-shopify.dev/**/*.ts",
           "vite.config.ts",
-          "docs/api/cli-kit/**/*.js"
+          "docs/api/cli-kit/**/*.js",
+          "graphql.config.ts"
         ],
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
@@ -152,7 +153,9 @@
           "graphql",
           "graphql-tag",
           "pin-github-action",
-          "react"
+          "react",
+          "@graphql-codegen/near-operation-file-preset",
+          "graphql-codegen-typescript-operation-types"
         ],
         "ignore": [
           "configurations/vite.config.ts"
@@ -164,6 +167,9 @@
           "**/index.ts!"
         ],
         "project": "**/*.{ts,tsx}!",
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
+        ],
         "ignoreDependencies": [
           "@shopify/plugin-cloudflare",
           "@shopify/function-runner"
