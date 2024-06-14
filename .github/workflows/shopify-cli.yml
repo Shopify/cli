@@ -50,6 +50,7 @@ env:
   BUNDLE_WITHOUT: 'test:development'
   SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
   SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   main:
@@ -173,6 +174,32 @@ jobs:
         uses: codex-/knip-reporter@1ccefdf649b847793412fbfba286dc0b05defc1e # pin@v2
         with:
           verbose: true
+
+  pr-platform-agnostic-graphql-schema:
+    name: '[PR] Check graphql-codegen has been run'
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'pull_request' }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: ['18.20.3']
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Get schemas for codegen
+        run: pnpm graphql-codegen:get-graphql-schemas
+      - name: Run graphql-codegen
+        run: pnpm graphql-codegen
+      - name: Fail if any changes were made
+        run: 'test -z "$(git status --porcelain)" || { echo -e "Run pnpm graphql-codegen when queries are changed, committing any fixes and generated files" ; exit 1; }'
 
   oclif-checks:
     name: '[PR] Check OCLIF manifests & readme & docs'
