@@ -3,7 +3,7 @@ import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, vi, test} from 'vitest'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, captureOutput} from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -138,6 +138,7 @@ describe('upgrade local CLI', () => {
         ),
         touchFile(joinPath(tmpDir, 'shopify.app.toml')),
       ])
+      vi.mocked(captureOutput).mockResolvedValueOnce(tmpDir)
 
       const outputMock = mockAndCaptureOutput()
       vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValueOnce(currentCliVersion)
@@ -149,6 +150,7 @@ describe('upgrade local CLI', () => {
       await upgradeService.upgrade(tmpDir, oldCliVersion, {env: {}})
 
       // Then
+      expect(captureOutput).toHaveBeenCalledWith('npm', ['prefix'], {cwd: tmpDir})
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
       `)
@@ -176,6 +178,8 @@ describe('upgrade local CLI', () => {
         ),
         touchFile(joinPath(tmpDir, 'shopify.app.nondefault.toml')),
       ])
+      vi.mocked(captureOutput).mockResolvedValueOnce(tmpDir)
+
       const outputMock = mockAndCaptureOutput()
       const checkMock = vi.spyOn(nodePackageManager as any, 'checkForNewVersion')
       checkMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce(currentCliVersion)
@@ -187,6 +191,7 @@ describe('upgrade local CLI', () => {
       await upgradeService.upgrade(tmpDir, oldCliVersion, {env: {}})
 
       // Then
+      expect(captureOutput).toHaveBeenCalledWith('npm', ['prefix'], {cwd: tmpDir})
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
       `)
