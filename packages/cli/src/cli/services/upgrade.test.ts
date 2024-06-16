@@ -150,7 +150,7 @@ describe('upgrade local CLI', () => {
       await upgradeService.upgrade(tmpDir, oldCliVersion, {env: {}})
 
       // Then
-      expect(captureOutput).toHaveBeenCalledWith('npm', ['prefix'], {cwd: tmpDir})
+      expect(captureOutput).toHaveBeenCalledWith('npm', ['prefix'], {cwd: normalizePath(tmpDir)})
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
       `)
@@ -191,7 +191,7 @@ describe('upgrade local CLI', () => {
       await upgradeService.upgrade(tmpDir, oldCliVersion, {env: {}})
 
       // Then
-      expect(captureOutput).toHaveBeenCalledWith('npm', ['prefix'], {cwd: tmpDir})
+      expect(captureOutput).toHaveBeenCalledWith('npm', ['prefix'], {cwd: normalizePath(tmpDir)})
       expect(outputMock.info()).toMatchInlineSnapshot(`
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
       `)
