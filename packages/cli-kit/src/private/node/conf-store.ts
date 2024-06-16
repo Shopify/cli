@@ -7,9 +7,11 @@ interface CacheValue<T> {
 }
 
 export type IntrospectionUrlKey = `identity-introspection-url-${string}`
+export type PackageVersionKey = `npm-package-${string}`
 
 interface Cache {
   [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
+  [packageVersionKey: PackageVersionKey]: CacheValue<string>
 }
 
 export interface ConfSchema {

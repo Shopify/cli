@@ -563,6 +563,38 @@ describe('checkForNewVersion', () => {
     // Then
     expect(result).toBe(undefined)
   })
+
+  test('caches results when given a nonzero timeout', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+
+    // When
+    await checkForNewVersion(dependency, currentVersion)
+    const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
+
+    // Then
+    expect(result).toBe(newestVersion)
+    expect(latestVersion).toHaveBeenCalledTimes(1)
+  })
+
+  test('refreshes results when given no timeout', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+
+    // When
+    await checkForNewVersion(dependency, currentVersion)
+    const result = await checkForNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBe(newestVersion)
+    expect(latestVersion).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('findUpAndReadPackageJson', () => {
