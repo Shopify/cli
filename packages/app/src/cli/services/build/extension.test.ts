@@ -6,6 +6,7 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -135,5 +136,22 @@ describe('buildFunctionExtension', () => {
       signal,
     })
     expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('fails when build lock cannot be acquired', async () => {
+    // Given
+    vi.mocked(lockfile.lock).mockRejectedValue('failed to acquire lock')
+
+    // Then
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).rejects.toThrow(AbortError)
+    expect(releaseLock).not.toHaveBeenCalled()
   })
 })

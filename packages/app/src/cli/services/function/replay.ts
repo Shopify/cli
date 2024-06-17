@@ -9,10 +9,11 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
@@ -77,7 +78,11 @@ export async function replay(options: ReplayOptions) {
           await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
         },
         onReloadAndBuildError: async (error) => {
-          outputWarn(`Failed to replay function: ${error.message}`)
+          if (error instanceof FatalError) {
+            renderFatalError(error)
+          } else {
+            outputWarn(`Failed to replay function: ${error.message}`)
+          }
         },
         signal: abortController.signal,
       })

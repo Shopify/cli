@@ -9,7 +9,9 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
 vi.mock('fs')
@@ -19,6 +21,7 @@ vi.mock('../../prompts/function/replay.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('replay', () => {
   const developerPlatformClient = testDeveloperPlatformClient()
@@ -203,9 +206,32 @@ describe('replay', () => {
     expect(exec).toHaveBeenCalledTimes(2)
   })
 
-  test('file watcher onReloadAndBuildError outputs error', async () => {
+  test('renders fatal error in onReloadAndBuildError', async () => {
     // Given
-    const expectedError = new Error('uh oh!')
+    const expectedError = new AbortError('abort!')
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
+
+    // Then
+    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
+    expect(renderFatalError).toHaveBeenCalledWith(expectedError)
+  })
+
+  test('outputs non-fatal error in onReloadAndBuildError', async () => {
+    // Given
+    const expectedError = new Error('non-fatal error')
     const file = createFunctionRunFile(extension.handle)
     mockFileOperations([file])
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)

@@ -134,7 +134,10 @@ export async function buildFunctionExtension(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
-    throw new Error('Failed to build function due to another in-progress build.')
+    throw new AbortError('Failed to build function.', 'This is likely due to another in-progress build.', [
+      'Ensure there are no other function builds in-progress.',
+      'Delete the `.build-lock` file in your function directory.',
+    ])
   }
 
   try {
