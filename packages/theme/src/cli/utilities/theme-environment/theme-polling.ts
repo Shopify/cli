@@ -50,18 +50,18 @@ export async function pollRemoteJsonChanges(
     applyFileFilters(checksums, localFileSystem, options),
   )
 
-  const assetsChangedOnRemote = getChangedAssets(previousChecksums, latestChecksums)
-  const assetsDeletedFromRemote = getDeletedAssets(latestChecksums, previousChecksums)
+  const changedAssets = getAssetsChangedOnRemote(previousChecksums, latestChecksums)
+  const deletedAssets = getAssetsDeletedFromRemote(latestChecksums, previousChecksums)
 
-  await abortIfMultipleSourcesChange(localFileSystem, assetsChangedOnRemote)
+  await abortIfMultipleSourcesChange(localFileSystem, changedAssets)
 
-  await syncChangedAssets(targetTheme, currentSession, localFileSystem, assetsChangedOnRemote)
-  await deleteRemovedAssets(localFileSystem, assetsDeletedFromRemote, options)
+  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets)
+  await deleteRemovedAssets(localFileSystem, deletedAssets, options)
 
   return latestChecksums
 }
 
-function getDeletedAssets(latestChecksums: Checksum[], previousChecksums: Checksum[]) {
+function getAssetsDeletedFromRemote(latestChecksums: Checksum[], previousChecksums: Checksum[]) {
   const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
   const assetsDeletedFromRemote = previousChecksums.filter((previousChecksum) => {
     return latestChecksumsMap.get(previousChecksum.key) === undefined
@@ -69,7 +69,7 @@ function getDeletedAssets(latestChecksums: Checksum[], previousChecksums: Checks
   return assetsDeletedFromRemote
 }
 
-function getChangedAssets(previousChecksums: Checksum[], latestChecksums: Checksum[]) {
+function getAssetsChangedOnRemote(previousChecksums: Checksum[], latestChecksums: Checksum[]) {
   const previousChecksumsMap = new Map(previousChecksums.map((checksum) => [checksum.key, checksum]))
   const assetsChangedOnRemote = latestChecksums.filter((latestAsset) => {
     const previousAsset = previousChecksumsMap.get(latestAsset.key)
