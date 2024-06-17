@@ -82,9 +82,7 @@ export async function setupDevProcesses({
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling =
     isTruthy(env[environmentVariableNames.enableAppLogPolling]) &&
-    localApp.allExtensions.filter((extension) => {
-      return extension.specification.identifier === 'function'
-    }).length > 0
+    localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   const processes = [
     ...(await setupWebProcesses({
