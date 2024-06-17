@@ -1,9 +1,9 @@
 import {gql} from 'graphql-request'
 
 export const CreateAssetURLMutation = gql`
-  mutation CreateAssetURL($appId: ID!) {
-    assetUrlCreate(appId: $appId) {
-      assetUrl
+  mutation CreateAssetURL {
+    appRequestSourceUploadUrl {
+      sourceUploadUrl
       userErrors {
         field
         message
@@ -12,13 +12,9 @@ export const CreateAssetURLMutation = gql`
   }
 `
 
-export interface CreateAssetURLMutationVariables {
-  appId: string
-}
-
 export interface CreateAssetURLMutationSchema {
-  assetUrlCreate: {
-    assetUrl: string
+  appRequestSourceUploadUrl: {
+    sourceUploadUrl: string
     userErrors: {
       field: string[]
       message: string
