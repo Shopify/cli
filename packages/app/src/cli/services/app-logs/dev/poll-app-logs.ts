@@ -6,6 +6,12 @@ import {
   ONE_MILLION,
   LOG_TYPE_FUNCTION_RUN,
   fetchAppLogs,
+  LOG_TYPE_FUNCTION_NETWORK_ACCESS,
+  LOG_TYPE_RESPONSE_FROM_CACHE,
+  LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND,
+  LOG_TYPE_REQUEST_EXECUTION,
+  REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON,
+  REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
 } from '../utils.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
@@ -77,24 +83,9 @@ export const pollAppLogs = async ({
         // eslint-disable-next-line no-await-in-loop
         await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
           if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
-            const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
-
-            if (log.status === 'success') {
-              stdout.write(`Function executed successfully using ${fuel}M instructions.`)
-            } else if (log.status === 'failure') {
-              stdout.write(`❌ Function failed to execute with error: ${payload.error_type}`)
-            }
-
-            const logs = payload.logs
-            if (logs.length > 0) {
-              stdout.write(
-                logs
-                  .split('\n')
-                  .filter(Boolean)
-                  .map((line: string) => outputContent`${outputToken.gray('│ ')}${line}`.value)
-                  .join('\n'),
-              )
-            }
+            handleFunctionRunLog(log, payload, stdout)
+          } else if (log.log_type.startsWith(LOG_TYPE_FUNCTION_NETWORK_ACCESS)) {
+            handleFunctionNetworkAccessLog(log, payload, stdout)
           } else {
             stdout.write(JSON.stringify(payload))
           }
@@ -149,5 +140,44 @@ export const pollAppLogs = async ({
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
     }, POLLING_ERROR_RETRY_INTERVAL_MS)
+  }
+}
+
+function handleFunctionRunLog(log: AppLogData, payload: {[key: string]: unknown}, stdout: Writable) {
+  const fuel = ((payload.fuel_consumed as number) / ONE_MILLION).toFixed(4)
+  if (log.status === 'success') {
+    stdout.write(`Function export "${payload.export}" executed successfully using ${fuel}M instructions.`)
+  } else if (log.status === 'failure') {
+    stdout.write(`❌ Function export "${payload.export}" failed to execute with error: ${payload.error_type}`)
+  }
+  const logs = payload.logs as string
+  if (logs.length > 0) {
+    stdout.write(
+      logs
+        .split('\n')
+        .filter(Boolean)
+        .map((line: string) => outputContent`${outputToken.gray('│ ')}${line}`.value)
+        .join('\n'),
+    )
+  }
+}
+
+function handleFunctionNetworkAccessLog(log: AppLogData, payload: {[key: string]: unknown}, stdout: Writable) {
+  if (log.log_type === LOG_TYPE_RESPONSE_FROM_CACHE) {
+    stdout.write('Function network access response retrieved from cache.')
+  } else if (log.log_type === LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND) {
+    if (payload.reason === REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON) {
+      stdout.write('Function network access request executing in background because there is no cached response.')
+    } else if (payload.reason === REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON) {
+      stdout.write(
+        'Function network access request executing in background because the cached response is about to expire.',
+      )
+    }
+  } else if (log.log_type === LOG_TYPE_REQUEST_EXECUTION) {
+    if (log.status === 'success') {
+      stdout.write('Function network access request executed successfully.')
+    } else if (log.status === 'failure') {
+      stdout.write(`❌ Function network access request failed to execute with error: ${payload.error}.`)
+    }
   }
 }
