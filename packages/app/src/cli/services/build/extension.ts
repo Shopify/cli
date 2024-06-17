@@ -130,7 +130,7 @@ export async function buildFunctionExtension(
   const lockfilePath = joinPath(extension.directory, '.build-lock')
   let releaseLock
   try {
-    releaseLock = await lockfile.lock(extension.directory, {retries: 10, lockfilePath})
+    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
