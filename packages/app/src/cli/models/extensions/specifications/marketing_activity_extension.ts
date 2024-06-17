@@ -201,10 +201,7 @@ const spec = createExtensionSpecification({
       referring_domain: config.referring_domain,
       is_automation: config.is_automation,
       use_external_editor: config.use_external_editor,
-      preview_data: config.preview_data,
       fields: config.fields,
     }
   },
 })
-
-export default spec
