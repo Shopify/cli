@@ -43,6 +43,7 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
+import {exit} from 'process'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -146,6 +147,19 @@ export async function ensureGenerateContext(options: GenerateContextOptions): Pr
   }
 }
 
+export async function demoEnsureDevContext(): Promise<void> {
+  /* TODO remove this demo code */
+  const org = await selectOrg()
+  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+  const orgId = org.id
+
+  const allStores = await developerPlatformClient.devStoresForOrg(orgId)
+  const thisOrganization = await fetchOrgFromId(orgId, developerPlatformClient)
+  const selectedStore = await selectStore(allStores, thisOrganization, developerPlatformClient)
+  console.log('This concludes what is supported in the demo. You selected store:', selectedStore)
+  exit(0)
+}
+
 /**
  * Make sure there is a valid context to execute `dev`
  * That means we have a valid organization, app and dev store selected.
@@ -160,6 +174,8 @@ export async function ensureGenerateContext(options: GenerateContextOptions): Pr
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions): Promise<DevContextOutput> {
+  await demoEnsureDevContext() /* TODO remove this demo code */
+
   let developerPlatformClient = options.developerPlatformClient
   const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,

@@ -1,7 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
-import {AppManagementClient} from '../utilities/developer-platform-client/app-management-client.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -14,8 +13,8 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     message: `Which organization is this work for?`,
     choices: orgList,
   })
-  console.log(await new AppManagementClient().devStoresForOrg(id))
-  throw 'Look above to see the prototype App Dev Store list'
+  // console.log(await new AppManagementClient().devStoresForOrg(id))
+  // throw 'Look above to see the prototype App Dev Store list'
   return organizations.find((org) => org.id === id)!
 }
 
