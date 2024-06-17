@@ -13,8 +13,6 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     message: `Which organization is this work for?`,
     choices: orgList,
   })
-  // console.log(await new AppManagementClient().devStoresForOrg(id))
-  // throw 'Look above to see the prototype App Dev Store list'
   return organizations.find((org) => org.id === id)!
 }
 
