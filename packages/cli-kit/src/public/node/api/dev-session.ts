@@ -29,8 +29,6 @@ export async function devSessionRequest<T>(
   const api = 'App Management'
   const fqdn = await devSessionFqdn()
   const url = `https://${shopName}.${fqdn}/app_dev/unstable/graphql.json`
-  // const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql`
-  console.log('url', url)
   const result = limiter.schedule<T>(() =>
     graphqlRequest({
       query,

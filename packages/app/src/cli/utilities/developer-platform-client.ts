@@ -48,7 +48,7 @@ import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphq
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
-import {DevSessionDeploySchema} from '../api/graphql/dev_session_create.js'
+import {DevSessionCreateSchema} from '../api/graphql/dev_session_create.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
@@ -204,7 +204,7 @@ export interface DeveloperPlatformClient {
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
-  devSessionDeploy: (input: DevSessionDeployOptions) => Promise<DevSessionDeploySchema>
+  devSessionDeploy: (input: DevSessionDeployOptions) => Promise<DevSessionCreateSchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,

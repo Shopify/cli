@@ -18,7 +18,6 @@ export const GetApiVersionsQuery = `
  */
 export async function requestApiVersions(developerPlatformClient: DeveloperPlatformClient): Promise<string[]> {
   const {publicApiVersions: result}: PublicApiVersionsSchema = await developerPlatformClient.apiVersions()
-  return ['unstable']
   const unstableIdx = result.indexOf('unstable')
   if (unstableIdx === -1) {
     result.sort().reverse()

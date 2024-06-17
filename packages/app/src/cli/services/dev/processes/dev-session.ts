@@ -5,11 +5,13 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {Writable} from 'stream'
+import {getExtensionUploadURL} from '../../deploy/upload.js'
+import {formData} from '@shopify/cli-kit/node/http'
 
 export interface DevSessionOptions {
   extensions: ExtensionInstance[]
@@ -19,6 +21,7 @@ export interface DevSessionOptions {
   url: string
   app: AppInterface
   organizationId: string
+  appId: string
 }
 
 export interface DevSessionProcessOptions extends DevSessionOptions {
@@ -94,10 +97,12 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
     await initialBuild(processOptions)
     await bundleExtensionsAndUpload(processOptions)
-    const deletedExtensionsWatcher = undefined
 
     const onChange = async () => {
-      return performActionWithRetryAfterRecovery(async () => bundleExtensionsAndUpload(processOptions), refreshToken)
+      return performActionWithRetryAfterRecovery(async () => {
+        // bundleExtensionsAndUpload(processOptions)
+        processOptions.stdout.write('[MOCK] Call devSessionUpdate')
+      }, refreshToken)
     }
 
     const extensionWatchers = app.draftableExtensions.map(async (extension) => {
@@ -138,31 +143,36 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
     outputZipPath: bundleZipPath,
   })
 
-  // API TODO: Get signed URL
-  // const signedURL = await getExtensionUploadURL(options.developerPlatformClient, options.apiKey)
+  options.stdout.write('Getting signed URL for extension upload')
+  const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
+    apiKey: options.apiKey,
+    organizationId: options.organizationId,
+    id: options.appId,
+  })
+  options.stdout.write(`Uploading bundle to signed URL: ${signedURL}`)
 
-  // API TODO: Upload zip file to GCS' signed URL
-  // const form = formData()
-  // const buffer = readFileSync(bundleZipPath)
-  // form.append('my_upload', buffer)
-  // await fetch(signedURL, {
-  //   method: 'put',
-  //   body: buffer,
-  //   headers: form.getHeaders(),
-  // })
+  const form = formData()
+  const buffer = readFileSync(bundleZipPath)
+  form.append('my_upload', buffer)
+  await fetch(signedURL, {
+    method: 'put',
+    body: buffer,
+    headers: form.getHeaders(),
+  })
+
+  options.stdout.write('Bundle uploaded')
 
   // API TODO: Deploy the GCS URL to the Dev Session
-  console.log('>>>>> Deploying to Dev Session')
-
   const result = await options.developerPlatformClient.devSessionDeploy({
     shopName: options.storeFqdn,
     appId: options.apiKey,
     assetsUrl: 'signedURL',
   })
-  console.log('>>>>> Deployed to Dev Session')
 
-  if (result.devSession.userErrors) {
+  if (result.devSessionCreate.userErrors.length > 0) {
     options.stderr.write('Dev Session Error')
-    options.stderr.write(JSON.stringify(result.devSession.userErrors, null, 2))
+    options.stderr.write(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+  } else {
+    options.stdout.write('Dev Session Created')
   }
 }

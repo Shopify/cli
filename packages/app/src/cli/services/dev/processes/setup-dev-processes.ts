@@ -127,6 +127,7 @@ export async function setupDevProcesses({
           apiKey,
           developerPlatformClient,
           url: network.proxyUrl,
+          appId: remoteApp.id,
           organizationId: remoteApp.organizationId,
           storeFqdn,
         })

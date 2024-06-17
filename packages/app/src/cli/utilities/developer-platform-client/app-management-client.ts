@@ -36,11 +36,7 @@ import {
   OrganizationQueryVariables,
 } from './app-management-client/graphql/organization.js'
 import {UserInfoQuery, UserInfoQuerySchema} from './app-management-client/graphql/user-info.js'
-import {
-  CreateAssetURLMutation,
-  CreateAssetURLMutationSchema,
-  CreateAssetURLMutationVariables,
-} from './app-management-client/graphql/create-asset-url.js'
+import {CreateAssetURLMutation, CreateAssetURLMutationSchema} from './app-management-client/graphql/create-asset-url.js'
 import {
   AppVersionByIdQuery,
   AppVersionByIdQuerySchema,
@@ -106,9 +102,9 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {
-  DevSessionDeploy,
-  DevSessionDeploySchema,
-  DevSessionDeployVariables,
+  DevSessionCreate,
+  DevSessionCreateSchema,
+  DevSessionCreateVariables,
 } from '../../api/graphql/dev_session_create.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
@@ -586,14 +582,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId, apiKey}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const variables: CreateAssetURLMutationVariables = {appId: apiKey}
     const result = await appManagementRequest<CreateAssetURLMutationSchema>(
       organizationId,
       CreateAssetURLMutation,
       await this.token(),
-      variables,
     )
-    return result.assetUrlCreate
+
+    return {
+      assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
+      userErrors: result.appRequestSourceUploadUrl.userErrors,
+    }
   }
 
   async updateExtension(_input: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
@@ -672,10 +670,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return versionResult
   }
 
-  async devSessionDeploy({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionDeploySchema> {
-    const query = DevSessionDeploy
-    const variables: DevSessionDeployVariables = {appId: String(numberFromGid(appId)), assetsUrl}
-    return devSessionRequest<DevSessionDeploySchema>(shopName, query, await this.token(), variables)
+  async devSessionDeploy({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
+    const query = DevSessionCreate
+    const variables: DevSessionCreateVariables = {appId: String(numberFromGid(appId)), assetsUrl}
+    return devSessionRequest<DevSessionCreateSchema>(shopName, query, await this.token(), variables)
   }
 
   async release({
@@ -738,7 +736,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    throw new BugError('Not implemented: apiVersions')
+    return {publicApiVersions: ['unstable']}
+    // throw new BugError('Not implemented: apiVersions')
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
@@ -895,7 +894,6 @@ function idFromEncodedGid(gid: string): string {
 
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
-  console.log('GID: ', gid)
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }
 

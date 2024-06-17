@@ -61,7 +61,7 @@ import appAccessSpec from '../extensions/specifications/app_config_app_access.js
 import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {DevSessionDeployVariables} from '../../api/graphql/dev_session_create.js'
+import {DevSessionCreateVariables} from '../../api/graphql/dev_session_create.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -1240,7 +1240,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
-    devSessionDeploy: (_input: DevSessionDeployOptions) => Promise.resolve({devSession: {userErrors: []}}),
+    devSessionDeploy: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub
