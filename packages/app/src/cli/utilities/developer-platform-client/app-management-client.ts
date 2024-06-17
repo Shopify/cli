@@ -47,6 +47,16 @@ import {
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
 } from './app-management-client/graphql/app-version-by-id.js'
+import {
+  DevStoresQuery,
+  DevStoresQuerySchema,
+  DevStoresQueryVariables,
+} from './app-management-client/graphql/dev-stores.js'
+import {
+  DevStoreByDomainQuery,
+  DevStoreByDomainQuerySchema,
+  DevStoreByDomainQueryVariables,
+} from './app-management-client/graphql/dev-store-by-domain.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -112,7 +122,10 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
-import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformRequest,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
@@ -362,8 +375,27 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async devStoresForOrg(_orgId: string): Promise<OrganizationStore[]> {
-    return []
+  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+    const base64Id = encodedGidFromId(orgId)
+    const variables: DevStoresQueryVariables = {organizationId: base64Id}
+    const storesResult = await businessPlatformOrganizationsRequest<DevStoresQuerySchema>(
+      DevStoresQuery,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
+
+    return storesResult.organization.properties.edges.map((edge) => {
+      const store = edge.node
+      return {
+        shopId: store.externalId,
+        link: store.primaryDomain,
+        shopDomain: store.primaryDomain,
+        shopName: store.name,
+        transferDisabled: true,
+        convertableToPartnerTest: true,
+      }
+    })
   }
 
   async appExtensionRegistrations(
@@ -669,8 +701,43 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+  async storeByDomain(orgId: string, domain: string): Promise<FindStoreByDomainSchema> {
+    const base64Id = encodedGidFromId(orgId)
+    const variables: DevStoreByDomainQueryVariables = {organizationId: base64Id, domain}
+    const storesResult = await businessPlatformOrganizationsRequest<DevStoreByDomainQuerySchema>(
+      DevStoreByDomainQuery,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
+
+    const {organization} = storesResult
+    return {
+      organizations: {
+        nodes: [
+          {
+            id: organization.id,
+            businessName: organization.name,
+            website: 'N/A',
+            stores: {
+              nodes: organization.properties.edges
+                .filter((edge) => edge.node.primaryDomain === domain)
+                .map((edge) => {
+                  const store = edge.node
+                  return {
+                    shopId: store.externalId,
+                    link: store.primaryDomain,
+                    shopDomain: store.primaryDomain,
+                    shopName: store.name,
+                    transferDisabled: true,
+                    convertableToPartnerTest: true,
+                  }
+                }),
+            },
+          },
+        ],
+      },
+    }
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
