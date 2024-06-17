@@ -781,6 +781,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const query = ActiveAppReleaseQuery
     const appId = numberFromGid(id)
     const variables: ActiveAppReleaseQueryVariables = {appId}
+    return {
+      app: {
+        id: 'gid://shopify/app/130918678529',
+        activeRelease: {
+          id: 'gid://shopify/app/130918678529',
+          version: {
+            modules: [],
+          },
+        },
+      },
+    }
     return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
@@ -790,6 +801,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const appId = numberFromGid(id)
     const variables: ActiveAppReleaseQueryVariables = {appId}
+    return {
+      app: {
+        id: 'gid://shopify/app/130918678529',
+        activeRelease: {
+          id: 'gid://shopify/app/130918678529',
+          version: {
+            modules: [],
+          },
+        },
+      },
+    }
     return appManagementRequest<ActiveAppReleaseQuerySchema>(
       organizationId,
       ActiveAppReleaseQuery,

@@ -58,7 +58,7 @@ export async function appManagementFqdn(): Promise<string> {
  */
 export async function devSessionFqdn(): Promise<string> {
   const environment = serviceEnvironment()
-  const productionFqdn = 'myshopify.com'
+  const productionFqdn = 'shopify.com'
   switch (environment) {
     case 'local':
       return 'shopify.myshopify.io'
