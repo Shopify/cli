@@ -1,6 +1,6 @@
 import {AbortError, BugError} from './error.js'
 import {AbortController, AbortSignal} from './abort.js'
-import {exec} from './system.js'
+import {captureOutput, exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
@@ -102,12 +102,12 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
-  const packageJson = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
-  if (!packageJson) {
+  const directory = await captureOutput('npm', ['prefix'], {cwd: fromDirectory})
+  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
+  const packageJson = joinPath(directory, 'package.json')
+  if (!(await fileExists(packageJson))) {
     return packageManagerFromUserAgent()
   }
-  const directory = dirname(packageJson)
-  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)
   const bunLockPath = joinPath(directory, bunLockfile)
