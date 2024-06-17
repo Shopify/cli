@@ -46,6 +46,10 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
+import {
+  MigrateMarketingActivityExtensionSchema,
+  MigrateMarketingActivityExtensionVariables,
+} from '../../api/graphql/extension_migrate_marketing_activity_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
@@ -1165,6 +1169,13 @@ const migrateFlowExtensionResponse: MigrateFlowExtensionSchema = {
   },
 }
 
+const migrateMarketingActivityExtensionResponse: MigrateMarketingActivityExtensionSchema = {
+  migrateMarketingActivityExtension: {
+    migratedExtensionToCli: true,
+    userErrors: [],
+  },
+}
+
 const migrateAppModuleResponse: MigrateAppModuleSchema = {
   migrateAppModule: {
     migratedAppModule: true,
@@ -1250,6 +1261,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
+    migrateMarketingActivityExtension: (_input: MigrateMarketingActivityExtensionVariables) =>
+      Promise.resolve(migrateMarketingActivityExtensionResponse),
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
