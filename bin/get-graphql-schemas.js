@@ -22,10 +22,6 @@ const schemas = [
   },
 ]
 
-// Define the repository and file details
-const repo = 'partners'
-const pathToFile = 'db/graphql/cli_schema.graphql'
-
 function runCommand(command, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {stdio: ['inherit', 'pipe', 'pipe']})
