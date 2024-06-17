@@ -121,21 +121,36 @@ async function getFunctionRunData(functionRunsDir: string, functionHandle: strin
       return splitFilename[3] === 'extensions' && splitFilename[4] === functionHandle
     })
     .reverse()
-  const latestFunctionRunFileNames = allFunctionRunFileNames.slice(0, LOG_SELECTOR_LIMIT)
-  const functionRunFilePaths = latestFunctionRunFileNames.map((functionRunFile) =>
-    joinPath(functionRunsDir, functionRunFile),
-  )
 
-  const functionRunData = await Promise.all(
-    functionRunFilePaths.map(async (functionRunFilePath) => {
-      const fileData = await readFile(functionRunFilePath)
-      const parsedData = JSON.parse(fileData)
-      return {
-        ...parsedData,
-        identifier: getIdentifierFromFilename(functionRunFilePath),
-      }
-    }),
-  )
+  let functionRunData: FunctionRunData[] = []
+  for (
+    let i = 0;
+    i < allFunctionRunFileNames.length && functionRunData.length < LOG_SELECTOR_LIMIT;
+    i += LOG_SELECTOR_LIMIT
+  ) {
+    const currentFunctionRunFileNameChunk = allFunctionRunFileNames.slice(i, i + LOG_SELECTOR_LIMIT)
+    const functionRunFilePaths = currentFunctionRunFileNameChunk.map((functionRunFile) =>
+      joinPath(functionRunsDir, functionRunFile),
+    )
+
+    // eslint-disable-next-line no-await-in-loop
+    const functionRunDataFromChunk = await Promise.all(
+      functionRunFilePaths.map(async (functionRunFilePath) => {
+        const fileData = await readFile(functionRunFilePath)
+        const parsedData = JSON.parse(fileData)
+        return {
+          ...parsedData,
+          identifier: getIdentifierFromFilename(functionRunFilePath),
+        }
+      }),
+    )
+
+    const filteredFunctionRunDataFromChunk = functionRunDataFromChunk.filter((run) => {
+      return run.payload.input != null
+    })
+
+    functionRunData = functionRunData.concat(filteredFunctionRunDataFromChunk)
+  }
 
   return functionRunData
 }
