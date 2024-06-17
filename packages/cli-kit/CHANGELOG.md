@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.62.0
+
+### Minor Changes
+
+- 2ae9341e7: Added support for JSON Schema based module validation
+
+### Patch Changes
+
+- 08b6acce2: Fix the output for unhandled errors
+
 ## 3.61.0
 
 ### Minor Changes
