@@ -1,10 +1,5 @@
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
-  AllDevStoresByOrganizationQuery,
-  AllDevStoresByOrganizationQueryVariables,
-  AllDevStoresByOrganizationSchema,
-} from '../../api/graphql/all_dev_stores_by_org.js'
-import {
   ActiveAppVersion,
   AppDeployOptions,
   AssetUrlSchema,
@@ -153,6 +148,10 @@ import {
 } from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {
+  DevStoresByOrg,
+  DevStoresByOrgQueryVariables,
+} from '../../api/graphql/partners/generated/all-dev-stores-by-org.js'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -327,9 +326,21 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const variables: AllDevStoresByOrganizationQueryVariables = {id: orgId}
-    const result: AllDevStoresByOrganizationSchema = await this.request(AllDevStoresByOrganizationQuery, variables)
-    return result.organizations.nodes[0]!.stores.nodes
+    const variables: DevStoresByOrgQueryVariables = {id: orgId}
+    const result = await this.requestDoc(DevStoresByOrg, variables)
+    const organizations = result.organizations.nodes ?? []
+    const stores =
+      organizations[0]?.stores.nodes?.map((store) => {
+        return {
+          shopId: store!.shopId ?? '',
+          link: store!.link as string,
+          shopDomain: store!.shopDomain,
+          shopName: store!.shopName,
+          transferDisabled: store!.transferDisabled,
+          convertableToPartnerTest: store!.convertableToPartnerTest,
+        }
+      }) ?? []
+    return stores
   }
 
   async appExtensionRegistrations({apiKey}: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {

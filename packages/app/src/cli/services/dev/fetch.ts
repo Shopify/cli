@@ -9,10 +9,6 @@ import {
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  AllDevStoresByOrganizationQuery,
-  AllDevStoresByOrganizationSchema,
-} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   AccountInfo,
@@ -26,9 +22,10 @@ import {
   allDeveloperPlatformClients,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {DevStoresByOrg} from '../../api/graphql/partners/generated/all-dev-stores-by-org.js'
 
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
@@ -190,11 +187,22 @@ export async function fetchOrgFromId(
 }
 
 export async function fetchAllDevStores(orgId: string, token: string): Promise<OrganizationStore[]> {
-  const query = AllDevStoresByOrganizationQuery
-  const result: AllDevStoresByOrganizationSchema = await partnersRequest(query, token, {
+  const result = await partnersRequestDoc(DevStoresByOrg, token, {
     id: orgId,
   })
-  return result.organizations.nodes[0]!.stores.nodes
+  const organizations = result.organizations.nodes ?? []
+  const stores =
+    organizations[0]?.stores.nodes?.map((store) => {
+      return {
+        shopId: store!.shopId ?? '',
+        link: store!.link as string,
+        shopDomain: store!.shopDomain,
+        shopName: store!.shopName,
+        transferDisabled: store!.transferDisabled,
+        convertableToPartnerTest: store!.convertableToPartnerTest,
+      }
+    }) ?? []
+  return stores
 }
 
 interface FetchStoreByDomainOutput {
