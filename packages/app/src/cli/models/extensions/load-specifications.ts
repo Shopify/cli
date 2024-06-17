@@ -21,6 +21,7 @@ import paymentExtensionSpec from './specifications/payments_app_extension.js'
 import posUISpec from './specifications/pos_ui_extension.js'
 import productSubscriptionSpec from './specifications/product_subscription.js'
 import taxCalculationSpec from './specifications/tax_calculation.js'
+import marketingActivityExtensionSpec from './specifications/marketing_activity_extension.js'
 import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
@@ -72,6 +73,7 @@ function loadSpecifications() {
     posUISpec,
     productSubscriptionSpec,
     taxCalculationSpec,
+    marketingActivityExtensionSpec,
     themeSpec,
     uiExtensionSpec,
     webPixelSpec,
