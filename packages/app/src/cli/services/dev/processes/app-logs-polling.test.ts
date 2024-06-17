@@ -1,13 +1,15 @@
 import {setupAppLogsPollingProcess, subscribeAndStartPolling} from './app-logs-polling.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
-import {pollAppLogs} from '../../app-logs/poll-app-logs.js'
+import {pollAppLogsForDev} from '../../app-logs/poll-app-logs-for-dev.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/logs')
-vi.mock('../../app-logs/poll-app-logs.js')
+vi.mock('@shopify/cli-kit/node/output')
+vi.mock('../../app-logs/poll-app-logs-for-dev.js')
 
 const SHOP_IDS = ['1', '2']
 const API_KEY = 'API_KEY'
@@ -65,7 +67,7 @@ describe('app-logs-polling', () => {
       developerPlatformClient = testDeveloperPlatformClient({subscribeToAppLogs})
 
       vi.mocked(createLogsDir).mockResolvedValue()
-      vi.mocked(pollAppLogs).mockResolvedValue()
+      vi.mocked(pollAppLogsForDev).mockResolvedValue()
     })
 
     test('sets up app log polling', async () => {
@@ -84,8 +86,8 @@ describe('app-logs-polling', () => {
       // Then
       expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
-      expect(pollAppLogs).toHaveBeenCalledOnce()
-      expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
+      expect(pollAppLogsForDev).toHaveBeenCalledOnce()
+      expect(vi.mocked(pollAppLogsForDev).mock.calls[0]?.[0]).toMatchObject({
         stdout,
         appLogsFetchInput: {jwtToken: JWT_TOKEN},
         apiKey: API_KEY,
@@ -109,10 +111,10 @@ describe('app-logs-polling', () => {
 
       // Then
       expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
-      expect(stdout.write).toHaveBeenCalledWith(`Errors subscribing to app logs: uh oh, another error`)
-      expect(stdout.write).toHaveBeenCalledWith(`App log streaming is not available in this \`dev\` session.`)
+      expect(outputWarn).toHaveBeenCalledWith(`Errors subscribing to app logs: uh oh, another error`)
+      expect(outputWarn).toHaveBeenCalledWith(`App log streaming is not available in this session.`)
       expect(createLogsDir).not.toHaveBeenCalled()
-      expect(pollAppLogs).not.toHaveBeenCalled()
+      expect(pollAppLogsForDev).not.toHaveBeenCalled()
     })
   })
 })

@@ -1,21 +1,16 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {
+  POLLING_INTERVAL_MS,
+  POLLING_ERROR_RETRY_INTERVAL_MS,
+  POLLING_THROTTLE_RETRY_INTERVAL_MS,
+  ONE_MILLION,
+  LOG_TYPE_FUNCTION_RUN,
+  generateFetchAppLogUrl,
+  fetchAppLogs,
+} from './helpers.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
-
-const POLLING_INTERVAL_MS = 450
-const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
-const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
-const ONE_MILLION = 1000000
-const LOG_TYPE_FUNCTION_RUN = 'function_run'
-
-const generateFetchAppLogUrl = async (cursor?: string) => {
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/app_logs/poll`
-  return url + (cursor ? `?cursor=${cursor}` : '')
-}
 
 export interface AppLogData {
   shop_id: number
@@ -29,7 +24,7 @@ export interface AppLogData {
   log_timestamp: string
 }
 
-export const pollAppLogs = async ({
+export const pollAppLogsForDev = async ({
   stdout,
   appLogsFetchInput: {jwtToken, cursor},
   apiKey,
@@ -42,12 +37,7 @@ export const pollAppLogs = async ({
 }) => {
   try {
     const url = await generateFetchAppLogUrl(cursor)
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-      },
-    })
+    const response = await fetchAppLogs(url, jwtToken)
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -56,7 +46,7 @@ export const pollAppLogs = async ({
         outputWarn(`Request throttled while polling app logs.`)
         outputWarn(`Retrying in ${POLLING_THROTTLE_RETRY_INTERVAL_MS / 1000} seconds.`)
         setTimeout(() => {
-          pollAppLogs({
+          pollAppLogsForDev({
             stdout,
             appLogsFetchInput: {
               jwtToken,
@@ -130,7 +120,7 @@ export const pollAppLogs = async ({
     const cursorFromResponse = data?.cursor
 
     setTimeout(() => {
-      pollAppLogs({
+      pollAppLogsForDev({
         stdout,
         appLogsFetchInput: {
           jwtToken,
@@ -149,7 +139,7 @@ export const pollAppLogs = async ({
     outputDebug(`${error}}\n`)
 
     setTimeout(() => {
-      pollAppLogs({
+      pollAppLogsForDev({
         stdout,
         appLogsFetchInput: {
           jwtToken,
