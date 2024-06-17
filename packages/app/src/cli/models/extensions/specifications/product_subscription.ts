@@ -7,6 +7,7 @@ const dependency = '@shopify/admin-ui-extensions'
 
 const productSubscriptionSpec = createExtensionSpecification({
   identifier: 'product_subscription',
+  additionalIdentifiers: ['subscription_management'],
   dependency,
   graphQLType: 'subscription_management',
   schema: BaseSchema,
