@@ -66,6 +66,58 @@
         "command": "pnpm tsc --noEmit",
         "cwd": "packages/app"
       }
+    },
+    "graphql-codegen": {
+      "executor": "nx:noop",
+      "dependsOn": ["graphql-codegen:formatting"]
+    },
+    "graphql-codegen:formatting": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["graphql-codegen:postfix"],
+      "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts", "{projectRoot}/src/cli/api/graphql/business-platform/generated/**/*.ts"],
+      "options": {
+        "commands": [
+          "pnpm eslint 'src/cli/api/graphql/partners/generated/**/*.{ts,tsx}' --fix",
+          "pnpm eslint 'src/cli/api/graphql/business-platform/generated/**/*.{ts,tsx}' --fix"
+        ],
+        "cwd": "packages/app"
+      }
+    },
+    "graphql-codegen:generate:partners": {
+      "executor": "nx:run-commands",
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/partners/**/*.graphql"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts"],
+      "options": {
+        "commands": [
+          "pnpm exec graphql-codegen --project=partners"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "graphql-codegen:generate:business-platform": {
+      "executor": "nx:run-commands",
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform/**/*.graphql"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform/generated/**/*.ts"],
+      "options": {
+        "commands": [
+          "pnpm exec graphql-codegen --project=businessPlatform"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "graphql-codegen:postfix": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["graphql-codegen:generate:partners", "graphql-codegen:generate:business-platform"],
+      "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts", "{projectRoot}/src/cli/api/graphql/business-platform/generated/**/*.ts"],
+      "options": {
+        "commands": [
+          "find ./packages/app/src/cli/api/graphql/partners/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
+          "find ./packages/app/src/cli/api/graphql/business-platform/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }
