@@ -5,9 +5,12 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
+import lockfile from 'proper-lockfile'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
+vi.mock('proper-lockfile')
 
 describe('buildFunctionExtension', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -15,6 +18,7 @@ describe('buildFunctionExtension', () => {
   let stderr: any
   let signal: any
   let app: any
+  let releaseLock: any
   const defaultConfig = {
     name: 'MyFunction',
     type: 'product_discounts',
@@ -29,12 +33,14 @@ describe('buildFunctionExtension', () => {
   }
 
   beforeEach(async () => {
+    releaseLock = vi.fn()
     stdout = vi.fn()
     stderr = {write: vi.fn()}
     stdout = {write: vi.fn()}
     signal = vi.fn()
     app = {}
     extension = await testFunctionExtension({config: defaultConfig})
+    vi.mocked(lockfile.lock).mockResolvedValue(releaseLock)
   })
 
   test('delegates the build to system when the build command is present', async () => {
@@ -59,6 +65,7 @@ describe('buildFunctionExtension', () => {
       cwd: extension.directory,
       signal,
     })
+    expect(releaseLock).toHaveBeenCalled()
   })
 
   test('fails when is not a JS function and build command is not present', async () => {
@@ -75,6 +82,7 @@ describe('buildFunctionExtension', () => {
         environment: 'production',
       }),
     ).rejects.toThrow()
+    expect(releaseLock).toHaveBeenCalled()
   })
 
   test('succeeds when is a JS function and build command is not present', async () => {
@@ -101,6 +109,7 @@ describe('buildFunctionExtension', () => {
       app,
       environment: 'production',
     })
+    expect(releaseLock).toHaveBeenCalled()
   })
 
   test('succeeds when is a JS function and build command is present', async () => {
@@ -126,5 +135,23 @@ describe('buildFunctionExtension', () => {
       cwd: extension.directory,
       signal,
     })
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('fails when build lock cannot be acquired', async () => {
+    // Given
+    vi.mocked(lockfile.lock).mockRejectedValue('failed to acquire lock')
+
+    // Then
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).rejects.toThrow(AbortError)
+    expect(releaseLock).not.toHaveBeenCalled()
   })
 })
