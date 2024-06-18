@@ -11,7 +11,7 @@ import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {Severity, SourceCodeType, loadConfig, type Offense, type Theme} from '@shopify/theme-check-node'
-import {Mock, SpyInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
+import {Mock, MockInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
   fileExists: vi.fn(),
@@ -309,7 +309,7 @@ describe('formatOffensesJson', () => {
 })
 
 describe('handleExit', () => {
-  let exitSpy: SpyInstance
+  let exitSpy: MockInstance<[code?: number | undefined], never>
 
   beforeEach(() => {
     // Create a spy on process.exit
