@@ -6,7 +6,7 @@ import {
   ONE_MILLION,
   LOG_TYPE_FUNCTION_RUN,
   fetchAppLogs,
-} from './helpers.js'
+} from '../utils.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
@@ -23,7 +23,7 @@ export interface AppLogData {
   log_timestamp: string
 }
 
-export const pollAppLogsForDev = async ({
+export const pollAppLogs = async ({
   stdout,
   appLogsFetchInput: {jwtToken, cursor},
   apiKey,
@@ -44,7 +44,7 @@ export const pollAppLogsForDev = async ({
         outputWarn(`Request throttled while polling app logs.`)
         outputWarn(`Retrying in ${POLLING_THROTTLE_RETRY_INTERVAL_MS / 1000} seconds.`)
         setTimeout(() => {
-          pollAppLogsForDev({
+          pollAppLogs({
             stdout,
             appLogsFetchInput: {
               jwtToken,
@@ -118,7 +118,7 @@ export const pollAppLogsForDev = async ({
     const cursorFromResponse = data?.cursor
 
     setTimeout(() => {
-      pollAppLogsForDev({
+      pollAppLogs({
         stdout,
         appLogsFetchInput: {
           jwtToken,
@@ -137,7 +137,7 @@ export const pollAppLogsForDev = async ({
     outputDebug(`${error}}\n`)
 
     setTimeout(() => {
-      pollAppLogsForDev({
+      pollAppLogs({
         stdout,
         appLogsFetchInput: {
           jwtToken,

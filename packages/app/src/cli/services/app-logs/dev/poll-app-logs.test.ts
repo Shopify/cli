@@ -1,4 +1,4 @@
-import {pollAppLogsForDev} from './poll-app-logs-for-dev.js'
+import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
@@ -138,7 +138,7 @@ describe('pollAppLogs', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When
-    await pollAppLogsForDev({
+    await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
@@ -206,7 +206,7 @@ describe('pollAppLogs', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
-    await pollAppLogsForDev({
+    await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
@@ -223,7 +223,7 @@ describe('pollAppLogs', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
-    await pollAppLogsForDev({
+    await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
@@ -246,7 +246,7 @@ describe('pollAppLogs', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When
-    await pollAppLogsForDev({
+    await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,

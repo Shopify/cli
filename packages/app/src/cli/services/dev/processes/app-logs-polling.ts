@@ -1,8 +1,8 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {pollAppLogsForDev} from '../../app-logs/poll-app-logs-for-dev.js'
+import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
-import {subscribeToAppLogs} from '../../app-logs/helpers.js'
+import {subscribeToAppLogs} from '../../app-logs/utils.js'
 
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 
@@ -54,7 +54,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
     const apiKey = appLogsSubscribeVariables.apiKey
     await createLogsDir(apiKey)
 
-    await pollAppLogsForDev({
+    await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken},
       apiKey,

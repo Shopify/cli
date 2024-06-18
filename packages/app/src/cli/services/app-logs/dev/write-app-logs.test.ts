@@ -1,5 +1,5 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {AppLogData} from './poll-app-logs-for-dev.js'
+import {AppLogData} from './poll-app-logs.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
