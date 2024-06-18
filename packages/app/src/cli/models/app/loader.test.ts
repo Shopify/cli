@@ -2924,6 +2924,24 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
+  test('throws an error if the api_version is invalid', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-02',
+      subscriptions: [
+        {
+          uri: 'https://example.com',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'The api_version is an invalid version',
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
   test('throws an error if we have privacy_compliance section and subscriptions with compliance_topics', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',

@@ -3,7 +3,12 @@ import {webhookValidator} from '../validation/app_config_webhook.js'
 import {WebhookSubscriptionUriValidation} from '../validation/common.js'
 import {SingleWebhookSubscriptionSchema} from '../app_config_webhook_subscription.js'
 import {mergeAllWebhooks} from '../transform/app_config_webhook.js'
+import {selectDeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
+import {requestApiVersions} from '../../../../services/webhook/request-api-versions.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+
+const developerPlatformClient = selectDeveloperPlatformClient()
+const acceptedApiVersions = await requestApiVersions(developerPlatformClient)
 
 const WebhooksConfigSchema = zod.object({
   api_version: zod.string({required_error: 'String is required'}),
@@ -23,5 +28,5 @@ const WebhooksConfigSchema = zod.object({
 export type SingleWebhookSubscriptionType = zod.infer<typeof SingleWebhookSubscriptionSchema>
 
 export const WebhooksSchema = zod.object({
-  webhooks: WebhooksConfigSchema.superRefine(webhookValidator),
+  webhooks: WebhooksConfigSchema.superRefine((config, ctx) => webhookValidator(config, ctx, acceptedApiVersions)),
 })

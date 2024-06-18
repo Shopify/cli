@@ -2,12 +2,28 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {uniq} from '@shopify/cli-kit/common/array'
 import type {WebhooksConfig} from '../types/app_config_webhook.js'
 
-export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
-  const webhookSubscriptionErrors = validateSubscriptions(schema as WebhooksConfig)
+export function webhookValidator(schema: object, ctx: zod.RefinementCtx, acceptedApiVersions: string[]) {
+  const webhooksConfig = schema as WebhooksConfig
+  const apiVersionError = validateApiVersion(webhooksConfig.api_version, acceptedApiVersions)
+  const webhookSubscriptionErrors = validateSubscriptions(webhooksConfig)
 
   if (webhookSubscriptionErrors) {
     ctx.addIssue(webhookSubscriptionErrors)
     return zod.NEVER
+  }
+  if (apiVersionError) {
+    ctx.addIssue(apiVersionError)
+    return zod.NEVER
+  }
+}
+
+export function validateApiVersion(apiVersion: string, acceptedApiVersions: string[]) {
+  if (!acceptedApiVersions.includes(apiVersion)) {
+    return {
+      code: zod.ZodIssueCode.custom,
+      message: `The api_version is an invalid version`,
+      fatal: true,
+    }
   }
 }
 
