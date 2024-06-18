@@ -11,7 +11,7 @@ export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
 
-export const generateFetchAppLogUrl = async (
+const generateFetchAppLogUrl = async (
   cursor?: string,
   filters?: {
     status?: string
@@ -37,7 +37,15 @@ export const generateFetchAppLogUrl = async (
   return url
 }
 
-export const fetchAppLogs = async (url: string, jwtToken: string): Promise<Response> => {
+export const fetchAppLogs = async (
+  jwtToken: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): Promise<Response> => {
+  const url = await generateFetchAppLogUrl(cursor, filters)
   return fetch(url, {
     method: 'GET',
     headers: {

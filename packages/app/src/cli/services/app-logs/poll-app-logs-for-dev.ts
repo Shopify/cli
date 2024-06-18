@@ -5,7 +5,6 @@ import {
   POLLING_THROTTLE_RETRY_INTERVAL_MS,
   ONE_MILLION,
   LOG_TYPE_FUNCTION_RUN,
-  generateFetchAppLogUrl,
   fetchAppLogs,
 } from './helpers.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
@@ -36,8 +35,7 @@ export const pollAppLogsForDev = async ({
   resubscribeCallback: () => Promise<void>
 }) => {
   try {
-    const url = await generateFetchAppLogUrl(cursor)
-    const response = await fetchAppLogs(url, jwtToken)
+    const response = await fetchAppLogs(jwtToken, cursor)
 
     if (!response.ok) {
       if (response.status === 401) {
