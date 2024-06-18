@@ -97,7 +97,7 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.11.0",
-    "esbuild": "0.19.8"
+    "esbuild": "0.21.5"
   },
   "optionalDependencies": {
     "@parcel/watcher": "2.4.1"
