@@ -17,7 +17,8 @@ export default function config(packagePath: string) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     test: {
-      testTimeout: process.env['VITEST_SKIP_TIMEOUT'] === '1' ? 180000 : 5000,
+      testTimeout:
+        process.env['VITEST_SKIP_TIMEOUT'] === '1' ? 180000 : process.env['RUNNER_OS'] === 'Windows' ? 13000 : 5000,
       clearMocks: true,
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
