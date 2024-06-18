@@ -33,6 +33,12 @@ export default class FunctionReplay extends Command {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
+    log: Flags.string({
+      char: 'l',
+      description:
+        'Specifies a specific log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.',
+      env: 'SHOPIFY_FLAG_LOG',
+    }),
     json: Flags.boolean({
       char: 'j',
       hidden: false,
@@ -73,6 +79,7 @@ export default class FunctionReplay extends Command {
           extension: ourFunction,
           apiKey,
           path: flags.path,
+          log: flags.log,
           json: flags.json,
           watch: flags.watch,
         })
