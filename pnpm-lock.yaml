@@ -170,8 +170,8 @@ importers:
         specifier: 8.0.0
         version: 8.0.0
       '@shopify/theme-check-node':
-        specifier: 2.5.1
-        version: 2.5.1
+        specifier: 2.7.0
+        version: 2.7.0
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -699,11 +699,11 @@ importers:
         specifier: 3.62.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 2.5.1
-        version: 2.5.1
+        specifier: 2.7.0
+        version: 2.7.0
       '@shopify/theme-language-server-node':
-        specifier: 1.11.1
-        version: 1.11.1
+        specifier: 1.11.3
+        version: 1.11.3
       yaml:
         specifier: 2.3.2
         version: 2.3.2
@@ -6393,12 +6393,13 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@2.5.1:
-    resolution: {integrity: sha512-m/rBrsCrOx8WdPRYi3HkpFPScyIoEgJ9hTIrhAYIeXDRJTSrQARDXHAqCDrFZ8Q0UIru2sEh25Ttlpr53z3KIw==}
+  /@shopify/theme-check-common@2.7.0:
+    resolution: {integrity: sha512-TR4BCz+CXp/dZo49uPWrLPjiaVsZtWP2KtsyDJcKz/IE0vsw0JDy2DcrLCyBdltgR+Rf8jJdzyxJS7+gEDb4aA==}
     dependencies:
       '@shopify/liquid-html-parser': 2.0.3
       cross-fetch: 4.0.0
       json-to-ast: 2.1.0
+      jsonc-parser: 3.2.1
       line-column: 1.0.2
       lodash-es: 4.17.21
       minimatch: 9.0.3
@@ -6407,33 +6408,33 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@2.5.1:
-    resolution: {integrity: sha512-z1S62V2OVVFACWTd8QqoK4tBGl9jT43NuGpImRruS9nwiuzR9XUDR87lo7MVX1gZAF2aiQHbhWw5n/kxE09aCg==}
+  /@shopify/theme-check-docs-updater@2.7.0:
+    resolution: {integrity: sha512-k1AFINzVGz8PFZV2ELQ7n5o8JX+jCCCHRV8CT2Com8LMNUoZZmywLQvKftJNzrNFsOnFMYCqo7Dh+Sbo96/OLQ==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 2.5.1
+      '@shopify/theme-check-common': 2.7.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@2.5.1:
-    resolution: {integrity: sha512-YuZ0nyVNxXC2g9dFLORQFe/vXq43aP2umt17uB+u1cPEERLTdRpsxEpE6yzkbXINlDVTpoyasQ571XIAlHHpOA==}
+  /@shopify/theme-check-node@2.7.0:
+    resolution: {integrity: sha512-ZWDAEIB5PLJnU/IHVG9P4XMr/IFPFBqg7b5TxqoVCi1qnnGJAcS6N63jLWay1n4Vzrb/qmRG2SiYX4YDeYbILw==}
     dependencies:
-      '@shopify/theme-check-common': 2.5.1
-      '@shopify/theme-check-docs-updater': 2.5.1
+      '@shopify/theme-check-common': 2.7.0
+      '@shopify/theme-check-docs-updater': 2.7.0
       glob: 8.1.0
       yaml: 2.3.2
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-common@1.11.1:
-    resolution: {integrity: sha512-JvCdNCtNPCznipnsvB49ErhNa2NLtAKDnfAaiEhmDX7uiqBRkYklOXYZweSdlZm7LWiC/3gE/YLI4wc7f/cDTg==}
+  /@shopify/theme-language-server-common@1.11.3:
+    resolution: {integrity: sha512-m10FMW14Mxs9Ll/uJfkUz0KQFvr4wZIdReRVdvgSCoGqmjA6I6JmthtcTb27pGTY1i/zbRXx02V4+m3fSJaXOw==}
     dependencies:
       '@shopify/liquid-html-parser': 2.0.3
-      '@shopify/theme-check-common': 2.5.1
+      '@shopify/theme-check-common': 2.7.0
       '@vscode/web-custom-data': 0.4.9
       vscode-json-languageservice: 5.3.11
       vscode-languageserver: 8.1.0
@@ -6443,12 +6444,12 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@1.11.1:
-    resolution: {integrity: sha512-PAFTqYaIhSzg+VBrSxsSV6qEHSoG5LE8BPAatfuT3kiZSgNFsA1Ela5Sh9em6fdAX2kfjlx9xloI9GpPfGm1oA==}
+  /@shopify/theme-language-server-node@1.11.3:
+    resolution: {integrity: sha512-abRrJRoq3ENVpGQ36dhBEqPc+MvJRvqGyeIEj1ootzwy/UinHpxLKYnOzcPLMd5/XRBzOkzMIxNhqWtCoLshlQ==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 2.5.1
-      '@shopify/theme-check-node': 2.5.1
-      '@shopify/theme-language-server-common': 1.11.1
+      '@shopify/theme-check-docs-updater': 2.7.0
+      '@shopify/theme-check-node': 2.7.0
+      '@shopify/theme-language-server-common': 1.11.3
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -10723,6 +10724,7 @@ packages:
   /glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
+    deprecated: Glob versions prior to v9 are no longer supported
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
