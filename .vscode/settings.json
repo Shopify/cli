@@ -38,4 +38,5 @@
   "testing.automaticallyOpenPeekView": "never",
   "javascript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifierEnding": "js",
+  "vitest.nodeEnv": {"VITEST_SKIP_TIMEOUT": "1"}
 }

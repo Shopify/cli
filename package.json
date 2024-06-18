@@ -95,7 +95,7 @@
   "version": "0.0.0",
   "resolutions": {
     "@types/react": "17.0.2",
-    "vite": "4.4.9",
+    "vite": "5.3.1",
     "@oclif/core": "3.26.5",
     "whatwg-url": "14.0.0",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
