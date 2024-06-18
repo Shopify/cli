@@ -57,7 +57,7 @@
   "devDependencies": {
     "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.62.0",
-    "@types/node": "18.19.3",
+    "@types/node": "18.19.36",
     "esbuild-plugin-copy": "^2.1.1",
     "@vitest/coverage-istanbul": "^1.6.0",
     "vitest": "^1.6.0"
