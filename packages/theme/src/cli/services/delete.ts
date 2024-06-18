@@ -37,12 +37,14 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
     return
   }
 
-  themes.map((theme) => {
-    if (isDevelopmentTheme(theme)) {
-      removeDevelopmentTheme()
-    }
-    return deleteTheme(theme.id, adminSession)
-  })
+  await Promise.all(
+    themes.map((theme) => {
+      if (isDevelopmentTheme(theme)) {
+        removeDevelopmentTheme()
+      }
+      return deleteTheme(theme.id, adminSession)
+    }),
+  )
 
   renderSuccess({
     body: pluralize(

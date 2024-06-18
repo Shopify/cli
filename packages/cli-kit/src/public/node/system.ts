@@ -122,6 +122,7 @@ Running system process:
  * Waits for a given number of seconds.
  *
  * @param seconds - Number of seconds to wait.
+ * @returns A Promise resolving after the number of seconds.
  */
 export async function sleep(seconds: number): Promise<void> {
   return new Promise((resolve) => {

@@ -269,6 +269,8 @@ async function shopifyCLIDirectory(embedded = false): Promise<string> {
 
 /**
  * It returns the Ruby version present in the envirronment.
+ *
+ * @returns The Ruby version, or undefined if it is not found.
  */
 export async function version(): Promise<string | undefined> {
   const parseOutput = (version: string) => version.match(/ruby (\d+\.\d+\.\d+)/)?.[1]
