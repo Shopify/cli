@@ -18,6 +18,11 @@ up:
       # whenever we run dev up.
       met?: pnpm install
       meet: 'true'
+  - custom:
+      name: 'Get GraphQL schemas'
+      # Always fetch these on dev up
+      met?: pnpm graphql-codegen:get-graphql-schemas
+      meet: 'true'
 
 env:
   SHOPIFY_CLI_ENV: development
