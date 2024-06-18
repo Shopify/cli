@@ -6,10 +6,18 @@ export function useExtensions() {
 
   return useMemo(
     () =>
-      extensionServer.state.extensions.map(({uuid, type}) => ({
-        uuid,
-        type,
-      })),
+      extensionServer.state.extensions
+        .sort((aExtension, bExtension) => {
+          if (aExtension.type.toLowerCase() === 'app_home') {
+            // aExtension will come first
+            return -1
+          }
+          return aExtension.handle.localeCompare(bExtension.handle)
+        })
+        .map(({uuid, type}) => ({
+          uuid,
+          type,
+        })),
     [extensionServer.state.extensions.length],
   )
 }
