@@ -15,6 +15,7 @@ import {
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
+  testFunctionExtension,
   testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
@@ -243,7 +244,7 @@ describe('setup-dev-processes', () => {
     })
   })
 
-  test('process list includes app polling when envVar is enabled', async () => {
+  test('process list includes app polling when envVar is enabled and functions are available', async () => {
     vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_ENABLE_APP_LOG_POLLING: '1'})
 
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -272,6 +273,101 @@ describe('setup-dev-processes', () => {
         redirectUrlWhitelist: ['https://example.com/redirect'],
       },
     }
+    const functionExtension = await testFunctionExtension()
+    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
+    const draftable = await testTaxCalculationExtension()
+    const theme = await testThemeExtensions()
+    const localApp = testAppWithConfig({
+      config: {},
+      app: {
+        webs: [
+          {
+            directory: 'web',
+            configuration: {
+              roles: [WebType.Backend, WebType.Frontend],
+              commands: {dev: 'npm exec remix dev'},
+              webhooks_path: '/webhooks',
+              hmr_server: {
+                http_paths: ['/ping'],
+              },
+            },
+          },
+        ],
+        allExtensions: [previewable, draftable, theme, functionExtension],
+      },
+    })
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecret: 'api-secret',
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+    }
+
+    const graphiqlKey = 'somekey'
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey,
+    })
+
+    expect(res.processes[6]).toMatchObject({
+      type: 'app-logs-subscribe',
+      prefix: 'app-logs',
+      function: subscribeAndStartPolling,
+      options: {
+        developerPlatformClient,
+        appLogsSubscribeVariables: {
+          shopIds: ['123456789'],
+          apiKey: 'api-key',
+          token: 'token',
+        },
+      },
+    })
+  })
+
+  test('process list skips app polling when envVar is enabled but no functions are registered on the app', async () => {
+    vi.mocked(getEnvironmentVariables).mockReturnValue({SHOPIFY_CLI_ENABLE_APP_LOG_POLLING: '1'})
+
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      subscriptionProductUrl: '/products/999999',
+      checkoutCartUrl: '/cart/999999:1',
+      theme: '1',
+      directory: '',
+      reset: false,
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      noTunnel: false,
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+
     const previewable = await testUIExtension({type: 'checkout_ui_extension'})
     const draftable = await testTaxCalculationExtension()
     const theme = await testThemeExtensions()
@@ -321,18 +417,8 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    expect(res.processes[6]).toMatchObject({
-      type: 'app-logs-subscribe',
-      prefix: 'app-logs',
-      function: subscribeAndStartPolling,
-      options: {
-        developerPlatformClient,
-        appLogsSubscribeVariables: {
-          shopIds: ['123456789'],
-          apiKey: 'api-key',
-          token: 'token',
-        },
-      },
+    res.processes.forEach((process) => {
+      expect(process.type).not.toBe('app-logs-subscribe')
     })
   })
 
