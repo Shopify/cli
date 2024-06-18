@@ -90,7 +90,7 @@ export const pollAppLogs = async ({
             stdout.write(JSON.stringify(payload))
           }
 
-          const logPath = await writeAppLogsToFile({
+          const logFile = await writeAppLogsToFile({
             appLog: log,
             apiKey,
             stdout,
@@ -98,9 +98,9 @@ export const pollAppLogs = async ({
           stdout.write(
             outputContent`${outputToken.gray('└ ')}${outputToken.link(
               'Open log file',
-              `file://${logPath}`,
-              `Log: ${logPath}`,
-            )}\n`.value,
+              `file://${logFile.fullOutputPath}`,
+              `Log: ${logFile.fullOutputPath}`,
+            )} ${outputToken.gray(`(${logFile.identifier})`)}\n`.value,
           )
         })
       }
