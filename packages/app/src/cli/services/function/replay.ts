@@ -59,24 +59,9 @@ export async function replay(options: ReplayOptions) {
     const {apiKey} = await ensureConnectedAppFunctionContext(options)
     const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
-    let selectedRun
-    if (options.log) {
-      const runPath = await findFunctionRun(functionRunsDir, options.extension.handle, options.log)
-      if (runPath === undefined) {
-        throw new AbortError(
-          `No log found for '${options.log}'.\nSearched ${functionRunsDir} for function ${options.extension.handle}.`,
-        )
-      }
-      const fileData = await readFile(runPath)
-      selectedRun = JSON.parse(fileData)
-    } else {
-      const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
-      selectedRun = await selectFunctionRunPrompt(functionRuns)
-
-      if (selectedRun === undefined) {
-        throw new AbortError(`No logs found in ${functionRunsDir}`)
-      }
-    }
+    const selectedRun = options.log ?
+      await getRunFromIdentifier(functionRunsDir, extension.handle, options.log) :
+      await getRunFromSelector(functionRunsDir, extension.handle)
 
     const {input, export: runExport} = selectedRun.payload
     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
@@ -128,6 +113,21 @@ async function runFunctionRunnerWithLogInput(
   )
 }
 
+async function getRunFromIdentifier(
+  functionRunsDir: string,
+  functionHandle: string,
+  logArgument: string
+) : Promise<FunctionRunData> {
+  const runPath = await findFunctionRun(functionRunsDir, functionHandle, logArgument)
+  if (runPath === undefined) {
+    throw new AbortError(
+      `No log found for '${logArgument}'.\nSearched ${functionRunsDir} for function ${functionHandle}.`,
+    )
+  }
+  const fileData = await readFile(runPath)
+  return JSON.parse(fileData)
+}
+
 async function findFunctionRun(
   functionRunsDir: string,
   functionHandle: string,
@@ -148,6 +148,19 @@ async function findFunctionRun(
     return joinPath(functionRunsDir, fileName)
   }
   return undefined
+}
+
+async function getRunFromSelector(
+  functionRunsDir: string,
+  functionHandle: string,
+) : Promise<FunctionRunData> {
+  const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
+  const selectedRun = await selectFunctionRunPrompt(functionRuns)
+
+  if (selectedRun === undefined) {
+    throw new AbortError(`No logs found in ${functionRunsDir}`)
+  }
+  return selectedRun
 }
 
 async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
