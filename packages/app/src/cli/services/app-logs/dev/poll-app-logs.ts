@@ -1,21 +1,15 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {
+  POLLING_INTERVAL_MS,
+  POLLING_ERROR_RETRY_INTERVAL_MS,
+  POLLING_THROTTLE_RETRY_INTERVAL_MS,
+  ONE_MILLION,
+  LOG_TYPE_FUNCTION_RUN,
+  fetchAppLogs,
+} from '../utils.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
-
-const POLLING_INTERVAL_MS = 450
-const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
-const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
-const ONE_MILLION = 1000000
-const LOG_TYPE_FUNCTION_RUN = 'function_run'
-
-const generateFetchAppLogUrl = async (cursor?: string) => {
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/app_logs/poll`
-  return url + (cursor ? `?cursor=${cursor}` : '')
-}
 
 export interface AppLogData {
   shop_id: number
@@ -41,13 +35,7 @@ export const pollAppLogs = async ({
   resubscribeCallback: () => Promise<void>
 }) => {
   try {
-    const url = await generateFetchAppLogUrl(cursor)
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-      },
-    })
+    const response = await fetchAppLogs(jwtToken, cursor)
 
     if (!response.ok) {
       if (response.status === 401) {
