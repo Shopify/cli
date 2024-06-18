@@ -1,7 +1,8 @@
-import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
+import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
-import {gql} from 'graphql-request'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {Variables, gql} from 'graphql-request'
 import Bottleneck from 'bottleneck'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
@@ -13,6 +14,23 @@ const limiter = new Bottleneck({
 })
 
 /**
+ * Sets up the request to the Partners API.
+ *
+ * @param token - Partners token.
+ */
+async function setupRequest(token: string) {
+  const api = 'Partners'
+  const fqdn = await partnersFqdn()
+  const url = `https://${fqdn}/api/cli/graphql`
+  return {
+    token,
+    api,
+    url,
+    responseOptions: {onResponse: handleDeprecations},
+  }
+}
+
+/**
  * Executes a GraphQL query against the Partners API.
  *
  * @param query - GraphQL query to execute.
@@ -21,17 +39,37 @@ const limiter = new Bottleneck({
  * @returns The response of the query of generic type <T>.
  */
 export async function partnersRequest<T>(query: string, token: string, variables?: GraphQLVariables): Promise<T> {
-  const api = 'Partners'
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/api/cli/graphql`
-  const result = limiter.schedule<T>(() =>
-    graphqlRequest({
+  const opts = await setupRequest(token)
+  const result = limiter.schedule(() =>
+    graphqlRequest<T>({
+      ...opts,
       query,
-      api,
-      url,
-      token,
       variables,
-      responseOptions: {onResponse: handleDeprecations},
+    }),
+  )
+
+  return result
+}
+
+/**
+ * Executes a GraphQL query against the Partners API. Uses typed documents.
+ *
+ * @param query - GraphQL query to execute.
+ * @param token - Partners token.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <TResult>.
+ */
+export async function partnersRequestDoc<TResult, TVariables extends Variables>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  token: string,
+  variables?: TVariables,
+): Promise<TResult> {
+  const opts = await setupRequest(token)
+  const result = limiter.schedule(() =>
+    graphqlRequestDoc<TResult, TVariables>({
+      ...opts,
+      query,
+      variables,
     }),
   )
 

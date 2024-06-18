@@ -50,6 +50,7 @@ env:
   BUNDLE_WITHOUT: 'test:development'
   SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
   SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+  GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
 
 jobs:
   main:
@@ -71,19 +72,19 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache  --target=build
+        run: pnpm nx run-many --all --skip-nx-cache  --target=build --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Lint
-        run: pnpm nx run-many --all --skip-nx-cache  --target=lint
+        run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Type-check
-        run: pnpm nx run-many --all --skip-nx-cache  --target=type-check
+        run: pnpm nx run-many --all --skip-nx-cache  --target=type-check --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Bundle
-        run: pnpm nx run-many --all --skip-nx-cache  --target=bundle
+        run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Unit tests
-        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
+        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features --output-style=stream
       - name: Acceptance tests
         if: ${{ matrix.node == '18.20.3' }}
         run: pnpm nx run features:test
@@ -124,7 +125,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: ${{ matrix.target }}
-        run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
+        run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }} --output-style=stream
 
   pr-platform-agnostic-bundle:
     name: '[PR] Run bundle with Node ${{ matrix.node }} in ${{ matrix.os }}'
@@ -146,9 +147,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: 'Build'
-        run: pnpm nx run-many --all --skip-nx-cache --target=build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: 'Bundle'
-        run: pnpm nx run-many --all --skip-nx-cache --target=bundle
+        run: pnpm nx run-many --all --skip-nx-cache --target=bundle --output-style=stream
 
   pr-platform-agnostic-knip:
     name: '[PR] Run knip with Node ${{ matrix.node }} in ${{ matrix.os }}'
@@ -174,6 +175,32 @@ jobs:
         with:
           verbose: true
 
+  pr-platform-agnostic-graphql-schema:
+    name: '[PR] Check graphql-codegen has been run'
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'pull_request' }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['macos-latest'] # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
+        node: ['18.20.3']
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Get schemas for codegen
+        run: pnpm graphql-codegen:get-graphql-schemas
+      - name: Run graphql-codegen
+        run: pnpm graphql-codegen
+      - name: Fail if any changes were made
+        run: 'test -z "$(git status --porcelain)" || { echo -e "Run pnpm graphql-codegen when queries are changed, committing any fixes and generated files" ; exit 1; }'
+
   oclif-checks:
     name: '[PR] Check OCLIF manifests & readme & docs'
     runs-on: ubuntu-latest
@@ -190,7 +217,7 @@ jobs:
         with:
           node-version: 18.20.3
       - name: Build
-        run: pnpm build
+        run: pnpm build --output-style=stream
       - name: Refresh manifests
         run: pnpm refresh-manifests
       - name: Check if there are changes
@@ -228,7 +255,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm test:unit
+        run: pnpm test:unit --output-style=stream
 
   pr-acceptance-tests:
     name: '[PR] Accept. Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
@@ -250,7 +277,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Acceptance tests
-        run: pnpm test:features
+        run: pnpm test:features --output-style=stream
 
   pr-test-coverage:
     name: '[PR] Run Test Coverage with Node ${{ matrix.node }} in ${{ matrix.os }}'
@@ -272,7 +299,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
         with:
@@ -298,9 +325,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
       - name: Unit tests
-        run: pnpm test:unit
+        run: pnpm test:unit --output-style=stream
       - name: Acceptance tests
-        run: pnpm test:features
+        run: pnpm test:features --output-style=stream
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
         uses: mxschmitt/action-tmate@1005f9c9db5f1b055a495e72c6e589764984baf6 # pin@v3

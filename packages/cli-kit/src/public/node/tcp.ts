@@ -14,7 +14,6 @@ interface GetTCPPortOptions {
  * @param preferredPort - Number of the preferred port to be used if available.
  * @param options - Extra configuration for getting TCP ports.
  * @returns A promise that resolves with an availabe port.
- * @example
  */
 export async function getAvailableTCPPort(preferredPort?: number, options?: GetTCPPortOptions): Promise<number> {
   if (preferredPort && (await checkPortAvailability(preferredPort))) {
@@ -35,6 +34,7 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
  * Checks if a port is available.
  *
  * @param portNumber - The port number to check.
+ * @returns A promise that resolves with a boolean indicating if the port is available.
  */
 export async function checkPortAvailability(portNumber: number): Promise<boolean> {
   return (await port.checkPort(portNumber)) === portNumber

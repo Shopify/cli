@@ -1,244 +1,309 @@
 import {FunctionRunData, replay} from './replay.js'
-import {runFunctionRunner} from './build.js'
-import {testApp, testFunctionExtension, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {getLogsDir} from '@shopify/cli-kit/node/logs'
-import {describe, expect, test, vi} from 'vitest'
+import {setupExtensionWatcher} from '../dev/extension/bundler.js'
 import {exec} from '@shopify/cli-kit/node/system'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {readFile} from '@shopify/cli-kit/node/fs'
+import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputWarn} from '@shopify/cli-kit/node/output'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {readdirSync} from 'fs'
 
+vi.mock('fs')
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
 vi.mock('../../prompts/function/replay.js')
-vi.mock('@shopify/cli-kit/node/logs')
-vi.mock('./build.js')
 vi.mock('@shopify/cli-kit/node/system')
-
-const EXTENSION_NAMESPACE = 'extensions'
-
-const EXTENSION = await testFunctionExtension({})
-const HANDLE = EXTENSION.handle
-const RUN1: FunctionRunData = {
-  shop_id: 69665030382,
-  api_client_id: 124042444801,
-  payload: {
-    input: '{}',
-    input_bytes: 136,
-    output: '{}',
-    export: 'run',
-    output_bytes: 195,
-    function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
-    logs: '',
-    fuel_consumed: 458206,
-  },
-  event_type: 'function_run',
-  cursor: '2024-05-31T15:29:47.291530Z',
-  source: HANDLE,
-  source_namespace: EXTENSION_NAMESPACE,
-  status: 'success',
-  log_timestamp: '2024-05-31T15:29:46.741270Z',
-  identifier: 'abcdef',
-}
-const RUN1_FILENAME = RUN1.log_timestamp.replace(/:/g, '_')
-
-const RUN2: FunctionRunData = {
-  shop_id: 69665030382,
-  api_client_id: 124042444801,
-  payload: {
-    input: '{}',
-    input_bytes: 136,
-    output: '{}',
-    export: 'run',
-    output_bytes: 195,
-    function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
-    logs: '',
-    fuel_consumed: 458206,
-  },
-  event_type: 'function_run',
-  cursor: '2024-05-31T15:29:47.291530Z',
-  status: 'success',
-  source: HANDLE,
-  source_namespace: EXTENSION_NAMESPACE,
-  log_timestamp: '2024-05-31T15:29:50.741270Z',
-  identifier: '123456',
-}
-const RUN2_FILENAME = RUN2.log_timestamp.replace(/:/g, '_')
-
-const UNRELATED_HANDLE = 'other-function'
-const UNRELATED_LOG: FunctionRunData = {
-  shop_id: 69665030382,
-  api_client_id: 124042444801,
-  payload: {
-    input: '{}',
-    input_bytes: 136,
-    output: '{}',
-    output_bytes: 195,
-    export: 'run',
-    function_id: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
-    logs: '',
-    fuel_consumed: 458206,
-  },
-  event_type: 'function_run',
-  cursor: '2024-05-31T15:29:47.291530Z',
-  status: 'success',
-  source: UNRELATED_HANDLE,
-  source_namespace: EXTENSION_NAMESPACE,
-  log_timestamp: '2024-05-31T15:29:50.741270Z',
-  identifier: '123456',
-}
-const UNRELATED_LOG_FILENAME = UNRELATED_LOG.log_timestamp.replace(/:/g, '_')
+vi.mock('../dev/extension/bundler.js')
+vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('replay', () => {
-  test('reads the app log directory, parses the function runs, and invokes function-runner', async () => {
-    // Given
-    const app = testApp()
-    const developerPlatformClient = testDeveloperPlatformClient()
-    const apiKey = 'apiKey'
+  const developerPlatformClient = testDeveloperPlatformClient()
+  const apiKey = 'apiKey'
+  const defaultConfig = {
+    name: 'MyFunction',
+    type: 'product_discounts',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
+    configuration_ui: true,
+    api_version: '2022-07',
+    metafields: [],
+    handle: 'function-handle',
+  }
 
-    await inTemporaryDirectory(async (tmpDir) => {
-      // setup a directory with function run logs
-      const functionRunsDir = joinPath(tmpDir, apiKey)
-      await mkdir(functionRunsDir)
+  let extension: ExtensionInstance<FunctionConfigType>
 
-      await Promise.all(
-        [...Array(100).keys()].map(async (index) => {
-          return writeFile(
-            joinPath(functionRunsDir, `${RUN1_FILENAME}_extensions_${HANDLE}_${index}_${RUN1.identifier}.json`),
-            JSON.stringify(RUN1),
-          )
-        }),
-      )
-      await writeFile(
-        joinPath(functionRunsDir, `${RUN2_FILENAME}_extensions_${HANDLE}_${RUN2.identifier}.json`),
-        JSON.stringify(RUN2),
-      )
-
-      const options = {
-        app,
-        extension: EXTENSION,
-        apiKey: undefined,
-        stdout: false,
-        path: functionRunsDir,
-        json: true,
-      }
-
-      vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValueOnce({apiKey, developerPlatformClient})
-      vi.mocked(getLogsDir).mockReturnValue(tmpDir)
-      vi.mocked(selectFunctionRunPrompt).mockResolvedValue(RUN1)
-      vi.mocked(runFunctionRunner)
-      // When
-      await replay(options)
-
-      // Then
-      // expect it to get the apiKey
-      expect(ensureConnectedAppFunctionContext).toHaveBeenCalledOnce()
-
-      // expect it to determine the directory from the apiKey
-      expect(getLogsDir).toHaveBeenCalledOnce()
-
-      // expect it to call the selector with a subset of the runs
-      const expectedRuns = Array(100).fill(RUN1)
-      expectedRuns[0] = RUN2
-      expect(selectFunctionRunPrompt).toHaveBeenCalledWith(expectedRuns)
-
-      // expect it to call function runner with that run
-      expect(exec).toHaveBeenCalledWith(
-        'npm',
-        [
-          'exec',
-          '--',
-          'function-runner',
-          '-f',
-          '/tmp/project/extensions/my-function/dist/index.wasm',
-          '--json',
-          '--export',
-          'run',
-        ],
-        {
-          cwd: '/tmp/project/extensions/my-function',
-          input: RUN1.payload.input,
-          stdout: 'inherit',
-          stderr: 'inherit',
-        },
-      )
-    })
+  beforeAll(async () => {
+    extension = await testFunctionExtension({config: defaultConfig})
   })
 
-  test('does not read logs from other functions', async () => {
-    // Given
-    const app = testApp()
-    const developerPlatformClient = testDeveloperPlatformClient()
-    const apiKey = 'apiKey'
-
-    await inTemporaryDirectory(async (tmpDir) => {
-      // setup a directory with function run logs
-      const functionRunsDir = joinPath(tmpDir, apiKey)
-      await mkdir(functionRunsDir)
-
-      await writeFile(
-        joinPath(functionRunsDir, `${RUN2_FILENAME}_extensions_${HANDLE}_${RUN2.identifier}.json`),
-        JSON.stringify(RUN2),
-      )
-      await writeFile(
-        joinPath(
-          functionRunsDir,
-          `${UNRELATED_LOG_FILENAME}_extensions_${UNRELATED_HANDLE}_${UNRELATED_LOG.identifier}.json`,
-        ),
-        JSON.stringify(UNRELATED_LOG),
-      )
-
-      const options = {
-        app,
-        extension: EXTENSION,
-        apiKey: undefined,
-        stdout: false,
-        path: functionRunsDir,
-        json: true,
-        export: 'run',
-      }
-
-      vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValueOnce({apiKey, developerPlatformClient})
-      vi.mocked(getLogsDir).mockReturnValue(tmpDir)
-      vi.mocked(selectFunctionRunPrompt).mockResolvedValue(RUN1)
-      vi.mocked(runFunctionRunner)
-      // When
-      await replay(options)
-
-      // Then
-      // expect it to call the selector with a subset of the runs
-      const expectedRuns = [RUN2]
-      expect(selectFunctionRunPrompt).toHaveBeenCalledWith(expectedRuns)
-    })
+  beforeEach(() => {
+    vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValue({apiKey, developerPlatformClient})
   })
 
-  test('throws an error if invoked with no logs available', async () => {
+  test('runs selected function', async () => {
     // Given
-    const app = testApp()
-    const developerPlatformClient = testDeveloperPlatformClient()
-    const apiKey = 'apiKey'
+    const file1 = createFunctionRunFile(extension.handle)
+    const file2 = createFunctionRunFile(extension.handle)
+    mockFileOperations([file1, file2])
 
-    await inTemporaryDirectory(async (tmpDir) => {
-      // setup a directory with function run logs
-      const functionRunsDir = joinPath(tmpDir, apiKey)
-      await mkdir(functionRunsDir)
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file1.run)
 
-      const options = {
-        app,
-        extension: EXTENSION,
-        apiKey: undefined,
-        stdout: false,
-        path: functionRunsDir,
-        json: true,
-        export: 'run',
-      }
-
-      vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValueOnce({apiKey, developerPlatformClient})
-      vi.mocked(getLogsDir).mockReturnValue(tmpDir)
-      vi.mocked(selectFunctionRunPrompt).mockResolvedValue(undefined)
-
-      // When/Then
-      await expect(() => replay(options)).rejects.toThrowError('No logs found')
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: false,
     })
+
+    // Then
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file2.run, file1.run])
+    expectExecToBeCalledWithInput(file1.run.payload.input)
+  })
+
+  test('only allows selection of the most recent 100 runs', async () => {
+    // Given
+    const files = new Array(101).fill(undefined).map((_) => createFunctionRunFile(extension.handle))
+    mockFileOperations(files)
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(files[100]!.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: false,
+    })
+
+    // Then
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
+      files
+        .map(({run}) => run)
+        .reverse()
+        .slice(0, 100),
+    )
+  })
+
+  test('does not allow selection of runs for other functions', async () => {
+    // Given
+    const file1 = createFunctionRunFile(extension.handle)
+    const file2 = createFunctionRunFile('another-function-handle')
+    mockFileOperations([file1, file2])
+
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file1.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: false,
+    })
+
+    // Then
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run])
+  })
+
+  test('throws error if no logs available', async () => {
+    // Given
+
+    // When/Then
+    await expect(async () => {
+      await replay({
+        app: testApp(),
+        extension,
+        stdout: false,
+        path: 'test-path',
+        json: true,
+        watch: false,
+      })
+    }).rejects.toThrow()
+  })
+
+  test('aborts on error', async () => {
+    // Given
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+    vi.mocked(setupExtensionWatcher).mockRejectedValueOnce('failure')
+
+    // When
+    await expect(async () =>
+      replay({
+        app: testApp(),
+        extension,
+        stdout: false,
+        path: 'test-path',
+        json: true,
+        watch: true,
+      }),
+    ).rejects.toThrow()
+    const abortSignal = vi.mocked(setupExtensionWatcher).mock.calls[0]![0].signal
+
+    // Then
+    expect(abortSignal.aborted).toBeTruthy()
+  })
+
+  test('runs function once in watch mode without changes', async () => {
+    // Given
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+
+    // Then
+    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
+    expect(exec).toHaveBeenCalledOnce()
+    expectExecToBeCalledWithInput(file.run.payload.input)
+  })
+
+  test('file watcher onChange re-runs function', async () => {
+    // Given
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onChange()
+
+    // Then
+    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
+    expectExecToBeCalledWithInput(file.run.payload.input)
+    expect(exec).toHaveBeenCalledTimes(2)
+  })
+
+  test('renders fatal error in onReloadAndBuildError', async () => {
+    // Given
+    const expectedError = new AbortError('abort!')
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
+
+    // Then
+    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
+    expect(renderFatalError).toHaveBeenCalledWith(expectedError)
+  })
+
+  test('outputs non-fatal error in onReloadAndBuildError', async () => {
+    // Given
+    const expectedError = new Error('non-fatal error')
+    const file = createFunctionRunFile(extension.handle)
+    mockFileOperations([file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
+
+    // Then
+    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
+    expect(outputWarn).toHaveBeenCalledWith(`Failed to replay function: ${expectedError.message}`)
   })
 })
+
+function createFunctionRunFile(handle: string) {
+  const identifier = randomUUID().substring(0, 6)
+  const path = `20240522_150641_827Z_extensions_${handle}_${identifier}.json`
+  const run: FunctionRunData = {
+    identifier,
+    shop_id: 1,
+    api_client_id: 1,
+    log_type: 'function_run',
+    source: handle,
+    source_namespace: 'extensions',
+    log_timestamp: '2024-06-12T20:38:18.796Z',
+    cursor: '2024-06-12T20:38:18.796Z',
+    status: 'success',
+    payload: {
+      input: {},
+      export: 'run',
+      fuel_consumed: 1,
+      function_id: 'function-id',
+      input_bytes: 1,
+      logs: '',
+      output: '',
+      output_bytes: 1,
+    },
+  }
+
+  return {run, path}
+}
+
+function expectExecToBeCalledWithInput(input: any) {
+  expect(exec).toHaveBeenCalledWith(
+    'npm',
+    [
+      'exec',
+      '--',
+      'function-runner',
+      '-f',
+      '/tmp/project/extensions/my-function/dist/index.wasm',
+      '--json',
+      '--export',
+      'run',
+    ],
+    {
+      cwd: '/tmp/project/extensions/my-function',
+      stdout: 'inherit',
+      stderr: 'inherit',
+      input: JSON.stringify(input),
+    },
+  )
+}
+
+function mockFileOperations(data: {run: FunctionRunData; path: string}[]) {
+  vi.mocked(readdirSync).mockReturnValue(data.map(({path}) => path) as any)
+  data.forEach(({run}) => vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(run) as any))
+}

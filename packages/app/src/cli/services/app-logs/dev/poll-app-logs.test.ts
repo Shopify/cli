@@ -77,28 +77,6 @@ const RESPONSE_DATA = {
       shop_id: 1,
       api_client_id: 1830457,
       payload: JSON.stringify(FUNCTION_PAYLOAD),
-      event_type: FUNCTION_RUN,
-      cursor: '2024-05-23T19:17:02.321773Z',
-      status: 'success',
-      source: SOURCE,
-      source_namespace: 'extensions',
-      log_timestamp: '2024-05-23T19:17:00.240053Z',
-    },
-    {
-      shop_id: 1,
-      api_client_id: 1830457,
-      payload: JSON.stringify(FAILURE_PAYLOAD),
-      event_type: FUNCTION_RUN,
-      cursor: '2024-05-23T19:17:02.321773Z',
-      status: 'failure',
-      source: SOURCE,
-      source_namespace: 'extensions',
-      log_timestamp: '2024-05-23T19:17:00.240053Z',
-    },
-    {
-      shop_id: 1,
-      api_client_id: 1830457,
-      payload: JSON.stringify(FUNCTION_PAYLOAD),
       log_type: FUNCTION_RUN,
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'success',
@@ -109,8 +87,19 @@ const RESPONSE_DATA = {
     {
       shop_id: 1,
       api_client_id: 1830457,
+      payload: JSON.stringify(FAILURE_PAYLOAD),
+      log_type: FUNCTION_RUN,
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'failure',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
       payload: JSON.stringify(OTHER_PAYLOAD),
-      event_type: 'some arbitrary event type',
+      log_type: 'some arbitrary event type',
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'failure',
       log_timestamp: '2024-05-23T19:17:00.240053Z',
@@ -187,11 +176,6 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
     })
-    expect(writeAppLogsToFile).toHaveBeenCalledWith({
-      appLog: RESPONSE_DATA.app_logs[3],
-      apiKey: API_KEY,
-      stdout,
-    })
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
       {outputPrefix: SOURCE, stripAnsi: false},
@@ -209,21 +193,14 @@ describe('pollAppLogs', () => {
     expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining('Log: '))
 
     // app_logs[2]
-    expect(stdout.write).toHaveBeenNthCalledWith(7, 'Function executed successfully using 0.5124M instructions.')
-    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenNthCalledWith(9, expect.stringContaining('Log: '))
-
-    // app_logs[3]
-    expect(stdout.write).toHaveBeenNthCalledWith(10, JSON.stringify(OTHER_PAYLOAD))
-    expect(stdout.write).toHaveBeenNthCalledWith(11, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(7, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })
 
   test('calls resubscribe callback if a 401 is received', async () => {
     // Given
-    const url = `https://${FQDN}/app_logs/poll`
-
     const response = new Response('errorMessage', {status: 401})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
@@ -239,14 +216,10 @@ describe('pollAppLogs', () => {
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
   })
 
-  test('displays error, waits, and retries if status is 429 or >500', async () => {
+  test('displays throttle message, waits, and retries if status is 429', async () => {
     // Given
-    const url = `https://${FQDN}/app_logs/poll`
-
-    const mockedFetch = vi
-      .fn()
-      .mockResolvedValueOnce(new Response('error for 429', {status: 429}))
-      .mockResolvedValueOnce(new Response('error for 500', {status: 500}))
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const mockedFetch = vi.fn().mockResolvedValueOnce(new Response('error for 429', {status: 429}))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
@@ -256,17 +229,16 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
     })
-    await vi.advanceTimersToNextTimerAsync()
 
-    expect(stdout.write).toHaveBeenCalledWith('error for 429')
-    expect(stdout.write).toHaveBeenCalledWith('error for 500')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 60 seconds.')
     expect(vi.getTimerCount()).toEqual(1)
   })
 
-  test('stops polling when unexpected error occurs instead of throwing ', async () => {
+  test('displays error message, waits, and retries if error occured', async () => {
     // Given
-    const url = `https://${FQDN}/app_logs/poll`
     const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
 
     // An unexpected error response
     const response = new Response('errorMessage', {status: 422})
@@ -282,15 +254,9 @@ describe('pollAppLogs', () => {
     })
 
     // Then
-    expect(fetch).toHaveBeenCalledWith(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${JWT_TOKEN}`,
-      },
-    })
-    expect(stdout.write).toHaveBeenCalledWith('Error while retrieving app logs.')
-    expect(stdout.write).toHaveBeenCalledWith('App log streaming is no longer available in this `dev` session.')
-    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('errorMessage'))
-    expect(vi.getTimerCount()).toEqual(0)
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Unhandled bad response: ${response.status}`))
+    expect(vi.getTimerCount()).toEqual(1)
   })
 })

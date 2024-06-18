@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-dev-console-app",
-  "version": "3.61.0",
+  "version": "3.62.0",
   "private": true,
   "scripts": {
     "build": "nx build",
@@ -62,7 +62,7 @@
     "jsdom": "^20.0.3",
     "sass": "^1.64.2",
     "typescript": "5.2.2",
-    "vite": "^4.4.9",
-    "vitest": "^0.34.3"
+    "vite": "^5.3.1",
+    "vitest": "^1.6.0"
   }
 }

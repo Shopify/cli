@@ -9,6 +9,7 @@ import {EditorExtensionCollectionType} from '../extensions/specifications/editor
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../services/dev/fetch.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
+import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -35,6 +36,12 @@ export const LegacyAppSchema = zod
       .default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
+    webhooks: zod
+      .object({
+        api_version: zod.string({required_error: 'String is required'}),
+        subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
+      })
+      .optional(),
   })
   .strict()
 

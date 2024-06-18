@@ -13,7 +13,6 @@ import lodashIsEqual from 'lodash/isEqual.js'
  * @param value - The value to compare.
  * @param other - The other value to compare.
  * @returns Returns `true` if the values are equivalent, else `false`.
- * @example
  */
 export function isEqual(value: unknown, other: unknown): boolean {
   return lodashIsEqual(value, other)

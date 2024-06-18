@@ -84,7 +84,9 @@ export async function setupDevProcesses({
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
-  const shouldPerformAppLogPolling = isTruthy(env[environmentVariableNames.enableAppLogPolling])
+  const shouldPerformAppLogPolling =
+    isTruthy(env[environmentVariableNames.enableAppLogPolling]) &&
+    localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   const processes = [
     ...(await setupWebProcesses({

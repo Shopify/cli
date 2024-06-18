@@ -10,7 +10,6 @@ import {
   OrganizationStore,
 } from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../api/graphql/update_draft.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
 
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
@@ -50,6 +49,10 @@ import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
 import {DevSessionCreateSchema} from '../api/graphql/dev_session_create.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
+import {
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateDraftMutationVariables,
+} from '../api/graphql/partners/generated/update-draft.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -202,7 +205,7 @@ export interface DeveloperPlatformClient {
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
-  updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
+  updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   devSessionDeploy: (input: DevSessionDeployOptions) => Promise<DevSessionCreateSchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>

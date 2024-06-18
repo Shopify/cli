@@ -266,6 +266,7 @@ describe('setupExtensionWatcher', () => {
       stderr: new Writable(),
       signal: signal ?? new AbortController().signal,
       onChange: vi.fn(),
+      onReloadAndBuildError: vi.fn(),
     }
   }
 
@@ -280,6 +281,7 @@ describe('setupExtensionWatcher', () => {
       stderr: new Writable(),
       signal: new AbortController().signal,
       onChange: vi.fn(),
+      onReloadAndBuildError: vi.fn(),
     }
   }
 
@@ -397,6 +399,7 @@ describe('setupExtensionWatcher', () => {
       stdout: watchOptions.stdout,
     })
     expect(watchOptions.onChange).toHaveBeenCalled()
+    expect(watchOptions.onReloadAndBuildError).not.toHaveBeenCalled()
   })
 
   test('does not deploy the function if the build fails', async () => {
@@ -418,6 +421,7 @@ describe('setupExtensionWatcher', () => {
 
     expect(buildSpy).toHaveBeenCalled()
     expect(watchOptions.onChange).not.toHaveBeenCalled()
+    expect(watchOptions.onReloadAndBuildError).toHaveBeenCalled()
   })
 
   test('terminates existing builds on concurrent file change', async () => {
@@ -522,7 +526,7 @@ describe('setupExtensionWatcher', () => {
     await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
-    // Them
+    // Then
     expect(buildSpy).not.toHaveBeenCalled()
     expect(chokidarOnSpy).toHaveBeenCalled()
     expect(reloadExtensionConfig).toHaveBeenCalledWith({
@@ -530,6 +534,7 @@ describe('setupExtensionWatcher', () => {
       stdout: watchOptions.stdout,
     })
     expect(watchOptions.onChange).toHaveBeenCalled()
+    expect(watchOptions.onReloadAndBuildError).not.toHaveBeenCalled()
   })
   test('dont deploy the configuration extension when the values are the same', async () => {
     // Given

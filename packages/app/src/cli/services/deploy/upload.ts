@@ -1,11 +1,11 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppDeployOptions, AssetUrlSchema, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
@@ -40,15 +40,15 @@ export async function uploadThemeExtensions(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
       const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
-      const themeExtensionInput: ExtensionUpdateDraftInput = {
+      const themeExtensionInput: ExtensionUpdateDraftMutationVariables = {
         apiKey,
         config: JSON.stringify(themeExtensionConfig),
         context: undefined,
         registrationId: themeId,
         handle: themeExtension.handle,
       }
-      const result: ExtensionUpdateSchema = await developerPlatformClient.updateExtension(themeExtensionInput)
-      if (result.extensionUpdateDraft?.userErrors?.length > 0) {
+      const result = await developerPlatformClient.updateExtension(themeExtensionInput)
+      if (result.extensionUpdateDraft?.userErrors && result.extensionUpdateDraft?.userErrors.length > 0) {
         const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
         throw new AbortError(errors)
       }
@@ -265,12 +265,20 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
     const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
+    const specificationIdentifier = error.details.find(
+      (detail) => typeof detail.specification_identifier !== 'undefined',
+    )?.specification_identifier
     const extensionIdentifier = error.details
       .find((detail) => typeof detail.extension_id !== 'undefined')
       ?.extension_id.toString()
 
     const handle = Object.keys(identifiers).find((key) => identifiers[key] === extensionIdentifier)
-    const extensionName = handle ?? remoteTitle
+    let extensionName = handle ?? remoteTitle
+
+    if (specificationIdentifier === 'webhook_subscription') {
+      // The remote title is a random identifier in this case
+      extensionName = 'Webhook Subscription'
+    }
 
     const existingSection = sections.find((section) => section.title === extensionName)
 

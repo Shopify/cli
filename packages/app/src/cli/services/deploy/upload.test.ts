@@ -441,6 +441,7 @@ describe('uploadExtensionsBundle', () => {
                 {
                   extension_id: 123,
                   extension_title: 'amortizable-marketplace-ext',
+                  specification_identifier: 'ui_extension',
                 },
               ],
             },
@@ -452,6 +453,7 @@ describe('uploadExtensionsBundle', () => {
                 {
                   extension_id: 456,
                   extension_title: 'amortizable-marketplace-ext-2',
+                  specification_identifier: 'ui_extension',
                 },
               ],
             },
@@ -463,6 +465,7 @@ describe('uploadExtensionsBundle', () => {
                 {
                   extension_id: 123,
                   extension_title: 'amortizable-marketplace-ext',
+                  specification_identifier: 'ui_extension',
                 },
               ],
             },
@@ -474,6 +477,7 @@ describe('uploadExtensionsBundle', () => {
                 {
                   extension_id: 456,
                   extension_title: 'amortizable-marketplace-ext-2',
+                  specification_identifier: 'ui_extension',
                 },
               ],
             },
@@ -485,6 +489,7 @@ describe('uploadExtensionsBundle', () => {
                 {
                   extension_id: 999,
                   extension_title: 'admin-link',
+                  specification_identifier: 'ui_extension',
                 },
               ],
             },
@@ -642,6 +647,7 @@ describe('deploymentErrorsToCustomSections', () => {
           {
             extension_id: 123,
             extension_title: 't:remote-title',
+            specification_identifier: 'ui_extension',
           },
         ],
       },
@@ -653,6 +659,7 @@ describe('deploymentErrorsToCustomSections', () => {
           {
             extension_id: 123,
             extension_title: 't:remote-title',
+            specification_identifier: 'ui_extension',
           },
         ],
       },
@@ -664,6 +671,7 @@ describe('deploymentErrorsToCustomSections', () => {
           {
             extension_id: 456,
             extension_title: 'amortizable-marketplace-ext-2',
+            specification_identifier: 'ui_extension',
           },
         ],
       },
@@ -675,6 +683,7 @@ describe('deploymentErrorsToCustomSections', () => {
           {
             extension_id: 456,
             extension_title: 'amortizable-marketplace-ext-2',
+            specification_identifier: 'ui_extension',
           },
         ],
       },
@@ -686,6 +695,7 @@ describe('deploymentErrorsToCustomSections', () => {
           {
             extension_id: 999,
             extension_title: 'admin-link',
+            specification_identifier: 'ui_extension',
           },
         ],
       },
@@ -832,6 +842,44 @@ describe('deploymentErrorsToCustomSections', () => {
           {userInput: 'already-taken-version'},
           'already exists. Deploy again with a different version name.',
         ],
+      },
+    ])
+  })
+
+  test('returns Webhook Subscription as the title for webhook subscription extensions', () => {
+    // Given
+    const errors = [
+      {
+        field: ['webhook_subscription'],
+        message: 'The following topic is invalid: products/wrong',
+        category: 'invalid',
+        details: [
+          {
+            extension_id: 686809612289,
+            extension_title: 'b05ef3d6a573863fa3b21fae7689f1',
+            specification_identifier: 'webhook_subscription',
+          },
+        ],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {
+      b05ef3d6a573863fa3b21fae7689f1: '686809612289',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        body: [
+          {
+            list: {
+              items: ['webhook_subscription: The following topic is invalid: products/wrong'],
+              title: '\nValidation errors',
+            },
+          },
+        ],
+        title: 'Webhook Subscription',
       },
     ])
   })

@@ -1,27 +1,21 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
+import {
+  POLLING_INTERVAL_MS,
+  POLLING_ERROR_RETRY_INTERVAL_MS,
+  POLLING_THROTTLE_RETRY_INTERVAL_MS,
+  ONE_MILLION,
+  LOG_TYPE_FUNCTION_RUN,
+  fetchAppLogs,
+} from '../utils.js'
+import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
-const POLLING_INTERVAL_MS = 450
-const POLLING_BACKOFF_INTERVAL_MS = 10000
-const ONE_MILLION = 1000000
-const LOG_TYPE_FUNCTION_RUN = 'function_run'
-
-const generateFetchAppLogUrl = async (cursor?: string) => {
-  const fqdn = await partnersFqdn()
-  const url = `https://${fqdn}/app_logs/poll`
-  return url + (cursor ? `?cursor=${cursor}` : '')
-}
-
-export interface AppEventData {
+export interface AppLogData {
   shop_id: number
   api_client_id: number
   payload: string
-  event_type: string
-  log_type?: string
+  log_type: string
   source: string
   source_namespace: string
   cursor: string
@@ -41,23 +35,14 @@ export const pollAppLogs = async ({
   resubscribeCallback: () => Promise<void>
 }) => {
   try {
-    const url = await generateFetchAppLogUrl(cursor)
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-      },
-    })
+    const response = await fetchAppLogs(jwtToken, cursor)
 
     if (!response.ok) {
-      const responseText = await response.text()
       if (response.status === 401) {
         await resubscribeCallback()
-      } else if (response.status === 429 || response.status >= 500) {
-        stdout.write(`Received an error while polling for app logs.`)
-        stdout.write(`${response.status}: ${response.statusText}`)
-        stdout.write(responseText)
-        stdout.write(`Retrying in ${POLLING_BACKOFF_INTERVAL_MS / 1000} seconds`)
+      } else if (response.status === 429) {
+        outputWarn(`Request throttled while polling app logs.`)
+        outputWarn(`Retrying in ${POLLING_THROTTLE_RETRY_INTERVAL_MS / 1000} seconds.`)
         setTimeout(() => {
           pollAppLogs({
             stdout,
@@ -70,15 +55,15 @@ export const pollAppLogs = async ({
           }).catch((error) => {
             outputDebug(`Unexpected error during polling: ${error}}\n`)
           })
-        }, POLLING_BACKOFF_INTERVAL_MS)
+        }, POLLING_THROTTLE_RETRY_INTERVAL_MS)
       } else {
-        throw new Error(`Error while fetching: ${responseText}`)
+        throw new Error(`Unhandled bad response: ${response.status}`)
       }
       return
     }
 
     const data = (await response.json()) as {
-      app_logs?: AppEventData[]
+      app_logs?: AppLogData[]
       cursor?: string
       errors?: string[]
     }
@@ -91,8 +76,7 @@ export const pollAppLogs = async ({
 
         // eslint-disable-next-line no-await-in-loop
         await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
-          // Use only log.log_type after https://github.com/Shopify/partners/pull/55178
-          if ((log.log_type ?? log.event_type) === LOG_TYPE_FUNCTION_RUN) {
+          if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
             const fuel = (payload.fuel_consumed / ONE_MILLION).toFixed(4)
 
             if (log.status === 'success') {
@@ -148,8 +132,22 @@ export const pollAppLogs = async ({
     }, POLLING_INTERVAL_MS)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    stdout.write(`Error while retrieving app logs.`)
-    stdout.write('App log streaming is no longer available in this `dev` session.')
+    outputWarn(`Error while polling app logs.`)
+    outputWarn(`Retrying in ${POLLING_ERROR_RETRY_INTERVAL_MS / 1000} seconds.`)
     outputDebug(`${error}}\n`)
+
+    setTimeout(() => {
+      pollAppLogs({
+        stdout,
+        appLogsFetchInput: {
+          jwtToken,
+          cursor: undefined,
+        },
+        apiKey,
+        resubscribeCallback,
+      }).catch((error) => {
+        outputDebug(`Unexpected error during polling: ${error}}\n`)
+      })
+    }, POLLING_ERROR_RETRY_INTERVAL_MS)
   }
 }
