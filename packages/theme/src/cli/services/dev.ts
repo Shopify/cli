@@ -1,6 +1,6 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
-import {startDevServer} from '../utilities/theme-environment/theme-environment.js'
+import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {DevServerContext, DevServerSession} from '../utilities/theme-environment/types.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -16,7 +16,7 @@ const DEFAULT_PORT = '9292'
 // Tokens are valid for 120 min, better to be safe and refresh every 110 min
 const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
 
-interface DevOptions {
+export interface DevOptions {
   adminSession: AdminSession
   storefrontToken: string
   directory: string
@@ -30,6 +30,7 @@ interface DevOptions {
   flagsToPass: string[]
   'dev-preview': boolean
   'theme-editor-sync': boolean
+  'live-reload': string
   noDelete: boolean
   ignore: string[]
   only: string[]
@@ -60,20 +61,28 @@ export async function dev(options: DevOptions) {
     storefrontToken: options.storefrontToken,
     expiresAt: new Date(),
   }
+
+  const host = options.host || DEFAULT_HOST
+  const port = options.port || DEFAULT_PORT
+
   const ctx: DevServerContext = {
     session,
     remoteChecksums,
     localThemeFileSystem,
-    themeEditorSync: options['theme-editor-sync'],
     options: {
+      themeEditorSync: options['theme-editor-sync'],
+      host,
+      port,
+      open: options.open,
+      liveReload: options['live-reload'],
       noDelete: options.noDelete,
       ignore: options.ignore,
       only: options.only,
     },
   }
 
-  await startDevServer(options.theme, ctx, () => {
-    renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
+  await setupDevServer(options.theme, ctx, () => {
+    renderLinks(options.store, options.theme.id.toString(), host, port)
   })
 }
 

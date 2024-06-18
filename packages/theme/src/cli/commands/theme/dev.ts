@@ -174,6 +174,7 @@ You can run this command only in a directory that matches the [default Shopify t
       theme,
       host: flags.host,
       port: flags.port,
+      'live-reload': flags['live-reload'],
       force: flags.force,
       open: flags.open,
       flagsToPass,
