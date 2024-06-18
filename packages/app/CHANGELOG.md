@@ -1,5 +1,24 @@
 # @shopify/app
 
+## 3.62.0
+
+### Minor Changes
+
+- 2ae9341e7: Added support for JSON Schema based module validation
+
+### Patch Changes
+
+- ec0854a44: Fix deploy prompt with existing Subscription UI
+- 3cbe734b6: Fix validation for Pub/Sub URLs in webhook trigger
+- 379c0e9f6: Update duplicate print action message
+- 5f103676e: Allow CORS to check if local GraphiQL is running
+- 343de48c7: Remove local templates - all extension templates will now be pulled from the API
+- Updated dependencies [08b6acce2]
+- Updated dependencies [2ae9341e7]
+  - @shopify/cli-kit@3.62.0
+  - @shopify/create-app@3.62.0
+  - @shopify/plugin-cloudflare@3.62.0
+
 ## 3.61.0
 
 ### Minor Changes
