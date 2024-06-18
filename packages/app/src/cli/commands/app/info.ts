@@ -1,11 +1,12 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
+import {Format, info} from '../../services/info.js'
 import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {OutputContextOptions, startFileWatcher} from '../../services/dev/processes/dev-session/file-watcher.js'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class AppInfo extends Command {
   static summary = 'Print basic information about your app and extensions.'
@@ -44,24 +45,13 @@ export default class AppInfo extends Command {
       userProvidedConfigName: flags.config,
       mode: 'report',
     })
-    let index = 0
-
-    const options: OutputContextOptions = {
-      stderr: process.stderr,
-      stdout: process.stdout,
-      signal: new AbortSignal(),
-    }
-    await startFileWatcher(app, options, (events) => {
-      console.log(`${index}: ${events.type} -> ${events.path}`)
-      index += 1
-    })
-    // outputInfo(
-    //   await info(app, {
-    //     format: (flags.json ? 'json' : 'text') as Format,
-    //     webEnv: flags['web-env'],
-    //     configName: flags.config,
-    //   }),
-    // )
-    // if (app.errors) process.exit(2)
+    outputInfo(
+      await info(app, {
+        format: (flags.json ? 'json' : 'text') as Format,
+        webEnv: flags['web-env'],
+        configName: flags.config,
+      }),
+    )
+    if (app.errors) process.exit(2)
   }
 }

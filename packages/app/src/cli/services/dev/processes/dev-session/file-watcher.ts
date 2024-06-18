@@ -1,8 +1,9 @@
 import {AppInterface} from '../../../../models/app/app.js'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, isSubpath, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {debounce} from '@shopify/cli-kit/common/function'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 /**
@@ -58,12 +59,9 @@ export async function startFileWatcher(
     return joinPath(app.directory, directory)
   })
 
-  // All existing extension paths sorted by length. This allows us to use `startsWith` to find the extension
-  // that was changed while avoiding false positives.
   const extensionPaths = app.realExtensions
-    .map((ext) => ext.directory)
+    .map((ext) => normalizePath(ext.directory))
     .filter((dir) => dir !== app.directory)
-    .sort((extA, extB) => extB.length - extA.length)
 
   // Watch the extensions root folder and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
@@ -73,6 +71,11 @@ export async function startFileWatcher(
   extensionPaths.forEach((path) => {
     debouncers.set(path, debounce(onChange, 500))
   })
+
+  function registerNewExtensionPath(path: string) {
+    extensionPaths.push(path)
+    debouncers.set(path, debounce(onChange, 500))
+  }
 
   const watcher = chokidar.watch(watchPaths, {
     ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**'],
@@ -85,9 +88,11 @@ export async function startFileWatcher(
   watcher.on('all', (event, path) => {
     const isConfigAppPath = path === appConfigurationPath
     const isRootExtensionDirectory = extensionDirectories.some((dir) => dirname(path) === dir)
-    const extensionPath = extensionPaths.find((dir) => path.startsWith(dir)) ?? 'unknown'
 
-    if (extensionPath === 'unknown' && !isConfigAppPath) {
+    // Starts with is not good enough, we need to check if the path is the same as the extension path
+    const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
+
+    if (extensionPath === 'unknown' && !isConfigAppPath && !isRootExtensionDirectory) {
       // Change in a folder that is not in the list of extensions -> it could be an extension being created. ignore.
       return
     }
@@ -111,7 +116,7 @@ export async function startFileWatcher(
         // Wait 5 seconds to report the new extension to give time to the extension to be created
         setTimeout(() => {
           onChange({type: 'extension_folder_created', path, extensionPath})
-          extensionPaths.push(path)
+          registerNewExtensionPath(path)
         }, 5000)
         break
       case 'unlink':

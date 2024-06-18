@@ -1,9 +1,9 @@
 /* eslint-disable no-case-declarations */
-import {OutputContextOptions, WatcherEvent, startFileWatcher} from './dev-session/file-watcher.js'
-import {AppInterface} from '../../../models/app/app.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
+import {AppInterface} from '../../../../models/app/app.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {loadApp} from '../../../models/app/loader.js'
+import {loadApp} from '../../../../models/app/loader.js'
 
 interface ExtensionEvent {
   type: 'updated' | 'deleted' | 'created'
@@ -49,10 +49,14 @@ export async function subscribeToAppEvents(
   options: OutputContextOptions,
   onChange: (event: AppEvent) => void,
 ) {
+  let currentApp = app
   await startFileWatcher(app, options, (event) => {
     // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
-    const extensions = app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
-    handlers[event.type](event, app, extensions, onChange)
+    const extensions = currentApp.realExtensions.filter((ext) => ext.directory === event.extensionPath)
+    handlers[event.type](event, currentApp, extensions, (appEvent) => {
+      currentApp = appEvent.app
+      onChange(appEvent)
+    })
   })
 }
 
@@ -88,12 +92,17 @@ async function ExtensionFolderCreatedHandler(
   extensions: ExtensionInstance[],
   onChange: (event: AppEvent) => void,
 ) {
+  console.log('New extension, reloading app...')
   // We need to reload the app
   const newApp = await reloadApp(app)
+  const oldExtensions = app.realExtensions.map((ext) => ext.handle)
+  const newExtensions = newApp.realExtensions
+  const createdExtensions = newExtensions.filter((ext) => !oldExtensions.includes(ext.handle))
+  const events = createdExtensions.map((ext) => ({type: 'created', extension: ext})) as ExtensionEvent[]
   // const events = extensions.map((ext) => ({type: 'created', extension: ext})) as ExtensionEvent[]
   // TODO: Try to detect which extensions were created here
   // TODO: Build the extensions if necessary
-  onChange({app: newApp, extensionEvents: []})
+  onChange({app: newApp, extensionEvents: events})
 }
 
 async function AppConfigUpdatedHandler(

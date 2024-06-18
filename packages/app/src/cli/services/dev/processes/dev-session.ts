@@ -12,6 +12,7 @@ import {zip} from '@shopify/cli-kit/node/archiver'
 import {Writable} from 'stream'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {formData} from '@shopify/cli-kit/node/http'
+import {subscribeToAppEvents} from './dev-session/events-interface.js'
 
 export interface DevSessionOptions {
   extensions: ExtensionInstance[]
@@ -105,14 +106,22 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       }, refreshToken)
     }
 
-    const extensionWatchers = app.draftableExtensions.map(async (extension) => {
-      return devSessionExtensionWatcher({...processOptions, extension, onChange})
+    // const extensionWatchers = app.draftableExtensions.map(async (extension) => {
+    //   return devSessionExtensionWatcher({...processOptions, extension, onChange})
+    // })
+
+    await subscribeToAppEvents(app, processOptions, async (event) => {
+      const events = event.extensionEvents.map((eve) => {
+        return {type: eve.type, path: eve.extension.directory}
+      })
+      processOptions.stdout.write('Event detected')
+      processOptions.stdout.write(JSON.stringify(events, null, 2))
     })
 
-    const newWatcher = newExtensionWatcher({...processOptions, onChange})
+    // const newWatcher = newExtensionWatcher({...processOptions, onChange})
 
     // const manifestWatcher = devSessionManifestWatcher({...processOptions, onChange})
-    await Promise.all([...extensionWatchers, newWatcher])
+    // await Promise.all([...extensionWatchers, newWatcher])
   })
 }
 
