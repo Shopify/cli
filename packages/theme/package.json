@@ -42,12 +42,12 @@
   "dependencies": {
     "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.62.0",
-    "@shopify/theme-check-node": "2.5.1",
-    "@shopify/theme-language-server-node": "1.11.1",
-    "yaml": "2.3.2"
+    "@shopify/theme-check-node": "2.7.0",
+    "@shopify/theme-language-server-node": "1.11.3",
+    "yaml": "2.4.5"
   },
   "devDependencies": {
-    "@types/node": "18.19.3",
+    "@types/node": "18.19.36",
     "@vitest/coverage-istanbul": "^0.34.3",
     "node-stream-zip": "^1.15.0",
     "vitest": "^0.34.3"
