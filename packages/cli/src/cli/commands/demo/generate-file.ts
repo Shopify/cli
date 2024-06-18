@@ -7,7 +7,7 @@ import {mkdir, fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputSuccess, outputToken} from '@shopify/cli-kit/node/output'
 import {resolvePath, joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {fileURLToPath} from 'url'
+import {createRequire} from 'module'
 
 const schemaFilename = 'demo-schema.json'
 
@@ -66,7 +66,8 @@ export default class GenerateFile extends Command {
 }
 
 async function selectSteps(): Promise<DemoStep[]> {
-  const catalogFile = joinPath(fileURLToPath(import.meta.url), '../../../../../assets/demo-catalog.json')
+  const require = createRequire(import.meta.url)
+  const catalogFile = require.resolve('@shopify/cli/assets/demo-catalog.json')
   const {steps} = JSON.parse(await readFile(catalogFile)) as {steps: DemoStep[]}
   const selectedSteps: DemoStep[] = []
   while (true) {

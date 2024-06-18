@@ -20,6 +20,7 @@
   "license": "MIT",
   "type": "module",
   "exports": {
+    "./assets/*": "./assets/*",
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
