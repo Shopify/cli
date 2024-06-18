@@ -35,11 +35,7 @@ import {
   OrganizationQueryVariables,
 } from './app-management-client/graphql/organization.js'
 import {UserInfoQuery, UserInfoQuerySchema} from './app-management-client/graphql/user-info.js'
-import {
-  CreateAssetURLMutation,
-  CreateAssetURLMutationSchema,
-  CreateAssetURLMutationVariables,
-} from './app-management-client/graphql/create-asset-url.js'
+import {CreateAssetURLMutation, CreateAssetURLMutationSchema} from './app-management-client/graphql/create-asset-url.js'
 import {
   AppVersionByIdQuery,
   AppVersionByIdQuerySchema,
@@ -555,15 +551,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: functionUploadUrl')
   }
 
-  async generateSignedUploadUrl({organizationId, apiKey}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const variables: CreateAssetURLMutationVariables = {appId: apiKey}
+  async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const result = await appManagementRequest<CreateAssetURLMutationSchema>(
       organizationId,
       CreateAssetURLMutation,
       await this.token(),
-      variables,
     )
-    return result.assetUrlCreate
+    return {
+      assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
+      userErrors: result.appRequestSourceUploadUrl.userErrors,
+    }
   }
 
   async updateExtension(_extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
