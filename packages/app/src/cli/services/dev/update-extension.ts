@@ -1,4 +1,4 @@
-import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {AppConfigurationWithoutPath} from '../../models/app/app.js'
 import {
   loadConfigurationFileContent,
@@ -50,7 +50,7 @@ export async function updateExtensionDraft({
     config = (await extension.deployConfig({apiKey, developerPlatformClient, appConfiguration})) || {}
   }
 
-  const extensionInput: ExtensionUpdateDraftInput = {
+  const extensionInput: ExtensionUpdateDraftMutationVariables = {
     apiKey,
     config: JSON.stringify({
       ...config,
@@ -61,8 +61,8 @@ export async function updateExtensionDraft({
     registrationId,
   }
 
-  const mutationResult: ExtensionUpdateSchema = await developerPlatformClient.updateExtension(extensionInput)
-  if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
+  const mutationResult = await developerPlatformClient.updateExtension(extensionInput)
+  if (mutationResult.extensionUpdateDraft?.userErrors && mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)
   } else {

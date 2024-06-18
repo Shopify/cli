@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.61.0",
+  "version": "3.62.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "private": true,
@@ -48,15 +48,16 @@
     ]
   },
   "dependencies": {
+    "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.61.0",
-    "@shopify/create-app": "3.61.0",
+    "@shopify/cli-kit": "3.62.0",
+    "@shopify/create-app": "3.62.0",
     "@shopify/function-runner": "4.1.1",
-    "@shopify/plugin-cloudflare": "3.61.0",
+    "@shopify/plugin-cloudflare": "3.62.0",
     "@shopify/polaris": "12.10.0",
     "@shopify/polaris-icons": "8.0.0",
-    "@shopify/theme-check-node": "2.5.1",
+    "@shopify/theme-check-node": "2.7.0",
     "body-parser": "1.20.2",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
@@ -66,6 +67,7 @@
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
     "micromatch": "4.0.5",
+    "proper-lockfile": "4.1.2",
     "react": "^18.2.0",
     "react-dom": "18.2.0",
     "ws": "8.13.0"
@@ -77,13 +79,14 @@
     "@types/http-proxy": "^1.17.11",
     "@types/micromatch": "^4.0.5",
     "@types/node": "18.19.3",
+    "@types/proper-lockfile": "4.1.4",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
     "@types/ws": "^8.5.5",
-    "@vitest/coverage-istanbul": "^0.34.3",
+    "@vitest/coverage-istanbul": "^1.6.0",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
-    "vitest": "^0.34.3"
+    "vitest": "^1.6.0"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

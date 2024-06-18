@@ -4,12 +4,16 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
+import {setupExtensionWatcher} from '../dev/extension/bundler.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
+import {outputWarn} from '@shopify/cli-kit/node/output'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
@@ -21,6 +25,7 @@ interface ReplayOptions {
   stdout: boolean
   path: string
   json: boolean
+  watch: boolean
 }
 
 export interface FunctionRunData {
@@ -46,22 +51,46 @@ export interface FunctionRunData {
 }
 
 export async function replay(options: ReplayOptions) {
-  const {apiKey} = await ensureConnectedAppFunctionContext(options)
-  const functionRunsDir = joinPath(getLogsDir(), apiKey)
+  const {watch, extension, app} = options
+  const abortController = new AbortController()
 
-  const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
-  const selectedRun = await selectFunctionRunPrompt(functionRuns)
+  try {
+    const {apiKey} = await ensureConnectedAppFunctionContext(options)
+    const functionRunsDir = joinPath(getLogsDir(), apiKey)
+    const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
 
-  if (selectedRun === undefined) {
-    throw new AbortError(`No logs found in ${functionRunsDir}`)
+    const selectedRun = await selectFunctionRunPrompt(functionRuns)
+
+    if (selectedRun === undefined) {
+      throw new AbortError(`No logs found in ${functionRunsDir}`)
+    }
+
+    const {input, export: runExport} = selectedRun.payload
+    await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+
+    if (watch) {
+      await setupExtensionWatcher({
+        extension,
+        app,
+        stdout: process.stdout,
+        stderr: process.stderr,
+        onChange: async () => {
+          await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+        },
+        onReloadAndBuildError: async (error) => {
+          if (error instanceof FatalError) {
+            renderFatalError(error)
+          } else {
+            outputWarn(`Failed to replay function: ${error.message}`)
+          }
+        },
+        signal: abortController.signal,
+      })
+    }
+  } catch (error) {
+    abortController.abort()
+    throw error
   }
-
-  await runFunctionRunnerWithLogInput(
-    options.extension,
-    options,
-    JSON.stringify(selectedRun.payload.input),
-    selectedRun.payload.export,
-  )
 }
 
 async function runFunctionRunnerWithLogInput(

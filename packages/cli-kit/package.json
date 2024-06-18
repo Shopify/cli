@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.61.0",
+  "version": "3.62.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -105,6 +105,7 @@
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@bugsnag/js": "7.21.0",
+    "@graphql-typed-document-node/core": "3.2.0",
     "@iarna/toml": "2.2.5",
     "@oclif/core": "3.26.5",
     "@opentelemetry/api": "1.6.0",
@@ -171,12 +172,12 @@
     "@types/node": "18.19.3",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
-    "@vitest/coverage-istanbul": "^0.34.3",
+    "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.25.7",
     "typescript": "5.2.2",
-    "vitest": "^0.34.3"
+    "vitest": "^1.6.0"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

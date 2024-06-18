@@ -13,8 +13,8 @@ const data: LandingTemplateSchema = {
       anchorLink: 'requirements',
       title: 'Requirements',
       sectionContent: `
-- [Node.js](https://nodejs.org/en/download/) version 18.16.0 or higher
-- [Git](https://git-scm.com/downloads) version 2.28.0 or higher
+- [Node.js](https://nodejs.org/en/download/): 18.20+, 20.10 or higher
+- [Git](https://git-scm.com/downloads): 2.28.0 or higher
 `,
     },
     {

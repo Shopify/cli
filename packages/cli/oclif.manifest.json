@@ -789,6 +789,15 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "char": "w",
+          "description": "Re-run the function when the source code changes.",
+          "env": "SHOPIFY_FLAG_WATCH",
+          "hidden": false,
+          "name": "watch",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -6008,5 +6017,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.61.0"
+  "version": "3.62.0"
 }

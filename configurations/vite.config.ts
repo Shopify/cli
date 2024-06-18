@@ -8,6 +8,7 @@ import {defineConfig} from 'vitest/config'
 export default function config(packagePath: string) {
   // always treat environment as one that doesn't support hyperlinks -- otherwise assertions are hard to keep consistent
   process.env['FORCE_HYPERLINK'] = '0'
+  process.env['FORCE_COLOR'] = '1'
 
   return defineConfig({
     resolve: {
@@ -16,6 +17,8 @@ export default function config(packagePath: string) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     test: {
+      testTimeout:
+        process.env['VITEST_SKIP_TIMEOUT'] === '1' ? 180000 : process.env['RUNNER_OS'] === 'Windows' ? 13000 : 5000,
       clearMocks: true,
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
@@ -26,6 +29,9 @@ export default function config(packagePath: string) {
         include: ['**/src/**'],
         all: true,
         reporter: ['text', 'json', 'lcov'],
+      },
+      snapshotFormat: {
+        escapeString: true,
       },
     },
   })

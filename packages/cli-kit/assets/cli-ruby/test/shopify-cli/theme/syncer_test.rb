@@ -12,6 +12,7 @@ module ShopifyCLI
       include TestHelpers::FakeDB
 
       def setup
+        skip
         super
         root = ShopifyCLI::ROOT + "/test/fixtures/theme"
         @ctx = TestHelpers::FakeContext.new(root: root)

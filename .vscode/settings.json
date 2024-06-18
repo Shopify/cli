@@ -1,5 +1,4 @@
 {
-  "window.title": "${activeEditorMedium}${separator}${rootName}",
   "javascript.validate.enable": false,
   "css.validate": false,
   "scss.validate": false,
@@ -39,4 +38,5 @@
   "testing.automaticallyOpenPeekView": "never",
   "javascript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifierEnding": "js",
+  "vitest.nodeEnv": {"VITEST_SKIP_TIMEOUT": "1"}
 }
