@@ -1,9 +1,8 @@
-/* eslint-disable no-case-declarations */
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
 import {AppInterface} from '../../../../models/app/app.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {loadApp} from '../../../../models/app/loader.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface ExtensionEvent {
   type: 'updated' | 'deleted' | 'created'
@@ -26,15 +25,15 @@ interface AppEvent {
 //                => FunctionFileChangedEvent  => ExtensionEvents
 //                => NewExtensionEvent (reloadApp) =>
 //                => ExtensionChangeEvent (reloadsExtension) => ExtensionEvents
+interface HandlerInput {
+  event: WatcherEvent
+  app: AppInterface
+  extensions: ExtensionInstance[]
+}
 
-type Handler = (
-  event: WatcherEvent,
-  app: AppInterface,
-  extensions: ExtensionInstance[],
-  onChange: (event: AppEvent) => void,
-) => Promise<void>
+type Handler = (input: HandlerInput) => Promise<AppEvent>
 
-const handlers: Record<WatcherEvent['type'], Handler> = {
+const handlers: {[key in WatcherEvent['type']]: Handler} = {
   extension_folder_deleted: ExtensionFolderDeletedHandler,
   extension_folder_created: ExtensionFolderCreatedHandler,
   file_created: FileChangeHandler,
@@ -53,45 +52,36 @@ export async function subscribeToAppEvents(
   await startFileWatcher(app, options, (event) => {
     // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
     const extensions = currentApp.realExtensions.filter((ext) => ext.directory === event.extensionPath)
-    handlers[event.type](event, currentApp, extensions, (appEvent) => {
-      currentApp = appEvent.app
-      onChange(appEvent)
-    })
+
+    handlers[event.type]({event, app: currentApp, extensions})
+      .then((appEvent) => {
+        currentApp = appEvent.app
+        onChange(appEvent)
+      })
+      .catch((error) => {
+        options.stderr.write(`Error handling event: ${event.type}`)
+        throw error
+      })
   })
 }
 
-async function ExtensionFolderDeletedHandler(
-  event: WatcherEvent,
-  app: AppInterface,
-  extensions: ExtensionInstance[],
-  onChange: (event: AppEvent) => void,
-) {
-  if (extensions.length === 0) return
+async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput) {
+  if (extensions.length === 0) return {app, extensionEvents: []}
   app.realExtensions = app.realExtensions.filter((ext) => ext.directory !== event.path)
   const events = extensions.map((ext) => ({type: 'deleted', extension: ext})) as ExtensionEvent[]
-  onChange({app, extensionEvents: events})
+  return {app, extensionEvents: events}
 }
 
-async function FileChangeHandler(
-  event: WatcherEvent,
-  app: AppInterface,
-  extensions: ExtensionInstance[],
-  onChange: (event: AppEvent) => void,
-) {
-  // TODO: Build the extensions if necessary
+async function FileChangeHandler({app, extensions}: HandlerInput) {
+  // PENDING: Build the extensions if necessary
   extensions.forEach((ext) => {
     // ext.buildForBundle({app, environment: 'development'}, app.directory, undefined)
   })
   const events = extensions.map((ext) => ({type: 'updated', extension: ext})) as ExtensionEvent[]
-  onChange({app, extensionEvents: events})
+  return {app, extensionEvents: events}
 }
 
-async function ExtensionFolderCreatedHandler(
-  event: WatcherEvent,
-  app: AppInterface,
-  extensions: ExtensionInstance[],
-  onChange: (event: AppEvent) => void,
-) {
+async function ExtensionFolderCreatedHandler({app}: HandlerInput) {
   console.log('New extension, reloading app...')
   // We need to reload the app
   const newApp = await reloadApp(app)
@@ -100,24 +90,19 @@ async function ExtensionFolderCreatedHandler(
   const createdExtensions = newExtensions.filter((ext) => !oldExtensions.includes(ext.handle))
   const events = createdExtensions.map((ext) => ({type: 'created', extension: ext})) as ExtensionEvent[]
   // const events = extensions.map((ext) => ({type: 'created', extension: ext})) as ExtensionEvent[]
-  // TODO: Try to detect which extensions were created here
-  // TODO: Build the extensions if necessary
-  onChange({app: newApp, extensionEvents: events})
+  // PENDING: Try to detect which extensions were created here
+  // PENDING: Build the extensions if necessary
+  return {app: newApp, extensionEvents: events}
 }
 
-async function AppConfigUpdatedHandler(
-  event: WatcherEvent,
-  app: AppInterface,
-  extensions: ExtensionInstance[],
-  onChange: (event: AppEvent) => void,
-) {
+async function AppConfigUpdatedHandler({app}: HandlerInput) {
   const newApp = await reloadApp(app)
-  // TODO: Try to detect which extensions were created, deleted or updated here
-  // TODO: Build extensions if necessary
-  onChange({app: newApp, extensionEvents: []})
+  // PENDING: Try to detect which extensions were created, deleted or updated here
+  // PENDING: Build extensions if necessary
+  return {app: newApp, extensionEvents: []}
 }
 
-async function AppConfigDeletedHandler() {
+async function AppConfigDeletedHandler(_input: HandlerInput) {
   // The user deleted the active app.toml, why would they do that? :(
   throw new AbortError('The active app.toml was deleted, exiting')
 }
