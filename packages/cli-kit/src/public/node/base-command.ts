@@ -19,6 +19,9 @@ interface EnvironmentFlags {
 }
 
 abstract class BaseCommand extends Command {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  static baseFlags: FlagInput<{}> = {}
+
   // Replace markdown links to plain text like: "link label" (url)
   public static descriptionWithoutMarkdown(): string | undefined {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
