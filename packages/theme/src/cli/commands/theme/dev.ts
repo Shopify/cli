@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
 import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
@@ -143,7 +143,8 @@ You can run this command only in a directory that matches the [default Shopify t
     showEmbeddedCLIWarning()
     showDeprecationWarnings(this.argv)
 
-    let {flags} = await this.parse(Dev)
+    const parsed = await this.parse(Dev)
+    let flags = parsed.flags as typeof parsed.flags & FlagValues
     const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 

@@ -22,7 +22,7 @@ interface ReplayOptions {
   app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
   apiKey?: string
-  stdout: boolean
+  stdout?: boolean
   path: string
   json: boolean
   watch: boolean
