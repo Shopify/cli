@@ -92,7 +92,11 @@ export async function extensionsIdentifiersReleaseBreakdown(
 
   const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
-      .filter((extension) => extension.specification.experience === 'extension')
+      .filter(
+        (extension) =>
+          extension.specification.experience === 'extension' &&
+          extension.specification.identifier !== 'webhook_subscription',
+      )
       .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle))
   const mapIsDashboard = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions

@@ -198,6 +198,18 @@ const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   },
 }
 
+const VERSION_DIFF_DELETED_CLI_WEBHOOK: AppVersionsDiffExtensionSchema = {
+  uuid: 'UUID_WEBOOK',
+  registrationTitle: 'Webhook Subscription Deleted',
+  specification: {
+    identifier: 'webhook_subscription',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
 const APP_CONFIGURATION: CurrentAppConfiguration = {
   path: 'shopify.app.development.toml',
   name: 'my app',
@@ -633,6 +645,39 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
         toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
         toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
+      },
+      versionDetails: versionDiff.versionDetails,
+    })
+  })
+
+  test('exclude webhook subscription modules from the version diff', async () => {
+    // Given
+    const versionDiff = {
+      versionsDiff: {
+        added: [],
+        updated: [],
+        removed: [VERSION_DIFF_DELETED_CLI_B, VERSION_DIFF_DELETED_CLI_WEBHOOK],
+      },
+      versionDetails: {
+        id: 1,
+        uuid: 'uuid',
+        location: 'location',
+        versionTag: '1.0.0',
+        message: 'message',
+        appModuleVersions: [],
+      },
+    }
+    vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
+
+    // When
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
+
+    // Then
+    expect(result).toEqual({
+      extensionIdentifiersBreakdown: {
+        toCreate: [],
+        toUpdate: [],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
       },
       versionDetails: versionDiff.versionDetails,
     })
