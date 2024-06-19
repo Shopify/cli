@@ -59,9 +59,9 @@ export async function replay(options: ReplayOptions) {
     const {apiKey} = await ensureConnectedAppFunctionContext(options)
     const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
-    const selectedRun = options.log ?
-      await getRunFromIdentifier(functionRunsDir, extension.handle, options.log) :
-      await getRunFromSelector(functionRunsDir, extension.handle)
+    const selectedRun = options.log
+      ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
+      : await getRunFromSelector(functionRunsDir, extension.handle)
 
     const {input, export: runExport} = selectedRun.payload
     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
@@ -116,8 +116,8 @@ async function runFunctionRunnerWithLogInput(
 async function getRunFromIdentifier(
   functionRunsDir: string,
   functionHandle: string,
-  logArgument: string
-) : Promise<FunctionRunData> {
+  logArgument: string,
+): Promise<FunctionRunData> {
   const runPath = await findFunctionRun(functionRunsDir, functionHandle, logArgument)
   if (runPath === undefined) {
     throw new AbortError(
@@ -150,10 +150,7 @@ async function findFunctionRun(
   return undefined
 }
 
-async function getRunFromSelector(
-  functionRunsDir: string,
-  functionHandle: string,
-) : Promise<FunctionRunData> {
+async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
   const selectedRun = await selectFunctionRunPrompt(functionRuns)
 
