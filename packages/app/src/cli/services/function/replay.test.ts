@@ -68,7 +68,7 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file2.run, file1.run])
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run, file2.run])
     expectExecToBeCalledWithInput(file1.run.payload.input)
   })
 
@@ -89,12 +89,7 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
-      files
-        .map(({run}) => run)
-        .reverse()
-        .slice(0, 100),
-    )
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(files.map(({run}) => run).slice(0, 100))
   })
 
   test('does not allow selection of runs for other functions', async () => {
@@ -251,9 +246,35 @@ describe('replay', () => {
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(outputWarn).toHaveBeenCalledWith(`Failed to replay function: ${expectedError.message}`)
   })
+
+  test('ignores runs with no input and keeps reading chunks until past the threshold', async () => {
+    // Given
+    const filesWithInput = new Array(99).fill(undefined).map((_) => createFunctionRunFile(extension.handle))
+    const fileWithoutInput = createFunctionRunFile(extension.handle, {input: null})
+    const additionalFiles = new Array(199).fill(undefined).map((_) => createFunctionRunFile(extension.handle))
+
+    mockFileOperations([...filesWithInput, fileWithoutInput, ...additionalFiles])
+
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(filesWithInput[0]!.run)
+
+    // // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+
+    // Then
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
+      [...filesWithInput, ...additionalFiles.slice(0, 100)].map(({run}) => run),
+    )
+  })
 })
 
-function createFunctionRunFile(handle: string) {
+function createFunctionRunFile(handle: string, partialPayload: object = {}) {
   const identifier = randomUUID().substring(0, 6)
   const path = `20240522_150641_827Z_extensions_${handle}_${identifier}.json`
   const run: FunctionRunData = {
@@ -275,6 +296,7 @@ function createFunctionRunFile(handle: string) {
       logs: '',
       output: '',
       output_bytes: 1,
+      ...partialPayload,
     },
   }
 
@@ -304,6 +326,6 @@ function expectExecToBeCalledWithInput(input: any) {
 }
 
 function mockFileOperations(data: {run: FunctionRunData; path: string}[]) {
-  vi.mocked(readdirSync).mockReturnValue(data.map(({path}) => path) as any)
+  vi.mocked(readdirSync).mockReturnValue([...data].reverse().map(({path}) => path) as any)
   data.forEach(({run}) => vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify(run) as any))
 }
