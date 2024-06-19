@@ -2071,12 +2071,22 @@
       "flags": {
         "file": {
           "default": ".",
-          "description": "The path to the design file.",
+          "description": "The name of the demo file.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
           "name": "file",
+          "type": "option"
+        },
+        "path": {
+          "default": ".",
+          "description": "The directory where the demo file is located. Defaults to the current directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
           "type": "option"
         }
       },

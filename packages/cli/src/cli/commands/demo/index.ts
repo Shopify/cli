@@ -9,9 +9,16 @@ export default class Demo extends Command {
   static hidden = true
 
   static flags = {
+    path: Flags.string({
+      hidden: false,
+      description: 'The directory where the demo file is located. Defaults to the current directory.',
+      env: 'SHOPIFY_FLAG_PATH',
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
+    }),
     file: Flags.string({
       hidden: false,
-      description: 'The path to the design file.',
+      description: 'The name of the demo file.',
       env: 'SHOPIFY_FLAG_PATH',
       parse: async (input) => resolvePath(input),
       default: async () => cwd(),
