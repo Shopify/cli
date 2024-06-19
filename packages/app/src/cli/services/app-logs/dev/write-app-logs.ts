@@ -4,7 +4,7 @@ import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
 
-export interface AppLogFile {
+interface AppLogFile {
   fullOutputPath: string
   identifier: string
 }
