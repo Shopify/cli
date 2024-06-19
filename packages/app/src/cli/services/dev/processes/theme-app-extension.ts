@@ -58,6 +58,10 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
 
 export const runThemeAppExtensionsServerNext: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async () => {
   outputInfo('This feature is currently in development and is not ready for use or testing yet.')
+
+  await createHostTheme()
+  await initializeFSWatcher()
+  await startThemeAppExtensionDevelopmentServer()
 }
 
 export async function setupPreviewThemeAppExtensionsProcess({
@@ -122,3 +126,9 @@ async function refreshToken(developerPlatformClient: DeveloperPlatformClient) {
     await execCLI2(['theme', 'token', '--partners', newToken])
   }
 }
+
+async function createHostTheme() {}
+
+async function initializeFSWatcher() {}
+
+async function startThemeAppExtensionDevelopmentServer() {}
