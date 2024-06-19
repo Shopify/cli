@@ -2061,6 +2061,35 @@
       "pluginType": "core",
       "strict": true
     },
+    "demo": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Demo a command design defined in a file",
+      "enableJsonFlag": false,
+      "flags": {
+        "file": {
+          "default": ".",
+          "description": "The path to the design file.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "file",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "demo",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "demo:catalog": {
       "aliases": [
       ],
@@ -3760,6 +3789,26 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:upgrade",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "kitchen-sink": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View all the available UI kit components",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+        "kitchen-sink all"
+      ],
+      "id": "kitchen-sink",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
