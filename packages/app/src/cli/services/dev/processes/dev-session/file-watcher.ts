@@ -25,6 +25,7 @@ export interface WatcherEvent {
     | 'file_created'
     | 'file_updated'
     | 'file_deleted'
+    | 'toml_updated'
     | 'app_config_updated'
     | 'app_config_deleted'
   path: string
@@ -63,7 +64,7 @@ export async function startFileWatcher(
     .map((ext) => normalizePath(ext.directory))
     .filter((dir) => dir !== app.directory)
 
-  // Watch the extensions root folder and the app configuration file, nothing else.
+  // Watch the extensions root directories and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
   // Create a debouncer for each extension directory to avoid multiple events for the same extension
@@ -77,36 +78,43 @@ export async function startFileWatcher(
     debouncers.set(path, debounce(onChange, 500))
   }
 
+  function removeExtensionPath(path: string) {
+    extensionPaths.splice(extensionPaths.indexOf(path), 1)
+    debouncers.delete(path)
+  }
+
+  // Create watcher ignoring node_modules, git, test files and dist folders
   const watcher = chokidar.watch(watchPaths, {
     ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**'],
     persistent: true,
     ignoreInitial: true,
   })
 
-  console.log('Watcher ready!')
-
   watcher.on('all', (event, path) => {
     const isConfigAppPath = path === appConfigurationPath
     const isRootExtensionDirectory = extensionDirectories.some((dir) => dirname(path) === dir)
-
-    // Starts with is not good enough, we need to check if the path is the same as the extension path
     const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
 
     if (extensionPath === 'unknown' && !isConfigAppPath && !isRootExtensionDirectory) {
-      // Change in a folder that is not in the list of extensions -> it could be an extension being created. ignore.
+      // Ignore an event if: it's not part of an existing extension AND it's not the app config file or an extension root directory
       return
     }
 
     const extensionDebouncedChange = debouncers.get(extensionPath)
 
-    // We need to debounce events of type add, addDir, unlink, unlinkDir to avoid multiple events for the same extension
-    // When adding/deleting an extension, we get multiple events for the same extension
     switch (event) {
       case 'change':
-        onChange({type: isConfigAppPath ? 'app_config_updated' : 'file_updated', path, extensionPath})
+        if (isConfigAppPath) {
+          onChange({type: 'app_config_updated', path, extensionPath})
+        } else if (path.endsWith('.toml')) {
+          onChange({type: 'toml_updated', path, extensionPath})
+        } else {
+          onChange({type: 'file_updated', path, extensionPath})
+        }
         break
       case 'add':
-        // This event will be ignored for new extensions until the extension is added to `extensionPaths`.
+        // This event will be triggered multiple times when adding a new extension.
+        // It will be ignored until the `addDir` event completes and adds the new extension to the known list.
         onChange({type: 'file_created', path, extensionPath})
         break
       case 'addDir':
@@ -135,10 +143,11 @@ export async function startFileWatcher(
         // 'unlink'  and 'unlinkDir' use the same debouncer, when deleting an extension, the last event will always
         // be a deletion of the root directory, so that's the last (and only) event we need to trigger.
         extensionDebouncedChange?.({type: 'extension_folder_deleted', path, extensionPath})
-        debouncers.delete(path)
+        removeExtensionPath(path)
         break
     }
   })
+
   listenForAbortOnWatchera(watcher, options)
 }
 

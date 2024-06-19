@@ -64,7 +64,6 @@ import {
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {DevSessionCreateVariables} from '../../api/graphql/dev_session_create.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',

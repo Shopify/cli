@@ -344,6 +344,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
+          assets: module.uid,
           config: (config ?? {}) as JsonMapType,
         }
       }),
