@@ -165,14 +165,23 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
       app.specifications ?? [],
       app.remoteFlags,
     )) ?? {}
-  const baselineConfig = versionAppModules
-    ? remoteAppConfigurationExtensionContent(versionAppModules, app.specifications ?? [], app.remoteFlags)
-    : app.configuration
-  const diffConfigContent = buildDiffConfigContent(
-    baselineConfig as CurrentAppConfiguration,
-    remoteConfig,
-    app.configSchema,
-  )
+  const baselineConfig = (
+    versionAppModules
+      ? remoteAppConfigurationExtensionContent(versionAppModules, app.specifications ?? [], app.remoteFlags)
+      : app.configuration
+  ) as CurrentAppConfiguration
+
+  // modify relative path webhook subscriptions to include app url so client vs server diff checking is consistent
+  if (baselineConfig?.webhooks?.subscriptions?.length) {
+    baselineConfig.webhooks.subscriptions = baselineConfig.webhooks.subscriptions.map((subscription) => {
+      if (subscription.uri.startsWith('/')) {
+        subscription.uri = `${baselineConfig.application_url}${subscription.uri}`
+      }
+      return subscription
+    })
+  }
+
+  const diffConfigContent = buildDiffConfigContent(baselineConfig, remoteConfig, app.configSchema)
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
   // (versioned fields)
