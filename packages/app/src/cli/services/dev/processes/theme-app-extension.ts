@@ -5,7 +5,7 @@ import {themeExtensionArgs} from '../theme-extension-args.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 
 // Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
@@ -56,6 +56,10 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
   })
 }
 
+export const runThemeAppExtensionsServerNext: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async () => {
+  outputInfo('This feature is currently in development and is not ready for use or testing yet.')
+}
+
 export async function setupPreviewThemeAppExtensionsProcess({
   allExtensions,
   apiKey,
@@ -64,6 +68,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   themeExtensionPort,
   notify,
   developerPlatformClient,
+  devPreview,
 }: Pick<PreviewThemeAppExtensionsOptions, 'developerPlatformClient'> & {
   allExtensions: ExtensionInstance[]
   apiKey: string
@@ -71,6 +76,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   theme?: string
   notify?: string
   themeExtensionPort?: number
+  devPreview?: boolean
 }): Promise<PreviewThemeAppExtensionsProcess | undefined> {
   const themeExtensions = allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length === 0) {
@@ -100,7 +106,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   return {
     type: 'theme-app-extensions',
     prefix: 'theme-extensions',
-    function: runThemeAppExtensionsServer,
+    function: devPreview ? runThemeAppExtensionsServerNext : runThemeAppExtensionsServer,
     options: {
       adminSession,
       themeExtensionServerArgs: args,

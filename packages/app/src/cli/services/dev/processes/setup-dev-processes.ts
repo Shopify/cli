@@ -134,6 +134,7 @@ export async function setupDevProcesses({
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
       notify: commandOptions.notify,
+      devPreview: commandOptions.devPreview,
     }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,
