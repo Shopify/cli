@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {pull} from '../../services/pull.js'
@@ -103,18 +103,20 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       return
     }
 
+    const flagsForCli2 = flags as typeof flags & FlagValues
+
     if (developmentTheme) {
-      if (flags.development) {
-        flags.theme = `${developmentTheme.id}`
-        flags.development = false
+      if (flagsForCli2.development) {
+        flagsForCli2.theme = `${developmentTheme.id}`
+        flagsForCli2.development = false
       }
       if (useEmbeddedThemeCLI()) {
-        flags['development-theme-id'] = developmentTheme.id
+        flagsForCli2['development-theme-id'] = developmentTheme.id
       }
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})
-    const command = ['theme', 'pull', flags.path, ...flagsToPass]
+    const flagsToPass = this.passThroughFlags(flagsForCli2, {allowedFlags: Pull.cli2Flags})
+    const command = ['theme', 'pull', flagsForCli2.path, ...flagsToPass]
 
     await execCLI2(command, {store, adminToken: adminSession.token})
   }
