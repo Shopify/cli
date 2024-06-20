@@ -2,18 +2,8 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const CreateAppVersionMutation = gql`
-  mutation CreateAppVersion(
-    $appId: ID!
-    $appSource: AppSourceInput!
-    $name: String!
-    $metadata: VersionMetadataInput
-  ) {
-    appVersionCreate(
-      appId: $appId
-      appSource: $appSource
-      name: $name
-      metadata: $metadata
-    ) {
+  mutation CreateAppVersion($appId: ID!, $appSource: AppSourceInput!, $name: String!, $metadata: VersionMetadataInput) {
+    appVersionCreate(appId: $appId, appSource: $appSource, name: $name, metadata: $metadata) {
       version {
         id
         appModules {

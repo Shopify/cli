@@ -8,10 +8,7 @@ import {
   ActiveAppReleaseQueryVariables,
   ActiveAppReleaseQuerySchema,
 } from './app-management-client/graphql/active-app-release.js'
-import {
-  SpecificationsQuery,
-  SpecificationsQuerySchema,
-} from './app-management-client/graphql/specifications.js'
+import {SpecificationsQuery, SpecificationsQuerySchema} from './app-management-client/graphql/specifications.js'
 import {
   AppVersionsQuery,
   AppVersionsQueryVariables,
@@ -27,7 +24,7 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './app-management-client/graphql/release-version.js'
-import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './app-management-client/graphql/apps.js'
+import {AppsQuery, AppsQuerySchema} from './app-management-client/graphql/apps.js'
 import {
   OrganizationQuery,
   OrganizationQuerySchema,
@@ -272,27 +269,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = SpecificationsQuery
-    const result = await appManagementRequest<SpecificationsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
+    const result = await appManagementRequest<SpecificationsQuerySchema>(organizationId, query, await this.token())
+    return result.specifications.map(
+      (spec): RemoteSpecification => ({
+        name: spec.name,
+        externalName: spec.name,
+        identifier: spec.identifier,
+        externalIdentifier: spec.externalIdentifier,
+        gated: false,
+        options: {
+          managementExperience: 'cli',
+          // Temporary stub, needs to be added to the API
+          registrationLimit: 1,
+        },
+        experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
+      }),
     )
-    return result.specifications
-      .map(
-        (spec): RemoteSpecification => ({
-          name: spec.name,
-          externalName: spec.name,
-          identifier: spec.identifier,
-          externalIdentifier: spec.externalIdentifier,
-          gated: false,
-          options: {
-            managementExperience: 'cli',
-            // Temporary stub, needs to be added to the API
-            registrationLimit: 1,
-          },
-          experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
-        }),
-      )
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
@@ -579,7 +571,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
-    const brandingModule = appModules?.find(mod => mod.specificationIdentifier === BrandingSpecIdentifier)
+    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
     let updatedName = name
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
