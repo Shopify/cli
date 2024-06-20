@@ -5,6 +5,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import micromatch from 'micromatch'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -62,6 +63,12 @@ export interface ExtensionEvent {
   extension: ExtensionInstance
 }
 
+/**
+ * An AppEvent is the result of processing a file system event.
+ * It includes the updated app and the affected extensions.
+ * The startTime is the time when the initial file-system event was received, it can be used by the consumer
+ * to determine how long it took to process the event.
+ */
 export interface AppEvent {
   app: AppInterface
   extensionEvents: ExtensionEvent[]
@@ -109,7 +116,7 @@ export async function subscribeToAppEvents(
       .then((appEvent) => {
         currentApp = appEvent.app
         if (appEvent.extensionEvents.length === 0) {
-          options.stdout.write('Change detected, but no extensions were affected')
+          outputDebug('Change detected, but no extensions were affected', options.stdout)
           return
         }
         onChange(appEvent)
@@ -249,6 +256,6 @@ async function reloadApp(app: AppInterface, options: OutputContextOptions): Prom
     remoteFlags: app.remoteFlags,
   })
   const endTime = process.hrtime(start)
-  options.stdout.write(`App reloaded [${normalizeTime(endTime)}ms]`)
+  outputDebug(`App reloaded [${normalizeTime(endTime)}ms]`, options.stdout)
   return newApp
 }
