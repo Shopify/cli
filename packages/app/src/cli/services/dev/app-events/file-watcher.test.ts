@@ -6,7 +6,7 @@ import {
   testSingleWebhookSubscriptionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
-import {flushPromises} from '../extension/bundler.test.js'
+import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
