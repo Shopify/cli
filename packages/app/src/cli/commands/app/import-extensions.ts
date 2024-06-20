@@ -1,5 +1,6 @@
 import {buildTomlObject as buildPaymentsTomlObject} from '../../services/payments/extension-to-toml.js'
 import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extension-to-toml.js'
+import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
@@ -38,6 +39,12 @@ const migrationChoices: MigrationChoice[] = [
     value: 'flow',
     extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
     buildTomlObject: buildFlowTomlObject,
+  },
+  {
+    label: 'Marketing Activity Extensions',
+    value: 'marketing activity',
+    extensionTypes: ['marketing_activity_extension'],
+    buildTomlObject: buildMarketingActivityTomlObject,
   },
 ]
 
