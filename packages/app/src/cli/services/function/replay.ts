@@ -12,7 +12,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
@@ -69,6 +69,7 @@ export async function replay(options: ReplayOptions) {
     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
 
     if (watch) {
+      outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
       await setupExtensionWatcher({
         extension,
         app,
@@ -76,6 +77,7 @@ export async function replay(options: ReplayOptions) {
         stderr: process.stderr,
         onChange: async () => {
           await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+          outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
         },
         onReloadAndBuildError: async (error) => {
           if (error instanceof FatalError) {
