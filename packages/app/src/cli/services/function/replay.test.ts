@@ -96,7 +96,7 @@ describe('replay', () => {
   test('does not allow selection of runs for other functions', async () => {
     // Given
     const file1 = createFunctionRunFile({handle: extension.handle})
-    const file2 = createFunctionRunFile('another-function-handle')
+    const file2 = createFunctionRunFile({handle: 'another-function-handle'})
     mockFileOperations([file1, file2])
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file1.run)
@@ -156,13 +156,13 @@ describe('replay', () => {
     expect(abortSignal.aborted).toBeTruthy()
   })
 
-  test.only('runs the log specified by the --log flag for the current function', async () => {
+  test('runs the log specified by the --log flag for the current function', async () => {
     // Given
     const identifier = '000000'
     const file1 = createFunctionRunFile({handle: extension.handle})
-    const file2 = createFunctionRunFile({handle: extension.handle}, identifier)
+    const file2 = createFunctionRunFile({handle: extension.handle, identifier})
     const file3 = createFunctionRunFile({handle: extension.handle})
-    const file4 = createFunctionRunFile('another-extension', identifier)
+    const file4 = createFunctionRunFile({handle: 'another-extension', identifier})
     mockFileOperations([file1, file2, file3, file4])
 
     // When
@@ -299,7 +299,7 @@ describe('replay', () => {
   test('ignores runs with no input and keeps reading chunks until past the threshold', async () => {
     // Given
     const filesWithInput = new Array(99).fill(undefined).map((_) => createFunctionRunFile({handle: extension.handle}))
-    const fileWithoutInput = createFunctionRunFile({handle: extension.handle, payload: {input: null}})
+    const fileWithoutInput = createFunctionRunFile({handle: extension.handle, partialPayload: {input: null}})
     const additionalFiles = new Array(199).fill(undefined).map((_) => createFunctionRunFile({handle: extension.handle}))
 
     mockFileOperations([...filesWithInput, fileWithoutInput, ...additionalFiles])
