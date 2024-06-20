@@ -1,3 +1,4 @@
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const ReleaseVersionMutation = gql`
@@ -11,6 +12,9 @@ export const ReleaseVersionMutation = gql`
       userErrors {
         field
         message
+        category
+        code
+        on
       }
     }
   }
@@ -31,6 +35,9 @@ export interface ReleaseVersionMutationSchema {
     userErrors: {
       field: string[]
       message: string
+      category: string
+      code: string
+      on: JsonMapType
     }[]
   }
 }
