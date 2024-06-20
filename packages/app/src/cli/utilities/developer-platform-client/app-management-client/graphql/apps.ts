@@ -24,7 +24,7 @@ export const AppsQuery = gql`
   }
 `
 
-export interface MinimalAppModule {
+interface MinimalAppModule {
   uuid: string
   handle: string
   config: JsonMapType
