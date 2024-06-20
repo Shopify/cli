@@ -10,7 +10,7 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputWarn, outputInfo} from '@shopify/cli-kit/node/output'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
@@ -70,6 +70,7 @@ describe('replay', () => {
     // Then
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run, file2.run])
     expectExecToBeCalledWithInput(file1.run.payload.input)
+    expect(outputInfo).not.toHaveBeenCalled()
   })
 
   test('only allows selection of the most recent 100 runs', async () => {
@@ -176,6 +177,7 @@ describe('replay', () => {
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(exec).toHaveBeenCalledOnce()
     expectExecToBeCalledWithInput(file.run.payload.input)
+    expect(outputInfo).toHaveBeenCalledWith(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
   })
 
   test('file watcher onChange re-runs function', async () => {
@@ -199,6 +201,8 @@ describe('replay', () => {
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expectExecToBeCalledWithInput(file.run.payload.input)
     expect(exec).toHaveBeenCalledTimes(2)
+    expect(outputInfo).toHaveBeenNthCalledWith(1, `Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
+    expect(outputInfo).toHaveBeenNthCalledWith(2, `Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
   })
 
   test('renders fatal error in onReloadAndBuildError', async () => {
