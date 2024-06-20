@@ -883,4 +883,99 @@ describe('deploymentErrorsToCustomSections', () => {
       },
     ])
   })
+
+  test('does not return duplicate error messages', () => {
+    // Given
+    const errors = [
+      {
+        field: ['first_field'],
+        message: 'First error message.',
+        category: 'invalid',
+        details: [
+          {
+            extension_title: 'webhook-subscription-1',
+            extension_id: 1,
+            specification_identifier: 'webhook_subscription',
+          },
+        ],
+      },
+      {
+        field: ['second_field'],
+        message: 'Second error message.',
+        category: 'invalid',
+        details: [
+          {
+            extension_title: 'webhook-subscription-2',
+            extension_id: 2,
+            specification_identifier: 'webhook_subscription',
+          },
+        ],
+      },
+      {
+        field: ['first_field'],
+        message: 'First error message.',
+        category: 'invalid',
+        details: [
+          {
+            extension_title: 'webhook-subscription-3',
+            extension_id: 3,
+            specification_identifier: 'webhook_subscription',
+          },
+        ],
+      },
+      {
+        field: ['some_other_field'],
+        message: 'Second error message.',
+        category: 'invalid',
+        details: [
+          {
+            extension_title: 'webhook-subscription-4',
+            extension_id: 4,
+            specification_identifier: 'webhook_subscription',
+          },
+        ],
+      },
+      {
+        field: ['second_field'],
+        message: 'Some other error message.',
+        category: 'invalid',
+        details: [
+          {
+            extension_title: 'webhook-subscription-5',
+            extension_id: 5,
+            specification_identifier: 'webhook_subscription',
+          },
+        ],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors as AppDeploySchema['appDeploy']['userErrors'], {
+      'webhook-subscription-1': '1',
+      'webhook-subscription-2': '2',
+      'webhook-subscription-3': '3',
+      'webhook-subscription-4': '4',
+      'webhook-subscription-5': '5',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        body: [
+          {
+            list: {
+              items: [
+                'first_field: First error message.',
+                'second_field: Second error message.',
+                'some_other_field: Second error message.',
+                'second_field: Some other error message.',
+              ],
+              title: '\nValidation errors',
+            },
+          },
+        ],
+        title: 'Webhook Subscription',
+      },
+    ])
+  })
 })
