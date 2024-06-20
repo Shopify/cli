@@ -326,6 +326,7 @@ describe('uploadExtensionsBundle', () => {
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
@@ -363,6 +364,7 @@ describe('uploadExtensionsBundle', () => {
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
@@ -400,6 +402,7 @@ describe('uploadExtensionsBundle', () => {
     // When
     await uploadExtensionsBundle({
       apiKey: 'app-id',
+      name: 'appName',
       organizationId: '1',
       bundlePath: undefined,
       appModules: [],
@@ -509,6 +512,7 @@ describe('uploadExtensionsBundle', () => {
       try {
         await uploadExtensionsBundle({
           apiKey: 'app-id',
+          name: 'appName',
           organizationId: '1',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           appModules: [
@@ -609,6 +613,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       const result = await uploadExtensionsBundle({
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [
