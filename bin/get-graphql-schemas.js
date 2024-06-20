@@ -88,13 +88,23 @@ async function fetchFileForSchema(schema, octokit) {
   }
 }
 
+async function getGithubPasswordFromDev() {
+  try {
+    // Uses token from `dev`
+    const output = await runCommand('/opt/dev/bin/dev', ['github', 'print-auth'])
+    const password = extractPassword(output)
+    return password
+  } catch (error) {
+    console.warn(`Soft-error fetching password from dev: ${error.message}`)
+    process.exit(0)
+  }
+}
+
 async function fetchFiles() {
   let password = undefined
   let tokenFromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
   if (!tokenFromEnv) {
-    // Uses token from `dev`
-    const output = await runCommand('/opt/dev/bin/dev', ['github', 'print-auth'])
-    password = extractPassword(output)
+    password = await getGithubPasswordFromDev()
   }
   const authToken = password || tokenFromEnv
 
