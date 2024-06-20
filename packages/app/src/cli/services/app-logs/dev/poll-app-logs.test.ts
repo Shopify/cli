@@ -231,8 +231,7 @@ describe('pollAppLogs', () => {
     const secondUrl = `${firstUrl}?cursor=${RETURNED_CURSOR}`
 
     // Given
-    vi.mocked(writeAppLogsToFile)
-
+    vi.mocked(writeAppLogsToFile).mockResolvedValue({fullOutputPath: '/path', identifier: '000000'})
     vi.spyOn(components, 'useConcurrentOutputContext')
 
     const mockedFetch = vi

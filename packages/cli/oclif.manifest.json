@@ -766,6 +766,15 @@
           "name": "json",
           "type": "boolean"
         },
+        "log": {
+          "char": "l",
+          "description": "Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.",
+          "env": "SHOPIFY_FLAG_LOG",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "log",
+          "type": "option"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",

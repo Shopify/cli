@@ -38,7 +38,7 @@ describe('writeAppLogsToFile', () => {
     const returnedPath = await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
 
     // Then
-    expect(returnedPath.startsWith(path)).toBe(true)
+    expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
   })
 

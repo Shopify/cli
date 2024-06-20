@@ -4,6 +4,11 @@ import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
 
+interface AppLogFile {
+  fullOutputPath: string
+  identifier: string
+}
+
 export const writeAppLogsToFile = async ({
   appLog,
   apiKey,
@@ -12,7 +17,7 @@ export const writeAppLogsToFile = async ({
   appLog: AppLogData
   apiKey: string
   stdout: Writable
-}): Promise<string> => {
+}): Promise<AppLogFile> => {
   const identifier = randomUUID().substring(0, 6)
 
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
@@ -29,7 +34,10 @@ export const writeAppLogsToFile = async ({
     const logData = JSON.stringify(toSaveData, null, 2)
 
     await writeLog(path, logData)
-    return fullOutputPath
+    return {
+      fullOutputPath,
+      identifier,
+    }
   } catch (error) {
     stdout.write(`Error while writing log to file: ${error}\n`)
     throw error
