@@ -14,13 +14,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 
 vi.mock('./file-watcher.js')
-vi.mock('../../../../models/app/loader.js')
+vi.mock('../../../models/app/loader.js')
 
 // Extensions 1 and 1B simulate extensions defined in the same directory (same toml)
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
-
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
-
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
@@ -243,6 +241,7 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       expect(onChange).toHaveBeenCalledWith({
         app: expect.objectContaining({realExtensions: finalExtensions}),
         extensionEvents: expect.arrayContaining(extensionEvents),
+        startTime: expect.anything(),
       })
       if (needsAppReload) {
         expect(loadApp).toHaveBeenCalled()
