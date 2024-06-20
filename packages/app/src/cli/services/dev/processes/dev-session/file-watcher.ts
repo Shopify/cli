@@ -4,6 +4,7 @@ import {debounce} from '@shopify/cli-kit/common/function'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 /**
@@ -75,11 +76,15 @@ export async function startFileWatcher(
     debouncers.set(path, debounce(onChange, 500))
   })
 
+  // When a new extension path is detected (new extension folder added), add it to the list of known paths
+  // And create a debouncer for it
   function registerNewExtensionPath(path: string) {
     extensionPaths.push(path)
     debouncers.set(path, debounce(onChange, 500))
   }
 
+  // When an extension path is deleted (extension folder deleted), remove it from the list of known paths
+  // And remove its debouncer
   function removeExtensionPath(path: string) {
     extensionPaths.splice(extensionPaths.indexOf(path), 1)
     debouncers.delete(path)
@@ -125,10 +130,13 @@ export async function startFileWatcher(
         // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
         if (!isRootExtensionDirectory) break
         // Wait 5 seconds to report the new extension to give time to the extension to be created
-        setTimeout(() => {
-          onChange({type: 'extension_folder_created', path, extensionPath, startTime})
-          registerNewExtensionPath(path)
-        }, 5000)
+        setTimeout(
+          () => {
+            onChange({type: 'extension_folder_created', path, extensionPath, startTime})
+            registerNewExtensionPath(path)
+          },
+          isUnitTest() ? 500 : 5000,
+        )
         break
       case 'unlink':
         if (isConfigAppPath) {
