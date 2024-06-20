@@ -1,5 +1,9 @@
 import { copyFile, cp, readFile, writeFile } from "fs/promises"
 
+/**
+ * Creates a duplicate of the CLI package and renames it to "shopify" in package.json and project.json
+ */
+
 await cp('./packages/cli', './packages/cli-copy', { recursive: true })
 
 const packageJsonFile = await readFile('./packages/cli-copy/package.json')
