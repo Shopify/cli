@@ -5,7 +5,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import micromatch from 'micromatch'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -122,8 +122,7 @@ export async function subscribeToAppEvents(
         onChange(appEvent)
       })
       .catch((error) => {
-        options.stderr.write(`Error handling event: ${event.type}`)
-        throw error
+        options.stderr.write(`Error handling event: ${error.message}`)
       })
   })
 }
@@ -249,13 +248,19 @@ async function AppConfigDeletedHandler(_input: HandlerInput): Promise<AppEvent> 
  */
 async function reloadApp(app: AppInterface, options: OutputContextOptions): Promise<AppInterface> {
   const start = process.hrtime()
-  const newApp = await loadApp({
-    specifications: app.specifications,
-    directory: app.directory,
-    userProvidedConfigName: undefined,
-    remoteFlags: app.remoteFlags,
-  })
-  const endTime = process.hrtime(start)
-  outputDebug(`App reloaded [${normalizeTime(endTime)}ms]`, options.stdout)
-  return newApp
+  try {
+    const newApp = await loadApp({
+      specifications: app.specifications,
+      directory: app.directory,
+      userProvidedConfigName: undefined,
+      remoteFlags: app.remoteFlags,
+    })
+    const endTime = process.hrtime(start)
+    outputDebug(`App reloaded [${normalizeTime(endTime)}ms]`, options.stdout)
+    return newApp
+    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    outputWarn(`Error reloading app: ${error.message}`, options.stdout)
+    return app
+  }
 }
