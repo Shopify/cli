@@ -220,7 +220,7 @@ const testCases: TestCase[] = [
 describe('app-event-watcher when receiving a file event that doesnt require an app reload', () => {
   test.each(testCases)(
     'The event $name returns the expected AppEvent',
-    async ({name, fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
+    async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
       // Given
       vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
       vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))

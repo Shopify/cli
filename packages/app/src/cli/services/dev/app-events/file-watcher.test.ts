@@ -3,7 +3,6 @@ import {
   testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
-  testSingleWebhookSubscriptionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -11,15 +10,19 @@ import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 
-// vi.mock('@shopify/cli-kit/common/function')
-
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
-const webhookExtension = await testSingleWebhookSubscriptionExtension()
 
+/**
+ * Test case for the file-watcher
+ * Each test case is an object containing the following elements:
+ * - A name for the test case
+ * - The file system event to be triggered
+ * - The path of the file that triggered the event
+ */
 interface TestCaseSingleEvent {
   name: string
   fileSystemEvent: string
@@ -27,6 +30,16 @@ interface TestCaseSingleEvent {
   expectedEvent: WatcherEvent
 }
 
+/**
+ * Test case for the file-watcher
+ * There are cases where multiple events are triggered in a short period of time.
+ * This test cases are used to test those scenarios.
+ *
+ * Each test case is an object containing the following elements:
+ * - A name for the test case
+ * - The file system events to be triggered
+ * - The expected event to be received by the onChange callback
+ */
 interface TestCaseMultiEvent {
   name: string
   fileSystemEvents: {event: string; path: string}[]
@@ -158,9 +171,8 @@ const defaultApp = testApp({
 describe('file-watcher events', () => {
   test.each(singleEventTestCases)(
     'The event $name returns the expected WatcherEvent',
-    async ({name, fileSystemEvent, path, expectedEvent}) => {
+    async ({fileSystemEvent, path, expectedEvent}) => {
       // Given
-      // vi.mocked(debounce).mockImplementation((fn, _) => fn as any)
       vi.spyOn(chokidar, 'watch').mockImplementation((_path) => {
         return {
           on: (_: string, listener: any) => listener(fileSystemEvent, path, undefined),
@@ -187,9 +199,8 @@ describe('file-watcher events', () => {
 
   test.each(multiEventTestCases)(
     'The event $name returns the expected WatcherEvent',
-    async ({name, fileSystemEvents, expectedEvent}) => {
+    async ({fileSystemEvents, expectedEvent}) => {
       // Given
-      // vi.mocked(debounce).mockImplementation((fn, _) => fn as any)
       vi.spyOn(chokidar, 'watch').mockImplementation((_path) => {
         return {
           on: (_: string, listener: any) => fileSystemEvents.forEach((ev) => listener(ev.event, ev.path, undefined)),
