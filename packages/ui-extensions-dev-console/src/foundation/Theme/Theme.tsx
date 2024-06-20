@@ -1,4 +1,4 @@
-import './Reset.module.scss'
+import './Reset.scss'
 import * as styles from './Theme.module.scss'
 import React from 'react'
 
