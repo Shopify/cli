@@ -1,4 +1,4 @@
-import {AppEventData} from './poll-app-logs.js'
+import {AppLogData} from './poll-app-logs.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -9,10 +9,10 @@ export const writeAppLogsToFile = async ({
   apiKey,
   stdout,
 }: {
-  appLog: AppEventData
+  appLog: AppLogData
   apiKey: string
   stdout: Writable
-}) => {
+}): Promise<string> => {
   const identifier = randomUUID().substring(0, 6)
 
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
@@ -29,7 +29,7 @@ export const writeAppLogsToFile = async ({
     const logData = JSON.stringify(toSaveData, null, 2)
 
     await writeLog(path, logData)
-    stdout.write(`Log: ${fullOutputPath}\n`)
+    return fullOutputPath
   } catch (error) {
     stdout.write(`Error while writing log to file: ${error}\n`)
     throw error

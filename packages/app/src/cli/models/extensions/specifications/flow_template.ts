@@ -7,11 +7,35 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {glob} from '@shopify/cli-kit/node/fs'
 import fs from 'fs'
 
+const VALID_CATEGORIES = [
+  'buyer_experience',
+  'customers',
+  'fulfillment',
+  'inventory_and_merch',
+  'loyalty',
+  'orders',
+  'promotion',
+  'risk',
+  'b2b',
+  'payment_reminders',
+  'custom_data',
+  'error_monitoring',
+]
+
+const FLOW_TEAM_CATEGORIES = ['capture_at_fulfillment']
+
 const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_template'),
   description: zod.string().max(1024),
   template: zod.object({
-    categories: zod.array(zod.string()),
+    categories: zod.array(
+      zod.string().refine(
+        (category) => VALID_CATEGORIES.concat(FLOW_TEAM_CATEGORIES).includes(category),
+        (category) => ({
+          message: `${category} is not a valid category. Valid categories include: ${VALID_CATEGORIES.join(', ')}.`,
+        }),
+      ),
+    ),
     module: zod.string(),
     require_app: zod.boolean().optional(),
     discoverable: zod.boolean().optional(),

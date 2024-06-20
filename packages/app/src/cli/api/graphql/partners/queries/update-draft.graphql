@@ -1,0 +1,16 @@
+mutation ExtensionUpdateDraft(
+  $apiKey: String!
+  $registrationId: ID!
+  $config: JSON!
+  $context: String
+  $handle: String
+) {
+  extensionUpdateDraft(
+    input: {apiKey: $apiKey, registrationId: $registrationId, config: $config, context: $context, handle: $handle}
+  ) {
+    userErrors {
+      field
+      message
+    }
+  }
+}

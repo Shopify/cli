@@ -1,4 +1,4 @@
-/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
+/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code, @nx/enforce-module-boundaries */
 /* eslint-disable import/no-extraneous-dependencies */
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'

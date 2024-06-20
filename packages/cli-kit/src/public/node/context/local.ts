@@ -246,6 +246,8 @@ export function ciPlatform(
       name = 'github'
     } else if (isTruthy(env.GITLAB_CI)) {
       name = 'gitlab'
+    } else if (isSet(env.BUILDKITE)) {
+      name = 'buildkite'
     }
 
     return {

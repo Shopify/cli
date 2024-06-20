@@ -1,11 +1,10 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {pollAppLogs} from '../../app-logs/poll-app-logs.js'
+import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../../api/graphql/subscribe_to_app_logs.js'
+import {subscribeToAppLogs} from '../../app-logs/utils.js'
 
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
-
-import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface SubscribeAndStartPollingOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -49,31 +48,23 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
   {stdout, stderr, abortSignal},
   {developerPlatformClient, appLogsSubscribeVariables},
 ) => {
-  const result = await developerPlatformClient.subscribeToAppLogs(appLogsSubscribeVariables)
-  const {jwtToken, success, errors} = result.appLogsSubscribe
-  outputDebug(`Token: ${jwtToken}\n`)
-  outputDebug(`API Key: ${appLogsSubscribeVariables.apiKey}\n`)
+  try {
+    const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
 
-  if (errors && errors.length > 0) {
-    stdout.write(`Errors subscribing to app logs: ${errors.join(', ')}`)
-    stdout.write('App log streaming is not available in this `dev` session.')
-    return
-  } else {
-    outputDebug(`Subscribed to App Events for shop ID(s) ${appLogsSubscribeVariables.shopIds}`)
-    outputDebug(`Success: ${success}\n`)
-  }
+    const apiKey = appLogsSubscribeVariables.apiKey
+    await createLogsDir(apiKey)
 
-  const apiKey = appLogsSubscribeVariables.apiKey
-  await createLogsDir(apiKey)
-  await pollAppLogs({
-    stdout,
-    appLogsFetchInput: {jwtToken},
-    apiKey,
-    resubscribeCallback: () => {
-      return subscribeAndStartPolling(
-        {stdout, stderr, abortSignal},
-        {developerPlatformClient, appLogsSubscribeVariables},
-      )
-    },
-  })
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken},
+      apiKey,
+      resubscribeCallback: () => {
+        return subscribeAndStartPolling(
+          {stdout, stderr, abortSignal},
+          {developerPlatformClient, appLogsSubscribeVariables},
+        )
+      },
+    })
+    // eslint-disable-next-line no-catch-all/no-catch-all,no-empty
+  } catch (error) {}
 }

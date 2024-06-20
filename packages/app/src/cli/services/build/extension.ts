@@ -7,6 +7,9 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import lockfile from 'proper-lockfile'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -124,10 +127,27 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  if (extension.isJavaScript) {
-    return runCommandOrBuildJSFunction(extension, options)
-  } else {
-    return buildOtherFunction(extension, options)
+  const lockfilePath = joinPath(extension.directory, '.build-lock')
+  let releaseLock
+  try {
+    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    outputDebug(`Failed to acquire function build lock: ${error.message}`)
+    throw new AbortError('Failed to build function.', 'This is likely due to another in-progress build.', [
+      'Ensure there are no other function builds in-progress.',
+      'Delete the `.build-lock` file in your function directory.',
+    ])
+  }
+
+  try {
+    if (extension.isJavaScript) {
+      await runCommandOrBuildJSFunction(extension, options)
+    } else {
+      await buildOtherFunction(extension, options)
+    }
+  } finally {
+    await releaseLock()
   }
 }
 

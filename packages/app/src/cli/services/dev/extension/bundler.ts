@@ -110,11 +110,12 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 export interface SetupExtensionWatcherOptions {
   extension: ExtensionInstance
   app: AppInterface
-  url: string
+  url?: string
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
   onChange: () => Promise<void>
+  onReloadAndBuildError: (error: Error) => Promise<void>
 }
 
 export async function setupExtensionWatcher({
@@ -125,6 +126,7 @@ export async function setupExtensionWatcher({
   stderr,
   signal,
   onChange,
+  onReloadAndBuildError,
 }: SetupExtensionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -196,12 +198,7 @@ Redeploy Paths:
         if (deepCompare(newConfig, previousConfig)) return
         return onChange()
       })
-      .catch((updateError: Error) => {
-        const draftUpdateErrorMessage = extension.draftMessages.errorMessage
-        if (draftUpdateErrorMessage) {
-          outputWarn(`${draftUpdateErrorMessage}: ${updateError.message}`, stdout)
-        }
-      })
+      .catch((error: Error) => onReloadAndBuildError(error))
   })
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
 }

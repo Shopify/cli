@@ -1,0 +1,9 @@
+query AllOrgs {
+  organizations(first: 200) {
+    nodes {
+      id
+      businessName
+      website
+    }
+  }
+}

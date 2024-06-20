@@ -10,6 +10,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
@@ -82,6 +83,12 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
                 }),
               refreshToken,
             )
+          },
+          onReloadAndBuildError: async (error) => {
+            const draftUpdateErrorMessage = extension.draftMessages.errorMessage
+            if (draftUpdateErrorMessage) {
+              outputWarn(`${draftUpdateErrorMessage}: ${error.message}`, stdout)
+            }
           },
         })
       })

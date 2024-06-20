@@ -283,7 +283,8 @@ class AppInfo {
 
   async versionUpgradeMessage(): Promise<string> {
     const cliDependency = '@shopify/cli'
-    const newestVersion = await checkForNewVersion(cliDependency, CLI_KIT_VERSION)
+    // Check a max of once daily
+    const newestVersion = await checkForNewVersion(cliDependency, CLI_KIT_VERSION, {cacheExpiryInHours: 24})
     if (newestVersion) {
       return getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
     }

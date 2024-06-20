@@ -10,6 +10,7 @@
  * @param performAction - The action to perform.
  * @param recoveryProcedure - The recovery procedure to perform if the action
  * fails the first time.
+ * @returns The result of the action.
  */
 export async function performActionWithRetryAfterRecovery<T>(
   performAction: () => Promise<T>,

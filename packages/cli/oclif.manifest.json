@@ -541,79 +541,6 @@
       "strict": true,
       "summary": "Run the app."
     },
-    "app:draft-extensions:push": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Updates the content of the app draft version.",
-      "flags": {
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "enable-dev-preview": {
-          "allowNo": false,
-          "description": "Enable dev preview after the draft content is updated.",
-          "env": "SHOPIFY_FLAG_ENABLE_DEV_PREVIEW",
-          "hidden": false,
-          "name": "enable-dev-preview",
-          "type": "boolean"
-        },
-        "path": {
-          "default": ".",
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "type": "option"
-        },
-        "reset": {
-          "allowNo": false,
-          "description": "Reset all your settings.",
-          "env": "SHOPIFY_FLAG_RESET",
-          "hidden": false,
-          "name": "reset",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "app:draft-extensions:push",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
     "app:env:pull": {
       "aliases": [
       ],
@@ -738,6 +665,7 @@
       },
       "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "descriptionWithMarkdown": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
+      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -793,6 +721,7 @@
       },
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
+      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "Application's API key",
@@ -862,6 +791,15 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "char": "w",
+          "description": "Re-run the function when the source code changes.",
+          "env": "SHOPIFY_FLAG_WATCH",
+          "hidden": false,
+          "name": "watch",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -882,6 +820,7 @@
       },
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
+      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -965,6 +904,7 @@
       },
       "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
+      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "The API key to fetch the schema with.",
@@ -1052,6 +992,7 @@
       },
       "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
+      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -1259,6 +1200,7 @@
       },
       "description": "\"DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "[DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
+      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "The API key to fetch the schema with.",
@@ -1337,6 +1279,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "strict": true,
       "summary": "Fetch the latest GraphQL schema for a function."
     },
     "app:import-extensions": {
@@ -1478,6 +1421,7 @@
       ],
       "args": {
       },
+      "enableJsonFlag": false,
       "flags": {
         "flavor": {
           "description": "Which flavor of the given template to use.",
@@ -1768,6 +1712,7 @@
       },
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+      "enableJsonFlag": false,
       "flags": {
         "address": {
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
@@ -1891,6 +1836,7 @@
       "args": {
       },
       "description": "Logs you out of the Shopify account or Partner account and store.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2036,6 +1982,7 @@
       },
       "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "descriptionWithMarkdown": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2055,6 +2002,7 @@
       },
       "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "descriptionWithMarkdown": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2074,6 +2022,7 @@
       },
       "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "descriptionWithMarkdown": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2092,6 +2041,7 @@
       "args": {
       },
       "description": "View all the available command flags",
+      "enableJsonFlag": false,
       "flags": {
         "csv": {
           "allowNo": false,
@@ -2117,6 +2067,7 @@
       "args": {
       },
       "description": "Browse the catalog for steps",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2135,6 +2086,7 @@
       "args": {
       },
       "description": "Create a command design file",
+      "enableJsonFlag": false,
       "flags": {
         "file": {
           "description": "The name of the demo file.",
@@ -2174,6 +2126,7 @@
       "args": {
       },
       "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2192,6 +2145,7 @@
       "args": {
       },
       "description": "Generate CLI commands documentation",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -2215,6 +2169,7 @@
         }
       },
       "description": "Display help for Shopify CLI",
+      "enableJsonFlag": false,
       "flags": {
         "nested-commands": {
           "allowNo": false,
@@ -2241,6 +2196,7 @@
       },
       "description": "Builds a Hydrogen storefront for production.",
       "descriptionWithMarkdown": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
+      "enableJsonFlag": false,
       "flags": {
         "bundle-stats": {
           "allowNo": true,
@@ -2343,6 +2299,7 @@
       },
       "description": "Returns diagnostic information about a Hydrogen storefront.",
       "descriptionWithMarkdown": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -2369,6 +2326,7 @@
       },
       "description": "Generate types for the Storefront API queries found in your project.",
       "descriptionWithMarkdown": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+      "enableJsonFlag": false,
       "flags": {
         "codegen-config-path": {
           "description": "Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.",
@@ -2417,6 +2375,7 @@
       "args": {
       },
       "description": "Push project configuration to admin",
+      "enableJsonFlag": false,
       "flags": {
         "dev-origin": {
           "description": "The development domain of your application.",
@@ -2472,6 +2431,7 @@
       },
       "description": "Builds and profiles the server startup time the app.",
       "descriptionWithMarkdown": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
+      "enableJsonFlag": false,
       "flags": {
         "diff": {
           "allowNo": false,
@@ -2523,6 +2483,7 @@
       },
       "description": "Builds and deploys a Hydrogen storefront to Oxygen.",
       "descriptionWithMarkdown": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
+      "enableJsonFlag": false,
       "flags": {
         "auth-bypass-token": {
           "allowNo": false,
@@ -2702,6 +2663,7 @@
       },
       "description": "Runs Hydrogen storefront in an Oxygen worker for development.",
       "descriptionWithMarkdown": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
+      "enableJsonFlag": false,
       "flags": {
         "codegen": {
           "allowNo": false,
@@ -2872,6 +2834,7 @@
       },
       "description": "List the environments on your linked Hydrogen storefront.",
       "descriptionWithMarkdown": "Lists all environments available on the linked Hydrogen storefront.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -2898,6 +2861,7 @@
       },
       "description": "Populate your .env with variables from your Hydrogen storefront.",
       "descriptionWithMarkdown": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
+      "enableJsonFlag": false,
       "flags": {
         "env": {
           "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
@@ -2953,6 +2917,7 @@
       "args": {
       },
       "description": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
+      "enableJsonFlag": false,
       "flags": {
         "env": {
           "description": "Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.",
@@ -2995,6 +2960,7 @@
       "args": {
       },
       "description": "Shortcut for `hydrogen generate`. See `hydrogen generate --help` for more information.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -3033,6 +2999,7 @@
       },
       "description": "Generates a standard Shopify route.",
       "descriptionWithMarkdown": "Generates a set of default routes from the starter template.",
+      "enableJsonFlag": false,
       "flags": {
         "adapter": {
           "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
@@ -3089,6 +3056,7 @@
       "args": {
       },
       "description": "Generates all supported standard shopify routes.",
+      "enableJsonFlag": false,
       "flags": {
         "adapter": {
           "description": "Remix adapter used in the route. The default is `@shopify/remix-oxygen`.",
@@ -3146,6 +3114,7 @@
       },
       "description": "Creates a new Hydrogen storefront.",
       "descriptionWithMarkdown": "Creates a new Hydrogen storefront.",
+      "enableJsonFlag": false,
       "flags": {
         "force": {
           "allowNo": false,
@@ -3260,6 +3229,7 @@
       },
       "description": "Link a local project to one of your shop's Hydrogen storefronts.",
       "descriptionWithMarkdown": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.",
+      "enableJsonFlag": false,
       "flags": {
         "force": {
           "allowNo": false,
@@ -3302,6 +3272,7 @@
       },
       "description": "Returns a list of Hydrogen storefronts available on a given shop.",
       "descriptionWithMarkdown": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3328,6 +3299,7 @@
       },
       "description": "Login to your Shopify account.",
       "descriptionWithMarkdown": "Logs in to the specified shop and saves the shop domain to the project.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3363,6 +3335,7 @@
       },
       "description": "Logout of your local session.",
       "descriptionWithMarkdown": "Log out from the current shop.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3389,6 +3362,7 @@
       },
       "description": "Runs a Hydrogen storefront in an Oxygen worker for production.",
       "descriptionWithMarkdown": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.",
+      "enableJsonFlag": false,
       "flags": {
         "build": {
           "allowNo": false,
@@ -3537,6 +3511,7 @@
       "args": {
       },
       "description": "Scaffold routes and core functionality.",
+      "enableJsonFlag": false,
       "flags": {
         "force": {
           "allowNo": false,
@@ -3603,6 +3578,7 @@
       },
       "description": "Setup CSS strategies for your project.",
       "descriptionWithMarkdown": "Adds support for certain CSS strategies to your project.",
+      "enableJsonFlag": false,
       "flags": {
         "force": {
           "allowNo": false,
@@ -3653,6 +3629,7 @@
       },
       "description": "Setup support for multiple markets in your project.",
       "descriptionWithMarkdown": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3678,6 +3655,7 @@
       "args": {
       },
       "description": "EXPERIMENTAL: Upgrades the project to use Vite.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3704,6 +3682,7 @@
       },
       "description": "Creates a global `h2` shortcut for the Hydrogen CLI",
       "descriptionWithMarkdown": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -3722,6 +3701,7 @@
       },
       "description": "Unlink a local project from a Hydrogen storefront.",
       "descriptionWithMarkdown": "Unlinks your local development environment from a remote Hydrogen storefront.",
+      "enableJsonFlag": false,
       "flags": {
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3748,6 +3728,7 @@
       },
       "description": "Upgrade Remix and Hydrogen npm dependencies.",
       "descriptionWithMarkdown": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
+      "enableJsonFlag": false,
       "flags": {
         "force": {
           "allowNo": false,
@@ -3790,6 +3771,7 @@
       "args": {
       },
       "description": "View the UI kit components that process async tasks",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -3808,6 +3790,7 @@
       "args": {
       },
       "description": "View the UI kit components prompts",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -3826,6 +3809,7 @@
       "args": {
       },
       "description": "View the UI kit components that display static output",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -4163,6 +4147,7 @@
         }
       },
       "description": "Starts a search on shopify.dev.",
+      "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
       ],
@@ -5927,6 +5912,7 @@
       },
       "description": "Shows details on how to upgrade Shopify CLI.",
       "descriptionWithMarkdown": "Shows details on how to upgrade Shopify CLI.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -5945,6 +5931,7 @@
       "args": {
       },
       "description": "Shopify CLI version currently installed.",
+      "enableJsonFlag": false,
       "flags": {
       },
       "hasDynamicHelp": false,
@@ -5963,6 +5950,7 @@
       },
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+      "enableJsonFlag": false,
       "flags": {
         "address": {
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
@@ -6078,8 +6066,9 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.61.0"
+  "version": "3.62.0"
 }

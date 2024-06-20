@@ -9,30 +9,7 @@ module.exports = {
   // WARNING: If you want to add new rules/plugins, you need to add them to the eslint-plugin-cli package.
   extends: ['plugin:@shopify/eslint-plugin-cli/config'],
   rules: {
-    '@nx/enforce-module-boundaries': [
-      'error',
-      {
-        allow: [],
-        depConstraints: [
-          {
-            sourceTag: 'scope:feature',
-            onlyDependOnLibsWithTargs: ['scope:foundation'],
-          },
-          {
-            sourceTag: 'scope:plugin',
-            onlyDependOnLibsWithTargs: ['scope:foundation'],
-          },
-          {
-            sourceTag: 'scope:cli',
-            onlyDependOnLibsWithTargs: ['scope:foundation', 'scope:feature'],
-          },
-          {
-            sourceTag: 'scope:create-cli',
-            onlyDependOnLibsWithTargs: ['scope:foundation'],
-          },
-        ],
-      },
-    ],
+    '@nx/enforce-module-boundaries': 'error',
   },
   overrides: [
     {
@@ -72,7 +49,6 @@ module.exports = {
         'jsdoc/implements-on-classes': 'error',
         'jsdoc/match-description': 'error',
         'jsdoc/multiline-blocks': 'error',
-        'jsdoc/newline-after-description': 'error',
         'jsdoc/no-bad-blocks': 'error',
         'jsdoc/no-defaults': 'error',
         'jsdoc/no-multi-asterisks': 'error',
@@ -90,13 +66,13 @@ module.exports = {
         'jsdoc/require-property-description': 'error',
         'jsdoc/require-property-name': 'error',
         'jsdoc/require-property-type': 'error',
-        'jsdoc/require-returns': 'error',
+        'jsdoc/require-returns': ['error', {publicOnly: true}],
         'jsdoc/require-returns-check': 'error',
         'jsdoc/require-returns-description': 'error',
         'jsdoc/require-throws': 'error',
         'jsdoc/require-yields': 'error',
         'jsdoc/require-yields-check': 'error',
-        'jsdoc/tag-lines': 'error',
+        'jsdoc/tag-lines': ['error', 'any', {startLines: 1}],
         'jsdoc/valid-types': 'error',
       },
       settings: {

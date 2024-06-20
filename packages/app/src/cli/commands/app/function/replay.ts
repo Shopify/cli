@@ -39,6 +39,13 @@ export default class FunctionReplay extends Command {
       description: 'Output the function run result as a JSON object.',
       env: 'SHOPIFY_FLAG_JSON',
     }),
+    watch: Flags.boolean({
+      char: 'w',
+      hidden: false,
+      default: true,
+      description: 'Re-run the function when the source code changes.',
+      env: 'SHOPIFY_FLAG_WATCH',
+    }),
   }
 
   public async run() {
@@ -65,9 +72,9 @@ export default class FunctionReplay extends Command {
           app,
           extension: ourFunction,
           apiKey,
-          stdout: flags.stdout,
           path: flags.path,
           json: flags.json,
+          watch: flags.watch,
         })
       },
     })

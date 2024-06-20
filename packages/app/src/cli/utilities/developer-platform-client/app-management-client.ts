@@ -28,7 +28,6 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './app-management-client/graphql/release-version.js'
-import {OrganizationsQuery, OrganizationsQuerySchema} from './app-management-client/graphql/organizations.js'
 import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './app-management-client/graphql/apps.js'
 import {
   OrganizationQuery,
@@ -36,11 +35,7 @@ import {
   OrganizationQueryVariables,
 } from './app-management-client/graphql/organization.js'
 import {UserInfoQuery, UserInfoQuerySchema} from './app-management-client/graphql/user-info.js'
-import {
-  CreateAssetURLMutation,
-  CreateAssetURLMutationSchema,
-  CreateAssetURLMutationVariables,
-} from './app-management-client/graphql/create-asset-url.js'
+import {CreateAssetURLMutation, CreateAssetURLMutationSchema} from './app-management-client/graphql/create-asset-url.js'
 import {
   AppVersionByIdQuery,
   AppVersionByIdQuerySchema,
@@ -70,7 +65,6 @@ import {
   AllAppExtensionRegistrationsQuerySchema,
   ExtensionRegistration,
 } from '../../api/graphql/all_app_extension_registrations.js'
-import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
@@ -106,13 +100,18 @@ import {
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 
+import {
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateDraftMutationVariables,
+} from '../../api/graphql/partners/generated/update-draft.js'
+import {ListOrganizations} from '../../api/graphql/business-platform/generated/organizations.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
-import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
@@ -209,10 +208,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    const organizationsResult = await businessPlatformRequest<OrganizationsQuerySchema>(
-      OrganizationsQuery,
-      await this.businessPlatformToken(),
-    )
+    const organizationsResult = await businessPlatformRequestDoc(ListOrganizations, await this.businessPlatformToken())
     if (!organizationsResult.currentUserAccount) return []
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
@@ -555,18 +551,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: functionUploadUrl')
   }
 
-  async generateSignedUploadUrl({organizationId, apiKey}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const variables: CreateAssetURLMutationVariables = {appId: apiKey}
+  async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const result = await appManagementRequest<CreateAssetURLMutationSchema>(
       organizationId,
       CreateAssetURLMutation,
       await this.token(),
-      variables,
     )
-    return result.assetUrlCreate
+    return {
+      assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
+      userErrors: result.appRequestSourceUploadUrl.userErrors,
+    }
   }
 
-  async updateExtension(_input: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
+  async updateExtension(_extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
     throw new BugError('Not implemented: updateExtension')
   }
 

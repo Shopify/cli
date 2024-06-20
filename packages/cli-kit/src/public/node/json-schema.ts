@@ -2,8 +2,24 @@ import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject} from 'ajv'
+import $RefParser from '@apidevtools/json-schema-ref-parser'
 
 type AjvError = ErrorObject<string, {[key: string]: unknown}, unknown>
+
+/**
+ * Normalises a JSON Schema by standardising it's internal implementation.
+ *
+ * We prefer to not use $ref elements in our schemas, so we inline them; it's easier then to process errors.
+ *
+ * @param schema - The JSON schema (as a string) to normalise.
+ * @returns The normalised JSON schema.
+ */
+export async function normaliseJsonSchema(schema: string): Promise<SchemaObject> {
+  // we want to modify the schema, removing any $ref elements and inlining with their source
+  const parsedSchema = JSON.parse(schema)
+  await $RefParser.dereference(parsedSchema, {resolve: {external: false}})
+  return parsedSchema
+}
 
 /**
  * Given a subject object and a JSON schema contract, validate the subject against the contract.
@@ -156,51 +172,52 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
 
     // get the schema list from where the union issue occured
     const dottedSchemaPath = unionError.schemaPath.replace('#/', '').replace(/\//g, '.')
-    const unionSchemas = getPathValue(schema, dottedSchemaPath) as SchemaObject[]
-
+    const unionSchemas = getPathValue<SchemaObject[]>(schema, dottedSchemaPath)
     // and the slice of the subject that caused the issue
-    const subjectValue = getPathValue(subject, unionError.instancePath.split('/').slice(1).join('.')) as object
+    const subjectValue = getPathValue(subject, unionError.instancePath.split('/').slice(1).join('.'))
 
-    // we know that none of the union schemas are correct, but for each of them we can measure how wrong they are
-    const correctValuesAndErrors = unionSchemas
-      .map((candidateSchemaFromUnion: SchemaObject) => {
-        const candidateSchemaValidator = ajv.compile(candidateSchemaFromUnion)
-        candidateSchemaValidator(subjectValue)
+    if (unionSchemas !== undefined && subjectValue !== undefined) {
+      // we know that none of the union schemas are correct, but for each of them we can measure how wrong they are
+      const correctValuesAndErrors = unionSchemas
+        .map((candidateSchemaFromUnion: SchemaObject) => {
+          const candidateSchemaValidator = ajv.compile(candidateSchemaFromUnion)
+          candidateSchemaValidator(subjectValue)
 
-        let score = 0
-        if (candidateSchemaFromUnion.type === 'object') {
-          // provided the schema is an object, we can measure how many properties are good
-          const candidatesObjectProperties = Object.keys(candidateSchemaFromUnion.properties)
-          score = candidatesObjectProperties.reduce((acc, propertyName) => {
-            const subSchema = candidateSchemaFromUnion.properties[propertyName] as SchemaObject
-            const subjectValueSlice = getPathValue(subjectValue, propertyName)
+          let score = 0
+          if (candidateSchemaFromUnion.type === 'object') {
+            // provided the schema is an object, we can measure how many properties are good
+            const candidatesObjectProperties = Object.keys(candidateSchemaFromUnion.properties)
+            score = candidatesObjectProperties.reduce((acc, propertyName) => {
+              const subSchema = candidateSchemaFromUnion.properties[propertyName] as SchemaObject
+              const subjectValueSlice = getPathValue(subjectValue, propertyName)
 
-            const subValidator = ajv.compile(subSchema)
-            if (subValidator(subjectValueSlice)) {
-              return acc + 1
-            }
-            return acc
-          }, score)
+              const subValidator = ajv.compile(subSchema)
+              if (subValidator(subjectValueSlice)) {
+                return acc + 1
+              }
+              return acc
+            }, score)
+          }
+
+          return [score, candidateSchemaValidator.errors!] as const
+        })
+        .sort(([scoreA], [scoreB]) => scoreA - scoreB)
+
+      if (correctValuesAndErrors.length >= 2) {
+        const [bestScore, bestErrors] = correctValuesAndErrors[correctValuesAndErrors.length - 1]!
+        const [penultimateScore] = correctValuesAndErrors[correctValuesAndErrors.length - 2]!
+
+        if (bestScore !== penultimateScore) {
+          // If there's a winner, show the errors for the best schema as they'll likely be actionable.
+          // We got these through a nested schema, so we need to adjust the instance path
+          simplifiedUnionRelatedErrors = [
+            unionError,
+            ...bestErrors.map((bestError) => ({
+              ...bestError,
+              instancePath: unionError.instancePath + bestError.instancePath,
+            })),
+          ]
         }
-
-        return [score, candidateSchemaValidator.errors!] as const
-      })
-      .sort(([scoreA], [scoreB]) => scoreA - scoreB)
-
-    if (correctValuesAndErrors.length >= 2) {
-      const [bestScore, bestErrors] = correctValuesAndErrors[correctValuesAndErrors.length - 1]!
-      const [penultimateScore] = correctValuesAndErrors[correctValuesAndErrors.length - 2]!
-
-      if (bestScore !== penultimateScore) {
-        // If there's a winner, show the errors for the best schema as they'll likely be actionable.
-        // We got these through a nested schema, so we need to adjust the instance path
-        simplifiedUnionRelatedErrors = [
-          unionError,
-          ...bestErrors.map((bestError) => ({
-            ...bestError,
-            instancePath: unionError.instancePath + bestError.instancePath,
-          })),
-        ]
       }
     }
     errors = [...unrelatedErrors, ...simplifiedUnionRelatedErrors]

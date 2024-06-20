@@ -22,7 +22,7 @@ export default class FunctionTypegen extends Command {
     const {flags} = await this.parse(FunctionTypegen)
     await inFunctionContext({
       path: flags.path,
-      userProvidedConfigName: flags.configName,
+      userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
         await buildGraphqlTypes(ourFunction, {stdout: process.stdout, stderr: process.stderr, app})
         renderSuccess({headline: 'GraphQL types generated successfully.'})

@@ -1,10 +1,11 @@
 import {AbortError, BugError} from './error.js'
 import {AbortController, AbortSignal} from './abort.js'
-import {exec} from './system.js'
+import {captureOutput, exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
+import {PackageVersionKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -101,12 +102,12 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
-  const packageJson = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
-  if (!packageJson) {
+  const directory = await captureOutput('npm', ['prefix'], {cwd: fromDirectory})
+  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
+  const packageJson = joinPath(directory, 'package.json')
+  if (!(await fileExists(packageJson))) {
     return packageManagerFromUserAgent()
   }
-  const directory = dirname(packageJson)
-  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)
   const bunLockPath = joinPath(directory, bunLockfile)
@@ -248,19 +249,32 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
  * @param dependency - The dependency name (e.g. react)
  * @param currentVersion - The current version.
+ * @param refreshIfOlderThanSeconds - If the last check was done more than this amount of seconds ago, it will
+ * refresh the cache. Defaults to always refreshing.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
-export async function checkForNewVersion(dependency: string, currentVersion: string): Promise<string | undefined> {
-  outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+export async function checkForNewVersion(
+  dependency: string,
+  currentVersion: string,
+  {cacheExpiryInHours = 0} = {},
+): Promise<string | undefined> {
+  const getLatestVersion = async () => {
+    outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+    return getLatestNPMPackageVersion(dependency)
+  }
+
+  const cacheKey: PackageVersionKey = `npm-package-${dependency}`
+  let lastVersion
   try {
-    const lastVersion = await getLatestNPMPackageVersion(dependency)
-    if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
-      return lastVersion
-    } else {
-      return undefined
-    }
+    lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 24 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    return undefined
+  }
+
+  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+    return lastVersion
+  } else {
     return undefined
   }
 }

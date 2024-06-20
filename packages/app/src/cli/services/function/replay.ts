@@ -4,12 +4,16 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
+import {setupExtensionWatcher} from '../dev/extension/bundler.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
+import {outputWarn} from '@shopify/cli-kit/node/output'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
@@ -18,25 +22,26 @@ interface ReplayOptions {
   app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
   apiKey?: string
-  stdout: boolean
+  stdout?: boolean
   path: string
   json: boolean
+  watch: boolean
 }
 
 export interface FunctionRunData {
   shop_id: number
   api_client_id: number
   payload: {
-    input: string
+    input: unknown
     input_bytes: number
-    output: string
+    output: unknown
     output_bytes: number
     function_id: string
     export: string
     logs: string
     fuel_consumed: number
   }
-  event_type: string
+  log_type: string
   cursor: string
   status: string
   source: string
@@ -46,17 +51,46 @@ export interface FunctionRunData {
 }
 
 export async function replay(options: ReplayOptions) {
-  const {apiKey} = await ensureConnectedAppFunctionContext(options)
-  const functionRunsDir = joinPath(getLogsDir(), apiKey)
+  const {watch, extension, app} = options
+  const abortController = new AbortController()
 
-  const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
-  const selectedRun = await selectFunctionRunPrompt(functionRuns)
+  try {
+    const {apiKey} = await ensureConnectedAppFunctionContext(options)
+    const functionRunsDir = joinPath(getLogsDir(), apiKey)
+    const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
 
-  if (selectedRun === undefined) {
-    throw new AbortError(`No logs found in ${functionRunsDir}`)
+    const selectedRun = await selectFunctionRunPrompt(functionRuns)
+
+    if (selectedRun === undefined) {
+      throw new AbortError(`No logs found in ${functionRunsDir}`)
+    }
+
+    const {input, export: runExport} = selectedRun.payload
+    await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+
+    if (watch) {
+      await setupExtensionWatcher({
+        extension,
+        app,
+        stdout: process.stdout,
+        stderr: process.stderr,
+        onChange: async () => {
+          await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+        },
+        onReloadAndBuildError: async (error) => {
+          if (error instanceof FatalError) {
+            renderFatalError(error)
+          } else {
+            outputWarn(`Failed to replay function: ${error.message}`)
+          }
+        },
+        signal: abortController.signal,
+      })
+    }
+  } catch (error) {
+    abortController.abort()
+    throw error
   }
-
-  await runFunctionRunnerWithLogInput(options.extension, options, selectedRun.payload.input, selectedRun.payload.export)
 }
 
 async function runFunctionRunnerWithLogInput(
@@ -87,21 +121,36 @@ async function getFunctionRunData(functionRunsDir: string, functionHandle: strin
       return splitFilename[3] === 'extensions' && splitFilename[4] === functionHandle
     })
     .reverse()
-  const latestFunctionRunFileNames = allFunctionRunFileNames.slice(0, LOG_SELECTOR_LIMIT)
-  const functionRunFilePaths = latestFunctionRunFileNames.map((functionRunFile) =>
-    joinPath(functionRunsDir, functionRunFile),
-  )
 
-  const functionRunData = await Promise.all(
-    functionRunFilePaths.map(async (functionRunFilePath) => {
-      const fileData = await readFile(functionRunFilePath)
-      const parsedData = JSON.parse(fileData)
-      return {
-        ...parsedData,
-        identifier: getIdentifierFromFilename(functionRunFilePath),
-      }
-    }),
-  )
+  let functionRunData: FunctionRunData[] = []
+  for (
+    let i = 0;
+    i < allFunctionRunFileNames.length && functionRunData.length < LOG_SELECTOR_LIMIT;
+    i += LOG_SELECTOR_LIMIT
+  ) {
+    const currentFunctionRunFileNameChunk = allFunctionRunFileNames.slice(i, i + LOG_SELECTOR_LIMIT)
+    const functionRunFilePaths = currentFunctionRunFileNameChunk.map((functionRunFile) =>
+      joinPath(functionRunsDir, functionRunFile),
+    )
+
+    // eslint-disable-next-line no-await-in-loop
+    const functionRunDataFromChunk = await Promise.all(
+      functionRunFilePaths.map(async (functionRunFilePath) => {
+        const fileData = await readFile(functionRunFilePath)
+        const parsedData = JSON.parse(fileData)
+        return {
+          ...parsedData,
+          identifier: getIdentifierFromFilename(functionRunFilePath),
+        }
+      }),
+    )
+
+    const filteredFunctionRunDataFromChunk = functionRunDataFromChunk.filter((run) => {
+      return run.payload.input != null
+    })
+
+    functionRunData = functionRunData.concat(filteredFunctionRunDataFromChunk)
+  }
 
   return functionRunData
 }

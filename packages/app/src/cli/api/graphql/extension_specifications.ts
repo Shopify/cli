@@ -18,6 +18,9 @@ export const ExtensionSpecificationsQuery = gql`
           surface
         }
       }
+      validationSchema {
+        jsonSchema
+      }
     }
   }
 `
@@ -42,12 +45,14 @@ export interface RemoteSpecification {
       surface: string
     }
   }
+  validationSchema?: {
+    jsonSchema: string
+  }
 }
 
 export interface FlattenedRemoteSpecification extends RemoteSpecification {
   surface?: string
   registrationLimit: number
-  contract: never
 }
 
 export interface ExtensionSpecificationsQuerySchema {

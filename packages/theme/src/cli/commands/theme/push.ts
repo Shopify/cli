@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
@@ -171,28 +171,30 @@ export default class Push extends ThemeCommand {
       return
     }
 
+    const flagsForCli2 = flags as typeof flags & FlagValues
+
     showEmbeddedCLIWarning()
 
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
 
-    const targetTheme = await (flags.development
+    const targetTheme = await (flagsForCli2.development
       ? developmentThemeManager.findOrCreate()
       : developmentThemeManager.fetch())
 
     if (targetTheme) {
-      if (flags.development) {
-        flags.theme = `${targetTheme.id}`
-        flags.development = false
+      if (flagsForCli2.development) {
+        flagsForCli2.theme = `${targetTheme.id}`
+        flagsForCli2.development = false
       }
       if (useEmbeddedThemeCLI()) {
-        flags['development-theme-id'] = targetTheme.id
+        flagsForCli2['development-theme-id'] = targetTheme.id
       }
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {
+    const flagsToPass = this.passThroughFlags(flagsForCli2, {
       allowedFlags: Push.cli2Flags,
     })
-    const command = ['theme', 'push', flags.path, ...flagsToPass]
+    const command = ['theme', 'push', flagsForCli2.path, ...flagsToPass]
 
     await execCLI2(command, {store, adminToken: adminSession.token})
   }

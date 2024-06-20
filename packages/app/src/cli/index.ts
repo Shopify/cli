@@ -3,7 +3,6 @@ import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
-import DraftExtensionsPush from './commands/app/draft-extensions/push.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import FunctionBuild from './commands/app/function/build.js'
@@ -34,7 +33,6 @@ export const commands = {
   'app:release': Release,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
-  'app:draft-extensions:push': DraftExtensionsPush,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
   'app:generate:schema': GenerateSchema,

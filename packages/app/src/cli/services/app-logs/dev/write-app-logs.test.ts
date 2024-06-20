@@ -1,16 +1,16 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {AppEventData} from './poll-app-logs.js'
+import {AppLogData} from './poll-app-logs.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/logs')
 
-const APP_LOG: AppEventData = {
+const APP_LOG: AppLogData = {
   shop_id: 1,
   api_client_id: 2,
   payload: JSON.stringify({someJson: 'someJSOn'}),
-  event_type: 'function_run',
+  log_type: 'function_run',
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
   source: 'my-function',
@@ -35,11 +35,11 @@ describe('writeAppLogsToFile', () => {
     const path = joinPath(API_KEY, fileName)
 
     // When
-    await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
+    const returnedPath = await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
 
     // Then
+    expect(returnedPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Log: '))
   })
 
   test('prints and re-throws parsing errors', async () => {
@@ -55,7 +55,7 @@ describe('writeAppLogsToFile', () => {
   })
 })
 
-function expectedLogDataFromAppEvent(event: AppEventData): string {
+function expectedLogDataFromAppEvent(event: AppLogData): string {
   const data = {
     ...event,
     payload: JSON.parse(event.payload),

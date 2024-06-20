@@ -5,6 +5,7 @@
       ],
       "args": {
       },
+      "enableJsonFlag": false,
       "flags": {
         "flavor": {
           "description": "Which flavor of the given template to use.",
@@ -98,5 +99,5 @@
       "summary": "Create a new app project"
     }
   },
-  "version": "3.61.0"
+  "version": "3.62.0"
 }

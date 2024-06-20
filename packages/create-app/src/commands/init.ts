@@ -104,7 +104,7 @@ export default class Init extends Command {
       throw new AbortError(
         outputContent`Only ${visibleTemplates
           .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
-          .join(', ')} template aliases are supported`,
+          .join(', ')} template aliases are supported, please provide a valid URL`,
       )
   }
 

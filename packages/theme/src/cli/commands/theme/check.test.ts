@@ -1,5 +1,5 @@
 import Check from './check.js'
-import {describe, vi, expect, test, beforeEach, afterAll, SpyInstance} from 'vitest'
+import {describe, vi, expect, test, beforeEach, afterAll, MockInstance} from 'vitest'
 import {Config} from '@oclif/core'
 import {themeCheckRun, Theme, Config as ThemeConfig, Offense} from '@shopify/theme-check-node'
 
@@ -7,7 +7,7 @@ vi.mock('@shopify/theme-check-node')
 const CommandConfig = new Config({root: __dirname})
 
 describe('Check', () => {
-  let exitSpy: SpyInstance
+  let exitSpy: MockInstance<[code?: number | undefined], never>
 
   beforeEach(() => {
     // Create a spy on process.exit

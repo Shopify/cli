@@ -30,6 +30,7 @@ export async function initializeGitRepository(directory: string, initialBranch =
  *
  * @param directory - The absolute path to the directory containing the files.
  * @param files - The list of files to check against.
+ * @returns Files ignored by the lockfile.
  */
 export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -287,6 +288,7 @@ export async function ensureIsClean(directory?: string): Promise<void> {
  * Returns true if the .git directory tree is clean (no uncommitted changes).
  *
  * @param directory - The directory to check.
+ * @returns True is the .git directory is clean.
  */
 export async function isClean(directory?: string): Promise<boolean> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -32,11 +32,6 @@ import {
   ActiveAppVersionQuerySchema,
   ActiveAppVersionQueryVariables,
 } from '../../api/graphql/app_active_version.js'
-import {
-  ExtensionUpdateDraftInput,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateSchema,
-} from '../../api/graphql/update_draft.js'
 import {AppDeploy, AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {
   GenerateSignedUploadUrl,
@@ -84,7 +79,6 @@ import {
   AppVersionByTagSchema,
   AppVersionByTagVariables,
 } from '../../api/graphql/app_version_by_tag.js'
-import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {
   SendSampleWebhookSchema,
   SendSampleWebhookVariables,
@@ -142,12 +136,20 @@ import {
   AppLogsSubscribeResponse,
 } from '../../api/graphql/subscribe_to_app_logs.js'
 
+import {AllOrgs} from '../../api/graphql/partners/generated/all-orgs.js'
+import {
+  ExtensionUpdateDraft,
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateDraftMutationVariables,
+} from '../../api/graphql/partners/generated/update-draft.js'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
   FunctionUploadUrlGenerateMutation,
   FunctionUploadUrlGenerateResponse,
   partnersRequest,
+  partnersRequestDoc,
 } from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -214,6 +216,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return partnersRequest(query, await this.token(), variables)
   }
 
+  async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
+    document: TypedDocumentNode<TResult, TVariables>,
+    variables?: TVariables,
+  ): Promise<TResult> {
+    return partnersRequestDoc(document, await this.token(), variables)
+  }
+
   async token(): Promise<string> {
     return (await this.session()).token
   }
@@ -239,10 +248,10 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async organizations(): Promise<Organization[]> {
     try {
-      const result: AllOrganizationsQuerySchema = await this.request(AllOrganizationsQuery)
-      return result.organizations.nodes.map((org) => ({
-        id: org.id,
-        businessName: org.businessName,
+      const result = await this.requestDoc(AllOrgs)
+      return result.organizations.nodes!.map((org) => ({
+        id: org!.id,
+        businessName: org!.businessName,
         source: OrganizationSource.Partners,
       }))
     } catch (error: unknown) {
@@ -370,8 +379,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ExtensionCreateQuery, input)
   }
 
-  async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {
-    return this.request(ExtensionUpdateDraftMutation, extensionInput)
+  async updateExtension(extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
+    return this.requestDoc(ExtensionUpdateDraft, extensionInput)
   }
 
   async deploy(deployInput: AppDeployOptions): Promise<AppDeploySchema> {
