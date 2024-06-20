@@ -338,6 +338,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -378,6 +379,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -414,11 +416,12 @@ describe('uploadExtensionsBundle', () => {
     // Then
     expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: 'appName',
       organizationId: '1',
       skipPublish: false,
       message: undefined,
       versionTag: undefined,
-      commitReferences: undefined,
+      commitReference: undefined,
     })
   })
 
