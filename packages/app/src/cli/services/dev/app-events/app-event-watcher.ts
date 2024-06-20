@@ -1,9 +1,46 @@
+/* eslint-disable tsdoc/syntax */
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import micromatch from 'micromatch'
+
+/**
+This is the entry point to start watching events in an app. This process has 3 steps:
+1. The file system watcher (file-watcher.ts) will detect changes in the file system and emit events.
+2. The app-event-watcher (this file) will receive the events and process them, reloading the app if necessary.
+3. The consumer of the processed events will receive the updated app and the affected extensions.
+
+Since an extension folder can contain multiple extensions defined in the same toml, all file system events can
+potentially affect multiple extensions, an AppEvent will always include an array with all affected extensions.
+
+Examples:
+1. A file is updated in an extension folder (/extensions/my_extension/index.js)
+ -> file-watcher will emit a `file_updated` event
+  -> app-event-watcher will determine that all extensions in the `my_extension` directory are affected
+    -> The consumer will receive the updated app and the affected extension(s)
+
+2. A new directory is created in the extensions folder (/extensions/new_extension)
+  -> file-watcher will emit a `extension_folder_created` event
+    -> app-event-watcher will determine that an extension(s) was(were) created and reload the app
+      -> The consumer will receive the updated app and the created extension(s)
+
+3. A directory is removed from the file system (/extensions/my_extension)
+  -> file-watcher will emit a `extension_folder_deleted` event
+    -> app-event-watcher will determine that all extensions in `my_extension` were deleted and remove them from the app
+      -> The consumer will receive the updated app and the deleted extension(s)
+
+4. A toml file is updated (/extensions/my_extension/extension.toml)
+  -> file-watcher will emit a `toml_updated` event
+    -> app-event-watcher will compare the old and new extensions to determine which were created, deleted or updated
+      -> The consumer will receive the updated app and the created, deleted and updated extensions
+
+5. The app.toml is updated
+  -> file-watcher will emit a `app_config_updated` event
+    -> app-event-watcher will compare the old and new config to determine which extensions were created, deleted or updated
+      -> The consumer will receive the updated app and the created, deleted and updated extensions
+ */
 
 /**
  * The type of the extension event
