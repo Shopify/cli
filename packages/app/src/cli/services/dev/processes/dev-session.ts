@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {subscribeToAppEvents} from './dev-session/app-event-watcher.js'
+import {normalizeTime, subscribeToAppEvents} from './dev-session/app-event-watcher.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -111,6 +111,8 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     // })
 
     await subscribeToAppEvents(app, processOptions, (event) => {
+      const endTime = process.hrtime(event.startTime)
+      processOptions.stdout.write(`Event handled [${normalizeTime(endTime)}ms]`)
       const events = event.extensionEvents.map((eve) => {
         return `->> ${eve.type} :: ${eve.extension.handle} :: ${eve.extension.directory}`
       })

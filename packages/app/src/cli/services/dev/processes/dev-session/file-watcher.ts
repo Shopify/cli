@@ -17,6 +17,7 @@ import {Writable} from 'stream'
  * @typeParam type - The type of the event
  * @typeParam path - The path of the file that triggered the event
  * @typeParam extensionPath - The path of the extension that contains the file
+ * @typeParam startTime - The time when the event was triggered
  */
 export interface WatcherEvent {
   type:
@@ -30,6 +31,7 @@ export interface WatcherEvent {
     | 'app_config_deleted'
   path: string
   extensionPath: string
+  startTime: [number, number]
 }
 
 export interface OutputContextOptions {
@@ -91,6 +93,7 @@ export async function startFileWatcher(
   })
 
   watcher.on('all', (event, path) => {
+    const startTime = process.hrtime()
     const isConfigAppPath = path === appConfigurationPath
     const isRootExtensionDirectory = extensionDirectories.some((dir) => dirname(path) === dir)
     const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
@@ -105,17 +108,17 @@ export async function startFileWatcher(
     switch (event) {
       case 'change':
         if (isConfigAppPath) {
-          onChange({type: 'app_config_updated', path, extensionPath})
+          onChange({type: 'app_config_updated', path, extensionPath, startTime})
         } else if (path.endsWith('.toml')) {
-          onChange({type: 'toml_updated', path, extensionPath})
+          onChange({type: 'toml_updated', path, extensionPath, startTime})
         } else {
-          onChange({type: 'file_updated', path, extensionPath})
+          onChange({type: 'file_updated', path, extensionPath, startTime})
         }
         break
       case 'add':
         // This event will be triggered multiple times when adding a new extension.
         // It will be ignored until the `addDir` event completes and adds the new extension to the known list.
-        onChange({type: 'file_created', path, extensionPath})
+        onChange({type: 'file_created', path, extensionPath, startTime})
         break
       case 'addDir':
         // Adding a root folder of a extension triggers a 'extension_folder_created'
@@ -123,17 +126,17 @@ export async function startFileWatcher(
         if (!isRootExtensionDirectory) break
         // Wait 5 seconds to report the new extension to give time to the extension to be created
         setTimeout(() => {
-          onChange({type: 'extension_folder_created', path, extensionPath})
+          onChange({type: 'extension_folder_created', path, extensionPath, startTime})
           registerNewExtensionPath(path)
         }, 5000)
         break
       case 'unlink':
         if (isConfigAppPath) {
-          onChange({type: 'app_config_deleted', path, extensionPath})
+          onChange({type: 'app_config_deleted', path, extensionPath, startTime})
         } else {
           // When deleting a file, debounce the event to avoid multiple events for the same extension
           // Ultimately, multiple deletion events could mean that the extension is being deleted
-          extensionDebouncedChange?.({type: 'file_deleted', path, extensionPath})
+          extensionDebouncedChange?.({type: 'file_deleted', path, extensionPath, startTime})
         }
         break
       case 'unlinkDir':
@@ -142,7 +145,7 @@ export async function startFileWatcher(
         if (!isRootExtensionDirectory) break
         // 'unlink'  and 'unlinkDir' use the same debouncer, when deleting an extension, the last event will always
         // be a deletion of the root directory, so that's the last (and only) event we need to trigger.
-        extensionDebouncedChange?.({type: 'extension_folder_deleted', path, extensionPath})
+        extensionDebouncedChange?.({type: 'extension_folder_deleted', path, extensionPath, startTime})
         removeExtensionPath(path)
         break
     }
