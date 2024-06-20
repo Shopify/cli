@@ -5,11 +5,11 @@ export const AppVersionByIdQuery = gql`
   query AppVersionById($appId: ID!, $versionId: ID!) {
     app(id: $appId) {
       id
+      key
       version(versionId: $versionId) {
         id
         versionTag
         modules {
-          key
           uid
           handle
           config
@@ -38,7 +38,6 @@ interface AppModuleSpecification {
 }
 
 export interface AppModule {
-  key: string
   uid: string
   handle: string
   config: JsonMapType
@@ -48,6 +47,7 @@ export interface AppModule {
 export interface AppVersionByIdQuerySchema {
   app: {
     id: string
+    key: string
     version: {
       id: string
       versionTag: string

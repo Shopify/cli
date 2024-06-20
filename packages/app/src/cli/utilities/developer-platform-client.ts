@@ -160,6 +160,7 @@ export interface ActiveAppVersion {
 
 export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
+  name: string
 }
 
 type WithUserErrors<T> = T & {

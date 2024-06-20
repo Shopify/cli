@@ -4,8 +4,8 @@ import {gql} from 'graphql-request'
 export const CreateAppVersionMutation = gql`
   mutation CreateAppVersion(
     $appId: ID!
-    $appSource: [AppSourceInput!]!
-    $name: String
+    $appSource: AppSourceInput!
+    $name: String!
     $metadata: VersionMetadataInput
   ) {
     appVersionCreate(
@@ -16,9 +16,8 @@ export const CreateAppVersionMutation = gql`
     ) {
       version {
         id
-        modules {
-          key
-          uid
+        appModules {
+          uuid
           handle
           config
           specification {
@@ -30,6 +29,9 @@ export const CreateAppVersionMutation = gql`
       userErrors {
         field
         message
+        category
+        code
+        on
       }
     }
   }
@@ -37,6 +39,7 @@ export const CreateAppVersionMutation = gql`
 
 export interface CreateAppVersionMutationVariables {
   appId: string
+  name?: string
   appSource: {
     assetsUrl?: string
     modules: {
@@ -45,7 +48,6 @@ export interface CreateAppVersionMutationVariables {
       config: JsonMapType
     }[]
   }
-  name?: string
   metadata?: {
     message?: string
     sourceControlUrl?: string
@@ -59,8 +61,7 @@ interface AppModuleSpecification {
 }
 
 interface AppModule {
-  key: string
-  uid: string
+  uuid: string
   handle: string
   config: {
     [key: string]: string | number | boolean | string[]
@@ -72,11 +73,14 @@ export interface CreateAppVersionMutationSchema {
   appVersionCreate: {
     version: {
       id: string
-      modules: AppModule[]
+      appModules: AppModule[]
     }
     userErrors: {
       field: string[]
       message: string
+      category: string
+      code: string
+      on: JsonMapType
     }[]
   }
 }
