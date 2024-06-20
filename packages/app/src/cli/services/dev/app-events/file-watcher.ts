@@ -42,10 +42,12 @@ export interface OutputContextOptions {
 }
 
 /**
- * Watch for changes in the given app.
+ * Watch for changes in the given app directory.
  *
- * It will watch for changes in the active app config and the extensions directories.
+ * It will watch for changes in the active config file and the extension directories.
  * When possible, changes will be interpreted to detect new/deleted extensions
+ *
+ * Changes to toml files will be reported as different events to other file changes.
  *
  * @param app - The app to watch
  * @param options - The output options
@@ -63,6 +65,11 @@ export async function startFileWatcher(
     return joinPath(app.directory, directory)
   })
 
+  // Current active extension paths (not defined in the main app configuration file)
+  // If a change happens outside of these paths, it will be ignored unless is for a new extension being created
+  // When a new extension is created, the path is added to this list
+  // When an extension is deleted, the path is removed from this list
+  // For every change, the corresponding extensionPath will be also reported in the event
   const extensionPaths = app.realExtensions
     .map((ext) => normalizePath(ext.directory))
     .filter((dir) => dir !== app.directory)
@@ -71,6 +78,7 @@ export async function startFileWatcher(
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
   // Create a debouncer for each extension directory to avoid multiple events for the same extension
+  // This is necessary because deleting/creating a folder will trigger multiple events, but we only need one.
   const debouncers = new Map<string, (event: WatcherEvent) => void>()
   extensionPaths.forEach((path) => {
     debouncers.set(path, debounce(onChange, 500))
@@ -97,6 +105,7 @@ export async function startFileWatcher(
     ignoreInitial: true,
   })
 
+  // Start watcher for 'all' events
   watcher.on('all', (event, path) => {
     const startTime = process.hrtime()
     const isConfigAppPath = path === appConfigurationPath
@@ -108,6 +117,7 @@ export async function startFileWatcher(
       return
     }
 
+    // Debouncer for the detected extension path
     const extensionDebouncedChange = debouncers.get(extensionPath)
 
     switch (event) {
