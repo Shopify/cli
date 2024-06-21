@@ -14,7 +14,6 @@ const extensionC = await testUIExtension({uid: 'extension-c-uuid'})
 
 function moduleFromExtension(extension: ExtensionInstance): AppModule {
   return {
-    key: extension.uid,
     uid: extension.uid,
     handle: extension.handle,
     config: extension.configuration,

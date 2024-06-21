@@ -5,12 +5,13 @@ export const ActiveAppReleaseQuery = gql`
   query activeAppRelease($appId: Int!) {
     app(id: $appId) {
       id
+      key
       activeRelease {
         id
         version {
-          modules {
-            key
-            uid
+          name
+          appModules {
+            uuid
             handle
             config
             specification {
@@ -37,7 +38,6 @@ interface AppModuleSpecification {
 }
 
 interface AppModule {
-  key: string
   uid: string
   handle: string
   config: JsonMapType
@@ -47,10 +47,12 @@ interface AppModule {
 export interface ActiveAppReleaseQuerySchema {
   app: {
     id: string
+    key: string
     activeRelease: {
       id: string
       version: {
-        modules: AppModule[]
+        name: string
+        appModules: AppModule[]
       }
     }
   }

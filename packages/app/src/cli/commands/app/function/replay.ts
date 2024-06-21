@@ -72,7 +72,6 @@ export default class FunctionReplay extends Command {
           app,
           extension: ourFunction,
           apiKey,
-          stdout: flags.stdout,
           path: flags.path,
           json: flags.json,
           watch: flags.watch,

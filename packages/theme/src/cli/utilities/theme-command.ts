@@ -1,7 +1,7 @@
 import {configurationFileName} from '../constants.js'
 import Command from '@shopify/cli-kit/node/base-command'
 
-interface FlagValues {
+export interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
 }
 interface PassThroughFlagsOptions {
