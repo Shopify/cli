@@ -104,9 +104,9 @@
     "@parcel/watcher": "2.4.1"
   },
   "devDependencies": {
-    "@oclif/core": "3.26.5",
-    "@oclif/plugin-commands": "3.3.2",
-    "@oclif/plugin-plugins": "5.1.2",
+    "@oclif/core": "3.27.0",
+    "@oclif/plugin-commands": "3.3.4",
+    "@oclif/plugin-plugins": "5.3.2",
     "@shopify/app": "3.63.0",
     "@shopify/cli-kit": "3.63.0",
     "@shopify/plugin-cloudflare": "3.63.0",
