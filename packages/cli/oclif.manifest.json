@@ -1513,8 +1513,8 @@
       ],
       "args": {
       },
-      "description": "\n  Opens a real-time stream of detailed log events from the selected app and store. Use the `--source` argument to limit output to a particular log source, such as a Shopify Function or webhook topic.\n  ```\n  shopify app logs\n  ```\n  ",
-      "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed log events from the selected app and store. Use the `--source` argument to limit output to a particular log source, such as a Shopify Function or webhook topic.\n  ```\n  shopify app logs\n  ```\n  ",
+      "description": "\n  Opens a real-time stream of detailed log events from the selected app and store.\n  Use the `--source` argument to limit output to a particular function, such as a specific Shopify Function handle.\n  Use the `--status` argument to specify the type of status to retrieve, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension-handle\n  ```\n  ",
+      "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed log events from the selected app and store.\n  Use the `--source` argument to limit output to a particular function, such as a specific Shopify Function handle.\n  Use the `--status` argument to specify the type of status to retrieve, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension-handle\n  ```\n  ",
       "flags": {
         "api-key": {
           "description": "The API key of your app.",
@@ -1642,7 +1642,7 @@
           "type": "boolean"
         },
         "source": {
-          "description": "Filters output to the specified log source (Multiple flags allowed).",
+          "description": "Filters output to the specified log source.",
           "env": "SHOPIFY_FLAG_SOURCE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -1655,6 +1655,10 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "status",
+          "options": [
+            "success",
+            "failure"
+          ],
           "type": "option"
         },
         "store": {
