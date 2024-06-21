@@ -137,9 +137,9 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
     return abortOrReport(
-      outputContent`\nValidation errors in ${outputToken.path(filepath)}:\n\n${parseHumanReadableError(
-        parseResult.error.issues,
-      )}`,
+      outputContent`\n${outputToken.errorText('Validation errors')} in ${outputToken.path(
+        filepath,
+      )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
       fallbackOutput,
       filepath,
     )

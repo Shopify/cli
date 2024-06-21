@@ -31,7 +31,7 @@ import {
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
@@ -418,7 +418,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Validation errors in/)
+    await expect(loadTestingApp()).rejects.toThrow(/Validation errors/)
   })
 
   test('throws an error if the extension type is invalid', async () => {
@@ -2484,7 +2484,9 @@ describe('parseConfigurationObject', () => {
         message: 'Boolean is required',
       },
     ]
-    const expectedFormatted = outputContent`\nValidation errors in tmp:\n\n${parseHumanReadableError(errorObject)}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
 
     const abortOrReport = vi.fn()
 
@@ -2509,7 +2511,9 @@ describe('parseConfigurationObject', () => {
         message: 'Expected string, received array',
       },
     ]
-    const expectedFormatted = outputContent`\nValidation errors in tmp:\n\n${parseHumanReadableError(errorObject)}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2556,7 +2560,9 @@ describe('parseConfigurationObject', () => {
         message: 'Invalid input',
       },
     ]
-    const expectedFormatted = outputContent`\nValidation errors in tmp:\n\n${parseHumanReadableError(errorObject)}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -3031,7 +3037,9 @@ describe('WebhooksSchema', () => {
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
-    const expectedFormatted = outputContent`\nValidation errors in tmp:\n\n${parseHumanReadableError(err)}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(err)}`
     const abortOrReport = vi.fn()
 
     const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)
