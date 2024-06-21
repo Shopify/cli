@@ -6,15 +6,18 @@ import {environmentVariableNames} from '../../constants.js'
 import {Flags} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class Logs extends Command {
   static hidden = true
   static summary = 'Stream detailed logs for your Shopify app.'
 
   static descriptionWithMarkdown = `
-  Opens a real-time stream of detailed log events from the selected app and store. Use the \`--source\` argument to limit output to a particular log source, such as a Shopify Function or webhook topic.
+  Opens a real-time stream of detailed log events from the selected app and store.
+  Use the \`--source\` argument to limit output to a particular function, such as a specific Shopify Function handle.
+  Use the \`--status\` argument to specify the type of status to retrieve, either \`success\` or \`failure\`.
   \`\`\`
-  shopify app logs
+  shopify app logs --status=success --source=extension-handle
   \`\`\`
   `
 
@@ -28,6 +31,7 @@ export default class Logs extends Command {
     }),
     status: Flags.string({
       description: 'Filters output to the specified status (success or failure).',
+      options: ['success', 'failure'],
       env: 'SHOPIFY_FLAG_STATUS',
     }),
   }
@@ -37,7 +41,7 @@ export default class Logs extends Command {
     const logPollingEnabled = isTruthy(env[environmentVariableNames.enableAppLogPolling])
 
     if (!logPollingEnabled) {
-      throw new Error(
+      throw new AbortError(
         'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
       )
     }

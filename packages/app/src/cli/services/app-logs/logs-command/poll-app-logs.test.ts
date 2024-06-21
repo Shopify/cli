@@ -11,43 +11,6 @@ vi.mock('../utils.js')
 const MOCKED_JWT_TOKEN = 'mockedJwtToken'
 const MOCKED_CURSOR = 'mockedCursor'
 
-const LOGS = '1\\n2\\n3\\n4\\n'
-const FUNCTION_ERROR = 'function_error'
-
-const INPUT = {
-  cart: {
-    lines: [
-      {
-        quantity: 3,
-        merchandise: {
-          __typename: 'ProductVariant',
-          id: 'gid:\\/\\/shopify\\/ProductVariant\\/2',
-        },
-      },
-    ],
-  },
-}
-const OUTPUT = {
-  discountApplicationStrategy: 'FIRST',
-  discounts: [
-    {
-      message: '10% off',
-      value: {
-        percentage: {
-          value: 10,
-        },
-      },
-      targets: [
-        {
-          productVariant: {
-            id: 'gid://shopify/ProductVariant/2',
-          },
-        },
-      ],
-    },
-  ],
-}
-
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'
 const RESPONSE_DATA_SUCCESS = {
   app_logs: [
@@ -72,21 +35,6 @@ const RESPONSE_DATA_SUCCESS = {
     },
   ],
   cursor: RETURNED_CURSOR,
-}
-
-const RESPONSE_401 = {
-  errors: ['401: Unauthorized'],
-}
-const RESPONSE_422 = {
-  errors: ['422: Unprocessable'],
-}
-
-const RESPONSE_429 = {
-  errors: ['429: Resubscribe'],
-}
-
-const RESPONSE_500 = {
-  errors: ['500: Error'],
 }
 
 const EMPTY_FILTERS = {status: undefined, source: undefined}
@@ -139,12 +87,15 @@ describe('pollProcess', () => {
     })
   })
 
-  test('returns errors when response is 401/429/500', async () => {
+  test.each([
+    [401, 'Unauthorized'],
+    [429, 'Rate limit'],
+    [500, 'Server Eror'],
+  ])('returns errors when response is %s', async (status, statusText) => {
     // Given
-    const status = 401
-    const statusText = '401: Unauthorized'
-
-    const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_401, status, statusText))
+    const mockedFetchAppLogs = vi
+      .fn()
+      .mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status, statusText))
     vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
 
     // When
@@ -163,9 +114,12 @@ describe('pollProcess', () => {
   test('polling with other error status', async () => {
     // Given
     const status = 422
-    const statusText = '422: Unprocessable'
+    const statusText = 'Unprocessable'
+    const responseData = {
+      errors: [statusText],
+    }
 
-    const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_422, status, statusText))
+    const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(responseData, status, statusText))
     vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
 
     // When/Then
