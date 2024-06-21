@@ -1,5 +1,6 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 import {uniq} from '@shopify/cli-kit/common/array'
+import colors from '@shopify/cli-kit/node/colors'
 import type {WebhooksConfig} from '../types/app_config_webhook.js'
 
 export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
@@ -14,6 +15,7 @@ export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
 function validateSubscriptions(webhookConfig: WebhooksConfig) {
   const {subscriptions = []} = webhookConfig
   const uniqueSubscriptionSet = new Set()
+  const duplicatedSubscriptionsFields: string[] = []
 
   if (!subscriptions.length) return
 
@@ -49,19 +51,28 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
       }
     }
 
-    for (const [j, topic] of topics.entries()) {
+    topics.forEach((topic) => {
       const key = `${topic}::${uri}::${filter}`
 
       if (uniqueSubscriptionSet.has(key)) {
-        return {
-          code: zod.ZodIssueCode.custom,
-          message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
-          fatal: true,
-          path: [...path, 'topics', j, topic],
-        }
+        const subscriptionFieldsString = filter
+          ? colors.dim(`\n\ntopic: ${topic}\nuri: ${uri}\nfilter: ${filter}`)
+          : colors.dim(`\n\ntopic: ${topic}\nuri: ${uri}`)
+
+        duplicatedSubscriptionsFields.push(subscriptionFieldsString)
       }
 
       uniqueSubscriptionSet.add(key)
+    })
+  }
+
+  if (duplicatedSubscriptionsFields.length > 0) {
+    const fieldsArrToString = duplicatedSubscriptionsFields.join('')
+
+    return {
+      code: zod.ZodIssueCode.custom,
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${fieldsArrToString}`,
+      path: ['subscriptions'],
     }
   }
 }
