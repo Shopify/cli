@@ -2902,7 +2902,7 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test.only('shows multiple duplicate subscriptions in error message', async () => {
+  test('shows multiple duplicate subscriptions in error message', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
       subscriptions: [
