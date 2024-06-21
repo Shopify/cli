@@ -1,10 +1,9 @@
 import {DevContextOptions, ensureDevContext} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
-import {appLogPollingEnabled, subscribeToAppLogs} from './app-logs/utils.js'
+import {subscribeToAppLogs} from './app-logs/utils.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface LogsOptions {
   directory: string
@@ -19,12 +18,6 @@ interface LogsOptions {
 
 export async function logs(commandOptions: LogsOptions) {
   const logsConfig = await prepareForLogs(commandOptions)
-
-  if (!appLogPollingEnabled()) {
-    throw new AbortError(
-      'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
-    )
-  }
 
   const variables = {
     shopIds: [logsConfig.storeId],

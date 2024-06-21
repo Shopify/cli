@@ -99,8 +99,7 @@ describe('usePollAppLogs', () => {
     expect(hook.lastResult?.appLogOutputs[0]!.prefix).toEqual({
       status: 'Success',
       source: SOURCE,
-      fuelConsumed: (FUEL_CONSUMED / 1000000).toFixed(4),
-      functionId: FUNCTION_ID,
+      description: `in ${(FUEL_CONSUMED / 1000000).toFixed(4)} M instructions`,
       logTimestamp: TIME,
     })
 

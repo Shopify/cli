@@ -33,7 +33,7 @@ const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, r
               <Text color="green">{prefix.logTimestamp}</Text>
               <Text color="blueBright">{`${prefix.source}`}</Text>
               <Text color={prefix.status === 'Success' ? 'green' : 'red'}>{prefix.status}</Text>
-              <Text>in {prefix.fuelConsumed} M instructions</Text>
+              <Text>{prefix.description}</Text>
             </Box>
             <Text>{appLog.logs}</Text>
             {appLog.input && (

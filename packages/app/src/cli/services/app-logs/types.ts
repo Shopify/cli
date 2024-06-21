@@ -60,8 +60,7 @@ export interface PollFilters {
 export interface AppLogPrefix {
   status: string
   source: string
-  fuelConsumed: string
-  functionId: string
+  description: string
   logTimestamp: string
 }
 

@@ -51,8 +51,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
           const prefix = {
             status: log.status === 'success' ? 'Success' : 'Failure',
             source: log.source,
-            fuelConsumed: fuel,
-            functionId: appLog.functionId,
+            description: `in ${fuel} M instructions`,
             logTimestamp: log.log_timestamp,
           }
 

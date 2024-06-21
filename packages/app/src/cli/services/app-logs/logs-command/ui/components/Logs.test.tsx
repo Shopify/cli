@@ -39,7 +39,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
       prefix: {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
-        fuelConsumed: (FUEL_CONSUMED / ONE_MILLION).toFixed(4),
+        description: `in ${(FUEL_CONSUMED / ONE_MILLION).toFixed(4)} M instructions`,
         status: STATUS === 'success' ? 'Success' : 'Failure',
         source: SOURCE,
       },
