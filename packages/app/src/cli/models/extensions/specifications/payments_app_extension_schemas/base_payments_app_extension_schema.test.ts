@@ -290,6 +290,23 @@ describe('SupportedBuyerContextSchema', async () => {
     )
   })
 
+  test('throws an error if an unexpected key is present', async () => {
+    expect(() =>
+      SupportedBuyerContextsSchema.parse({
+        supported_buyer_contexts: [{currency: 'USD', random: 123}],
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.unrecognized_keys,
+          keys: ['random'],
+          path: ['supported_buyer_contexts', 0],
+          message: "Unrecognized key(s) in object: 'random'",
+        },
+      ]),
+    )
+  })
+
   test('is valid if countries are not provided', async () => {
     const {success} = SupportedBuyerContextsSchema.safeParse({
       supported_buyer_contexts: [{currency: 'USD'}],

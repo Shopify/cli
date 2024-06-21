@@ -65,10 +65,12 @@ export const ConfirmationSchema = zod.object({
 export const SupportedBuyerContextsSchema = zod.object({
   supported_buyer_contexts: zod
     .array(
-      zod.object({
-        currency: zod.string(),
-        countries: zod.array(zod.string()).nonempty().optional(),
-      }),
+      zod
+        .object({
+          currency: zod.string(),
+          countries: zod.array(zod.string()).nonempty().optional(),
+        })
+        .strict(),
     )
     .optional(),
 })
