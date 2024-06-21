@@ -1,16 +1,24 @@
 import {FunctionRunLog} from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
+import {environmentVariableNames} from '../../constants.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
 export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
+
+export function appLogPollingEnabled() {
+  const env = getEnvironmentVariables()
+  return isTruthy(env[environmentVariableNames.enableAppLogPolling])
+}
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)

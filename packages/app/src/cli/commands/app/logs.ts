@@ -2,10 +2,8 @@ import Dev from './dev.js'
 import Command from '../../utilities/app-command.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs} from '../../services/logs.js'
-import {environmentVariableNames} from '../../constants.js'
+import {appLogPollingEnabled} from '../../services/app-logs/utils.js'
 import {Flags} from '@oclif/core'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class Logs extends Command {
@@ -37,10 +35,7 @@ export default class Logs extends Command {
   }
 
   public async run(): Promise<void> {
-    const env = getEnvironmentVariables()
-    const logPollingEnabled = isTruthy(env[environmentVariableNames.enableAppLogPolling])
-
-    if (!logPollingEnabled) {
+    if (!appLogPollingEnabled()) {
       throw new AbortError(
         'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
       )
