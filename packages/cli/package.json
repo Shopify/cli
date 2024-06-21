@@ -97,7 +97,7 @@
     ]
   },
   "dependencies": {
-    "@ast-grep/napi": "0.11.0",
+    "@ast-grep/napi": "0.23.0",
     "esbuild": "0.19.8"
   },
   "optionalDependencies": {
@@ -112,13 +112,13 @@
     "@shopify/plugin-cloudflare": "3.63.0",
     "@shopify/plugin-did-you-mean": "3.63.0",
     "@shopify/theme": "3.63.0",
-    "@shopify/cli-hydrogen": "0.0.0-next-9eb60d7-20240607102913",
-    "@types/node": "18.19.3",
+    "@shopify/cli-hydrogen": "0.33.7",
+    "@types/node": "18.19.38",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1",
     "vitest": "^1.6.0",
-    "zod-to-json-schema": "3.21.4"
+    "zod-to-json-schema": "3.23.1"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"
