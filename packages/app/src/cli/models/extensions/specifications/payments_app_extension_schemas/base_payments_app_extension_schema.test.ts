@@ -307,9 +307,26 @@ describe('SupportedBuyerContextSchema', async () => {
     )
   })
 
+  test('throws an error if a mixture of currency and currency plus countries provided', async () => {
+    expect(() =>
+      SupportedBuyerContextsSchema.parse({
+        supported_buyer_contexts: [{currency: 'USD'}, {currency: 'EUR', countries: ['DE']}],
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          message:
+            'Must all be defined with only a currency, or must all be defined with a currency plus countries -- a mixture of the two is not allowed',
+          path: ['supported_buyer_contexts'],
+        },
+      ]),
+    )
+  })
+
   test('is valid if countries are not provided', async () => {
     const {success} = SupportedBuyerContextsSchema.safeParse({
-      supported_buyer_contexts: [{currency: 'USD'}],
+      supported_buyer_contexts: [{currency: 'USD'}, {currency: 'CAD'}],
     })
 
     expect(success).toBe(true)
@@ -317,7 +334,10 @@ describe('SupportedBuyerContextSchema', async () => {
 
   test('is valid if currrency and countries are provided', async () => {
     const {success} = SupportedBuyerContextsSchema.safeParse({
-      supported_buyer_contexts: [{currency: 'USD', countries: ['US']}],
+      supported_buyer_contexts: [
+        {currency: 'USD', countries: ['US']},
+        {currency: 'EUR', countries: ['FR', 'DE']},
+      ],
     })
 
     expect(success).toBe(true)

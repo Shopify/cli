@@ -20,11 +20,7 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   merchant_label: 'some-label',
   supported_countries: ['CA'],
   supported_payment_methods: ['PAYMENT_METHOD'],
-  supported_buyer_contexts: [
-    {currency: 'USD'},
-    {currency: 'CAD', countries: ['CA']},
-    {currency: 'EUR', countries: ['DE', 'FR']},
-  ],
+  supported_buyer_contexts: [{currency: 'USD'}, {currency: 'CAD'}],
   supports_3ds: false,
   test_mode_available: true,
   supports_deferred_payments: false,
