@@ -137,9 +137,9 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
     return abortOrReport(
-      outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
-        filepath,
-      )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
+      outputContent`\nValidation errors in ${outputToken.path(filepath)}:\n\n${parseHumanReadableError(
+        parseResult.error.issues,
+      )}`,
       fallbackOutput,
       filepath,
     )
