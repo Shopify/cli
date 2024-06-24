@@ -55,7 +55,7 @@
     ]
   },
   "devDependencies": {
-    "@oclif/core": "3.26.5",
+    "@oclif/core": "3.27.0",
     "@shopify/cli-kit": "3.63.0",
     "@types/node": "18.19.3",
     "esbuild-plugin-copy": "^2.1.1",
