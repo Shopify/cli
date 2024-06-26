@@ -53,6 +53,11 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     release: options.release,
   })
 
+  const scopesWereChanged =
+    (configExtensionIdentifiersBreakdown?.existingUpdatedFieldNames.includes('access_scopes') ||
+      configExtensionIdentifiersBreakdown?.newFieldNames.includes('access_scopes')) ??
+    false
+
   const confirmed = await deployOrReleaseConfirmationPrompt({
     extensionIdentifiersBreakdown,
     configExtensionIdentifiersBreakdown,
@@ -70,9 +75,12 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   )
 
   return {
-    app: options.appId,
-    extensions: result.extensions,
-    extensionIds: result.extensionIds,
-    extensionsNonUuidManaged: result.extensionsNonUuidManaged,
+    identifiers: {
+      app: options.appId,
+      extensions: result.extensions,
+      extensionIds: result.extensionIds,
+      extensionsNonUuidManaged: result.extensionsNonUuidManaged,
+    },
+    scopesWereChanged,
   }
 }

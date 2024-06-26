@@ -112,7 +112,9 @@ export async function setupDraftableExtensionsProcess({
 
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp}, developerPlatformClient)
 
-  const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({
+  const {
+    identifiers: {extensionIds: remoteExtensionIds, extensions: extensionsUuids},
+  } = await ensureDeploymentIdsPresence({
     app: localApp,
     remoteApp,
     appId: apiKey,

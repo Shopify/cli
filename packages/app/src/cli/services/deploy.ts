@@ -3,16 +3,17 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import type {Task} from '@shopify/cli-kit/node/ui'
+import type {InlineToken, Task, TokenItem} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -52,7 +53,10 @@ export async function deploy(options: DeployOptions) {
   let developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, remoteApp, release} = await ensureDeployContext({...options, developerPlatformClient})
+  let {app, identifiers, remoteApp, release, scopesWereChanged} = await ensureDeployContext({
+    ...options,
+    developerPlatformClient,
+  })
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const apiKey = identifiers?.app ?? remoteApp.apiKey
 
@@ -131,6 +135,8 @@ export async function deploy(options: DeployOptions) {
         app,
         release,
         uploadExtensionsBundleResult,
+        apiKey,
+        scopesWereChanged,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,16 +155,36 @@ async function outputCompletionMessage({
   app,
   release,
   uploadExtensionsBundleResult,
+  scopesWereChanged,
+  apiKey,
 }: {
   app: AppInterface
   release: boolean
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput
+  scopesWereChanged: boolean
+  apiKey: string
 }) {
   const linkAndMessage = [
     {link: {label: uploadExtensionsBundleResult.versionTag, url: uploadExtensionsBundleResult.location}},
     uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
   ]
   if (release) {
+    let nextSteps: TokenItem<InlineToken>[] | undefined
+    if (scopesWereChanged && isCurrentAppSchema(app.configuration) && app.configuration.build?.dev_store_url) {
+      const previewUrl = buildAppURLForWeb(app.configuration.build.dev_store_url, apiKey)
+      nextSteps = [
+        [
+          'Grant your updated access scopes for testing by visiting',
+          {
+            link: {
+              url: previewUrl,
+              label: 'your dev store.',
+            },
+          },
+        ],
+      ]
+    }
+
     return uploadExtensionsBundleResult.deployError
       ? renderInfo({
           headline: 'New version created, but not released.',
@@ -167,6 +193,7 @@ async function outputCompletionMessage({
       : renderSuccess({
           headline: 'New version released to users.',
           body: linkAndMessage,
+          nextSteps,
         })
   }
 
