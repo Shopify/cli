@@ -1,5 +1,12 @@
 # @shopify/plugin-cloudflare
 
+## 3.63.1
+
+### Patch Changes
+
+- 25c53bc6b: Upgrade cloudflared binary to 2024.6.1
+  - @shopify/cli-kit@3.63.1
+
 ## 3.63.0
 
 ### Patch Changes
