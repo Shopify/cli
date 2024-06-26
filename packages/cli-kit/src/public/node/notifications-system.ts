@@ -1,6 +1,9 @@
 import {versionSatisfies} from './node-package-manager.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {NotificationsKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+
+const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json'
 
 interface Notifications {
   notifications: Notification[]
@@ -27,10 +30,8 @@ export interface Notification {
  * @returns - A promise that resolves when the notifications have been shown.
  */
 export async function showNotificationsIfNeeded(commandId: string, _surface?: string): Promise<void> {
-  const response = await fetch('https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json')
-  const notifications = await (response.json() as Promise<Notifications>)
-
-  const notificationsToShow = filterNotifications(notifications.notifications, commandId, new Date(), CLI_KIT_VERSION)
+  const notifications = await getNotifications()
+  const notificationsToShow = filterNotifications(notifications.notifications, commandId)
 
   notificationsToShow.forEach((notification) => {
     const content = {
@@ -54,6 +55,23 @@ export async function showNotificationsIfNeeded(commandId: string, _surface?: st
 }
 
 /**
+ * Get notifications list from cache or fetch it if not present.
+ */
+async function getNotifications(): Promise<Notifications> {
+  const cacheKey: NotificationsKey = `notifications-${URL}`
+  const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, 24 * 3600 * 1000)
+  return JSON.parse(rawNotifications)
+}
+
+/**
+ * Fetch notifications from GitHub.
+ */
+async function fetchNotifications(): Promise<string> {
+  const response = await fetch(URL)
+  return response.text() as unknown as string
+}
+
+/**
  * Filters notifications based on the version of the CLI.
  *
  * @param notifications - The notifications to filter.
@@ -65,8 +83,8 @@ export async function showNotificationsIfNeeded(commandId: string, _surface?: st
 export function filterNotifications(
   notifications: Notification[],
   commandId: string,
-  today: Date,
-  currentVersion: string,
+  today: Date = new Date(),
+  currentVersion: string = CLI_KIT_VERSION,
 ): Notification[] {
   return notifications
     .filter((notification) => filterByVersion(notification, currentVersion))
