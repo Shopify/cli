@@ -1,5 +1,5 @@
 import {versionSatisfies} from './node-package-manager.js'
-import {renderInfo} from './ui.js'
+import {renderError, renderInfo, renderWarning} from './ui.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
 interface Notifications {
@@ -40,10 +40,23 @@ export async function showNotificationsIfNeeded(commandId: string, _surface?: st
     })
 
   notificationsToShow.forEach((notification) => {
-    renderInfo({
+    const content = {
       headline: notification.title,
       body: notification.message,
-    })
+    }
+    switch (notification.type) {
+      case 'info': {
+        renderInfo(content)
+        return
+      }
+      case 'warning': {
+        renderWarning(content)
+        return
+      }
+      case 'error': {
+        renderError(content)
+      }
+    }
   })
 }
 
@@ -66,7 +79,7 @@ const today = new Date()
  * @param notification - The notification to filter.
  */
 function filterByDate(notification: Notification) {
-  const minDate = !notification.minDate || new Date(notification.minDate) >= today
-  const maxDate = !notification.maxDate || new Date(notification.maxDate) <= today
+  const minDate = !notification.minDate || new Date(notification.minDate) <= today
+  const maxDate = !notification.maxDate || new Date(notification.maxDate) >= today
   return minDate && maxDate
 }
