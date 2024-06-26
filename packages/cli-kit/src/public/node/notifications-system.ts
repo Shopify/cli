@@ -86,10 +86,12 @@ export function filterNotifications(
   today: Date = new Date(),
   currentVersion: string = CLI_KIT_VERSION,
 ): Notification[] {
+  const surface = commandId.split(':')[0] ?? 'all'
   return notifications
     .filter((notification) => filterByVersion(notification, currentVersion))
     .filter((notifications) => filterByDate(notifications, today))
     .filter((notification) => filterByCommand(notification, commandId))
+    .filter((notification) => filterBySurface(notification, surface))
 }
 
 /**
@@ -125,4 +127,15 @@ function filterByDate(notification: Notification, today: Date) {
  */
 function filterByCommand(notification: Notification, commandId: string) {
   return !notification.commands || notification.commands.includes(commandId)
+}
+
+/**
+ * Filters notifications based on the surface.
+ *
+ * @param notification - The notification to filter.
+ * @param surface - The surface to filter by.
+ * @returns - A boolean indicating whether the notification should be shown.
+ */
+function filterBySurface(notification: Notification, surface: string) {
+  return !notification.surface || notification.surface === surface
 }

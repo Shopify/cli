@@ -45,6 +45,18 @@ const onlyForDevCommand: Notification = {
   commands: ['app:dev'],
 }
 
+const onlyForThemeSurface: Notification = {
+  message: 'message',
+  type: 'info',
+  surface: 'theme',
+}
+
+const unknownSurface: Notification = {
+  message: 'message',
+  type: 'info',
+  surface: 'unknown',
+}
+
 const defaultInput = [
   betweenVersins1and2,
   betweenDatesIn2000,
@@ -53,6 +65,8 @@ const defaultInput = [
   fromDateJan2000,
   upToDateDec2000,
   onlyForDevCommand,
+  onlyForThemeSurface,
+  unknownSurface,
 ]
 
 /**
@@ -73,14 +87,6 @@ interface TestCase {
 }
 
 const testCases: TestCase[] = [
-  {
-    name: 'all filters pass',
-    input: defaultInput,
-    commandId: 'app:dev',
-    version: '1.0.0',
-    date: '2000-02-01',
-    output: defaultInput,
-  },
   {
     name: 'Only for app:info command, excludes notifications for explicit commands',
     input: defaultInput,
@@ -120,6 +126,22 @@ const testCases: TestCase[] = [
     version: '2.1.0',
     date: '2024-02-01',
     output: [fromVersion1, fromDateJan2000, onlyForDevCommand],
+  },
+  {
+    name: 'Notifications for theme surface',
+    input: defaultInput,
+    commandId: 'theme:dev',
+    version: '2.1.0',
+    date: '2024-02-01',
+    output: [fromVersion1, fromDateJan2000, onlyForThemeSurface],
+  },
+  {
+    name: 'Notifications for unknown surface is never shown',
+    input: defaultInput,
+    commandId: 'version',
+    version: '2.1.0',
+    date: '2024-02-01',
+    output: [fromVersion1, fromDateJan2000],
   },
 ]
 
