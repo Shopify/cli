@@ -39,6 +39,15 @@ const ApiVersionSchema = zod.string()
 
 export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
+export const CustomBuildSchema = zod.object({
+  command: zod
+    .string()
+    .transform((value) => (value.trim() === '' ? undefined : value))
+    .optional(),
+  path: zod.string().optional(),
+  watch: zod.union([zod.string(), zod.string().array()]).optional(),
+})
+
 export const FieldSchema = zod.object({
   key: zod.string().optional(),
   name: zod.string().optional(),
@@ -72,6 +81,7 @@ export const BaseSchema = zod.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   settings: SettingsSchema.optional(),
+  build: CustomBuildSchema.optional(),
 })
 
 export const BaseSchemaWithHandle = BaseSchema.extend({

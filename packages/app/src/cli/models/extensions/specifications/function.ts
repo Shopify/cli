@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchema, CustomBuildSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -17,15 +17,8 @@ interface UI {
 
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
 const FunctionExtensionSchema = BaseSchema.extend({
-  build: zod.object({
-    command: zod
-      .string()
-      .transform((value) => (value.trim() === '' ? undefined : value))
-      .optional(),
-    path: zod.string().optional(),
-    watch: zod.union([zod.string(), zod.string().array()]).optional(),
-  }),
   configuration_ui: zod.boolean().optional().default(true),
+  build: CustomBuildSchema,
   ui: zod
     .object({
       enable_create: zod.boolean().optional(),

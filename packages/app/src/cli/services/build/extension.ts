@@ -91,19 +91,28 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   }
 
   try {
-    await bundleExtension({
-      minify: true,
-      outputPath: extension.outputPath,
-      stdin: {
-        contents: extension.getBundleExtensionStdinContent(),
-        resolveDir: extension.directory,
-        loader: 'tsx',
-      },
-      environment: options.environment,
-      env,
-      stderr: options.stderr,
-      stdout: options.stdout,
-    })
+    if (extension.buildCommand) {
+      await runCommand(extension.buildCommand, extension, {
+        app: options.app,
+        environment: options.environment,
+        stderr: options.stderr,
+        stdout: options.stdout,
+      })
+    } else {
+      await bundleExtension({
+        minify: true,
+        outputPath: extension.outputPath,
+        stdin: {
+          contents: extension.getBundleExtensionStdinContent(),
+          resolveDir: extension.directory,
+          loader: 'tsx',
+        },
+        environment: options.environment,
+        env,
+        stderr: options.stderr,
+        stdout: options.stdout,
+      })
+    }
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
     throw new AbortError(
