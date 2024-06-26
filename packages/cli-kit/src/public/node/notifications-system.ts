@@ -27,9 +27,7 @@ interface Notification {
  * @returns - A promise that resolves when the notifications have been shown.
  */
 export async function showNotificationsIfNeeded(commandId: string, _surface?: string): Promise<void> {
-  const response = await fetch(
-    'https://raw.githubusercontent.com/Shopify/cli/4d32b20d28d0c3a89b411e8e1062df3377d552ac/notifications.json',
-  )
+  const response = await fetch('https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json')
   const notifications = await (response.json() as Promise<Notifications>)
 
   const notificationsToShow = notifications.notifications
