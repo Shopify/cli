@@ -21,7 +21,6 @@ const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   supported_countries: ['CA'],
   supported_payment_methods: ['visa'],
   supported_buyer_contexts: [
-    {currency: 'USD'},
     {currency: 'CAD', countries: ['CA']},
     {currency: 'EUR', countries: ['DE', 'FR']},
   ],

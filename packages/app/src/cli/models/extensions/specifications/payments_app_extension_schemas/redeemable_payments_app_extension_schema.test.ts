@@ -17,11 +17,7 @@ const config: RedeemablePaymentsAppExtensionConfigType = {
   merchant_label: 'some-label',
   supported_countries: ['CA'],
   supported_payment_methods: ['gift-card'],
-  supported_buyer_contexts: [
-    {currency: 'USD'},
-    {currency: 'CAD', countries: ['CA']},
-    {currency: 'EUR', countries: ['DE', 'FR']},
-  ],
+  supported_buyer_contexts: [{currency: 'CAD'}],
   test_mode_available: true,
   ui_extension_handle: 'sample-ui-extension',
   targeting: [{target: 'payments.redeemable.render'}],
