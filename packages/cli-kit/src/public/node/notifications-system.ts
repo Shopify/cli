@@ -30,12 +30,7 @@ export async function showNotificationsIfNeeded(commandId: string, _surface?: st
   const response = await fetch('https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json')
   const notifications = await (response.json() as Promise<Notifications>)
 
-  const notificationsToShow = notifications.notifications
-    .filter(filterByVersion)
-    .filter(filterByDate)
-    .filter((notification) => {
-      return !notification.commands || notification.commands?.includes(commandId)
-    })
+  const notificationsToShow = filterNotifications(notifications.notifications, commandId)
 
   notificationsToShow.forEach((notification) => {
     const content = {
@@ -61,6 +56,20 @@ export async function showNotificationsIfNeeded(commandId: string, _surface?: st
 /**
  * Filters notifications based on the version of the CLI.
  *
+ * @param notifications - The notifications to filter.
+ * @param commandId - The command ID to filter by.
+ * @returns - The filtered notifications.
+ */
+export function filterNotifications(notifications: Notification[], commandId: string): Notification[] {
+  return notifications
+    .filter(filterByVersion)
+    .filter(filterByDate)
+    .filter((notification) => filterByCommand(notification, commandId))
+}
+
+/**
+ * Filters notifications based on the version of the CLI.
+ *
  * @param notification - The notification to filter.
  */
 function filterByVersion(notification: Notification) {
@@ -80,4 +89,15 @@ function filterByDate(notification: Notification) {
   const minDate = !notification.minDate || new Date(notification.minDate) <= today
   const maxDate = !notification.maxDate || new Date(notification.maxDate) >= today
   return minDate && maxDate
+}
+
+/**
+ *  Filters notifications based on the command ID.
+ *
+ * @param notification - The notification to filter.
+ * @param commandId - The command ID to filter by.
+ * @returns - A boolean indicating whether the notification should be shown.
+ */
+function filterByCommand(notification: Notification, commandId: string) {
+  return !notification.commands || notification.commands.includes(commandId)
 }
