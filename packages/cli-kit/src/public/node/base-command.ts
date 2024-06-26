@@ -8,33 +8,15 @@ import {outputContent, outputInfo, outputToken} from './output.js'
 import {terminalSupportsRawMode} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
-import {versionSatisfies} from './node-package-manager.js'
+import {showNotificationsIfNeeded} from './notifications-system.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {CLI_KIT_VERSION} from '../common/version.js'
 import {Command, Errors} from '@oclif/core'
 import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 interface EnvironmentFlags {
   environment?: string
   path?: string
-}
-
-interface Notifications {
-  notifications: Notification[]
-}
-
-interface Notification {
-  message: string
-  type: 'info' | 'warning' | 'error'
-  title?: string
-  minVersion?: string
-  maxVersion?: string
-  minDate?: string
-  maxDate?: string
-  commands?: string[]
-  surface?: 'app' | 'theme' | 'hydrogen' | string
-  frequency?: 'always' | 'once_a_day' | 'once_a_week'
 }
 
 abstract class BaseCommand extends Command {
@@ -69,7 +51,7 @@ abstract class BaseCommand extends Command {
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
     this.showNpmFlagWarning()
-    await this.showNotifications()
+    await showNotificationsIfNeeded(this.id!)
     return super.init()
   }
 
@@ -91,36 +73,6 @@ abstract class BaseCommand extends Command {
         ],
       })
     }
-  }
-
-  protected async showNotifications(): Promise<void> {
-    const response = await fetch(
-      'https://raw.githubusercontent.com/Shopify/cli/4d32b20d28d0c3a89b411e8e1062df3377d552ac/notifications.json',
-    )
-    const notifications = await (response.json() as Promise<Notifications>)
-    const today = new Date()
-
-    const notificationsToShow = notifications.notifications
-      .filter((notification) => {
-        const minVersion = !notification.minVersion || versionSatisfies(CLI_KIT_VERSION, `>=${notification.minVersion}`)
-        const maxVersion = !notification.maxVersion || versionSatisfies(CLI_KIT_VERSION, `<=${notification.maxVersion}`)
-        return minVersion && maxVersion
-      })
-      .filter((notification) => {
-        const minDate = !notification.minDate || new Date(notification.minDate) >= today
-        const maxDate = !notification.maxDate || new Date(notification.maxDate) <= today
-        return minDate && maxDate
-      })
-      .filter((notification) => {
-        return !notification.commands || notification.commands?.includes(this.id!)
-      })
-
-    notificationsToShow.forEach((notification) => {
-      renderInfo({
-        headline: notification.title,
-        body: notification.message,
-      })
-    })
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
