@@ -13,11 +13,15 @@ import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
+import chokidar from 'chokidar'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import EventEmitter from 'events'
 
 // Schemas for loading app configuration
 
@@ -250,6 +254,8 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): AppCreationDefaultOptions
+
+  watchForAccessChange(): Promise<EventEmitter>
 }
 
 type AppConstructor<
@@ -266,6 +272,7 @@ type AppConstructor<
   errors?: AppErrors
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  appConfigurationFilePath: string
 }
 
 export class App<
@@ -287,6 +294,7 @@ export class App<
   configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
+  appConfigurationFilePath: string
 
   constructor({
     name,
@@ -302,8 +310,10 @@ export class App<
     specifications,
     configSchema,
     remoteFlags,
+    appConfigurationFilePath,
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
+    this.appConfigurationFilePath = appConfigurationFilePath
     this.directory = directory
     this.packageManager = packageManager
     this.configuration = configuration
@@ -389,6 +399,32 @@ export class App<
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
     }
+  }
+
+  async watchForAccessChange(): Promise<EventEmitter> {
+    const accessChangeEmitter = new EventEmitter()
+    const sniffScopes = async () => {
+      const fileContent = await readFile(this.appConfigurationFilePath)
+      const content = decodeToml(fileContent)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return getAppScopes(content as any)
+    }
+    let lastSeenScopes = await sniffScopes()
+
+    const checkForScopeChange = async () => {
+      const nextScopes = await sniffScopes()
+      if (lastSeenScopes !== nextScopes) {
+        outputInfo(`Scopes changed from ${lastSeenScopes} to ${nextScopes}`)
+        accessChangeEmitter.emit('accessChange', {scopes: nextScopes})
+        lastSeenScopes = nextScopes
+      }
+    }
+    chokidar.watch(this.appConfigurationFilePath).on('change', () => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      checkForScopeChange()
+    })
+
+    return accessChangeEmitter
   }
 
   get includeConfigOnDeploy() {

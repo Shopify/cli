@@ -1,5 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {setupGraphiQLServer} from '../graphiql/server.js'
+import EventEmitter from 'node:events'
 
 interface GraphiQLServerProcessOptions {
   appName: string
@@ -9,6 +10,7 @@ interface GraphiQLServerProcessOptions {
   storeFqdn: string
   key?: string
   port: number
+  accessChangeEvent: EventEmitter
 }
 
 export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions> {

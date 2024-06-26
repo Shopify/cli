@@ -301,6 +301,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specifications: this.specifications,
       configSchema,
       remoteFlags: this.remoteFlags,
+      appConfigurationFilePath: configuration.path,
     })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors

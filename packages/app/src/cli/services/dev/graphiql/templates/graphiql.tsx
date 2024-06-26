@@ -1,8 +1,20 @@
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'
-import {AlertCircleIcon, DisabledIcon, LinkIcon} from '@shopify/polaris-icons'
+import {
+  AppProvider,
+  Badge,
+  Banner,
+  BlockStack,
+  Box,
+  Grid,
+  Icon,
+  InlineStack,
+  Link,
+  Select,
+  Text,
+} from '@shopify/polaris'
+import {AlertCircleIcon, DisabledIcon, KeyboardIcon, LinkIcon} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
 
@@ -181,23 +193,20 @@ export function graphiqlTemplate({
             <Box background="bg-surface" padding="400">
               <BlockStack gap="300">
                 <Grid columns={{xs: 3, sm: 3, md: 3}}>
-                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 7, xl: 7}}>
+                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 8, xl: 8}}>
                     <InlineStack gap="400">
                       <div id="status-badge" className="top-bar-section">
                         <div className="status-badge-option" id="status-badge-running">
-                          <span className="top-bar-section-title">Status: </span>
                           <Badge tone="success" progress="complete">
                             Running
                           </Badge>
                         </div>
                         <div className="status-badge-option with-shrunk-icon" id="status-badge-unauthorized">
-                          <span className="top-bar-section-title">Status: </span>
                           <Badge tone="attention" icon={AlertCircleIcon}>
                             App uninstalled
                           </Badge>
                         </div>
                         <div className="status-badge-option with-shrunk-icon" id="status-badge-disconnected">
-                          <span className="top-bar-section-title">Status: </span>
                           <Badge tone="critical" icon={DisabledIcon}>
                             Disconnected
                           </Badge>
@@ -213,10 +222,10 @@ export function graphiqlTemplate({
                           onChange={() => {}}
                         />
                       </div>
-                      {linkPills({storeFqdn, appName, appUrl})}
+                      {linkPills({storeFqdn, appName, appUrl, scopesOutOfSync: 'false'})}
                     </InlineStack>
                   </Grid.Cell>
-                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 5, xl: 5}}>
+                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 4, xl: 4}}>
                     <div id="scopes-note" className="top-bar-section">
                       <Text as="span" tone="subdued">
                         GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
@@ -278,6 +287,7 @@ export function graphiqlTemplate({
       // Start out optimistic
       let serverIsLive = true
       let appIsInstalled = true
+      let scopesOutOfSync = false
 
       const updateBadge = function() {
         const topErrorBar = document.querySelector('#graphiql #top-error-bar')
@@ -294,6 +304,9 @@ export function graphiqlTemplate({
           }
         })
         topErrorBar.style.display = serverIsLive ? 'none' : 'block'
+
+        const scopesSyncWarning = document.querySelector('#scopeSyncWarning')
+        scopesSyncWarning.style.display = scopesOutOfSync ? 'inline-flex' : 'none'
       }
       const statusInterval = setInterval(updateBadge, 1000)
 
@@ -319,18 +332,10 @@ export function graphiqlTemplate({
       setInterval(function() {
         fetch('{{ url }}/graphiql/status')
           .then(async function(response) {
-            const {status, storeFqdn, appName, appUrl} = await response.json()
+            const {status, storeFqdn, appName, appUrl, scopeMismatch} = await response.json()
             appIsInstalled = status === 'OK'
-            if (storeFqdn) {
-              document.getElementById('outbound-links').innerHTML = \`${renderToStaticMarkup(
-                // Create HTML string with substitutions included
-                <AppProvider i18n={{}}>
-                  {
-                    // eslint-disable-next-line no-template-curly-in-string
-                    linkPills({storeFqdn: '${storeFqdn}', appName: '${appName}', appUrl: '${appUrl}'})
-                  }
-                </AppProvider>,
-              )}\`
+            if (scopeMismatch !== undefined) {
+              scopesOutOfSync = scopeMismatch
             }
           })
       }, 5000)
@@ -344,9 +349,11 @@ interface LinkPillOptions {
   storeFqdn: string
   appName: string
   appUrl: string
+  scopesOutOfSync: string
 }
 
-function linkPills({storeFqdn, appName, appUrl}: LinkPillOptions) {
+function linkPills({storeFqdn, appName, appUrl, scopesOutOfSync}: LinkPillOptions) {
+  const outOfSync = JSON.parse(scopesOutOfSync)
   return (
     <div id="outbound-links" className="top-bar-section with-shrunk-icon">
       <span className="top-bar-section-title">Store: </span>
@@ -357,6 +364,16 @@ function linkPills({storeFqdn, appName, appUrl}: LinkPillOptions) {
       <Link url={appUrl} target="_blank">
         <Badge tone="info" icon={LinkIcon} children={appName} />
       </Link>
+      <span id="scopeSyncWarning" style={{display: outOfSync ? 'inline-flex' : 'none'}}>
+        <span className="Polaris-Badge Polaris-Badge__toneCritical--strong">
+          <span className="Polaris-Badge__Icon">
+            <Icon source={KeyboardIcon} />
+          </span>
+          <span className="Polaris-Text--root Polaris-Text--bodySm">
+            Scopes are out of sync, have you ran <pre style={{display: 'inline'}}>shopify app deploy</pre>?
+          </span>
+        </span>
+      </span>
     </div>
   )
 }
