@@ -268,6 +268,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+    return {apps: [], hasMorePages: false}
     const query = AppsQuery
     const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token())
     const minimalOrganizationApps = result.apps.map((app) => {
@@ -770,17 +771,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const query = ActiveAppReleaseQuery
     const appId = numberFromGid(id)
     const variables: ActiveAppReleaseQueryVariables = {appId}
-    // return {
-    //   app: {
-    //     id: 'gid://shopify/app/130918678529',
-    //     activeRelease: {
-    //       id: 'gid://shopify/app/130918678529',
-    //       version: {
-    //         modules: [],
-    //       },
-    //     },
-    //   },
-    // }
+    return {
+      app: {
+        id: 'gid://shopify/app/130918678529',
+        key: '130918678529',
+        activeRelease: {
+          id: 'gid://shopify/app/130918678529',
+          version: {
+            name: 'version',
+            appModules: [],
+          },
+        },
+      },
+    }
     return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
@@ -790,17 +793,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const appId = numberFromGid(id)
     const variables: ActiveAppReleaseQueryVariables = {appId}
-    // return {
-    //   app: {
-    //     id: 'gid://shopify/app/130918678529',
-    //     activeRelease: {
-    //       id: 'gid://shopify/app/130918678529',
-    //       version: {
-    //         modules: [],
-    //       },
-    //     },
-    //   },
-    // }
+    return {
+      app: {
+        id: 'gid://shopify/app/130918678529',
+        key: '130918678529',
+        activeRelease: {
+          id: 'gid://shopify/app/130918678529',
+          version: {
+            name: 'version',
+            appModules: [],
+          },
+        },
+      },
+    }
     return appManagementRequest<ActiveAppReleaseQuerySchema>(
       organizationId,
       ActiveAppReleaseQuery,
