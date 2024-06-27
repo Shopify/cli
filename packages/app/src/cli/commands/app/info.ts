@@ -7,7 +7,7 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo, OutputMessage, TokenizedString} from '@shopify/cli-kit/node/output'
-import {RenderTableOptions, ScalarDict, renderTable} from '@shopify/cli-kit/node/ui'
+import {renderTable} from '@shopify/cli-kit/node/ui'
 
 export default class AppInfo extends Command {
   static summary = 'Print basic information about your app and extensions.'
@@ -47,15 +47,17 @@ export default class AppInfo extends Command {
       mode: 'report',
     })
 
-    const result = await info(app, {
+    const contents = await info(app, {
       format: (flags.json ? 'json' : 'text') as Format,
       webEnv: flags['web-env'],
       configName: flags.config,
     })
-    if (result instanceof TokenizedString || result instanceof String) {
-      outputInfo(result as OutputMessage)
-    } else {
-      renderTable(result as RenderTableOptions<ScalarDict>)
+    for (const content of contents) {
+      if (typeof content === 'string' || content instanceof TokenizedString) {
+        outputInfo(content as OutputMessage)
+      } else {
+        renderTable(content)
+      }
     }
     if (app.errors) process.exit(2)
   }

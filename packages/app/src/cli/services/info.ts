@@ -36,11 +36,11 @@ interface Configurable {
 export async function info(
   app: AppInterface,
   options: InfoOptions,
-): Promise<OutputMessage | RenderTableOptions<ScalarDict>> {
+): Promise<(OutputMessage | RenderTableOptions<ScalarDict>)[]> {
   options.developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (options.webEnv) {
-    return infoWeb(app, options)
+    return [await infoWeb(app, options)]
   } else {
     return infoApp(app, options)
   }
@@ -53,7 +53,7 @@ async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<Output
 async function infoApp(
   app: AppInterface,
   options: InfoOptions,
-): Promise<OutputMessage | RenderTableOptions<ScalarDict>> {
+): Promise<(OutputMessage | RenderTableOptions<ScalarDict>)[]> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -77,14 +77,17 @@ async function infoApp(
         }),
       }
     }
-    return outputContent`${JSON.stringify(
-      Object.fromEntries(Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema')),
-      null,
-      2,
-    )}`
+    return [
+      outputContent`${JSON.stringify(
+        Object.fromEntries(Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema')),
+        null,
+        2,
+      )}`,
+    ]
   } else {
     const appInfo = new AppInfo(app, options)
-    return appInfo.output()
+    return [await appInfo.output()]
+    return appInfo.outputContents()
   }
 }
 
@@ -120,7 +123,7 @@ class AppInfo {
     this.options = options
   }
 
-  async output(): Promise<string> {
+  async output(): Promise<(OutputMessage | RenderTableOptions<ScalarDict>)[]> {
     const sections: [string, string][] = [
       await this.devConfigsSection(),
       this.projectSettingsSection(),
@@ -130,11 +133,70 @@ class AppInfo {
     return sections.map((sectionContents: [string, string]) => formatSection(...sectionContents)).join('\n\n')
   }
 
-  outputTable(): RenderTableOptions<ScalarDict> {
+  async outputContents(): Promise<(OutputMessage | RenderTableOptions<ScalarDict>)[]> {
+    // TODO: make title part of table
+    return [
+      'TITLE OF TABLE\n',
+      await this.devConfigsSectionAsTable(),
+      '\n',
+      outputContent`💡 To change these, run ${outputToken.packagejsonScript(this.app.packageManager, 'dev', '--reset')}`
+        .value,
+      '\n',
+      this.projectSettingsSectionAsTable(),
+      '\n',
+      await this.systemInfoSectionAsTable(),
+    ]
+  }
+
+  async devConfigsSectionAsTable(): Promise<RenderTableOptions<ScalarDict>> {
+    let developerPlatformClient = this.options.developerPlatformClient!
+    const {cachedInfo, remoteApp} = await getAppContext({
+      developerPlatformClient,
+      directory: this.app.directory,
+      reset: false,
+      configName: this.options.configName,
+      promptLinkingApp: false,
+    })
+    developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
+
+    let updateUrls
+    if (cachedInfo?.updateURLs === undefined) {
+      updateUrls = NOT_CONFIGURED_TEXT
+    } else {
+      updateUrls = cachedInfo.updateURLs ? 'Yes' : 'No'
+    }
+
+    let partnersAccountInfo = ['Partners account', 'unknown']
+    const retrievedAccountInfo = await developerPlatformClient.accountInfo()
+    if (isServiceAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
+    } else if (isUserAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Partners account', retrievedAccountInfo.email]
+    }
+
+    const lines = [
+      ['Configuration file', cachedInfo?.configFile || configurationFileNames.app],
+      ['App name', cachedInfo?.title || NOT_CONFIGURED_TEXT],
+      ['Client ID', cachedInfo?.appId || NOT_CONFIGURED_TEXT],
+      ['Access scopes', getAppScopes(this.app.configuration)],
+      ['Dev store', cachedInfo?.storeFqdn || NOT_CONFIGURED_TEXT],
+      ['Update URLs', updateUrls],
+      partnersAccountInfo,
+    ]
+
+    const rows = lines.map((line) => {
+      return {
+        name: line[0],
+        value: line[1],
+      }
+    })
+
     return {
-      rows: [],
+      rows,
+      // TODO: Make columns optional on table
       columns: {
-        something: {header: 'something'},
+        name: {header: 'Name'},
+        value: {header: 'Value'},
       },
     }
   }
@@ -182,6 +244,21 @@ class AppInfo {
       partnersAccountInfo,
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
+  }
+
+  projectSettingsSectionAsTable(): RenderTableOptions<ScalarDict> {
+    return {
+      rows: [
+        {
+          name: 'Root location',
+          value: this.app.directory,
+        },
+      ],
+      columns: {
+        name: {header: 'Name'},
+        value: {header: 'Value'},
+      },
+    }
   }
 
   projectSettingsSection(): [string, string] {
@@ -280,6 +357,34 @@ class AppInfo {
     const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).split('\n')
     const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
     return outputContent`${outputToken.errorText(errorLines.join('\n'))}`.value
+  }
+
+  async systemInfoSectionAsTable(): Promise<RenderTableOptions<ScalarDict>> {
+    const {platform, arch} = platformAndArch()
+    const versionUpgradeMessage = await this.versionUpgradeMessage()
+    const cliVersionInfo = [CLI_KIT_VERSION, versionUpgradeMessage].join(' ').trim()
+    const lines: string[][] = [
+      ['Shopify CLI', cliVersionInfo],
+      ['Package manager', this.app.packageManager],
+      ['OS', `${platform}-${arch}`],
+      ['Shell', process.env.SHELL || 'unknown'],
+      ['Node version', process.version],
+    ]
+    const rows = lines.map((line) => {
+      return {
+        name: line[0],
+        value: line[1],
+      }
+    })
+
+    return {
+      rows,
+      // TODO: Make columns optional on table
+      columns: {
+        name: {header: 'Name'},
+        value: {header: 'Value'},
+      },
+    }
   }
 
   async systemInfoSection(): Promise<[string, string]> {
