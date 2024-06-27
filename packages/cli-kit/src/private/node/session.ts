@@ -15,6 +15,7 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
+import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
@@ -281,8 +282,16 @@ const getFirstOrganization = gql`
  * @returns A promise that resolves to true if the token is valid for partners API.
  */
 async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
+  const cachedStatus = getCachedPartnerAccountStatus(partnersToken)
+
+  if (cachedStatus) {
+    outputDebug(`Confirmed partner account exists from cache`)
+    return true
+  }
+
   try {
     await partnersRequest(getFirstOrganization, partnersToken)
+    setCachedPartnerAccountStatus(partnersToken)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
