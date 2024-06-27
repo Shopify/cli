@@ -9,12 +9,11 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {relativePath} from '@shopify/cli-kit/node/path'
-import {render, renderTable} from '@shopify/cli-kit/node/ui'
+import {RenderTableOptions, ScalarDict} from '@shopify/cli-kit/node/ui'
 import {
   OutputMessage,
   outputContent,
   outputToken,
-  outputInfo,
   formatSection,
   stringifyMessage,
   getOutputUpdateCLIReminder,
@@ -34,22 +33,27 @@ interface Configurable {
   externalType: string
 }
 
-export function info(app: AppInterface, options: InfoOptions): void {
+export async function info(
+  app: AppInterface,
+  options: InfoOptions,
+): Promise<OutputMessage | RenderTableOptions<ScalarDict>> {
   options.developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (options.webEnv) {
-    infoWeb(app, options)
+    return infoWeb(app, options)
   } else {
-    infoApp(app, options)
+    return infoApp(app, options)
   }
 }
 
-async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<void> {
-  outputInfo(await outputEnv(app, format))
+async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
+  return outputEnv(app, format)
 }
 
-async function infoApp(app: AppInterface, options: InfoOptions): Promise<void> {
-  let result: OutputMessage
+async function infoApp(
+  app: AppInterface,
+  options: InfoOptions,
+): Promise<OutputMessage | RenderTableOptions<ScalarDict>> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -73,16 +77,15 @@ async function infoApp(app: AppInterface, options: InfoOptions): Promise<void> {
         }),
       }
     }
-    result = outputContent`${JSON.stringify(
+    return outputContent`${JSON.stringify(
       Object.fromEntries(Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema')),
       null,
       2,
     )}`
   } else {
     const appInfo = new AppInfo(app, options)
-    result = await appInfo.output()
+    return appInfo.output()
   }
-  outputInfo(result)
 }
 
 function objectWithoutSchema(obj: object): object {
@@ -125,6 +128,15 @@ class AppInfo {
       await this.systemInfoSection(),
     ]
     return sections.map((sectionContents: [string, string]) => formatSection(...sectionContents)).join('\n\n')
+  }
+
+  outputTable(): RenderTableOptions<ScalarDict> {
+    return {
+      rows: [],
+      columns: {
+        something: {header: 'something'},
+      },
+    }
   }
 
   async devConfigsSection(): Promise<[string, string]> {

@@ -6,7 +6,8 @@ import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, OutputMessage, TokenizedString} from '@shopify/cli-kit/node/output'
+import {RenderTableOptions, ScalarDict, renderTable} from '@shopify/cli-kit/node/ui'
 
 export default class AppInfo extends Command {
   static summary = 'Print basic information about your app and extensions.'
@@ -45,11 +46,17 @@ export default class AppInfo extends Command {
       userProvidedConfigName: flags.config,
       mode: 'report',
     })
-    info(app, {
+
+    const result = await info(app, {
       format: (flags.json ? 'json' : 'text') as Format,
       webEnv: flags['web-env'],
       configName: flags.config,
     })
+    if (result instanceof TokenizedString || result instanceof String) {
+      outputInfo(result as OutputMessage)
+    } else {
+      renderTable(result as RenderTableOptions<ScalarDict>)
+    }
     if (app.errors) process.exit(2)
   }
 }

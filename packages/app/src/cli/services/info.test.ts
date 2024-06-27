@@ -16,7 +16,7 @@ import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js
 import {describe, expect, vi, test} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
@@ -89,7 +89,9 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const resultUnion = await info(app, infoOptions())
+      const result = stringifyMessage(resultUnion as OutputMessage)
+
       // Then
       expect(unstyled(result)).toMatch(
         `Shopify CLI       ${CLI_KIT_VERSION} 💡 Version 2.2.3 available! Run \`yarn shopify upgrade\``,
@@ -133,16 +135,18 @@ describe('info', () => {
       })
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+
+      const result = await info(app, infoOptions())
+      const resultStr = stringifyMessage(result as OutputMessage)
 
       // Then
-      expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
-      expect(unstyled(result)).toMatch(/App name\s*my app/)
-      expect(unstyled(result)).toMatch(/Client ID\s*12345/)
-      expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
-      expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
+      expect(unstyled(resultStr)).toMatch(/Configuration file\s*shopify.app.toml/)
+      expect(unstyled(resultStr)).toMatch(/App name\s*my app/)
+      expect(unstyled(resultStr)).toMatch(/Client ID\s*12345/)
+      expect(unstyled(resultStr)).toMatch(/Access scopes\s*read_products/)
+      expect(unstyled(resultStr)).toMatch(/Dev store\s*Not yet configured/)
+      expect(unstyled(resultStr)).toMatch(/Update URLs\s*Not yet configured/)
+      expect(unstyled(resultStr)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -160,7 +164,8 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const resultUnion = await info(app, infoOptions())
+      const result = stringifyMessage(resultUnion as OutputMessage)
 
       // Then
       expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
@@ -179,7 +184,8 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const resultUnion = await info(app, infoOptions())
+      const result = stringifyMessage(resultUnion as OutputMessage)
 
       // Then
       expect(unstyled(result)).toMatch(/App name\s*Not yet configured/)
@@ -197,7 +203,9 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const resultUnion = await info(app, infoOptions())
+      const result = stringifyMessage(resultUnion as OutputMessage)
+
       // Then
       expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
       expect(unstyled(result)).not.toMatch('CLI reminder')
@@ -213,7 +221,8 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, {...infoOptions(), webEnv: true})
+      const resultUnion = await info(app, {...infoOptions(), webEnv: true})
+      const result = stringifyMessage(resultUnion as OutputMessage)
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -234,7 +243,8 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, {...infoOptions(), format: 'json', webEnv: true})
+      const resultUnion = await info(app, {...infoOptions(), format: 'json', webEnv: true})
+      const result = stringifyMessage(resultUnion as OutputMessage)
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
