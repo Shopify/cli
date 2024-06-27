@@ -1,7 +1,9 @@
-import {Notification, filterNotifications} from './notifications-system.js'
-import {getCache} from '../../private/node/conf-store.js'
+import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
+import {renderError, renderInfo, renderWarning} from './ui.js'
+import {getCache, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
+vi.mock('./ui.js')
 vi.mock('../../private/node/conf-store.js')
 
 const betweenVersins1and2: Notification = {
@@ -102,6 +104,24 @@ const showAlways: Notification = {
   message: 'message',
   type: 'info',
   frequency: 'always',
+}
+
+const infoNotification: Notification = {
+  id: 'infoNotification',
+  message: 'message',
+  type: 'info',
+}
+
+const errorNotification: Notification = {
+  id: 'errorNotification',
+  message: 'message',
+  type: 'error',
+}
+
+const warningNotification: Notification = {
+  id: 'warningNotification',
+  message: 'message',
+  type: 'warning',
 }
 
 const defaultInput = [
@@ -276,5 +296,43 @@ describe('notifications-system filter notifications', () => {
     expect(result).toEqual([showOnceAWeek])
     const result2 = filterNotifications([showOnceAWeek], 'version')
     expect(result2).toEqual([])
+  })
+})
+
+describe('notifications-system', () => {
+  test('an info notification triggers a renderInfo call', async () => {
+    // Given
+    const notifications = [infoNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded()
+
+    // Then
+    expect(renderInfo).toHaveBeenCalled()
+  })
+
+  test('a warning notification triggers a renderWarning call', async () => {
+    // Given
+    const notifications = [warningNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded()
+
+    // Then
+    expect(renderWarning).toHaveBeenCalled()
+  })
+
+  test('an error notification triggers a renderError call', async () => {
+    // Given
+    const notifications = [errorNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded()
+
+    // Then
+    expect(renderError).toHaveBeenCalled()
   })
 })

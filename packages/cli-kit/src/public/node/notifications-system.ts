@@ -1,5 +1,6 @@
 import {versionSatisfies} from './node-package-manager.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
+import {getCurrentCommandId} from './global-context.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 
@@ -26,12 +27,12 @@ export interface Notification {
 /**
  * Shows notifications to the user if they meet the criteria specified in the notifications.json file.
  *
- * @param commandId - The command ID that triggered the notifications.
  * @param currentSurfaces - The surfaces present in the current project (usually for app extensions).
  * @returns - A promise that resolves when the notifications have been shown.
  */
-export async function showNotificationsIfNeeded(commandId: string, currentSurfaces?: string[]): Promise<void> {
+export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Promise<void> {
   const notifications = await getNotifications()
+  const commandId = getCurrentCommandId()
   const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
   await renderNotifications(notificationsToShow)
 }
