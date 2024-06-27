@@ -102,7 +102,6 @@ export function setupGraphiQLServer({
         },
       })
       const tokenResponseObject = await tokenResponse.json()
-      console.log(tokenResponseObject)
 
       const {scope: approvedScopes} = tokenResponseObject as {scope: string}
 
@@ -115,10 +114,8 @@ export function setupGraphiQLServer({
       const areSetsEqual = (left: Set<string>, right: Set<string>) =>
         left.size === right.size && [...left].every((value) => right.has(value))
       if (areSetsEqual(approvedScopesSet, scopesSet)) {
-        console.log('setting that scopes are ok')
         scopeMismatch = false
       } else {
-        console.log('setting that scopes are mismatched')
         scopeMismatch = true
       }
 
@@ -131,7 +128,6 @@ export function setupGraphiQLServer({
 
   accessChangeEvent.on('accessChange', ({scopes}) => {
     const hardRefresh = async () => {
-      console.log(`Refreshing token due to file change, new expected scopes are ${scopes}`)
       _token = await refreshToken(scopes)
     }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

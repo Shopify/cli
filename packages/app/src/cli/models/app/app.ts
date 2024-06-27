@@ -255,6 +255,11 @@ export interface AppInterface<
    */
   creationDefaultOptions(): AppCreationDefaultOptions
 
+  /**
+   * Get an event emitter that monitors for changes to an app's access scopes, monitoring the configuration file.
+   *
+   * The event emitter fires an 'accessChange' event when the scopes change.
+   */
   watchForAccessChange(): Promise<EventEmitter>
 }
 
