@@ -7,7 +7,7 @@
       "minDate": "2024-06-25",
       "minVersion": "3.62.0",
       "commands": ["app:generate:extension", "app:dev", "app:build"],
-      "surface": "ui-extension"
+      "surface": "ui_extension"
     }
   ]
 }
