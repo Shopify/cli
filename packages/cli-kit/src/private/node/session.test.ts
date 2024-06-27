@@ -34,12 +34,14 @@ const validIdentityToken: IdentityToken = {
   refreshToken: 'refresh_token',
   expiresAt: futureDate,
   scopes: ['scope', 'scope2'],
+  userId: '1234-5678',
 }
 
 const validTokens: OAuthSession = {
   admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
   storefront: 'storefront_token',
   partners: 'partners_token',
+  userId: '1234-5678',
 }
 
 const appTokens: {[x: string]: ApplicationToken} = {
