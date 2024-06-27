@@ -178,7 +178,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
   if (!envToken && tokens.partners) {
-    await ensureUserHasPartnerAccount(tokens.partners)
+    await ensureUserHasPartnerAccount(tokens.partners, completeSession[fqdn]?.identity.userId)
   }
 
   return tokens
@@ -244,11 +244,11 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  *
  * @param partnersToken - Partners token.
  */
-async function ensureUserHasPartnerAccount(partnersToken: string) {
+async function ensureUserHasPartnerAccount(partnersToken: string, userId: string | undefined) {
   if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
 
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
-  if (!(await hasPartnerAccount(partnersToken))) {
+  if (!(await hasPartnerAccount(partnersToken, userId))) {
     outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
     outputInfo(`👉 Press any key to create one`)
     await keypress()
@@ -256,7 +256,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
     outputInfo(outputContent`👉 Press any key when you have ${outputToken.cyan('created the organization')}`)
     outputWarn(outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
-    if (!(await hasPartnerAccount(partnersToken))) {
+    if (!(await hasPartnerAccount(partnersToken, userId))) {
       throw new AbortError(
         `Couldn't find your Shopify Partners organization`,
         `Have you confirmed your accounts from the emails you received?`,
@@ -281,8 +281,9 @@ const getFirstOrganization = gql`
  * @param partnersToken - Partners token.
  * @returns A promise that resolves to true if the token is valid for partners API.
  */
-async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
-  const cachedStatus = getCachedPartnerAccountStatus(partnersToken)
+async function hasPartnerAccount(partnersToken: string, userId?: string): Promise<boolean> {
+  const cacheKey = userId ?? partnersToken
+  const cachedStatus = getCachedPartnerAccountStatus(cacheKey)
 
   if (cachedStatus) {
     outputDebug(`Confirmed partner account exists from cache`)
@@ -291,7 +292,7 @@ async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
 
   try {
     await partnersRequest(getFirstOrganization, partnersToken)
-    setCachedPartnerAccountStatus(partnersToken)
+    setCachedPartnerAccountStatus(cacheKey)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -414,7 +415,7 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 function buildIdentityTokenFromEnv(
   scopes: string[],
-  identityTokenInformation: {accessToken: string; refreshToken: string},
+  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string},
 ) {
   return {
     ...identityTokenInformation,
