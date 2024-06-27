@@ -119,7 +119,12 @@ export async function fetchOrganizations(): Promise<Organization[]> {
 
   if (organizations.length === 0) {
     const developerPlatformClient = selectDeveloperPlatformClient()
-    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient)
+    const accountInfo = await fetchCurrentAccountInformation(
+      developerPlatformClient,
+      (
+        await developerPlatformClient.session()
+      ).token,
+    )
     throw new NoOrgError(accountInfo)
   }
   return organizations

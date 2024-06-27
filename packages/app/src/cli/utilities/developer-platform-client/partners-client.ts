@@ -206,7 +206,7 @@ export class PartnersClient implements DeveloperPlatformClient {
         token,
         accountInfo: {type: 'UnknownAccount'},
       }
-      const accountInfo = await fetchCurrentAccountInformation(this)
+      const accountInfo = await fetchCurrentAccountInformation(this, token)
       this._session = {token, accountInfo}
     }
     return this._session
