@@ -13,6 +13,10 @@ interface Notifications {
 export interface Notification {
   id: string
   message: string
+  cta?: {
+    label: string
+    url: string
+  }
   type: 'info' | 'warning' | 'error'
   title?: string
   minVersion?: string
@@ -38,14 +42,16 @@ export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Pro
 }
 
 /**
+ * Renders the notifications to the user.
  *
- * @param notifications
+ * @param notifications - The notifications to render.
  */
 async function renderNotifications(notifications: Notification[]) {
   notifications.forEach((notification) => {
     const content = {
       headline: notification.title,
       body: notification.message,
+      link: notification.cta,
     }
     switch (notification.type) {
       case 'info': {
