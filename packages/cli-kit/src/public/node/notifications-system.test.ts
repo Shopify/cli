@@ -1,5 +1,10 @@
-import {Notification, filterNotifications} from './notifications-system.js'
-import {describe, expect, test} from 'vitest'
+import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
+import {renderError, renderInfo, renderWarning} from './ui.js'
+import {cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {describe, expect, test, vi} from 'vitest'
+
+vi.mock('./ui.js')
+vi.mock('../../private/node/conf-store.js')
 
 const betweenVersins1and2: Notification = {
   message: 'message',
@@ -61,6 +66,21 @@ const extensionSurface: Notification = {
   message: 'message',
   type: 'info',
   surface: 'ui-extension',
+}
+
+const infoNotification: Notification = {
+  message: 'message',
+  type: 'info',
+}
+
+const errorNotification: Notification = {
+  message: 'message',
+  type: 'error',
+}
+
+const warningNotification: Notification = {
+  message: 'message',
+  type: 'warning',
 }
 
 const defaultInput = [
@@ -171,5 +191,43 @@ describe('notifications-system filter notifications', () => {
 
     // Then
     expect(result).toEqual(output)
+  })
+})
+
+describe('notifications-system', () => {
+  test('an info notification triggers a renderInfo call', async () => {
+    // Given
+    const notifications = [infoNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded()
+
+    // Then
+    expect(renderInfo).toHaveBeenCalled()
+  })
+
+  test('a warning notification triggers a renderWarning call', async () => {
+    // Given
+    const notifications = [warningNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded()
+
+    // Then
+    expect(renderWarning).toHaveBeenCalled()
+  })
+
+  test('an error notification triggers a renderError call', async () => {
+    // Given
+    const notifications = [errorNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded()
+
+    // Then
+    expect(renderError).toHaveBeenCalled()
   })
 })
