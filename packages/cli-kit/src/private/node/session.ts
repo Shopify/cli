@@ -98,6 +98,12 @@ export interface OAuthSession {
   storefront?: string
   businessPlatform?: string
   appManagement?: string
+  userId: string
+}
+
+let userId: undefined | string
+export function getLastSeenUserIdAfterAuth() {
+  return userId
 }
 
 /**
@@ -180,6 +186,8 @@ The CLI is currently unable to prompt for reauthentication.`,
   if (!envToken && tokens.partners) {
     await ensureUserHasPartnerAccount(tokens.partners, completeSession[fqdn]?.identity.userId)
   }
+
+  userId = tokens.userId
 
   return tokens
 }
@@ -342,7 +350,9 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
   if (!fqdnSession) {
     throw new BugError('No session found after ensuring authenticated')
   }
-  const tokens: OAuthSession = {}
+  const tokens: OAuthSession = {
+    userId: fqdnSession.identity.userId,
+  }
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`

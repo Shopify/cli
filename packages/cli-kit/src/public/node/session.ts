@@ -4,7 +4,7 @@ import {getPartnersToken} from './environment.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {ensureAuthenticated, getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -26,7 +26,7 @@ interface EnsureAuthenticatedAdditionalOptions {
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param env - Optional environment variables to use.
  * @param options - Optional extra options to use.
- * @returns The access token for the Partners API.
+ * @returns The access token for the Partners API, and the user's ID.
  */
 export async function ensureAuthenticatedPartners(
   scopes: string[] = [],
@@ -45,6 +45,26 @@ ${outputToken.json(scopes)}
     throw new BugError('No partners token found after ensuring authenticated')
   }
   return tokens.partners
+}
+
+/**
+ * Ensures the user is authenticated, returns their user ID.
+ *
+ * If the CLI already ran `ensureAuthenticated` earlier -- under any context -- it won't repeat any work.
+ *
+ * @param env - Optional environment variables to use.
+ * @returns User ID, this should be the same for the same human beings.
+ */
+export async function ensureAuthenticatedUserId(env = process.env): Promise<string> {
+  outputDebug(outputContent`Ensuring that the user is authenticated, and gathering their identity`)
+  const lastUserId = getLastSeenUserIdAfterAuth()
+  if (lastUserId) {
+    outputDebug(`Using user ID from prior authentication flow`)
+    return lastUserId
+  }
+
+  const tokens = await ensureAuthenticated({}, env, {})
+  return tokens.userId
 }
 
 /**
