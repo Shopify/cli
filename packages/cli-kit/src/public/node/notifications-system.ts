@@ -1,12 +1,13 @@
 import {versionSatisfies} from './node-package-manager.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {getCurrentCommandId} from './global-context.js'
+import {fileExists, readFile} from './fs.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json'
 
-interface Notifications {
+export interface Notifications {
   notifications: Notification[]
 }
 
@@ -72,8 +73,10 @@ async function renderNotifications(notifications: Notification[]) {
 
 /**
  * Get notifications list from cache or fetch it if not present.
+ *
+ * @returns A Notifications object.
  */
-async function getNotifications(): Promise<Notifications> {
+export async function getNotifications(): Promise<Notifications> {
   const cacheKey: NotificationsKey = `notifications-${URL}`
   const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, 24 * 3600 * 1000)
   return JSON.parse(rawNotifications)
@@ -190,4 +193,37 @@ function filterByFrequency(notification: Notification): boolean {
       return new Date().getTime() - Number(lastShown) > 7 * 24 * 3600 * 1000
     }
   }
+}
+
+/**
+ * Returns a string with the filters from a notification, one by line.
+ *
+ * @param notification - The notification to get the filters from.
+ * @returns A string with human-readable filters from the notification.
+ */
+export function stringifyFilters(notification: Notification): string {
+  const filters = []
+  if (notification.minDate) filters.push(`from ${notification.minDate}`)
+  if (notification.maxDate) filters.push(`to ${notification.maxDate}`)
+  if (notification.minVersion) filters.push(`from v${notification.minVersion}`)
+  if (notification.maxVersion) filters.push(`to v${notification.maxVersion}`)
+  if (notification.frequency === 'once') filters.push('show only once')
+  if (notification.frequency === 'once_a_day') filters.push('show once a day')
+  if (notification.frequency === 'once_a_week') filters.push('show once a week')
+  if (notification.surface) filters.push(`surface = ${notification.surface}`)
+  if (notification.commands) filters.push(`commands = ${notification.commands.join(', ')}`)
+  return filters.join('\n')
+}
+
+/**
+ * Reads the notifications from the local file.
+ *
+ * @returns A Notifications object.
+ */
+export async function getLocalNotifications(): Promise<Notifications> {
+  const filePath = './notifications.json'
+  if (!(await fileExists(filePath))) return {notifications: []}
+
+  const rawNotifications = await readFile(filePath)
+  return JSON.parse(rawNotifications)
 }

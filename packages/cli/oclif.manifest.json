@@ -3890,6 +3890,44 @@
       "pluginType": "core",
       "strict": true
     },
+    "notifications:generate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Generate a new notification for the the CLI.",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "notifications:generate",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "notifications:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "List current notifications configured for the CLI.",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "notifications:list",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "plugins": {
       "aliases": [
       ],
