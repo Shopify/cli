@@ -34,10 +34,13 @@ vi.mock('@shopify/cli-kit/node/environment')
 beforeEach(() => {
   // mocked for draft extensions
   vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({
-    extensionIds: {},
-    app: 'app-id',
-    extensions: {},
-    extensionsNonUuidManaged: {},
+    identifiers: {
+      extensionIds: {},
+      app: 'app-id',
+      extensions: {},
+      extensionsNonUuidManaged: {},
+    },
+    scopesWereChanged: false,
   })
 
   // mocked for theme app extensions
