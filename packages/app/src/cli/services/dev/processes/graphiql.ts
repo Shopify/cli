@@ -11,6 +11,7 @@ interface GraphiQLServerProcessOptions {
   key?: string
   port: number
   accessChangeEvent: EventEmitter
+  initialExpectedScopes: string
 }
 
 export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions> {

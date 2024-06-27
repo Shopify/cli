@@ -43,6 +43,7 @@ interface SetupGraphiQLServerOptions {
   key?: string
   storeFqdn: string
   accessChangeEvent: EventEmitter
+  initialExpectedScopes: string
 }
 
 export function setupGraphiQLServer({
@@ -55,9 +56,11 @@ export function setupGraphiQLServer({
   key,
   storeFqdn,
   accessChangeEvent,
+  initialExpectedScopes,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
   const localhostUrl = `http://localhost:${port}`
+  let expectedScopes = initialExpectedScopes
 
   const app = express()
 
@@ -79,6 +82,9 @@ export function setupGraphiQLServer({
   let scopeMismatch = false
 
   async function refreshToken(expectedScopesBasedOnFile?: string): Promise<string> {
+    if (expectedScopesBasedOnFile !== undefined) {
+      expectedScopes = expectedScopesBasedOnFile
+    }
     try {
       outputInfo('refreshing token', stdout)
       _token = undefined
@@ -99,22 +105,21 @@ export function setupGraphiQLServer({
       console.log(tokenResponseObject)
 
       const {scope: approvedScopes} = tokenResponseObject as {scope: string}
-      if (expectedScopesBasedOnFile !== undefined) {
-        // break and trim by commas put the approved scopes into a set
-        const approvedScopesSet = new Set(approvedScopes.split(',').map((s) => s.trim()))
-        // same for scopes
-        const scopesSet = new Set(expectedScopesBasedOnFile.split(',').map((s) => s.trim()))
 
-        // if these sets don't match exactly... log something
-        const areSetsEqual = (a: Set<string>, b: Set<string>) =>
-          a.size === b.size && [...a].every((value) => b.has(value))
-        if (!areSetsEqual(approvedScopesSet, scopesSet)) {
-          console.log('setting that scopes are mismatched')
-          scopeMismatch = true
-        } else {
-          console.log('setting that scopes are ok')
-          scopeMismatch = false
-        }
+      // break and trim by commas put the approved scopes into a set
+      const approvedScopesSet = new Set(approvedScopes.split(',').map((scope) => scope.trim()))
+      // same for scopes
+      const scopesSet = new Set(expectedScopes.split(',').map((scope) => scope.trim()))
+
+      // if these sets don't match exactly... log something
+      const areSetsEqual = (left: Set<string>, right: Set<string>) =>
+        left.size === right.size && [...left].every((value) => right.has(value))
+      if (areSetsEqual(approvedScopesSet, scopesSet)) {
+        console.log('setting that scopes are ok')
+        scopeMismatch = false
+      } else {
+        console.log('setting that scopes are mismatched')
+        scopeMismatch = true
       }
 
       const tokenJson = tokenResponseObject as {access_token: string}
@@ -148,6 +153,7 @@ export function setupGraphiQLServer({
   })
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
+    _token = await refreshToken()
     return performActionWithRetryAfterRecovery(
       async () => supportedApiVersions({storeFqdn, token: await token()}),
       refreshToken,

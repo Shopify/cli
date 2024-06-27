@@ -106,6 +106,7 @@ export async function setupDevProcesses({
           key: graphiqlKey,
           storeFqdn,
           accessChangeEvent,
+          initialExpectedScopes: getAppScopes(localApp.configuration),
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
