@@ -9,10 +9,12 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {relativePath} from '@shopify/cli-kit/node/path'
+import {render, renderTable} from '@shopify/cli-kit/node/ui'
 import {
   OutputMessage,
   outputContent,
   outputToken,
+  outputInfo,
   formatSection,
   stringifyMessage,
   getOutputUpdateCLIReminder,
@@ -32,21 +34,22 @@ interface Configurable {
   externalType: string
 }
 
-export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+export function info(app: AppInterface, options: InfoOptions): void {
   options.developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
   if (options.webEnv) {
-    return infoWeb(app, options)
+    infoWeb(app, options)
   } else {
-    return infoApp(app, options)
+    infoApp(app, options)
   }
 }
 
-async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
-  return outputEnv(app, format)
+async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<void> {
+  outputInfo(await outputEnv(app, format))
 }
 
-async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+async function infoApp(app: AppInterface, options: InfoOptions): Promise<void> {
+  let result: OutputMessage
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -70,15 +73,16 @@ async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputM
         }),
       }
     }
-    return outputContent`${JSON.stringify(
+    result = outputContent`${JSON.stringify(
       Object.fromEntries(Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema')),
       null,
       2,
     )}`
   } else {
     const appInfo = new AppInfo(app, options)
-    return appInfo.output()
+    result = await appInfo.output()
   }
+  outputInfo(result)
 }
 
 function objectWithoutSchema(obj: object): object {

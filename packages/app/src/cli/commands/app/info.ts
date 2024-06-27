@@ -45,13 +45,11 @@ export default class AppInfo extends Command {
       userProvidedConfigName: flags.config,
       mode: 'report',
     })
-    outputInfo(
-      await info(app, {
-        format: (flags.json ? 'json' : 'text') as Format,
-        webEnv: flags['web-env'],
-        configName: flags.config,
-      }),
-    )
+    info(app, {
+      format: (flags.json ? 'json' : 'text') as Format,
+      webEnv: flags['web-env'],
+      configName: flags.config,
+    })
     if (app.errors) process.exit(2)
   }
 }
