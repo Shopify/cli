@@ -108,12 +108,13 @@ export function setupGraphiQLServer({
       // break and trim by commas put the approved scopes into a set
       const approvedScopesSet = new Set(approvedScopes.split(',').map((scope) => scope.trim()))
       // same for scopes
-      const scopesSet = new Set(expectedScopes.split(',').map((scope) => scope.trim()))
+      const expectedScopesSet = new Set(expectedScopes.split(',').map((scope) => scope.trim()))
+
+      // check if everything in expectedScopesSet is in approvedScopesSet
+      const allExpectedInApproved = [...expectedScopesSet].every((scope) => approvedScopesSet.has(scope))
 
       // if these sets don't match exactly... log something
-      const areSetsEqual = (left: Set<string>, right: Set<string>) =>
-        left.size === right.size && [...left].every((value) => right.has(value))
-      if (areSetsEqual(approvedScopesSet, scopesSet)) {
+      if (allExpectedInApproved) {
         scopeMismatch = false
       } else {
         scopeMismatch = true
