@@ -243,7 +243,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   // Functions specific properties
   get buildCommand() {
     const config = this.configuration as unknown as FunctionConfigType
-    return config.build.command
+    return config.build?.command
   }
 
   get watchBuildPaths() {
