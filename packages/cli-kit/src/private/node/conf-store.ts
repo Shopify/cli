@@ -9,11 +9,13 @@ interface CacheValue<T> {
 export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
 export type NotificationsKey = `notifications-${string}`
+export type NotificationKey = `notification-${string}`
 
 interface Cache {
   [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
   [packageVersionKey: PackageVersionKey]: CacheValue<string>
   [notifications: NotificationsKey]: CacheValue<string>
+  [notification: NotificationKey]: CacheValue<string>
 }
 
 export interface ConfSchema {
@@ -90,4 +92,15 @@ export async function cacheRetrieveOrRepopulate(
   cache[key] = {value, timestamp: Date.now()}
   config.set('cache', cache)
   return value
+}
+
+export function getCache(key: keyof Cache, config = cliKitStore()): string | undefined {
+  const cache: Cache = config.get('cache') || {}
+  return cache[key]?.value
+}
+
+export function setCache(key: keyof Cache, value: string, config = cliKitStore()): void {
+  const cache: Cache = config.get('cache') || {}
+  cache[key] = {value, timestamp: Date.now()}
+  config.set('cache', cache)
 }

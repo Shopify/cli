@@ -1,7 +1,7 @@
 import {versionSatisfies} from './node-package-manager.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {NotificationsKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json'
 
@@ -10,6 +10,7 @@ interface Notifications {
 }
 
 export interface Notification {
+  id: string
   message: string
   type: 'info' | 'warning' | 'error'
   title?: string
@@ -19,7 +20,7 @@ export interface Notification {
   maxDate?: string
   commands?: string[]
   surface?: 'app' | 'theme' | 'hydrogen' | string
-  frequency?: 'always' | 'once_a_day' | 'once_a_week'
+  frequency?: 'always' | 'once' | 'once_a_day' | 'once_a_week'
 }
 
 /**
@@ -32,8 +33,15 @@ export interface Notification {
 export async function showNotificationsIfNeeded(commandId: string, currentSurfaces?: string[]): Promise<void> {
   const notifications = await getNotifications()
   const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
+  await renderNotifications(notificationsToShow)
+}
 
-  notificationsToShow.forEach((notification) => {
+/**
+ *
+ * @param notifications
+ */
+async function renderNotifications(notifications: Notification[]) {
+  notifications.forEach((notification) => {
     const content = {
       headline: notification.title,
       body: notification.message,
@@ -41,16 +49,17 @@ export async function showNotificationsIfNeeded(commandId: string, currentSurfac
     switch (notification.type) {
       case 'info': {
         renderInfo(content)
-        return
+        break
       }
       case 'warning': {
         renderWarning(content)
-        return
+        break
       }
       case 'error': {
         renderError(content)
       }
     }
+    setCache(`notification-${notification.id}`, new Date().getTime().toString())
   })
 }
 
@@ -93,6 +102,7 @@ export function filterNotifications(
     .filter((notifications) => filterByDate(notifications, today))
     .filter((notification) => filterByCommand(notification, commandId))
     .filter((notification) => filterBySurface(notification, commandId, currentSurfaces))
+    .filter((notification) => filterByFrequency(notification))
 }
 
 /**
@@ -146,4 +156,31 @@ function filterBySurface(notification: Notification, commandId: string, surfaces
   if (surfacesFromContext) return surfacesFromContext.includes(notificationSurface)
 
   return notificationSurface === surfaceFromCommand || notificationSurface === 'all'
+}
+
+/**
+ * Filters notifications based on the frequency.
+ *
+ * @param notification - The notification to filter.
+ * @returns - A boolean indicating whether the notification should be shown.
+ */
+function filterByFrequency(notification: Notification): boolean {
+  if (!notification.frequency) return true
+  const lastShown = getCache(`notification-${notification.id}`) as unknown as string
+
+  switch (notification.frequency) {
+    case 'always': {
+      return true
+    }
+    case 'once': {
+      const result = !lastShown
+      return result
+    }
+    case 'once_a_day': {
+      return new Date().getTime() - Number(lastShown) > 24 * 3600 * 1000
+    }
+    case 'once_a_week': {
+      return new Date().getTime() - Number(lastShown) > 7 * 24 * 3600 * 1000
+    }
+  }
 }

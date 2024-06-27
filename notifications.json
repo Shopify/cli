@@ -1,6 +1,7 @@
 {
   "notifications": [
     {
+      "id": "editions-summer24",
       "type": "info",
       "title": "Editions is here!",
       "message": "Check out shopify.com/editions/summer2024",
