@@ -10,9 +10,7 @@
         "url": "https://shopify.com/editions/summer2024"
       },
       "minDate": "2024-06-25",
-      "minVersion": "3.62.0",
-      "commands": ["app:generate:extension", "app:dev", "app:build"],
-      "surface": "ui_extension"
+      "minVersion": "3.62.0"
     }
   ]
 }
