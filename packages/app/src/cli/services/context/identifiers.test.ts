@@ -62,12 +62,51 @@ describe('ensureDeploymentIdsPresence', () => {
 
     // Then
     expect(result).toEqual({
-      app: params.appId,
+      identifiers: {
+        app: params.appId,
+        extensions: {
+          EXTENSION_A: 'UUID_A',
+        },
+        extensionIds: {EXTENSION_A: 'A'},
+        extensionsNonUuidManaged: {},
+      },
+      scopesWereChanged: false,
+    })
+  })
+
+  test('if talk about access scopes being changed, reflect that in the result', async () => {
+    // Given
+    vi.mocked(extensionsIdentifiersDeployBreakdown).mockResolvedValue(buildExtensionsBreakdown())
+    vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue({
+      ...buildConfigBreakdown(),
+      newFieldNames: ['access_scopes'],
+    })
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(deployConfirmed).mockResolvedValue({
       extensions: {
         EXTENSION_A: 'UUID_A',
       },
       extensionIds: {EXTENSION_A: 'A'},
       extensionsNonUuidManaged: {},
+    })
+
+    // When
+    const params = {
+      app: testApp(),
+      developerPlatformClient,
+      appId: 'appId',
+      appName: 'appName',
+      remoteApp: testOrganizationApp(),
+      envIdentifiers: {},
+      force: false,
+      release: true,
+    }
+    const result = await ensureDeploymentIdsPresence(params)
+
+    // Then
+    expect(result).toEqual({
+      identifiers: expect.any(Object),
+      scopesWereChanged: true,
     })
   })
 })

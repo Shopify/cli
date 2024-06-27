@@ -13,7 +13,7 @@ import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileRealPath, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
@@ -408,6 +408,12 @@ export class App<
 
   async watchForAccessChange(): Promise<EventEmitter> {
     const accessChangeEmitter = new EventEmitter()
+
+    if (!(await fileExists(this.appConfigurationFilePath))) {
+      // if the config isn't present -- it doesn't need to be -- just have an idle emitter
+      return accessChangeEmitter
+    }
+
     const sniffScopes = async () => {
       const fileContent = await readFile(this.appConfigurationFilePath)
       const content = decodeToml(fileContent)
