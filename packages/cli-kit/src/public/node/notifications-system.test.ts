@@ -57,6 +57,12 @@ const unknownSurface: Notification = {
   surface: 'unknown',
 }
 
+const extensionSurface: Notification = {
+  message: 'message',
+  type: 'info',
+  surface: 'ui-extension',
+}
+
 const defaultInput = [
   betweenVersins1and2,
   betweenDatesIn2000,
@@ -67,7 +73,10 @@ const defaultInput = [
   onlyForDevCommand,
   onlyForThemeSurface,
   unknownSurface,
+  extensionSurface,
 ]
+
+const defaultSurfaces = ['app', 'theme', 'hydrogen']
 
 /**
  * Represents a test case
@@ -83,6 +92,7 @@ interface TestCase {
   commandId: string
   version: string
   date: string
+  surfaces?: string[]
   output: Notification[]
 }
 
@@ -143,12 +153,21 @@ const testCases: TestCase[] = [
     date: '2024-02-01',
     output: [fromVersion1, fromDateJan2000],
   },
+  {
+    name: 'Notifications for extension type surface is shown',
+    input: defaultInput,
+    commandId: 'version',
+    version: '2.1.0',
+    date: '2024-02-01',
+    surfaces: ['ui-extension', 'function'],
+    output: [extensionSurface],
+  },
 ]
 
 describe('notifications-system filter notifications', () => {
-  test.each(testCases)('Filter for %name', ({input, commandId, version, date, output}) => {
+  test.each(testCases)('Filter for %name', ({input, commandId, version, date, surfaces, output}) => {
     // When
-    const result = filterNotifications(input, commandId, new Date(date), version)
+    const result = filterNotifications(input, commandId, surfaces, new Date(date), version)
 
     // Then
     expect(result).toEqual(output)
