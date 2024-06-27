@@ -152,7 +152,7 @@ import {
   partnersRequestDoc,
 } from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedPartners, ensureAuthenticatedUserId} from '@shopify/cli-kit/node/session'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -202,12 +202,14 @@ export class PartnersClient implements DeveloperPlatformClient {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
       const token = await ensureAuthenticatedPartners()
+      const userId = await ensureAuthenticatedUserId()
       this._session = {
         token,
         accountInfo: {type: 'UnknownAccount'},
+        userId,
       }
-      const accountInfo = await fetchCurrentAccountInformation(this, token)
-      this._session = {token, accountInfo}
+      const accountInfo = await fetchCurrentAccountInformation(this, userId)
+      this._session = {token, accountInfo, userId}
     }
     return this._session
   }

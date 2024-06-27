@@ -991,6 +991,7 @@ export const testPartnersUserSession: PartnersSession = {
     type: 'UserAccount',
     email: 'partner@shopify.com',
   },
+  userId: '1234-5678',
 }
 
 const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = {
@@ -1259,6 +1260,7 @@ export const testPartnersServiceSession: PartnersSession = {
     type: 'ServiceAccount',
     orgName: 'organization',
   },
+  userId: '1234-5678',
 }
 
 export async function buildVersionedAppSchema() {

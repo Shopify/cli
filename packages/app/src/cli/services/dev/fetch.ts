@@ -123,7 +123,7 @@ export async function fetchOrganizations(): Promise<Organization[]> {
       developerPlatformClient,
       (
         await developerPlatformClient.session()
-      ).token,
+      ).userId,
     )
     throw new NoOrgError(accountInfo)
   }

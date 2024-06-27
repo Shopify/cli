@@ -105,7 +105,11 @@ import {
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {ListOrganizations} from '../../api/graphql/business-platform/generated/organizations.js'
-import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {
+  ensureAuthenticatedAppManagement,
+  ensureAuthenticatedBusinessPlatform,
+  ensureAuthenticatedUserId,
+} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -148,6 +152,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         await this.businessPlatformToken(),
       )
       const token = await ensureAuthenticatedAppManagement()
+      const userId = await ensureAuthenticatedUserId()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -155,6 +160,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             type: 'UserAccount',
             email: userInfoResult.currentUserAccount.email,
           },
+          userId,
         }
       } else {
         this._session = {
@@ -162,6 +168,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           accountInfo: {
             type: 'UnknownAccount',
           },
+          userId,
         }
       }
     }
