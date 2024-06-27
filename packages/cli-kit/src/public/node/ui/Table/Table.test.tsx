@@ -1,6 +1,6 @@
 import {Table, TableColumn} from './Table.js'
 import ScalarDict from './ScalarDict.js'
-import {render} from '../../../testing/ui.js'
+import {render} from '../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
 

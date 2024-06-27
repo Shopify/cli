@@ -15,13 +15,14 @@ import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
+import ScalarDict from './ui/Table/ScalarDict.js'
+import {Table, TableColumn, TableProps} from './ui/Table/Table.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
-import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
+
 import {
   tokenItemToString,
   InlineToken,
@@ -477,7 +478,7 @@ export async function renderAutocompletePrompt<T>(
   })
 }
 
-interface RenderTableOptions<T extends ScalarDict> extends TableProps<T> {
+export interface RenderTableOptions<T extends ScalarDict> extends TableProps<T> {
   renderOptions?: RenderOptions
 }
 
@@ -718,4 +719,15 @@ This usually happens when running a command non-interactively, for example in a 
 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}
+export {
+  Task,
+  TokenItem,
+  InlineToken,
+  LinkToken,
+  TableColumn,
+  InfoTableSection,
+  ListToken,
+  render,
+  handleCtrlC,
+  ScalarDict,
+}
