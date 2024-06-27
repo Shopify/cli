@@ -65,10 +65,23 @@ export const ConfirmationSchema = zod.object({
 export const SupportedBuyerContextsSchema = zod.object({
   supported_buyer_contexts: zod
     .array(
-      zod.object({
-        currency: zod.string(),
-        countries: zod.array(zod.string()).nonempty().optional(),
-      }),
+      zod
+        .object({
+          currency: zod.string(),
+          countries: zod.array(zod.string()).nonempty().optional(),
+        })
+        .strict(),
     )
-    .optional(),
+    .optional()
+    .refine(
+      (values) => {
+        return (
+          values === undefined || values.every((value) => value.countries) || values.every((value) => !value.countries)
+        )
+      },
+      {
+        message:
+          'Must all be defined with only a currency, or must all be defined with a currency plus countries -- a mixture of the two is not allowed',
+      },
+    ),
 })
