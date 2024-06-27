@@ -26,12 +26,15 @@ export interface Notification {
  * Shows notifications to the user if they meet the criteria specified in the notifications.json file.
  *
  * @param commandId - The command ID that triggered the notifications.
- * @param _surface - The surface that triggered the notifications.
+ * @param availableSurfaces - The surfaces present in the current project (usually for app extensions).
  * @returns - A promise that resolves when the notifications have been shown.
  */
-export async function showNotificationsIfNeeded(commandId: string, _surface?: string): Promise<void> {
+export async function showNotificationsIfNeeded(
+  commandId: string,
+  availableSurfaces: string[] = ['app', 'theme', 'hydrogen'],
+): Promise<void> {
   const notifications = await getNotifications()
-  const notificationsToShow = filterNotifications(notifications.notifications, commandId)
+  const notificationsToShow = filterNotifications(notifications.notifications, commandId, availableSurfaces)
 
   notificationsToShow.forEach((notification) => {
     const content = {
@@ -76,6 +79,7 @@ async function fetchNotifications(): Promise<string> {
  *
  * @param notifications - The notifications to filter.
  * @param commandId - The command ID to filter by.
+ * @param availableSurfaces - The surfaces present in the current project (usually for app extensions).
  * @param today - The current date.
  * @param currentVersion - The current version of the CLI.
  * @returns - The filtered notifications.
@@ -83,15 +87,16 @@ async function fetchNotifications(): Promise<string> {
 export function filterNotifications(
   notifications: Notification[],
   commandId: string,
+  availableSurfaces: string[],
   today: Date = new Date(),
   currentVersion: string = CLI_KIT_VERSION,
 ): Notification[] {
-  const surface = commandId.split(':')[0] ?? 'all'
+  const mainSurface = commandId.split(':')[0] ?? 'all'
   return notifications
     .filter((notification) => filterByVersion(notification, currentVersion))
     .filter((notifications) => filterByDate(notifications, today))
     .filter((notification) => filterByCommand(notification, commandId))
-    .filter((notification) => filterBySurface(notification, surface))
+    .filter((notification) => filterBySurface(notification, availableSurfaces ?? [mainSurface]))
 }
 
 /**
@@ -133,9 +138,9 @@ function filterByCommand(notification: Notification, commandId: string) {
  * Filters notifications based on the surface.
  *
  * @param notification - The notification to filter.
- * @param surface - The surface to filter by.
+ * @param availableSurfaces - The surfaces present in the current project (usually for app extensions).
  * @returns - A boolean indicating whether the notification should be shown.
  */
-function filterBySurface(notification: Notification, surface: string) {
-  return !notification.surface || notification.surface === surface
+function filterBySurface(notification: Notification, availableSurfaces: string[]) {
+  return !notification.surface || availableSurfaces.includes(notification.surface)
 }
