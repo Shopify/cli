@@ -306,7 +306,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     // Show CLI notifications that are targetted for when your app has specific extension types
     const extensionTypes = appClass.realExtensions.map((module) => module.type)
-    await showNotificationsIfNeeded('app', extensionTypes)
+    await showNotificationsIfNeeded('', extensionTypes)
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 

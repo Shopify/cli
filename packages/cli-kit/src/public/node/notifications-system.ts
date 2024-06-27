@@ -127,6 +127,7 @@ function filterByDate(notification: Notification, today: Date) {
  * @returns - A boolean indicating whether the notification should be shown.
  */
 function filterByCommand(notification: Notification, commandId: string) {
+  if (commandId === '') return true
   return !notification.commands || notification.commands.includes(commandId)
 }
 
