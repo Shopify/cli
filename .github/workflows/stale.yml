@@ -23,6 +23,8 @@ jobs:
       - uses: actions/stale@v4
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          exempt-issue-labels: 'stale-exempt'
+          exempt-pr-labels: 'stale-exempt'
           days-before-issue-stale: 42
           days-before-pr-stale: 30
           days-before-close: 7
