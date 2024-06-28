@@ -2,6 +2,7 @@ import {versionSatisfies} from './node-package-manager.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {getCurrentCommandId} from './global-context.js'
 import {fileExists, readFile} from './fs.js'
+import {outputDebug} from './output.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 
@@ -36,10 +37,15 @@ export interface Notification {
  * @returns - A promise that resolves when the notifications have been shown.
  */
 export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Promise<void> {
-  const notifications = await getNotifications()
-  const commandId = getCurrentCommandId()
-  const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
-  await renderNotifications(notificationsToShow)
+  try {
+    const notifications = await getNotifications()
+    const commandId = getCurrentCommandId()
+    const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
+    await renderNotifications(notificationsToShow)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error: unknown) {
+    outputDebug('Error retrieving notifications')
+  }
 }
 
 /**
