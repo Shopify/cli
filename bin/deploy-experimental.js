@@ -2,32 +2,30 @@ import {execaSync} from 'execa'
 
 
 const clean = execaSync("git", ["status", "--porcelain"]).stdout.trim()
-console.log(clean.length)
 
-if (!clean) {
-  console.log("NOT CLEAN")
-} else {
-  console.log("CLEAN")
+if (clean.length > 0) {
+  console.log("❌ You have uncommitted changes. Please commit or stash them before deploying.")
+  process.exit(1)
 }
 
-// // get current branch
-// const currentBranch = execaSync("git", ["branch","--show-current"]).stdout.trim()
-// console.log(`🏗️ Preparing to deploy "${currentBranch}" to experimental`)
-// // validate a clean state
+// get current branch
+const currentBranch = execaSync("git", ["branch","--show-current"]).stdout.trim()
+console.log(`🏗️ Preparing to deploy "${currentBranch}" to experimental`)
+// validate a clean state
 
-// // change to experimental
-// execaSync("git", ["checkout", "experimental"])
+// change to experimental
+execaSync("git", ["checkout", "experimental"])
 
-// // reset experimental
-// console.log("🔄 Updating experimental branch...")
-// execaSync("git", ["reset", "--hard", currentBranch])
+// reset experimental
+console.log("🔄 Updating experimental branch...")
+execaSync("git", ["reset", "--hard", currentBranch])
 
-// // push force experimental
-// console.log("🙌 Pushing experimental branch...")
-// execaSync("git", ["push", "origin", "experimental", "-f"])
+// push force experimental
+console.log("🙌 Pushing experimental branch...")
+execaSync("git", ["push", "origin", "experimental", "-f"])
 
-// execaSync("git", ["checkout", currentBranch])
+execaSync("git", ["checkout", currentBranch])
 
-// // navigate to shipit
-// console.log("✅ Done! go to shipit and hit deploy! -> https://shipit.shopify.io/shopify/cli/experimental")
-// execaSync("open", ["https://shipit.shopify.io/shopify/cli/experimental"])
+// navigate to shipit
+console.log("✅ Done! go to shipit and hit deploy! -> https://shipit.shopify.io/shopify/cli/experimental")
+execaSync("open", ["https://shipit.shopify.io/shopify/cli/experimental"])
