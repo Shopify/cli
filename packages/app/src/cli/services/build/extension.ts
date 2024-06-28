@@ -10,6 +10,8 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {copyFile} from '@shopify/cli-kit/node/fs'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -91,19 +93,31 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   }
 
   try {
-    await bundleExtension({
-      minify: true,
-      outputPath: extension.outputPath,
-      stdin: {
-        contents: extension.getBundleExtensionStdinContent(),
-        resolveDir: extension.directory,
-        loader: 'tsx',
-      },
-      environment: options.environment,
-      env,
-      stderr: options.stderr,
-      stdout: options.stdout,
-    })
+    if (extension.isHtml) {
+      const targets = (getPathValue(extension.configuration, 'targeting') as {module: string}[]) ?? []
+      const modulePath = targets[0]?.module
+
+      if (!modulePath) throw new Error('No module path found')
+
+      const inputPath = joinPath(extension.directory, modulePath)
+      await copyFile(inputPath, extension.outputPath)
+    } else if (extension.isJavaScript) {
+      await bundleExtension({
+        minify: true,
+        outputPath: extension.outputPath,
+        stdin: {
+          contents: extension.getBundleExtensionStdinContent(),
+          resolveDir: extension.directory,
+          loader: 'tsx',
+        },
+        environment: options.environment,
+        env,
+        stderr: options.stderr,
+        stdout: options.stdout,
+      })
+    } else {
+      throw new Error('Could not build extension')
+    }
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
     throw new AbortError(

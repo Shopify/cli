@@ -110,6 +110,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
+    // This should likely be one html file per target
+    if (this.isHtml) {
+      return `${this.handle}.html`
+    }
     return `${this.handle}.js`
   }
 
@@ -131,6 +135,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
     this.uid = this.configuration.uid ?? randomUUID()
+
+    if (this.isHtml) {
+      this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
+    }
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
@@ -290,6 +298,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isJavaScript() {
     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
+  }
+
+  get isHtml() {
+    // targets are not defined here?
+    // const targets = (getPathValue(this.configuration, 'targeting') as {module: string}[]) ?? []
+    // return targets.some((target) => target.module.endsWith('.html'))
+    return true
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
