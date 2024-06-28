@@ -6,7 +6,7 @@ import {outputDebug} from './output.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 
-const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications-sytem/notifications.json'
+const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications/notifications.json'
 
 export interface Notifications {
   notifications: Notification[]
