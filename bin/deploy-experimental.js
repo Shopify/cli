@@ -28,7 +28,7 @@ async function deploy() {
   execaSync("git", ["checkout", currentBranch])
 
   // Wait a bit while shipit receives all the info
-  await (new Promise(resolve => setTimeout(resolve, 5000)));
+  await (new Promise(resolve => setTimeout(resolve, 3000)));
 
   // navigate to shipit
   const commit = execaSync("git", ["rev-parse", "HEAD"]).stdout.trim()
