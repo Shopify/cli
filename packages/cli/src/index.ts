@@ -22,6 +22,7 @@ import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
+import EditionsPlay from './cli/commands/editions/play.js'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
 export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunnel'
@@ -102,6 +103,7 @@ export const COMMANDS: any = {
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
+  'editions:play': EditionsPlay,
   'docs:generate': DocsGenerate,
 }
 

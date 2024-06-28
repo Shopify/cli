@@ -2206,6 +2206,25 @@
       "pluginType": "core",
       "strict": true
     },
+    "editions:play": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Play a game to learn about the most recent Shopify Edition",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "editions:play",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "help": {
       "aliases": [
       ],
