@@ -27,5 +27,7 @@ execaSync("git", ["push", "origin", "experimental", "-f"])
 execaSync("git", ["checkout", currentBranch])
 
 // navigate to shipit
-console.log("✅ Done! go to shipit and hit deploy! -> https://shipit.shopify.io/shopify/cli/experimental")
-execaSync("open", ["https://shipit.shopify.io/shopify/cli/experimental"])
+const commit = execaSync("git", ["rev-parse", "HEAD"]).stdout.trim()
+const url = `https://shipit.shopify.io/shopify/cli/experimental/deploys/new/${commit}`
+console.log(`✅ Done! go to shipit and hit deploy! ->\n   ${url}`)
+execaSync("open", [url])
