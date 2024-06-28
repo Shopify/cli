@@ -11,7 +11,7 @@ if (changes.length > 0) {
 
 // get current branch
 const currentBranch = execaSync("git", ["branch","--show-current"]).stdout.trim()
-console.log(`🏗️ Preparing to deploy "${currentBranch}" to experimental`)
+console.log(`🏗️  Preparing to deploy "${currentBranch}" to experimental`)
 
 // change to experimental
 execaSync("git", ["checkout", "experimental"])
