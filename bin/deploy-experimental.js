@@ -1,9 +1,10 @@
 import {execaSync} from 'execa'
 
 
-const clean = execaSync("git", ["status", "--porcelain"]).stdout.trim()
+const changes = execaSync("git", ["status", "--porcelain"]).stdout.trim()
 
-if (clean.length > 0) {
+// validate that we have a clean state
+if (changes.length > 0) {
   console.log("❌ You have uncommitted changes. Please commit or stash them before deploying.")
   process.exit(1)
 }
@@ -11,7 +12,6 @@ if (clean.length > 0) {
 // get current branch
 const currentBranch = execaSync("git", ["branch","--show-current"]).stdout.trim()
 console.log(`🏗️ Preparing to deploy "${currentBranch}" to experimental`)
-// validate a clean state
 
 // change to experimental
 execaSync("git", ["checkout", "experimental"])
