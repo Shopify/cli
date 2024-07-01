@@ -94,31 +94,20 @@ module ShopifyCLI
         assert_equal(Digest::MD5.hexdigest(content), @theme["layout/theme.liquid"].checksum)
       end
 
-      def test_normalize_json_template_for_checksum
-        expected_content = <<~EOS
-          {
-            "name": "Blog",
-            "sections": {
-              "main": {
-                "type": "main-blog",
-                "settings": {}
-              }
-            },
-            "order": [
-              "main"
-            ]
-          }
+      def test_do_not_normalize_settings_schema_for_checksum
+        normalized = <<~EOS.rstrip
+          [
+            {
+              "name": "theme_info",
+              "theme_name": "Example",
+              "theme_version": "1.0.0",
+              "theme_author": "Shopify",
+              "theme_documentation_url": "https://shopify.com",
+              "theme_support_url": "https://support.shopify.com/"
+            }
+          ]
         EOS
-        normalized = JSON.parse(expected_content).to_json
-        assert_equal(Digest::MD5.hexdigest(normalized), @theme["templates/blog.json"].checksum)
-      end
 
-      def test_normalize_settings_schema_for_checksum
-        normalized =
-          "[{\"name\":\"theme_info\",\"theme_name\":\"Example\"," \
-          "\"theme_version\":\"1.0.0\",\"theme_author\":\"Shopify\"," \
-          "\"theme_documentation_url\":\"https:\\/\\/shopify.com\"," \
-          "\"theme_support_url\":\"https:\\/\\/support.shopify.com\\/\"}]"
         assert_equal(Digest::MD5.hexdigest(normalized), @theme["config/settings_schema.json"].checksum)
       end
 
