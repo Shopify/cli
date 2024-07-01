@@ -1,0 +1,20 @@
+name: Snapit
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  snapit:
+    name: Snapit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+
+      - name: Create snapshot version
+        uses: Shopify/snapit@ad1361e8e945474410230d3063bededf21901a95 # pin@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
