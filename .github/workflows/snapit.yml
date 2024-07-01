@@ -12,7 +12,10 @@ jobs:
     steps:
       - name: Checkout default branch
         uses: actions/checkout@v4
-
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 22.2.0
       - name: Create snapshot version
         uses: Shopify/snapit@ad1361e8e945474410230d3063bededf21901a95 # pin@main
         env:
