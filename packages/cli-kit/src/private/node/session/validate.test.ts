@@ -16,6 +16,7 @@ const validIdentity: IdentityToken = {
   refreshToken: 'refresh',
   expiresAt: futureDate,
   scopes: ['scope', 'scope2', 'scope3'],
+  userId: '1234-5678',
 }
 
 const expiredIdentity: IdentityToken = {
@@ -23,6 +24,7 @@ const expiredIdentity: IdentityToken = {
   refreshToken: 'refresh',
   expiresAt: pastDate,
   scopes: ['scope', 'scope2', 'scope3'],
+  userId: '1234-5678',
 }
 
 const validApplications = {

@@ -13,6 +13,7 @@ const IdentityTokenSchema = zod.object({
   refreshToken: zod.string(),
   expiresAt: DateSchema,
   scopes: zod.array(zod.string()),
+  userId: zod.string(),
 })
 
 /**
@@ -66,3 +67,13 @@ export const SessionSchema = zod.object({}).catchall(
 export type Session = zod.infer<typeof SessionSchema>
 export type IdentityToken = zod.infer<typeof IdentityTokenSchema>
 export type ApplicationToken = zod.infer<typeof ApplicationTokenSchema>
+
+/**
+ * Confirms that a given identity token structure matches what the schema currently defines.
+ *
+ * A full re-auth is the expectation if this validation fails.
+ */
+export function validateCachedIdentityTokenStructure(identityToken: unknown) {
+  const parsed = IdentityTokenSchema.safeParse(identityToken)
+  return parsed.success
+}
