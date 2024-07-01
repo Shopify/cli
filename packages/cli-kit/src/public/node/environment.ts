@@ -55,7 +55,7 @@ export function getBackendPort(): number | undefined {
 }
 
 /**
- * Returns the information of the identity token.
+ * Returns the information of the identity & refresh tokens, provided by environment variables.
  *
  * @returns The identity token information in case it exists.
  */

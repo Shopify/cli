@@ -191,9 +191,22 @@ describe('useDeviceAuth', () => {
     expect(got).toBe(true)
   })
 
-  test('returns false when SHOPIFY_CLI_DEVICE_AUTH, SPIN, CODESPACES or GITPOD_WORKSPACE_URL are missing', () => {
+  test('returns true by default', () => {
     // Given
     const env = {}
+
+    // When
+    const got = useDeviceAuth(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false if opted-out', () => {
+    // Given
+    const env = {
+      SHOPIFY_CLI_ACCESS_CODE_AUTH: '1',
+    }
 
     // When
     const got = useDeviceAuth(env)
