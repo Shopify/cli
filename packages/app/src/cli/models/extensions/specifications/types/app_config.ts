@@ -26,4 +26,7 @@ export interface AppConfigurationUsedByCli {
   auth?: {
     redirect_urls: string[]
   }
+  build?: {
+    app_type?: 'dev' | 'prod'
+  }
 }

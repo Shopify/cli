@@ -51,6 +51,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     automatically_update_urls_on_dev: true,
     dev_store_url: 'https://google.com',
     include_config_on_deploy: true,
+    app_type: 'dev',
   },
 }
 

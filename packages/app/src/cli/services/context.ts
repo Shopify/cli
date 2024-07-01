@@ -35,9 +35,14 @@ import {
 } from '../api/graphql/development_preview.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {
+  TokenItem,
+  renderConfirmationPrompt,
+  renderDangerousConfirmationPrompt,
+  renderInfo,
+} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
@@ -251,7 +256,21 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     selectedStore,
     cachedInfo,
     organization,
+    localApp,
   })
+
+  // validate that dev is ok for prod apps
+  const isProdApp = isCurrentAppSchema(localApp.configuration) && localApp.configuration.build?.app_type === 'prod'
+  if (isProdApp) {
+    const confirmationResponse = await renderDangerousConfirmationPrompt({
+      message:
+        '🚨 This app is marked as being used in production. You may make changes that are visible to merchants. Are you sure you want to continue?',
+      confirmation: selectedApp.title,
+    })
+    if (!confirmationResponse) {
+      throw new AbortSilentError()
+    }
+  }
 
   const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
   await logMetadataForLoadedContext({
@@ -503,6 +522,7 @@ async function ensureIncludeConfigOnDeploy({
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+    appType: isCurrentAppSchema(app.configuration) ? app.configuration?.build?.app_type : undefined,
     resetMessage: resetHelpMessage,
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
@@ -809,12 +829,13 @@ interface ReusedValuesOptions {
   selectedApp: OrganizationApp
   selectedStore: OrganizationStore
   cachedInfo?: CachedAppInfo
+  localApp: AppInterface
 }
 
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo, localApp}: ReusedValuesOptions) {
   if (!cachedInfo) return
 
   let updateURLs = 'Not yet configured'
@@ -824,6 +845,7 @@ function showReusedDevValues({organization, selectedApp, selectedStore, cachedIn
     org: organization.businessName,
     appName: selectedApp.title,
     devStore: selectedStore.shopDomain,
+    appType: isCurrentAppSchema(localApp.configuration) ? localApp.configuration.build?.app_type : undefined,
     updateURLs,
     configFile: cachedInfo.configFile,
     resetMessage: resetHelpMessage,
@@ -834,6 +856,7 @@ interface CurrentlyUsedConfigInfoOptions {
   appName: string
   org?: string
   devStore?: string
+  appType?: string
   updateURLs?: string
   configFile?: string
   appDotEnv?: string
@@ -851,6 +874,7 @@ export function renderCurrentlyUsedConfigInfo({
   appName,
   devStore,
   updateURLs,
+  appType,
   configFile,
   appDotEnv,
   resetMessage,
@@ -860,6 +884,7 @@ export function renderCurrentlyUsedConfigInfo({
 
   if (org) items.unshift(`Org:             ${org}`)
   if (devStore) items.push(`Dev store:       ${devStore}`)
+  if (appType) items.push(`App type:        ${appType}`)
   if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
   if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
 

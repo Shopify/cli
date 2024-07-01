@@ -54,6 +54,7 @@ export const AppSchema = zod.object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
       dev_store_url: zod.string().optional(),
       include_config_on_deploy: zod.boolean().optional(),
+      app_type: zod.enum(['dev', 'prod']).optional(),
     })
     .optional(),
   extension_directories: zod.array(zod.string()).optional(),
