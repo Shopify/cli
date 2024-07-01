@@ -941,7 +941,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
@@ -969,7 +969,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, appId: 'key2'})
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
     vi.mocked(loadApp).mockResolvedValue(app)
 
@@ -996,7 +996,7 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
@@ -1033,7 +1033,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     const developerPlatformClient = buildDeveloperPlatformClient({
       async orgAndApps(_orgId: string) {
@@ -1102,7 +1102,7 @@ describe('ensureDeployContext', () => {
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(link).mockResolvedValue((app as any).configuration)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
@@ -1161,7 +1161,7 @@ describe('ensureDeployContext', () => {
     })
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(appWithExtensions)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(appWithExtensions)
 
@@ -1190,7 +1190,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
@@ -1240,7 +1240,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
@@ -1286,7 +1286,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const writeAppConfigurationFileSpy = vi
@@ -1334,7 +1334,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
@@ -1385,7 +1385,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
@@ -1428,7 +1428,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({identifiers, scopesWereChanged: false})
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')

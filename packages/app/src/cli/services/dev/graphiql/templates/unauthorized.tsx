@@ -61,10 +61,11 @@ const polarisUnauthorizedContent = renderToStaticMarkup(
                   Install your app to access GraphiQL
                 </Text>
                 <p>
-                  The GraphiQL Explorer relies on your app being installed on your development store to access its data.
+                  The GraphiQL Explorer relies on your app being installed and access scopes approved on your
+                  development store to access its data.
                 </p>
                 <p id="card-cta">
-                  <Button id="app-install-button">Install your app</Button>
+                  <Button id="app-install-button">Install your app/Approve scopes</Button>
                 </p>
               </BlockStack>
             </div>

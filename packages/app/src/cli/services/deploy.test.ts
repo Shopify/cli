@@ -565,6 +565,7 @@ async function testDeployBundle({
         organizationId: 'org-id',
       }),
     release: !options?.noRelease,
+    scopesWereChanged: false,
   })
 
   vi.mocked(useThemebundling).mockReturnValue(true)

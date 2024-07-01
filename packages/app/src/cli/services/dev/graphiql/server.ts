@@ -8,11 +8,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
+import {EventEmitter} from 'node:stream'
 
 const require = createRequire(import.meta.url)
 
@@ -41,6 +42,8 @@ interface SetupGraphiQLServerOptions {
   apiSecret: string
   key?: string
   storeFqdn: string
+  accessChangeEvent: EventEmitter
+  initialExpectedScopes: string
 }
 
 export function setupGraphiQLServer({
@@ -52,9 +55,12 @@ export function setupGraphiQLServer({
   apiSecret,
   key,
   storeFqdn,
+  accessChangeEvent,
+  initialExpectedScopes,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
   const localhostUrl = `http://localhost:${port}`
+  let expectedScopes = initialExpectedScopes
 
   const app = express()
 
@@ -73,27 +79,61 @@ export function setupGraphiQLServer({
     return _token
   }
 
-  async function refreshToken(): Promise<string> {
+  let scopeMismatch = false
+
+  async function refreshToken(expectedScopesBasedOnFile?: string): Promise<string> {
+    if (expectedScopesBasedOnFile !== undefined) {
+      expectedScopes = expectedScopesBasedOnFile
+    }
     try {
-      outputDebug('refreshing token', stdout)
+      outputInfo('refreshing token', stdout)
       _token = undefined
-      const queryString = queryStringEncode({
+      const oauthOptions = {
         client_id: apiKey,
         client_secret: apiSecret,
         grant_type: 'client_credentials',
-      })
+        scope: expectedScopesBasedOnFile,
+      }
+      const queryString = queryStringEncode(oauthOptions)
       const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token?${queryString}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       })
-      const tokenJson = (await tokenResponse.json()) as {access_token: string}
+      const tokenResponseObject = await tokenResponse.json()
+
+      const {scope: approvedScopes} = tokenResponseObject as {scope: string}
+
+      // break and trim by commas put the approved scopes into a set
+      const approvedScopesSet = new Set(approvedScopes.split(',').map((scope) => scope.trim()))
+      // same for scopes
+      const expectedScopesSet = new Set(expectedScopes.split(',').map((scope) => scope.trim()))
+
+      // check if everything in expectedScopesSet is in approvedScopesSet
+      const allExpectedInApproved = [...expectedScopesSet].every((scope) => approvedScopesSet.has(scope))
+
+      // if these sets don't match exactly... log something
+      if (allExpectedInApproved) {
+        scopeMismatch = false
+      } else {
+        scopeMismatch = true
+      }
+
+      const tokenJson = tokenResponseObject as {access_token: string}
       return tokenJson.access_token
     } catch (_error) {
       throw new TokenRefreshError()
     }
   }
+
+  accessChangeEvent.on('accessChange', ({scopes}) => {
+    const hardRefresh = async () => {
+      _token = await refreshToken(scopes)
+    }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    hardRefresh()
+  })
 
   app.get('/graphiql/ping', corsMiddleware, (_req, res) => {
     res.send('pong')
@@ -110,6 +150,7 @@ export function setupGraphiQLServer({
   })
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
+    _token = await refreshToken()
     return performActionWithRetryAfterRecovery(
       async () => supportedApiVersions({storeFqdn, token: await token()}),
       refreshToken,
@@ -118,17 +159,19 @@ export function setupGraphiQLServer({
 
   app.get('/graphiql/status', (_req, res) => {
     fetchApiVersionsWithTokenRefresh()
-      .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl}))
+      .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl, scopeMismatch}))
       .catch(() => res.send({status: 'UNAUTHENTICATED'}))
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
+
     if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     let apiVersions: string[]
     try {
+      await refreshToken()
       apiVersions = await fetchApiVersionsWithTokenRefresh()
     } catch (err) {
       if (err instanceof TokenRefreshError) {
@@ -158,6 +201,7 @@ export function setupGraphiQLServer({
         }),
         {
           url: localhostUrl,
+          appUrl,
           defaultQueries: [{query: defaultQuery}],
           query,
         },
@@ -169,6 +213,9 @@ export function setupGraphiQLServer({
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
+    // we always grab a fresh token in case scopes have changed
+    await refreshToken()
+
     outputDebug('Handling /graphiql/graphql.json request', stdout)
     if (failIfUnmatchedKey(req.query.key as string, res)) return
 

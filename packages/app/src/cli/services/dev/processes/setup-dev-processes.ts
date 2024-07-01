@@ -84,6 +84,8 @@ export async function setupDevProcesses({
     isTruthy(env[environmentVariableNames.enableAppLogPolling]) &&
     localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
+  const accessChangeEvent = await localApp.watchForAccessChange()
+
   const processes = [
     ...(await setupWebProcesses({
       webs: localApp.webs,
@@ -103,6 +105,8 @@ export async function setupDevProcesses({
           apiSecret,
           key: graphiqlKey,
           storeFqdn,
+          accessChangeEvent,
+          initialExpectedScopes: getAppScopes(localApp.configuration),
         })
       : undefined,
     await setupPreviewableExtensionsProcess({

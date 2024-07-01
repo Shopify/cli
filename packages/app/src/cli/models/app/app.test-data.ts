@@ -110,6 +110,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
+    appConfigurationFilePath: app.configuration?.path ?? getConfig().path,
   })
 
   if (app.updateDependencies) {

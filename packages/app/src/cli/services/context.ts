@@ -342,6 +342,7 @@ interface DeployContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>
   identifiers: Identifiers
   release: boolean
+  scopesWereChanged: boolean
 }
 
 /**
@@ -437,7 +438,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 
   await ensureIncludeConfigOnDeploy({org, app, remoteApp, reset, force})
 
-  const identifiers = await ensureDeploymentIdsPresence({
+  const {identifiers, scopesWereChanged} = await ensureDeploymentIdsPresence({
     app,
     appId: remoteApp.apiKey,
     appName: remoteApp.title,
@@ -468,6 +469,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     },
     identifiers,
     release: !noRelease,
+    scopesWereChanged,
   }
 
   await logMetadataForLoadedContext({
