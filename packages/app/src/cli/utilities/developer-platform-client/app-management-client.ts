@@ -8,11 +8,7 @@ import {
   ActiveAppReleaseQueryVariables,
   ActiveAppReleaseQuerySchema,
 } from './app-management-client/graphql/active-app-release.js'
-import {
-  SpecificationsQuery,
-  SpecificationsQueryVariables,
-  SpecificationsQuerySchema,
-} from './app-management-client/graphql/specifications.js'
+import {SpecificationsQuery, SpecificationsQuerySchema} from './app-management-client/graphql/specifications.js'
 import {
   AppVersionsQuery,
   AppVersionsQueryVariables,
@@ -28,7 +24,7 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './app-management-client/graphql/release-version.js'
-import {AppsQuery, AppsQuerySchema, MinimalAppModule} from './app-management-client/graphql/apps.js'
+import {AppsQuery, AppsQuerySchema} from './app-management-client/graphql/apps.js'
 import {
   OrganizationQuery,
   OrganizationQuerySchema,
@@ -99,12 +95,16 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
-
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {ListOrganizations} from '../../api/graphql/business-platform/generated/organizations.js'
+import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
+import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
+import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
+import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -173,7 +173,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    return this.token()
+    const newToken = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const session = await this.session()
+    if (newToken) {
+      session.token = newToken
+    }
+    return session.token
   }
 
   async businessPlatformToken(): Promise<string> {
@@ -192,16 +197,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
     const {app} = await this.fetchApp(appIdentifiers)
-    const {modules} = app.activeRelease.version
-    const brandingModule = modules.find((mod) => mod.specification.externalIdentifier === 'branding')!
-    const appAccessModule = modules.find((mod) => mod.specification.externalIdentifier === 'app_access')!
+    const {name, appModules} = app.activeRelease.version
+    const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     return {
       id: app.id,
-      title: brandingModule.config.name as string,
+      title: name,
       apiKey: app.id,
       organizationId: appIdentifiers.organizationId,
       apiSecretKeys: [],
-      grantedScopes: appAccessModule.config.scopes as string[],
+      grantedScopes: (appAccessModule?.config?.scopes as string[] | undefined) ?? [],
       flags: [],
       developerPlatformClient: this,
     }
@@ -250,13 +254,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const query = AppsQuery
     const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token())
     const minimalOrganizationApps = result.apps.map((app) => {
-      const brandingConfig = app.activeRelease.version.modules.find(
-        (mod: MinimalAppModule) => mod.specification.externalIdentifier === 'branding',
-      )!.config
       return {
         id: app.id,
         apiKey: app.id,
-        title: brandingConfig.name as string,
+        title: app.activeRelease.version.name,
         organizationId,
       }
     })
@@ -266,31 +267,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications({id: appId, organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+  async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = SpecificationsQuery
-    const variables: SpecificationsQueryVariables = {appId}
-    const result = await appManagementRequest<SpecificationsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
+    const result = await appManagementRequest<SpecificationsQuerySchema>(organizationId, query, await this.token())
+    return result.specifications.map(
+      (spec): RemoteSpecification => ({
+        name: spec.name,
+        externalName: spec.name,
+        identifier: spec.identifier,
+        externalIdentifier: spec.externalIdentifier,
+        gated: false,
+        options: {
+          managementExperience: 'cli',
+          // Temporary stub, needs to be added to the API
+          registrationLimit: 1,
+        },
+        experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
+      }),
     )
-    return result.specifications
-      .filter((spec) => spec.experience !== 'DEPRECATED')
-      .map(
-        (spec): RemoteSpecification => ({
-          name: spec.name,
-          externalName: spec.name,
-          identifier: spec.identifier,
-          externalIdentifier: spec.externalIdentifier,
-          gated: false,
-          options: {
-            managementExperience: 'cli',
-            registrationLimit: spec.appModuleLimit,
-          },
-          experience: spec.experience.toLowerCase() as 'extension' | 'configuration',
-        }),
-      )
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
@@ -368,7 +362,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {app} = await this.fetchApp(appIdentifiers)
     const configurationRegistrations: ExtensionRegistration[] = []
     const extensionRegistrations: ExtensionRegistration[] = []
-    app.activeRelease.version.modules.forEach((mod) => {
+    app.activeRelease.version.appModules.forEach((mod) => {
       const registration = {
         id: mod.uid,
         uid: mod.uid,
@@ -462,7 +456,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           message: '',
           appModuleVersions: result2.app.version.modules.map((mod: AppModuleReturnType) => {
             return {
-              registrationId: mod.gid,
+              registrationId: mod.uid,
               registrationUid: mod.uid,
               registrationUuid: mod.uid,
               registrationTitle: mod.handle,
@@ -495,7 +489,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         variables,
       ),
     ])
-    const currentModules = currentVersion.app.activeRelease.version.modules
+    const currentModules = currentVersion.app.activeRelease.version.appModules
     const selectedVersionModules = selectedVersion.app.version.modules
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
@@ -527,9 +521,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
     const result = await this.activeAppVersionRawResult(app)
     return {
-      appModuleVersions: result.app.activeRelease.version.modules.map((mod) => {
+      appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
+        const experience = CONFIG_EXTENSION_IDS.includes(mod.uid) ? 'configuration' : 'extension'
         return {
-          registrationId: mod.gid,
+          registrationId: mod.uid,
           registrationUid: mod.uid,
           registrationUuid: mod.uid,
           registrationTitle: mod.handle,
@@ -539,7 +534,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             ...mod.specification,
             identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
-            experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+            experience,
           },
         }
       }),
@@ -569,23 +564,35 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async deploy({
     apiKey,
+    name,
     appModules,
     organizationId,
     versionTag,
     bundleUrl,
+    skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
+    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
+    let updatedName = name
+    if (brandingModule) {
+      updatedName = JSON.parse(brandingModule.config).name
+    }
     const variables: CreateAppVersionMutationVariables = {
       appId: apiKey,
-      appModules: (appModules ?? []).map((mod) => {
-        return {
-          uid: mod.uid ?? mod.uuid ?? mod.handle,
-          specificationIdentifier: mod.specificationIdentifier,
-          handle: mod.handle,
-          config: mod.config,
-        }
-      }),
-      versionTag,
-      assetsUrl: bundleUrl,
+      name: updatedName,
+      appSource: {
+        assetsUrl: bundleUrl,
+        modules: (appModules ?? []).map((mod) => {
+          return {
+            uid: mod.uid ?? mod.uuid ?? mod.handle,
+            specificationIdentifier: mod.specificationIdentifier,
+            handle: mod.handle,
+            config: JSON.parse(mod.config),
+          }
+        }),
+      },
+      metadata: {
+        versionTag,
+      },
     }
 
     const result = await appManagementRequest<CreateAppVersionMutationSchema>(
@@ -594,7 +601,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
     )
-    const {version, userErrors} = result.versionCreate
+    const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
     const devDashFqdn = (await appManagementFqdn()).replace('app.', 'developers.')
@@ -604,20 +611,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
           uuid: version.id,
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
-          versionTag: version.versionTag,
+          versionTag: versionTag ?? 'VERSION TAG NOT RETURNED FROM API YET',
           location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
-          appModuleVersions: version.modules.map((mod) => {
+          appModuleVersions: version.appModules.map((mod) => {
             return {
-              uuid: mod.uid,
-              registrationUuid: mod.uid,
+              uuid: mod.uuid,
+              registrationUuid: mod.uuid,
               validationErrors: [],
             }
           }),
           message: '',
         },
-        userErrors: userErrors?.map((err) => ({...err, category: 'deploy', details: []})),
+        userErrors: userErrors?.map((err) => ({...err, details: []})),
       },
     }
+    if (noRelease) return versionResult
 
     const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
     const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
@@ -628,7 +636,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
     if (releaseResult.versionRelease?.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
-        releaseResult.versionRelease.userErrors.map((err) => ({...err, category: 'release', details: []})),
+        releaseResult.versionRelease.userErrors.map((err) => ({...err, details: []})),
       )
     }
 
@@ -773,34 +781,41 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
   return {
-    appModules: [
-      {
-        uid: 'app_home',
-        specificationIdentifier: 'app_home',
-        config: JSON.stringify({
-          app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-          embedded: isLaunchable,
-        }),
-      },
-      {
-        uid: 'branding',
-        specificationIdentifier: 'branding',
-        config: JSON.stringify({name}),
-      },
-      {
-        uid: 'webhooks',
-        specificationIdentifier: 'webhooks',
-        config: JSON.stringify({api_version: '2024-01'}),
-      },
-      {
-        uid: 'app_access',
-        specificationIdentifier: 'app_access',
-        config: JSON.stringify({
-          redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
-          ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
-        }),
-      },
-    ],
+    appSource: {
+      modules: [
+        {
+          // Change the uid to AppHomeSpecIdentifier
+          uid: 'app_home',
+          specificationIdentifier: AppHomeSpecIdentifier,
+          config: {
+            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+            embedded: isLaunchable,
+          },
+        },
+        {
+          // Change the uid to BrandingSpecIdentifier
+          uid: 'branding',
+          specificationIdentifier: BrandingSpecIdentifier,
+          config: {name},
+        },
+        {
+          // Change the uid to WebhooksSpecIdentifier
+          uid: 'webhooks',
+          specificationIdentifier: WebhooksSpecIdentifier,
+          config: {api_version: '2024-01'},
+        },
+        {
+          // Change the uid to AppAccessSpecIdentifier
+          uid: 'app_access',
+          specificationIdentifier: AppAccessSpecIdentifier,
+          config: {
+            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+            ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+          },
+        },
+      ],
+    },
+    name,
   }
 }
 
@@ -815,7 +830,13 @@ function encodedGidFromId(id: string): string {
 
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
-  return Buffer.from(gid, 'base64').toString('ascii').match(/\d+$/)![0]
+  const decodedGid = Buffer.from(gid, 'base64').toString('ascii')
+  return numberFromGid(decodedGid).toString()
+}
+
+// gid://organization/Organization/1234 => 1234
+function numberFromGid(gid: string): number {
+  return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }
 
 interface DiffAppModulesInput {

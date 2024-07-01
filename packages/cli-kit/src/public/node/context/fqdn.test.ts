@@ -62,7 +62,7 @@ describe('appManagementFqdn', () => {
     const got = await appManagementFqdn()
 
     // Then
-    expect(got).toEqual('shopify.com')
+    expect(got).toEqual('app.shopify.com')
   })
 
   test("returns the spin fqdn if the environment is spin and it's running in a Spin environment", async () => {
