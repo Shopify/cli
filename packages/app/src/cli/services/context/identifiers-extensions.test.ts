@@ -1154,7 +1154,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     const config = {
       topic: 'orders/delete',
       api_version: '2024-01',
-      uri: 'https://my-app.com/webhooks',
+      uri: '/webhooks',
       include_fields: ['id'],
       filter: 'id:*',
     }
@@ -1172,7 +1172,8 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
       title: 'Webhook Subscription',
       type: 'WEBHOOK_SUBSCRIPTION',
       activeVersion: {
-        config: JSON.stringify(config),
+        // use absolute path here to test that it matches both absolute and relative paths from the local config
+        config: JSON.stringify({...config, uri: 'https://my-app.com/webhooks'}),
       },
     }
 
