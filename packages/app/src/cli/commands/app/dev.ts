@@ -133,7 +133,8 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     }),
     'dev-preview': Flags.boolean({
       hidden: true,
-      description: 'Enables the developer preview for the upcoming `app dev` implementation.',
+      description:
+        'Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.',
       env: 'SHOPIFY_FLAG_BETA',
     }),
   }

@@ -391,7 +391,7 @@
         },
         "dev-preview": {
           "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `app dev` implementation.",
+          "description": "Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.",
           "env": "SHOPIFY_FLAG_BETA",
           "hidden": true,
           "name": "dev-preview",
