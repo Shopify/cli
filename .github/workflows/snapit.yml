@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 22.2.0
       - name: Create snapshot version
-        uses: Shopify/snapit@ad1361e8e945474410230d3063bededf21901a95 # pin@main
+        uses: Shopify/snapit@c785784b88dd65b9e0645ff7361cbf83a289a3e4 # pin@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
