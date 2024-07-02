@@ -161,9 +161,10 @@ function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance)
   const remoteVersionConfig = remoteSource.activeVersion?.config
   const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : {}
   const localConfig = extension.configuration as unknown as SingleWebhookSubscriptionType
+  const remoteUri: string = remoteVersionConfigObj.uri || ''
   return (
     remoteVersionConfigObj.topic === localConfig.topic &&
-    remoteVersionConfigObj.uri === localConfig.uri &&
+    (remoteUri === localConfig.uri || remoteUri.endsWith(localConfig.uri)) &&
     remoteVersionConfigObj.filter === localConfig.filter
   )
 }
