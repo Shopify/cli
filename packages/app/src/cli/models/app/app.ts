@@ -18,6 +18,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 // Schemas for loading app configuration
 
@@ -239,6 +241,7 @@ export interface AppInterface<
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  manifest: () => Promise<JsonMapType>
   /**
    * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
    *
@@ -331,6 +334,27 @@ export class App<
     return this.realExtensions.filter(
       (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
     )
+  }
+
+  async manifest(): Promise<JsonMapType> {
+    const modules = await Promise.all(
+      this.realExtensions.map(async (module) => {
+        const config = await module.commonDeployConfig('', this.configuration)
+        return {
+          type: module.externalType,
+          handle: module.handle,
+          uid: module.uid,
+          assets: module.uid,
+          config: (config ?? {}) as JsonMapType,
+        }
+      }),
+    )
+    const realModules = getArrayRejectingUndefined(modules)
+    return {
+      name: this.name,
+      handle: '',
+      modules: realModules,
+    }
   }
 
   async updateDependencies() {

@@ -5,6 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
@@ -31,6 +32,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | DevSessionProcess
   | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
@@ -57,6 +59,7 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
+  beta: boolean
 }
 
 export async function setupDevProcesses({
@@ -70,6 +73,7 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
+  beta,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -119,13 +123,23 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    await setupDraftableExtensionsProcess({
-      localApp,
-      remoteApp,
-      apiKey,
-      developerPlatformClient,
-      proxyUrl: network.proxyUrl,
-    }),
+    beta
+      ? await setupDevSessionProcess({
+          app: localApp,
+          apiKey,
+          developerPlatformClient,
+          url: network.proxyUrl,
+          appId: remoteApp.id,
+          organizationId: remoteApp.organizationId,
+          storeFqdn,
+        })
+      : await setupDraftableExtensionsProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          developerPlatformClient,
+          proxyUrl: network.proxyUrl,
+        }),
     await setupPreviewThemeAppExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,

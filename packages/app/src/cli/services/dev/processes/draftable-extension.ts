@@ -12,7 +12,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 
-interface DraftableExtensionOptions {
+export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string

@@ -50,7 +50,7 @@ import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 
-const defaultExtensionDirectory = 'extensions/*'
+export const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
@@ -254,6 +254,8 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
+let alreadyShownCLIWarning = false
+
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private mode: AppLoaderMode
   private errors: AppErrors = new AppErrors()
@@ -335,7 +337,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     // - The current process is global
     // - The project has a local CLI
     // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
-    if (currentProcessIsGlobal() && hasLocalCLI && !sniffForJson()) {
+    if (currentProcessIsGlobal() && hasLocalCLI && !sniffForJson() && !alreadyShownCLIWarning) {
       const warningContent = {
         headline: 'You are running a global installation of Shopify CLI',
         body: [
@@ -347,6 +349,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         },
       }
       renderInfo(warningContent)
+      alreadyShownCLIWarning = true
     }
   }
 

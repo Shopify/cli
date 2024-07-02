@@ -57,7 +57,12 @@ const Dev: FunctionComponent<DevProps> = ({
   developerPreview,
   isEditionWeek,
 }) => {
-  const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
+  const {developmentStorePreviewEnabled} = app
+  const canEnablePreviewMode = false
+
+  // TODO: Clean this up, canEnablePreviewMode should come from app, but it doesn't work in the new API yet
+  // const {canEnablePreviewMode ,developmentStorePreviewEnabled} = app
+
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
@@ -79,7 +84,7 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
-    await developerPreview.disable()
+    // await developerPreview.disable()
   })
 
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)

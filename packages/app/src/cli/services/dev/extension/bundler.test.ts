@@ -285,11 +285,6 @@ describe('setupExtensionWatcher', () => {
     }
   }
 
-  // Needed to test chokidar event handlers, which do not support async
-  function flushPromises() {
-    return new Promise((resolve) => setImmediate(resolve))
-  }
-
   test('warns and does not watch if there are no watch paths', async () => {
     const watchOptions = await mockWatcherOptions({
       watchPath: undefined,
@@ -594,3 +589,8 @@ describe('setupExtensionWatcher', () => {
     expect(outputWarn).not.toHaveBeenCalled()
   })
 })
+
+// Needed to test chokidar event handlers, which do not support async
+export function flushPromises() {
+  return new Promise((resolve) => setImmediate(resolve))
+}

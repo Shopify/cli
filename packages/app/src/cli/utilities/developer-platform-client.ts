@@ -47,6 +47,7 @@ import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphq
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {DevSessionCreateSchema} from '../api/graphql/dev_session_create.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {
   ExtensionUpdateDraftMutation,
@@ -160,6 +161,13 @@ export interface ActiveAppVersion {
 
 export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
+  name: string
+}
+
+export interface DevSessionDeployOptions {
+  shopName: string
+  appId: string
+  assetsUrl: string
 }
 
 type WithUserErrors<T> = T & {
@@ -200,6 +208,7 @@ export interface DeveloperPlatformClient {
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
+  devSessionDeploy: (input: DevSessionDeployOptions) => Promise<DevSessionCreateSchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,

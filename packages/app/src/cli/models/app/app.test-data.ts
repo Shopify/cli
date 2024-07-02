@@ -24,6 +24,7 @@ import {
   AppVersionIdentifiers,
   AssetUrlSchema,
   CreateAppOptions,
+  DevSessionDeployOptions,
   DeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
@@ -192,8 +193,9 @@ export async function testUIExtension(
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   const configuration = uiExtension?.configuration ?? {
-    name: uiExtension?.configuration?.name ?? 'test-ui-extension',
-    type: uiExtension?.configuration?.type ?? uiExtension?.type ?? 'product_subscription',
+    name: uiExtension?.name ?? 'test-ui-extension',
+    type: uiExtension?.type ?? 'product_subscription',
+    handle: uiExtension?.handle ?? 'test-ui-extension',
     metafields: [],
     capabilities: {
       block_progress: false,
@@ -395,7 +397,7 @@ export async function testSingleWebhookSubscriptionExtension({
 
   const webhooksExtension = new ExtensionInstance({
     configuration,
-    configurationPath: '',
+    configurationPath: 'shopify.app.toml',
     directory: './',
     specification: appWebhookSubscriptionSpec,
   })
@@ -1240,6 +1242,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
+    devSessionDeploy: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub

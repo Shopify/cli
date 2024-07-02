@@ -3,10 +3,12 @@ import {dev} from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
+import {newDev} from '../../services/new-dev.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 export default class Dev extends Command {
   static summary = 'Run the app.'
@@ -131,6 +133,12 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
+    // eslint-disable-next-line @shopify/cli/command-conventional-flag-env
+    beta: Flags.boolean({
+      hidden: true,
+      description: 'Enables the developer preview for the upcoming `app dev` implementation.',
+      env: 'DEV_BETA',
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -180,6 +188,11 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       graphiqlKey: flags['graphiql-key'],
     }
 
-    await dev(devOptions)
+    if (flags.beta) {
+      outputWarn('-----> Running on beta mode <-----')
+      await newDev(devOptions)
+    } else {
+      await dev(devOptions)
+    }
   }
 }

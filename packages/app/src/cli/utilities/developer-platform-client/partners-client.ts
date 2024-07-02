@@ -7,6 +7,7 @@ import {
 import {
   ActiveAppVersion,
   AppDeployOptions,
+  DevSessionDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
   DeveloperPlatformClient,
@@ -130,6 +131,7 @@ import {
   MigrateAppModuleSchema,
   MigrateAppModuleVariables,
 } from '../../api/graphql/extension_migrate_app_module.js'
+import {DevSessionCreateSchema} from '../../api/graphql/dev_session_create.js'
 import {
   AppLogsSubscribeVariables,
   AppLogsSubscribeMutation,
@@ -393,6 +395,11 @@ export class PartnersClient implements DeveloperPlatformClient {
       return otherFields
     })
     return this.request(AppDeploy, variables)
+  }
+
+  async devSessionDeploy(_input: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
   }
 
   async release({
