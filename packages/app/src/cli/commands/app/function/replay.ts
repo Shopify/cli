@@ -2,12 +2,11 @@ import {functionFlags, inFunctionContext} from '../../../services/function/commo
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import {environmentVariableNames} from '../../../constants.js'
+import {appLogPollingEnabled} from '../../../services/app-logs/utils.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class FunctionReplay extends Command {
   static hidden = true
@@ -55,11 +54,8 @@ export default class FunctionReplay extends Command {
   }
 
   public async run() {
-    const env = getEnvironmentVariables()
-    const logPollingEnabled = isTruthy(env[environmentVariableNames.enableAppLogPolling])
-
-    if (!logPollingEnabled) {
-      throw new Error(
+    if (!appLogPollingEnabled()) {
+      throw new AbortError(
         'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
       )
     }
