@@ -58,6 +58,13 @@ export interface ExtensionDevOptions {
    */
   apiKey: string
 
+  apiSecret?: string
+
+  /**
+   * URL used to install the app
+   */
+  appUrl?: string
+
   /**
    * URL where the extension is locally served from. It's usually the tunnel URL
    */
