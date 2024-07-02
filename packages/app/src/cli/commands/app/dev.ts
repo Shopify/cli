@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {dev} from '../../services/dev.js'
+import {dev, DevOptions} from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
@@ -131,6 +131,11 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
+    'dev-preview': Flags.boolean({
+      hidden: true,
+      description: 'Enables the developer preview for the upcoming `app dev` implementation.',
+      env: 'SHOPIFY_FLAG_BETA',
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -160,7 +165,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     await checkFolderIsValidApp(flags.path)
 
-    const devOptions = {
+    const devOptions: DevOptions = {
       directory: flags.path,
       configName: flags.config,
       apiKey,
@@ -178,6 +183,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      devPreview: flags['dev-preview'],
     }
 
     await dev(devOptions)
