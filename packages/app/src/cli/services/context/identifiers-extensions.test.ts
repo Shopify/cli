@@ -19,6 +19,7 @@ import {
   testPaymentsAppExtension,
   testDeveloperPlatformClient,
   testSingleWebhookSubscriptionExtension,
+  testAppAccessConfigExtension,
 } from '../../models/app/app.test-data.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
@@ -928,7 +929,7 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
       uuid: 'UUID_C_A',
       id: 'C_A',
       title: 'C_A',
-      type: 'POINT_OF_SALE',
+      type: 'app-access',
     }
     const developerPlatformClient = testDeveloperPlatformClient({
       createExtension: () => createExtensionResult(REGISTRATION_CONFIG_A),
@@ -936,7 +937,7 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
 
     // When
 
-    const CONFIG_A = await testAppConfigExtensions()
+    const CONFIG_A = await testAppAccessConfigExtension()
     const ensureExtensionsIdsOptions = options([], [], {configExtensions: [CONFIG_A], developerPlatformClient})
     ensureExtensionsIdsOptions.includeDraftExtensions = true
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
@@ -948,8 +949,8 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
     expect(developerPlatformClient.createExtension).toBeCalledTimes(1)
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {'point-of-sale': 'C_A'},
-      extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
+      extensionIds: {'app-access': 'C_A'},
+      extensionsNonUuidManaged: {'app-access': 'UUID_C_A'},
     })
   })
   test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created with context', async () => {
