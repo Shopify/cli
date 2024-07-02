@@ -389,6 +389,14 @@
           "name": "config",
           "type": "option"
         },
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "graphiql-key": {
           "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
           "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
