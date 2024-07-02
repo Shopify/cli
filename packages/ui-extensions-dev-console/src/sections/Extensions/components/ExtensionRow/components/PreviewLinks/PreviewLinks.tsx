@@ -8,9 +8,10 @@ import {classNames} from '@/utilities/css'
 
 interface Props {
   extension: ExtensionPayload
+  isUnifiedPOSUI: boolean
 }
 
-export function PreviewLinks({extension}: Props) {
+export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
   const [i18n] = useI18n({
     id: 'PreviewLinks',
     fallback: en,
@@ -37,7 +38,15 @@ export function PreviewLinks({extension}: Props) {
 
             const {root, target, resource} = extensionPoint
 
-            return <PreviewLink rootUrl={root.url} title={target} key={target} resourceUrl={resource.url} />
+            return (
+              <PreviewLink
+                rootUrl={root.url}
+                title={target}
+                key={target}
+                resourceUrl={resource.url}
+                hasLink={!isUnifiedPOSUI}
+              />
+            )
           })}
         </span>
       </>

@@ -47,7 +47,7 @@ export function ExtensionRow({uuid}: Props) {
         <span className={styles.Title}>{extension.handle}</span>
       </td>
       <td>
-        <PreviewLinks extension={extension} />
+        <PreviewLinks extension={extension} isUnifiedPOSUI={isUnifiedPOSUIExtension(extension)} />
       </td>
       <td>
         {showMobileQrCode(extension) && (
