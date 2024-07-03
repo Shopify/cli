@@ -15,6 +15,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
+import chalk from '@shopify/cli-kit/node/colors'
 
 const LOG_SELECTOR_LIMIT = 100
 
@@ -100,6 +101,8 @@ async function runFunctionRunnerWithLogInput(
   exportName: string,
 ) {
   const outputAsJson = options.json ? ['--json'] : []
+
+  printInputForFunctionRunner(input);
 
   return exec(
     'npm',
@@ -220,4 +223,11 @@ async function getFunctionRunData(functionRunsDir: string, functionHandle: strin
 
 function getIdentifierFromFilename(fileName: string): string {
   return fileName.split('_').pop()!.substring(0, 6)
+}
+
+function printInputForFunctionRunner(input: string) {
+  const title = chalk.black.bgRgb(150, 191, 72)('             Input            ');
+
+  console.log(`${title}\n`);
+  console.log(`${JSON.stringify(JSON.parse(input), null, 2)}\n`);
 }
