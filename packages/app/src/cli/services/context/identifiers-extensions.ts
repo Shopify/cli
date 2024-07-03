@@ -164,7 +164,7 @@ function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance)
   const remoteUri: string = remoteVersionConfigObj.uri || ''
   return (
     remoteVersionConfigObj.topic === localConfig.topic &&
-    (remoteUri === localConfig.uri || remoteUri.endsWith(localConfig.uri)) &&
+    remoteUri.endsWith(localConfig.uri) &&
     remoteVersionConfigObj.filter === localConfig.filter
   )
 }
