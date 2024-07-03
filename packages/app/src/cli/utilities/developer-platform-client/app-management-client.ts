@@ -629,7 +629,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
     const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
-      '1',
+      organizationId,
       ReleaseVersionMutation,
       await this.token(),
       releaseVariables,
