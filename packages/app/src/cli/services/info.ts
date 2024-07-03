@@ -87,7 +87,7 @@ async function infoApp(
   } else {
     const appInfo = new AppInfo(app, options)
     return [await appInfo.output()]
-    return appInfo.outputContents()
+    // return appInfo.outputContents()
   }
 }
 
@@ -123,7 +123,7 @@ class AppInfo {
     this.options = options
   }
 
-  async output(): Promise<(OutputMessage | RenderTableOptions<ScalarDict>)[]> {
+  async output(): Promise<string> {
     const sections: [string, string][] = [
       await this.devConfigsSection(),
       this.projectSettingsSection(),
@@ -267,6 +267,38 @@ class AppInfo {
     return [title, linesToColumns(lines)]
   }
 
+  // async appComponentsSectionAsTable(): RenderTableOptions<ScalarDict>[] {
+
+  //   let body = this.webComponentsSection()
+
+  //   function augmentWithExtensions<TExtension extends Configurable>(
+  //     extensions: TExtension[],
+  //     outputFormatter: (extension: TExtension) => string,
+  //   ) {
+  //     const types = new Set(extensions.map((ext) => ext.type))
+  //     types.forEach((extensionType: string) => {
+  //       const relevantExtensions = extensions.filter((extension: TExtension) => extension.type === extensionType)
+  //       if (relevantExtensions[0]) {
+  //         body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
+  //         relevantExtensions.forEach((extension: TExtension) => {
+  //           body += `${outputFormatter(extension)}`
+  //         })
+  //       }
+  //     })
+  //   }
+
+  //   const supportedExtensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
+  //   augmentWithExtensions(supportedExtensions, this.extensionSubSection.bind(this))
+
+  //   if (this.app.errors?.isEmpty() === false) {
+  //     body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
+  //     supportedExtensions.forEach((extension) => {
+  //       body += `${this.invalidExtensionSubSection(extension)}`
+  //     })
+  //   }
+  //   return [title, body]
+  // }
+
   async appComponentsSection(): Promise<[string, string]> {
     const title = 'Directory Components'
 
@@ -299,6 +331,34 @@ class AppInfo {
     }
     return [title, body]
   }
+
+  // webComponentsSectionAsTable(): RenderTableOptions<ScalarDict> {
+  //   const errors: OutputMessage[] = []
+  //   const subtitle = [outputContent`${outputToken.subheading('web')}`.value]
+  //   const sublevels: [string, string][] = []
+  //   this.app.webs.forEach((web) => {
+  //     if (web.configuration) {
+  //       if (web.configuration.name) {
+  //         const {name, roles} = web.configuration
+  //         sublevels.push([`    📂 ${name} (${roles.join(',')})`, relativePath(this.app.directory, web.directory)])
+  //       } else {
+  //         web.configuration.roles.forEach((role) => {
+  //           sublevels.push([`    📂 ${role}`, relativePath(this.app.directory, web.directory)])
+  //         })
+  //       }
+  //     } else {
+  //       sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
+  //     }
+  //     if (this.app.errors) {
+  //       const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
+  //       if (error) errors.push(error)
+  //     }
+  //   })
+  //   let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
+  //   if (errorContent.trim() === '') errorContent = ''
+
+  //   return `${subtitle}\n${linesToColumns([...sublevels])}${errorContent}`
+  // }
 
   webComponentsSection(): string {
     const errors: OutputMessage[] = []
