@@ -1,5 +1,9 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
+import {
+  PreviewThemeAppExtensionsProcess as PreviewThemeAppExtensionsNextProcess,
+  setupPreviewThemeAppExtensionsProcess as setupPreviewThemeAppExtensionsProcessNext,
+} from './theme-app-extension-next.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
@@ -26,6 +30,7 @@ interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: st
 type DevProcessDefinition =
   | SendWebhookProcess
   | PreviewThemeAppExtensionsProcess
+  | PreviewThemeAppExtensionsNextProcess
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
@@ -126,15 +131,23 @@ export async function setupDevProcesses({
       developerPlatformClient,
       proxyUrl: network.proxyUrl,
     }),
-    await setupPreviewThemeAppExtensionsProcess({
-      allExtensions: localApp.allExtensions,
-      storeFqdn,
-      apiKey,
-      developerPlatformClient,
-      theme: commandOptions.theme,
-      themeExtensionPort: commandOptions.themeExtensionPort,
-      notify: commandOptions.notify,
-    }),
+    commandOptions.devPreview
+      ? await setupPreviewThemeAppExtensionsProcessNext({
+          allExtensions: localApp.allExtensions,
+          storeFqdn,
+          developerPlatformClient,
+          theme: commandOptions.theme,
+          themeExtensionPort: commandOptions.themeExtensionPort,
+        })
+      : await setupPreviewThemeAppExtensionsProcess({
+          allExtensions: localApp.allExtensions,
+          storeFqdn,
+          apiKey,
+          developerPlatformClient,
+          theme: commandOptions.theme,
+          themeExtensionPort: commandOptions.themeExtensionPort,
+          notify: commandOptions.notify,
+        }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,
       backendPort: network.backendPort,

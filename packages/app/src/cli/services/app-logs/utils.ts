@@ -10,6 +10,12 @@ export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
 export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
+export const LOG_TYPE_FUNCTION_NETWORK_ACCESS = 'function_network_access'
+export const LOG_TYPE_RESPONSE_FROM_CACHE = 'function_network_access.response_from_cache'
+export const LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND = 'function_network_access.request_execution_in_background'
+export const LOG_TYPE_REQUEST_EXECUTION = 'function_network_access.request_execution'
+export const REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON = 'no_cached_response'
+export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cached_response_about_to_expire'
 
 const generateFetchAppLogUrl = async (
   cursor?: string,

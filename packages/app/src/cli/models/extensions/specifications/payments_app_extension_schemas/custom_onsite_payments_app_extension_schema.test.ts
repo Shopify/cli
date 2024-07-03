@@ -21,11 +21,7 @@ const config: CustomOnsitePaymentsAppExtensionConfigType = {
   merchant_label: 'some-label',
   supported_countries: ['CA'],
   supported_payment_methods: ['visa'],
-  supported_buyer_contexts: [
-    {currency: 'USD'},
-    {currency: 'CAD', countries: ['CA']},
-    {currency: 'EUR', countries: ['DE', 'FR']},
-  ],
+  supported_buyer_contexts: [{currency: 'EUR', countries: ['DE', 'FR']}],
   supports_oversell_protection: true,
   supports_3ds: true,
   supports_installments: true,

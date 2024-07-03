@@ -1,5 +1,11 @@
 # @shopify/eslint-plugin-cli
 
+## 3.47.1
+
+### Patch Changes
+
+- 9d3a6bade: Updated nx and eslint rules
+
 ## 3.47.0
 
 ### Minor Changes

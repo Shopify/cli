@@ -4,12 +4,14 @@ import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
+import Demo from './cli/commands/demo/index.js'
 import Catalog from './cli/commands/demo/catalog.js'
 import GenerateFile from './cli/commands/demo/generate-file.js'
 import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
+import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import ThemeCommands from '@shopify/theme'
@@ -92,9 +94,11 @@ export const COMMANDS: any = {
   help: HelpCommand,
   'auth:logout': Logout,
   'debug:command-flags': CommandFlags,
+  demo: Demo,
   'demo:catalog': Catalog,
   'demo:generate-file': GenerateFile,
   'demo:print-ai-prompt': PrintAIPrompt,
+  'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,

@@ -389,6 +389,14 @@
           "name": "config",
           "type": "option"
         },
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "graphiql-key": {
           "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
           "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
@@ -765,6 +773,15 @@
           "hidden": false,
           "name": "json",
           "type": "boolean"
+        },
+        "log": {
+          "char": "l",
+          "description": "Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.",
+          "env": "SHOPIFY_FLAG_LOG",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "log",
+          "type": "option"
         },
         "no-color": {
           "allowNo": false,
@@ -2056,6 +2073,45 @@
       "hiddenAliases": [
       ],
       "id": "debug:command-flags",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "demo": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Demo a command design defined in a file",
+      "enableJsonFlag": false,
+      "flags": {
+        "file": {
+          "default": ".",
+          "description": "The name of the demo file.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "file",
+          "type": "option"
+        },
+        "path": {
+          "default": ".",
+          "description": "The directory where the demo file is located. Defaults to the current directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "demo",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -3813,6 +3869,26 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:upgrade",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "kitchen-sink": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "View all the available UI kit components",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+        "kitchen-sink all"
+      ],
+      "id": "kitchen-sink",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6123,5 +6199,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.62.0"
+  "version": "3.63.0"
 }

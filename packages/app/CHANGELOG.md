@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 3.63.0
+
+### Minor Changes
+
+- 53811a2dc: Bump Shopify/theme-tools packages
+- 2a6341b3b: - Add VariableName check
+  - Update Theme Check to use jsonc parser
+- 0f833358e: Added watch support for function replay
+- 7742994a5: Log streaming for Shopify Functions within `app dev` and re-execution of function runs via `app function replay` are available in beta. See [Shopify Functions documentation](https://shopify.dev/docs/apps/build/functions/log-streaming-and-replay) for more information.
+
+### Patch Changes
+
+- Updated dependencies [9d3a6bade]
+  - @shopify/cli-kit@3.63.0
+  - @shopify/create-app@3.63.0
+  - @shopify/plugin-cloudflare@3.63.0
+
 ## 3.62.0
 
 ### Minor Changes

@@ -290,7 +290,9 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
           : sectionBody.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
 
       if (errorsList) {
-        errorsList.list.items.push(errorMessage)
+        if (!errorsList.list.items.includes(errorMessage)) {
+          errorsList.list.items.push(errorMessage)
+        }
       } else {
         sectionBody.push({
           list: {

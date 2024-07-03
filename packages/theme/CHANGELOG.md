@@ -1,5 +1,19 @@
 # @shopify/theme
 
+## 3.63.0
+
+### Minor Changes
+
+- 53811a2dc: Bump Shopify/theme-tools packages
+- 2a6341b3b: - Add VariableName check
+  - Update Theme Check to use jsonc parser
+
+### Patch Changes
+
+- 9d3a6bade: Updated nx and eslint rules
+- Updated dependencies [9d3a6bade]
+  - @shopify/cli-kit@3.63.0
+
 ## 3.62.0
 
 ### Patch Changes

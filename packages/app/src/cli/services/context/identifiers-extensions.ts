@@ -161,9 +161,10 @@ function matchWebhooks(remoteSource: RemoteSource, extension: ExtensionInstance)
   const remoteVersionConfig = remoteSource.activeVersion?.config
   const remoteVersionConfigObj = remoteVersionConfig ? JSON.parse(remoteVersionConfig) : {}
   const localConfig = extension.configuration as unknown as SingleWebhookSubscriptionType
+  const remoteUri: string = remoteVersionConfigObj.uri || ''
   return (
     remoteVersionConfigObj.topic === localConfig.topic &&
-    remoteVersionConfigObj.uri === localConfig.uri &&
+    remoteUri.endsWith(localConfig.uri) &&
     remoteVersionConfigObj.filter === localConfig.filter
   )
 }
@@ -204,7 +205,7 @@ export async function ensureNonUuidManagedExtensionsIds(
   includeDraftExtensions = false,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  let localExtensionRegistrations = includeDraftExtensions ? app.realExtensions : app.allExtensions
+  let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
 
   localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUUIDStrategyExtension)
 

@@ -12,7 +12,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
@@ -26,6 +26,7 @@ interface ReplayOptions {
   path: string
   json: boolean
   watch: boolean
+  log?: string
 }
 
 export interface FunctionRunData {
@@ -57,18 +58,16 @@ export async function replay(options: ReplayOptions) {
   try {
     const {apiKey} = await ensureConnectedAppFunctionContext(options)
     const functionRunsDir = joinPath(getLogsDir(), apiKey)
-    const functionRuns = await getFunctionRunData(functionRunsDir, options.extension.handle)
 
-    const selectedRun = await selectFunctionRunPrompt(functionRuns)
-
-    if (selectedRun === undefined) {
-      throw new AbortError(`No logs found in ${functionRunsDir}`)
-    }
+    const selectedRun = options.log
+      ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
+      : await getRunFromSelector(functionRunsDir, extension.handle)
 
     const {input, export: runExport} = selectedRun.payload
     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
 
     if (watch) {
+      outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
       await setupExtensionWatcher({
         extension,
         app,
@@ -76,6 +75,7 @@ export async function replay(options: ReplayOptions) {
         stderr: process.stderr,
         onChange: async () => {
           await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+          outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
         },
         onReloadAndBuildError: async (error) => {
           if (error instanceof FatalError) {
@@ -113,12 +113,75 @@ async function runFunctionRunnerWithLogInput(
   )
 }
 
+async function getRunFromIdentifier(
+  functionRunsDir: string,
+  functionHandle: string,
+  identifier: string,
+): Promise<FunctionRunData> {
+  const runPath = await findFunctionRun(functionRunsDir, functionHandle, identifier)
+  if (runPath === undefined) {
+    throw new AbortError(
+      `No log found for '${identifier}'.\nSearched ${functionRunsDir} for function ${functionHandle}.`,
+    )
+  }
+  const fileData = await readFile(runPath)
+  return JSON.parse(fileData)
+}
+
+interface LogFileMetadata {
+  namespace: string
+  functionHandle: string
+  identifier: string
+}
+
+function parseLogFilename(filename: string): LogFileMetadata | undefined {
+  // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
+  const splitFilename = filename.split(/[_.]/)
+
+  if (splitFilename.length < 6) {
+    return undefined
+  } else {
+    return {
+      namespace: splitFilename[3]!,
+      functionHandle: splitFilename[4]!,
+      identifier: splitFilename[5]!,
+    }
+  }
+}
+
+async function findFunctionRun(
+  functionRunsDir: string,
+  functionHandle: string,
+  identifier: string,
+): Promise<string | undefined> {
+  const fileName = readdirSync(functionRunsDir).find((filename) => {
+    const fileMetadata = parseLogFilename(filename)
+    return (
+      fileMetadata?.namespace === 'extensions' &&
+      fileMetadata?.functionHandle === functionHandle &&
+      fileMetadata?.identifier === identifier
+    )
+  })
+
+  return fileName ? joinPath(functionRunsDir, fileName) : undefined
+}
+
+async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
+  const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
+  const selectedRun = await selectFunctionRunPrompt(functionRuns)
+
+  if (selectedRun === undefined) {
+    throw new AbortError(`No logs found in ${functionRunsDir}`)
+  }
+  return selectedRun
+}
+
 async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
   const allFunctionRunFileNames = readdirSync(functionRunsDir)
     .filter((filename) => {
       // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
-      const splitFilename = filename.split('_')
-      return splitFilename[3] === 'extensions' && splitFilename[4] === functionHandle
+      const fileMetadata = parseLogFilename(filename)
+      return fileMetadata?.namespace === 'extensions' && fileMetadata?.functionHandle === functionHandle
     })
     .reverse()
 
