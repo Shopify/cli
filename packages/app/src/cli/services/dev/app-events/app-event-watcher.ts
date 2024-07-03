@@ -69,7 +69,7 @@ export interface ExtensionEvent {
  * The startTime is the time when the initial file-system event was received, it can be used by the consumer
  * to determine how long it took to process the event.
  */
-export interface AppEvent {
+interface AppEvent {
   app: AppInterface
   extensionEvents: ExtensionEvent[]
   startTime: [number, number]
@@ -127,7 +127,7 @@ export async function subscribeToAppEvents(
   })
 }
 
-export function normalizeTime(time: [number, number]) {
+function normalizeTime(time: [number, number]) {
   return (time[0] * 1000 + time[1] / 1000000).toFixed(2)
 }
 
