@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.63.2
+
+### Patch Changes
+
+- eaec7f0b4: Avoid deploying draft webhook extensions on dev
+- ce64d0378: Fix an issue with webhooks being recreated during deploy
+  - @shopify/create-app@3.63.2
+  - @shopify/cli-kit@3.63.2
+  - @shopify/plugin-cloudflare@3.63.2
+
 ## 3.63.1
 
 ### Patch Changes
