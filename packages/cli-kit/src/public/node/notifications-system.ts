@@ -182,15 +182,15 @@ function filterBySurface(notification: Notification, commandId: string, surfaces
  */
 function filterByFrequency(notification: Notification): boolean {
   if (!notification.frequency) return true
-  const lastShown = getCache(`notification-${notification.id}`) as unknown as string
+  const lastShown = getCache(`notification-${notification.id}`)?.value as unknown as string
+  if (!lastShown) return true
 
   switch (notification.frequency) {
     case 'always': {
       return true
     }
     case 'once': {
-      const result = !lastShown
-      return result
+      return false
     }
     case 'once_a_day': {
       return new Date().getTime() - Number(lastShown) > 24 * 3600 * 1000

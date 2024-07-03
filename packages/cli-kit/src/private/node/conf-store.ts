@@ -9,7 +9,7 @@ interface CacheValue<T> {
 export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
 export type NotificationsKey = `notifications-${string}`
-export type NotificationKey = `notification-${string}`
+type NotificationKey = `notification-${string}`
 
 interface Cache {
   [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
@@ -81,22 +81,20 @@ export async function cacheRetrieveOrRepopulate(
   timeout?: number,
   config = cliKitStore(),
 ): Promise<CacheValueForKey<typeof key>> {
-  const cache: Cache = config.get('cache') || {}
-  const cached = cache[key]
+  const cached = getCache(key, config)
 
   if (cached?.value !== undefined && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
     return cached.value
   }
 
   const value = await fn()
-  cache[key] = {value, timestamp: Date.now()}
-  config.set('cache', cache)
+  setCache(key, value, config)
   return value
 }
 
-export function getCache(key: keyof Cache, config = cliKitStore()): string | undefined {
+export function getCache(key: keyof Cache, config = cliKitStore()): CacheValue<string> | undefined {
   const cache: Cache = config.get('cache') || {}
-  return cache[key]?.value
+  return cache[key]
 }
 
 export function setCache(key: keyof Cache, value: string, config = cliKitStore()): void {
