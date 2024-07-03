@@ -26,6 +26,7 @@ jobs:
         with:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
+          custom_message: '(after installing, check the version by running just `shopify` in your terminal)'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
