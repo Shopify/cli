@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.63.2
+
+### Patch Changes
+
+- 086af5ee9: Avoid loop when users pass the `--theme-editor-sync` flag in the `shopify theme dev` command
+  - @shopify/cli-kit@3.63.2
+
 ## 3.63.1
 
 ### Patch Changes
