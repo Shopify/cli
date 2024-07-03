@@ -20,9 +20,9 @@ jobs:
         with:
           node-version: 22.2.0
       - name: Create snapshot version
-        uses: Shopify/snapit@1f633d5784cd739ca1b336c40ee0512f3bf4d62a # pin@main
+        uses: Shopify/snapit@f9e1c0990888000fb4b2e622319ee69e2dc84e67 # pin@main
         with:
-          is_global: 'true'
+          global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
