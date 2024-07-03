@@ -19,6 +19,8 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 22.2.0
+      - name: Force snapshot changeset
+        run: 'echo -e "---\n\ "@shopify/cli" : patch\n---" > .changeset/force-experimental-build.md'
       - name: Create snapshot version
         uses: Shopify/snapit@f9e1c0990888000fb4b2e622319ee69e2dc84e67 # pin@main
         with:
