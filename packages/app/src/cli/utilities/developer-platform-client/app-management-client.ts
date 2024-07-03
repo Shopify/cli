@@ -611,7 +611,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           uuid: version.id,
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
-          versionTag: versionTag ?? 'VERSION TAG NOT RETURNED FROM API YET',
+          versionTag: version.metadata.versionTag,
           location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
           appModuleVersions: version.appModules.map((mod) => {
             return {
