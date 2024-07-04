@@ -397,19 +397,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
         organizationId,
         title,
         appVersions: {
-          nodes: result.app.versions.map((version) => {
+          nodes: result.versions.map((version) => {
             return {
-              createdAt: '0',
+              createdAt: version.createdAt,
               createdBy: {
-                displayName: version.createdBy.name,
+                displayName: version.createdBy,
               },
-              versionTag: version.versionTag,
-              status: '',
+              versionTag: version.metadata.versionTag,
+              status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
               versionId: version.id,
+              message: version.metadata.message,
             }
           }),
           pageInfo: {
-            totalResults: result.app.versions.length,
+            totalResults: result.versions.length,
           },
         },
       },
@@ -431,7 +432,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (!result.app) {
       throw new AbortError(`App not found for API key: ${apiKey}`)
     }
-    const version = result.app.versions.find((version) => version.versionTag === tag)
+    const version = result.versions.find((version) => version.metadata.versionTag === tag)
     if (!version) {
       throw new AbortError(`Version not found for tag: ${tag}`)
     }
@@ -590,9 +591,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      metadata: {
-        versionTag,
-      },
+      metadata: {versionTag},
     }
 
     const result = await appManagementRequest<CreateAppVersionMutationSchema>(
