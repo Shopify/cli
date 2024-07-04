@@ -67,7 +67,6 @@ async function migrateExtensionToUIExtension(
   registrationId: MigrateToUiExtensionVariables['registrationId'],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  console.log('>>>>>>>>>>>>>>>>>>>>>>>>> registration id', registrationId)
   const variables: MigrateToUiExtensionVariables = {
     apiKey,
     registrationId,
