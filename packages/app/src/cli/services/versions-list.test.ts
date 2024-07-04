@@ -177,7 +177,7 @@ versionTag    ★ active  message        2021-01-01 00:00:00  createdBy
 versionTag 2  released  message 2      2021-01-01 00:00:00  createdBy 2
 versionTag 3  released  long messa...  2021-01-01 00:00:00  createdBy 3
 
-View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com/org-id/apps/app-id/versions )"`)
+View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id/apps/app-id/versions )"`)
   })
 
   test('render json when there are app versions', async () => {

@@ -17,6 +17,7 @@ export const CreateAppVersionMutation = gql`
         }
         metadata {
           versionTag
+          message
         }
       }
       userErrors {
@@ -69,6 +70,7 @@ export interface CreateAppVersionMutationSchema {
       appModules: AppModule[]
       metadata: {
         versionTag: string
+        message: string
       }
     }
     userErrors: {

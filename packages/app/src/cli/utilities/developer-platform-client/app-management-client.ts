@@ -112,7 +112,7 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn, developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -125,6 +125,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public clientName = 'app-management'
+  public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined
@@ -603,7 +604,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
-    const devDashFqdn = (await appManagementFqdn()).replace('app.', 'developers.')
     const versionResult = {
       appDeploy: {
         appVersion: {
@@ -611,7 +611,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.metadata.versionTag,
-          location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
+          location: [await this.appDeepLink({organizationId, id: apiKey, apiKey}), `versions/${version.id}`].join('/'),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -619,7 +619,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
               validationErrors: [],
             }
           }),
-          message: '',
+          message: version.metadata.message,
         },
         userErrors: userErrors?.map((err) => ({...err, details: []})),
       },
@@ -739,6 +739,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   toExtensionGraphQLType(input: string) {
     return input.toLowerCase()
+  }
+
+  async appDeepLink({id, organizationId}: MinimalAppIdentifiers): Promise<string> {
+    return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
   }
 
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
