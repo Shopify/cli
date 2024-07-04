@@ -17,7 +17,6 @@ you can go through the steps below to have your environment setup to work with t
 
 1. Clone the repository: `git clone https://github.com/Shopify/cli.git`.
 2. Install dependencies: `pnpm install`
-3. Run dev: `dev up`
 
 ### Run against a local project
 
