@@ -70,6 +70,10 @@ module ShopifyCLI
         path.extname == ".json"
       end
 
+      def static_json?
+        json? && relative_path.start_with?("assets/")
+      end
+
       def template?
         relative_path.start_with?("templates/")
       end
@@ -77,7 +81,7 @@ module ShopifyCLI
       def checksum
         content = read
 
-        if mime_type.json? && !settings_schema?
+        if mime_type.json? && !settings_schema? && !static_json?
           # Normalize JSON to match backend
           begin
             content = normalize_json(content)
@@ -118,11 +122,8 @@ module ShopifyCLI
       end
 
       def normalize_json(content)
-        normalized = JSON.generate(JSON.parse(content))
-
-        # Backend escapes forward slashes
-        normalized.gsub!(/\//, "\\/")
-        normalized
+        # Backend escapes slashes
+        JSON.generate(JSON.parse(content), escape_slash: true)
       end
     end
   end
