@@ -15,7 +15,7 @@ export function getUIExtensionsToMigrate(
   identifiers: IdentifiersExtensions,
 ) {
   const ids = getExtensionIds(localSources, identifiers)
-  const remoteExtensionTypesToMigrate = ['CHECKOUT_UI_EXTENSION']
+  const remoteExtensionTypesToMigrate = ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION']
 
   return localSources.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
     if (localSource.type === 'ui_extension') {
@@ -67,6 +67,7 @@ async function migrateExtensionToUIExtension(
   registrationId: MigrateToUiExtensionVariables['registrationId'],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
+  console.log('>>>>>>>>>>>>>>>>>>>>>>>>> registration id', registrationId)
   const variables: MigrateToUiExtensionVariables = {
     apiKey,
     registrationId,
