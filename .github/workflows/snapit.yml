@@ -27,6 +27,7 @@ jobs:
         with:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
+          custom_message_prefix: "Test the snapshot by intalling the CLI globally:"
           custom_message_suffix: "\n> After installing, validate the version by running just `shopify` in your terminal\n> If the versions don't match, you might have multiple global instances installed.\n> Use `which shopify` to find out which one you are running and uninstall it."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
