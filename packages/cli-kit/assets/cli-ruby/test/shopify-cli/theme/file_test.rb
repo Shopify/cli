@@ -142,6 +142,21 @@ module ShopifyCLI
         end
       end
 
+      def test_checksum_for_static_json_assets
+        normalized = <<~EOS.rstrip
+          {
+            "private": true,
+            "type": "module",
+            "version": "0.0.0"
+          }
+        EOS
+
+        file = fixture_file("assets/package.json")
+        file.stubs(read: normalized)
+
+        assert_equal(Digest::MD5.hexdigest(normalized), file.checksum)
+      end
+
       private
 
       def fixture_file(file_path)
