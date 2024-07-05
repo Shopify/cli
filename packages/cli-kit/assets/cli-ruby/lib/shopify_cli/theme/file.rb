@@ -122,8 +122,11 @@ module ShopifyCLI
       end
 
       def normalize_json(content)
-        # Backend escapes slashes
-        JSON.generate(JSON.parse(content), escape_slash: true)
+        normalized = JSON.generate(JSON.parse(content))
+
+        # Backend escapes forward slashes
+        normalized.gsub!(/\//, "\\/")
+        normalized
       end
     end
   end
