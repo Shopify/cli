@@ -11,6 +11,7 @@ env:
 jobs:
   snapit:
     name: Snapit
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout default branch
