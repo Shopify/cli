@@ -7,7 +7,7 @@ const MarketingActivityExtensionSchema = BaseSchema.extend({
   description: zod.string().min(1),
   app_api_url: zod.string(),
   tactic: zod.enum([
-    'ad,',
+    'ad',
     'retargeting',
     'post',
     'message',
