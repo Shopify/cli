@@ -3,6 +3,7 @@
 import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
 import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
 import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
+import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-kit.js'
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
@@ -53,6 +54,7 @@ esBuild({
     ShopifyVSCodePlugin,
     GraphiQLImportsPlugin,
     ShopifyStacktraceyPlugin,
+    CliKitDedupPlugin({require}),
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       // if not specified, this plugin uses ESBuild.build outdir/outfile options as base path.
