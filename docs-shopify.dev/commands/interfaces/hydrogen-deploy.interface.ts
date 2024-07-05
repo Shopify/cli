@@ -2,9 +2,15 @@
 export interface hydrogendeploy {
   /**
    * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.
-   *
+   * @environment AUTH_BYPASS_TOKEN
    */
   '--auth-bypass-token'?: ''
+
+  /**
+   * Specify the duration (in hours) up to 12 hours for the authentication bypass token. Defaults to `2`
+   * @environment AUTH_BYPASS_TOKEN_DURATION
+   */
+  '--auth-bypass-token-duration <value>'?: string
 
   /**
    * Specify a build command to run before deploying. If not specified, `shopify hydrogen build` will be used.

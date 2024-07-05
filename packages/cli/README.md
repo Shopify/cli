@@ -869,38 +869,44 @@ Builds and deploys a Hydrogen storefront to Oxygen.
 
 ```
 USAGE
-  $ shopify hydrogen deploy [--auth-bypass-token] [--build-command <value>] [--entry <value>] [--env <value> |
-    --env-branch <value>] [--env-file <value>] [-f] [--json-output] [--lockfile-check] [--metadata-description <value>]
-    [--metadata-user <value>] [--no-verify] [--path <value>] [--preview] [-s <value>] [-t <value>]
+  $ shopify hydrogen deploy [--auth-bypass-token-duration <value> --auth-bypass-token] [--build-command <value>]
+    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--json-output]
+    [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path <value>]
+    [--preview] [-s <value>] [-t <value>]
 
 FLAGS
-  -f, --force                         Forces a deployment to proceed if there are uncommited changes in its Git
-                                      repository.
-  -s, --shop=<value>                  Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL
-                                      (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).
-  -t, --token=<value>                 Oxygen deployment token. Defaults to the linked storefront's token if available.
-      --auth-bypass-token             Generate an authentication bypass token, which can be used to perform end-to-end
-                                      tests against the deployment.
-      --build-command=<value>         Specify a build command to run before deploying. If not specified, `shopify
-                                      hydrogen build` will be used.
-      --entry=<value>                 Entry file for the worker. Defaults to `./server`.
-      --env=<value>                   Specifies the environment to perform the operation using its handle. Fetch the
-                                      handle using the `env list` command.
-      --env-branch=<value>            Specifies the environment to perform the operation using its Git branch name.
-      --env-file=<value>              Path to an environment file to override existing environment variables for the
-                                      deployment.
-      --[no-]json-output              Create a JSON file containing the deployment details in CI environments. Defaults
-                                      to true, use `--no-json-output` to disable.
-      --[no-]lockfile-check           Checks that there is exactly one valid lockfile in the project. Defaults to
-                                      `true`. Deactivate with `--no-lockfile-check`.
-      --metadata-description=<value>  Description of the changes in the deployment. Defaults to the commit message of
-                                      the latest commit if there are no uncommited changes.
-      --metadata-user=<value>         User that initiated the deployment. Will be saved and displayed in the Shopify
-                                      admin
-      --no-verify                     Skip the routability verification step after deployment.
-      --path=<value>                  The path to the directory of the Hydrogen storefront. Defaults to the current
-                                      directory where the command is run.
-      --preview                       Deploys to the Preview environment. Overrides --env-branch and Git metadata.
+  -f, --force                               Forces a deployment to proceed if there are uncommited changes in its Git
+                                            repository.
+  -s, --shop=<value>                        Shop URL. It can be the shop prefix (janes-apparel) or the full
+                                            myshopify.com URL (janes-apparel.myshopify.com,
+                                            https://janes-apparel.myshopify.com).
+  -t, --token=<value>                       Oxygen deployment token. Defaults to the linked storefront's token if
+                                            available.
+      --auth-bypass-token                   Generate an authentication bypass token, which can be used to perform
+                                            end-to-end tests against the deployment.
+      --auth-bypass-token-duration=<value>  Specify the duration (in hours) up to 12 hours for the authentication bypass
+                                            token. Defaults to `2`
+      --build-command=<value>               Specify a build command to run before deploying. If not specified, `shopify
+                                            hydrogen build` will be used.
+      --entry=<value>                       Entry file for the worker. Defaults to `./server`.
+      --env=<value>                         Specifies the environment to perform the operation using its handle. Fetch
+                                            the handle using the `env list` command.
+      --env-branch=<value>                  Specifies the environment to perform the operation using its Git branch
+                                            name.
+      --env-file=<value>                    Path to an environment file to override existing environment variables for
+                                            the deployment.
+      --[no-]json-output                    Create a JSON file containing the deployment details in CI environments.
+                                            Defaults to true, use `--no-json-output` to disable.
+      --[no-]lockfile-check                 Checks that there is exactly one valid lockfile in the project. Defaults to
+                                            `true`. Deactivate with `--no-lockfile-check`.
+      --metadata-description=<value>        Description of the changes in the deployment. Defaults to the commit message
+                                            of the latest commit if there are no uncommited changes.
+      --metadata-user=<value>               User that initiated the deployment. Will be saved and displayed in the
+                                            Shopify admin
+      --no-verify                           Skip the routability verification step after deployment.
+      --path=<value>                        The path to the directory of the Hydrogen storefront. Defaults to the
+                                            current directory where the command is run.
+      --preview                             Deploys to the Preview environment. Overrides --env-branch and Git metadata.
 
 DESCRIPTION
   Builds and deploys a Hydrogen storefront to Oxygen.
