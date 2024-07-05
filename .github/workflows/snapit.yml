@@ -23,10 +23,11 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@0a4846f3f6915ba43636340b9f5426af2b189907 # pin@main
+        uses: Shopify/snapit@b083fb4d9418750c290984ed39e6199112c90884 # pin@main
         with:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
+          custom_message_suffix: "\n> After installing, validate the version by running just `shopify` in your terminal\n> If the versions don't match, you might have multiple global instances installed.\n> Use `which shopify` to find out which one you are running and uninstall it."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
