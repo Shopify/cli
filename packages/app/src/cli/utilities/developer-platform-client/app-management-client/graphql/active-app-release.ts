@@ -34,11 +34,10 @@ interface AppModuleSpecification {
   identifier: string
   externalIdentifier: string
   name: string
-  experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
 interface AppModule {
-  uid: string
+  uuid: string
   handle: string
   config: JsonMapType
   specification: AppModuleSpecification

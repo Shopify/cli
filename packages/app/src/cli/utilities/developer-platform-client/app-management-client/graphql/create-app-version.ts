@@ -17,7 +17,6 @@ export const CreateAppVersionMutation = gql`
         }
         metadata {
           versionTag
-          message
         }
       }
       userErrors {
