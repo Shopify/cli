@@ -4,20 +4,20 @@ import {gql} from 'graphql-request'
 export const AppVersionByIdQuery = gql`
   query AppVersionById($versionId: ID!) {
     version(id: $versionId) {
-     id
-     metadata {
-       versionTag
-     }
-     appModules {
-       uuid
-       handle
-       config
-       specification {
-         identifier
-         externalIdentifier
-         name
-       }
-     }
+      id
+      metadata {
+        versionTag
+      }
+      appModules {
+        uuid
+        handle
+        config
+        specification {
+          identifier
+          externalIdentifier
+          name
+        }
+      }
     }
   }
 `

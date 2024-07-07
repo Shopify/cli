@@ -93,7 +93,7 @@ export default async function versionList(options: VersionListOptions) {
   const result = await ensureVersionsListContext(options)
   const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
 
-  const {id: appId, organizationId, title} = result.remoteApp
+  const {organizationId, title} = result.remoteApp
 
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, result.remoteApp, options.json)
 

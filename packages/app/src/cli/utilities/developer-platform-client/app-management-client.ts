@@ -460,7 +460,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
           location: '',
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
-            const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
+            const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier)
+              ? 'configuration'
+              : 'extension'
             return {
               registrationId: mod.uuid,
               registrationUid: mod.uuid,

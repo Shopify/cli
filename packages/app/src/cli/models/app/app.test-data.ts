@@ -14,7 +14,7 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {MinimalAppIdentifiers, MinimalOrganizationApp, Organization, OrganizationApp} from '../organization.js'
+import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
@@ -1241,14 +1241,18 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
-    appDeepLink: (app: MinimalAppIdentifiers) => Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
+    appDeepLink: (app: MinimalAppIdentifiers) =>
+      Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName' >
+        key as keyof Omit<
+          DeveloperPlatformClient,
+          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName'
+        >
       ] = vi.fn().mockImplementation(value)
     }
   }
