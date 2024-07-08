@@ -14,14 +14,13 @@ const extensionC = await testUIExtension({uid: 'extension-c-uuid'})
 
 function moduleFromExtension(extension: ExtensionInstance): AppModule {
   return {
-    uid: extension.uid,
+    uuid: extension.uid,
     handle: extension.handle,
     config: extension.configuration,
     specification: {
       identifier: extension.specification.identifier,
       externalIdentifier: extension.specification.externalIdentifier,
       name: extension.specification.externalName,
-      experience: extension.specification.experience as 'EXTENSION' | 'CONFIGURATION',
     },
   }
 }

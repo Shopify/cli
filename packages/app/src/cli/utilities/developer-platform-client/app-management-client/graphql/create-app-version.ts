@@ -15,6 +15,9 @@ export const CreateAppVersionMutation = gql`
             name
           }
         }
+        metadata {
+          versionTag
+        }
       }
       userErrors {
         field
@@ -64,6 +67,10 @@ export interface CreateAppVersionMutationSchema {
     version: {
       id: string
       appModules: AppModule[]
+      metadata: {
+        versionTag: string
+        message: string
+      }
     }
     userErrors: {
       field: string[]

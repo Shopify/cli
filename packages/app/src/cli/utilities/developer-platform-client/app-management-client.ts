@@ -119,7 +119,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {devSessionRequest} from '@shopify/cli-kit/node/api/dev-session'
 import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
@@ -132,6 +132,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public clientName = 'app-management'
+  public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
   private _session: PartnersSession | undefined
@@ -382,14 +383,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const extensionRegistrations: ExtensionRegistration[] = []
     app.activeRelease.version.appModules.forEach((mod) => {
       const registration = {
-        id: mod.uid,
-        uid: mod.uid,
-        uuid: mod.uid,
+        id: mod.uuid,
+        uid: mod.uuid,
+        uuid: mod.uuid,
         title: mod.specification.name,
         type: mod.specification.identifier,
       }
-      if (mod.specification.experience === 'CONFIGURATION') configurationRegistrations.push(registration)
-      if (mod.specification.experience === 'EXTENSION') extensionRegistrations.push(registration)
+      if (CONFIG_EXTENSION_IDS.includes(mod.uuid)) {
+        configurationRegistrations.push(registration)
+      } else {
+        extensionRegistrations.push(registration)
+      }
     })
     return {
       app: {
@@ -415,19 +419,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
         organizationId,
         title,
         appVersions: {
-          nodes: result.app.versions.map((version) => {
+          nodes: result.versions.map((version) => {
             return {
-              createdAt: '0',
+              createdAt: version.createdAt,
               createdBy: {
-                displayName: version.createdBy.name,
+                displayName: version.createdBy,
               },
-              versionTag: version.versionTag,
-              status: '',
+              versionTag: version.metadata.versionTag,
+              status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
               versionId: version.id,
+              message: version.metadata.message,
             }
           }),
           pageInfo: {
-            totalResults: result.app.versions.length,
+            totalResults: result.versions.length,
           },
         },
       },
@@ -449,34 +454,37 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (!result.app) {
       throw new AbortError(`App not found for API key: ${apiKey}`)
     }
-    const version = result.app.versions.find((version) => version.versionTag === tag)
+    const version = result.versions.find((version) => version.metadata.versionTag === tag)
     if (!version) {
       throw new AbortError(`Version not found for tag: ${tag}`)
     }
 
     const query2 = AppVersionByIdQuery
-    const variables2: AppVersionByIdQueryVariables = {appId, versionId: version.id}
+    const variables2: AppVersionByIdQueryVariables = {versionId: version.id}
     const result2 = await appManagementRequest<AppVersionByIdQuerySchema>(
       organizationId,
       query2,
       await this.token(),
       variables2,
     )
-    const versionInfo = result2.app.version
+    const versionInfo = result2.version
 
     return {
       app: {
         appVersion: {
           id: parseInt(versionInfo.id, 10),
           uuid: versionInfo.id,
-          versionTag: versionInfo.versionTag,
+          versionTag: versionInfo.metadata.versionTag,
           location: '',
           message: '',
-          appModuleVersions: result2.app.version.modules.map((mod: AppModuleReturnType) => {
+          appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
+            const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier)
+              ? 'configuration'
+              : 'extension'
             return {
-              registrationId: mod.uid,
-              registrationUid: mod.uid,
-              registrationUuid: mod.uid,
+              registrationId: mod.uuid,
+              registrationUid: mod.uuid,
+              registrationUuid: mod.uuid,
               registrationTitle: mod.handle,
               type: mod.specification.externalIdentifier,
               config: JSON.stringify(mod.config),
@@ -484,7 +492,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
                 ...mod.specification,
                 identifier: mod.specification.externalIdentifier,
                 options: {managementExperience: 'cli'},
-                experience: mod.specification.experience.toLowerCase() as 'configuration' | 'extension' | 'deprecated',
+                experience,
               },
             }
           }),
@@ -497,7 +505,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app: MinimalOrganizationApp,
     {versionId}: AppVersionIdentifiers,
   ): Promise<AppVersionsDiffSchema> {
-    const variables: AppVersionByIdQueryVariables = {appId: app.id, versionId}
+    const variables: AppVersionByIdQueryVariables = {versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
       this.activeAppVersionRawResult(app),
       appManagementRequest<AppVersionByIdQuerySchema>(
@@ -508,18 +516,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ),
     ])
     const currentModules = currentVersion.app.activeRelease.version.appModules
-    const selectedVersionModules = selectedVersion.app.version.modules
+    const selectedVersionModules = selectedVersion.version.appModules
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
     function formattedModule(mod: AppModuleReturnType) {
+      const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
       return {
-        uuid: mod.uid,
+        uuid: mod.uuid,
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience: mod.specification.experience.toLowerCase(),
+          experience,
           options: {
-            managementExperience: mod.specification.experience.toLowerCase(),
+            managementExperience: 'cli',
           },
         },
       }
@@ -540,11 +549,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.activeAppVersionRawResult(app)
     return {
       appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
-        const experience = CONFIG_EXTENSION_IDS.includes(mod.uid) ? 'configuration' : 'extension'
+        const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
         return {
-          registrationId: mod.uid,
-          registrationUid: mod.uid,
-          registrationUuid: mod.uid,
+          registrationId: mod.uuid,
+          registrationUid: mod.uuid,
+          registrationUuid: mod.uuid,
           registrationTitle: mod.handle,
           type: mod.specification.externalIdentifier,
           config: mod.config,
@@ -608,9 +617,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      metadata: {
-        versionTag,
-      },
+      ...(versionTag ? {metadata: {versionTag}} : {}),
     }
 
     const result = await appManagementRequest<CreateAppVersionMutationSchema>(
@@ -622,15 +629,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
-    const devDashFqdn = (await appManagementFqdn()).replace('app.', 'developers.')
     const versionResult = {
       appDeploy: {
         appVersion: {
           uuid: version.id,
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
-          versionTag: versionTag ?? 'VERSION TAG NOT RETURNED FROM API YET',
-          location: `https://${devDashFqdn}/org/${organizationId}/apps/${apiKey}/versions/${version.id}`,
+          versionTag: version.metadata.versionTag,
+          location: [await this.appDeepLink({organizationId, id: apiKey, apiKey}), `versions/${version.id}`].join('/'),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -638,7 +644,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
               validationErrors: [],
             }
           }),
-          message: '',
+          message: version.metadata.message,
         },
         userErrors: userErrors?.map((err) => ({...err, details: []})),
       },
@@ -647,14 +653,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
     const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
-      '1',
+      organizationId,
       ReleaseVersionMutation,
       await this.token(),
       releaseVariables,
     )
-    if (releaseResult.versionRelease?.userErrors) {
+    if (releaseResult.appReleaseCreate?.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
-        releaseResult.versionRelease.userErrors.map((err) => ({...err, details: []})),
+        releaseResult.appReleaseCreate.userErrors.map((err) => ({...err, details: []})),
       )
     }
 
@@ -684,11 +690,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       appRelease: {
         appVersion: {
-          versionTag: releaseResult.versionRelease.release.version.versionTag,
-          message: '',
-          location: '',
+          versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
+          message: releaseResult.appReleaseCreate.release.version.metadata.message,
+          location: [
+            await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
+            'versions',
+            releaseResult.appReleaseCreate.release.version.id,
+          ].join('/'),
         },
-        userErrors: releaseResult.versionRelease.userErrors?.map((err) => ({
+        userErrors: releaseResult.appReleaseCreate.userErrors?.map((err) => ({
           field: err.field,
           message: err.message,
           category: '',
@@ -765,6 +775,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   toExtensionGraphQLType(input: string) {
     return input.toLowerCase()
+  }
+
+  async appDeepLink({id, organizationId}: MinimalAppIdentifiers): Promise<string> {
+    return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
   }
 
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
@@ -904,12 +918,12 @@ interface DiffAppModulesOutput {
 }
 
 export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
-  const currentModuleUids = currentModules.map((mod) => mod.uid)
-  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.uid)
-  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.uid))
-  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.uid))
-  const addedUids = added.map((mod) => mod.uid)
-  const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uid))
+  const currentModuleUids = currentModules.map((mod) => mod.uuid)
+  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.uuid)
+  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.uuid))
+  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.uuid))
+  const addedUids = added.map((mod) => mod.uuid)
+  const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uuid))
   return {added, removed, updated}
 }
 

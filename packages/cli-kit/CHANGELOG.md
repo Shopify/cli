@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.63.0
+
+### Patch Changes
+
+- 9d3a6bade: Updated nx and eslint rules
+
 ## 3.62.0
 
 ### Minor Changes

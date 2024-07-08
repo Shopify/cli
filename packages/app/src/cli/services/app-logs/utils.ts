@@ -1,15 +1,45 @@
+import {FunctionRunLog} from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
+import {environmentVariableNames} from '../../constants.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
 export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
+export const LOG_TYPE_FUNCTION_NETWORK_ACCESS = 'function_network_access'
+export const LOG_TYPE_RESPONSE_FROM_CACHE = 'function_network_access.response_from_cache'
+export const LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND = 'function_network_access.request_execution_in_background'
+export const LOG_TYPE_REQUEST_EXECUTION = 'function_network_access.request_execution'
+export const REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON = 'no_cached_response'
+export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cached_response_about_to_expire'
+
+export function appLogPollingEnabled() {
+  const env = getEnvironmentVariables()
+  return isTruthy(env[environmentVariableNames.enableAppLogPolling])
+}
+
+export function parseFunctionRunPayload(payload: string): FunctionRunLog {
+  const parsedPayload = JSON.parse(payload)
+  return {
+    input: parsedPayload.input,
+    inputBytes: parsedPayload.input_bytes,
+    output: parsedPayload.output,
+    outputBytes: parsedPayload.output_bytes,
+    logs: parsedPayload.logs,
+    functionId: parsedPayload.function_id,
+    fuelConsumed: parsedPayload.fuel_consumed,
+    errorMessage: parsedPayload.error_message,
+    errorType: parsedPayload.error_type,
+  }
+}
 
 const generateFetchAppLogUrl = async (
   cursor?: string,
@@ -72,4 +102,19 @@ export const subscribeToAppLogs = async (
     outputDebug(`Success: ${success}\n`)
   }
   return jwtToken
+}
+
+export function prettyPrintJsonIfPossible(json: unknown) {
+  try {
+    if (typeof json === 'string') {
+      const jsonObject = JSON.parse(json)
+      return JSON.stringify(jsonObject, null, 2)
+    } else if (typeof json === 'object' && json !== null) {
+      return JSON.stringify(json, null, 2)
+    } else {
+      return json
+    }
+  } catch (error) {
+    throw new Error(`Error parsing JSON: ${error}`)
+  }
 }

@@ -4,12 +4,20 @@ export const AppVersionsQuery = gql`
   query AppVersions($appId: ID!) {
     app(id: $appId) {
       id
-      versions {
+      activeRelease {
         id
-        versionTag
-        createdBy {
-          name
+        version {
+          id
         }
+      }
+    }
+    versions(appId: $appId) {
+      id
+      createdAt
+      createdBy
+      metadata {
+        message
+        versionTag
       }
     }
   }
@@ -22,12 +30,20 @@ export interface AppVersionsQueryVariables {
 export interface AppVersionsQuerySchema {
   app: {
     id: string
-    versions: {
+    activeRelease: {
       id: string
-      createdBy: {
-        name: string
+      version: {
+        id: string
       }
-      versionTag: string
-    }[]
+    }
   }
+  versions: {
+    id: string
+    createdAt: string
+    createdBy: string
+    metadata: {
+      message: string
+      versionTag: string
+    }
+  }[]
 }

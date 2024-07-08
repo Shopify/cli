@@ -70,13 +70,18 @@ module ShopifyCLI
         path.extname == ".json"
       end
 
+      def static_json?
+        json? && relative_path.start_with?("assets/")
+      end
+
       def template?
         relative_path.start_with?("templates/")
       end
 
       def checksum
         content = read
-        if mime_type.json?
+
+        if mime_type.json? && !settings_schema? && !static_json?
           # Normalize JSON to match backend
           begin
             content = normalize_json(content)
@@ -84,6 +89,7 @@ module ShopifyCLI
             # Fallback to using the raw content
           end
         end
+
         Digest::MD5.hexdigest(content)
       end
 
@@ -111,40 +117,16 @@ module ShopifyCLI
 
       private
 
+      def settings_schema?
+        relative_path.end_with?("config/settings_schema.json")
+      end
+
       def normalize_json(content)
-        parsed = JSON.parse(content)
+        normalized = JSON.generate(JSON.parse(content))
 
-        if template?
-          JsonTemplateNormalizer.new.visit_document(parsed)
-        end
-
-        normalized = JSON.generate(parsed)
         # Backend escapes forward slashes
         normalized.gsub!(/\//, "\\/")
         normalized
-      end
-
-      class JsonTemplateNormalizer
-        def visit_document(value)
-          visit_hash(value["sections"])
-        end
-
-        def visit_hash(hash)
-          return unless hash.is_a?(Hash)
-          hash.each do |_, value|
-            visit_value(value)
-          end
-        end
-
-        def visit_value(value)
-          return unless value.is_a?(Hash)
-
-          # Reinsert settings to force the same ordering as in the backend
-          settings = value.delete("settings") || {}
-          value["settings"] = settings
-
-          visit_hash(value["blocks"])
-        end
       end
     end
   end

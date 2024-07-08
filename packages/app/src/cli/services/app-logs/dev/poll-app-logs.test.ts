@@ -59,6 +59,7 @@ const FUNCTION_PAYLOAD = {
   function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
   logs: LOGS,
   fuel_consumed: 512436,
+  export: 'run',
 }
 const FAILURE_PAYLOAD = {
   input: JSON.stringify(INPUT),
@@ -68,7 +69,55 @@ const FAILURE_PAYLOAD = {
   function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
   logs: LOGS,
   error_type: FUNCTION_ERROR,
+  export: 'run',
 }
+
+const NETWORK_ACCESS_HTTP_REQUEST = {
+  url: 'https://api.example.com/hello',
+  method: 'GET',
+  headers: {},
+  body: null,
+  policy: {
+    read_timeout_ms: 500,
+  },
+}
+const NETWORK_ACCESS_HTTP_RESPONSE = {
+  status: 200,
+  body: 'Success',
+  headers: {
+    header1: 'value1',
+  },
+}
+
+const NETWORK_ACCESS_REQUEST_EXECUTION_SUCCESS_PAYLOAD = {
+  attempt: 1,
+  connect_time_ms: 40,
+  write_read_time_ms: 40,
+  http_request: NETWORK_ACCESS_HTTP_REQUEST,
+  http_response: NETWORK_ACCESS_HTTP_RESPONSE,
+}
+const NETWORK_ACCESS_REQUEST_EXECUTION_FAILURE_PAYLOAD = {
+  attempt: 1,
+  http_request: NETWORK_ACCESS_HTTP_REQUEST,
+  error: 'Timeout Error',
+}
+
+const NETWORK_ACCESS_RESPONSE_FROM_CACHE_PAYLOAD = {
+  cache_entry_epoch_ms: 1683904621000,
+  cache_ttl_ms: 300000,
+  http_request: NETWORK_ACCESS_HTTP_REQUEST,
+}
+
+const NETWORK_ACCESS_REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHE_PAYLOAD = {
+  reason: 'no_cached_response',
+  http_request: NETWORK_ACCESS_HTTP_REQUEST,
+}
+
+const NETWORK_ACCESS_REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_PAYLOAD = {
+  reason: 'cached_response_about_to_expire',
+  http_request: NETWORK_ACCESS_HTTP_REQUEST,
+}
+
 const OTHER_PAYLOAD = {some: 'arbitrary payload'}
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'
 const RESPONSE_DATA = {
@@ -91,6 +140,61 @@ const RESPONSE_DATA = {
       log_type: FUNCTION_RUN,
       cursor: '2024-05-23T19:17:02.321773Z',
       status: 'failure',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(NETWORK_ACCESS_REQUEST_EXECUTION_SUCCESS_PAYLOAD),
+      log_type: 'function_network_access.request_execution',
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'success',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(NETWORK_ACCESS_REQUEST_EXECUTION_FAILURE_PAYLOAD),
+      log_type: 'function_network_access.request_execution',
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'failure',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(NETWORK_ACCESS_RESPONSE_FROM_CACHE_PAYLOAD),
+      log_type: 'function_network_access.response_from_cache',
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'success',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(NETWORK_ACCESS_REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_PAYLOAD),
+      log_type: 'function_network_access.request_execution_in_background',
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'success',
+      source: SOURCE,
+      source_namespace: 'extensions',
+      log_timestamp: '2024-05-23T19:17:00.240053Z',
+    },
+    {
+      shop_id: 1,
+      api_client_id: 1830457,
+      payload: JSON.stringify(NETWORK_ACCESS_REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHE_PAYLOAD),
+      log_type: 'function_network_access.request_execution_in_background',
+      cursor: '2024-05-23T19:17:02.321773Z',
+      status: 'success',
       source: SOURCE,
       source_namespace: 'extensions',
       log_timestamp: '2024-05-23T19:17:00.240053Z',
@@ -127,8 +231,7 @@ describe('pollAppLogs', () => {
     const secondUrl = `${firstUrl}?cursor=${RETURNED_CURSOR}`
 
     // Given
-    vi.mocked(writeAppLogsToFile)
-
+    vi.mocked(writeAppLogsToFile).mockResolvedValue({fullOutputPath: '/path', identifier: '000000'})
     vi.spyOn(components, 'useConcurrentOutputContext')
 
     const mockedFetch = vi
@@ -183,18 +286,53 @@ describe('pollAppLogs', () => {
     )
 
     // app_logs[0]
-    expect(stdout.write).toHaveBeenNthCalledWith(1, 'Function executed successfully using 0.5124M instructions.')
+    expect(stdout.write).toHaveBeenNthCalledWith(
+      1,
+      'Function export "run" executed successfully using 0.5124M instructions.',
+    )
     expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringContaining(LOGS))
     expect(stdout.write).toHaveBeenNthCalledWith(3, expect.stringContaining('Log: '))
 
     // app_logs[1]
-    expect(stdout.write).toHaveBeenNthCalledWith(4, `❌ Function failed to execute with error: ${FUNCTION_ERROR}`)
+    expect(stdout.write).toHaveBeenNthCalledWith(
+      4,
+      `❌ Function export "run" failed to execute with error: ${FUNCTION_ERROR}`,
+    )
     expect(stdout.write).toHaveBeenNthCalledWith(5, expect.stringContaining(LOGS))
     expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining('Log: '))
 
     // app_logs[2]
-    expect(stdout.write).toHaveBeenNthCalledWith(7, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(7, 'Function network access request executed successfully.')
     expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining('Log: '))
+
+    // app_logs[3]
+    expect(stdout.write).toHaveBeenNthCalledWith(
+      9,
+      '❌ Function network access request failed to execute with error: Timeout Error.',
+    )
+    expect(stdout.write).toHaveBeenNthCalledWith(10, expect.stringContaining('Log: '))
+
+    // app_logs[4]
+    expect(stdout.write).toHaveBeenNthCalledWith(11, 'Function network access response retrieved from cache.')
+    expect(stdout.write).toHaveBeenNthCalledWith(12, expect.stringContaining('Log: '))
+
+    // app_logs[5]
+    expect(stdout.write).toHaveBeenNthCalledWith(
+      13,
+      'Function network access request executing in background because the cached response is about to expire.',
+    )
+    expect(stdout.write).toHaveBeenNthCalledWith(14, expect.stringContaining('Log: '))
+
+    // app_logs[6]
+    expect(stdout.write).toHaveBeenNthCalledWith(
+      15,
+      'Function network access request executing in background because there is no cached response.',
+    )
+    expect(stdout.write).toHaveBeenNthCalledWith(16, expect.stringContaining('Log: '))
+
+    // app_logs[7]
+    expect(stdout.write).toHaveBeenNthCalledWith(17, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(18, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })

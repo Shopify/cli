@@ -70,6 +70,24 @@ export async function devSessionFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the Developer Dashboard domain we should interact with.
+ *
+ * @returns Fully-qualified domain of the Developer Dashboard we should interact with.
+ */
+export async function developerDashboardFqdn(): Promise<string> {
+  const environment = serviceEnvironment()
+  const productionFqdn = 'dev.shopify.com'
+  switch (environment) {
+    case 'local':
+      return 'dev.shopify.myshopify.io'
+    case 'spin':
+      return `dev.shopify.${await spinFqdn()}`
+    default:
+      return productionFqdn
+  }
+}
+
+/**
  * It returns the BusinessPlatform' API service we should interact with.
  *
  * @returns Fully-qualified domain of the partners service we should interact with.
