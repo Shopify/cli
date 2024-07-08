@@ -111,6 +111,11 @@ import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
+import {
+  DevSessionUpdate,
+  DevSessionUpdateSchema,
+  DevSessionUpdateVariables,
+} from '../../api/graphql/dev_session_update.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -122,6 +127,7 @@ import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
@@ -656,10 +662,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return versionResult
   }
 
-  async devSessionDeploy({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
+  async devSessionCreate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
     const query = DevSessionCreate
     const variables: DevSessionCreateVariables = {appId: String(numberFromGid(appId)), assetsUrl}
     return devSessionRequest<DevSessionCreateSchema>(shopName, query, await this.token(), variables)
+  }
+
+  async devSessionUpdate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionUpdateSchema> {
+    const query = DevSessionUpdate
+    const variables: DevSessionUpdateVariables = {appId: String(numberFromGid(appId)), assetsUrl}
+    return devSessionRequest<DevSessionUpdateSchema>(shopName, query, await this.token(), variables)
   }
 
   async release({
@@ -742,7 +754,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    throw new BugError('Not implemented: updateURLs')
+    outputWarn('updateURLs is not implemented')
+    return {appUpdate: {userErrors: []}}
+    // throw new BugError('Not implemented: updateURLs')
   }
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {

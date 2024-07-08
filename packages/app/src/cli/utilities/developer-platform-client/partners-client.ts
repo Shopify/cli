@@ -144,6 +144,7 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {DevSessionUpdateSchema} from '../../api/graphql/dev_session_update.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -399,7 +400,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppDeploy, variables)
   }
 
-  async devSessionDeploy(_input: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
+  async devSessionCreate(_input: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
+  }
+
+  async devSessionUpdate(_input: DevSessionDeployOptions): Promise<DevSessionUpdateSchema> {
     // Dev Sessions are not supported in partners client.
     throw new Error('Unsupported operation')
   }

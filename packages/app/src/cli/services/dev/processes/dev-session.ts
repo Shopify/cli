@@ -1,10 +1,11 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {normalizeTime, subscribeToAppEvents} from './dev-session/app-event-watcher.js'
+import {EventType, normalizeTime, subscribeToAppEvents} from './dev-session/app-event-watcher.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
+import {DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {inTemporaryDirectory, mkdir, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -97,32 +98,42 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
     processOptions.stdout.write('Starting initial build and bundle process...')
     await initialBuild(processOptions)
-    await bundleExtensionsAndUpload(processOptions)
+    await bundleExtensionsAndUpload(processOptions, false)
 
-    const onChange = async () => {
+    const onChange = async (newApp: AppInterface) => {
       return performActionWithRetryAfterRecovery(async () => {
-        // bundleExtensionsAndUpload(processOptions)
-        processOptions.stdout.write('[MOCK] Call devSessionUpdate')
+        await bundleExtensionsAndUpload({...processOptions, app: newApp}, true)
       }, refreshToken)
     }
 
-    // const extensionWatchers = app.draftableExtensions.map(async (extension) => {
-    //   return devSessionExtensionWatcher({...processOptions, extension, onChange})
-    // })
-
-    await subscribeToAppEvents(app, processOptions, (event) => {
-      const endTime = process.hrtime(event.startTime)
-      processOptions.stdout.write(`Event handled [${normalizeTime(endTime)}ms]`)
+    await subscribeToAppEvents(app, processOptions, async (event) => {
+      processOptions.stdout.write(`Event detected:`)
       const events = event.extensionEvents.map((eve) => {
         return `->> ${eve.type} :: ${eve.extension.handle} :: ${eve.extension.directory}`
       })
       processOptions.stdout.write(JSON.stringify(events, null, 2))
+      try {
+        const buildPromises = event.extensionEvents
+          .filter((eve) => eve.type === EventType.UpdatedSourceFile)
+          .map((eve) => {
+            return eve.extension.buildForBundle(
+              {...processOptions, app: event.app, environment: 'development'},
+              processOptions.bundlePath,
+              undefined,
+            )
+          })
+        await Promise.all(buildPromises)
+        // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        processOptions.stderr.write('Error building extensions')
+        processOptions.stderr.write(error.message)
+      }
+
+      await onChange(event.app)
+      const endTime = process.hrtime(event.startTime)
+      processOptions.stdout.write(`Session updated [${normalizeTime(endTime)}ms]`)
     })
     processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
-    // const newWatcher = newExtensionWatcher({...processOptions, onChange})
-
-    // const manifestWatcher = devSessionManifestWatcher({...processOptions, onChange})
-    // await Promise.all([...extensionWatchers, newWatcher])
   })
 }
 
@@ -138,9 +149,10 @@ async function initialBuild(options: DevSessionProcessOptions) {
   await Promise.all(allPromises)
 }
 
-async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
+async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, updating: boolean) {
   // Build and bundle all extensions in a zip file (including the manifest file)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
+  // options.stdout.write('Building manifest...')
 
   // Include manifest in bundle
   const appManifest = await options.app.manifest()
@@ -148,17 +160,21 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 
   // Create zip file with everything
+  // options.stdout.write('Creating zip file...')
   await zip({
     inputDirectory: options.bundlePath,
     outputZipPath: bundleZipPath,
   })
 
+  // Upload zip file to GCS
+  // options.stdout.write('Getting signed URL...')
   const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
     apiKey: options.apiKey,
     organizationId: options.organizationId,
     id: options.appId,
   })
 
+  // options.stdout.write('Uploading zip file...')
   const form = formData()
   const buffer = readFileSync(bundleZipPath)
   form.append('my_upload', buffer)
@@ -168,15 +184,24 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions) {
     headers: form.getHeaders(),
   })
 
-  // API TODO: Deploy the GCS URL to the Dev Session
-  const result = await options.developerPlatformClient.devSessionDeploy({
+  const payload = {
     shopName: options.storeFqdn,
     appId: options.apiKey,
     assetsUrl: 'signedURL',
-  })
+  }
 
-  if (result.devSessionCreate.userErrors.length > 0) {
+  // options.stdout.write('Creating/Updating dev session...')
+  let errors: DevSessionCreateSchema['devSessionCreate']['userErrors']
+  if (updating) {
+    const result = await options.developerPlatformClient.devSessionUpdate(payload)
+    errors = result.devSessionUpdate?.userErrors
+  } else {
+    const result = await options.developerPlatformClient.devSessionCreate(payload)
+    errors = result.devSessionCreate?.userErrors
+  }
+
+  if (errors.length > 0) {
     options.stderr.write('Dev Session Error')
-    options.stderr.write(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+    options.stderr.write(JSON.stringify(errors, null, 2))
   }
 }

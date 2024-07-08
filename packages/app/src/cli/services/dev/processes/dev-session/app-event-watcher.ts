@@ -62,7 +62,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
 export async function subscribeToAppEvents(
   app: AppInterface,
   options: OutputContextOptions,
-  onChange: (event: AppEvent) => void,
+  onChange: (event: AppEvent) => Promise<void>,
 ) {
   let currentApp = app
   await startFileWatcher(app, options, (event) => {
@@ -75,7 +75,7 @@ export async function subscribeToAppEvents(
           options.stdout.write('Change detected, but no extensions were affected')
           return
         }
-        onChange(appEvent)
+        return onChange(appEvent)
       })
       .catch((error) => {
         options.stderr.write(`Error handling event: ${event.type}`)
