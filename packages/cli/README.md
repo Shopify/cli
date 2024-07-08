@@ -15,6 +15,7 @@
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
+* [`shopify app magic`](#shopify-app-magic)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
@@ -507,6 +508,28 @@ FLAGS
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   Increase the verbosity of the output.
+```
+
+## `shopify app magic`
+
+Do some magic.
+
+```
+USAGE
+  $ shopify app magic [-c <value>] [--json] [--no-color] [--path <value>] [--verbose] [--web-env]
+
+FLAGS
+  -c, --config=<value>  The name of the app configuration.
+      --json            format output as JSON
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the output.
+      --web-env         Outputs environment variables necessary for running and deploying web/.
+
+DESCRIPTION
+  Do some magic.
+
+  All the magic.
 ```
 
 ## `shopify app:release --version <version>`

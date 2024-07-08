@@ -14,6 +14,7 @@ import AppGenerateExtension from './commands/app/generate/extension.js'
 import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
+import AppMagic from './commands/app/magic.js'
 import Init from './commands/app/init.js'
 import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
@@ -28,6 +29,7 @@ export const commands = {
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:import-extensions': ImportExtensions,
+  'app:magic': AppMagic,
   'app:info': AppInfo,
   'app:init': Init,
   'app:release': Release,
