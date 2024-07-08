@@ -100,9 +100,6 @@
     "@ast-grep/napi": "0.11.0",
     "esbuild": "0.19.8"
   },
-  "optionalDependencies": {
-    "@parcel/watcher": "2.4.1"
-  },
   "devDependencies": {
     "@oclif/core": "3.26.5",
     "@oclif/plugin-commands": "3.3.2",
@@ -112,7 +109,7 @@
     "@shopify/plugin-cloudflare": "3.63.0",
     "@shopify/plugin-did-you-mean": "3.63.0",
     "@shopify/theme": "3.63.0",
-    "@shopify/cli-hydrogen": "0.0.0-next-9eb60d7-20240607102913",
+    "@shopify/cli-hydrogen": "0.0.0-next-18e76ba-20240708092928",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",

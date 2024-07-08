@@ -6,11 +6,12 @@ on:
       - created
 
 env:
-  PNPM_VERSION: '8.7.0'
+  PNPM_VERSION: '8.15.7'
 
 jobs:
   snapit:
     name: Snapit
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout default branch
@@ -22,10 +23,12 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@f9e1c0990888000fb4b2e622319ee69e2dc84e67 # pin@main
+        uses: Shopify/snapit@f47c2a5c398098e5bd6a5ceb9229ac6afc80bb7f # pin@main
         with:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
+          custom_message_prefix: "Test the snapshot by intalling the CLI globally:"
+          custom_message_suffix: "\n> After installing, validate the version by running just `shopify` in your terminal\n> If the versions don't match, you might have multiple global instances installed.\n> Use `which shopify` to find out which one you are running and uninstall it."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

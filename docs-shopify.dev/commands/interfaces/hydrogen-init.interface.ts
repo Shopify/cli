@@ -61,6 +61,12 @@ export interface hydrogeninit {
   '--shortcut'?: ''
 
   /**
+   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING
+   */
+  '--styling <value>'?: string
+
+  /**
    * Scaffolds project based on an existing template or example from the Hydrogen repository.
    * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE
    */

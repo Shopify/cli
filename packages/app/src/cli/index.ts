@@ -4,6 +4,7 @@ import ConfigUse from './commands/app/config/use.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
+import Logs from './commands/app/logs.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import FunctionBuild from './commands/app/function/build.js'
@@ -28,6 +29,7 @@ export const commands = {
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,
+  'app:logs': Logs,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
