@@ -1,4 +1,4 @@
-import {EventType, ExtensionEvent, subscribeToAppEvents} from './app-event-watcher.js'
+import {AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
 import {
   testApp,
@@ -9,7 +9,6 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 
@@ -226,28 +225,31 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
 
       // When
-      const onChange = vi.fn()
-      await subscribeToAppEvents(
-        testApp({
-          allExtensions: initialExtensions,
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.toml'},
-        }),
-        outputOptions,
-        onChange,
-      )
+      const app = testApp({
+        allExtensions: initialExtensions,
+        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.toml'},
+      })
+      const watcher = new AppEventWatcher(app, outputOptions)
+      const emitSpy = vi.spyOn(watcher, 'emit')
+      await watcher.start()
 
       // Then
-      await flushPromises()
-      expect(onChange).toHaveBeenCalledWith({
-        app: expect.objectContaining({realExtensions: finalExtensions}),
-        extensionEvents: expect.arrayContaining(extensionEvents),
-        startTime: expect.anything(),
-      })
-      if (needsAppReload) {
-        expect(loadApp).toHaveBeenCalled()
-      } else {
-        expect(loadApp).not.toHaveBeenCalled()
-      }
+      setTimeout(() => {
+        expect(emitSpy).toHaveBeenCalledWith([
+          'all',
+          {
+            app: expect.objectContaining({realExtensions: finalExtensions}),
+            extensionEvents: expect.arrayContaining(extensionEvents),
+            startTime: expect.anything(),
+          },
+        ])
+
+        if (needsAppReload) {
+          expect(loadApp).toHaveBeenCalled()
+        } else {
+          expect(loadApp).not.toHaveBeenCalled()
+        }
+      }, 50)
     },
   )
 })

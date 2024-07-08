@@ -3,7 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import Command from '../../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {EventType, subscribeToAppEvents} from '../../../services/dev/app-events/app-event-watcher.js'
+import {AppEventWatcher, EventType} from '../../../services/dev/app-events/app-event-watcher.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -29,12 +29,15 @@ export default class DemoWatcher extends Command {
     })
 
     const stdoutOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
+    const watcher = new AppEventWatcher(app, stdoutOptions)
+    await watcher.start()
     outputInfo(`Watching for changes in ${app.name}...`)
-    await subscribeToAppEvents(app, stdoutOptions, (event) => {
-      const endTime = process.hrtime(event.startTime)
+
+    watcher.onEvent(async ({extensionEvents, startTime}) => {
+      const endTime = process.hrtime(startTime)
       const time = (endTime[0] * 1000 + endTime[1] / 1000000).toFixed(2)
       outputInfo(`🆕 Event [${time}ms]:`)
-      event.extensionEvents.forEach((event) => {
+      extensionEvents.forEach((event) => {
         switch (event.type) {
           case EventType.Created:
             outputInfo(`  ✅ Extension created - ${colors.green(event.extension.handle)}`)
@@ -51,5 +54,8 @@ export default class DemoWatcher extends Command {
         }
       })
     })
+
+    // Just to keep the process running
+    setInterval(() => {}, 1 << 30)
   }
 }

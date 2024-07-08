@@ -6,6 +6,7 @@ import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import micromatch from 'micromatch'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import EventEmitter from 'events'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -96,35 +97,42 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
 }
 
 /**
- * Subscribe to events for the given app.
- * When a change is detected, the onChange callback will be called with the event.
- * The event will include the updated app and the extension(s) affected by the change.
- *
- * This function will reload the app when necessary, the onChange callback will always have the latest app.
- * This function won't rebuild the extensions, it's the responsibility of the consumer of the event to do so.
+ * App event watcher will emit events when changes are detected in the file system.
  */
-export async function subscribeToAppEvents(
-  app: AppInterface,
-  options: OutputContextOptions,
-  onChange: (event: AppEvent) => void,
-) {
-  let currentApp = app
-  await startFileWatcher(app, options, (event) => {
-    // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
-    const extensions = currentApp.realExtensions.filter((ext) => ext.directory === event.extensionPath)
-    handlers[event.type]({event, app: currentApp, extensions, options})
-      .then((appEvent) => {
-        currentApp = appEvent.app
-        if (appEvent.extensionEvents.length === 0) {
-          outputDebug('Change detected, but no extensions were affected', options.stdout)
-          return
-        }
-        onChange(appEvent)
-      })
-      .catch((error) => {
-        options.stderr.write(`Error handling event: ${error.message}`)
-      })
-  })
+export class AppEventWatcher extends EventEmitter {
+  private app: AppInterface
+  private options: OutputContextOptions
+
+  constructor(app: AppInterface, options: OutputContextOptions) {
+    super()
+    this.app = app
+    this.options = options
+  }
+
+  async start() {
+    await startFileWatcher(this.app, this.options, (event) => {
+      // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
+      const extensions = this.app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
+      handlers[event.type]({event, app: this.app, extensions, options: this.options})
+        .then((appEvent) => {
+          this.app = appEvent.app
+          if (appEvent.extensionEvents.length === 0) {
+            outputDebug('Change detected, but no extensions were affected', this.options.stdout)
+            return
+          }
+          this.emit('all', appEvent)
+        })
+        .catch((error) => {
+          this.options.stderr.write(`Error handling event: ${error.message}`)
+        })
+    })
+  }
+
+  onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.addListener('all', listener)
+    return this
+  }
 }
 
 function normalizeTime(time: [number, number]) {
