@@ -204,16 +204,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    // return {
-    //   id: 'gid://shopify/app/130918678529',
-    //   title: 'title',
-    //   apiKey: 'gid://shopify/app/130918678529',
-    //   organizationId: '109300',
-    //   apiSecretKeys: [],
-    //   grantedScopes: [],
-    //   flags: [],
-    //   developerPlatformClient: this,
-    // }
     const {app} = await this.fetchApp(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
@@ -269,7 +259,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
-    // return {apps: [], hasMorePages: false}
     const query = AppsQuery
     const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token())
     const minimalOrganizationApps = result.apps.map((app) => {
@@ -737,8 +726,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    return {publicApiVersions: ['unstable']}
-    // throw new BugError('Not implemented: apiVersions')
+    throw new BugError('Not implemented: apiVersions')
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {

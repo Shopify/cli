@@ -294,22 +294,22 @@ const storeFromFqdn = async (
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> => {
-  return {
-    shopId: '1',
-    link: 'string',
-    shopDomain: storeFqdn,
-    shopName: 'name',
-    transferDisabled: true,
-    convertableToPartnerTest: true,
-  }
-  // const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
-  // if (result?.store) {
-  //   // never automatically convert a store provided via the cache
-  //   await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
-  //   return result.store
-  // } else {
-  //   throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
+  // return {
+  //   shopId: '1',
+  //   link: 'string',
+  //   shopDomain: storeFqdn,
+  //   shopName: 'name',
+  //   transferDisabled: true,
+  //   convertableToPartnerTest: true,
   // }
+  const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
+  if (result?.store) {
+    // never automatically convert a store provided via the cache
+    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
+    return result.store
+  } else {
+    throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
+  }
 }
 
 function buildOutput(
