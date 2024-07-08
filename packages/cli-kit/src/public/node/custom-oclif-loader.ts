@@ -9,7 +9,7 @@ export class ShopifyConfig extends Config {
     const currentPath = cwd()
 
     let path = sniffForPath() ?? currentPath
-    const currentPathMightBeHydrogenMonorepo = currentPath.includes('shopify/hydrogen')
+    const currentPathMightBeHydrogenMonorepo = currentPath.toLowerCase().includes('shopify/hydrogen')
     const ignoreHydrogenMonorepo = process.env.IGNORE_HYDROGEN_MONOREPO
     if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
       path = execaSync('npm', ['prefix']).stdout.trim()
