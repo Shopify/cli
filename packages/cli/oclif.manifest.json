@@ -2488,7 +2488,7 @@
       "flags": {
         "bundle-stats": {
           "allowNo": true,
-          "description": "[Classic Remix Compiler] Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
+          "description": "Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
           "name": "bundle-stats",
           "type": "boolean"
         },
@@ -3505,6 +3505,14 @@
           "name": "shortcut",
           "type": "boolean"
         },
+        "styling": {
+          "description": "Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_STYLING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "styling",
+          "type": "option"
+        },
         "template": {
           "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
           "env": "SHOPIFY_HYDROGEN_FLAG_TEMPLATE",
@@ -3867,12 +3875,12 @@
       ],
       "args": {
         "strategy": {
-          "description": "The CSS strategy to setup. One of tailwind,css-modules,vanilla-extract,postcss",
+          "description": "The CSS strategy to setup. One of tailwind,vanilla-extract,css-modules,postcss",
           "name": "strategy",
           "options": [
             "tailwind",
-            "css-modules",
             "vanilla-extract",
+            "css-modules",
             "postcss"
           ]
         }
