@@ -41,13 +41,15 @@ export async function extensionMigrationPrompt(
     .map((name) => `"${name}"`)
     .join(', ')
 
+  const migrationEndType = toMigrate.map(({local}) => `"${local.type}"`).join(', ')
+
   renderInfo({
     headline: "Extension migrations can't be undone.",
     body: `Your ${migrationNames} configuration has been updated. Migrating gives you access to new features and won't impact the end user experience. All previous extension versions will reflect this change.`,
   })
 
   const confirmMessage = includeRemoteType
-    ? `Yes, confirm migration from ${uniqueMigrationTypes}`
+    ? `Yes, confirm migration from ${uniqueMigrationTypes} to ${migrationEndType}`
     : 'Yes, confirm migration'
 
   return renderConfirmationPrompt({
