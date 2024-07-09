@@ -18,6 +18,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 // Schemas for loading app configuration
 
@@ -250,6 +252,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): AppCreationDefaultOptions
+  manifest: () => Promise<JsonMapType>
 }
 
 type AppConstructor<
@@ -331,6 +334,27 @@ export class App<
     return this.realExtensions.filter(
       (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
     )
+  }
+
+  async manifest(): Promise<JsonMapType> {
+    const modules = await Promise.all(
+      this.realExtensions.map(async (module) => {
+        const config = await module.commonDeployConfig('', this.configuration)
+        return {
+          type: module.externalType,
+          handle: module.handle,
+          uid: module.uid,
+          assets: module.uid,
+          config: (config ?? {}) as JsonMapType,
+        }
+      }),
+    )
+    const realModules = getArrayRejectingUndefined(modules)
+    return {
+      name: this.name,
+      handle: '',
+      modules: realModules,
+    }
   }
 
   async updateDependencies() {
