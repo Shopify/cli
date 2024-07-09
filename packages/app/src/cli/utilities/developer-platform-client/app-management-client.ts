@@ -579,8 +579,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
-    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
+    // `name` is from the package.json package name or the directory name, while
+    // the branding module reflects the current specified name in the TOML.
+    // Since it is technically valid to not have a branding module, we will default
+    // to the `name` if no branding module is present.
     let updatedName = name
+    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
