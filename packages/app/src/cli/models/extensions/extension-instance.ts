@@ -41,10 +41,6 @@ export const CONFIG_EXTENSION_IDS = [
   appPrivacyComplienceSpec,
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
-  '0f844fe3-fee9-45ae-9b68-7e596b3eaaa9',
-  '10457bd6-aeea-4f92-ab90-a9ab1e471276',
-  '0ea86845-466c-4f0e-b7f1-9d9496d93f4a',
-  '406bb2df-eaa4-44bc-860d-c714f4b65def',
 ]
 
 /**
