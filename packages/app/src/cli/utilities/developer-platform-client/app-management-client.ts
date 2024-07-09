@@ -456,7 +456,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
           id: parseInt(versionInfo.id, 10),
           uuid: versionInfo.id,
           versionTag: versionInfo.metadata.versionTag,
-          location: '',
+          location: [
+            await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
+            'versions',
+            numberFromGid(versionInfo.id),
+          ].join('/'),
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
             return {
@@ -669,7 +673,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           location: [
             await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
             'versions',
-            releaseResult.appReleaseCreate.release.version.id,
+            numberFromGid(releaseResult.appReleaseCreate.release.version.id),
           ].join('/'),
         },
         userErrors: releaseResult.appReleaseCreate.userErrors?.map((err) => ({
