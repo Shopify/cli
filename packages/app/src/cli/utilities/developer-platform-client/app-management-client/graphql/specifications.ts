@@ -7,6 +7,9 @@ export const SpecificationsQuery = gql`
       identifier
       externalIdentifier
       features
+      uidStrategy {
+        appModuleLimit
+      }
     }
   }
 `
@@ -16,6 +19,9 @@ interface RemoteSpecification {
   identifier: string
   externalIdentifier: string
   features?: string[]
+  uidStrategy: {
+    appModuleLimit: number
+  }
 }
 
 export interface SpecificationsQuerySchema {

@@ -280,8 +280,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         gated: false,
         options: {
           managementExperience: 'cli',
-          // Temporary stub, needs to be added to the API
-          registrationLimit: 1,
+          registrationLimit: spec.uidStrategy.appModuleLimit,
         },
         experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
       }),
