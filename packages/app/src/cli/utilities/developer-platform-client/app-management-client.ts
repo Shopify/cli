@@ -282,7 +282,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           managementExperience: 'cli',
           registrationLimit: spec.uidStrategy.appModuleLimit,
         },
-        experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
+        experience: experience(spec.identifier),
       }),
     )
   }
@@ -459,9 +459,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
           location: '',
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
-            const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier)
-              ? 'configuration'
-              : 'extension'
             return {
               registrationId: mod.uuid,
               registrationUid: mod.uuid,
@@ -473,7 +470,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
                 ...mod.specification,
                 identifier: mod.specification.externalIdentifier,
                 options: {managementExperience: 'cli'},
-                experience,
+                experience: experience(mod.specification.identifier),
               },
             }
           }),
@@ -501,13 +498,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
     function formattedModule(mod: AppModuleReturnType) {
-      const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
       return {
         uuid: mod.uuid,
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience,
+          experience: experience(mod.specification.identifier),
           options: {
             managementExperience: 'cli',
           },
@@ -530,7 +526,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.activeAppVersionRawResult(app)
     return {
       appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
-        const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
         return {
           registrationId: mod.uuid,
           registrationUid: mod.uuid,
@@ -542,7 +537,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             ...mod.specification,
             identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
-            experience,
+            experience: experience(mod.specification.identifier),
           },
         }
       }),
@@ -890,4 +885,8 @@ export async function allowedTemplates(
       !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
     return hasAnyNeededBetas && satisfiesMinCliVersion
   })
+}
+
+function experience(identifier: string): 'configuration' | 'extension' {
+  return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
 }
