@@ -345,6 +345,7 @@ export class App<
           handle: module.handle,
           uid: module.uid,
           assets: module.uid,
+          target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
         }
       }),
