@@ -11,7 +11,7 @@ vi.mock('../context/fqdn.js')
 const mockedResult = 'OK'
 const appManagementFqdnValue = 'shopify.com'
 const orgId = Math.floor(Math.random() * 1000000000000).toString()
-const url = `https://${appManagementFqdnValue}/app_management/unstable/organizations/${orgId}/graphql`
+const url = `https://${appManagementFqdnValue}/app_management/unstable/organizations/${orgId}/graphql.json`
 
 const mockedToken = 'token'
 
