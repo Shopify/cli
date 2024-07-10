@@ -90,7 +90,8 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   // Review if this extension list makes sense
 
   await inTemporaryDirectory(async (tmpDir) => {
-    const dir = '/Users/isaac/Desktop/testing'
+    // '/Users/isaac/Desktop/testing'
+    const dir = tmpDir
     const bundlePath = joinPath(dir, 'bundle')
     await mkdir(bundlePath)
 
