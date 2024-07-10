@@ -763,8 +763,8 @@ USAGE
     [--entry <value>] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
 
 FLAGS
-  --[no-]bundle-stats            [Classic Remix Compiler] Show a bundle size summary after building. Defaults to true,
-                                 use `--no-bundle-stats` to disable.
+  --[no-]bundle-stats            Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to
+                                 disable.
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
   --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
                                  this file exists.
@@ -1059,7 +1059,7 @@ Creates a new Hydrogen storefront.
 ```
 USAGE
   $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
-    [--path <value>] [--quickstart] [--routes] [--shortcut] [--template <value>]
+    [--path <value>] [--quickstart] [--routes] [--shortcut] [--styling <value>] [--template <value>]
 
 FLAGS
   -f, --force              Overwrites the destination directory and files if they already exist.
@@ -1076,6 +1076,8 @@ FLAGS
       --[no-]routes        Generate routes for all pages.
       --[no-]shortcut      Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with
                            `--no-shortcut`.
+      --styling=<value>    Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`,
+                           `postcss`, `none`.
       --template=<value>   Scaffolds project based on an existing template or example from the Hydrogen repository.
 
 DESCRIPTION
@@ -1214,8 +1216,8 @@ USAGE
   $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--path <value>]
 
 ARGUMENTS
-  STRATEGY  (tailwind|css-modules|vanilla-extract|postcss) The CSS strategy to setup. One of
-            tailwind,css-modules,vanilla-extract,postcss
+  STRATEGY  (tailwind|vanilla-extract|css-modules|postcss) The CSS strategy to setup. One of
+            tailwind,vanilla-extract,css-modules,postcss
 
 FLAGS
   -f, --force              Overwrites the destination directory and files if they already exist.

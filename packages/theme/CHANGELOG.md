@@ -1,5 +1,15 @@
 # @shopify/theme
 
+## 3.64.0
+
+### Patch Changes
+
+- 13c246e60: Avoid loop with static assets when users pass the `--theme-editor-sync` flag
+- c053fd555: Avoid loop when users pass the `--theme-editor-sync` flag in the `shopify theme dev` command
+- Updated dependencies [f76debde5]
+- Updated dependencies [593019155]
+  - @shopify/cli-kit@3.64.0
+
 ## 3.63.0
 
 ### Minor Changes

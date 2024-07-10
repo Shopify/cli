@@ -293,10 +293,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
         gated: false,
         options: {
           managementExperience: 'cli',
-          // Temporary stub, needs to be added to the API
-          registrationLimit: 1,
+          registrationLimit: spec.uidStrategy.appModuleLimit,
         },
-        experience: CONFIG_EXTENSION_IDS.includes(spec.identifier) ? 'configuration' : 'extension',
+        experience: experience(spec.identifier),
       }),
     )
   }
@@ -470,12 +469,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
           id: parseInt(versionInfo.id, 10),
           uuid: versionInfo.id,
           versionTag: versionInfo.metadata.versionTag,
-          location: '',
+          location: [
+            await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
+            'versions',
+            numberFromGid(versionInfo.id),
+          ].join('/'),
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
-            const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier)
-              ? 'configuration'
-              : 'extension'
             return {
               registrationId: mod.uuid,
               registrationUid: mod.uuid,
@@ -487,7 +487,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
                 ...mod.specification,
                 identifier: mod.specification.externalIdentifier,
                 options: {managementExperience: 'cli'},
-                experience,
+                experience: experience(mod.specification.identifier),
               },
             }
           }),
@@ -515,13 +515,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
     function formattedModule(mod: AppModuleReturnType) {
-      const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
       return {
         uuid: mod.uuid,
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience,
+          experience: experience(mod.specification.identifier),
           options: {
             managementExperience: 'cli',
           },
@@ -544,7 +543,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.activeAppVersionRawResult(app)
     return {
       appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
-        const experience = CONFIG_EXTENSION_IDS.includes(mod.specification.identifier) ? 'configuration' : 'extension'
         return {
           registrationId: mod.uuid,
           registrationUid: mod.uuid,
@@ -556,7 +554,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             ...mod.specification,
             identifier: mod.specification.identifier,
             options: {managementExperience: 'cli'},
-            experience,
+            experience: experience(mod.specification.identifier),
           },
         }
       }),
@@ -593,8 +591,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
-    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
+    // `name` is from the package.json package name or the directory name, while
+    // the branding module reflects the current specified name in the TOML.
+    // Since it is technically valid to not have a branding module, we will default
+    // to the `name` if no branding module is present.
     let updatedName = name
+    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
@@ -612,7 +614,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      ...(versionTag ? {metadata: {versionTag}} : {}),
+      metadata: versionTag ? {versionTag} : {},
     }
 
     const result = await appManagementRequest<CreateAppVersionMutationSchema>(
@@ -696,7 +698,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           location: [
             await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
             'versions',
-            releaseResult.appReleaseCreate.release.version.id,
+            numberFromGid(releaseResult.appReleaseCreate.release.version.id),
           ].join('/'),
         },
         userErrors: releaseResult.appReleaseCreate.userErrors?.map((err) => ({
@@ -922,4 +924,8 @@ export async function allowedTemplates(
       !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
     return hasAnyNeededBetas && satisfiesMinCliVersion
   })
+}
+
+function experience(identifier: string): 'configuration' | 'extension' {
+  return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
 }

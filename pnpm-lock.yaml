@@ -152,16 +152,16 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../cli-kit
       '@shopify/create-app':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -274,22 +274,22 @@ importers:
         specifier: 5.1.2
         version: 5.1.2
       '@shopify/app':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-ee28ee1-20240705042654
-        version: 0.0.0-next-ee28ee1-20240705042654(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 0.0.0-next-18e76ba-20240708092928
+        version: 0.0.0-next-18e76ba-20240708092928(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../theme
       '@types/node':
         specifier: 18.19.3
@@ -539,7 +539,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../cli-kit
       '@types/node':
         specifier: 18.19.3
@@ -663,7 +663,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -679,7 +679,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -698,7 +698,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.63.0
+        specifier: 3.64.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 2.8.0
@@ -6014,15 +6014,15 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-ee28ee1-20240705042654(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-SEzC4yV31I4JcqfPcZOmnpIQecPS2xmXbGplpEO+HdmReDnfbTMRlhTnhxVFH6NCg7o6ehVlxdGfmGXXgLu7Sw==}
+  /@shopify/cli-hydrogen@0.0.0-next-18e76ba-20240708092928(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-NI8h9XB8qLWL0XxDyYh4YkNYR7Dc02m2Q7BtEtj1pjJ3ATBX4WZ8J6y9XiruXdHr+SYYiVSzuP1AMufZcjLvdQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-ee28ee1-20240705042654
-      '@shopify/mini-oxygen': 0.0.0-next-ee28ee1-20240705042654
+      '@shopify/hydrogen-codegen': 0.0.0-next-18e76ba-20240708092928
+      '@shopify/mini-oxygen': 0.0.0-next-18e76ba-20240708092928
       graphql-config: ^5.0.3
       vite: 5.3.1
     peerDependenciesMeta:
@@ -6049,7 +6049,6 @@ packages:
       chokidar: 3.5.3
       cli-truncate: 4.0.0
       diff: 5.1.0
-      fs-extra: 11.1.0
       get-port: 7.1.0
       gunzip-maybe: 1.4.2
       prettier: 2.8.8
