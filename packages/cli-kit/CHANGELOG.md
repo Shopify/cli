@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.64.0
+
+### Minor Changes
+
+- f76debde5: Device auth is the default authentication method
+
+### Patch Changes
+
+- 593019155: Remove unnecessary prompt from CLI2
+
 ## 3.63.0
 
 ### Patch Changes
