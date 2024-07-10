@@ -76,6 +76,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
@@ -163,6 +164,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,
@@ -184,6 +186,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
@@ -215,6 +218,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
@@ -267,6 +271,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       appModules: [
         {
@@ -300,6 +305,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
@@ -345,6 +351,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       appModules: [
         {
@@ -377,6 +384,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
+      name: app.name,
       organizationId: 'org-id',
       appModules: [],
       developerPlatformClient,

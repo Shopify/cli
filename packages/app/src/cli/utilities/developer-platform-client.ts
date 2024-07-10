@@ -160,6 +160,7 @@ export interface ActiveAppVersion {
 
 export type AppDeployOptions = AppDeployVariables & {
   organizationId: string
+  name: string
 }
 
 type WithUserErrors<T> = T & {
@@ -175,6 +176,7 @@ export type AssetUrlSchema = WithUserErrors<{
 
 export interface DeveloperPlatformClient {
   clientName: string
+  webUiName: string
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
   session: () => Promise<PartnersSession>
@@ -218,4 +220,5 @@ export interface DeveloperPlatformClient {
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
+  appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
 }
