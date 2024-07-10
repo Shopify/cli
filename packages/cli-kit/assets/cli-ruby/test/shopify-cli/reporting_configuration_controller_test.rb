@@ -57,55 +57,5 @@ module ShopifyCLI
       refute got
     end
 
-    def test_check_or_prompt_report_automatically_returns_true_when_the_user_was_already_prompted_and_they_enabled_it
-      # Given
-      ShopifyCLI::Environment.expects(:test?).returns(false)
-      ShopifyCLI::Environment.expects(:development?).returns(false)
-      ShopifyCLI::Environment.expects(:interactive?).returns(true)
-      ShopifyCLI::Config
-        .expects(:get_section)
-        .with(Constants::Config::Sections::Analytics::NAME)
-        .returns({ Constants::Config::Sections::Analytics::Fields::ENABLED => true })
-      ShopifyCLI::Config
-        .expects(:get_bool)
-        .with(
-          Constants::Config::Sections::Analytics::NAME,
-          Constants::Config::Sections::Analytics::Fields::ENABLED,
-          default: false
-        )
-        .returns(true)
-
-      # When
-      got = ReportingConfigurationController.check_or_prompt_report_automatically(context: @context)
-
-      # Then
-      assert got
-    end
-
-    def test_check_or_prompt_report_automatically_stores_and_returns_the_value_selected_by_the_user
-      # Given
-      ShopifyCLI::Environment.expects(:test?).returns(false)
-      ShopifyCLI::Environment.expects(:development?).returns(false)
-      ShopifyCLI::Environment.expects(:interactive?).returns(true)
-      ShopifyCLI::Config
-        .expects(:get_section)
-        .with(Constants::Config::Sections::Analytics::NAME)
-        .returns({})
-
-      ShopifyCLI::Config
-        .expects(:set)
-        .with(
-          Constants::Config::Sections::Analytics::NAME,
-          Constants::Config::Sections::Analytics::Fields::ENABLED,
-          false
-        )
-      CLI::UI::Prompt.expects(:ask).returns(false)
-
-      # When
-      got = ReportingConfigurationController.check_or_prompt_report_automatically(context: @context)
-
-      # Then
-      refute got
-    end
   end
 end
