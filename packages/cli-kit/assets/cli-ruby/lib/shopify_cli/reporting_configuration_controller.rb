@@ -22,8 +22,8 @@ module ShopifyCLI
       )
     end
 
-    def self.check_or_prompt_report_automatically(source: :usage, prompt: true, context: ShopifyCLI::Context.new)
-      return false
+    def self.check_or_prompt_report_automatically(*)
+      false
     end
   end
 end
