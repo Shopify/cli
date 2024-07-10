@@ -601,7 +601,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      ...(versionTag ? {metadata: {versionTag}} : {}),
+      metadata: versionTag ? {versionTag} : {},
     }
 
     const result = await appManagementRequest<CreateAppVersionMutationSchema>(
