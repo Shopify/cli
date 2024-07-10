@@ -24,16 +24,10 @@ jobs:
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
           fetch-depth: 1
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # pin@v4.0.0
+      - name: Setup deps
+        uses: ../actions/setup-cli-deps
         with:
-          version: ${{ env.PNPM_VERSION }}
-      - name: Set Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'pnpm'
-      - name: Install dependencies
-        run: pnpm install
+          node-version: 18.20.3
       - name: Create Release Pull Request
         uses: Wandalen/wretry.action@e6cf3db7de3777ba5f999f903c2f4efdd9ac7288 # pin@v1.0.36
         with:
