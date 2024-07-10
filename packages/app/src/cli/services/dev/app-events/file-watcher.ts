@@ -5,6 +5,7 @@ import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
 
 /**
@@ -98,16 +99,16 @@ export async function startFileWatcher(
     debouncers.delete(path)
   }
 
-  // Create watcher ignoring node_modules, git, test files and dist folders
+  // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   const watcher = chokidar.watch(watchPaths, {
     ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
     persistent: true,
     ignoreInitial: true,
   })
 
-  // Start watcher for 'all' events
+  // Start chokidar watcher for 'all' events
   watcher.on('all', (event, path) => {
-    const startTime = process.hrtime()
+    const startTime = startHRTime()
     const isConfigAppPath = path === appConfigurationPath
     const isRootExtensionDirectory = extensionDirectories.some((dir) => dirname(path) === dir)
     const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
@@ -140,6 +141,7 @@ export async function startFileWatcher(
         // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
         if (!isRootExtensionDirectory) break
         // Wait 5 seconds to report the new extension to give time to the extension to be created
+        // This might not be enough time in some cases, the consumer of this event should be prepared to handle this.
         setTimeout(
           () => {
             onChange({type: 'extension_folder_created', path, extensionPath, startTime})

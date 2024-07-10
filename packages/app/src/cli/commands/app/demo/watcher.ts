@@ -7,7 +7,7 @@ import {AppEventWatcher, EventType} from '../../../services/dev/app-events/app-e
 import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
 
 export default class DemoWatcher extends Command {
   static summary = 'Watch and prints out changes to an app.'
@@ -28,15 +28,12 @@ export default class DemoWatcher extends Command {
       mode: 'report',
     })
 
-    const stdoutOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-    const watcher = new AppEventWatcher(app, stdoutOptions)
+    const watcher = new AppEventWatcher(app)
     await watcher.start()
     outputInfo(`Watching for changes in ${app.name}...`)
 
-    watcher.onEvent(async ({extensionEvents, startTime}) => {
-      const endTime = process.hrtime(startTime)
-      const time = (endTime[0] * 1000 + endTime[1] / 1000000).toFixed(2)
-      outputInfo(`🆕 Event [${time}ms]:`)
+    watcher.onEvent(async ({app: _newApp, extensionEvents, startTime}) => {
+      outputInfo(`🆕 Event [${endHRTimeInMs(startTime)}ms]:`)
       extensionEvents.forEach((event) => {
         switch (event.type) {
           case EventType.Created:

@@ -6,6 +6,8 @@ import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import micromatch from 'micromatch'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import EventEmitter from 'events'
 
 /**
@@ -103,10 +105,10 @@ export class AppEventWatcher extends EventEmitter {
   private app: AppInterface
   private options: OutputContextOptions
 
-  constructor(app: AppInterface, options: OutputContextOptions) {
+  constructor(app: AppInterface, options?: OutputContextOptions) {
     super()
     this.app = app
-    this.options = options
+    this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
   }
 
   async start() {
@@ -133,10 +135,6 @@ export class AppEventWatcher extends EventEmitter {
     this.addListener('all', listener)
     return this
   }
-}
-
-function normalizeTime(time: [number, number]) {
-  return (time[0] * 1000 + time[1] / 1000000).toFixed(2)
 }
 
 /**
@@ -255,7 +253,7 @@ async function AppConfigDeletedHandler(_input: HandlerInput): Promise<AppEvent> 
  * Prints the time to reload the app to stdout
  */
 async function reloadApp(app: AppInterface, options: OutputContextOptions): Promise<AppInterface> {
-  const start = process.hrtime()
+  const start = startHRTime()
   try {
     const newApp = await loadApp({
       specifications: app.specifications,
@@ -263,12 +261,11 @@ async function reloadApp(app: AppInterface, options: OutputContextOptions): Prom
       userProvidedConfigName: undefined,
       remoteFlags: app.remoteFlags,
     })
-    const endTime = process.hrtime(start)
-    outputDebug(`App reloaded [${normalizeTime(endTime)}ms]`, options.stdout)
+    outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)
     return newApp
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    outputWarn(`Error reloading app: ${error.message}`, options.stdout)
+    outputWarn(`Error reloading app: ${error.message}`, options.stderr)
     return app
   }
 }
