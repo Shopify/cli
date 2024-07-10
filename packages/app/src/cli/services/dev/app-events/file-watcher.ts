@@ -100,7 +100,7 @@ export async function startFileWatcher(
 
   // Create watcher ignoring node_modules, git, test files and dist folders
   const watcher = chokidar.watch(watchPaths, {
-    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**'],
+    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
     persistent: true,
     ignoreInitial: true,
   })
