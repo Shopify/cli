@@ -1,4 +1,13 @@
-import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy, ExportJavyBuilder, jsExports} from './build.js'
+import {
+  javy,
+  buildGraphqlTypes,
+  bundleExtension,
+  runFunctionRunner,
+  runJavy,
+  ExportJavyBuilder,
+  jsExports,
+  functionRunner,
+} from './build.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -141,17 +150,8 @@ describe('runJavy', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      [
-        'exec',
-        '--',
-        'javy-cli',
-        'compile',
-        '-d',
-        '-o',
-        joinPath(ourFunction.directory, 'dist/index.wasm'),
-        'dist/function.js',
-      ],
+      javy.path,
+      ['compile', '-d', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -172,16 +172,12 @@ describe('runFunctionRunner', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      'npm',
-      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm')],
-      {
-        cwd: ourFunction.directory,
-        stderr: 'inherit',
-        stdin: 'inherit',
-        stdout: 'inherit',
-      },
-    )
+    expect(exec).toHaveBeenCalledWith(functionRunner.path, ['-f', joinPath(ourFunction.directory, 'dist/index.wasm')], {
+      cwd: ourFunction.directory,
+      stderr: 'inherit',
+      stdin: 'inherit',
+      stdout: 'inherit',
+    })
   })
 
   test('calls function runner to execute function locally and return json', async () => {
@@ -194,8 +190,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--json'],
+      functionRunner.path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--json'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -215,16 +211,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      [
-        'exec',
-        '--',
-        'function-runner',
-        '-f',
-        joinPath(ourFunction.directory, 'dist/index.wasm'),
-        '--input',
-        'input.json',
-      ],
+      functionRunner.path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--input', 'input.json'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -244,8 +232,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--export', 'foo'],
+      functionRunner.path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--export', 'foo'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -325,11 +313,8 @@ describe('ExportJavyBuilder', () => {
         // Then
         await expect(got).resolves.toBeUndefined()
         expect(exec).toHaveBeenCalledWith(
-          'npm',
+          javy.path,
           [
-            'exec',
-            '--',
-            'javy-cli',
             'compile',
             '-d',
             '-o',
@@ -442,5 +427,205 @@ describe('jsExports', () => {
     expect(() => {
       jsExports(ourFunction)
     }).toThrow(/Invalid export names: 'fooBar', 'foo\*baz'[.\n]*The TOML's exports must be kebab-case/)
+  })
+})
+
+describe('javy', () => {
+  test('properties are set correctly', () => {
+    expect(javy.name).toBe('javy')
+    expect(javy.version).match(/^v\d\.\d\.\d$/)
+    expect(javy.directory).toBeDefined()
+    expect(javy.path).toMatch(/(\/|\\)javy-v\d\.\d\.\d$/)
+  })
+
+  describe('downloadUrl returns the correct URL', () => {
+    test('for Apple Silicon MacOS', () => {
+      // When
+      const url = javy.downloadUrl('darwin', 'arm64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-arm-macos-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for Intel MacOS', () => {
+      // When
+      const url = javy.downloadUrl('darwin', 'x64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-x86_64-macos-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for Arm Linux', () => {
+      // When
+      const url = javy.downloadUrl('linux', 'arm64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-arm-linux-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for x86 Linux', () => {
+      // When
+      const url = javy.downloadUrl('linux', 'x64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-x86_64-linux-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for a 32-bit installation of NodeJS on Windows', () => {
+      // When
+      const url = javy.downloadUrl('win32', 'ia32')
+
+      // Uses the 64-bit version since we assume the operating system actually uses 64-bits and its just a 32-bit
+      // installation of NodeJS.
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-x86_64-windows-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for a 64-bit installation of NodeJS on Windows', () => {
+      // When
+      const url = javy.downloadUrl('win32', 'x64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-x86_64-windows-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('aix (or any other unsupported platform) throws an error', () => {
+      // When
+      const platform = 'aix'
+
+      // Then
+      expect(() => javy.downloadUrl(platform, 'x64')).toThrowError('Unsupported platform aix')
+    })
+
+    test('ppc architecture (or any other unsupported architecture) throws an error', () => {
+      // When
+      const arch = 'ppc'
+
+      // Then
+      expect(() => javy.downloadUrl('darwin', arch)).toThrowError('Unsupported architecture ppc')
+    })
+
+    test('Unsupported combination throws an error', () => {
+      // When
+      const arch = 'arm'
+      const platform = 'win32'
+
+      // Then
+      expect(() => javy.downloadUrl(platform, arch)).toThrowError(
+        'Unsupported platform/architecture combination win32/arm',
+      )
+    })
+  })
+})
+
+describe('functionRunner', () => {
+  test('properties are set correctly', () => {
+    expect(functionRunner.name).toBe('function-runner')
+    expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
+    expect(functionRunner.directory).toBeDefined()
+    expect(functionRunner.path).toMatch(/(\/|\\)function-runner-v\d\.\d\.\d$/)
+  })
+
+  describe('downloadUrl returns the correct URL', () => {
+    test('for Apple Silicon MacOS', () => {
+      // When
+      const url = functionRunner.downloadUrl('darwin', 'arm64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/Shopify\/function-runner\/releases\/download\/v\d\.\d\.\d\/function-runner-arm-macos-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for Intel MacOS', () => {
+      // When
+      const url = functionRunner.downloadUrl('darwin', 'x64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/Shopify\/function-runner\/releases\/download\/v\d\.\d\.\d\/function-runner-x86_64-macos-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for Arm Linux', () => {
+      // When
+      const url = functionRunner.downloadUrl('linux', 'arm64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/Shopify\/function-runner\/releases\/download\/v\d\.\d\.\d\/function-runner-arm-linux-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for x86 Linux', () => {
+      // When
+      const url = functionRunner.downloadUrl('linux', 'x64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/Shopify\/function-runner\/releases\/download\/v\d\.\d\.\d\/function-runner-x86_64-linux-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for a 32-bit installation of NodeJS on Windows', () => {
+      // When
+      const url = functionRunner.downloadUrl('win32', 'ia32')
+
+      // Uses the 64-bit version since we assume the operating system actually uses 64-bits and its just a 32-bit
+      // installation of NodeJS.
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/Shopify\/function-runner\/releases\/download\/v\d\.\d\.\d\/function-runner-x86_64-windows-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('for a 64-bit installation of NodeJS on Windows', () => {
+      // When
+      const url = functionRunner.downloadUrl('win32', 'x64')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/Shopify\/function-runner\/releases\/download\/v\d\.\d\.\d\/function-runner-x86_64-windows-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('aix (or any other unsupported platform) throws an error', () => {
+      // When
+      const platform = 'aix'
+
+      // Then
+      expect(() => functionRunner.downloadUrl(platform, 'x64')).toThrowError('Unsupported platform aix')
+    })
+
+    test('ppc architecture (or any other unsupported architecture) throws an error', () => {
+      // When
+      const arch = 'ppc'
+
+      // Then
+      expect(() => functionRunner.downloadUrl('darwin', arch)).toThrowError('Unsupported architecture ppc')
+    })
+
+    test('Unsupported combination throws an error', () => {
+      // When
+      const arch = 'arm'
+      const platform = 'win32'
+
+      // Then
+      expect(() => functionRunner.downloadUrl(platform, arch)).toThrowError(
+        'Unsupported platform/architecture combination win32/arm',
+      )
+    })
   })
 })
