@@ -15,7 +15,7 @@ When(/I look at the github actions we use/, async function () {
 Then(/I see all non-official actions being pinned/, async function () {
   const remaining: string[] = this.githubActions.filter(
     // we skip the ones from github or from the repo
-    (action: string) => !action.startsWith('actions/') && !action.startsWith('./'),
+    (action: string) => !action.startsWith('actions/') && !action.startsWith('./') && !action.startsWith('../'),
   )
   const unpinned = remaining.filter(
     (action: string) =>
