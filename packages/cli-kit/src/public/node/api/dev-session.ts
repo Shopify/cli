@@ -28,7 +28,7 @@ export async function devSessionRequest<T>(
 ): Promise<T> {
   const api = 'App Management'
   const fqdn = await devSessionFqdn()
-  const url = `https://${shopName}.${fqdn}/app_dev/unstable/graphql.json`
+  const url = `https://${shopName}/app_dev/unstable/graphql.json`
   const result = limiter.schedule<T>(() =>
     graphqlRequest({
       query,

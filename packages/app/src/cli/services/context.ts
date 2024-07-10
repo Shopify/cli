@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
-import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -696,32 +696,41 @@ async function fetchDevDataFromOptions(
       }
     })(),
     (async () => {
-      if (options.storeFqdn) {
-        const orgWithStore = await fetchStoreByDomain(orgId, options.storeFqdn, developerPlatformClient)
-        if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
-        if (!orgWithStore.store) {
-          const partners = await partnersFqdn()
-          const org = orgWithStore.organization
-          throw new AbortError(
-            `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
-            `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
-          )
-        }
-        return orgWithStore as {store: OrganizationStore; organization: Organization}
-      }
+      // if (options.storeFqdn && false) {
+      //   const orgWithStore = await fetchStoreByDomain(orgId, options.storeFqdn, developerPlatformClient)
+      //   if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
+      //   if (!orgWithStore.store) {
+      //     const partners = await partnersFqdn()
+      //     const org = orgWithStore.organization
+      //     throw new AbortError(
+      //       `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
+      //       `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
+      //     )
+      //   }
+      //   return orgWithStore as {store: OrganizationStore; organization: Organization}
+      // }
     })(),
   ])
   let selectedStore: OrganizationStore | undefined
 
   if (options.storeFqdn) {
-    selectedStore = orgWithStore!.store
-    // never automatically convert a store provided via the command line
-    await convertToTransferDisabledStoreIfNeeded(
-      selectedStore,
-      orgWithStore!.organization.id,
-      developerPlatformClient,
-      'never',
-    )
+    // selectedStore = orgWithStore!.store
+    // // never automatically convert a store provided via the command line
+    // await convertToTransferDisabledStoreIfNeeded(
+    //   selectedStore,
+    //   orgWithStore!.organization.id,
+    //   developerPlatformClient,
+    //   'never',
+    // )
+
+    selectedStore = {
+      shopId: '5',
+      link: 'string',
+      shopDomain: options.storeFqdn,
+      shopName: 'name',
+      transferDisabled: true,
+      convertableToPartnerTest: true,
+    }
   }
 
   return {app: selectedApp, store: selectedStore}

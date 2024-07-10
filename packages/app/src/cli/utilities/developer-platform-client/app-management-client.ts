@@ -734,7 +734,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    throw new BugError('Not implemented: sendSampleWebhook')
+    return {
+      sendSampleWebhook: {
+        samplePayload: '',
+        headers: '',
+        success: true,
+        userErrors: [],
+      },
+    }
+    // throw new BugError('Not implemented: sendSampleWebhook')
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
