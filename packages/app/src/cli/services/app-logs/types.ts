@@ -26,7 +26,8 @@ export interface AppLogData {
   log_timestamp: string
 }
 
-export interface FunctionRunLog {
+export class FunctionRunLog {
+  export: string
   input: unknown
   inputBytes: number
   output: unknown
@@ -36,7 +37,120 @@ export interface FunctionRunLog {
   fuelConsumed: number
   errorMessage: string | null
   errorType: string | null
+
+  constructor({
+    export: exportValue,
+    input,
+    inputBytes,
+    output,
+    outputBytes,
+    logs,
+    functionId,
+    fuelConsumed,
+    errorMessage,
+    errorType,
+  }: {
+    export: string
+    input: unknown
+    inputBytes: number
+    output: unknown
+    outputBytes: number
+    logs: string
+    functionId: string
+    fuelConsumed: number
+    errorMessage: string | null
+    errorType: string | null
+  }) {
+    this.export = exportValue
+    this.input = input
+    this.inputBytes = inputBytes
+    this.output = output
+    this.outputBytes = outputBytes
+    this.logs = logs
+    this.functionId = functionId
+    this.fuelConsumed = fuelConsumed
+    this.errorMessage = errorMessage
+    this.errorType = errorType
+  }
 }
+
+export class NetworkAccessResponseFromCacheLog {
+  cacheEntryEpochMs: number
+  cacheTtlMs: number
+  httpRequest: unknown
+  httpResponse: unknown
+
+  constructor({
+    cacheEntryEpochMs,
+    cacheTtlMs,
+    httpRequest,
+    httpResponse,
+  }: {
+    cacheEntryEpochMs: number
+    cacheTtlMs: number
+    httpRequest: unknown
+    httpResponse: unknown
+  }) {
+    this.cacheEntryEpochMs = cacheEntryEpochMs
+    this.cacheTtlMs = cacheTtlMs
+    this.httpRequest = httpRequest
+    this.httpResponse = httpResponse
+  }
+}
+
+export enum BackgroundExecutionReason {
+  NoCachedResponse,
+  CacheAboutToExpire,
+  Unknown,
+}
+
+export class NetworkAccessRequestExecutionInBackgroundLog {
+  reason: BackgroundExecutionReason
+  httpRequest: unknown
+
+  constructor({reason, httpRequest}: {reason: BackgroundExecutionReason; httpRequest: unknown}) {
+    this.reason = reason
+    this.httpRequest = httpRequest
+  }
+}
+
+export class NetworkAccessRequestExecutedLog {
+  attempt: number
+  connectTimeMs: number | null
+  writeReadTimeMs: number | null
+  httpRequest: unknown
+  httpResponse: unknown | null
+  error: string | null
+
+  constructor({
+    attempt,
+    connectTimeMs,
+    writeReadTimeMs,
+    httpRequest,
+    httpResponse,
+    error,
+  }: {
+    attempt: number
+    connectTimeMs: number | null
+    writeReadTimeMs: number | null
+    httpRequest: unknown
+    httpResponse: unknown | null
+    error: string | null
+  }) {
+    this.attempt = attempt
+    this.connectTimeMs = connectTimeMs
+    this.writeReadTimeMs = writeReadTimeMs
+    this.httpRequest = httpRequest
+    this.httpResponse = httpResponse
+    this.error = error
+  }
+}
+
+export type AppLogPayload =
+  | FunctionRunLog
+  | NetworkAccessResponseFromCacheLog
+  | NetworkAccessRequestExecutionInBackgroundLog
+  | NetworkAccessRequestExecutedLog
 
 export interface SubscribeOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -66,5 +180,5 @@ export interface AppLogPrefix {
 
 export interface AppLogOutput {
   prefix: AppLogPrefix
-  appLog: FunctionRunLog
+  appLog: AppLogPayload
 }

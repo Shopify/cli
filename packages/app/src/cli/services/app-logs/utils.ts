@@ -1,4 +1,10 @@
-import {FunctionRunLog} from './types.js'
+import {
+  BackgroundExecutionReason,
+  FunctionRunLog,
+  NetworkAccessRequestExecutedLog,
+  NetworkAccessRequestExecutionInBackgroundLog,
+  NetworkAccessResponseFromCacheLog,
+} from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {environmentVariableNames} from '../../constants.js'
@@ -28,7 +34,8 @@ export function appLogPollingEnabled() {
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)
-  return {
+  return new FunctionRunLog({
+    export: parsedPayload.export,
     input: parsedPayload.input,
     inputBytes: parsedPayload.input_bytes,
     output: parsedPayload.output,
@@ -38,7 +45,44 @@ export function parseFunctionRunPayload(payload: string): FunctionRunLog {
     fuelConsumed: parsedPayload.fuel_consumed,
     errorMessage: parsedPayload.error_message,
     errorType: parsedPayload.error_type,
-  }
+  })
+}
+
+export function parseNetworkAccessResponseFromCachePayload(payload: string): NetworkAccessResponseFromCacheLog {
+  const parsedPayload = JSON.parse(payload)
+  return new NetworkAccessResponseFromCacheLog({
+    cacheEntryEpochMs: parsedPayload.cache_entry_epoch_ms,
+    cacheTtlMs: parsedPayload.cache_ttl_ms,
+    httpRequest: parsedPayload.http_request,
+    httpResponse: parsedPayload.http_response,
+  })
+}
+
+const reasonStringToEnum: {[key: string]: BackgroundExecutionReason} = {
+  no_cached_response: BackgroundExecutionReason.NoCachedResponse,
+  cached_response_about_to_expire: BackgroundExecutionReason.CacheAboutToExpire,
+}
+
+export function parseNetworkAccessRequestExecutionInBackgroundPayload(
+  payload: string,
+): NetworkAccessRequestExecutionInBackgroundLog {
+  const parsedPayload = JSON.parse(payload)
+  return new NetworkAccessRequestExecutionInBackgroundLog({
+    reason: reasonStringToEnum[parsedPayload.reason] ?? BackgroundExecutionReason.Unknown,
+    httpRequest: parsedPayload.http_request,
+  })
+}
+
+export function parseNetworkAccessRequestExecutedPayload(payload: string): NetworkAccessRequestExecutedLog {
+  const parsedPayload = JSON.parse(payload)
+  return new NetworkAccessRequestExecutedLog({
+    attempt: parsedPayload.attempt,
+    connectTimeMs: parsedPayload.connect_time_ms || null,
+    writeReadTimeMs: parsedPayload.write_read_time_ms || null,
+    httpRequest: parsedPayload.http_request,
+    httpResponse: parsedPayload.http_response || null,
+    error: parsedPayload.error || null,
+  })
 }
 
 const generateFetchAppLogUrl = async (

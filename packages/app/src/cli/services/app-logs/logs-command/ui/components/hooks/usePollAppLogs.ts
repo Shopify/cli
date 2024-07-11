@@ -4,8 +4,15 @@ import {
   POLLING_INTERVAL_MS,
   POLLING_THROTTLE_RETRY_INTERVAL_MS,
   parseFunctionRunPayload,
+  LOG_TYPE_FUNCTION_RUN,
+  LOG_TYPE_RESPONSE_FROM_CACHE,
+  parseNetworkAccessResponseFromCachePayload,
+  LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND,
+  parseNetworkAccessRequestExecutionInBackgroundPayload,
+  LOG_TYPE_REQUEST_EXECUTION,
+  parseNetworkAccessRequestExecutedPayload,
 } from '../../../../utils.js'
-import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters} from '../../../../types.js'
+import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
 import {useState, useEffect} from 'react'
 
@@ -46,12 +53,39 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
 
       if (appLogs) {
         for (const log of appLogs) {
-          const appLog = parseFunctionRunPayload(log.payload)
-          const fuel = (appLog.fuelConsumed / ONE_MILLION).toFixed(4)
+          let appLog: AppLogPayload
+          let description
+          let executionTime
+
+          switch (log.log_type) {
+            case LOG_TYPE_FUNCTION_RUN:
+              appLog = parseFunctionRunPayload(log.payload)
+              description = `export "${appLog.export}" executed in ${(appLog.fuelConsumed / ONE_MILLION).toFixed(
+                4,
+              )} M instructions`
+              break
+            case LOG_TYPE_RESPONSE_FROM_CACHE:
+              appLog = parseNetworkAccessResponseFromCachePayload(log.payload)
+              description = 'network access response retrieved from cache'
+              break
+            case LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND:
+              appLog = parseNetworkAccessRequestExecutionInBackgroundPayload(log.payload)
+              description = 'network access request executing in background'
+              break
+            case LOG_TYPE_REQUEST_EXECUTION:
+              appLog = parseNetworkAccessRequestExecutedPayload(log.payload)
+              executionTime =
+                appLog.connectTimeMs && appLog.writeReadTimeMs ? appLog.connectTimeMs + appLog.writeReadTimeMs : null
+              description = `network access request executed${executionTime ? ` in ${executionTime} ms` : ''}`
+              break
+            default:
+              return
+          }
+
           const prefix = {
             status: log.status === 'success' ? 'Success' : 'Failure',
             source: log.source,
-            description: `in ${fuel} M instructions`,
+            description,
             logTimestamp: log.log_timestamp,
           }
 
