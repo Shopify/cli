@@ -44,7 +44,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && node ../../bin/update-bugsnag cli && cp ../../README.md README.md",
+    "prepack": "unknowncrash && cross-env NODE_ENV=production pnpm nx bundle && node ../../bin/update-bugsnag cli && cp ../../README.md README.md",
     "test": "nx run cli:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
