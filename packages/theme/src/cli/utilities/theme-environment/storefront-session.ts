@@ -4,7 +4,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(storeURL, {
+  const response = await fetch(ensureHttps(storeURL), {
     method: 'GET',
     redirect: 'manual',
   })
@@ -113,4 +113,11 @@ function getCookie(setCookieArray: string[], cookieName: string) {
   const parsedCookie = parseCookies(cookie)
 
   return parsedCookie[cookieName]
+}
+
+function ensureHttps(url: string): string {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`
+  }
+  return url
 }
