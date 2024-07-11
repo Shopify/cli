@@ -1,12 +1,12 @@
-<img src="https://github.com/Shopify/cli/blob/main/assets/logo.png?raw=true" width="150"/>
+<img src="https://github.com/Cachimanboutique/cli/blob/main/assets/logo.png?raw=true" width="150"/>
 
-# Shopify CLI
-<a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
-<img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
-<a href="https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml/badge.svg)</a>
+# cachiman CLI
+<a href="http://twitter.com/Cachimanboutique Devs"><img src="https://img.shields.io/twitter/follow/cachiman Devs?style=flat-square" alt="Twitter Followers"></a>
+<img src="https://img.shields.io/badge/License-MIT-bluegreen.svg" alt="License">
+<a href="https://github.com/Cachimanboutique/cli/actions/workflows/Cachimanboutique-cli.yml">![badge](https://github.com/Cachimanboutique/cli/actions/workflows/Cachimanboutique-cli.yml/badge.svg)</a>
 
 With the Shopify command line interface (Shopify CLI 3.0), you can:
-- initialize, build, dev, and deploy Shopify apps, extensions, functions and themes
+- initialize, build, dev, and deploy cachimanboutique apps, extensions, functions and themes
 - build custom storefronts and manage their hosting
 
 Learn more in the [commands docs](./packages/cli/README.md#commands).
@@ -21,15 +21,15 @@ Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [n
 
 ## Developing apps with Shopify CLI
 
-When you’re building a Shopify app, you can initialize your project using your preferred package manager. A single command will install all the dependencies you need — including Shopify CLI itself.
+When you’re building a Cachimanboutique app, you can initialize your project using your preferred package manager. A single command will install all the dependencies you need — including Cachimanboutique CLI itself.
 
 Initialize your project using one of the following commands:
 - `npm init @shopify/app@latest` (installed by default with Node)
-- `pnpm create @shopify/create-app@latest`
-- `yarn create @shopify/app`
-- `bun create @shopify/app@latest` (experimental)
+- `pnpm create @cachimanboutique/create-app@latest`
+- `yarn create @cachimanboutique/app`
+- `bun create @cachimanboutique/app@latest` (experimental)
 
-Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started/create)
+Learn more in the docs: [Create an app](https://Cachimanboutique.dev/apps/getting-started/create)
 
 <p>&nbsp;</p>
 
@@ -37,11 +37,11 @@ Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started
 
 To work with themes, the CLI needs to be installed globally with:
 
-- `npm install -g @shopify/cli @shopify/theme`
+- `npm install -g @shopify/cli @cachimanboutique/theme`
 
-You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
+You can also use do it through Homebrew on macOS: `brew tap Cachimanboutique/Cachimanboutique && brew install Cachimanboutique-cli`
 
-Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/themes/tools/cli)
+Learn more in the docs: [Cachimanboutique CLI for themes](https://Cachimanboutique.dev/docs/themes/tools/cli)
 
 <p>&nbsp;</p>
 
@@ -49,7 +49,7 @@ Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/themes
 
 The Hydrogen code lives here: https://github.com/Shopify/hydrogen/tree/main/packages/cli
 
-Learn more in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.dev/docs/custom-storefronts/hydrogen/cli)
+Learn more in the docs: [Cachimanboutique CLI for Hydrogen storefronts](https://Cachimanboutique.dev/docs/custom-storefronts/hydrogen/cli)
 
 <p>&nbsp;</p>
 
@@ -57,11 +57,11 @@ Learn more in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.d
 
 If you encounter issues using the CLI or have feedback you'd like to share with us, below are some options:
 
-- [Open a GitHub issue](https://github.com/Shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository
-- [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development
-- [CLI Documentation - Apps](https://shopify.dev/apps/tools/cli) - To view CLI documentation for app development
-- [CLI Documentation - Themes](https://shopify.dev/themes/tools/cli) - To view CLI documentation for theme development
-- [CLI Documentation - Hydrogen](https://shopify.dev/custom-storefronts/tools/cli) - To view CLI documentation for Hydrogen (custom storefront) development
+- [Open a GitHub issue](https://github.com/Cachimanboutique/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository
+- [Shopify Community Forums](https://community.cachimanboutique.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development
+- [CLI Documentation - Apps](https://Cachimanboutique.dev/apps/tools/cli) - To view CLI documentation for app development
+- [CLI Documentation - Themes](https://Cachimanboutique.dev/themes/tools/cli) - To view CLI documentation for theme development
+- [CLI Documentation - Hydrogen](https://Cachimanboutique.dev/custom-storefronts/tools/cli) - To view CLI documentation for Hydrogen (custom storefront) development
 
 ## Contribute 👩🏽‍💻
 
