@@ -1,28 +1,33 @@
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
-import {consoleLog} from '@shopify/cli-kit/node/output'
+import {promptPassword} from '../utilities/theme-environment/theme-password.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {createInterface} from 'readline'
 
-export async function ensureReplEnv(store: string) {
-  const storefrontHasPassword = await isStorefrontPasswordProtected(store)
-  consoleLog(storefrontHasPassword.toString())
-  if (storefrontHasPassword) {
-    const password = await promptPassword()
-    consoleLog(password)
+export async function ensureReplEnv(store: string, password?: string) {
+  const themeId = await findOrCreateReplTheme()
+
+  const finalPassword = (await shouldPromptForPassword(password, store)) ? await promptPassword() : password
+
+  return {
+    themeId,
+    password: finalPassword,
   }
 }
 
-export async function repl(_adminSession: AdminSession, _storefrontToken: string, _password?: string) {}
-
-function promptPassword(): Promise<string> {
-  const readline = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-
-  return new Promise((resolve) => {
-    readline.question('Enter your theme password: ', (password) => {
-      resolve(password)
-    })
-  })
+async function findOrCreateReplTheme(): Promise<string> {
+  return ''
 }
+
+async function shouldPromptForPassword(password: string | undefined, store: string) {
+  if (password) {
+    return false
+  } else {
+    return isStorefrontPasswordProtected(store)
+  }
+}
+
+export async function repl(
+  _adminSession: AdminSession,
+  _storefrontToken: string,
+  _themeId: string,
+  _password: string | undefined,
+) {}

@@ -1,8 +1,10 @@
-import {getStorefrontSessionCookies, isStorefrontPasswordProtected} from './storefront-session.js'
-import {describe, expect, test, vi} from 'vitest'
+import {getStorefrontSessionCookies, isStorefrontPasswordProtected, promptPassword} from './storefront-session.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {createInterface} from 'readline'
 
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('readline')
 
 describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {
@@ -129,4 +131,27 @@ describe('Storefront API', () => {
       },
     } as any
   }
+
+  describe('promptPassword', () => {
+    let mockReadline: any
+
+    beforeEach(() => {
+      mockReadline = {
+        question: vi.fn().mockImplementation((_event, handler) => handler('testPassword')),
+        close: vi.fn(),
+      }
+      vi.mocked(createInterface).mockReturnValue(mockReadline)
+    })
+
+    test('should display the correct prompt message', async () => {
+      await promptPassword()
+      expect(mockReadline.question).toHaveBeenCalledWith('Enter your theme password: ', expect.any(Function))
+    })
+
+    test('should resolve with the password entered by the user', async () => {
+      const password = await promptPassword()
+      expect(mockReadline.close).toHaveBeenCalled()
+      expect(password).toBe('testPassword')
+    })
+  })
 })

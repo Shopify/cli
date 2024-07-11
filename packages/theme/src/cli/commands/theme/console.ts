@@ -46,18 +46,18 @@ export default class Console extends ThemeCommand {
   async run() {
     const {flags} = await this.parse(Console)
     const store = ensureThemeStore(flags)
-    const {password, url, port} = flags
+    const {url, port, password: passwordFlag} = flags
     const cliVersion = CLI_KIT_VERSION
     const theme = `liquid-console-repl-${cliVersion}`
 
-    const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-    const storefrontToken = await ensureAuthenticatedStorefront([], password)
+    const adminSession = await ensureAuthenticatedThemes(store, passwordFlag, [], true)
+    const storefrontToken = await ensureAuthenticatedStorefront([], passwordFlag)
     const authUrl = `http://localhost:${port}/password`
 
     if (flags['dev-preview']) {
       outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-      await ensureReplEnv(store)
-      await repl(adminSession, storefrontToken, flags.password)
+      const {themeId, password} = await ensureReplEnv(store, passwordFlag)
+      await repl(adminSession, storefrontToken, themeId, password)
       return
     }
 
