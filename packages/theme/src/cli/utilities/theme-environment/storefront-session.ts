@@ -2,6 +2,7 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {createInterface} from 'readline'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(ensureHttps(storeURL), {
@@ -115,9 +116,23 @@ function getCookie(setCookieArray: string[], cookieName: string) {
   return parsedCookie[cookieName]
 }
 
-function ensureHttps(url: string): string {
+export function ensureHttps(url: string): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return `https://${url}`
   }
   return url
+}
+
+export function promptPassword(): Promise<string> {
+  const readline = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
+  return new Promise((resolve) => {
+    readline.question('Enter your theme password: ', (password) => {
+      readline.close()
+      resolve(password)
+    })
+  })
 }
