@@ -24,7 +24,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: [path.resolve(__dirname, './tests/setup.ts')],
     deps: {
-      inline: ['@shopify/react-testing'],
+      inline: ['@cachiman/react-testing'],
     },
   },
 })
