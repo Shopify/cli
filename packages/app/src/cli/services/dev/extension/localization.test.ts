@@ -24,6 +24,9 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
           sms_marketing: false,
           customer_privacy: false,
         },
+        iframe: {
+          sources: [],
+        },
       },
     },
     idEnvironmentVariableName: 'mockId',

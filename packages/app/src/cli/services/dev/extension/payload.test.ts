@@ -36,6 +36,9 @@ describe('getUIExtensionPayload', () => {
               sms_marketing: false,
               customer_privacy: false,
             },
+            iframe: {
+              sources: [],
+            },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
         },
@@ -86,6 +89,9 @@ describe('getUIExtensionPayload', () => {
           apiAccess: true,
           collectBuyerConsent: {
             smsMarketing: false,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
           },
         },
         development: {
@@ -139,6 +145,9 @@ describe('getUIExtensionPayload', () => {
           collectBuyerConsent: {
             smsMarketing: false,
           },
+          iframe: {
+            sources: ['https://my-iframe.com'],
+          },
         },
       })
     })
@@ -160,6 +169,9 @@ describe('getUIExtensionPayload', () => {
             collect_buyer_consent: {
               sms_marketing: false,
               customer_privacy: false,
+            },
+            iframe: {
+              sources: [],
             },
           },
           extension_points: [
@@ -246,6 +258,9 @@ describe('getUIExtensionPayload', () => {
             collect_buyer_consent: {
               sms_marketing: false,
               customer_privacy: false,
+            },
+            iframe: {
+              sources: [],
             },
           },
           extension_points: [
