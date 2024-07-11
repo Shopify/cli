@@ -23,10 +23,11 @@ import {
   readFile,
   writeFile,
 } from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 interface InitOptions {
   name: string
@@ -47,6 +48,8 @@ async function init(options: InitOptions) {
   const githubRepo = parseGitHubRepositoryReference(options.template)
 
   await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
+  // Remove cache from previous projects in the same directory
+  await clearCache(outputDirectory)
 
   renderInfo({
     body: [
@@ -206,6 +209,12 @@ async function ensureAppDirectoryIsAvailable(directory: string, name: string): P
   const exists = await fileExists(directory)
   if (exists)
     throw new AbortError(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
+}
+
+async function clearCache(directory: string) {
+  const appCache = new LocalStorage({projectName: 'shopify-cli-app'})
+  const normalizedDirectory = normalizePath(directory)
+  appCache.delete(normalizedDirectory)
 }
 
 function detectAdditionalWorkspacesFolders(directory: string) {
