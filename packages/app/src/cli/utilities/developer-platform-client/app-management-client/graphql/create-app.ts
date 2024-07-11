@@ -18,7 +18,7 @@ export const CreateAppMutation = gql`
 
 export interface CreateAppMutationVariables {
   appSource: {
-    modules: {
+    appModules: {
       uid: string
       specificationIdentifier: string
       config: JsonMapType
