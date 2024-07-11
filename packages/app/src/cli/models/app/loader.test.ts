@@ -2584,7 +2584,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message:
-        "URI format isn't correct. Valid ones: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2612,7 +2612,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message:
-        "URI format isn't correct. Valid ones: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2779,7 +2779,7 @@ describe('WebhooksSchema', () => {
     const errorObj = {
       code: zod.ZodIssueCode.custom,
       message:
-        "URI format isn't correct. Valid ones: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
