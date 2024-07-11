@@ -17,5 +17,5 @@
     "rootDir": "..",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
-  "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../shopify-cli-extensions-test-utils"}]
+  "references": [{"path": "../ui-extensions-server-kit"}, {"path": "../cachiman-cli-extensions-test-utils"}]
 }
