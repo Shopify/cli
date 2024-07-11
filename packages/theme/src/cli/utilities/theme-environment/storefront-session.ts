@@ -13,6 +13,37 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
   return response.status === 302
 }
 
+export function promptPassword(prompt: string): Promise<string> {
+  const readline = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
+  return new Promise((resolve) => {
+    readline.question(prompt, (password) => {
+      readline.close()
+      resolve(password)
+    })
+  })
+}
+
+/**
+ * Sends a request to the password redirect page.
+ * If the password is correct, SFR will respond with a 302 to redirect to the storefront
+ */
+export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
+  const response = await fetch(`${ensureHttps(store)}/password`, {
+    headers: {
+      'cache-control': 'max-age=0',
+      'content-type': 'application/x-www-form-urlencoded',
+    },
+    body: `form_type=storefront_password&utf8=%E2%9C%93&password=${password}`,
+    method: 'POST',
+    redirect: 'manual',
+  })
+  return response.status === 302 && response.headers.get('location') === `${ensureHttps(store)}/`
+}
+
 export async function getStorefrontSessionCookies(
   storeUrl: string,
   themeId: string,
@@ -121,18 +152,4 @@ export function ensureHttps(url: string): string {
     return `https://${url}`
   }
   return url
-}
-
-export function promptPassword(): Promise<string> {
-  const readline = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-
-  return new Promise((resolve) => {
-    readline.question('Enter your theme password: ', (password) => {
-      readline.close()
-      resolve(password)
-    })
-  })
 }
