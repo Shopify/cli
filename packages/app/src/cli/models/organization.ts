@@ -28,6 +28,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   apiSecretKeys: {
     secret: string
   }[]
+  _temporaryApiKey?: string
   appType?: string
   newApp?: boolean
   grantedScopes: string[]

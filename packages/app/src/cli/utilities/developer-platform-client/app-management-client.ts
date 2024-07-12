@@ -217,6 +217,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       id: app.id,
       title: name,
       apiKey: app.id,
+      _temporaryApiKey: app.key,
       organizationId: appIdentifiers.organizationId,
       apiSecretKeys: [],
       grantedScopes: (appAccessModule?.config?.scopes as string[] | undefined) ?? [],
