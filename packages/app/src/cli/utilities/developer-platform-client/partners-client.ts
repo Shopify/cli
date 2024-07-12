@@ -92,6 +92,11 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionMutation,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
+import {
+  MigrateMarketingActivityExtensionSchema,
+  MigrateMarketingActivityExtensionVariables,
+  MigrateMarketingActivityExtensionMutation,
+} from '../../api/graphql/extension_migrate_marketing_activity_extension.js'
 import {UpdateURLsVariables, UpdateURLsSchema, UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoQuery, CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {
@@ -453,6 +458,12 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async migrateFlowExtension(input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
     return this.request(MigrateFlowExtensionMutation, input)
+  }
+
+  async migrateMarketingActivityExtension(
+    input: MigrateMarketingActivityExtensionVariables,
+  ): Promise<MigrateMarketingActivityExtensionSchema> {
+    return this.request(MigrateMarketingActivityExtensionMutation, input)
   }
 
   async migrateAppModule(input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {

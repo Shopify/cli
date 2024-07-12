@@ -6,6 +6,10 @@ import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
+import {
+  getMarketingActivtyExtensionsToMigrate,
+  migrateMarketingActivityExtensions,
+} from '../dev/migrate-marketing-activity-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
@@ -34,6 +38,11 @@ export async function ensureExtensionsIds(
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
+  const marketingActivityExtensionsToMigrate = getMarketingActivtyExtensionsToMigrate(
+    localExtensions,
+    dashboardOnlyExtensions,
+    validIdentifiers,
+  )
   const paymentsExtensionsToMigrate = getPaymentsExtensionsToMigrate(
     localExtensions,
     dashboardOnlyExtensions,
@@ -56,6 +65,18 @@ export async function ensureExtensionsIds(
     if (!confirmedMigration) throw new AbortSilentError()
     const newRemoteExtensions = await migrateFlowExtensions(
       flowExtensionsToMigrate,
+      options.appId,
+      dashboardOnlyExtensions,
+      options.developerPlatformClient,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+  }
+
+  if (marketingActivityExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(marketingActivityExtensionsToMigrate, false)
+    if (!confirmedMigration) throw new AbortSilentError()
+    const newRemoteExtensions = await migrateMarketingActivityExtensions(
+      marketingActivityExtensionsToMigrate,
       options.appId,
       dashboardOnlyExtensions,
       options.developerPlatformClient,
