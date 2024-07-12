@@ -2,10 +2,11 @@ import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {inTemporaryDirectory, mkdirSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdirSync, touchFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -14,16 +15,17 @@ interface BundleOptions {
   identifiers?: Identifiers
 }
 
-export async function bundleAndBuildExtensions(options: BundleOptions) {
+export async function bundleAndBuildExtensions(options: BundleOptions, systemEnvironment = process.env) {
   await inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = joinPath(tmpDir, 'bundle')
-    await mkdirSync(bundleDirectory)
+    mkdirSync(bundleDirectory)
     await touchFile(joinPath(bundleDirectory, '.shopify'))
 
-    if (process.env.DEV_BETA) {
+    if (isTruthy(systemEnvironment.USE_APP_MANAGEMENT_API)) {
+      // Include manifest in bundle
       const appManifest = await options.app.manifest()
       const manifestPath = joinPath(bundleDirectory, 'manifest.json')
-      await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
+      writeFileSync(manifestPath, JSON.stringify(appManifest, null, 2))
     }
 
     // Force the download of the javy binary in advance to avoid later problems,

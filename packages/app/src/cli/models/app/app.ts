@@ -253,6 +253,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): AppCreationDefaultOptions
+  manifest: () => Promise<JsonMapType>
 }
 
 type AppConstructor<
