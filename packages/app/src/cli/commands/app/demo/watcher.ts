@@ -32,8 +32,9 @@ export default class DemoWatcher extends Command {
     await watcher.start()
     outputInfo(`Watching for changes in ${app.name}...`)
 
-    watcher.onEvent(async ({app: _newApp, extensionEvents, startTime}) => {
-      outputInfo(`🆕 Event [${endHRTimeInMs(startTime)}ms]:`)
+    watcher.onEvent(async ({app: _newApp, extensionEvents, startTime, path}) => {
+      outputInfo(`🆕 Event [${endHRTimeInMs(startTime)}ms]`)
+      outputInfo(`  📂 ${path}`)
       extensionEvents.forEach((event) => {
         switch (event.type) {
           case EventType.Created:

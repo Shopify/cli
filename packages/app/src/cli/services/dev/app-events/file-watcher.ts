@@ -1,11 +1,12 @@
+/* eslint-disable no-case-declarations */
 import {AppInterface} from '../../../models/app/app.js'
+import {configurationFileNames} from '../../../constants.js'
 import {dirname, isSubpath, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {debounce} from '@shopify/cli-kit/common/function'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 /**
@@ -71,33 +72,12 @@ export async function startFileWatcher(
   // When a new extension is created, the path is added to this list
   // When an extension is deleted, the path is removed from this list
   // For every change, the corresponding extensionPath will be also reported in the event
-  const extensionPaths = app.realExtensions
+  let extensionPaths = app.realExtensions
     .map((ext) => normalizePath(ext.directory))
     .filter((dir) => dir !== app.directory)
 
   // Watch the extensions root directories and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
-
-  // Create a debouncer for each extension directory to avoid multiple events for the same extension
-  // This is necessary because deleting/creating a folder will trigger multiple events, but we only need one.
-  const debouncers = new Map<string, (event: WatcherEvent) => void>()
-  extensionPaths.forEach((path) => {
-    debouncers.set(path, debounce(onChange, 500))
-  })
-
-  // When a new extension path is detected (new extension folder added), add it to the list of known paths
-  // And create a debouncer for it
-  function registerNewExtensionPath(path: string) {
-    extensionPaths.push(path)
-    debouncers.set(path, debounce(onChange, 500))
-  }
-
-  // When an extension path is deleted (extension folder deleted), remove it from the list of known paths
-  // And remove its debouncer
-  function removeExtensionPath(path: string) {
-    extensionPaths.splice(extensionPaths.indexOf(path), 1)
-    debouncers.delete(path)
-  }
 
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   const watcher = chokidar.watch(watchPaths, {
@@ -113,13 +93,22 @@ export async function startFileWatcher(
     const isRootExtensionDirectory = extensionDirectories.some((dir) => dirname(path) === dir)
     const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
 
+    outputDebug(`🌀: ${event} ${path.replace(app.directory, '')}\n`)
+
     if (extensionPath === 'unknown' && !isConfigAppPath && !isRootExtensionDirectory) {
       // Ignore an event if: it's not part of an existing extension AND it's not the app config file or an extension root directory
+
+      // But, if it's a toml being modified/added in an unknown path, we should still trigger a `toml_updated` event.
+      // This covers the case where a user accidentally deletes a toml and re-adds it again.
+      // And it will force an app reload.
+      // if (path.endsWith('.toml') && !fileExistsSync(joinPath(dirname(path), configurationFileNames.app))) {
+      //   onChange({type: 'toml_updated', path, extensionPath, startTime})
+      // }
       return
     }
 
-    // Debouncer for the detected extension path
-    const extensionDebouncedChange = debouncers.get(extensionPath)
+    // NOTE: Handle the case where a user deletes a toml file and immediatelly adds it again.
+    // Right now we trigger the extension deletion, but not the subsequent creation.
 
     switch (event) {
       case 'change':
@@ -140,35 +129,53 @@ export async function startFileWatcher(
         // Adding a root folder of a extension triggers a 'extension_folder_created'
         // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
         if (!isRootExtensionDirectory) break
-        // Wait 5 seconds to report the new extension to give time to the extension to be created
-        // This might not be enough time in some cases, the consumer of this event should be prepared to handle this.
+        // When a new extension is created, a `.shoplock` file is added first, indicating that the extension is being created
+        // and it's not ready to be used yet. This file will be removed when the extension is fully created.
+        // Once the file no longer exists, then we can trigger the extension_folder_created event.
 
-        // NOTE: Add a lockfile on extension creation and delete it afterwards. Don't trigger this event while the lockfile is present
-        setTimeout(
-          () => {
+        // A timeout is added just in case something goes wrong, currently set at 20 seconds.
+        let totalWaitedTime = 0
+
+        const intervalId = setInterval(() => {
+          // eslint-disable-next-line no-negated-condition
+          if (!fileExistsSync(joinPath(path, configurationFileNames.lockFile))) {
+            clearInterval(intervalId)
+            extensionPaths.push(path)
             onChange({type: 'extension_folder_created', path, extensionPath, startTime})
-            registerNewExtensionPath(path)
-          },
-          isUnitTest() ? 500 : 5000,
-        )
+          } else {
+            outputDebug(`Waiting for extension to complete creation: ${path}\n`)
+            totalWaitedTime += 500
+          }
+          if (totalWaitedTime >= 20000) {
+            clearInterval(intervalId)
+            options.stderr.write(`Extension creation detection timeout at path: ${path}\nYou might need to restart dev`)
+          }
+        }, 200)
         break
       case 'unlink':
+        // Ignore shoplock files
+        if (path.endsWith(configurationFileNames.lockFile)) break
+
         if (isConfigAppPath) {
           onChange({type: 'app_config_deleted', path, extensionPath, startTime})
+        } else if (path.endsWith('.toml')) {
+          // When a toml is deleted, we can consider the extension is being deleted
+          const newPaths = extensionPaths.filter((extPath) => extPath !== extensionPath)
+          extensionPaths = newPaths
+          onChange({type: 'extension_folder_deleted', path, extensionPath, startTime})
         } else {
-          // When deleting a file, debounce the event to avoid multiple events for the same extension
-          // Ultimately, multiple deletion events could mean that the extension is being deleted
-          extensionDebouncedChange?.({type: 'file_deleted', path, extensionPath, startTime})
+          // wait 500ms, if there is no toml file, then the extension is being deleted and we should ignore this event.
+          setTimeout(() => {
+            // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
+            if (!extensionPaths.includes(extensionPath)) return
+            // If after 500ms the toml file is still there, then just this file was deleted and we should trigger the event.
+            if (fileExistsSync(joinPath(extensionPath, 'shopify.extension.toml'))) {
+              onChange({type: 'file_deleted', path, extensionPath, startTime})
+            }
+          }, 500)
         }
         break
       case 'unlinkDir':
-        // Deleting the root folder of a extension triggers a 'extension_folder_deleted'
-        // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
-        if (!isRootExtensionDirectory) break
-        // 'unlink'  and 'unlinkDir' use the same debouncer, when deleting an extension, the last event will always
-        // be a deletion of the root directory, so that's the last (and only) event we need to trigger.
-        extensionDebouncedChange?.({type: 'extension_folder_deleted', path, extensionPath, startTime})
-        removeExtensionPath(path)
         break
     }
   })

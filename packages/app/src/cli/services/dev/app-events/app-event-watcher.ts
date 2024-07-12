@@ -75,6 +75,7 @@ export interface ExtensionEvent {
 interface AppEvent {
   app: AppInterface
   extensionEvents: ExtensionEvent[]
+  path: string
   startTime: [number, number]
 }
 
@@ -143,11 +144,12 @@ export class AppEventWatcher extends EventEmitter {
  *
  * An extension folder can contain multiple extensions, the event will include all of them.
  */
-async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput) {
-  if (extensions.length === 0) return {app, extensionEvents: [], startTime: event.startTime}
-  app.realExtensions = app.realExtensions.filter((ext) => ext.directory !== event.path)
+async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput): Promise<AppEvent> {
+  if (extensions.length === 0) return {app, extensionEvents: [], startTime: event.startTime, path: event.path}
+  const deletedHandles = extensions.map((ext) => ext.handle)
+  app.realExtensions = app.realExtensions.filter((ext) => !deletedHandles.includes(ext.handle))
   const events = extensions.map((ext) => ({type: EventType.Deleted, extension: ext}))
-  return {app, extensionEvents: events, startTime: event.startTime}
+  return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
 }
 
 /**
@@ -157,13 +159,13 @@ async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerIn
  *
  * A file can be shared between multiple extensions in the same folder. The event will include all of the affected ones.
  */
-async function FileChangeHandler({event, app, extensions}: HandlerInput) {
+async function FileChangeHandler({event, app, extensions}: HandlerInput): Promise<AppEvent> {
   const events: ExtensionEvent[] = extensions.map((ext) => {
     const buildPaths = ext.watchBuildPaths ?? []
     const type = micromatch.isMatch(event.path, buildPaths) ? EventType.UpdatedSourceFile : EventType.Updated
     return {type, extension: ext}
   })
-  return {app, extensionEvents: events, startTime: event.startTime}
+  return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
 }
 
 /**
@@ -174,11 +176,11 @@ async function FileChangeHandler({event, app, extensions}: HandlerInput) {
  * Since a toml can contain multiple extensions, this could trigger Create, Delete and Update events.
  * The toml is considered a SourceFile because changes in the configuration can affect the build.
  */
-async function TomlChangeHandler({event, app, extensions, options}: HandlerInput) {
+async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
   const newApp = await reloadApp(app, options)
-  const oldExtensions = extensions
+  const oldExtensions = app.realExtensions
   const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions.filter((ext) => ext.configurationPath === event.path)
+  const newExtensions = newApp.realExtensions
   const newExtensionsHandles = newExtensions.map((ext) => ext.handle)
 
   const createdExtensions = newExtensions.filter((ext) => !oldExtensionsHandles.includes(ext.handle))
@@ -197,6 +199,7 @@ async function TomlChangeHandler({event, app, extensions, options}: HandlerInput
     app: newApp,
     extensionEvents: [...createdEvents, ...deletedEvents, ...updatedEvents],
     startTime: event.startTime,
+    path: event.path,
   }
 }
 
@@ -204,13 +207,13 @@ async function TomlChangeHandler({event, app, extensions, options}: HandlerInput
  * When an extension folder is created:
  * Reload the app and return the new app and the created extensions in the event.
  */
-async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput) {
+async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
   const newApp = await reloadApp(app, options)
   const oldExtensions = app.realExtensions.map((ext) => ext.handle)
   const newExtensions = newApp.realExtensions
   const createdExtensions = newExtensions.filter((ext) => !oldExtensions.includes(ext.handle))
   const events = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
-  return {app: newApp, extensionEvents: events, startTime: event.startTime}
+  return {app: newApp, extensionEvents: events, startTime: event.startTime, path: event.path}
 }
 
 /**
@@ -218,7 +221,7 @@ async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput
  * Reload the app and return the new app and the updated extensions in the event.
  * Compare the old and new extensions (defined in the app tomle) to find the created, deleted and updated extensions.
  */
-async function AppConfigUpdatedHandler({event, app, options}: HandlerInput) {
+async function AppConfigUpdatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
   const newApp = await reloadApp(app, options)
   const oldExtensions = app.realExtensions.filter((ext) => ext.configurationPath === app.configuration.path)
   const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
@@ -236,7 +239,12 @@ async function AppConfigUpdatedHandler({event, app, options}: HandlerInput) {
   const createEvents = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
   const deleteEvents = deletedExtensions.map((ext) => ({type: EventType.Deleted, extension: ext}))
   const updateEvents = updatedExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
-  return {app: newApp, extensionEvents: [...createEvents, ...deleteEvents, ...updateEvents], startTime: event.startTime}
+  return {
+    app: newApp,
+    extensionEvents: [...createEvents, ...deleteEvents, ...updateEvents],
+    startTime: event.startTime,
+    path: event.path,
+  }
 }
 
 /**

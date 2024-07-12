@@ -9,6 +9,7 @@ export const configurationFileNames = {
   app: 'shopify.app.toml',
   web: 'shopify.web.toml',
   appEnvironments: 'shopify.environments.toml',
+  lockFile: '.shopify.lock',
 } as const
 
 export const dotEnvFileNames = {
