@@ -1,38 +1,30 @@
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const CreateAppVersionMutation = gql`
-  mutation CreateAppVersion(
-    $appId: ID!
-    $appModules: [NewModuleVersion!]!
-    $assetsUrl: String
-    $versionTag: String
-    $gitUrl: String
-  ) {
-    versionCreate(
-      appId: $appId
-      modules: $appModules
-      assetsUrl: $assetsUrl
-      versionTag: $versionTag
-      gitUrl: $gitUrl
-    ) {
+  mutation CreateAppVersion($appId: ID!, $appSource: AppSourceInput!, $name: String!, $metadata: VersionMetadataInput) {
+    appVersionCreate(appId: $appId, appSource: $appSource, name: $name, metadata: $metadata) {
       version {
         id
-        modules {
-          gid
-          uid
+        appModules {
+          uuid
           handle
           config
           specification {
             identifier
             name
-            experience
           }
         }
-        versionTag
+        metadata {
+          versionTag
+        }
       }
       userErrors {
         field
         message
+        category
+        code
+        on
       }
     }
   }
@@ -40,25 +32,29 @@ export const CreateAppVersionMutation = gql`
 
 export interface CreateAppVersionMutationVariables {
   appId: string
-  appModules: {
-    uid: string
-    specificationIdentifier?: string
-    config: string
-  }[]
-  assetsUrl?: string
-  versionTag?: string
-  gitUrl?: string
+  name?: string
+  appSource: {
+    assetsUrl?: string
+    modules: {
+      uid: string
+      specificationIdentifier?: string
+      config: JsonMapType
+    }[]
+  }
+  metadata?: {
+    message?: string
+    sourceControlUrl?: string
+    versionTag?: string
+  }
 }
 
 interface AppModuleSpecification {
   identifier: string
   name: string
-  experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
 interface AppModule {
-  gid: string
-  uid: string
+  uuid: string
   handle: string
   config: {
     [key: string]: string | number | boolean | string[]
@@ -67,15 +63,21 @@ interface AppModule {
 }
 
 export interface CreateAppVersionMutationSchema {
-  versionCreate: {
+  appVersionCreate: {
     version: {
       id: string
-      modules: AppModule[]
-      versionTag: string
+      appModules: AppModule[]
+      metadata: {
+        versionTag: string
+        message: string
+      }
     }
     userErrors: {
       field: string[]
       message: string
+      category: string
+      code: string
+      on: JsonMapType
     }[]
   }
 }

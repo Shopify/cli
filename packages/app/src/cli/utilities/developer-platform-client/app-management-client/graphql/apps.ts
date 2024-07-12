@@ -5,12 +5,13 @@ export const AppsQuery = gql`
   query listApps {
     apps {
       id
+      key
       activeRelease {
         id
         version {
-          modules {
-            gid
-            uid
+          name
+          appModules {
+            uuid
             handle
             config
             specification {
@@ -23,9 +24,8 @@ export const AppsQuery = gql`
   }
 `
 
-export interface MinimalAppModule {
-  gid: string
-  uid: string
+interface MinimalAppModule {
+  uuid: string
   handle: string
   config: JsonMapType
   specification: {
@@ -36,10 +36,12 @@ export interface MinimalAppModule {
 export interface AppsQuerySchema {
   apps: {
     id: string
+    key: string
     activeRelease: {
       id: string
       version: {
-        modules: MinimalAppModule[]
+        name: string
+        appModules: MinimalAppModule[]
       }
     }
   }[]

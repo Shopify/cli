@@ -1196,6 +1196,7 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
     clientName: 'test',
+    webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
@@ -1241,13 +1242,18 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
+    appDeepLink: (app: MinimalAppIdentifiers) =>
+      Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName'>
+        key as keyof Omit<
+          DeveloperPlatformClient,
+          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName'
+        >
       ] = vi.fn().mockImplementation(value)
     }
   }

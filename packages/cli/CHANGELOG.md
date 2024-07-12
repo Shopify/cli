@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.64.0
+
+### Minor Changes
+
+- cb06f10e1: Added extension type pos_ui_extension to the ui_extension migration process
+
 ## 3.63.0
 
 ### Minor Changes

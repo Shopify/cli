@@ -12,9 +12,10 @@ interface Props {
   rootUrl: string
   resourceUrl?: string
   title: string
+  hasLink?: boolean
 }
 
-export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
+export function PreviewLink({rootUrl, resourceUrl, title, hasLink = true}: Props) {
   const [i18n] = useI18n({
     id: 'PreviewLink',
     fallback: en,
@@ -42,14 +43,18 @@ export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
 
   return (
     <span className={styles.PreviewLink}>
-      <a
-        href={rootUrl}
-        target={isEmbedded ? '_top' : '_blank'}
-        aria-label={i18n.translate('linkLabel', {title})}
-        onClick={handleOpenRoot}
-      >
-        {title}
-      </a>
+      {hasLink ? (
+        <a
+          href={rootUrl}
+          target={isEmbedded ? '_top' : '_blank'}
+          aria-label={i18n.translate('linkLabel', {title})}
+          onClick={handleOpenRoot}
+        >
+          {title}
+        </a>
+      ) : (
+        title
+      )}
       <IconButton
         type="button"
         onClick={() => handleCopyPreviewLink()}
