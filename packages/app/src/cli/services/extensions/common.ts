@@ -58,6 +58,8 @@ export async function canEnablePreviewMode({
   apiKey: string
   organizationId: string
 }) {
+  // Does not apply for app-management apps
+  if (developerPlatformClient.clientName === 'app-management') return false
   const {dashboardManagedExtensionRegistrations} = (
     await developerPlatformClient.appExtensionRegistrations({
       id: apiKey,

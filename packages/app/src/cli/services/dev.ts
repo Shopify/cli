@@ -315,7 +315,7 @@ export async function launchDevProcesses({
     canEnablePreviewMode: await canEnablePreviewMode({
       localApp: config.localApp,
       developerPlatformClient,
-      apiKey,
+      apiKey: config.remoteApp.id,
       organizationId: config.remoteApp.organizationId,
     }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,

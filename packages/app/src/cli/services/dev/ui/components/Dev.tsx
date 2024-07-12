@@ -57,11 +57,7 @@ const Dev: FunctionComponent<DevProps> = ({
   developerPreview,
   isEditionWeek,
 }) => {
-  const {developmentStorePreviewEnabled} = app
-  const canEnablePreviewMode = false
-
-  // TODO: Clean this up, canEnablePreviewMode should come from app, but it doesn't work in the new API yet
-  // const {canEnablePreviewMode ,developmentStorePreviewEnabled} = app
+  const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
 
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()

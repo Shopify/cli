@@ -147,7 +147,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   // Upload zip file to GCS
   // options.stdout.write('Getting signed URL...')
   const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
-    apiKey: options.apiKey,
+    apiKey: options.appId,
     organizationId: options.organizationId,
     id: options.appId,
   })
@@ -164,7 +164,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
 
   const payload = {
     shopName: options.storeFqdn,
-    appId: options.apiKey,
+    appId: options.appId,
     assetsUrl: signedURL,
   }
 
