@@ -7,11 +7,12 @@ import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {inTemporaryDirectory, mkdir, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {mkdir, readFileSync, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData} from '@shopify/cli-kit/node/http'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface DevSessionOptions {
@@ -70,72 +71,48 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   const {developerPlatformClient, app} = options
   await installJavy(app)
 
-  async function refreshToken() {
-    await developerPlatformClient.refreshToken()
-  }
+  const dir = tempDirectory()
+  const bundlePath = joinPath(dir, 'bundle')
+  await mkdir(bundlePath)
 
-  // Extensions defined in the app toml that don't have any other watch paths
-  // const extensionsInManifest = await app.draftableExtensions.filter(async (extension) => {
-  //   const watchPaths = (await extension.watchConfigurationPaths()).concat(extension.watchBuildPaths ?? [])
-  //   return watchPaths.length === 1 && watchPaths[0] === app.configuration.path
-  // })
+  const processOptions = {...options, stderr, stdout, signal, bundlePath}
 
-  // Extensions (defined in any toml) that need a custom watcher because they have custom paths
-  // const extensions = await asyncFilter(app.realExtensions, async (extension) => {
-  //   const watchPaths = (await extension.watchConfigurationPaths()).concat(extension.watchBuildPaths ?? [])
-  //   if (watchPaths.length === 0) return false
-  //   return watchPaths.length > 1 || watchPaths[0] !== app.configuration.path
-  // })
+  outputDebug(`Using temp dir: ${dir}`, stdout)
+  processOptions.stdout.write('Preparing dev session...')
 
-  // Review if this extension list makes sense
+  await initialBuild(processOptions)
+  await bundleExtensionsAndUpload(processOptions, false)
 
-  await inTemporaryDirectory(async (tmpDir) => {
-    // '/Users/isaac/Desktop/testing'
-    const dir = tmpDir
-    const bundlePath = joinPath(dir, 'bundle')
-    await mkdir(bundlePath)
-
-    const processOptions = {...options, stderr, stdout, signal, bundlePath}
-
-    processOptions.stdout.write('Starting initial build and bundle process...')
-    await initialBuild(processOptions)
-    await bundleExtensionsAndUpload(processOptions, false)
-
-    const onChange = async (newApp: AppInterface) => {
-      return performActionWithRetryAfterRecovery(async () => {
-        await bundleExtensionsAndUpload({...processOptions, app: newApp}, true)
-      }, refreshToken)
+  await subscribeToAppEvents(app, processOptions, async (event) => {
+    processOptions.stdout.write(`Event detected:`)
+    event.extensionEvents.forEach((eve) => {
+      processOptions.stdout.write(`🆕 ->> ${eve.type} :: ${eve.extension.handle} :: ${eve.extension.directory}`)
+    })
+    try {
+      const buildPromises = event.extensionEvents
+        .filter((eve) => eve.type === EventType.UpdatedSourceFile)
+        .map((eve) => {
+          return eve.extension.buildForBundle(
+            {...processOptions, app: event.app, environment: 'development'},
+            processOptions.bundlePath,
+            undefined,
+          )
+        })
+      await Promise.all(buildPromises)
+      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      processOptions.stderr.write('Error building extensions')
+      processOptions.stderr.write(error.message)
     }
 
-    await subscribeToAppEvents(app, processOptions, async (event) => {
-      processOptions.stdout.write(`Event detected:`)
-      const events = event.extensionEvents.map((eve) => {
-        return `->> ${eve.type} :: ${eve.extension.handle} :: ${eve.extension.directory}`
-      })
-      processOptions.stdout.write(JSON.stringify(events, null, 2))
-      try {
-        const buildPromises = event.extensionEvents
-          .filter((eve) => eve.type === EventType.UpdatedSourceFile)
-          .map((eve) => {
-            return eve.extension.buildForBundle(
-              {...processOptions, app: event.app, environment: 'development'},
-              processOptions.bundlePath,
-              undefined,
-            )
-          })
-        await Promise.all(buildPromises)
-        // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        processOptions.stderr.write('Error building extensions')
-        processOptions.stderr.write(error.message)
-      }
+    await performActionWithRetryAfterRecovery(async () => {
+      await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
+    }, developerPlatformClient.refreshToken)
 
-      await onChange(event.app)
-      const endTime = process.hrtime(event.startTime)
-      processOptions.stdout.write(`Session updated [${normalizeTime(endTime)}ms]`)
-    })
-    processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
+    const endTime = process.hrtime(event.startTime)
+    processOptions.stdout.write(`Session updated [${normalizeTime(endTime)}ms]`)
   })
+  processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
 }
 
 // Build all extensions into the bundle path
@@ -188,7 +165,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   const payload = {
     shopName: options.storeFqdn,
     appId: options.apiKey,
-    assetsUrl: 'signedURL',
+    assetsUrl: signedURL,
   }
 
   // options.stdout.write('Creating/Updating dev session...')
