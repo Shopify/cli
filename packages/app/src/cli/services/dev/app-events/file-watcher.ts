@@ -1,11 +1,13 @@
+/* eslint-disable no-case-declarations */
 import {AppInterface} from '../../../models/app/app.js'
+import {configurationFileNames} from '../../../constants.js'
 import {dirname, isSubpath, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {debounce} from '@shopify/cli-kit/common/function'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 /**
@@ -140,17 +142,28 @@ export async function startFileWatcher(
         // Adding a root folder of a extension triggers a 'extension_folder_created'
         // Any other folder shouldn't trigger anything, if there are files inside the folder, they will trigger their own events
         if (!isRootExtensionDirectory) break
-        // Wait 5 seconds to report the new extension to give time to the extension to be created
-        // This might not be enough time in some cases, the consumer of this event should be prepared to handle this.
+        // When a new extension is created, a `.shoplock` file is added first, indicating that the extension is being created
+        // and it's not ready to be used yet. This file will be removed when the extension is fully created.
+        // Once the file no longer exists, then we can trigger the extension_folder_created event.
 
-        // NOTE: Add a lockfile on extension creation and delete it afterwards. Don't trigger this event while the lockfile is present
-        setTimeout(
-          () => {
+        // A timeout is added just in case something goes wrong, currently set at 20 seconds.
+
+        let totalWaitedTime = 0
+
+        const intervalId = setInterval(() => {
+          // eslint-disable-next-line no-negated-condition
+          if (!fileExistsSync(joinPath(path, configurationFileNames.lockFile))) {
+            clearInterval(intervalId)
             onChange({type: 'extension_folder_created', path, extensionPath, startTime})
-            registerNewExtensionPath(path)
-          },
-          isUnitTest() ? 500 : 5000,
-        )
+          } else {
+            outputDebug(`Waiting for extension to complete creation: ${path}\n`)
+            totalWaitedTime += 500
+          }
+          if (totalWaitedTime >= 20000) {
+            clearInterval(intervalId)
+            options.stderr.write(`Extension creation detection timeout at path: ${path}\nYou might need to restart dev`)
+          }
+        }, 200)
         break
       case 'unlink':
         if (isConfigAppPath) {
