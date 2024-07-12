@@ -1611,14 +1611,15 @@ USAGE
   $ shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
-  -e, --environment=<value>  The environment to apply to the current command.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --port=<value>         [default: 9293] Local port to serve authentication service.
-      --url=<value>          [default: /] The url to be used as context
-      --verbose              Increase the verbosity of the output.
+  -e, --environment=<value>     The environment to apply to the current command.
+  -s, --store=<value>           Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                                (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+      --no-color                Disable color output.
+      --password=<value>        Password generated from the Theme Access app.
+      --port=<value>            [default: 9293] Local port to serve authentication service.
+      --store-password=<value>  The password for the storefront.
+      --url=<value>             [default: /] The url to be used as context
+      --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool

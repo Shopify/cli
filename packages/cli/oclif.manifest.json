@@ -4688,6 +4688,14 @@
           "name": "store",
           "type": "option"
         },
+        "store-password": {
+          "description": "The password for the storefront.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
+          "type": "option"
+        },
         "url": {
           "default": "/",
           "description": "The url to be used as context",
