@@ -147,7 +147,7 @@ function getCookie(setCookieArray: string[], cookieName: string) {
   return parsedCookie[cookieName]
 }
 
-export function ensureHttps(url: string): string {
+function ensureHttps(url: string): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return `https://${url}`
   }

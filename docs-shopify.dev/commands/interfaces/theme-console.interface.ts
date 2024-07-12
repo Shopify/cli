@@ -31,6 +31,12 @@ export interface themeconsole {
   '-s, --store <value>'?: string
 
   /**
+   * The password for the storefront.
+   * @environment SHOPIFY_FLAG_STORE_PASSWORD
+   */
+  '--store-password <value>'?: string
+
+  /**
    * The url to be used as context
    * @environment SHOPIFY_FLAG_URL
    */

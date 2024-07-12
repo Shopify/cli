@@ -36,6 +36,10 @@ export default class Console extends ThemeCommand {
       env: 'SHOPIFY_FLAG_PORT',
       default: '9293',
     }),
+    'store-password': Flags.string({
+      description: 'The password for the storefront.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
+    }),
     'dev-preview': Flags.boolean({
       hidden: true,
       description: 'Enables the developer preview for the upcoming `theme console` implementation.',
@@ -46,18 +50,18 @@ export default class Console extends ThemeCommand {
   async run() {
     const {flags} = await this.parse(Console)
     const store = ensureThemeStore(flags)
-    const {url, port, password: passwordFlag} = flags
+    const {url, port, password: themeAccessPassword} = flags
     const cliVersion = CLI_KIT_VERSION
     const theme = `liquid-console-repl-${cliVersion}`
 
-    const adminSession = await ensureAuthenticatedThemes(store, passwordFlag, [], true)
-    const storefrontToken = await ensureAuthenticatedStorefront([], passwordFlag)
+    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
+    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
     const authUrl = `http://localhost:${port}/password`
 
     if (flags['dev-preview']) {
       outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-      const {themeId, password} = await ensureReplEnv(store, passwordFlag)
-      await repl(adminSession, storefrontToken, themeId, password)
+      const {themeId, storePassword} = await ensureReplEnv(store, flags['store-password'])
+      await repl(adminSession, storefrontToken, themeId, storePassword)
       return
     }
 

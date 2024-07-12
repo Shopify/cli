@@ -5,16 +5,16 @@ import {
 } from '../utilities/theme-environment/storefront-session.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
-export async function ensureReplEnv(store: string, password?: string) {
+export async function ensureReplEnv(store: string, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme()
 
-  const finalPassword = (await isStorefrontPasswordProtected(store))
-    ? await promptValidPassword(password, store)
-    : password
+  const storePassword = (await isStorefrontPasswordProtected(store))
+    ? await promptValidPassword(storePasswordFlag, store)
+    : storePasswordFlag
 
   return {
     themeId,
-    password: finalPassword,
+    storePassword,
   }
 }
 
