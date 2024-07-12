@@ -1,6 +1,12 @@
 import {Logs} from './Logs.js'
 import {usePollAppLogs} from './hooks/usePollAppLogs.js'
-import {ONE_MILLION} from '../../../utils.js'
+import {
+  BackgroundExecutionReason,
+  FunctionRunLog,
+  NetworkAccessRequestExecutedLog,
+  NetworkAccessRequestExecutionInBackgroundLog,
+  NetworkAccessResponseFromCacheLog,
+} from '../../../types.js'
 import {describe, test, vi, expect} from 'vitest'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import React from 'react'
@@ -22,25 +28,118 @@ const INPUT = {test: 'input'}
 const INPUT_BYTES = 10
 const OUTPUT_BYTES = 10
 
+const NETWORK_ACCESS_HTTP_REQUEST = {
+  url: 'https://api.example.com/hello',
+  method: 'GET',
+  headers: {},
+  body: null,
+  policy: {
+    read_timeout_ms: 500,
+  },
+}
+const NETWORK_ACCESS_HTTP_RESPONSE = {
+  status: 200,
+  body: 'Success',
+  headers: {
+    header1: 'value1',
+  },
+}
+
 const USE_POLL_APP_LOGS_RETURN_VALUE = {
   appLogOutputs: [
     {
-      appLog: {
-        logs: LOGS,
+      appLog: new FunctionRunLog({
+        export: 'run',
         input: INPUT,
         inputBytes: INPUT_BYTES,
         output: OUTPUT,
         outputBytes: OUTPUT_BYTES,
-        invovationId: 'invocationId',
+        logs: LOGS,
         functionId: FUNCTION_ID,
+        fuelConsumed: FUEL_CONSUMED,
         errorMessage: 'errorMessage',
         errorType: 'errorType',
-      },
+      }),
       prefix: {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
-        description: `in ${(FUEL_CONSUMED / ONE_MILLION).toFixed(4)} M instructions`,
+        description: `export "run" executed in 0.5124 M instructions`,
         status: STATUS === 'success' ? 'Success' : 'Failure',
+        source: SOURCE,
+      },
+    },
+    {
+      appLog: new NetworkAccessResponseFromCacheLog({
+        cacheEntryEpochMs: 1683904621000,
+        cacheTtlMs: 300000,
+        httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
+        httpResponse: NETWORK_ACCESS_HTTP_RESPONSE,
+      }),
+      prefix: {
+        functionId: FUNCTION_ID,
+        logTimestamp: TIME,
+        description: 'network access response from cache',
+        status: 'Success',
+        source: SOURCE,
+      },
+    },
+    {
+      appLog: new NetworkAccessRequestExecutedLog({
+        attempt: 1,
+        connectTimeMs: 40,
+        writeReadTimeMs: 40,
+        httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
+        httpResponse: NETWORK_ACCESS_HTTP_RESPONSE,
+        error: null,
+      }),
+      prefix: {
+        functionId: FUNCTION_ID,
+        logTimestamp: TIME,
+        description: 'network access request executed in 80 ms',
+        status: 'Success',
+        source: SOURCE,
+      },
+    },
+    {
+      appLog: new NetworkAccessRequestExecutedLog({
+        attempt: 1,
+        connectTimeMs: null,
+        writeReadTimeMs: null,
+        httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
+        httpResponse: null,
+        error: 'Timeout Error',
+      }),
+      prefix: {
+        functionId: FUNCTION_ID,
+        logTimestamp: TIME,
+        description: 'network access request executed',
+        status: 'Failure',
+        source: SOURCE,
+      },
+    },
+    {
+      appLog: new NetworkAccessRequestExecutionInBackgroundLog({
+        reason: BackgroundExecutionReason.NoCachedResponse,
+        httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
+      }),
+      prefix: {
+        functionId: FUNCTION_ID,
+        logTimestamp: TIME,
+        description: 'network access request executing in background',
+        status: 'Success',
+        source: SOURCE,
+      },
+    },
+    {
+      appLog: new NetworkAccessRequestExecutionInBackgroundLog({
+        reason: BackgroundExecutionReason.CacheAboutToExpire,
+        httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
+      }),
+      prefix: {
+        functionId: FUNCTION_ID,
+        logTimestamp: TIME,
+        description: 'network access request executing in background',
+        status: 'Success',
         source: SOURCE,
       },
     },
@@ -72,18 +171,96 @@ describe('Logs', () => {
     const lastFrame = renderInstance.lastFrame()
 
     expect(unstyled(lastFrame!)).toMatchInlineSnapshot(`
-      "${TIME} ${SOURCE} ${STATUS === 'success' ? 'Success' : 'Failure'} in ${(FUEL_CONSUMED / ONE_MILLION).toFixed(
-      4,
-    )} M instructions
-      test logs
-      Input (${INPUT_BYTES} bytes):
-      {
-        \\"test\\": \\"input\\"
+    "2024-06-18 16:02:04.868 my-function Success export \\"run\\" executed in 0.5124 M instructions
+    test logs
+    Input (10 bytes):
+    {
+      \\"test\\": \\"input\\"
+    }
+    Output (10 bytes):
+    {
+      \\"test\\": \\"output\\"
+    }
+    2024-06-18 16:02:04.868 my-function Success network access response from cache
+    Cache write time: 2023-05-12T15:17:01.000Z
+    Cache TTL: 300 s
+    HTTP request:
+    {
+      \\"url\\": \\"https://api.example.com/hello\\",
+      \\"method\\": \\"GET\\",
+      \\"headers\\": {},
+      \\"body\\": null,
+      \\"policy\\": {
+        \\"read_timeout_ms\\": 500
       }
-      Output (${OUTPUT_BYTES} bytes):
-      {
-        \\"test\\": \\"output\\"
-      }"
+    }
+    HTTP response:
+    {
+      \\"status\\": 200,
+      \\"body\\": \\"Success\\",
+      \\"headers\\": {
+        \\"header1\\": \\"value1\\"
+      }
+    }
+    2024-06-18 16:02:04.868 my-function Success network access request executed in 80 ms
+    Attempt: 1
+    Connect time: 40 ms
+    Write read time: 40 ms
+    HTTP request:
+    {
+      \\"url\\": \\"https://api.example.com/hello\\",
+      \\"method\\": \\"GET\\",
+      \\"headers\\": {},
+      \\"body\\": null,
+      \\"policy\\": {
+        \\"read_timeout_ms\\": 500
+      }
+    }
+    HTTP response:
+    {
+      \\"status\\": 200,
+      \\"body\\": \\"Success\\",
+      \\"headers\\": {
+        \\"header1\\": \\"value1\\"
+      }
+    }
+    2024-06-18 16:02:04.868 my-function Failure network access request executed
+    Attempt: 1
+    HTTP request:
+    {
+      \\"url\\": \\"https://api.example.com/hello\\",
+      \\"method\\": \\"GET\\",
+      \\"headers\\": {},
+      \\"body\\": null,
+      \\"policy\\": {
+        \\"read_timeout_ms\\": 500
+      }
+    }
+    Error: Timeout Error
+    2024-06-18 16:02:04.868 my-function Success network access request executing in background
+    Reason: No cached response available
+    HTTP request:
+    {
+      \\"url\\": \\"https://api.example.com/hello\\",
+      \\"method\\": \\"GET\\",
+      \\"headers\\": {},
+      \\"body\\": null,
+      \\"policy\\": {
+        \\"read_timeout_ms\\": 500
+      }
+    }
+    2024-06-18 16:02:04.868 my-function Success network access request executing in background
+    Reason: Cache is about to expire
+    HTTP request:
+    {
+      \\"url\\": \\"https://api.example.com/hello\\",
+      \\"method\\": \\"GET\\",
+      \\"headers\\": {},
+      \\"body\\": null,
+      \\"policy\\": {
+        \\"read_timeout_ms\\": 500
+      }
+    }"
     `)
 
     renderInstance.unmount()

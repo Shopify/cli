@@ -113,7 +113,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isAppConfigExtension() {
-    return this.specification.experience === 'configuration'
+    return ['single', 'dynamic'].includes(this.specification.uidStrategy)
   }
 
   get isFlow() {
