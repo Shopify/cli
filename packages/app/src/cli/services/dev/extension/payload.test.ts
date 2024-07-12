@@ -37,7 +37,7 @@ describe('getUIExtensionPayload', () => {
               customer_privacy: false,
             },
             iframe: {
-              sources: [],
+              sources: ['https://my-iframe.com'],
             },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
@@ -146,7 +146,7 @@ describe('getUIExtensionPayload', () => {
             smsMarketing: false,
           },
           iframe: {
-            sources: ['https://my-iframe.com'],
+            sources: [],
           },
         },
       })
