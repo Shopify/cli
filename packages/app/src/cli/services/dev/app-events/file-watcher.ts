@@ -142,6 +142,8 @@ export async function startFileWatcher(
         if (!isRootExtensionDirectory) break
         // Wait 5 seconds to report the new extension to give time to the extension to be created
         // This might not be enough time in some cases, the consumer of this event should be prepared to handle this.
+
+        // NOTE: Add a lockfile on extension creation and delete it afterwards. Don't trigger this event while the lockfile is present
         setTimeout(
           () => {
             onChange({type: 'extension_folder_created', path, extensionPath, startTime})
