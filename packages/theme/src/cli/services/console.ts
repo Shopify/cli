@@ -30,6 +30,8 @@ async function promptValidPassword(password: string | undefined, store: string) 
 }
 
 async function findOrCreateReplTheme(themeName: string): Promise<string> {
+  // packages/cli-kit/assets/cli-ruby/lib/shopify_cli/theme/repl/auth_dev_server.rb
+
   return themeName
 }
 
