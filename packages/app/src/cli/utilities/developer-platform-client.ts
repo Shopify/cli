@@ -159,6 +159,7 @@ export interface ActiveAppVersion {
 }
 
 export type AppDeployOptions = AppDeployVariables & {
+  appId: string
   organizationId: string
   name: string
 }

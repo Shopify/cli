@@ -57,6 +57,9 @@ export async function uploadThemeExtensions(
 }
 
 interface UploadExtensionsBundleOptions {
+  /** The ID of the application */
+  appId: string
+
   /** The application API key */
   apiKey: string
 
@@ -140,6 +143,7 @@ export async function uploadExtensionsBundle(
   }
 
   const variables: AppDeployOptions = {
+    appId: options.appId,
     apiKey: options.apiKey,
     name: options.name,
     organizationId: options.organizationId,

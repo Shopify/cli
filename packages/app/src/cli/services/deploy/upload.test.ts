@@ -325,6 +325,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appId: '1',
         apiKey: 'app-id',
         name: 'appName',
         organizationId: '1',
@@ -337,6 +338,7 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appId: '1',
         apiKey: 'app-id',
         name: 'appName',
         organizationId: '1',
@@ -364,6 +366,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appId: '1',
         apiKey: 'app-id',
         name: 'appName',
         organizationId: '1',
@@ -378,6 +381,7 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appId: '1',
         apiKey: 'app-id',
         name: 'appName',
         organizationId: '1',
@@ -403,6 +407,7 @@ describe('uploadExtensionsBundle', () => {
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
     await uploadExtensionsBundle({
+      appId: '1',
       apiKey: 'app-id',
       name: 'appName',
       organizationId: '1',
@@ -415,6 +420,7 @@ describe('uploadExtensionsBundle', () => {
 
     // Then
     expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+      appId: '1',
       apiKey: 'app-id',
       name: 'appName',
       organizationId: '1',
@@ -514,6 +520,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       try {
         await uploadExtensionsBundle({
+          appId: '1',
           apiKey: 'app-id',
           name: 'appName',
           organizationId: '1',
@@ -615,6 +622,7 @@ describe('uploadExtensionsBundle', () => {
 
       // When
       const result = await uploadExtensionsBundle({
+        appId: '1',
         apiKey: 'app-id',
         name: 'appName',
         organizationId: '1',
