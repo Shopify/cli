@@ -1,11 +1,11 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {EventType, normalizeTime, subscribeToAppEvents} from './dev-session/app-event-watcher.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
+import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {mkdir, readFileSync, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -13,6 +13,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData} from '@shopify/cli-kit/node/http'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
 
 export interface DevSessionOptions {
@@ -76,6 +77,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   await mkdir(bundlePath)
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath}
+  const appWatcher = new AppEventWatcher(app, processOptions)
 
   outputDebug(`Using temp dir: ${dir}`, stdout)
   processOptions.stdout.write('Preparing dev session...')
@@ -83,7 +85,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   await initialBuild(processOptions)
   await bundleExtensionsAndUpload(processOptions, false)
 
-  await subscribeToAppEvents(app, processOptions, async (event) => {
+  appWatcher.onEvent(async (event) => {
     processOptions.stdout.write(`Event detected:`)
     event.extensionEvents.forEach((eve) => {
       processOptions.stdout.write(`🆕 ->> ${eve.type} :: ${eve.extension.handle} :: ${eve.extension.directory}`)
@@ -110,8 +112,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     }, developerPlatformClient.refreshToken)
 
     const endTime = process.hrtime(event.startTime)
-    processOptions.stdout.write(`Session updated [${normalizeTime(endTime)}ms]`)
+    processOptions.stdout.write(`Session updated [${endHRTimeInMs(endTime)}ms]`)
   })
+
+  await appWatcher.start()
   processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
 }
 
