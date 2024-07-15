@@ -1,5 +1,5 @@
 import {appFlags} from '../../../flags.js'
-import {loadAppConfiguration} from '../../../models/app/loader.js'
+import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import use from '../../../services/app/config/use.js'
 import Command from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
@@ -38,11 +38,7 @@ export default class ConfigUse extends Command {
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(ConfigUse)
 
-    const localApp = await loadAppConfiguration({
-      directory: flags.path,
-      userProvidedConfigName: undefined,
-    })
-
-    await use({directory: localApp.directory, configName: args.config, reset: flags.reset})
+    await checkFolderIsValidApp(flags.path)
+    await use({directory: flags.path, configName: args.config, reset: flags.reset})
   }
 }
