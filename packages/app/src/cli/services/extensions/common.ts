@@ -1,9 +1,9 @@
 import {AppInterface} from '../../models/app/app.js'
-import {blocks} from '../../constants.js'
+import {blocks, configurationFileNames} from '../../constants.js'
 import {ExtensionFlavor} from '../../models/app/template.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, findPathUp, mkdir} from '@shopify/cli-kit/node/fs'
+import {fileExists, findPathUp, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {hyphenate} from '@shopify/cli-kit/common/string'
 import {fileURLToPath} from 'url'
@@ -44,6 +44,7 @@ export async function ensureExtensionDirectoryExists({name, app}: {name: string;
     )
   }
   await mkdir(extensionDirectory)
+  await touchFile(joinPath(extensionDirectory, configurationFileNames.lockFile))
   return extensionDirectory
 }
 

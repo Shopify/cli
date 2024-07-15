@@ -1,6 +1,7 @@
 import Build from './commands/app/build.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
+import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
 import Logs from './commands/app/logs.js'
@@ -47,6 +48,7 @@ export const commands = {
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
   'webhook:trigger': WebhookTriggerDeprecated,
+  'demo:watcher': DemoWatcher,
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata

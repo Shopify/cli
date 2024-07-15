@@ -2427,6 +2427,59 @@
       "pluginType": "core",
       "strict": true
     },
+    "demo:watcher": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "demo:watcher",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Watch and prints out changes to an app."
+    },
     "docs:generate": {
       "aliases": [
       ],
