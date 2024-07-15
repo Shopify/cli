@@ -5,14 +5,28 @@ import {
 } from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/prompts.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/prompts.js')
+vi.mock('../utilities/repl-theme-manager.js', () => {
+  const REPLThemeManager = vi.fn()
+  REPLThemeManager.prototype.findOrCreate = () => ({
+    id: 1,
+    name: 'theme',
+    role: 'development',
+    createdAtRuntime: true,
+    processing: true,
+  })
+  return {REPLThemeManager}
+})
 
 describe('ensureReplEnv', () => {
   beforeEach(() => {
     vi.mocked(ensureValidPassword).mockResolvedValue('testPassword')
   })
+
+  const adminSession: AdminSession = {storeFqdn: 'test-store', token: 'token'}
 
   test('should prompt for password when storefront is password protected', async () => {
     // Given
@@ -20,7 +34,7 @@ describe('ensureReplEnv', () => {
     vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
 
     // When
-    const {storePassword} = await ensureReplEnv('test-store')
+    const {storePassword} = await ensureReplEnv(adminSession, 'test-store')
 
     // Then
     expect(ensureValidPassword).toHaveBeenCalled()
@@ -33,7 +47,7 @@ describe('ensureReplEnv', () => {
     vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
 
     // When
-    const {storePassword} = await ensureReplEnv('test-store')
+    const {storePassword} = await ensureReplEnv(adminSession, 'test-store')
 
     // Then
     expect(ensureValidPassword).not.toHaveBeenCalled()
