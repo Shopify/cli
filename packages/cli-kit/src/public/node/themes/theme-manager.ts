@@ -13,10 +13,10 @@ export abstract class ThemeManager {
 
   constructor(protected adminSession: AdminSession) {}
 
-  async findOrCreate(): Promise<Theme> {
+  async findOrCreate(themeRole?: Role, themeName?: string): Promise<Theme> {
     let theme = await this.fetch()
     if (!theme) {
-      theme = await this.create()
+      theme = await this.create(themeRole, themeName)
     }
     return theme
   }
