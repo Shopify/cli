@@ -153,6 +153,19 @@ async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerIn
 }
 
 /**
+ * When an extension folder is created:
+ * Reload the app and return the new app and the created extensions in the event.
+ */
+async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
+  const newApp = await reloadApp(app, options)
+  const oldExtensions = app.realExtensions.map((ext) => ext.handle)
+  const newExtensions = newApp.realExtensions
+  const createdExtensions = newExtensions.filter((ext) => !oldExtensions.includes(ext.handle))
+  const events = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
+  return {app: newApp, extensionEvents: events, startTime: event.startTime, path: event.path}
+}
+
+/**
  * When a file is created, updated or deleted:
  * Return the same app and the updated extension(s) in the event.
  * Is the responsibility of the consumer of the event to build the extension if necessary
@@ -201,19 +214,6 @@ async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<A
     startTime: event.startTime,
     path: event.path,
   }
-}
-
-/**
- * When an extension folder is created:
- * Reload the app and return the new app and the created extensions in the event.
- */
-async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
-  const oldExtensions = app.realExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensions.includes(ext.handle))
-  const events = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
-  return {app: newApp, extensionEvents: events, startTime: event.startTime, path: event.path}
 }
 
 /**
