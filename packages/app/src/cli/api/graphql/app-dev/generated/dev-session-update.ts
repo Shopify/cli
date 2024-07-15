@@ -10,7 +10,7 @@ export type DevSessionUpdateMutationVariables = Types.Exact<{
 
 export type DevSessionUpdateMutation = {devSessionUpdate?: {userErrors: {message: string}[]} | null}
 
-export const DevSessionUpdateDocument = {
+export const DevSessionUpdate = {
   kind: 'Document',
   definitions: [
     {

@@ -79,7 +79,8 @@
       "options": {
         "commands": [
           "pnpm eslint 'src/cli/api/graphql/partners/generated/**/*.{ts,tsx}' --fix",
-          "pnpm eslint 'src/cli/api/graphql/business-platform/generated/**/*.{ts,tsx}' --fix"
+          "pnpm eslint 'src/cli/api/graphql/business-platform/generated/**/*.{ts,tsx}' --fix",
+          "pnpm eslint 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}' --fix"
         ],
         "cwd": "packages/app"
       }
@@ -125,10 +126,13 @@
       "options": {
         "commands": [
           "find ./packages/app/src/cli/api/graphql/partners/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
-          "find ./packages/app/src/cli/api/graphql/business-platform/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+          "find ./packages/app/src/cli/api/graphql/business-platform/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
+          "find ./packages/app/src/cli/api/graphql/app-dev/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
+          "echo '/* eslint-disable tsdoc/syntax */'|cat - ./packages/app/src/cli/api/graphql/app-dev/generated/types.d.ts > /tmp/out && mv /tmp/out ./packages/app/src/cli/api/graphql/app-dev/generated/types.d.ts"
         ],
         "cwd": "{workspaceRoot}"
       }
     }
   }
 }
+

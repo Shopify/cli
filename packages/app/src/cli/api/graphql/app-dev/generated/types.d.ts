@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 /* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any */
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
@@ -15,6 +16,18 @@ export type Scalars = {
   Float: {input: number; output: number}
   /**
    * A [JSON](https://www.json.org/json-en.html) object.
+   *
+   * Example value:
+   * `{
+   *   "product": {
+   *     "id": "gid://shopify/Product/1346443542550",
+   *     "title": "White T-shirt",
+   *     "options": [{
+   *       "name": "Size",
+   *       "values": ["M", "L"]
+   *     }]
+   *   }
+   * }`
    */
   JSON: {input: any; output: any}
 }
