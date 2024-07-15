@@ -145,7 +145,7 @@ export async function startFileWatcher(
         } else if (isToml) {
           // When a toml is deleted, we can consider every extension in that folder was deleted.
           extensionPaths = extensionPaths.filter((extPath) => extPath !== extensionPath)
-          onChange({type: 'extension_folder_deleted', path, extensionPath, startTime})
+          onChange({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
         } else {
           // This could be an extension delete event, Wait 500ms to see if the toml is deleted or not.
           setTimeout(() => {

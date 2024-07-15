@@ -104,8 +104,8 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
   },
   {
     name: 'add a new extension',
-    fileSystemEvent: 'addDir',
-    path: '/extensions/ui_extension_3',
+    fileSystemEvent: 'add',
+    path: '/extensions/ui_extension_3/shopify.extension.toml',
     expectedEvent: {
       type: 'extension_folder_created',
       path: '/extensions/ui_extension_3',
@@ -115,8 +115,8 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
   },
   {
     name: 'delete an extension',
-    fileSystemEvent: 'unlinkDir',
-    path: '/extensions/ui_extension_1',
+    fileSystemEvent: 'unlink',
+    path: '/extensions/ui_extension_1/shopify.extension.toml',
     expectedEvent: {
       type: 'extension_folder_deleted',
       path: '/extensions/ui_extension_1',
@@ -132,6 +132,7 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
     fileSystemEvents: [
       // When adding a folder, the events are emitted in order (first the root, then all files)
       {event: 'addDir', path: '/extensions/ui_extension_3'},
+      {event: 'add', path: '/extensions/ui_extension_3/shopify.extension.toml'},
       {event: 'add', path: '/extensions/ui_extension_3/index.js'},
       {event: 'add', path: '/extensions/ui_extension_3/new-file.js'},
       {event: 'change', path: '/extensions/ui_extension_3/index.js'},
@@ -149,6 +150,7 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
       // When deleting a folder, the events are emitted in reverse order (first the files, then the root)
       {event: 'unlink', path: '/extensions/ui_extension_1/index.js'},
       {event: 'unlink', path: '/extensions/ui_extension_1/new-file.js'},
+      {event: 'unlink', path: '/extensions/ui_extension_1/shopify.extension.toml'},
       {event: 'unlinkDir', path: '/extensions/ui_extension_1/index.js'},
       {event: 'unlinkDir', path: '/extensions/ui_extension_1'},
     ],
