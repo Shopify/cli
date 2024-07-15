@@ -5,18 +5,26 @@ import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
-import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  chmod,
+  createFileWriteStream,
+  fileExists,
+  findPathUp,
+  inTemporaryDirectory,
+  mkdir,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
-import cachedir from 'cachedir'
 import {PipelineSource, Writable} from 'stream'
 import stream from 'stream/promises'
 import fs from 'fs'
 import * as gzip from 'zlib'
+import {fileURLToPath} from 'url'
 
 const JAVY_VERSION = 'v3.0.1'
 const FUNCTION_RUNNER_VERSION = 'v5.1.3'
@@ -27,15 +35,13 @@ const FUNCTION_RUNNER_VERSION = 'v5.1.3'
 class DownloadableBinary {
   readonly name: string
   readonly version: string
-  readonly directory: string
   readonly path: string
   private readonly gitHubRepo: string
 
   constructor(name: string, version: string, gitHubRepo: string) {
     this.name = name
     this.version = version
-    this.directory = cachedir(name)
-    this.path = joinPath(this.directory, `${this.name}-${this.version}`)
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'bin', `${this.name}`)
     this.gitHubRepo = gitHubRepo
   }
 
@@ -398,17 +404,14 @@ JavaScript exports with camelCase names are automatically mapped to kebab-case W
 }
 
 async function installBinary(bin: DownloadableBinary) {
-  const isInstalled = await fs.promises
-    .stat(bin.path)
-    .then(() => true)
-    .catch(() => false)
+  const isInstalled = await fileExists(bin.path)
   if (isInstalled) {
     return
   }
 
   const url = bin.downloadUrl(process.platform, process.arch)
   outputDebug(`Downloading ${bin.name} ${bin.version} from ${url} to ${bin.path}`)
-  await fs.promises.mkdir(bin.directory, {recursive: true})
+  await mkdir(dirname(bin.path))
   const resp = await fetch(url)
   if (resp.status !== 200) {
     throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
@@ -419,7 +422,7 @@ async function installBinary(bin: DownloadableBinary) {
     throw new Error(`Downloading ${bin.name} failed with empty response body`)
   }
 
-  const outputStream = fs.createWriteStream(bin.path)
+  const outputStream = createFileWriteStream(bin.path)
   await bin.processResponse(responseStream, outputStream)
-  await fs.promises.chmod(bin.path, 0o775)
+  await chmod(bin.path, 0o775)
 }

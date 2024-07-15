@@ -434,8 +434,7 @@ describe('javy', () => {
   test('properties are set correctly', () => {
     expect(javy.name).toBe('javy')
     expect(javy.version).match(/^v\d\.\d\.\d$/)
-    expect(javy.directory).toBeDefined()
-    expect(javy.path).toMatch(/(\/|\\)javy-v\d\.\d\.\d$/)
+    expect(javy.path).toMatch(/(\/|\\)javy$/)
   })
 
   describe('downloadUrl returns the correct URL', () => {
@@ -534,8 +533,7 @@ describe('functionRunner', () => {
   test('properties are set correctly', () => {
     expect(functionRunner.name).toBe('function-runner')
     expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
-    expect(functionRunner.directory).toBeDefined()
-    expect(functionRunner.path).toMatch(/(\/|\\)function-runner-v\d\.\d\.\d$/)
+    expect(functionRunner.path).toMatch(/(\/|\\)function-runner$/)
   })
 
   describe('downloadUrl returns the correct URL', () => {
