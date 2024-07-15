@@ -20,6 +20,11 @@ const schemas = [
     pathToFile: 'db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform/destinations_schema.graphql',
   },
+  {
+    repo: 'shopify',
+    pathToFile: 'db/graphql/app_dev_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+  }
 ]
 
 function runCommand(command, args) {

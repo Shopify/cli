@@ -67,5 +67,6 @@ export default {
   projects: {
     partners: projectFactory('partners', 'cli_schema.graphql'),
     businessPlatform: projectFactory('business-platform', 'destinations_schema.graphql'),
+    appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
   },
 }
