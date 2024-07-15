@@ -35,10 +35,10 @@ export async function generate() {
   const frequency: 'always' | 'once' | 'once_a_day' | 'once_a_week' = await renderSelectPrompt({
     message: 'Frequency',
     choices: [
-      {label: 'Always', value: 'always'},
       {label: 'Only once', value: 'once'},
-      {label: 'Once a day', value: 'once_a_day'},
       {label: 'Once a week', value: 'once_a_week'},
+      {label: 'Once a day', value: 'once_a_day'},
+      {label: 'Always', value: 'always'},
     ],
   })
   const minVersion = await renderTextPrompt({
