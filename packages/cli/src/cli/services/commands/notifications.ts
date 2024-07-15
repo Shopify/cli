@@ -69,6 +69,9 @@ export async function generate() {
     message: 'Comma separated list of commands. E.g.: app:generate:extension (optional)',
     allowEmpty: true,
   })
+  const ownerChannel = await renderTextPrompt({
+    message: 'Slack channel of the team who will own this notification',
+  })
 
   const notifications: Notifications = await getLocalNotifications()
   const notification: Notification = {
@@ -83,6 +86,7 @@ export async function generate() {
     maxDate: maxDate.length === 0 ? undefined : maxDate,
     surface: surface.length === 0 ? undefined : surface,
     commands: commands.length === 0 ? undefined : commands.split(',').map((command) => command.trim()),
+    ownerChannel,
   }
   notifications.notifications.push(notification)
   await writeFile('./notifications.json', JSON.stringify(notifications))
@@ -100,7 +104,7 @@ export async function list() {
     filters: {header: 'Filters', color: 'dim'},
   }
 
-  const rows = notifications.notifications.map((notification) => {
+  const rows = notifications.notifications.map((notification: Notification) => {
     return {
       type: notification.type,
       title: notification.title || '',

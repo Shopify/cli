@@ -15,11 +15,12 @@ export interface Notifications {
 export interface Notification {
   id: string
   message: string
+  type: 'info' | 'warning' | 'error'
+  ownerChannel: string
   cta?: {
     label: string
     url: string
   }
-  type: 'info' | 'warning' | 'error'
   title?: string
   minVersion?: string
   maxVersion?: string
