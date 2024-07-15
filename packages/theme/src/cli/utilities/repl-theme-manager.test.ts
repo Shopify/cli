@@ -3,7 +3,7 @@ import {setREPLTheme, removeREPLTheme, getREPLTheme, getDevelopmentTheme} from '
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../services/local-storage')
@@ -15,6 +15,27 @@ describe('REPLThemeManager', () => {
   beforeEach(() => {
     adminSession = {storeFqdn: 'mystore.myshopify.com', token: 'token'}
     themeManager = new REPLThemeManager(adminSession)
+  })
+
+  describe('create', () => {
+    // should upload theme assets
+    test('should upload theme assets', async () => {
+      // Given
+      const theme = {
+        id: 123,
+        name: 'Liquid Console (3.60)',
+        role: DEVELOPMENT_THEME_ROLE,
+        processing: true,
+        createdAtRuntime: true,
+      }
+      vi.mocked(createTheme).mockResolvedValue(theme)
+
+      // When
+      await themeManager.create(DEVELOPMENT_THEME_ROLE, 'Liquid Console (3.60)')
+
+      // Then
+      expect(bulkUploadThemeAssets).toHaveBeenCalledWith(123, expect.any(Array), adminSession)
+    })
   })
 
   test('should set the REPL theme in local storage', async () => {
