@@ -60,11 +60,7 @@ export default class Console extends ThemeCommand {
 
     if (flags['dev-preview']) {
       outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-      const {themeId, storePassword} = await ensureReplEnv(
-        store,
-        `Liquid Console ${cliVersion}`,
-        flags['store-password'],
-      )
+      const {themeId, storePassword} = await ensureReplEnv(store, flags['store-password'])
       await repl(adminSession, storefrontToken, themeId, storePassword)
       return
     }
