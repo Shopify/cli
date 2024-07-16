@@ -174,7 +174,7 @@ describe('Storefront API', () => {
       )
 
       // When
-      const result = await isStorefrontPasswordCorrect('correct-password', 'https://store.myshopify.com')
+      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
 
       // Then
       expect(result).toBe(true)
