@@ -29,8 +29,7 @@ export interface WatcherEvent {
     | 'file_created'
     | 'file_updated'
     | 'file_deleted'
-    | 'toml_updated'
-    | 'app_config_updated'
+    | 'extensions_config_updated'
     | 'app_config_deleted'
   path: string
   extensionPath: string
@@ -103,10 +102,8 @@ export async function startFileWatcher(
 
     switch (event) {
       case 'change':
-        if (isConfigAppPath) {
-          onChange({type: 'app_config_updated', path, extensionPath, startTime})
-        } else if (isToml) {
-          onChange({type: 'toml_updated', path, extensionPath, startTime})
+        if (isToml) {
+          onChange({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           onChange({type: 'file_updated', path, extensionPath, startTime})
         }

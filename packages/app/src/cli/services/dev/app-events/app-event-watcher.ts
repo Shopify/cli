@@ -95,8 +95,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
   file_created: FileChangeHandler,
   file_deleted: FileChangeHandler,
   file_updated: FileChangeHandler,
-  toml_updated: TomlChangeHandler,
-  app_config_updated: AppConfigUpdatedHandler,
+  extensions_config_updated: TomlChangeHandler,
   app_config_deleted: AppConfigDeletedHandler,
 }
 
@@ -183,8 +182,8 @@ async function FileChangeHandler({event, app, extensions}: HandlerInput): Promis
 }
 
 /**
- * When an extension.toml is updated:
- * Return the same app and the updated extension(s) in the event.
+ * When any config file (toml) is updated, including the app.toml and any extension toml:
+ * Reload the app and find which extensions were created, deleted or updated.
  * Is the responsibility of the consumer of the event to build the extension if necessary
  *
  * Since a toml can contain multiple extensions, this could trigger Create, Delete and Update events.
@@ -212,38 +211,6 @@ async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<A
   return {
     app: newApp,
     extensionEvents: [...createdEvents, ...deletedEvents, ...updatedEvents],
-    startTime: event.startTime,
-    path: event.path,
-  }
-}
-
-/**
- * When the app.toml is updated:
- * Reload the app and return the new app and the updated extensions in the event.
- * Compare the old and new extensions (defined in the app toml) to find the created, deleted and updated extensions.
- */
-async function AppConfigUpdatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
-  const oldExtensions = app.realExtensions
-  const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions
-  const newExtensionsHandles = newExtensions.map((ext) => ext.handle)
-
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsHandles.includes(ext.handle))
-  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsHandles.includes(ext.handle))
-
-  const updatedExtensions = newExtensions.filter((ext) => {
-    const oldConfig = oldExtensions.find((oldExt) => oldExt.handle === ext.handle)?.configuration
-    const newConfig = ext.configuration
-    if (oldConfig === undefined) return false
-    return JSON.stringify(oldConfig) !== JSON.stringify(newConfig)
-  })
-  const createEvents = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
-  const deleteEvents = deletedExtensions.map((ext) => ({type: EventType.Deleted, extension: ext}))
-  const updateEvents = updatedExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
-  return {
-    app: newApp,
-    extensionEvents: [...createEvents, ...deleteEvents, ...updateEvents],
     startTime: event.startTime,
     path: event.path,
   }
