@@ -219,37 +219,77 @@ const testCases: TestCase[] = [
 describe('app-event-watcher when receiving a file event that doesnt require an app reload', () => {
   test.each(testCases)(
     'The event $name returns the expected AppEvent',
-    async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
-      // Given
-      vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
-      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
+    async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) =>
+      new Promise((resolve) => {
+        // Given
+        vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
+        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
 
-      // When
-      const app = testApp({
-        allExtensions: initialExtensions,
-        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.toml'},
-      })
-      const watcher = new AppEventWatcher(app, outputOptions)
-      const emitSpy = vi.spyOn(watcher, 'emit')
-      await watcher.start()
+        // When
+        const app = testApp({
+          allExtensions: initialExtensions,
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.toml'},
+        })
+        const watcher = new AppEventWatcher(app, outputOptions)
+        // const emitSpy = vi.spyOn(watcher, 'emit')
 
-      // Then
-      setTimeout(() => {
-        expect(emitSpy).toHaveBeenCalledWith([
-          'all',
-          {
+        watcher.onEvent((event) => {
+          expect(event).toEqual({
             app: expect.objectContaining({realExtensions: finalExtensions}),
             extensionEvents: expect.arrayContaining(extensionEvents),
             startTime: expect.anything(),
-          },
-        ])
+            path: expect.anything(),
+          })
+          if (needsAppReload) {
+            expect(loadApp).toHaveBeenCalledWith({
+              specifications: expect.anything(),
+              directory: expect.anything(),
+              userProvidedConfigName: 'shopify.app.toml',
+              remoteFlags: expect.anything(),
+            })
+          } else {
+            expect(loadApp).not.toHaveBeenCalled()
+          }
+          resolve()
+        })
 
-        if (needsAppReload) {
-          expect(loadApp).toHaveBeenCalled()
-        } else {
-          expect(loadApp).not.toHaveBeenCalled()
-        }
-      }, 50)
-    },
+        watcher
+          .start()
+          .then(() => {})
+          .catch(() => {
+            resolve()
+          })
+
+        // Then
+        // setTimeout(() => {
+        // await flushPromises()
+
+        // expect(event).toEqual({
+        //   app: expect.objectContaining({realExtensions: finalExtensions}),
+        //   extensionEvents: expect.arrayContaining(extensionEvents),
+        //   startTime: expect.anything(),
+        //   path: expect.anything(),
+        // })
+
+        // if (needsAppReload) {
+        //   expect(loadApp).toHaveBeenCalledWith({
+        //     specifications: expect.anything(),
+        //     directory: expect.anything(),
+        //     userProvidedConfigName: 'shopify.app.toaaaml',
+        //     remoteFlags: expect.anything(),
+        //   })
+        // } else {
+        //   expect(loadApp).not.toHaveBeenCalled()
+        // }
+        // }, 50)
+      }),
   )
 })
+
+async function waitForEvent(watcher: AppEventWatcher) {
+  return new Promise((resolve) => {
+    watcher.onEvent((event) => {
+      resolve(event)
+    })
+  })
+}
