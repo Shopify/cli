@@ -201,8 +201,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
-    const apiSecretKeys = app.activeRoot.clientCredentials.secrets
-      .map((secret) => ({secret: secret.key}))
+    const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       id: app.id,
       title: name,

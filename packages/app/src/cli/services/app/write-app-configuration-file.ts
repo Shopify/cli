@@ -42,6 +42,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
   let configCopy = config
   if (typeof config === 'object' && config !== null && config !== undefined) {
     if ('app_id' in config && !('organization_id' in config)) {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const {app_id, ...rest} = config
       configCopy = rest
     }
