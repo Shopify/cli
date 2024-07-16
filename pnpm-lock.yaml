@@ -277,8 +277,8 @@ importers:
         specifier: 3.64.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 0.0.0-next-18e76ba-20240708092928
-        version: 0.0.0-next-18e76ba-20240708092928(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 0.0.0-snapshot-20240716160423
+        version: 0.0.0-snapshot-20240716160423(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.64.0
         version: link:../cli-kit
@@ -6014,15 +6014,15 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@0.0.0-next-18e76ba-20240708092928(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-NI8h9XB8qLWL0XxDyYh4YkNYR7Dc02m2Q7BtEtj1pjJ3ATBX4WZ8J6y9XiruXdHr+SYYiVSzuP1AMufZcjLvdQ==}
+  /@shopify/cli-hydrogen@0.0.0-snapshot-20240716160423(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-l9Bw28JcwaentpE2CPISE0o0sdDvyjrqYJCvZ6Ee78rJTuC1NQxiaIEYoYviOV+dTwEJEfdqDTKucmu2WaNJNQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': 0.0.0-next-18e76ba-20240708092928
-      '@shopify/mini-oxygen': 0.0.0-next-18e76ba-20240708092928
+      '@shopify/hydrogen-codegen': ^0.3.1
+      '@shopify/mini-oxygen': ^3.0.4
       graphql-config: ^5.0.3
       vite: 5.3.1
     peerDependenciesMeta:
