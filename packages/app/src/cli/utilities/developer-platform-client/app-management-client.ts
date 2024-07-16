@@ -592,7 +592,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       name: updatedName,
       appSource: {
         assetsUrl: bundleUrl,
-        modules: (appModules ?? []).map((mod) => {
+        appModules: (appModules ?? []).map((mod) => {
           return {
             uid: mod.uid ?? mod.uuid ?? mod.handle,
             specificationIdentifier: mod.specificationIdentifier,
@@ -798,7 +798,7 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
   return {
     appSource: {
-      modules: [
+      appModules: [
         {
           // Change the uid to AppHomeSpecIdentifier
           uid: 'app_home',
