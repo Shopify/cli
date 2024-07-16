@@ -18,7 +18,6 @@ describe('REPLThemeManager', () => {
   })
 
   describe('create', () => {
-    // should upload theme assets
     test('should upload theme assets', async () => {
       // Given
       const theme = {
