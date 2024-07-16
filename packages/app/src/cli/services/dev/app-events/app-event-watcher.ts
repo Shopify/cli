@@ -8,6 +8,7 @@ import micromatch from 'micromatch'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {basename} from '@shopify/cli-kit/node/path'
 import EventEmitter from 'events'
 
 /**
@@ -266,7 +267,7 @@ async function reloadApp(app: AppInterface, options: OutputContextOptions): Prom
     const newApp = await loadApp({
       specifications: app.specifications,
       directory: app.directory,
-      userProvidedConfigName: undefined,
+      userProvidedConfigName: basename(app.configuration.path),
       remoteFlags: app.remoteFlags,
     })
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)
