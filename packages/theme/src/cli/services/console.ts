@@ -10,7 +10,7 @@ export async function ensureReplEnv(adminSession: AdminSession, storePasswordFla
 
   const storePassword = (await isStorefrontPasswordProtected(adminSession.storeFqdn))
     ? await ensureValidPassword(storePasswordFlag, adminSession.storeFqdn)
-    : storePasswordFlag
+    : undefined
 
   return {
     themeId,
