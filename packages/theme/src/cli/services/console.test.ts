@@ -41,13 +41,26 @@ describe('ensureReplEnv', () => {
     expect(storePassword).toBe('testPassword')
   })
 
-  test('should skip prompt for password when storefront is not password protected', async () => {
+  test('should skip prompt and return undefined for password when storefront is not password protected', async () => {
     // Given
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
     vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
 
     // When
-    const {storePassword} = await ensureReplEnv(adminSession, 'test-store')
+    const {storePassword} = await ensureReplEnv(adminSession)
+
+    // Then
+    expect(ensureValidPassword).not.toHaveBeenCalled()
+    expect(storePassword).toBeUndefined()
+  })
+
+  test('shoul return undefined for storePassword when password is provided but storefront is not password protected', async () => {
+    // Given
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
+
+    // When
+    const {storePassword} = await ensureReplEnv(adminSession, 'testPassword')
 
     // Then
     expect(ensureValidPassword).not.toHaveBeenCalled()
