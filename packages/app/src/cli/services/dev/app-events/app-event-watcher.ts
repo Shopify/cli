@@ -219,7 +219,7 @@ async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<A
 /**
  * When the app.toml is updated:
  * Reload the app and return the new app and the updated extensions in the event.
- * Compare the old and new extensions (defined in the app tomle) to find the created, deleted and updated extensions.
+ * Compare the old and new extensions (defined in the app toml) to find the created, deleted and updated extensions.
  */
 async function AppConfigUpdatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
   const newApp = await reloadApp(app, options)

@@ -162,10 +162,10 @@ export async function startFileWatcher(
     }
   })
 
-  listenForAbortOnWatchera(watcher, options)
+  listenForAbortOnWatcher(watcher, options)
 }
 
-const listenForAbortOnWatchera = (watcher: FSWatcher, options: OutputContextOptions) => {
+const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptions) => {
   options.signal.addEventListener('abort', () => {
     outputDebug(`Closing file watcher`, options.stdout)
     watcher
