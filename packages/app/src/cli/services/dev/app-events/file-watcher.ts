@@ -5,7 +5,7 @@ import {dirname, isSubpath, joinPath, normalizePath} from '@shopify/cli-kit/node
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
@@ -34,7 +34,7 @@ export interface WatcherEvent {
     | 'app_config_deleted'
   path: string
   extensionPath: string
-  startTime: [number, number]
+  startTime: StartTime
 }
 
 export interface OutputContextOptions {
