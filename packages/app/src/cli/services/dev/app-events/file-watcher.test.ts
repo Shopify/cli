@@ -63,7 +63,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
     fileSystemEvent: 'change',
     path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
     expectedEvent: {
-      type: 'toml_updated',
+      type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
       startTime: expect.any(Array),
@@ -74,7 +74,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
     fileSystemEvent: 'change',
     path: '/shopify.app.toml',
     expectedEvent: {
-      type: 'app_config_updated',
+      type: 'extensions_config_updated',
       path: '/shopify.app.toml',
       extensionPath: 'unknown',
       startTime: expect.any(Array),

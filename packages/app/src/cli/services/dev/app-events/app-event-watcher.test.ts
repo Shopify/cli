@@ -183,9 +183,9 @@ const testCases: TestCase[] = [
     ],
   },
   {
-    name: 'app_config_update with multiple extensions affected',
+    name: 'app config updated with multiple extensions affected',
     fileWatchEvent: {
-      type: 'app_config_updated',
+      type: 'extensions_config_updated',
       path: 'shopify.app.custom.toml',
       extensionPath: 'unknown',
       startTime: [0, 0],
@@ -193,16 +193,16 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension2, posExtension, webhookExtension],
     finalExtensions: [extension1, extension2, posExtensionUpdated, appAccessExtension],
     extensionEvents: [
-      {type: EventType.Updated, extension: posExtensionUpdated},
+      {type: EventType.UpdatedSourceFile, extension: posExtensionUpdated},
       {type: EventType.Deleted, extension: webhookExtension},
       {type: EventType.Created, extension: appAccessExtension},
     ],
     needsAppReload: true,
   },
   {
-    name: 'toml_updated with multiple extensions affected',
+    name: 'extensions_config_updated with multiple extensions affected',
     fileWatchEvent: {
-      type: 'toml_updated',
+      type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
       startTime: [0, 0],
