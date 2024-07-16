@@ -212,5 +212,23 @@ describe('Storefront API', () => {
       // Then
       expect(result).toBe(false)
     })
+
+    test('throws an error when the server responds with "Too Many Requests"', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 429,
+          headers: {
+            'retry-after': '60',
+          },
+        }),
+      )
+
+      // When
+      const result = isStorefrontPasswordCorrect('wrong-password', 'store.myshopify.com')
+
+      // Then
+      await expect(result).rejects.toThrow('Too many incorrect password attempts. Please try again after 60 seconds.')
+    })
   })
 })

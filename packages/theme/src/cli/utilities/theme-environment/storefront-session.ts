@@ -34,13 +34,19 @@ export function promptPassword(prompt: string): Promise<string> {
 export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
   const response = await fetch(`${ensureHttps(store)}/password`, {
     headers: {
-      'cache-control': 'max-age=0',
+      'cache-control': 'no-cache',
       'content-type': 'application/x-www-form-urlencoded',
     },
     body: `form_type=storefront_password&utf8=%E2%9C%93&password=${password}`,
     method: 'POST',
     redirect: 'manual',
   })
+
+  if (response.status === 429) {
+    throw new AbortError(
+      `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
+    )
+  }
   return response.status === 302 && response.headers.get('location') === `${ensureHttps(store)}/`
 }
 
