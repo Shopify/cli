@@ -37,12 +37,12 @@ Examples:
       -> The consumer will receive the updated app and the deleted extension(s)
 
 4. A toml file is updated (/extensions/my_extension/extension.toml)
-  -> file-watcher will emit a `toml_updated` event
+  -> file-watcher will emit a `extensions_config_updated` event
     -> app-event-watcher will compare the old and new extensions to determine which were created, deleted or updated
       -> The consumer will receive the updated app and the created, deleted and updated extensions
 
 5. The app.toml is updated
-  -> file-watcher will emit a `app_config_updated` event
+  -> file-watcher will emit a `extensions_config_updated` event
     -> app-event-watcher will compare the old and new config to determine which extensions were created, deleted or updated
       -> The consumer will receive the updated app and the created, deleted and updated extensions
  */
