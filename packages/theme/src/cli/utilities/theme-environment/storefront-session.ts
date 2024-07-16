@@ -2,10 +2,11 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {consoleLog} from '@shopify/cli-kit/node/output'
 import {createInterface} from 'readline'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(ensureHttps(storeURL), {
+  const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
     redirect: 'manual',
   })
@@ -32,7 +33,7 @@ export function promptPassword(prompt: string): Promise<string> {
  * If the password is correct, SFR will respond with a 302 to redirect to the storefront
  */
 export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
-  const response = await fetch(`${ensureHttps(store)}/password`, {
+  const response = await fetch(`${prependHttps(store)}/password`, {
     headers: {
       'cache-control': 'no-cache',
       'content-type': 'application/x-www-form-urlencoded',
@@ -47,7 +48,9 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
       `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
     )
   }
-  return response.status === 302 && response.headers.get('location') === `${ensureHttps(store)}/`
+  consoleLog(response.headers.get('location') || '')
+  consoleLog(`${prependHttps(store)}/`)
+  return response.status === 302 && response.headers.get('location') === `${prependHttps(store)}/`
 }
 
 export async function getStorefrontSessionCookies(
@@ -153,9 +156,6 @@ function getCookie(setCookieArray: string[], cookieName: string) {
   return parsedCookie[cookieName]
 }
 
-function ensureHttps(url: string): string {
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    return `https://${url}`
-  }
-  return url
+function prependHttps(url: string): string {
+  return `https://${url}`
 }
