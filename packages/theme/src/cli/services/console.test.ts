@@ -26,7 +26,7 @@ describe('ensureReplEnv', () => {
     vi.mocked(ensureValidPassword).mockResolvedValue('testPassword')
   })
 
-  const adminSession: AdminSession = {storeFqdn: 'test-store', token: 'token'}
+  const adminSession: AdminSession = {storeFqdn: 'test-store.myshopify.com', token: 'token'}
 
   test('should prompt for password when storefront is password protected', async () => {
     // Given
@@ -34,7 +34,7 @@ describe('ensureReplEnv', () => {
     vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
 
     // When
-    const {storePassword} = await ensureReplEnv(adminSession, 'test-store')
+    const {storePassword} = await ensureReplEnv(adminSession)
 
     // Then
     expect(ensureValidPassword).toHaveBeenCalled()
