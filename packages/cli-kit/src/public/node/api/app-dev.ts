@@ -1,5 +1,4 @@
-import {GraphQLResponse, graphqlRequestDoc} from './graphql.js'
-import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
+import {graphqlRequestDoc} from './graphql.js'
 import Bottleneck from 'bottleneck'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -37,36 +36,8 @@ export async function appDevRequest<TResult, TVariables extends Variables>(
       url,
       token,
       variables,
-      responseOptions: {onResponse: handleDeprecations},
     }),
   )
 
   return result
-}
-
-interface Deprecation {
-  supportedUntilDate?: string
-}
-
-interface WithDeprecations {
-  deprecations: Deprecation[]
-}
-
-/**
- * Sets the next deprecation date from [GraphQL response extensions](https://www.apollographql.com/docs/resources/graphql-glossary/#extensions)
- * if `response.extensions.deprecations` objects contain a `supportedUntilDate` (ISO 8601-formatted string).
- *
- * @param response - The response of the query.
- */
-export function handleDeprecations<T>(response: GraphQLResponse<T>): void {
-  if (!response.extensions) return
-
-  const deprecationDates: Date[] = []
-  for (const deprecation of (response.extensions as WithDeprecations).deprecations) {
-    if (deprecation.supportedUntilDate) {
-      deprecationDates.push(new Date(deprecation.supportedUntilDate))
-    }
-  }
-
-  setNextDeprecationDate(deprecationDates)
 }
