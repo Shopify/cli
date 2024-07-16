@@ -1,9 +1,10 @@
 import {getREPLTheme, setREPLTheme, removeREPLTheme} from '../services/local-storage.js'
 import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {Role} from '@shopify/cli-kit/node/themes/utils'
+import {DEVELOPMENT_THEME_ROLE, Role} from '@shopify/cli-kit/node/themes/utils'
 import {bulkUploadThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 export class REPLThemeManager extends ThemeManager {
   protected context = 'REPL'
@@ -17,6 +18,15 @@ export class REPLThemeManager extends ThemeManager {
     const theme = await super.create(themeRole, themeName)
     await this.uploadThemeAssets(theme)
 
+    return theme
+  }
+
+  async findOrCreate(): Promise<Theme> {
+    let theme = await this.fetch()
+    if (!theme) {
+      const themeName = `Liquid Console (${CLI_KIT_VERSION})`
+      theme = await this.create(DEVELOPMENT_THEME_ROLE, themeName)
+    }
     return theme
   }
 
