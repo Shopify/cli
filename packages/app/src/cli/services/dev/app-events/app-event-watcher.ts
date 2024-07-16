@@ -224,13 +224,14 @@ async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<A
  */
 async function AppConfigUpdatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
   const newApp = await reloadApp(app, options)
-  const oldExtensions = app.realExtensions.filter((ext) => ext.configurationPath === app.configuration.path)
+  const oldExtensions = app.realExtensions
   const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions.filter((ext) => ext.configurationPath === app.configuration.path)
+  const newExtensions = newApp.realExtensions
   const newExtensionsHandles = newExtensions.map((ext) => ext.handle)
 
   const createdExtensions = newExtensions.filter((ext) => !oldExtensionsHandles.includes(ext.handle))
   const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsHandles.includes(ext.handle))
+
   const updatedExtensions = newExtensions.filter((ext) => {
     const oldConfig = oldExtensions.find((oldExt) => oldExt.handle === ext.handle)?.configuration
     const newConfig = ext.configuration

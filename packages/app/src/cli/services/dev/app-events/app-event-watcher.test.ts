@@ -11,6 +11,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {loadApp} from '../../../models/app/loader.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {flushPromises} from '@shopify/cli-kit/node/promises'
 
 vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
@@ -185,7 +186,7 @@ const testCases: TestCase[] = [
     name: 'app_config_update with multiple extensions affected',
     fileWatchEvent: {
       type: 'app_config_updated',
-      path: 'shopify.app.toml',
+      path: 'shopify.app.custom.toml',
       extensionPath: 'unknown',
       startTime: [0, 0],
     },
@@ -219,70 +220,41 @@ const testCases: TestCase[] = [
 describe('app-event-watcher when receiving a file event that doesnt require an app reload', () => {
   test.each(testCases)(
     'The event $name returns the expected AppEvent',
-    async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) =>
-      new Promise((resolve) => {
-        // Given
-        vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
-        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
+    async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
+      // Given
+      vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
+      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
 
-        // When
-        const app = testApp({
-          allExtensions: initialExtensions,
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.toml'},
+      // When
+      const app = testApp({
+        allExtensions: initialExtensions,
+        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+      })
+      const watcher = new AppEventWatcher(app, outputOptions)
+      const emitSpy = vi.spyOn(watcher, 'emit')
+      await watcher.start()
+
+      await flushPromises()
+
+      expect(emitSpy).toHaveBeenCalledWith('all', {
+        app: expect.objectContaining({realExtensions: finalExtensions}),
+        extensionEvents: expect.arrayContaining(extensionEvents),
+        startTime: expect.anything(),
+        path: expect.anything(),
+      })
+
+      if (needsAppReload) {
+        expect(loadApp).toHaveBeenCalledWith({
+          specifications: expect.anything(),
+          directory: expect.anything(),
+          // The app is loaded with the same configuration file
+          userProvidedConfigName: 'shopify.app.custom.toml',
+          remoteFlags: expect.anything(),
         })
-        const watcher = new AppEventWatcher(app, outputOptions)
-        // const emitSpy = vi.spyOn(watcher, 'emit')
-
-        watcher.onEvent((event) => {
-          expect(event).toEqual({
-            app: expect.objectContaining({realExtensions: finalExtensions}),
-            extensionEvents: expect.arrayContaining(extensionEvents),
-            startTime: expect.anything(),
-            path: expect.anything(),
-          })
-          if (needsAppReload) {
-            expect(loadApp).toHaveBeenCalledWith({
-              specifications: expect.anything(),
-              directory: expect.anything(),
-              userProvidedConfigName: 'shopify.app.toml',
-              remoteFlags: expect.anything(),
-            })
-          } else {
-            expect(loadApp).not.toHaveBeenCalled()
-          }
-          resolve()
-        })
-
-        watcher
-          .start()
-          .then(() => {})
-          .catch(() => {
-            resolve()
-          })
-
-        // Then
-        // setTimeout(() => {
-        // await flushPromises()
-
-        // expect(event).toEqual({
-        //   app: expect.objectContaining({realExtensions: finalExtensions}),
-        //   extensionEvents: expect.arrayContaining(extensionEvents),
-        //   startTime: expect.anything(),
-        //   path: expect.anything(),
-        // })
-
-        // if (needsAppReload) {
-        //   expect(loadApp).toHaveBeenCalledWith({
-        //     specifications: expect.anything(),
-        //     directory: expect.anything(),
-        //     userProvidedConfigName: 'shopify.app.toaaaml',
-        //     remoteFlags: expect.anything(),
-        //   })
-        // } else {
-        //   expect(loadApp).not.toHaveBeenCalled()
-        // }
-        // }, 50)
-      }),
+      } else {
+        expect(loadApp).not.toHaveBeenCalled()
+      }
+    },
   )
 })
 
