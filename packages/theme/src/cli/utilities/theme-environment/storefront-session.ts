@@ -2,8 +2,6 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {consoleLog} from '@shopify/cli-kit/node/output'
-import {createInterface} from 'readline'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
@@ -12,20 +10,6 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
   })
 
   return response.status === 302
-}
-
-export function promptPassword(prompt: string): Promise<string> {
-  const readline = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-
-  return new Promise((resolve) => {
-    readline.question(prompt, (password) => {
-      readline.close()
-      resolve(password)
-    })
-  })
 }
 
 /**
@@ -48,8 +32,6 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
       `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
     )
   }
-  consoleLog(response.headers.get('location') || '')
-  consoleLog(`${prependHttps(store)}/`)
   return response.status === 302 && response.headers.get('location') === `${prependHttps(store)}/`
 }
 
