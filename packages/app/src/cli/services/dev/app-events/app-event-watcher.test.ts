@@ -187,7 +187,7 @@ const testCases: TestCase[] = [
     fileWatchEvent: {
       type: 'extensions_config_updated',
       path: 'shopify.app.custom.toml',
-      extensionPath: 'unknown',
+      extensionPath: '/',
       startTime: [0, 0],
     },
     initialExtensions: [extension1, extension2, posExtension, webhookExtension],

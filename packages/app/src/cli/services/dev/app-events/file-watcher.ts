@@ -15,8 +15,6 @@ import {Writable} from 'stream'
  * Includes the type of the event, the path of the file that triggered the event and the extension path that contains the file.
  * path and extensionPath could be the same if the event is at the extension level (create, delete extension)
  *
- * extensionPath will be "unknown" for changes in the app config file.
- *
  * @typeParam type - The type of the event
  * @typeParam path - The path of the file that triggered the event
  * @typeParam extensionPath - The path of the extension that contains the file
@@ -89,7 +87,8 @@ export async function startFileWatcher(
   watcher.on('all', (event, path) => {
     const startTime = startHRTime()
     const isConfigAppPath = path === appConfigurationPath
-    const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
+    const extensionPath =
+      extensionPaths.find((dir) => isSubpath(dir, path)) ?? (isConfigAppPath ? app.directory : 'unknown')
     const isToml = path.endsWith('.toml')
 
     outputDebug(`🌀: ${event} ${path.replace(app.directory, '')}\n`)

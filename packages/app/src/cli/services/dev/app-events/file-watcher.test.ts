@@ -76,7 +76,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
     expectedEvent: {
       type: 'extensions_config_updated',
       path: '/shopify.app.toml',
-      extensionPath: 'unknown',
+      extensionPath: '/',
       startTime: expect.any(Array),
     },
   },
