@@ -109,7 +109,7 @@
     "@shopify/plugin-cloudflare": "3.64.0",
     "@shopify/plugin-did-you-mean": "3.64.0",
     "@shopify/theme": "3.64.0",
-    "@shopify/cli-hydrogen": "0.0.0-snapshot-20240716160423",
+    "@shopify/cli-hydrogen": "0.0.0-next-8b2322d-20240716164327",
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
