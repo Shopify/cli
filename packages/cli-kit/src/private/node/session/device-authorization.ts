@@ -55,14 +55,16 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     await keypress()
     await openURL(jsonResult.verification_uri_complete)
     outputInfo(
-      outputContent`Opened link to start the auth process: ${outputToken.green(
+      outputContent`Opened link to start the auth process: ${outputToken.link(
+        'Login link',
         jsonResult.verification_uri_complete,
       )}`,
     )
   } else {
     outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
     outputInfo(
-      outputContent`👉 Open this link to start the auth process: ${outputToken.green(
+      outputContent`👉 Open this link to start the auth process: ${outputToken.link(
+        'Login link',
         jsonResult.verification_uri_complete,
       )}`,
     )
