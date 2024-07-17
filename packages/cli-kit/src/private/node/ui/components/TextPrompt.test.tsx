@@ -254,4 +254,14 @@ describe('TextPrompt', () => {
       "
     `)
   })
+
+  test('skip the prompt message when provided', async () => {
+    const {lastFrame} = render(<TextPrompt message="this will get skipped" onSubmit={() => {}} skipPromptMessage />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      ">  █
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+      "
+      `)
+  })
 })

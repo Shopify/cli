@@ -21,6 +21,7 @@ export interface TextPromptProps {
   abortSignal?: AbortSignal
   preview?: (value: string) => TokenItem<InlineToken>
   initialAnswer?: string
+  skipPromptMessage?: boolean
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -34,6 +35,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   abortSignal,
   preview,
   initialAnswer = '',
+  skipPromptMessage = false,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -89,12 +91,14 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>
-      <Box>
-        <Box marginRight={2}>
-          <Text>?</Text>
+      {skipPromptMessage ? null : (
+        <Box>
+          <Box marginRight={2}>
+            <Text>?</Text>
+          </Box>
+          <TokenizedText item={messageWithPunctuation(message)} />
         </Box>
-        <TokenizedText item={messageWithPunctuation(message)} />
-      </Box>
+      )}
       {promptState === PromptState.Submitted ? (
         <Box>
           <Box marginRight={2}>
