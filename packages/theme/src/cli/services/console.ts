@@ -1,12 +1,10 @@
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {REPLThemeManager} from '../utilities/repl-theme-manager.js'
 import {ensureValidPassword} from '../utilities/prompts.js'
+import {replLoop} from '../utilities/repl.js'
 import {DevServerSession} from '../utilities/theme-environment/types.js'
-import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {consoleError, consoleLog, consoleWarn, outputDebug} from '@shopify/cli-kit/node/output'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {consoleLog} from '@shopify/cli-kit/node/output'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
@@ -28,7 +26,7 @@ async function findOrCreateReplTheme(adminSession: AdminSession): Promise<string
   return replTheme.id.toString()
 }
 
-export async function repl(
+export async function initializeRepl(
   adminSession: AdminSession,
   storefrontToken: string,
   themeId: string,
@@ -42,60 +40,4 @@ export async function repl(
     expiresAt: new Date(),
   }
   return replLoop(themeSession, storefrontToken, themeId, password)
-}
-
-async function replLoop(
-  themeSession: DevServerSession,
-  storefrontToken: string,
-  themeId: string,
-  password: string | undefined,
-) {
-  try {
-    const inputValue = await renderTextPrompt({message: 'Enter a value'})
-    if (hasDelimiter(inputValue)) {
-      consoleWarn(
-        "Liquid Console doesn't support Liquid delimiters such as '{{ ... }}' or '{% ... %}'.\nPlease use 'collections.first' instead of '{{ collections.first }}'.",
-      )
-    }
-    const evaluatedValue = await evaluate(themeSession, inputValue, themeId)
-    const regex = />([^<]+)</
-    const match = evaluatedValue.match(regex)
-
-    if (match && match[1]) {
-      consoleLog(match[1])
-    }
-    return replLoop(themeSession, storefrontToken, themeId, password)
-  } catch (error) {
-    shutdownReplSession(error)
-    throw new AbortSilentError()
-  }
-}
-
-function shutdownReplSession(error: unknown) {
-  if (error instanceof Error) {
-    const errorMessage = `Shopify Liquid console error: ${error.message}`
-    const backtrace = error.stack || 'Error backtrace not found'
-    consoleError(errorMessage)
-    outputDebug(backtrace)
-  }
-}
-
-function hasDelimiter(input: string): boolean {
-  return /\{\{|\}\}|\{%|%\}/.test(input)
-}
-
-export async function evaluate(themeSession: DevServerSession, snippet: string, themeId: string) {
-  const response = await render(themeSession, {
-    path: '/',
-    query: [],
-    themeId,
-    cookies: '',
-    sectionId: 'announcement-bar',
-    headers: {},
-    replaceTemplates: {
-      'sections/announcement-bar.liquid': `{{ ${snippet} }}`,
-    },
-  })
-
-  return response.text()
 }
