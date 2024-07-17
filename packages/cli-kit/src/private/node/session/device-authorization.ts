@@ -27,7 +27,7 @@ export interface DeviceAuthorizationResponse {
  */
 export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
   const fqdn = await identityFqdn()
-  const identityClientId = await clientId()
+  const identityClientId = clientId()
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
   const url = `https://${fqdn}/oauth/device_authorization`
 

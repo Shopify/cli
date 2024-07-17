@@ -41,7 +41,7 @@ describe('requestDeviceAuthorization', () => {
     const response = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockResolvedValue('clientId')
+    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When
     const got = await requestDeviceAuthorization(['scope1', 'scope2'])
