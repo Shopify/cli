@@ -96,8 +96,6 @@ export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppC
  */
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 
-export type AppConfigurationType = CurrentAppConfiguration | LegacyAppConfiguration
-
 /** Validation schema that produces a provided app configuration type */
 export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
 
