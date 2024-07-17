@@ -253,6 +253,7 @@ export interface AppInterface<
    */
   creationDefaultOptions(): AppCreationDefaultOptions
   manifest: () => Promise<JsonMapType>
+  removeExtension: (extensionHandle: string) => void
 }
 
 type AppConstructor<
@@ -414,6 +415,10 @@ export class App<
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
     }
+  }
+
+  removeExtension(extensionHandle: string) {
+    this.realExtensions = this.realExtensions.filter((ext) => ext.handle !== extensionHandle)
   }
 
   get includeConfigOnDeploy() {
