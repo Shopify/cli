@@ -691,7 +691,7 @@ interface IsTTYOptions {
   uiDebugOptions?: UIDebugOptions
 }
 
-export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions) {
+export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
   return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode())
 }
 
