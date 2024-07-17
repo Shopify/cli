@@ -1,7 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {ensureReplEnv, repl} from '../../services/console.js'
+import {ensureReplEnv, initializeRepl} from '../../services/console.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -61,7 +61,7 @@ export default class Console extends ThemeCommand {
     if (flags['dev-preview']) {
       outputInfo('This feature is currently in development and is not ready for use or testing yet.')
       const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
-      await repl(adminSession, storefrontToken, themeId, storePassword)
+      await initializeRepl(adminSession, storefrontToken, themeId, storePassword)
       return
     }
 
