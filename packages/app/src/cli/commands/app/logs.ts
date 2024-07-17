@@ -32,6 +32,11 @@ export default class Logs extends Command {
       options: ['success', 'failure'],
       env: 'SHOPIFY_FLAG_STATUS',
     }),
+    json: Flags.boolean({
+      char: 'j',
+      description: 'Log the run result as a JSON object.',
+      env: 'SHOPIFY_FLAG_JSON',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -53,6 +58,7 @@ export default class Logs extends Command {
       status: flags.status,
       configName: flags.config,
       reset: flags.reset,
+      json: flags.json,
     }
 
     await logs(logOptions)

@@ -42,6 +42,7 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
+import {sniffForJson} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -816,6 +817,7 @@ interface ReusedValuesOptions {
  */
 function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
+  if (sniffForJson()) return
 
   let updateURLs = 'Not yet configured'
   if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
