@@ -5,8 +5,9 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {BugError} from '../../../public/node/error.js'
-import {isTTY, keypress} from '../../../public/node/ui.js'
+import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {openURL} from '../../../public/node/system.js'
+import {isTTY, keypress} from '../../../public/node/ui.js'
 
 export interface DeviceAuthorizationResponse {
   deviceCode: string
@@ -49,7 +50,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
 
   outputInfo('\nTo run this command, log in to Shopify.')
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
-  if (isTTY()) {
+  if (isTTY() && !isCloudEnvironment()) {
     outputInfo('👉 Press any key to open the login page on your browser')
     await keypress()
     await openURL(jsonResult.verification_uri_complete)
