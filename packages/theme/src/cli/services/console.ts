@@ -4,8 +4,8 @@ import {ensureValidPassword} from '../utilities/prompts.js'
 import {DevServerSession} from '../utilities/theme-environment/types.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {consoleLog} from '@shopify/cli-kit/node/output'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
@@ -33,6 +33,16 @@ export async function repl(
   themeId: string,
   password: string | undefined,
 ) {
+  consoleLog('Welcome to Shopify Liquid console\n(press Ctrl + C to exit)')
+  return replLoop(adminSession, storefrontToken, themeId, password)
+}
+
+async function replLoop(
+  adminSession: AdminSession,
+  storefrontToken: string,
+  themeId: string,
+  password: string | undefined,
+) {
   const inputValue = await renderTextPrompt({message: 'Enter a value'})
   const evaluatedValue = await evaluate(inputValue, adminSession, storefrontToken, themeId, password)
   const regex = />([^<]+)</
@@ -41,7 +51,7 @@ export async function repl(
   if (match && match[1]) {
     consoleLog(match[1])
   }
-  return repl(adminSession, storefrontToken, themeId, password)
+  return replLoop(adminSession, storefrontToken, themeId, password)
 }
 
 export async function evaluate(
