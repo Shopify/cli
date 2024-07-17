@@ -30,6 +30,7 @@ export async function initializeRepl(
   adminSession: AdminSession,
   storefrontToken: string,
   themeId: string,
+  url: string,
   password: string | undefined,
 ) {
   consoleLog('Welcome to Shopify Liquid console\n(press Ctrl + C to exit)')
@@ -39,5 +40,5 @@ export async function initializeRepl(
     storefrontPassword: password,
     expiresAt: new Date(),
   }
-  return replLoop(themeSession, storefrontToken, themeId, password)
+  return replLoop(themeSession, storefrontToken, themeId, url)
 }

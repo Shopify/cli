@@ -61,7 +61,7 @@ export default class Console extends ThemeCommand {
     if (flags['dev-preview']) {
       outputInfo('This feature is currently in development and is not ready for use or testing yet.')
       const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
-      await initializeRepl(adminSession, storefrontToken, themeId, storePassword)
+      await initializeRepl(adminSession, storefrontToken, themeId, url, storePassword)
       return
     }
 
