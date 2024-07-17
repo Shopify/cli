@@ -10,6 +10,7 @@ import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {WebhookSubscription} from '../../models/extensions/specifications/types/app_config_webhook.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -31,6 +32,7 @@ export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
   appProxy?: AppProxy
+  webhookSubscriptions?: WebhookSubscription[]
 }
 
 export interface FrontendURLOptions {
@@ -146,6 +148,7 @@ export function generatePartnersURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
   proxyFields?: CurrentAppConfiguration['app_proxy'],
+  webhookSubscriptions?: WebhookSubscription[],
 ): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
@@ -174,10 +177,22 @@ export function generatePartnersURLs(
       }
     : {}
 
+  let newWebhookSubscriptions: WebhookSubscription[] | undefined
+  if (webhookSubscriptions) {
+    // Update the webhook subscriptions to use the base URL
+    newWebhookSubscriptions = webhookSubscriptions.map((subscription) => {
+      return {
+        ...subscription,
+        uri: `${baseURL}${subscription.uri}`,
+      }
+    })
+  }
+
   return {
     applicationUrl: baseURL,
     redirectUrlWhitelist,
     ...appProxy,
+    webhookSubscriptions: newWebhookSubscriptions,
   }
 }
 

@@ -1,45 +1,27 @@
 {
   "targetDefaults": {
     "clean": {
-      "dependsOn": [
-        "^clean"
-      ]
+      "dependsOn": ["^clean"]
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     },
     "refresh-manifests": {
-      "dependsOn": [
-        "build",
-        "refresh-readme"
-      ]
+      "dependsOn": ["build", "refresh-readme"]
     },
     "refresh-readme": {
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {},
     "lint:fix": {
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "type-check": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "bundle": {
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     }
   },
   "extends": "@nx/workspace/presets/npm.json",
@@ -66,13 +48,9 @@
   "defaultBase": "main",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "sharedGlobals": [],
-    "production": [
-      "default"
-    ]
-  }
+    "production": ["default"]
+  },
+  "nxCloudAccessToken": "OTY5MzNjMjAtZjJmZi00NDhhLWJkZDAtZmM1OTZlMzBkYmY1fHJlYWQtd3JpdGU="
 }
