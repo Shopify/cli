@@ -35,25 +35,31 @@ export async function repl(
   password: string | undefined,
 ) {
   consoleLog('Welcome to Shopify Liquid console\n(press Ctrl + C to exit)')
-  return replLoop(adminSession, storefrontToken, themeId, password)
+  const themeSession: DevServerSession = {
+    ...adminSession,
+    storefrontToken,
+    storefrontPassword: password,
+    expiresAt: new Date(),
+  }
+  return replLoop(themeSession, storefrontToken, themeId, password)
 }
 
 async function replLoop(
-  adminSession: AdminSession,
+  themeSession: DevServerSession,
   storefrontToken: string,
   themeId: string,
   password: string | undefined,
 ) {
   try {
     const inputValue = await renderTextPrompt({message: 'Enter a value'})
-    const evaluatedValue = await evaluate(inputValue, adminSession, storefrontToken, themeId, password)
+    const evaluatedValue = await evaluate(themeSession, inputValue, themeId)
     const regex = />([^<]+)</
     const match = evaluatedValue.match(regex)
 
     if (match && match[1]) {
       consoleLog(match[1])
     }
-    return replLoop(adminSession, storefrontToken, themeId, password)
+    return replLoop(themeSession, storefrontToken, themeId, password)
   } catch (error) {
     shutdownReplSession(error)
     throw new AbortSilentError()
@@ -69,21 +75,8 @@ function shutdownReplSession(error: unknown) {
   }
 }
 
-export async function evaluate(
-  snippet: string,
-  adminSession: AdminSession,
-  storefrontToken: string,
-  themeId: string,
-  password: string | undefined,
-) {
-  const session: DevServerSession = {
-    ...adminSession,
-    storefrontToken,
-    storefrontPassword: password,
-    expiresAt: new Date(),
-  }
-
-  const response = await render(session, {
+export async function evaluate(themeSession: DevServerSession, snippet: string, themeId: string) {
+  const response = await render(themeSession, {
     path: '/',
     query: [],
     themeId,
