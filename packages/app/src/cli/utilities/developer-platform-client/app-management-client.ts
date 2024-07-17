@@ -38,6 +38,16 @@ import {
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
 } from './app-management-client/graphql/app-version-by-id.js'
+import {
+  DevStoreType,
+  ListDevStoresQuery,
+  ListDevStoresQuerySchema,
+} from './app-management-client/graphql/list-dev-stores.js'
+import {
+  FetchDevStoreByDomainQuery,
+  FetchDevStoreByDomainQuerySchema,
+  FetchDevStoreByDomainQueryVariables,
+} from './app-management-client/graphql/fetch-dev-store-by-domain.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -116,7 +126,11 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
-import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformRequest,
+  businessPlatformRequestDoc,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
@@ -360,8 +374,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async devStoresForOrg(_orgId: string): Promise<OrganizationStore[]> {
-    return []
+  // we are returning OrganizationStore type here because we want to keep types consistent btwn
+  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
+  // from the Partners OrganizationStore schema, we will return this type for now
+  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+    const storesResult = await businessPlatformOrganizationsRequest<ListDevStoresQuerySchema>(
+      ListDevStoresQuery,
+      await this.businessPlatformToken(),
+      orgId,
+    )
+    const storesArray = storesResult.organization.properties.edges
+
+    return mapBusinessPlatformStoresToOrganizationStores(storesArray)
   }
 
   async appExtensionRegistrations(
@@ -694,8 +718,35 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+  // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
+  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
+  // from the Partners FindByStoreDomainSchema, we will return this type for now
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    const queryVariables: FetchDevStoreByDomainQueryVariables = {organizationId: orgId, domain: shopDomain}
+    const storesResult = await businessPlatformOrganizationsRequest<FetchDevStoreByDomainQuerySchema>(
+      FetchDevStoreByDomainQuery,
+      await this.businessPlatformToken(),
+      orgId,
+      queryVariables,
+    )
+
+    const {organization} = storesResult
+    const storesArray = mapBusinessPlatformStoresToOrganizationStores(organization.properties.edges)
+
+    return {
+      organizations: {
+        nodes: [
+          {
+            id: organization.id,
+            businessName: organization.name,
+            website: 'N/A',
+            stores: {
+              nodes: storesArray,
+            },
+          },
+        ],
+      },
+    }
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -916,4 +967,18 @@ export async function allowedTemplates(
 
 function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
+}
+
+function mapBusinessPlatformStoresToOrganizationStores(storesArray: DevStoreType[]) {
+  return storesArray.map((store: DevStoreType) => {
+    const {externalId, primaryDomain, name} = store.node
+    return {
+      shopId: externalId,
+      link: primaryDomain,
+      shopDomain: primaryDomain,
+      shopName: name,
+      transferDisabled: true,
+      convertableToPartnerTest: true,
+    }
+  })
 }

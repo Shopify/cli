@@ -23,7 +23,7 @@ describe('allDefaultScopes', () => {
     ])
   })
 
-  test('includes the App Management one when the required env var is defined', async () => {
+  test('includes App Management and Store Management when the required env var is defined', async () => {
     // Given
     const envVars = {USE_APP_MANAGEMENT_API: 'true'}
 
@@ -40,6 +40,7 @@ describe('allDefaultScopes', () => {
       'https://api.shopify.com/auth/partners.app.cli.access',
       'https://api.shopify.com/auth/destinations.readonly',
       'https://api.shopify.com/auth/organization.apps.manage',
+      'https://api.shopify.com/auth/organization.store-management',
     ])
   })
 })

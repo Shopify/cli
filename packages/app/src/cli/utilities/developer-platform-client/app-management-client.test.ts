@@ -1,16 +1,76 @@
 import {AppManagementClient, GatedExtensionTemplate, allowedTemplates, diffAppModules} from './app-management-client.js'
 import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
+import {ListDevStoresQuery, ListDevStoresQuerySchema} from './app-management-client/graphql/list-dev-stores.js'
+import {FetchDevStoreByDomainQuerySchema} from './app-management-client/graphql/fetch-dev-store-by-domain.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {Organization} from '../../models/organization.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
 
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/session')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
 const extensionC = await testUIExtension({uid: 'extension-c-uuid'})
+
+const ORG1: Organization = {
+  id: '1',
+  businessName: 'test business 1',
+}
+
+const STORE1_NODE = {
+  id: '1',
+  externalId: '1',
+  name: 'dev store 1',
+  primaryDomain: 'https://devstore1.shopify.com',
+  storeType: 'app_development',
+  shortName: 'dev store 1',
+}
+
+const STORE2_NODE = {
+  id: '2',
+  externalId: '2',
+  name: 'dev store 2',
+  primaryDomain: 'https://devstore2.shopify.com',
+  storeType: 'app_development',
+  shortName: 'dev store 2',
+}
+
+const LIST_DEV_STORE_RESPONSE_VALUE: ListDevStoresQuerySchema = {
+  organization: {
+    id: '1',
+    name: 'org 1',
+    properties: {
+      edges: [
+        {
+          node: STORE1_NODE,
+        },
+        {
+          node: STORE2_NODE,
+        },
+      ],
+    },
+  },
+}
+
+const FETCH_DEV_STORE_BY_DOMAIN_VALUE: FetchDevStoreByDomainQuerySchema = {
+  organization: {
+    id: '1',
+    name: 'org 1',
+    properties: {
+      edges: [
+        {
+          node: STORE1_NODE,
+        },
+      ],
+    },
+  },
+}
 
 function moduleFromExtension(extension: ExtensionInstance): AppModule {
   return {
@@ -111,5 +171,84 @@ describe('allowedTemplates', () => {
     // Then
     expect(got.length).toEqual(2)
     expect(got).toEqual([templateWithoutRules, allowedTemplate])
+  })
+})
+
+describe('devStoresForOrg', () => {
+  test('returns a list of OrganizationStore typed stores, from query response', async () => {
+    const mockStore1 = STORE1_NODE
+    const mockStore2 = STORE2_NODE
+
+    const mockAppManagementClient = new AppManagementClient()
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue(LIST_DEV_STORE_RESPONSE_VALUE)
+
+    const got = await mockAppManagementClient.devStoresForOrg(ORG1.id)
+
+    expect(got).toEqual([
+      {
+        shopId: mockStore1.id,
+        link: mockStore1.primaryDomain,
+        shopDomain: mockStore1.primaryDomain,
+        shopName: mockStore1.name,
+        transferDisabled: true,
+        convertableToPartnerTest: true,
+      },
+      {
+        shopId: mockStore2.externalId,
+        link: mockStore2.primaryDomain,
+        shopDomain: mockStore2.primaryDomain,
+        shopName: mockStore2.name,
+        transferDisabled: true,
+        convertableToPartnerTest: true,
+      },
+    ])
+    expect(businessPlatformOrganizationsRequest).toHaveBeenCalledWith(
+      ListDevStoresQuery,
+      'businessPlatformToken',
+      ORG1.id,
+    )
+  })
+})
+
+describe('storeByDomain', () => {
+  test('returns the store with the correct domain, typed as FindStoreByDomainSchema', async () => {
+    const mockStore1 = STORE1_NODE
+    const mockAppManagementClient = new AppManagementClient()
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue(FETCH_DEV_STORE_BY_DOMAIN_VALUE)
+
+    const got = await mockAppManagementClient.storeByDomain(ORG1.id, mockStore1.primaryDomain)
+
+    expect(got).toEqual({
+      organizations: {
+        nodes: [
+          {
+            id: FETCH_DEV_STORE_BY_DOMAIN_VALUE.organization.id,
+            name: FETCH_DEV_STORE_BY_DOMAIN_VALUE.organization.name,
+            website: 'N/A',
+            stores: {
+              nodes: [
+                {
+                  shopId: mockStore1.id,
+                  link: mockStore1.primaryDomain,
+                  shopDomain: mockStore1.primaryDomain,
+                  shopName: mockStore1.name,
+                  transferDisabled: true,
+                  convertableToPartnerTest: true,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    })
+    expect(businessPlatformOrganizationsRequest).toHaveBeenCalledWith(
+      ListDevStoresQuery,
+      'businessPlatformToken',
+      ORG1.id,
+      {
+        organizationId: ORG1.id,
+        domain: mockStore1.primaryDomain,
+      },
+    )
   })
 })
