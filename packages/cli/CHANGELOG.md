@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.64.1
+
+### Patch Changes
+
+- cb71a1f35: Fix an issue with Hydrogen's auth
+
 ## 3.64.0
 
 ### Minor Changes
