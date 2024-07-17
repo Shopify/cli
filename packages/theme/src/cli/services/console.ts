@@ -4,8 +4,9 @@ import {ensureValidPassword} from '../utilities/prompts.js'
 import {DevServerSession} from '../utilities/theme-environment/types.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {consoleLog} from '@shopify/cli-kit/node/output'
+import {consoleError, consoleLog, outputDebug} from '@shopify/cli-kit/node/output'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
@@ -43,15 +44,29 @@ async function replLoop(
   themeId: string,
   password: string | undefined,
 ) {
-  const inputValue = await renderTextPrompt({message: 'Enter a value'})
-  const evaluatedValue = await evaluate(inputValue, adminSession, storefrontToken, themeId, password)
-  const regex = />([^<]+)</
-  const match = evaluatedValue.match(regex)
+  try {
+    const inputValue = await renderTextPrompt({message: 'Enter a value'})
+    const evaluatedValue = await evaluate(inputValue, adminSession, storefrontToken, themeId, password)
+    const regex = />([^<]+)</
+    const match = evaluatedValue.match(regex)
 
-  if (match && match[1]) {
-    consoleLog(match[1])
+    if (match && match[1]) {
+      consoleLog(match[1])
+    }
+    return replLoop(adminSession, storefrontToken, themeId, password)
+  } catch (error) {
+    shutdownReplSession(error)
+    throw new AbortSilentError()
   }
-  return replLoop(adminSession, storefrontToken, themeId, password)
+}
+
+function shutdownReplSession(error: unknown) {
+  if (error instanceof Error) {
+    const errorMessage = `Shopify Liquid console error: ${error.message}`
+    const backtrace = error.stack || 'Error backtrace not found'
+    consoleError(errorMessage)
+    outputDebug(backtrace)
+  }
 }
 
 export async function evaluate(
