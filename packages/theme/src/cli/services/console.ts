@@ -40,5 +40,5 @@ export async function initializeRepl(
     storefrontPassword: password,
     expiresAt: new Date(),
   }
-  return replLoop(themeSession, storefrontToken, themeId, url)
+  return replLoop(themeSession, themeId, url)
 }
