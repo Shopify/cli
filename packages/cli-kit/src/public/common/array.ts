@@ -66,15 +66,3 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
   return lodashDifference(array, ...values)
 }
-
-/**
- * Filters an array of values based on an async predicate.
- *
- * @param array - The array to filter.
- * @param predicate - The async predicate to filter the array.
- * @returns A promise that resolves to the filtered array.
- */
-export async function asyncFilter<T>(array: T[], predicate: (value: T) => Promise<boolean>): Promise<T[]> {
-  const results = await Promise.all(array.map(predicate))
-  return array.filter((_v, index) => results[index])
-}

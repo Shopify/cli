@@ -11,7 +11,7 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData} from '@shopify/cli-kit/node/http'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
 
@@ -78,6 +78,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   const processOptions = {...options, stderr, stdout, signal, bundlePath}
   const appWatcher = new AppEventWatcher(app, processOptions)
 
+  outputWarn('-----> Running DEV on beta mode <-----')
   outputDebug(`Using temp dir: ${dir}`, stdout)
   processOptions.stdout.write('Preparing dev session...')
 

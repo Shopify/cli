@@ -41,7 +41,7 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand, outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -137,22 +137,16 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   )
   localApp.webs = webs
 
-  const beta = developerPlatformClient.clientName === 'app-management'
-  if (beta) outputWarn('-----> Running DEV on beta mode <-----')
-
-  let partnerUrlsUpdated = false
-  if (!beta) {
-    partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
-      webs,
-      commandOptions.update,
-      network,
-      localApp,
-      cachedUpdateURLs,
-      remoteApp,
-      apiKey,
-      developerPlatformClient,
-    )
-  }
+  const partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
+    webs,
+    commandOptions.update,
+    network,
+    localApp,
+    cachedUpdateURLs,
+    remoteApp,
+    apiKey,
+    developerPlatformClient,
+  )
 
   return {
     storeFqdn,
@@ -166,7 +160,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
-    beta,
+    beta: developerPlatformClient.clientName === 'app-management',
   }
 }
 
@@ -318,12 +312,14 @@ export async function launchDevProcesses({
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    canEnablePreviewMode: await canEnablePreviewMode({
-      localApp: config.localApp,
-      developerPlatformClient,
-      apiKey: config.remoteApp.id,
-      organizationId: config.remoteApp.organizationId,
-    }),
+    canEnablePreviewMode: config.beta
+      ? false
+      : await canEnablePreviewMode({
+          localApp: config.localApp,
+          developerPlatformClient,
+          apiKey: config.remoteApp.id,
+          organizationId: config.remoteApp.organizationId,
+        }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
     developerPlatformClient,
@@ -337,14 +333,24 @@ export async function launchDevProcesses({
     graphiqlPort: config.graphiqlPort,
     app,
     abortController,
-    developerPreview: developerPreviewController(apiKey, developerPlatformClient),
+    developerPreview: developerPreviewController(apiKey, developerPlatformClient, config.beta),
   })
 }
 
 export function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
+  beta: boolean,
 ): DeveloperPreviewController {
+  if (beta) {
+    return {
+      fetchMode: () => Promise.resolve(false),
+      enable: () => Promise.resolve(),
+      disable: () => Promise.resolve(),
+      update: () => Promise.resolve(false),
+    }
+  }
+
   const refreshToken = async () => {
     await developerPlatformClient.refreshToken()
   }

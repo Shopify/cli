@@ -52,24 +52,6 @@ export async function appManagementFqdn(): Promise<string> {
 }
 
 /**
- * It returns the Dev Session service we should interact with.
- *
- * @returns Fully-qualified domain of the Dev Session service we should interact with.
- */
-export async function devSessionFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'myshopify.com'
-  switch (environment) {
-    case 'local':
-      return 'shopify.myshopify.io'
-    case 'spin':
-      return `shopify.${await spinFqdn()}`
-    default:
-      return productionFqdn
-  }
-}
-
-/**
  * It returns the Developer Dashboard domain we should interact with.
  *
  * @returns Fully-qualified domain of the Developer Dashboard we should interact with.
