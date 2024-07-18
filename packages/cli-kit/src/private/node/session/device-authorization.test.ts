@@ -8,14 +8,20 @@ import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
+import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
 
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
 vi.mock('../../../public/node/http.js')
+vi.mock('../../../public/node/ui.js')
 vi.mock('./exchange.js')
+
+beforeEach(() => {
+  vi.mocked(isTTY).mockReturnValue(true)
+})
 
 describe('requestDeviceAuthorization', () => {
   const data: any = {
@@ -41,7 +47,7 @@ describe('requestDeviceAuthorization', () => {
     const response = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockResolvedValue('clientId')
+    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When
     const got = await requestDeviceAuthorization(['scope1', 'scope2'])

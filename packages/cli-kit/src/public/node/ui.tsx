@@ -47,7 +47,7 @@ type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
 interface UIDebugOptions {
   /** If true, don't check if the current terminal is interactive or not */
-  skipTTYCheck: boolean
+  skipTTYCheck?: boolean
 }
 const defaultUIDebugOptions: UIDebugOptions = {
   skipTTYCheck: false,
@@ -691,7 +691,7 @@ interface IsTTYOptions {
   uiDebugOptions?: UIDebugOptions
 }
 
-export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions) {
+export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
   return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode())
 }
 
