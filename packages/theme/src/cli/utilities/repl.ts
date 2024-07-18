@@ -1,8 +1,15 @@
 import {render} from './theme-environment/storefront-renderer.js'
 import {DevServerSession} from './theme-environment/types.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {consoleWarn, consoleError, outputDebug, consoleLog} from '@shopify/cli-kit/node/output'
-import {renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  consoleWarn,
+  consoleError,
+  outputDebug,
+  outputToken,
+  outputContent,
+  outputInfo,
+} from '@shopify/cli-kit/node/output'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 // todo - combine config into a single arg
 export async function replLoop(themeSession: DevServerSession, storefrontToken: string, themeId: string, url: string) {
@@ -22,21 +29,14 @@ export async function replLoop(themeSession: DevServerSession, storefrontToken: 
   }
 }
 
-// todo - figure out how to print cyan
 // todo - handle JSON errors
-function presentEvaluatedValue(evaluatedValue: string) {
-  if (evaluatedValue === 'null') {
-    renderText({text: 'null'})
+function presentEvaluatedValue(evaluatedValue?: string) {
+  if (evaluatedValue === undefined || evaluatedValue === null) {
+    outputInfo(outputContent`${outputToken.cyan('null')}`)
     return
   }
 
-  const regex = />([^<]+)</
-  const match = evaluatedValue.match(regex)
-
-  if (match && match[1]) {
-    const jsonValue = JSON.parse(match[1])
-    consoleLog(jsonValue)
-  }
+  outputInfo(outputContent`${outputToken.cyan(evaluatedValue)}`)
 }
 
 function shutdownReplSession(error: unknown) {
@@ -52,8 +52,20 @@ function hasDelimiter(input: string): boolean {
   return /\{\{|\}\}|\{%|%\}/.test(input)
 }
 
-export async function evaluate(themeSession: DevServerSession, snippet: string, themeId: string, url: string) {
-  return evaluateResult(themeSession, themeId, snippet, url)
+export async function evaluate(
+  themeSession: DevServerSession,
+  snippet: string,
+  themeId: string,
+  url: string,
+): Promise<string | undefined> {
+  const result = await evaluateResult(themeSession, themeId, snippet, url)
+
+  const regex = />([^<]+)</
+  const match = result.match(regex)
+
+  if (match && match[1]) {
+    return JSON.parse(match[1])
+  }
 }
 
 async function evaluateResult(themeSession: DevServerSession, themeId: string, snippet: string, url: string) {
