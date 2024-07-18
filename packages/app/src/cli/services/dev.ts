@@ -41,7 +41,7 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -69,7 +69,7 @@ export interface DevOptions {
 
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
-  await actionsBeforeSettingUpDevProcesses(config)
+  if (!config.beta) await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
@@ -137,16 +137,22 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   )
   localApp.webs = webs
 
-  const partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
-    webs,
-    commandOptions.update,
-    network,
-    localApp,
-    cachedUpdateURLs,
-    remoteApp,
-    apiKey,
-    developerPlatformClient,
-  )
+  const beta = developerPlatformClient.clientName === 'app-management'
+  if (beta) outputWarn('-----> Running DEV on beta mode <-----')
+
+  let partnerUrlsUpdated = false
+  if (!beta) {
+    partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
+      webs,
+      commandOptions.update,
+      network,
+      localApp,
+      cachedUpdateURLs,
+      remoteApp,
+      apiKey,
+      developerPlatformClient,
+    )
+  }
 
   return {
     storeFqdn,
@@ -160,7 +166,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
-    beta: false,
+    beta,
   }
 }
 

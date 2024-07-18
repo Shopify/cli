@@ -24,7 +24,6 @@ import {
   AppVersionIdentifiers,
   AssetUrlSchema,
   CreateAppOptions,
-  DevSessionDeployOptions,
   DeveloperPlatformClient,
   DevSessionDeployOptions,
 } from '../../utilities/developer-platform-client.js'

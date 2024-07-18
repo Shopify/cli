@@ -245,7 +245,6 @@ export interface AppInterface<
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
-  manifest: () => Promise<JsonMapType>
   /**
    * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
    *
