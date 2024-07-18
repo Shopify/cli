@@ -11,6 +11,10 @@ import {
 } from '@shopify/cli-kit/node/output'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
+interface ErrorOutput {
+  error?: string
+}
+
 // todo - combine config into a single arg
 export async function replLoop(themeSession: DevServerSession, storefrontToken: string, themeId: string, url: string) {
   try {
@@ -29,14 +33,25 @@ export async function replLoop(themeSession: DevServerSession, storefrontToken: 
   }
 }
 
-// todo - handle JSON errors
-function presentEvaluatedValue(evaluatedValue?: string) {
-  if (evaluatedValue === undefined || evaluatedValue === null) {
-    outputInfo(outputContent`${outputToken.cyan('null')}`)
+function presentEvaluatedValue(evaluatedValue?: unknown) {
+  if (hasJsonError(evaluatedValue)) {
+    consoleWarn(
+      "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid.",
+    )
     return
   }
 
-  outputInfo(outputContent`${outputToken.cyan(evaluatedValue)}`)
+  if (evaluatedValue === undefined || evaluatedValue === null) {
+    presentValue('null')
+    return
+  }
+
+  const formattedOutput = JSON.stringify(evaluatedValue, null, 2)
+  presentValue(formattedOutput)
+}
+
+function presentValue(value: string) {
+  return outputInfo(outputContent`${outputToken.cyan(value)}`)
 }
 
 function shutdownReplSession(error: unknown) {
@@ -50,6 +65,21 @@ function shutdownReplSession(error: unknown) {
 
 function hasDelimiter(input: string): boolean {
   return /\{\{|\}\}|\{%|%\}/.test(input)
+}
+
+function hasJsonError(output: unknown): boolean {
+  switch (typeof output) {
+    case 'object':
+      if (Array.isArray(output)) {
+        return hasJsonError(output[0])
+      } else if (output !== null) {
+        const errorOutput = output as ErrorOutput
+        return errorOutput.error?.includes('json not allowed for this object') ?? false
+      }
+      return false
+    default:
+      return false
+  }
 }
 
 export async function evaluate(
