@@ -2457,6 +2457,7 @@
       ],
       "args": {
       },
+      "customPluginName": "@shopify/app",
       "flags": {
         "config": {
           "char": "c",
