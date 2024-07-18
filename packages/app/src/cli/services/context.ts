@@ -40,9 +40,8 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, sniffForJson} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
-import {sniffForJson} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {

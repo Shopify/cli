@@ -1,8 +1,6 @@
 import {
-  POLLING_ERROR_RETRY_INTERVAL_MS,
   ONE_MILLION,
   POLLING_INTERVAL_MS,
-  POLLING_THROTTLE_RETRY_INTERVAL_MS,
   parseFunctionRunPayload,
   LOG_TYPE_FUNCTION_RUN,
   LOG_TYPE_RESPONSE_FROM_CACHE,
@@ -11,6 +9,7 @@ import {
   parseNetworkAccessRequestExecutionInBackgroundPayload,
   LOG_TYPE_REQUEST_EXECUTION,
   parseNetworkAccessRequestExecutedPayload,
+  handleFetchAppLogsError,
 } from '../../../../utils.js'
 import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
@@ -28,23 +27,30 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
 
   useEffect(() => {
     const poll = async ({jwtToken, cursor, filters}: {jwtToken: string; cursor?: string; filters: PollFilters}) => {
-      let nextInterval = POLLING_INTERVAL_MS
       let nextJwtToken = jwtToken
+      let retryIntervalMs = POLLING_INTERVAL_MS
       const response = await pollAppLogs({jwtToken, cursor, filters})
 
-      const {errors} = response as ErrorResponse
+      const errorResponse = response as ErrorResponse
 
-      if (errors && errors.length > 0) {
-        const errorsStrings = errors.map((error) => error.message)
-        if (errors.some((error) => error.status === 429)) {
-          setErrors([...errorsStrings, `Retrying in ${POLLING_THROTTLE_RETRY_INTERVAL_MS / 1000}s`])
-          nextInterval = POLLING_THROTTLE_RETRY_INTERVAL_MS
-        } else if (errors.some((error) => error.status === 401)) {
-          nextJwtToken = await resubscribeCallback()
-        } else {
-          setErrors([...errorsStrings, `Retrying in ${POLLING_ERROR_RETRY_INTERVAL_MS / 1000}s`])
-          nextInterval = POLLING_ERROR_RETRY_INTERVAL_MS
+      if (errorResponse.errors) {
+        const result = await handleFetchAppLogsError({
+          response: errorResponse,
+          onThrottle: (retryIntervalMs) => {
+            setErrors(['Request throttled while polling app logs.', `Retrying in ${retryIntervalMs / 1000}s`])
+          },
+          onUnknownError: (retryIntervalMs) => {
+            setErrors(['Error while polling app logs', `Retrying in ${retryIntervalMs / 1000}s`])
+          },
+          onResubscribe: () => {
+            return resubscribeCallback()
+          },
+        })
+
+        if (result.nextJwtToken) {
+          nextJwtToken = result.nextJwtToken
         }
+        retryIntervalMs = result.retryIntervalMs
       } else {
         setErrors([])
       }
@@ -97,7 +103,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
         poll({jwtToken: nextJwtToken, cursor: nextCursor || cursor, filters}).catch((error) => {
           throw error
         })
-      }, nextInterval)
+      }, retryIntervalMs)
     }
 
     poll({jwtToken: initialJwt, cursor: '', filters}).catch((error) => {

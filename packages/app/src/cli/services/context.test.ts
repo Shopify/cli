@@ -890,6 +890,32 @@ api_version = "2023-04"
     expect(link).toBeCalled()
   })
 
+  describe('when --json is in argv', () => {
+    let originalArgv: string[]
+
+    beforeEach(() => {
+      originalArgv = process.argv
+    })
+
+    // Restore the original process.argv
+    afterEach(() => {
+      process.argv = originalArgv
+    })
+
+    test('Does not display used dev values when using json output', async () => {
+      vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      const options = devOptions()
+      process.argv = ['', '', '--json']
+      await ensureDevContext(options)
+
+      expect(renderInfo).not.toBeCalled()
+    })
+  })
+
   test('links app if no app configs exist & cache has a current config file defined', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
