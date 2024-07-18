@@ -167,7 +167,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   })
 
   const payload = {
-    shopName: options.storeFqdn,
+    shopFqdn: options.storeFqdn,
     appId: options.appId,
     assetsUrl: signedURL,
   }

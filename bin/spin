@@ -3,4 +3,5 @@
 export NODE_TLS_REJECT_UNAUTHORIZED="${NODE_TLS_REJECT_UNAUTHORIZED:=0}"
 export SHOPIFY_SERVICE_ENV="spin"
 export SPIN_INSTANCE="${SPIN_INSTANCE:=$(spin show --output=name)}"
+
 "$@"
