@@ -11,7 +11,7 @@ function projectFactory(name: string, schemaName: string) {
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */',
+                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */',
                 },
               },
             ],
@@ -67,5 +67,6 @@ export default {
   projects: {
     partners: projectFactory('partners', 'cli_schema.graphql'),
     businessPlatform: projectFactory('business-platform', 'destinations_schema.graphql'),
+    appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
   },
 }

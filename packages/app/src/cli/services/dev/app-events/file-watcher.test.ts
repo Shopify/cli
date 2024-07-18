@@ -63,7 +63,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
     fileSystemEvent: 'change',
     path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
     expectedEvent: {
-      type: 'toml_updated',
+      type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
       startTime: expect.any(Array),
@@ -74,9 +74,9 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
     fileSystemEvent: 'change',
     path: '/shopify.app.toml',
     expectedEvent: {
-      type: 'app_config_updated',
+      type: 'extensions_config_updated',
       path: '/shopify.app.toml',
-      extensionPath: 'unknown',
+      extensionPath: '/',
       startTime: expect.any(Array),
     },
   },
@@ -171,6 +171,26 @@ const defaultApp = testApp({
 })
 
 describe('file-watcher events', () => {
+  test('The file watcher is started with the correct paths and options', async () => {
+    // Given
+    const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
+      return {
+        on: (_: string, listener: any) => listener('change', '/shopify.app.toml'),
+        close: () => Promise.resolve(),
+      } as any
+    })
+
+    // When
+    await startFileWatcher(defaultApp, outputOptions, vi.fn())
+
+    // Then
+    expect(watchSpy).toHaveBeenCalledWith(['/shopify.app.toml', '/extensions'], {
+      ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
+      ignoreInitial: true,
+      persistent: true,
+    })
+  })
+
   test.each(singleEventTestCases)(
     'The event $name returns the expected WatcherEvent',
     async ({fileSystemEvent, path, expectedEvent}) => {

@@ -1,0 +1,7 @@
+mutation DevSessionDelete($appId: String!) {
+  devSessionDelete(appId: $appId) {
+    userErrors {
+      message
+    }
+  }
+}

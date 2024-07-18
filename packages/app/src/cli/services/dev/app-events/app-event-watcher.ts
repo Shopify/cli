@@ -1,5 +1,6 @@
 /* eslint-disable tsdoc/syntax */
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
+import {AppExtensionsDiff, appDiff} from './app-diffing.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
@@ -8,6 +9,7 @@ import micromatch from 'micromatch'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {basename} from '@shopify/cli-kit/node/path'
 import EventEmitter from 'events'
 
 /**
@@ -36,12 +38,12 @@ Examples:
       -> The consumer will receive the updated app and the deleted extension(s)
 
 4. A toml file is updated (/extensions/my_extension/extension.toml)
-  -> file-watcher will emit a `toml_updated` event
+  -> file-watcher will emit a `extensions_config_updated` event
     -> app-event-watcher will compare the old and new extensions to determine which were created, deleted or updated
       -> The consumer will receive the updated app and the created, deleted and updated extensions
 
 5. The app.toml is updated
-  -> file-watcher will emit a `app_config_updated` event
+  -> file-watcher will emit a `extensions_config_updated` event
     -> app-event-watcher will compare the old and new config to determine which extensions were created, deleted or updated
       -> The consumer will receive the updated app and the created, deleted and updated extensions
  */
@@ -94,8 +96,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
   file_created: FileChangeHandler,
   file_deleted: FileChangeHandler,
   file_updated: FileChangeHandler,
-  toml_updated: TomlChangeHandler,
-  app_config_updated: AppConfigUpdatedHandler,
+  extensions_config_updated: TomlChangeHandler,
   app_config_deleted: AppConfigDeletedHandler,
 }
 
@@ -145,24 +146,11 @@ export class AppEventWatcher extends EventEmitter {
  * An extension folder can contain multiple extensions, the event will include all of them.
  */
 async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput): Promise<AppEvent> {
-  if (extensions.length === 0) return {app, extensionEvents: [], startTime: event.startTime, path: event.path}
-  const deletedHandles = extensions.map((ext) => ext.handle)
-  app.realExtensions = app.realExtensions.filter((ext) => !deletedHandles.includes(ext.handle))
-  const events = extensions.map((ext) => ({type: EventType.Deleted, extension: ext}))
+  const events = extensions.map((ext) => {
+    app.removeExtension(ext.handle)
+    return {type: EventType.Deleted, extension: ext}
+  })
   return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
-}
-
-/**
- * When an extension folder is created:
- * Reload the app and return the new app and the created extensions in the event.
- */
-async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
-  const oldExtensions = app.realExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensions.includes(ext.handle))
-  const events = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
-  return {app: newApp, extensionEvents: events, startTime: event.startTime, path: event.path}
 }
 
 /**
@@ -182,8 +170,18 @@ async function FileChangeHandler({event, app, extensions}: HandlerInput): Promis
 }
 
 /**
- * When an extension.toml is updated:
- * Return the same app and the updated extension(s) in the event.
+ * When an extension folder is created:
+ * Reload the app and return the new app and the created extensions in the event.
+ */
+async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
+  const newApp = await reloadApp(app, options)
+  const extensionEvents = mapAppDiffToEvents(appDiff(app, newApp, false))
+  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path}
+}
+
+/**
+ * When any config file (toml) is updated, including the app.toml and any extension toml:
+ * Reload the app and find which extensions were created, deleted or updated.
  * Is the responsibility of the consumer of the event to build the extension if necessary
  *
  * Since a toml can contain multiple extensions, this could trigger Create, Delete and Update events.
@@ -191,60 +189,20 @@ async function FileChangeHandler({event, app, extensions}: HandlerInput): Promis
  */
 async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
   const newApp = await reloadApp(app, options)
-  const oldExtensions = app.realExtensions
-  const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions
-  const newExtensionsHandles = newExtensions.map((ext) => ext.handle)
-
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsHandles.includes(ext.handle))
-  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsHandles.includes(ext.handle))
-
-  const updatedExtensions = newExtensions.filter((ext) => {
-    const oldConfig = oldExtensions.find((oldExt) => oldExt.handle === ext.handle)?.configuration
-    const newConfig = ext.configuration
-    if (oldConfig === undefined) return false
-    return JSON.stringify(oldConfig) !== JSON.stringify(newConfig)
-  })
-  const createdEvents = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
-  const deletedEvents = deletedExtensions.map((ext) => ({type: EventType.Deleted, extension: ext}))
-  const updatedEvents = updatedExtensions.map((ext) => ({type: EventType.UpdatedSourceFile, extension: ext}))
-  return {
-    app: newApp,
-    extensionEvents: [...createdEvents, ...deletedEvents, ...updatedEvents],
-    startTime: event.startTime,
-    path: event.path,
-  }
+  const extensionEvents = mapAppDiffToEvents(appDiff(app, newApp))
+  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path}
 }
 
 /**
- * When the app.toml is updated:
- * Reload the app and return the new app and the updated extensions in the event.
- * Compare the old and new extensions (defined in the app tomle) to find the created, deleted and updated extensions.
+ * Map the AppExtensionsDiff to ExtensionEvents
+ * @param appDiff - The diff between the old and new app
+ * @returns An array of ExtensionEvents
  */
-async function AppConfigUpdatedHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
-  const oldExtensions = app.realExtensions.filter((ext) => ext.configurationPath === app.configuration.path)
-  const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
-  const newExtensions = newApp.realExtensions.filter((ext) => ext.configurationPath === app.configuration.path)
-  const newExtensionsHandles = newExtensions.map((ext) => ext.handle)
-
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsHandles.includes(ext.handle))
-  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsHandles.includes(ext.handle))
-  const updatedExtensions = newExtensions.filter((ext) => {
-    const oldConfig = oldExtensions.find((oldExt) => oldExt.handle === ext.handle)?.configuration
-    const newConfig = ext.configuration
-    if (oldConfig === undefined) return false
-    return JSON.stringify(oldConfig) !== JSON.stringify(newConfig)
-  })
-  const createEvents = createdExtensions.map((ext) => ({type: EventType.Created, extension: ext}))
-  const deleteEvents = deletedExtensions.map((ext) => ({type: EventType.Deleted, extension: ext}))
-  const updateEvents = updatedExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
-  return {
-    app: newApp,
-    extensionEvents: [...createEvents, ...deleteEvents, ...updateEvents],
-    startTime: event.startTime,
-    path: event.path,
-  }
+function mapAppDiffToEvents(appDiff: AppExtensionsDiff): ExtensionEvent[] {
+  const createdEvents = appDiff.created.map((ext) => ({type: EventType.Created, extension: ext}))
+  const deletedEvents = appDiff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
+  const updatedEvents = appDiff.updated.map((ext) => ({type: EventType.UpdatedSourceFile, extension: ext}))
+  return [...createdEvents, ...deletedEvents, ...updatedEvents]
 }
 
 /**
@@ -266,7 +224,7 @@ async function reloadApp(app: AppInterface, options: OutputContextOptions): Prom
     const newApp = await loadApp({
       specifications: app.specifications,
       directory: app.directory,
-      userProvidedConfigName: undefined,
+      userProvidedConfigName: basename(app.configuration.path),
       remoteFlags: app.remoteFlags,
     })
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)

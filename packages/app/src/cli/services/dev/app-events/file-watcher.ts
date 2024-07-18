@@ -5,7 +5,7 @@ import {dirname, isSubpath, joinPath, normalizePath} from '@shopify/cli-kit/node
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
@@ -14,8 +14,6 @@ import {Writable} from 'stream'
  *
  * Includes the type of the event, the path of the file that triggered the event and the extension path that contains the file.
  * path and extensionPath could be the same if the event is at the extension level (create, delete extension)
- *
- * extensionPath will be "unknown" for changes in the app config file.
  *
  * @typeParam type - The type of the event
  * @typeParam path - The path of the file that triggered the event
@@ -29,12 +27,11 @@ export interface WatcherEvent {
     | 'file_created'
     | 'file_updated'
     | 'file_deleted'
-    | 'toml_updated'
-    | 'app_config_updated'
+    | 'extensions_config_updated'
     | 'app_config_deleted'
   path: string
   extensionPath: string
-  startTime: [number, number]
+  startTime: StartTime
 }
 
 export interface OutputContextOptions {
@@ -90,7 +87,8 @@ export async function startFileWatcher(
   watcher.on('all', (event, path) => {
     const startTime = startHRTime()
     const isConfigAppPath = path === appConfigurationPath
-    const extensionPath = extensionPaths.find((dir) => isSubpath(dir, path)) ?? 'unknown'
+    const extensionPath =
+      extensionPaths.find((dir) => isSubpath(dir, path)) ?? (isConfigAppPath ? app.directory : 'unknown')
     const isToml = path.endsWith('.toml')
 
     outputDebug(`🌀: ${event} ${path.replace(app.directory, '')}\n`)
@@ -103,10 +101,8 @@ export async function startFileWatcher(
 
     switch (event) {
       case 'change':
-        if (isConfigAppPath) {
-          onChange({type: 'app_config_updated', path, extensionPath, startTime})
-        } else if (isToml) {
-          onChange({type: 'toml_updated', path, extensionPath, startTime})
+        if (isToml) {
+          onChange({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           onChange({type: 'file_updated', path, extensionPath, startTime})
         }
@@ -162,10 +158,10 @@ export async function startFileWatcher(
     }
   })
 
-  listenForAbortOnWatchera(watcher, options)
+  listenForAbortOnWatcher(watcher, options)
 }
 
-const listenForAbortOnWatchera = (watcher: FSWatcher, options: OutputContextOptions) => {
+const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptions) => {
   options.signal.addEventListener('abort', () => {
     outputDebug(`Closing file watcher`, options.stdout)
     watcher

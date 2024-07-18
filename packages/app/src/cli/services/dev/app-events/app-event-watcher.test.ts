@@ -11,6 +11,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {loadApp} from '../../../models/app/loader.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {flushPromises} from '@shopify/cli-kit/node/promises'
 
 vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
@@ -182,26 +183,26 @@ const testCases: TestCase[] = [
     ],
   },
   {
-    name: 'app_config_update with multiple extensions affected',
+    name: 'app config updated with multiple extensions affected',
     fileWatchEvent: {
-      type: 'app_config_updated',
-      path: 'shopify.app.toml',
-      extensionPath: 'unknown',
+      type: 'extensions_config_updated',
+      path: 'shopify.app.custom.toml',
+      extensionPath: '/',
       startTime: [0, 0],
     },
     initialExtensions: [extension1, extension2, posExtension, webhookExtension],
     finalExtensions: [extension1, extension2, posExtensionUpdated, appAccessExtension],
     extensionEvents: [
-      {type: EventType.Updated, extension: posExtensionUpdated},
+      {type: EventType.UpdatedSourceFile, extension: posExtensionUpdated},
       {type: EventType.Deleted, extension: webhookExtension},
       {type: EventType.Created, extension: appAccessExtension},
     ],
     needsAppReload: true,
   },
   {
-    name: 'toml_updated with multiple extensions affected',
+    name: 'extensions_config_updated with multiple extensions affected',
     fileWatchEvent: {
-      type: 'toml_updated',
+      type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
       startTime: [0, 0],
@@ -227,29 +228,40 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       // When
       const app = testApp({
         allExtensions: initialExtensions,
-        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.toml'},
+        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
       })
       const watcher = new AppEventWatcher(app, outputOptions)
       const emitSpy = vi.spyOn(watcher, 'emit')
       await watcher.start()
 
-      // Then
-      setTimeout(() => {
-        expect(emitSpy).toHaveBeenCalledWith([
-          'all',
-          {
-            app: expect.objectContaining({realExtensions: finalExtensions}),
-            extensionEvents: expect.arrayContaining(extensionEvents),
-            startTime: expect.anything(),
-          },
-        ])
+      await flushPromises()
 
-        if (needsAppReload) {
-          expect(loadApp).toHaveBeenCalled()
-        } else {
-          expect(loadApp).not.toHaveBeenCalled()
-        }
-      }, 50)
+      expect(emitSpy).toHaveBeenCalledWith('all', {
+        app: expect.objectContaining({realExtensions: finalExtensions}),
+        extensionEvents: expect.arrayContaining(extensionEvents),
+        startTime: expect.anything(),
+        path: expect.anything(),
+      })
+
+      if (needsAppReload) {
+        expect(loadApp).toHaveBeenCalledWith({
+          specifications: expect.anything(),
+          directory: expect.anything(),
+          // The app is loaded with the same configuration file
+          userProvidedConfigName: 'shopify.app.custom.toml',
+          remoteFlags: expect.anything(),
+        })
+      } else {
+        expect(loadApp).not.toHaveBeenCalled()
+      }
     },
   )
 })
+
+async function waitForEvent(watcher: AppEventWatcher) {
+  return new Promise((resolve) => {
+    watcher.onEvent((event) => {
+      resolve(event)
+    })
+  })
+}
