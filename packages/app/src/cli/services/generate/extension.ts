@@ -1,4 +1,4 @@
-import {versions} from '../../constants.js'
+import {configurationFileNames, versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
@@ -110,6 +110,8 @@ async function extensionInit(options: ExtensionInitOptions) {
         await uiExtensionInit(options)
         break
     }
+    const lockFilePath = joinPath(options.directory, configurationFileNames.lockFile)
+    await removeFile(lockFilePath)
   } catch (error) {
     await removeFile(options.directory)
     throw error

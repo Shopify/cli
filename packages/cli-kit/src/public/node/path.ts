@@ -119,6 +119,18 @@ export function relativizePath(path: string, dir: string = cwd()): string {
 }
 
 /**
+ * Given 2 paths, it returns whether the second path is a subpath of the first path.
+ *
+ * @param mainPath - The main path.
+ * @param subpath - The subpath.
+ * @returns Whether the subpath is a subpath of the main path.
+ */
+export function isSubpath(mainPath: string, subpath: string): boolean {
+  const relativePath = relative(mainPath, subpath)
+  return !relativePath.startsWith('..') && !isAbsolutePath(relativePath)
+}
+
+/**
  * Given a module's import.meta.url it returns the directory containing the module.
  *
  * @param moduleURL - The value of import.meta.url in the context of the caller module.

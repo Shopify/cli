@@ -21,6 +21,7 @@ import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as cliKitFS from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
@@ -283,11 +284,6 @@ describe('setupExtensionWatcher', () => {
       onChange: vi.fn(),
       onReloadAndBuildError: vi.fn(),
     }
-  }
-
-  // Needed to test chokidar event handlers, which do not support async
-  function flushPromises() {
-    return new Promise((resolve) => setImmediate(resolve))
   }
 
   test('warns and does not watch if there are no watch paths', async () => {

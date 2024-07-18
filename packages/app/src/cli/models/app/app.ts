@@ -34,7 +34,7 @@ export const LegacyAppSchema = zod
       .string()
       .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
       .default(''),
-    extension_directories: zod.array(zod.string()).optional(),
+    extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
     web_directories: zod.array(zod.string()).optional(),
     webhooks: zod
       .object({
@@ -45,6 +45,10 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
+function removeTrailingPathSeparator(value: string[] | undefined) {
+  // eslint-disable-next-line no-useless-escape
+  return value?.map((dir) => dir.replace(/[\/\\]+$/, ''))
+}
 /**
  * Schema for a normal, linked app. Properties from modules are not validated.
  */
@@ -58,7 +62,7 @@ export const AppSchema = zod.object({
       include_config_on_deploy: zod.boolean().optional(),
     })
     .optional(),
-  extension_directories: zod.array(zod.string()).optional(),
+  extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
   web_directories: zod.array(zod.string()).optional(),
 })
 
@@ -253,6 +257,7 @@ export interface AppInterface<
    */
   creationDefaultOptions(): AppCreationDefaultOptions
   manifest: () => Promise<JsonMapType>
+  removeExtension: (extensionHandle: string) => void
 }
 
 type AppConstructor<
@@ -414,6 +419,10 @@ export class App<
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
     }
+  }
+
+  removeExtension(extensionHandle: string) {
+    this.realExtensions = this.realExtensions.filter((ext) => ext.handle !== extensionHandle)
   }
 
   get includeConfigOnDeploy() {
