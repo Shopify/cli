@@ -11,6 +11,7 @@ import {
   AppVersionIdentifiers,
   DeveloperPlatformClient,
   Paginateable,
+  DevSessionOptions,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
@@ -490,5 +491,20 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appDeepLink({id, organizationId}: MinimalAppIdentifiers): Promise<string> {
     return `https://${await partnersFqdn()}/${organizationId}/apps/${id}`
+  }
+
+  async devSessionCreate(_input: DevSessionOptions): Promise<never> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
+  }
+
+  async devSessionUpdate(_input: DevSessionOptions): Promise<never> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
+  }
+
+  async devSessionDelete(_input: unknown): Promise<never> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
   }
 }

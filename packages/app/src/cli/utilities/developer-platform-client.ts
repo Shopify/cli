@@ -52,6 +52,9 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../api/graphql/partners/generated/update-draft.js'
+import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
+import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
+import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -163,6 +166,12 @@ export type AppDeployOptions = AppDeployVariables & {
   name: string
 }
 
+export interface DevSessionOptions {
+  shopFqdn: string
+  appId: string
+  assetsUrl: string
+}
+
 type WithUserErrors<T> = T & {
   userErrors: {
     field: string[]
@@ -221,4 +230,7 @@ export interface DeveloperPlatformClient {
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
+  devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
+  devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
+  devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
 }
