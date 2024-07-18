@@ -16,19 +16,19 @@ const limiter = new Bottleneck({
  * Uses typed documents.
  *
  * @param query - GraphQL query to execute.
- * @param shopName - The shop name.
+ * @param shopFqdn - The shop fqdn.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
 export async function appDevRequest<TResult, TVariables extends Variables>(
   query: TypedDocumentNode<TResult, TVariables>,
-  shopName: string,
+  shopFqdn: string,
   token: string,
   variables?: TVariables,
 ): Promise<TResult> {
   const api = 'App Dev'
-  const url = `https://${shopName}/app_dev/unstable/graphql.json`
+  const url = `https://${shopFqdn}/app_dev/unstable/graphql.json`
   const result = limiter.schedule<TResult>(() =>
     graphqlRequestDoc<TResult, TVariables>({
       query,
