@@ -47,13 +47,14 @@ import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphq
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
-import {DevSessionCreateSchema} from '../api/graphql/dev_session_create.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../api/graphql/partners/generated/update-draft.js'
-import {DevSessionUpdateSchema} from '../api/graphql/dev_session_update.js'
+import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
+import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
+import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -210,8 +211,6 @@ export interface DeveloperPlatformClient {
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
-  devSessionCreate: (input: DevSessionDeployOptions) => Promise<DevSessionCreateSchema>
-  devSessionUpdate: (input: DevSessionDeployOptions) => Promise<DevSessionUpdateSchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,
@@ -231,4 +230,7 @@ export interface DeveloperPlatformClient {
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
+  devSessionCreate: (input: DevSessionDeployOptions) => Promise<DevSessionCreateMutation>
+  devSessionUpdate: (input: DevSessionDeployOptions) => Promise<DevSessionUpdateMutation>
+  devSessionDelete: (input: {appId: string; shopName: string}) => Promise<DevSessionDeleteMutation>
 }

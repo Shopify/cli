@@ -44,9 +44,9 @@ import {
   Paginateable,
   ActiveAppVersion,
   AppDeployOptions,
-  DevSessionDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
+  DevSessionDeployOptions,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -95,11 +95,6 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {
-  DevSessionCreate,
-  DevSessionCreateSchema,
-  DevSessionCreateVariables,
-} from '../../api/graphql/dev_session_create.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {
   ExtensionUpdateDraftMutation,
@@ -111,18 +106,16 @@ import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
-import {
-  DevSessionUpdate,
-  DevSessionUpdateSchema,
-  DevSessionUpdateVariables,
-} from '../../api/graphql/dev_session_update.js'
+import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
+import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
+import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
-import {devSessionRequest} from '@shopify/cli-kit/node/api/dev-session'
+import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -665,18 +658,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return versionResult
   }
 
-  async devSessionCreate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionCreateSchema> {
-    const query = DevSessionCreate
-    const variables: DevSessionCreateVariables = {appId: String(numberFromGid(appId)), assetsUrl}
-    return devSessionRequest<DevSessionCreateSchema>(shopName, query, await this.token(), variables)
-  }
-
-  async devSessionUpdate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionUpdateSchema> {
-    const query = DevSessionUpdate
-    const variables: DevSessionUpdateVariables = {appId: String(numberFromGid(appId)), assetsUrl}
-    return devSessionRequest<DevSessionUpdateSchema>(shopName, query, await this.token(), variables)
-  }
-
   async release({
     app: {id: appId, organizationId},
     version: {versionId},
@@ -792,6 +773,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appDeepLink({id, organizationId}: MinimalAppIdentifiers): Promise<string> {
     return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+  }
+
+  async devSessionCreate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionCreateMutation> {
+    const appIdNumber = String(numberFromGid(appId))
+    return appDevRequest(DevSessionCreate, shopName, await this.token(), {appId: appIdNumber, assetsUrl})
+  }
+
+  async devSessionUpdate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionUpdateMutation> {
+    const appIdNumber = String(numberFromGid(appId))
+    return appDevRequest(DevSessionUpdate, shopName, await this.token(), {appId: appIdNumber, assetsUrl})
+  }
+
+  async devSessionDelete({appId, shopName}: {appId: string; shopName: string}): Promise<DevSessionDeleteMutation> {
+    const appIdNumber = String(numberFromGid(appId))
+    return appDevRequest(DevSessionDelete, shopName, await this.token(), {appId: appIdNumber})
   }
 
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {

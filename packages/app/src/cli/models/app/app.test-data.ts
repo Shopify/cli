@@ -26,6 +26,7 @@ import {
   CreateAppOptions,
   DevSessionDeployOptions,
   DeveloperPlatformClient,
+  DevSessionDeployOptions,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -1247,6 +1248,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionUpdate: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
+    devSessionCreate: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
+    devSessionUpdate: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
+    devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub

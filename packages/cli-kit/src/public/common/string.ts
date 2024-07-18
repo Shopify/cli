@@ -395,3 +395,15 @@ export function normalizeDelimitedString(delimitedString?: string, delimiter = '
 
   return uniqueSortedItems.join(delimiter)
 }
+
+/**
+ * Given a string, it returns it with the first letter in lowercase.
+ *
+ * @param str - String to lowercase.
+ * @param char
+ * @param chars
+ * @returns String with the first letter in lowercase.
+ */
+export function removeTrailingCharacters(str: string, chars: string[]): string {
+  return str.replace(new RegExp(`${escapeRegExp(char)}+$`), '')
+}
