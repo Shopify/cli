@@ -46,7 +46,7 @@ import {
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
-  DevSessionDeployOptions,
+  DevSessionOptions,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -775,19 +775,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
   }
 
-  async devSessionCreate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionCreateMutation> {
+  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopName, await this.token(), {appId: appIdNumber, assetsUrl})
+    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
-  async devSessionUpdate({appId, assetsUrl, shopName}: DevSessionDeployOptions): Promise<DevSessionUpdateMutation> {
+  async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopName, await this.token(), {appId: appIdNumber, assetsUrl})
+    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
-  async devSessionDelete({appId, shopName}: {appId: string; shopName: string}): Promise<DevSessionDeleteMutation> {
+  async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionDelete, shopName, await this.token(), {appId: appIdNumber})
+    return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
 
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {

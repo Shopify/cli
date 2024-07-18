@@ -166,8 +166,8 @@ export type AppDeployOptions = AppDeployVariables & {
   name: string
 }
 
-export interface DevSessionDeployOptions {
-  shopName: string
+export interface DevSessionOptions {
+  shopFqdn: string
   appId: string
   assetsUrl: string
 }
@@ -230,7 +230,7 @@ export interface DeveloperPlatformClient {
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
-  devSessionCreate: (input: DevSessionDeployOptions) => Promise<DevSessionCreateMutation>
-  devSessionUpdate: (input: DevSessionDeployOptions) => Promise<DevSessionUpdateMutation>
-  devSessionDelete: (input: {appId: string; shopName: string}) => Promise<DevSessionDeleteMutation>
+  devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
+  devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
+  devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
 }
