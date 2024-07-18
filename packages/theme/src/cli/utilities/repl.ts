@@ -1,6 +1,6 @@
-import {render} from './theme-environment/storefront-renderer.js'
 import {DevServerSession} from './theme-environment/types.js'
 import {presentValue} from './repl/presenter.js'
+import {evaluate} from './repl/evaluater.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {consoleWarn, consoleError, outputDebug} from '@shopify/cli-kit/node/output'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -36,37 +36,4 @@ function shutdownReplSession(error: unknown) {
 
 function hasDelimiter(input: string): boolean {
   return /\{\{|\}\}|\{%|%\}/.test(input)
-}
-
-async function evaluate(
-  themeSession: DevServerSession,
-  snippet: string,
-  themeId: string,
-  url: string,
-): Promise<string | undefined> {
-  const result = await evaluateResult(themeSession, themeId, snippet, url)
-
-  const regex = />([^<]+)</
-  const match = result.match(regex)
-
-  if (match && match[1]) {
-    return JSON.parse(match[1])
-  }
-}
-
-async function evaluateResult(themeSession: DevServerSession, themeId: string, snippet: string, url: string) {
-  outputDebug(`Evaluating snippet - ${snippet}`)
-  const response = await render(themeSession, {
-    path: url,
-    query: [],
-    themeId,
-    cookies: '',
-    sectionId: 'announcement-bar',
-    headers: {},
-    replaceTemplates: {
-      'sections/announcement-bar.liquid': `{{ ${snippet} | json }}`,
-    },
-  })
-
-  return response.text()
 }
