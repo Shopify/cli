@@ -35,7 +35,7 @@ export interface CreateAppVersionMutationVariables {
   name?: string
   appSource: {
     assetsUrl?: string
-    modules: {
+    appModules: {
       uid: string
       specificationIdentifier?: string
       config: JsonMapType

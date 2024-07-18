@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any  */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax  */
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
@@ -14,19 +14,19 @@ export type Scalars = {
   Int: {input: number; output: number}
   Float: {input: number; output: number}
   /**
-   * An [ISO-8601](https://en.wikipedia.org/wiki/ISO_8601) encoded UTC date time
-   * string. Example value: `"2019-07-03T20:47:55.123456Z"`.
+   * A [JSON](https://www.json.org/json-en.html) object.
+   *
+   * Example value:
+   * `{
+   *   "product": {
+   *     "id": "gid://shopify/Product/1346443542550",
+   *     "title": "White T-shirt",
+   *     "options": [{
+   *       "name": "Size",
+   *       "values": ["M", "L"]
+   *     }]
+   *   }
+   * }`
    */
-  DateTime: {input: any; output: any}
-  /**
-   * Deprecated: Supported extension types.
-   *         This used to include a list of extension types, we mantain it to keep compatibility with the old schema
-   */
-  ExtensionType: {input: any; output: any}
-  /** Represents untyped JSON */
   JSON: {input: any; output: any}
-  /** A valid URL, transported as a string. */
-  Url: {input: any; output: any}
-  /** A valid webhook subscription endpoint string. */
-  WebhookSubscriptionEndpoint: {input: any; output: any}
 }
