@@ -1244,8 +1244,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
-    devSessionCreate: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
-    devSessionUpdate: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     devSessionCreate: (_input: DevSessionDeployOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),

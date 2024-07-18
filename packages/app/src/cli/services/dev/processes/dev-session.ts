@@ -4,7 +4,6 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
-import {DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
 import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {mkdir, readFileSync, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -173,7 +172,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   }
 
   // options.stdout.write('Creating/Updating dev session...')
-  let errors: DevSessionCreateSchema['devSessionCreate']['userErrors']
+  let errors: {message: string}[] | undefined
   if (updating) {
     const result = await options.developerPlatformClient.devSessionUpdate(payload)
     errors = result.devSessionUpdate?.userErrors
@@ -182,7 +181,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     errors = result.devSessionCreate?.userErrors
   }
 
-  if (errors.length > 0) {
+  if (errors && errors.length > 0) {
     options.stderr.write('Dev Session Error')
     options.stderr.write(JSON.stringify(errors, null, 2))
   }
