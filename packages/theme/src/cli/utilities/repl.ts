@@ -11,12 +11,7 @@ import {
 } from '@shopify/cli-kit/node/output'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
-interface ErrorOutput {
-  error?: string
-}
-
-// todo - combine config into a single arg
-export async function replLoop(themeSession: DevServerSession, storefrontToken: string, themeId: string, url: string) {
+export async function replLoop(themeSession: DevServerSession, themeId: string, url: string) {
   try {
     const inputValue = await renderTextPrompt({message: 'Enter a value'})
     if (hasDelimiter(inputValue)) {
@@ -26,7 +21,7 @@ export async function replLoop(themeSession: DevServerSession, storefrontToken: 
     }
     const evaluatedValue = await evaluate(themeSession, inputValue, themeId, url)
     presentEvaluatedValue(evaluatedValue)
-    return replLoop(themeSession, storefrontToken, themeId, url)
+    return replLoop(themeSession, themeId, url)
   } catch (error) {
     shutdownReplSession(error)
     throw new AbortSilentError()
@@ -73,7 +68,7 @@ function hasJsonError(output: unknown): boolean {
       if (Array.isArray(output)) {
         return hasJsonError(output[0])
       } else if (output !== null) {
-        const errorOutput = output as ErrorOutput
+        const errorOutput = output as {error?: string}
         return errorOutput.error?.includes('json not allowed for this object') ?? false
       }
       return false
@@ -82,7 +77,7 @@ function hasJsonError(output: unknown): boolean {
   }
 }
 
-export async function evaluate(
+async function evaluate(
   themeSession: DevServerSession,
   snippet: string,
   themeId: string,
