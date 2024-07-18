@@ -1,3 +1,4 @@
+import {functionRunnerBinary, installBinary, javyBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -5,99 +6,14 @@ import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
-import {
-  chmod,
-  createFileWriteStream,
-  fileExists,
-  findPathUp,
-  inTemporaryDirectory,
-  mkdir,
-  writeFile,
-} from '@shopify/cli-kit/node/fs'
+import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
-import {PipelineSource, Writable} from 'stream'
-import stream from 'stream/promises'
-import fs from 'fs'
-import * as gzip from 'zlib'
-import {fileURLToPath} from 'url'
-
-const JAVY_VERSION = 'v3.0.1'
-const FUNCTION_RUNNER_VERSION = 'v5.1.3'
-
-// The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
-// Javy and function-runner for now. Those methods may not continue to have the same logic in the future. If they
-// diverge, make `Binary` an abstract class and create subclasses to handle the different logic polymorphically.
-class DownloadableBinary {
-  readonly name: string
-  readonly version: string
-  readonly path: string
-  private readonly gitHubRepo: string
-
-  constructor(name: string, version: string, gitHubRepo: string) {
-    this.name = name
-    this.version = version
-    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'bin', `${this.name}`)
-    this.gitHubRepo = gitHubRepo
-  }
-
-  downloadUrl(processPlatform: string, processArch: string) {
-    let platform
-    let arch
-    switch (processPlatform.toLowerCase()) {
-      case 'darwin':
-        platform = 'macos'
-        break
-      case 'linux':
-        platform = 'linux'
-        break
-      case 'win32':
-        platform = 'windows'
-        break
-      default:
-        throw Error(`Unsupported platform ${processPlatform}`)
-    }
-    switch (processArch.toLowerCase()) {
-      case 'arm':
-      case 'arm64':
-        arch = 'arm'
-        break
-      // A 32 bit arch likely needs that someone has 32bit Node installed on a
-      // 64 bit system, and wasmtime doesn't support 32bit anyway.
-      case 'ia32':
-      case 'x64':
-        arch = 'x86_64'
-        break
-      default:
-        throw Error(`Unsupported architecture ${processArch}`)
-    }
-
-    const archPlatform = `${arch}-${platform}`
-    // These are currently the same between both binaries _coincidentally_.
-    const supportedTargets = ['arm-linux', 'arm-macos', 'x86_64-macos', 'x86_64-windows', 'x86_64-linux']
-    if (!supportedTargets.includes(archPlatform)) {
-      throw Error(`Unsupported platform/architecture combination ${processPlatform}/${processArch}`)
-    }
-
-    return `https://github.com/${this.gitHubRepo}/releases/download/${this.version}/${this.name}-${archPlatform}-${this.version}.gz`
-  }
-
-  async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
-    const gunzip = gzip.createGunzip()
-    await stream.pipeline(responseStream, gunzip, outputStream)
-  }
-}
-
-export const javy = new DownloadableBinary('javy', JAVY_VERSION, 'bytecodealliance/javy')
-export const functionRunner = new DownloadableBinary(
-  'function-runner',
-  FUNCTION_RUNNER_VERSION,
-  'Shopify/function-runner',
-)
+import {Writable} from 'stream'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
@@ -252,7 +168,7 @@ export async function runJavy(
 ) {
   const args = ['compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
 
-  return exec(javy.path, args, {
+  return exec(javyBinary().path, args, {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
@@ -263,6 +179,7 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
+    const javy = javyBinary()
     await installBinary(javy)
   }
 }
@@ -274,6 +191,7 @@ interface FunctionRunnerOptions {
 }
 
 export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigType>, options: FunctionRunnerOptions) {
+  const functionRunner = functionRunnerBinary()
   await installBinary(functionRunner)
 
   const outputAsJson = options.json ? ['--json'] : []
@@ -401,28 +319,4 @@ JavaScript exports with camelCase names are automatically mapped to kebab-case W
   }
 
   return withExport.map((target) => target.export!)
-}
-
-async function installBinary(bin: DownloadableBinary) {
-  const isInstalled = await fileExists(bin.path)
-  if (isInstalled) {
-    return
-  }
-
-  const url = bin.downloadUrl(process.platform, process.arch)
-  outputDebug(`Downloading ${bin.name} ${bin.version} from ${url} to ${bin.path}`)
-  await mkdir(dirname(bin.path))
-  const resp = await fetch(url)
-  if (resp.status !== 200) {
-    throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
-  }
-
-  const responseStream = resp.body
-  if (responseStream === null) {
-    throw new Error(`Downloading ${bin.name} failed with empty response body`)
-  }
-
-  const outputStream = createFileWriteStream(bin.path)
-  await bin.processResponse(responseStream, outputStream)
-  await chmod(bin.path, 0o775)
 }
