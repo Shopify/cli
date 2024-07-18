@@ -12,6 +12,7 @@ import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 interface MigrationChoice {
   label: string
@@ -20,7 +21,7 @@ interface MigrationChoice {
   buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
 }
 
-const migrationChoices: MigrationChoice[] = [
+const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
   {
     label: 'Payments Extensions',
     value: 'payments',
@@ -40,12 +41,16 @@ const migrationChoices: MigrationChoice[] = [
     extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
     buildTomlObject: buildFlowTomlObject,
   },
-  {
-    label: 'Marketing Activity Extensions',
-    value: 'marketing activity',
-    extensionTypes: ['marketing_activity_extension'],
-    buildTomlObject: buildMarketingActivityTomlObject,
-  },
+  ...(isShopifolk
+    ? [
+        {
+          label: 'Marketing Activity Extensions',
+          value: 'marketing activity',
+          extensionTypes: ['marketing_activity_extension'],
+          buildTomlObject: buildMarketingActivityTomlObject,
+        },
+      ]
+    : []),
 ]
 
 export default class ImportExtensions extends Command {
@@ -70,7 +75,8 @@ export default class ImportExtensions extends Command {
       directory: flags.path,
       userProvidedConfigName: flags.config,
     })
-
+    const isShopifolk = await isShopify()
+    const migrationChoices = getMigrationChoices(isShopifolk)
     const choices = migrationChoices.map((choice) => {
       return {label: choice.label, value: choice.value}
     })
