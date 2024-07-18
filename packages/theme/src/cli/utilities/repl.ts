@@ -1,14 +1,8 @@
 import {render} from './theme-environment/storefront-renderer.js'
 import {DevServerSession} from './theme-environment/types.js'
+import {presentValue} from './repl/presenter.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {
-  consoleWarn,
-  consoleError,
-  outputDebug,
-  outputToken,
-  outputContent,
-  outputInfo,
-} from '@shopify/cli-kit/node/output'
+import {consoleWarn, consoleError, outputDebug} from '@shopify/cli-kit/node/output'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function replLoop(themeSession: DevServerSession, themeId: string, url: string) {
@@ -18,35 +12,17 @@ export async function replLoop(themeSession: DevServerSession, themeId: string, 
       consoleWarn(
         "Liquid Console doesn't support Liquid delimiters such as '{{ ... }}' or '{% ... %}'.\nPlease use 'collections.first' instead of '{{ collections.first }}'.",
       )
+      return replLoop(themeSession, themeId, url)
     }
+
     const evaluatedValue = await evaluate(themeSession, inputValue, themeId, url)
-    presentEvaluatedValue(evaluatedValue)
+    presentValue(evaluatedValue)
+
     return replLoop(themeSession, themeId, url)
   } catch (error) {
     shutdownReplSession(error)
     throw new AbortSilentError()
   }
-}
-
-function presentEvaluatedValue(evaluatedValue?: unknown) {
-  if (hasJsonError(evaluatedValue)) {
-    consoleWarn(
-      "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid.",
-    )
-    return
-  }
-
-  if (evaluatedValue === undefined || evaluatedValue === null) {
-    presentValue('null')
-    return
-  }
-
-  const formattedOutput = JSON.stringify(evaluatedValue, null, 2)
-  presentValue(formattedOutput)
-}
-
-function presentValue(value: string) {
-  return outputInfo(outputContent`${outputToken.cyan(value)}`)
 }
 
 function shutdownReplSession(error: unknown) {
@@ -60,21 +36,6 @@ function shutdownReplSession(error: unknown) {
 
 function hasDelimiter(input: string): boolean {
   return /\{\{|\}\}|\{%|%\}/.test(input)
-}
-
-function hasJsonError(output: unknown): boolean {
-  switch (typeof output) {
-    case 'object':
-      if (Array.isArray(output)) {
-        return hasJsonError(output[0])
-      } else if (output !== null) {
-        const errorOutput = output as {error?: string}
-        return errorOutput.error?.includes('json not allowed for this object') ?? false
-      }
-      return false
-    default:
-      return false
-  }
 }
 
 async function evaluate(
