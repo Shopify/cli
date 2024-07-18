@@ -11,7 +11,7 @@ function projectFactory(name: string, schemaName: string) {
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any */',
+                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */',
                 },
               },
             ],

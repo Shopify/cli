@@ -27,6 +27,11 @@ export async function startAnalytics({
     startCommand = (commandClass as typeof BaseCommand).analyticsNameOverride() ?? commandContent.command
   }
 
+  let pluginName = commandClass?.plugin?.name
+  if (commandClass && 'customPluginName' in commandClass) {
+    pluginName = commandClass.customPluginName as string
+  }
+
   await metadata.addSensitiveMetadata(() => ({
     commandStartOptions: {
       startTime: currentTime,
@@ -39,7 +44,7 @@ export async function startAnalytics({
     cmd_all_launcher: packageManagerFromUserAgent(),
     cmd_all_alias_used: commandContent.alias,
     cmd_all_topic: commandContent.topic,
-    cmd_all_plugin: commandClass?.plugin?.name,
+    cmd_all_plugin: pluginName,
     cmd_all_force: flagIncluded('force', commandClass) ? args.includes('--force') : undefined,
   }))
 }
