@@ -930,8 +930,7 @@ export async function enableDeveloperPreview({
   apiKey: string
   developerPlatformClient: DeveloperPlatformClient
 }) {
-  return true
-  // return developerPreviewUpdate({apiKey, developerPlatformClient, enabled: true})
+  return developerPreviewUpdate({apiKey, developerPlatformClient, enabled: true})
 }
 
 export async function disableDeveloperPreview({

@@ -80,7 +80,7 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
-    // await developerPreview.disable()
+    await developerPreview.disable()
   })
 
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
