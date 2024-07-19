@@ -36,6 +36,9 @@ describe('ui_extension', async () => {
           customer_privacy: true,
           sms_marketing: false,
         },
+        iframe: {
+          sources: [],
+        },
       },
       settings: {},
     }
@@ -97,6 +100,9 @@ describe('ui_extension', async () => {
             customer_privacy: true,
             sms_marketing: false,
           },
+          iframe: {
+            sources: [],
+          },
         },
         settings: {},
       }
@@ -143,6 +149,9 @@ describe('ui_extension', async () => {
             customer_privacy: true,
             sms_marketing: false,
           },
+          iframe: {
+            sources: [],
+          },
         },
         settings: {},
       }
@@ -183,6 +192,9 @@ describe('ui_extension', async () => {
           collect_buyer_consent: {
             customer_privacy: true,
             sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
           },
         },
         settings: {},
@@ -299,6 +311,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             ...uiExtension.configuration.capabilities,
             collect_buyer_consent: {
               ...uiExtension.configuration.capabilities.collect_buyer_consent,
+            },
+            iframe: {
+              ...uiExtension.configuration.capabilities.iframe,
             },
           },
           name: uiExtension.configuration.name,
