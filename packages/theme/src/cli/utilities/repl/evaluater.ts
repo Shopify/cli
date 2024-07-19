@@ -14,6 +14,7 @@ export async function evaluate(
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputInfo(outputContent`${outputToken.errorText(error.message)}`)
+    outputDebug(error.stack || 'Error backtrace not found')
   }
 }
 

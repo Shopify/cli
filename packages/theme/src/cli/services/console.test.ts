@@ -54,7 +54,7 @@ describe('ensureReplEnv', () => {
     expect(storePassword).toBeUndefined()
   })
 
-  test('shoul return undefined for storePassword when password is provided but storefront is not password protected', async () => {
+  test('should return undefined for storePassword when password is provided but storefront is not password protected', async () => {
     // Given
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
     vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
