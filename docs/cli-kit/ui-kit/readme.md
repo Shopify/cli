@@ -193,15 +193,15 @@ Very similar to `renderSelectPrompt` with the difference that you can provide a 
 
 Shows a text field and waits for the user to input something and press `Enter` to submit.
 
-This requires a `message` to display a prompt for user input. If `skipPromptMessage` is `true`, the prompt will not be displayed.
-
 Unless `allowEmpty` is set to `true` the user will see a validation error if they attempt to press `Enter` without having typed anything. If `allowEmpty` is `true` then an empty string will be returned in case they immediately press `Enter`. This can be useful for optional fields.
 
 `defaultValue` can be used to show a default value with a dimmed text style. The user can either press `Enter` immediately if they wish to submit the default value or start typing in order to override it.
 
 The validation logic can also be customized by passing the `validate` function which has to return either a `string` in case of error or `undefined` in case validation passes.
 
-Finally, if you want to mask the user input with asterisks you can set the `password` param to `true`. This can be useful for sensitive inputs that the user might not want to reveal while typing.
+If you want to mask the user input with asterisks you can set the `password` param to `true`. This can be useful for sensitive inputs that the user might not want to reveal while typing.
+
+Finally, the `minimal` flag can be used to render a text input without the underline and prompt message.
 
 ### Async tasks
 

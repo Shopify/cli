@@ -255,12 +255,11 @@ describe('TextPrompt', () => {
     `)
   })
 
-  test('skip the prompt message when provided', async () => {
-    const {lastFrame} = render(<TextPrompt message="this will get skipped" onSubmit={() => {}} skipPromptMessage />)
+  test('render without text prompt or underline when minimal prop is provided', async () => {
+    const {lastFrame} = render(<TextPrompt message="this will get skipped" onSubmit={() => {}} minimal />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       ">  █
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
       `)
   })
