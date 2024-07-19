@@ -206,13 +206,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {app} = await this.fetchApp(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
+    const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       id: app.id,
       title: name,
       apiKey: app.id,
       _temporaryApiKey: app.key,
       organizationId: appIdentifiers.organizationId,
-      apiSecretKeys: [],
+      apiSecretKeys,
       grantedScopes: (appAccessModule?.config?.scopes as string[] | undefined) ?? [],
       flags: [],
       developerPlatformClient: this,
@@ -721,7 +722,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       sendSampleWebhook: {
         samplePayload: '',
-        headers: '',
+        headers: '{}',
         success: true,
         userErrors: [],
       },

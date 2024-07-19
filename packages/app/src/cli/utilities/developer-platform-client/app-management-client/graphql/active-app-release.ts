@@ -6,6 +6,13 @@ export const ActiveAppReleaseQuery = gql`
     app(id: $appId) {
       id
       key
+      activeRoot {
+        clientCredentials {
+          secrets {
+            key
+          }
+        }
+      }
       activeRelease {
         id
         version {
@@ -47,6 +54,13 @@ export interface ActiveAppReleaseQuerySchema {
   app: {
     id: string
     key: string
+    activeRoot: {
+      clientCredentials: {
+        secrets: {
+          key: string
+        }[]
+      }
+    }
     activeRelease: {
       id: string
       version: {

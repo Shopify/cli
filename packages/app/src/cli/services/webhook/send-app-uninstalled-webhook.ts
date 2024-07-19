@@ -30,8 +30,7 @@ export async function sendUninstallWebhookToAppServer(
   options.stdout.write('Sending APP_UNINSTALLED webhook to app server')
 
   await sleep(3)
-  // const result = await triggerWebhook(options, sample)
-  const result = true
+  const result = await triggerWebhook(options, sample)
   options.stdout.write(result ? 'APP_UNINSTALLED webhook delivered' : 'APP_UNINSTALLED webhook delivery failed')
 
   return result
