@@ -4,6 +4,7 @@ import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 interface BaseField {
+  id: string
   ui_type: string
   name: string
   label: string
@@ -39,6 +40,13 @@ type ProductPickerField = BaseField & {
   max_resources: number | null
   min_image_select_per_product: number | null
   max_image_select_per_product: number | null
+}
+
+type SingleLineTextField = BaseField & {
+  ui_type: 'text-single-line'
+  placeholder: string
+  min_length: number
+  max_length: number
 }
 
 type TextMultiLineField = BaseField & {
@@ -84,6 +92,7 @@ type Field =
   | DiscountPickerField
   | ScheduleField
   | ProductPickerField
+  | SingleLineTextField
   | TextMultiLineField
   | SelectSingleField
   | ParagraphField
@@ -91,23 +100,49 @@ type Field =
   | NumberField
   | ImagePickerField
 
-interface MarketingActivityDashboardConfig {
+export interface MarketingActivityDashboardConfig {
   title: string
   description: string
   app_api_url: string
   tactic: string
-  platform?: string
-  ad_format?: string
+  platform: string
   is_automation: boolean
-  is_automation_step?: boolean
   use_external_editor?: boolean
-  enable_pricing_confirmation?: boolean
-  pricing_information?: string
   preview_data: {
     label: string
     value: string
   }[]
   fields: Field[]
+}
+
+const PLATFORM_CHANNEL_MAP: {[key: string]: string} = {
+  facebook: 'social',
+  instagram: 'social',
+  google: 'search',
+  pinterest: 'social',
+  bing: 'search',
+  email: 'email',
+  snapchat: 'social',
+  sms: 'sms',
+  verizon_media: 'display',
+  ebay: 'marketplace',
+  tiktok: 'social',
+  flow: 'email',
+}
+
+const PLATFORM_DOMAIN_MAP: {[key: string]: string | null} = {
+  facebook: 'facebook.com',
+  instagram: 'instagram.com',
+  google: 'google.com',
+  pinterest: 'pinterest.com',
+  bing: 'bing.com',
+  snapchat: 'snapchat.com',
+  verizon_media: null,
+  email: null,
+  sms: null,
+  ebay: 'ebay.com',
+  tiktok: 'tiktok.com',
+  flow: null,
 }
 
 /**
@@ -128,13 +163,10 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
         description: config.description,
         app_api_url: config.app_api_url,
         tactic: config.tactic,
-        platform: config.platform,
-        ad_format: config.ad_format,
+        channel: PLATFORM_CHANNEL_MAP[config.platform] ?? '',
+        referring_domain: PLATFORM_DOMAIN_MAP[config.platform] ?? '',
         is_automation: config.is_automation,
-        is_automation_step: config.is_automation_step,
         use_external_editor: config.use_external_editor,
-        enable_pricing_confirmation: config.enable_pricing_confirmation,
-        pricing_information: config.pricing_information,
         preview_data: config.preview_data,
         fields: config.fields,
       },

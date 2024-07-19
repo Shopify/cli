@@ -19,13 +19,10 @@ const MarketingActivityExtensionSchema = BaseSchema.extend({
     'link',
     'storefront_app',
   ]),
-  platform: zod.string().optional(),
-  ad_format: zod.string().optional(),
+  channel: zod.enum(['social', 'search', 'email', 'sms', 'display', 'marketplace']),
+  referring_domain: zod.string().optional(),
   is_automation: zod.boolean().optional(),
-  is_automation_step: zod.boolean().optional(),
   use_external_editor: zod.boolean().optional(),
-  enable_pricing_confirmation: zod.boolean().optional(),
-  pricing_information: zod.string().optional(),
   preview_data: zod.object({
     types: zod
       .array(
@@ -50,13 +47,10 @@ const spec = createExtensionSpecification({
       description: config.description,
       app_api_url: config.app_api_url,
       tactic: config.tactic,
-      platform: config.platform,
-      ad_format: config.ad_format,
+      channel: config.channel,
+      referring_domain: config.referring_domain,
       is_automation: config.is_automation,
-      is_automation_step: config.is_automation_step,
       use_external_editor: config.use_external_editor,
-      enable_pricing_confirmation: config.enable_pricing_confirmation,
-      pricing_information: config.pricing_information,
       preview_data: config.preview_data,
       fields: config.fields,
     }
