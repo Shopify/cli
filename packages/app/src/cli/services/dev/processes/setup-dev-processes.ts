@@ -65,7 +65,7 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
-  beta: boolean
+  consistentDev: boolean
 }
 
 export async function setupDevProcesses({
@@ -79,7 +79,7 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
-  beta,
+  consistentDev,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -128,7 +128,7 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    beta
+    consistentDev
       ? await setupDevSessionProcess({
           app: localApp,
           apiKey,

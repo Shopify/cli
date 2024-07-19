@@ -82,7 +82,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   const processOptions = {...options, stderr, stdout, signal, bundlePath}
   const appWatcher = new AppEventWatcher(app, processOptions)
 
-  outputWarn('-----> Running DEV on beta mode <-----')
+  outputWarn('-----> Running DEV on consistentDev mode <-----')
   outputDebug(`Using temp dir: ${dir}`, stdout)
   processOptions.stdout.write('Preparing dev session...')
 
