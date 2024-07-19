@@ -341,9 +341,9 @@ async function launchDevProcesses({
 export function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
-  beta: boolean,
+  consistentDev: boolean,
 ): DeveloperPreviewController {
-  if (beta) {
+  if (consistentDev) {
     return {
       fetchMode: () => Promise.resolve(false),
       enable: () => Promise.resolve(),
