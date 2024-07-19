@@ -1,0 +1,20 @@
+  query FetchDevStoreByDomain($domain: String) {
+    organization {
+      id
+      name
+      properties(search: $domain, offeringHandles: ["shop"]) {
+        edges {
+          node {
+            id
+            externalId
+            ... on Shop {
+              name
+              storeType
+              primaryDomain
+              shortName
+            }
+          }
+        }
+      }
+    }
+  }

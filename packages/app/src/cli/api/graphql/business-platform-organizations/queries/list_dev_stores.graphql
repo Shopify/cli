@@ -1,0 +1,20 @@
+  query ListAppDevStores {
+    organization {
+      id
+      name
+      properties(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, offeringHandles: ["shop"]) {
+        edges {
+          node {
+            id
+            externalId
+            ... on Shop {
+              name
+              storeType
+              primaryDomain
+              shortName
+            }
+          }
+        }
+      }
+    }
+  }
