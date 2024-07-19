@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {installJavy} from '../../function/build.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -6,13 +7,13 @@ import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {mkdir, readFileSync, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {mkdir, readFileSync, rmdir, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
+import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
 
 export interface DevSessionOptions {
@@ -72,6 +73,9 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   await installJavy(app)
 
   const dir = tempDirectory()
+
+  // Uncomment this to open the temp directory automatically for debugging
+  // await exec(`open`, [dir])
   const bundlePath = joinPath(dir, 'bundle')
   await mkdir(bundlePath)
 
@@ -86,33 +90,41 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   await bundleExtensionsAndUpload(processOptions, false)
 
   appWatcher.onEvent(async (event) => {
-    processOptions.stdout.write(`Event detected:`)
-    event.extensionEvents.forEach((eve) => {
-      processOptions.stdout.write(`🆕 ->> ${eve.type} :: ${eve.extension.handle} :: ${eve.extension.directory}`)
-    })
-    try {
-      const buildPromises = event.extensionEvents
-        .filter((eve) => eve.type === EventType.UpdatedSourceFile)
-        .map((eve) => {
+    const promises = event.extensionEvents.map(async (eve) => {
+      switch (eve.type) {
+        case EventType.Created:
+        case EventType.UpdatedSourceFile:
+          const message = eve.type === EventType.Created ? '✅ Extension created ' : '🔄 Extension Updated'
+          processOptions.stdout.write(`${message} ->> ${eve.extension.handle}`)
           return eve.extension.buildForBundle(
             {...processOptions, app: event.app, environment: 'development'},
             processOptions.bundlePath,
             undefined,
           )
-        })
-      await Promise.all(buildPromises)
+        case EventType.Deleted:
+          processOptions.stdout.write(`❌ Extension deleted ->> ${eve.extension.handle}`)
+          return rmdir(joinPath(processOptions.bundlePath, eve.extension.handle), {force: true})
+        case EventType.Updated:
+          processOptions.stdout.write(`🔄 Extension Updated ->> ${eve.extension.handle}`)
+          break
+      }
+    })
+    try {
+      await Promise.all(promises)
       // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
     } catch (error: any) {
       processOptions.stderr.write('Error building extensions')
       processOptions.stderr.write(error.message)
     }
 
+    const networkStartTime = startHRTime()
     await performActionWithRetryAfterRecovery(async () => {
       await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
     }, developerPlatformClient.refreshToken)
 
-    const endTime = process.hrtime(event.startTime)
-    processOptions.stdout.write(`Session updated [${endHRTimeInMs(endTime)}ms]`)
+    const endTime = endHRTimeInMs(event.startTime)
+    const endNetworkTime = endHRTimeInMs(networkStartTime)
+    processOptions.stdout.write(`Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
   })
 
   await appWatcher.start()
@@ -132,6 +144,7 @@ async function initialBuild(options: DevSessionProcessOptions) {
 }
 
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, updating: boolean) {
+  outputDebug('Building and uploading extensions', options.stdout)
   // Build and bundle all extensions in a zip file (including the manifest file)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
   // options.stdout.write('Building manifest...')

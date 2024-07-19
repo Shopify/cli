@@ -334,6 +334,7 @@ async function launchDevProcesses({
     app,
     abortController,
     developerPreview: developerPreviewController(apiKey, developerPlatformClient, config.beta),
+    shopFqdn: config.storeFqdn,
   })
 }
 

@@ -149,7 +149,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
-    this.uid = this.configuration.uid ?? randomUUID()
+    this.uid = this.configuration.uid ?? this.handle
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
@@ -330,7 +330,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
-    const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.uid
+    const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.handle
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {

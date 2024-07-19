@@ -145,6 +145,7 @@ describe('ui', () => {
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
+      const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: true,
@@ -156,7 +157,16 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview})
+      await renderDev({
+        processes,
+        previewUrl,
+        graphiqlUrl,
+        graphiqlPort,
+        app,
+        abortController,
+        developerPreview,
+        shopFqdn,
+      })
 
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
@@ -177,6 +187,7 @@ describe('ui', () => {
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
+      const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: true,
@@ -188,7 +199,16 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview})
+      await renderDev({
+        processes,
+        previewUrl,
+        graphiqlUrl,
+        graphiqlPort,
+        app,
+        abortController,
+        developerPreview,
+        shopFqdn,
+      })
       abortController.abort()
 
       expect(developerPreview.enable).toHaveBeenCalled()
@@ -205,6 +225,7 @@ describe('ui', () => {
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
+      const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: false,
@@ -216,7 +237,16 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview})
+      await renderDev({
+        processes,
+        previewUrl,
+        graphiqlUrl,
+        graphiqlPort,
+        app,
+        abortController,
+        developerPreview,
+        shopFqdn,
+      })
       abortController.abort()
 
       expect(developerPreview.enable).not.toHaveBeenCalled()
@@ -233,6 +263,7 @@ describe('ui', () => {
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
+      const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: true,
@@ -245,7 +276,7 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview})
+      renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview, shopFqdn})
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 
