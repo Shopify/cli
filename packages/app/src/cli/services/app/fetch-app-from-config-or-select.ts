@@ -13,7 +13,7 @@ export async function fetchAppFromConfigOrSelect(
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = app.configuration.client_id
     organizationApp = await developerPlatformClient.appFromId({
-      id: apiKey,
+      id: app.configuration.app_id ?? 'no-id-available',
       apiKey,
       organizationId: app.configuration.organization_id ?? '0',
     })

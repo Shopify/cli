@@ -75,6 +75,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -163,6 +164,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -185,6 +187,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -217,6 +220,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -270,6 +274,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -304,6 +309,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -350,6 +356,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
@@ -383,6 +390,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appId: 'app-id',
       apiKey: 'app-id',
       name: app.name,
       organizationId: 'org-id',
