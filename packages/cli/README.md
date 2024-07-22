@@ -1617,7 +1617,7 @@ FLAGS
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --port=<value>            [default: 9293] Local port to serve authentication service.
-      --store-password=<value>  The password for the storefront.
+      --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
 

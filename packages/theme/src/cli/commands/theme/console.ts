@@ -37,7 +37,7 @@ export default class Console extends ThemeCommand {
       default: '9293',
     }),
     'store-password': Flags.string({
-      description: 'The password for the storefront.',
+      description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
     'dev-preview': Flags.boolean({

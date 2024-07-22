@@ -4803,7 +4803,7 @@
           "type": "option"
         },
         "store-password": {
-          "description": "The password for the storefront.",
+          "description": "The password for storefronts with password protection.",
           "env": "SHOPIFY_FLAG_STORE_PASSWORD",
           "hasDynamicHelp": false,
           "multiple": false,
