@@ -29,8 +29,8 @@ export type Scalars = {
   OrganizationID: {input: any; output: any}
   /** The ID for a OrganizationUser. */
   OrganizationUserID: {input: any; output: any}
-  PropertyId: {input: any; output: any}
-  PropertyPublicID: {input: any; output: any}
+  PropertyId: {input: string; output: string}
+  PropertyPublicID: {input: string; output: string}
   /** The ID for a Role. */
   RoleID: {input: any; output: any}
   /** The ID for a ShopifyShop. */

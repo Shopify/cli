@@ -19,6 +19,8 @@ function projectFactory(name: string, schemaName: string) {
               omitObjectTypes: true,
               scalars: {
                 GlobalID: 'string',
+                PropertyId: 'string',
+                PropertyPublicID: 'string',
               },
             },
           },
@@ -39,6 +41,8 @@ function projectFactory(name: string, schemaName: string) {
                   onlyOperationTypes: true,
                   scalars: {
                     GlobalID: 'string',
+                    PropertyId: 'string',
+                    PropertyPublicID: 'string',
                   },
                 },
               },

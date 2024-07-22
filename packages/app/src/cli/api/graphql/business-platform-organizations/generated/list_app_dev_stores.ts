@@ -12,15 +12,15 @@ export type ListAppDevStoresQuery = {
     properties?: {
       edges: {
         node:
-          | {id: unknown; externalId?: unknown | null}
-          | {id: unknown; externalId?: unknown | null}
+          | {id: string; externalId?: string | null}
+          | {id: string; externalId?: string | null}
           | {
               name: string
               storeType?: Types.Store | null
               primaryDomain?: string | null
               shortName?: string | null
-              id: unknown
-              externalId?: unknown | null
+              id: string
+              externalId?: string | null
             }
       }[]
     } | null
@@ -68,7 +68,7 @@ export const ListAppDevStores = {
                           {
                             kind: 'ObjectField',
                             name: {kind: 'Name', value: 'value'},
-                            value: {kind: 'StringValue', value: 'production', block: false},
+                            value: {kind: 'StringValue', value: 'app_development', block: false},
                           },
                         ],
                       },

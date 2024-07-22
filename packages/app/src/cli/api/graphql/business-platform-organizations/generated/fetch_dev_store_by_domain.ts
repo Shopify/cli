@@ -14,15 +14,15 @@ export type FetchDevStoreByDomainQuery = {
     properties?: {
       edges: {
         node:
-          | {id: unknown; externalId?: unknown | null}
-          | {id: unknown; externalId?: unknown | null}
+          | {id: string; externalId?: string | null}
+          | {id: string; externalId?: string | null}
           | {
               name: string
               storeType?: Types.Store | null
               primaryDomain?: string | null
               shortName?: string | null
-              id: unknown
-              externalId?: unknown | null
+              id: string
+              externalId?: string | null
             }
       }[]
     } | null
@@ -58,6 +58,30 @@ export const FetchDevStoreByDomain = {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'properties'},
                   arguments: [
+                    {
+                      kind: 'Argument',
+                      name: {kind: 'Name', value: 'filters'},
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: {kind: 'Name', value: 'field'},
+                            value: {kind: 'EnumValue', value: 'STORE_TYPE'},
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: {kind: 'Name', value: 'operator'},
+                            value: {kind: 'EnumValue', value: 'EQUALS'},
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: {kind: 'Name', value: 'value'},
+                            value: {kind: 'StringValue', value: 'app_development', block: false},
+                          },
+                        ],
+                      },
+                    },
                     {
                       kind: 'Argument',
                       name: {kind: 'Name', value: 'search'},
