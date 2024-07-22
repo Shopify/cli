@@ -135,7 +135,7 @@ describe('Storefront API', () => {
     } as any
   }
 
-  describe('storefrontPasswordIsCorrect', () => {
+  describe('isStorefrontPasswordCorrect', () => {
     test('returns true when the password is correct', async () => {
       // Given
       vi.mocked(fetch).mockResolvedValueOnce(
