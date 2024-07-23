@@ -929,7 +929,7 @@ api_version = "2023-04"
   })
 })
 
-describe('ensureDeployContext', () => {
+describe('ensureDeploy Context', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
@@ -1194,6 +1194,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    vi.mocked(link).mockResolvedValue(app.configuration)
+
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
@@ -1244,6 +1246,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    vi.mocked(link).mockResolvedValue(app.configuration)
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
@@ -1288,14 +1291,19 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue((app as any).configuration)
+    // vi.mocked(selectDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
+    const options = deployOptions(app)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
+
     // When
-    await ensureDeployContext(deployOptions(app))
+    await ensureDeployContext(options)
 
     // Then
     expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
@@ -1344,6 +1352,8 @@ describe('ensureDeployContext', () => {
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
+    const options = deployOptions(app, true)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
     // When
     await ensureDeployContext(deployOptions(app, true))
 
@@ -1387,14 +1397,18 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
 
+    const options = deployOptions(app, false, true)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
+
     // When
-    await ensureDeployContext(deployOptions(app, false, true))
+    await ensureDeployContext(options)
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()

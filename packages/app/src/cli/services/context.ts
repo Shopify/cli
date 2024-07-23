@@ -164,7 +164,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   let developerPlatformClient = options.developerPlatformClient
   const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,
-    promptLinkingApp: !options.apiKey,
+    enableLinkingPrompt: !options.apiKey,
   })
   developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
@@ -636,19 +636,37 @@ export async function fetchAppAndIdentifiers(
     reset: boolean
     apiKey?: string
   },
-  developerPlatformClient: DeveloperPlatformClient,
+  initialDeveloperPlatformClient: DeveloperPlatformClient,
   reuseFromDev = true,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
+  let developerPlatformClient = initialDeveloperPlatformClient
   const app = options.app
   let reuseDevCache = reuseFromDev
   let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
   let remoteApp: OrganizationApp | undefined
 
-  if (options.reset) {
+  const {performAppLink, previousCachedInfo} = await decideOnLinkStrategy(app.directory, options.reset, true)
+
+  /**
+   * TODO:
+   * - Clean up this refactor to the extent possible (and file an issue for further improvements)
+   * - Fixing existing tests
+   * - Add test that link is called on a new deploy
+   * - More tophatting.
+   */
+  if (performAppLink) {
     envIdentifiers = {app: undefined, extensions: {}}
     reuseDevCache = false
-    const configuration = await link({directory: app.directory, developerPlatformClient})
+    const configuration = await link(
+      {
+        directory: app.directory,
+        baseConfigName: previousCachedInfo?.configFile,
+        developerPlatformClient,
+      },
+      false,
+    )
     app.configuration = configuration
+    developerPlatformClient = selectDeveloperPlatformClient({configuration})
   }
 
   if (isCurrentAppSchema(app.configuration)) {
@@ -748,24 +766,17 @@ export async function getAppContext({
   directory,
   developerPlatformClient,
   configName,
-  promptLinkingApp = true,
+  enableLinkingPrompt = true,
 }: {
   reset: boolean
   directory: string
   developerPlatformClient: DeveloperPlatformClient
   configName?: string
-  promptLinkingApp?: boolean
+  enableLinkingPrompt?: boolean
 }): Promise<AppContext> {
-  const previousCachedInfo = getCachedAppInfo(directory)
+  const {performAppLink, previousCachedInfo} = await decideOnLinkStrategy(directory, reset, enableLinkingPrompt)
 
-  if (reset) clearCachedAppInfo(directory)
-
-  const firstTimeSetup = previousCachedInfo === undefined
-  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
-  const usingConfigWithNoTomls =
-    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
-
-  if (promptLinkingApp && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
+  if (performAppLink) {
     await link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
   }
 
@@ -803,6 +814,20 @@ export async function getAppContext({
     cachedInfo,
     remoteApp,
   }
+}
+
+async function decideOnLinkStrategy(directory: string, reset: boolean, enableLinkingPrompt: boolean) {
+  const previousCachedInfo = getCachedAppInfo(directory)
+
+  if (reset) clearCachedAppInfo(directory)
+
+  const firstTimeSetup = previousCachedInfo === undefined
+  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
+  const usingConfigWithNoTomls =
+    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+
+  const performAppLink = enableLinkingPrompt && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)
+  return {performAppLink, previousCachedInfo}
 }
 
 /**
