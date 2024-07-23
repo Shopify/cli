@@ -19,6 +19,8 @@ function projectFactory(name: string, schemaName: string) {
               omitObjectTypes: true,
               scalars: {
                 GlobalID: 'string',
+                PropertyId: 'string',
+                PropertyPublicID: 'string',
               },
             },
           },
@@ -39,6 +41,8 @@ function projectFactory(name: string, schemaName: string) {
                   onlyOperationTypes: true,
                   scalars: {
                     GlobalID: 'string',
+                    PropertyId: 'string',
+                    PropertyPublicID: 'string',
                   },
                 },
               },
@@ -66,7 +70,8 @@ function projectFactory(name: string, schemaName: string) {
 export default {
   projects: {
     partners: projectFactory('partners', 'cli_schema.graphql'),
-    businessPlatform: projectFactory('business-platform', 'destinations_schema.graphql'),
+    businessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql'),
+    businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
   },
 }

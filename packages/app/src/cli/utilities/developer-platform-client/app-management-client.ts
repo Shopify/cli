@@ -100,7 +100,7 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
-import {ListOrganizations} from '../../api/graphql/business-platform/generated/organizations.js'
+import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'

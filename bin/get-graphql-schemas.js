@@ -18,7 +18,12 @@ const schemas = [
   {
     repo: 'business-platform',
     pathToFile: 'db/graphql/destinations_schema.graphql',
-    localPath: './packages/app/src/cli/api/graphql/business-platform/destinations_schema.graphql',
+    localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
+  },
+  {
+    repo: 'business-platform',
+    pathToFile: 'db/graphql/organizations_schema.graphql',
+    localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
   {
     repo: 'shopify',
