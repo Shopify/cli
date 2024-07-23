@@ -120,7 +120,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     const networkStartTime = startHRTime()
     await performActionWithRetryAfterRecovery(async () => {
       await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
-    }, developerPlatformClient.refreshToken)
+    }, developerPlatformClient.refreshToken.bind(developerPlatformClient))
 
     const endTime = endHRTimeInMs(event.startTime)
     const endNetworkTime = endHRTimeInMs(networkStartTime)
