@@ -12,9 +12,10 @@ export type ListAppDevStoresQuery = {
     properties?: {
       edges: {
         node:
-          | {id: string; externalId?: string | null}
-          | {id: string; externalId?: string | null}
+          | {__typename: 'BillingAccount'; id: string; externalId?: string | null}
+          | {__typename: 'Property'; id: string; externalId?: string | null}
           | {
+              __typename: 'Shop'
               name: string
               storeType?: Types.Store | null
               primaryDomain?: string | null
@@ -94,6 +95,7 @@ export const ListAppDevStores = {
                               selectionSet: {
                                 kind: 'SelectionSet',
                                 selections: [
+                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'externalId'}},
                                   {
@@ -110,7 +112,6 @@ export const ListAppDevStores = {
                                       ],
                                     },
                                   },
-                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                 ],
                               },
                             },

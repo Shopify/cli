@@ -5,6 +5,7 @@
       properties(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, offeringHandles: ["shop"]) {
         edges {
           node {
+            __typename
             id
             externalId
             ... on Shop {
