@@ -43,7 +43,7 @@ type ProductPickerField = BaseField & {
 }
 
 type SingleLineTextField = BaseField & {
-  ui_type: 'text-single-line'
+  ui_type: 'text-single-line' | 'text-email' | 'text-tel' | 'text-url'
   placeholder: string
   min_length: number
   max_length: number
@@ -56,8 +56,15 @@ type TextMultiLineField = BaseField & {
   max_length: number
 }
 
-type SelectSingleField = BaseField & {
-  ui_type: 'select-single'
+interface DividerField {
+  id: string
+  ui_type: 'divider'
+  title: string
+  name: string
+}
+
+type SelectField = BaseField & {
+  ui_type: 'select-single' | 'select-multiple'
   choices: {label: string; value: string}[]
 }
 
@@ -94,11 +101,12 @@ type Field =
   | ProductPickerField
   | SingleLineTextField
   | TextMultiLineField
-  | SelectSingleField
+  | SelectField
   | ParagraphField
   | TypeAheadField
   | NumberField
   | ImagePickerField
+  | DividerField
 
 export interface MarketingActivityDashboardConfig {
   title: string
