@@ -111,11 +111,12 @@ import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {
   FetchDevStoreByDomain,
-  FetchDevStoreByDomainQuery,
   FetchDevStoreByDomainQueryVariables,
 } from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
-import {ListAppDevStores} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
-import * as Types from '../../api/graphql/business-platform-organizations/generated/types.js'
+import {
+  ListAppDevStores,
+  ListAppDevStoresQuery,
+} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -133,17 +134,11 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
-interface ShopeNodeQuery {
-  node: {
-    __typename: 'Shop'
-    id: string
-    externalId?: string | null
-    name: string
-    storeType?: Types.Store | null
-    primaryDomain?: string | null
-    shortName?: string | null
-  }
-}
+
+type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
+type Properties = NonNullable<OrgType['properties']>
+type ShopEdge = NonNullable<Properties['edges'][number]>
+type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
@@ -385,12 +380,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const storesResult = await businessPlatformOrganizationsRequest(
+    const storesResult = await businessPlatformOrganizationsRequest<ListAppDevStoresQuery>(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
     )
-    const shopArray = storesResult?.organization?.properties?.edges.map((value) => value.node as ShopeNodeQuery) ?? null
+    const shopArray = storesResult?.organization?.properties?.edges.map((value) => value.node as ShopNode) ?? null
 
     return shopArray ? mapBusinessPlatformStoresToOrganizationStores(shopArray) : []
   }
@@ -730,13 +725,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // from the Partners FindByStoreDomainSchema, we will return this type for now
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
-    const storesResult = await businessPlatformOrganizationsRequest<
-      FetchDevStoreByDomainQuery,
-      FetchDevStoreByDomainQueryVariables
-    >(FetchDevStoreByDomain, await this.businessPlatformToken(), orgId, queryVariables)
+    const storesResult = await businessPlatformOrganizationsRequest(
+      FetchDevStoreByDomain,
+      await this.businessPlatformToken(),
+      orgId,
+      queryVariables,
+    )
 
     const {organization} = storesResult
-    const bpStoresArray = organization?.properties?.edges.map((value) => value.node as ShopeNodeQuery) ?? []
+    const bpStoresArray = organization?.properties?.edges.map((value) => value.node as ShopNode) ?? []
     const storesArray = bpStoresArray.length > 0 ? mapBusinessPlatformStoresToOrganizationStores(bpStoresArray) : []
 
     return {
@@ -975,9 +972,9 @@ function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
 }
 
-function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopeNodeQuery[]): OrganizationStore[] {
-  return storesArray.map((store: ShopeNodeQuery) => {
-    const {externalId, primaryDomain, name} = store.node
+function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]): OrganizationStore[] {
+  return storesArray.map((store: ShopNode) => {
+    const {externalId, primaryDomain, name} = store
     return {
       shopId: externalId,
       link: primaryDomain,

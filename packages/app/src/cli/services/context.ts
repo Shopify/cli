@@ -186,7 +186,8 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     const [cachedApp, cachedStore] = await Promise.all([
       selectedApp ||
         remoteApp ||
-        (cachedInfo?.appId && appFromId({apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
+        (cachedInfo?.appId &&
+          appFromId({id: cachedInfo.appGid, apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
       selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
     ])
 

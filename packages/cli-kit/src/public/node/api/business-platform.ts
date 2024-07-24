@@ -4,6 +4,8 @@ import {businessPlatformFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
 
+export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
+
 /**
  * Sets up the request to the Business Platform Destinations API.
  *
@@ -70,12 +72,12 @@ export async function businessPlatformRequestDoc<TResult, TVariables extends Var
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function businessPlatformOrganizationsRequest<T>(
-  query: string,
+export async function businessPlatformOrganizationsRequest<TResult>(
+  query: TypedDocumentNode<TResult, GraphQLVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>,
   token: string,
   organizationId: string,
   variables?: GraphQLVariables,
-): Promise<T> {
+): Promise<TResult> {
   const api = 'BusinessPlatform'
   const fqdn = await businessPlatformFqdn()
   const url = `https://${fqdn}/organizations/api/unstable/organization/${organizationId}/graphql`

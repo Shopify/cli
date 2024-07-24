@@ -59,10 +59,10 @@ function scopeTransform(scope: string): string {
       return 'https://api.shopify.com/auth/shop.storefront-renderer.devtools'
     case 'destinations':
       return 'https://api.shopify.com/auth/destinations.readonly'
-    case 'app-management':
-      return 'https://api.shopify.com/auth/organization.apps.manage'
     case 'store-management':
       return 'https://api.shopify.com/auth/organization.store-management'
+    case 'app-management':
+      return 'https://api.shopify.com/auth/organization.apps.manage'
     default:
       return scope
   }
