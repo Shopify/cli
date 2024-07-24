@@ -154,7 +154,7 @@ const PLATFORM_DOMAIN_MAP: {[key: string]: string | null} = {
 }
 
 /**
- * Given a dashboard-built payments extension config file, convert it to toml for the CLI extension
+ * Given a dashboard-built marketing activity extension config file, convert it to toml for the CLI extension
  */
 export function buildTomlObject(extension: ExtensionRegistration): string {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config

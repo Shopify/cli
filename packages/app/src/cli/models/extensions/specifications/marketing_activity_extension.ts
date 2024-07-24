@@ -2,6 +2,119 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
+const BaseFieldSchema = zod.object({
+  id: zod.string(),
+  ui_type: zod.string(),
+})
+
+const CommonFieldSchema = BaseFieldSchema.extend({
+  name: zod.string(),
+  label: zod.string(),
+  help_text: zod.string().optional(),
+  required: zod.boolean(),
+})
+
+const BudgetScheduleFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('budget-schedule'),
+  use_scheduling: zod.boolean(),
+  use_end_date: zod.boolean(),
+  use_daily_budget: zod.boolean(),
+  use_lifetime_budget: zod.boolean(),
+})
+
+const DiscountPickerFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('discount-picker'),
+  min_resources: zod.number().nullable(),
+  max_resources: zod.number().nullable(),
+})
+
+const ScheduleFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('schedule'),
+  use_end_date: zod.boolean(),
+})
+
+const ProductPickerFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('product-picker'),
+  allow_product_image_selection: zod.boolean(),
+  allow_uploaded_image_as_product_image: zod.boolean(),
+  allow_free_image_as_product_image: zod.boolean(),
+  min_resources: zod.number().nullable(),
+  max_resources: zod.number().nullable(),
+  min_image_select_per_product: zod.number().nullable(),
+  max_image_select_per_product: zod.number().nullable(),
+})
+
+const SingleLineTextFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.enum(['text-single-line', 'text-email', 'text-tel', 'text-url']),
+  placeholder: zod.string(),
+  min_length: zod.number(),
+  max_length: zod.number(),
+})
+
+const TextMultiLineFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('text-multi-line'),
+  placeholder: zod.string(),
+  min_length: zod.number(),
+  max_length: zod.number(),
+})
+
+const DividerFieldSchema = BaseFieldSchema.extend({
+  ui_type: zod.literal('divider'),
+  title: zod.string(),
+  name: zod.string(),
+})
+
+const SelectFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.enum(['select-single', 'select-multiple']),
+  choices: zod.array(
+    zod.object({
+      label: zod.string(),
+      value: zod.string(),
+    }),
+  ),
+})
+
+const ParagraphFieldSchema = BaseFieldSchema.extend({
+  ui_type: zod.literal('paragraph'),
+  heading: zod.string().optional(),
+  body: zod.string().optional(),
+})
+
+const TypeAheadFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('type-ahead'),
+  placeholder: zod.string(),
+})
+
+const NumberFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.enum(['number-float', 'number-integer']),
+  min: zod.number(),
+  max: zod.number(),
+  step: zod.number(),
+})
+
+const ImagePickerFieldSchema = CommonFieldSchema.extend({
+  ui_type: zod.literal('image-picker'),
+  min_resources: zod.number(),
+  max_resources: zod.number(),
+  allow_free_images: zod.boolean(),
+  alt_text_required: zod.boolean(),
+})
+
+const FieldSchema = zod.union([
+  BudgetScheduleFieldSchema,
+  DiscountPickerFieldSchema,
+  ScheduleFieldSchema,
+  ProductPickerFieldSchema,
+  SingleLineTextFieldSchema,
+  TextMultiLineFieldSchema,
+  SelectFieldSchema,
+  ParagraphFieldSchema,
+  TypeAheadFieldSchema,
+  NumberFieldSchema,
+  ImagePickerFieldSchema,
+  DividerFieldSchema,
+])
+
 const MarketingActivityExtensionSchema = BaseSchema.extend({
   title: zod.string().min(1),
   description: zod.string().min(1),
@@ -34,7 +147,7 @@ const MarketingActivityExtensionSchema = BaseSchema.extend({
       .max(3)
       .min(1),
   }),
-  fields: zod.array(zod.any()),
+  fields: zod.array(FieldSchema).min(1),
 })
 
 const spec = createExtensionSpecification({
