@@ -6,13 +6,16 @@ import {slugify} from '@shopify/cli-kit/common/string'
 interface BaseField {
   id: string
   ui_type: string
+}
+
+interface CommonField extends BaseField {
   name: string
   label: string
   help_text: string
   required: boolean
 }
 
-type BudgetScheduleField = BaseField & {
+type BudgetScheduleField = CommonField & {
   ui_type: 'budget-schedule'
   use_scheduling: boolean
   use_end_date: boolean
@@ -20,18 +23,18 @@ type BudgetScheduleField = BaseField & {
   use_lifetime_budget: boolean
 }
 
-type DiscountPickerField = BaseField & {
+type DiscountPickerField = CommonField & {
   ui_type: 'discount-picker'
   min_resources: number | null
   max_resources: number | null
 }
 
-type ScheduleField = BaseField & {
+type ScheduleField = CommonField & {
   ui_type: 'schedule'
   use_end_date: boolean
 }
 
-type ProductPickerField = BaseField & {
+type ProductPickerField = CommonField & {
   ui_type: 'product-picker'
   allow_product_image_selection: boolean
   allow_uploaded_image_as_product_image: boolean
@@ -42,28 +45,27 @@ type ProductPickerField = BaseField & {
   max_image_select_per_product: number | null
 }
 
-type SingleLineTextField = BaseField & {
+type SingleLineTextField = CommonField & {
   ui_type: 'text-single-line' | 'text-email' | 'text-tel' | 'text-url'
   placeholder: string
   min_length: number
   max_length: number
 }
 
-type TextMultiLineField = BaseField & {
+type TextMultiLineField = CommonField & {
   ui_type: 'text-multi-line'
   placeholder: string
   min_length: number
   max_length: number
 }
 
-interface DividerField {
-  id: string
+type DividerField = BaseField & {
   ui_type: 'divider'
   title: string
   name: string
 }
 
-type SelectField = BaseField & {
+type SelectField = CommonField & {
   ui_type: 'select-single' | 'select-multiple'
   choices: {label: string; value: string}[]
 }
@@ -74,19 +76,19 @@ type ParagraphField = BaseField & {
   body: string
 }
 
-type TypeAheadField = BaseField & {
+type TypeAheadField = CommonField & {
   ui_type: 'type-ahead'
   placeholder: string
 }
 
-type NumberField = BaseField & {
+type NumberField = CommonField & {
   ui_type: 'number-float' | 'number-integer'
   min: number
   max: number
   step: number
 }
 
-type ImagePickerField = BaseField & {
+type ImagePickerField = CommonField & {
   ui_type: 'image-picker'
   min_resources: number
   max_resources: number
