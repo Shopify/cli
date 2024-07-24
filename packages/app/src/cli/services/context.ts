@@ -427,7 +427,9 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const {reset, force, noRelease} = options
   let developerPlatformClient = options.developerPlatformClient
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
+  // do the link here
+  const performAppLink = await decideOnLinkStrategy(options.app.directory, options.reset, true)
+  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, performAppLink)
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
@@ -638,6 +640,7 @@ export async function fetchAppAndIdentifiers(
   },
   initialDeveloperPlatformClient: DeveloperPlatformClient,
   reuseFromDev = true,
+  performAppLink = false,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   let developerPlatformClient = initialDeveloperPlatformClient
   const app = options.app
@@ -645,7 +648,7 @@ export async function fetchAppAndIdentifiers(
   let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
   let remoteApp: OrganizationApp | undefined
 
-  const {performAppLink, previousCachedInfo} = await decideOnLinkStrategy(app.directory, options.reset, true)
+  const previousCachedInfo = getCachedAppInfo(app.directory)
 
   /**
    * TODO:
@@ -653,6 +656,7 @@ export async function fetchAppAndIdentifiers(
    * - Fixing existing tests
    * - Add test that link is called on a new deploy
    * - More tophatting.
+   * - Test dev flow with partners
    */
   if (performAppLink) {
     envIdentifiers = {app: undefined, extensions: {}}
@@ -774,13 +778,12 @@ export async function getAppContext({
   configName?: string
   enableLinkingPrompt?: boolean
 }): Promise<AppContext> {
-  const {performAppLink, previousCachedInfo} = await decideOnLinkStrategy(directory, reset, enableLinkingPrompt)
+  const performAppLink = await decideOnLinkStrategy(directory, reset, enableLinkingPrompt)
+  let cachedInfo = getCachedAppInfo(directory)
 
   if (performAppLink) {
-    await link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
+    await link({directory, baseConfigName: cachedInfo?.configFile}, false)
   }
-
-  let cachedInfo = getCachedAppInfo(directory)
 
   const {configuration} = await loadAppConfiguration({
     directory,
@@ -816,18 +819,22 @@ export async function getAppContext({
   }
 }
 
-async function decideOnLinkStrategy(directory: string, reset: boolean, enableLinkingPrompt: boolean) {
+async function decideOnLinkStrategy(
+  directory: string,
+  reset: boolean,
+  enableLinkingPrompt: boolean,
+): Promise<boolean | undefined> {
   const previousCachedInfo = getCachedAppInfo(directory)
 
   if (reset) clearCachedAppInfo(directory)
 
   const firstTimeSetup = previousCachedInfo === undefined
   const usingConfigAndResetting = previousCachedInfo?.configFile && reset
-  const usingConfigWithNoTomls =
-    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+  const usingConfigWithNoTomls: boolean =
+    previousCachedInfo?.configFile !== undefined && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
 
   const performAppLink = enableLinkingPrompt && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)
-  return {performAppLink, previousCachedInfo}
+  return performAppLink
 }
 
 /**
