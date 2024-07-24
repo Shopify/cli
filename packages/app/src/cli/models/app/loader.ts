@@ -1168,10 +1168,3 @@ export function isValidFormatAppConfigurationFileName(configName: string): confi
   }
   return false
 }
-
-const printTargets = [
-  'admin.order-details.print-action.render',
-  'admin.order-index.selection-print-action.render',
-  'admin.product-details.print-action.render',
-  'admin.product-index.selection-print-action.render',
-]
