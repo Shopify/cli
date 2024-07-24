@@ -100,20 +100,25 @@ const ImagePickerFieldSchema = CommonFieldSchema.extend({
   alt_text_required: zod.boolean(),
 })
 
-const FieldSchema = zod.union([
-  BudgetScheduleFieldSchema,
-  DiscountPickerFieldSchema,
-  ScheduleFieldSchema,
-  ProductPickerFieldSchema,
-  SingleLineTextFieldSchema,
-  TextMultiLineFieldSchema,
-  SelectFieldSchema,
-  ParagraphFieldSchema,
-  TypeAheadFieldSchema,
-  NumberFieldSchema,
-  ImagePickerFieldSchema,
-  DividerFieldSchema,
-])
+const UISchemaMapping: {[key: string]: zod.Schema} = {
+  'budget-schedule': BudgetScheduleFieldSchema,
+  'discount-picker': DiscountPickerFieldSchema,
+  schedule: ScheduleFieldSchema,
+  'product-picker': ProductPickerFieldSchema,
+  'text-single-line': SingleLineTextFieldSchema,
+  'text-email': SingleLineTextFieldSchema,
+  'text-tel': SingleLineTextFieldSchema,
+  'text-url': SingleLineTextFieldSchema,
+  'text-multi-line': TextMultiLineFieldSchema,
+  'select-single': SelectFieldSchema,
+  'select-multiple': SelectFieldSchema,
+  paragraph: ParagraphFieldSchema,
+  'type-ahead': TypeAheadFieldSchema,
+  'number-float': NumberFieldSchema,
+  'number-integer': NumberFieldSchema,
+  'image-picker': ImagePickerFieldSchema,
+  divider: DividerFieldSchema,
+}
 
 const MarketingActivityExtensionSchema = BaseSchema.extend({
   title: zod.string().min(1),
@@ -147,7 +152,39 @@ const MarketingActivityExtensionSchema = BaseSchema.extend({
       .max(3)
       .min(1),
   }),
-  fields: zod.array(FieldSchema).min(1),
+  fields: zod
+    .array(
+      zod.any().superRefine((val, ctx) => {
+        if (typeof val !== 'object') {
+          return ctx.addIssue({
+            message: 'Field must be an object',
+            code: zod.ZodIssueCode.custom,
+          })
+        }
+        if (val.ui_type === undefined) {
+          return ctx.addIssue({
+            message: 'Field must have a ui_type',
+            code: zod.ZodIssueCode.custom,
+          })
+        }
+        const schema = UISchemaMapping[val.ui_type]
+        if (schema === undefined) {
+          return ctx.addIssue({
+            message: `Unknown ui_type for Field: ${val.ui_type}`,
+            code: zod.ZodIssueCode.custom,
+          })
+        }
+
+        const result = schema.safeParse(val)
+        if (!result.success) {
+          return ctx.addIssue({
+            message: `Error found on Field "${val.name}": ${result.error.message}`,
+            code: zod.ZodIssueCode.custom,
+          })
+        }
+      }),
+    )
+    .min(1),
 })
 
 const spec = createExtensionSpecification({
