@@ -1,44 +1,51 @@
-import {replLoop} from './repl.js'
+import {handleInput} from './repl.js'
 import {DevServerSession} from './theme-environment/types.js'
 import {evaluate} from './repl/evaluater.js'
-import {consoleWarn, outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {presentValue} from './repl/presenter.js'
 import {describe, expect, test, vi} from 'vitest'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {consoleWarn} from '@shopify/cli-kit/node/output'
+import {createInterface} from 'readline'
 
-vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('./repl/evaluater')
+vi.mock('./repl/evaluater.js')
+vi.mock('./repl/presenter.js')
 
-describe('repl', () => {
-  const themeSession = {} as DevServerSession
-  const themeId = 'themeId'
-  const url = 'url'
-
-  test('replLoop should call consoleWarn and return when inputValue has delimiter', async () => {
-    // Given
-    vi.mocked(renderTextPrompt).mockResolvedValueOnce('{{ collections.first }}')
-    vi.mocked(evaluate).mockRejectedValueOnce(new Error('Some error'))
-
-    // When
-    await expect(replLoop(themeSession, themeId, url)).rejects.toThrowError()
-
-    // Then
-    expect(consoleWarn).toHaveBeenCalledWith(
-      "Liquid Console doesn't support Liquid delimiters such as '{{ ... }}' or '{% ... %}'.\nPlease use 'collections.first' instead of '{{ collections.first }}'.",
-    )
+describe('handleInput', () => {
+  const themeSesssion: DevServerSession = {
+    storefrontPassword: 'password',
+    token: 'token',
+    expiresAt: new Date(),
+    storeFqdn: 'store.myshopify.com',
+    storefrontToken: 'storefrontToken',
+  }
+  const themeId = '123'
+  const url = '/'
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
   })
 
-  test('replLoop should call shutdownReplSession and throw AbortSilentError on error', async () => {
+  test('should call consoleWarn and prompt readline if input has delimiter', async () => {
     // Given
-    vi.mocked(renderTextPrompt).mockResolvedValueOnce('some value')
-    vi.mocked(evaluate).mockRejectedValueOnce(new Error('Some error'))
+    const inputValue = '{{ collections.first }}'
 
     // When
-    await expect(replLoop(themeSession, themeId, url)).rejects.toThrow(AbortSilentError)
+    await handleInput(inputValue, themeSesssion, themeId, url, rl)
 
     // Then
-    expect(outputInfo).toHaveBeenCalled()
-    expect(outputDebug).toHaveBeenCalled()
+    expect(consoleWarn).toHaveBeenCalled()
+  })
+
+  test('should call evaluate, presentValue, and prompt readline if input is valid', async () => {
+    // Given
+    const inputValue = 'collections.first'
+
+    // When
+    await handleInput(inputValue, themeSesssion, themeId, url, rl)
+
+    // Then
+    expect(consoleWarn).not.toHaveBeenCalled()
+    expect(evaluate).toHaveBeenCalled()
+    expect(presentValue).toHaveBeenCalled()
   })
 })
