@@ -1,7 +1,7 @@
 import {gql} from 'graphql-request'
 
 export const MigrateMarketingActivityExtensionMutation = gql`
-  mutation MigrateMarketingActivityExtension($apiKey: String!, $registrationId: String!) {
+  mutation MigrateMarketingActivityExtension($apiKey: String!, $registrationId: ID!) {
     migrateMarketingActivityExtension(input: {apiKey: $apiKey, registrationId: $registrationId}) {
       migratedExtensionToCli
       userErrors {
