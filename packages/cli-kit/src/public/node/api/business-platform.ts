@@ -1,10 +1,8 @@
-import {GraphQLVariables, graphqlRequest, graphqlRequestDoc} from './graphql.js'
+import {Exact, GraphQLVariables, graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {handleDeprecations} from './partners.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
-
-export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
 
 /**
  * Sets up the request to the Business Platform Destinations API.
@@ -81,7 +79,7 @@ export async function businessPlatformOrganizationsRequest<TResult>(
   const api = 'BusinessPlatform'
   const fqdn = await businessPlatformFqdn()
   const url = `https://${fqdn}/organizations/api/unstable/organization/${organizationId}/graphql`
-  return graphqlRequest({
+  return graphqlRequestDoc({
     query,
     api,
     url,
