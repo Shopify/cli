@@ -185,6 +185,29 @@ automatically_update_urls_on_dev = true
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
+  test('throws an error when the application_url is invalid', async () => {
+    // Given
+    const appConfiguration = `
+name = "for-testing"
+client_id = "1234567890"
+application_url = "wrong"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+
+[build]
+automatically_update_urls_on_dev = true
+        `
+    await writeConfig(appConfiguration)
+
+    // When/Then
+    await expect(loadTestingApp()).rejects.toThrow(/\[application_url\]: Invalid URL/)
+  })
+
   test('loads the app when the configuration is valid and has no blocks', async () => {
     // Given
     await writeConfig(appConfiguration)
