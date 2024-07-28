@@ -1,7 +1,6 @@
-import {fetchAllDevStores, fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
+import {fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
-import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   testPartnersServiceSession,
@@ -157,22 +156,6 @@ describe('fetchApp', async () => {
     // Then
     await expect(got).rejects.toThrowError(new NoOrgError(testPartnersUserSession.accountInfo))
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
-  })
-})
-
-describe('fetchAllDevStores', async () => {
-  test('returns fetched stores', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
-
-    // When
-    const got = await fetchAllDevStores(ORG1.id, 'token')
-
-    // Then
-    expect(got).toEqual([STORE1])
-    expect(partnersRequest).toHaveBeenCalledWith(AllDevStoresByOrganizationQuery, 'token', {
-      id: ORG1.id,
-    })
   })
 })
 

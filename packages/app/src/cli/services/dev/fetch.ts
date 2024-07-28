@@ -9,10 +9,6 @@ import {
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  AllDevStoresByOrganizationQuery,
-  AllDevStoresByOrganizationSchema,
-} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   AccountInfo,
@@ -187,14 +183,6 @@ export async function fetchOrgFromId(
   const org = await developerPlatformClient.orgFromId(id)
   if (!org) throw new NoOrgError((await developerPlatformClient.session()).accountInfo, id)
   return org
-}
-
-export async function fetchAllDevStores(orgId: string, token: string): Promise<OrganizationStore[]> {
-  const query = AllDevStoresByOrganizationQuery
-  const result: AllDevStoresByOrganizationSchema = await partnersRequest(query, token, {
-    id: orgId,
-  })
-  return result.organizations.nodes[0]!.stores.nodes
 }
 
 interface FetchStoreByDomainOutput {
