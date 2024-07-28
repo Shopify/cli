@@ -1,13 +1,13 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectAppPrompt} from '../../prompts/dev.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {
+  Flag,
   AppModuleVersion,
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {selectOrg} from '../context.js'
 import {searchForAppsByNameFactory} from '../dev/prompt-helpers.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'

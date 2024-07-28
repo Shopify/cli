@@ -34,9 +34,12 @@ describe('env show', () => {
     vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
 
     // When
-    const result = await showEnv(app, testDeveloperPlatformClient({
-      orgAndApps: () => Promise.resolve({organization, apps: [organizationApp], hasMorePages: false}),
-    }))
+    const result = await showEnv(
+      app,
+      testDeveloperPlatformClient({
+        orgAndApps: () => Promise.resolve({organization, apps: [organizationApp], hasMorePages: false}),
+      }),
+    )
 
     // Then
     expect(file.writeFile).not.toHaveBeenCalled()

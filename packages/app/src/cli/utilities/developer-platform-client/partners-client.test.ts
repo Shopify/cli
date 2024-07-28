@@ -9,10 +9,10 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {appNamePrompt} from '../../prompts/dev.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test} from 'vitest'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')

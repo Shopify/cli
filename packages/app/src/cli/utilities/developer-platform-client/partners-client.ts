@@ -143,6 +143,9 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
+import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
+import {NoOrgError} from '../../services/dev/fetch.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -155,9 +158,6 @@ import {
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
-import {NoOrgError} from '../../services/dev/fetch.js'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -533,10 +533,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     throw new Error('Unsupported operation')
   }
 
-  private async fetchOrgAndApps(
-    orgId: string,
-    title?: string,
-  ): Promise<OrgAndAppsResponse> {
+  private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
     const query = FindOrganizationQuery
     const params: {id: string; title?: string} = {id: orgId}
     if (title) params.title = title

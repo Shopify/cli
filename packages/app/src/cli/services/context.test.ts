@@ -1,8 +1,4 @@
-import {
-  fetchOrganizations,
-  fetchOrgFromId,
-  fetchStoreByDomain,
-} from './dev/fetch.js'
+import {fetchOrganizations, fetchOrgFromId, fetchStoreByDomain} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore, convertToTransferDisabledStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
@@ -737,7 +733,7 @@ api_version = "2023-04"
     const options = devOptions({
       developerPlatformClient: buildDeveloperPlatformClient({
         appFromId: () => Promise.resolve(APP1),
-        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE)
+        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE),
       }),
     })
     const got = await ensureDevContext(options)
@@ -792,7 +788,7 @@ api_version = "2023-04"
       storeFqdn: 'domain1',
       developerPlatformClient: buildDeveloperPlatformClient({
         appFromId: () => Promise.resolve(APP2),
-        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE)
+        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE),
       }),
     })
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
@@ -1164,7 +1160,7 @@ describe('ensureDeployContext', () => {
           hasMorePages: false,
         }
       },
-      appFromId: () => Promise.resolve(APP2)
+      appFromId: () => Promise.resolve(APP2),
     })
     const opts = {...deployOptions(app, true), developerPlatformClient}
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)

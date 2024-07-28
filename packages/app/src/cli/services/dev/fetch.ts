@@ -1,8 +1,4 @@
-import {
-  Organization,
-  OrganizationSource,
-  OrganizationStore,
-} from '../../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
@@ -78,7 +74,6 @@ export class NoOrgError extends AbortError {
     super(`No Organization found`, undefined, nextSteps)
   }
 }
-
 
 /**
  * Fetch all organizations the user belongs to
