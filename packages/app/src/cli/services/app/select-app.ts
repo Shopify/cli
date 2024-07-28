@@ -1,6 +1,6 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectAppPrompt} from '../../prompts/dev.js'
-import {Flag} from '../dev/fetch.js'
+import {Flag} from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {

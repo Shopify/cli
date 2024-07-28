@@ -18,7 +18,7 @@ import {
   appFromId,
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
-import {Flag} from '../../dev/fetch.js'
+import {Flag} from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'

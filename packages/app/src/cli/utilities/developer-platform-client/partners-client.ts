@@ -12,9 +12,10 @@ import {
   DeveloperPlatformClient,
   Paginateable,
   DevSessionOptions,
+  filterDisabledFlags,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
+import {fetchOrgAndApps} from '../../../cli/services/dev/fetch.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -155,6 +156,7 @@ import {
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -244,9 +246,18 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const app = await fetchAppDetailsFromApiKey(apiKey, await this.token())
-    if (app) app.developerPlatformClient = this
-    return app
+    const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, await this.token(), {
+      apiKey,
+    })
+    const app = res.app
+    if (app) {
+      const flags = filterDisabledFlags(app.disabledFlags)
+      return {
+        ...app,
+        flags,
+        developerPlatformClient: this,
+      }
+    }
   }
 
   async organizations(): Promise<Organization[]> {

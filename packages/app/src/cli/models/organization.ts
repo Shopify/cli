@@ -1,5 +1,5 @@
 import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
-import {Flag} from '../services/dev/fetch.js'
+import {Flag} from '../utilities/developer-platform-client.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
 export enum OrganizationSource {

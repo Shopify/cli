@@ -19,7 +19,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {Flag} from '../../services/dev/fetch.js'
+import {Flag} from '../../utilities/developer-platform-client.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,

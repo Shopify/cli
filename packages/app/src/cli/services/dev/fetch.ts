@@ -1,13 +1,11 @@
 import {
   MinimalOrganizationApp,
   Organization,
-  OrganizationApp,
   OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
 
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
-import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
@@ -141,31 +139,6 @@ export async function fetchOrgAndApps(
   const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
   const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
   return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
-}
-
-export enum Flag {
-  DeclarativeWebhooks,
-}
-
-const FlagMap: {[key: string]: Flag} = {
-  '5b25141b': Flag.DeclarativeWebhooks,
-}
-
-export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
-  const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
-    apiKey,
-  })
-  const app = res.app
-  if (app) {
-    const flags = filterDisabledFlags(app.disabledFlags)
-    return {...app, flags}
-  }
-}
-
-export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
-  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
-  const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
-  return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
 
 export async function fetchAppPreviewMode(

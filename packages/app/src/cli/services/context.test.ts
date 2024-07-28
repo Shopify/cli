@@ -1,5 +1,4 @@
 import {
-  fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
@@ -116,7 +115,9 @@ const devOptions = (options: object = {}): DevContextOptions => {
   return {
     directory: 'app_directory',
     reset: false,
-    developerPlatformClient: buildDeveloperPlatformClient(),
+    developerPlatformClient: buildDeveloperPlatformClient({
+      appFromId: () => Promise.resolve(APP2),
+    }),
     ...options,
   }
 }
@@ -239,10 +240,11 @@ describe('ensureGenerateContext', () => {
       directory: '/app',
       reset: false,
       partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP2),
+      }),
       commandConfig: COMMAND_CONFIG,
     }
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -303,7 +305,9 @@ describe('ensureGenerateContext', () => {
       directory: '/app',
       reset: false,
       partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP2),
+      }),
       commandConfig: COMMAND_CONFIG,
     }
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
@@ -317,7 +321,6 @@ describe('ensureGenerateContext', () => {
       specifications: [],
       remoteFlags: [],
     })
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -333,7 +336,9 @@ describe('ensureGenerateContext', () => {
       directory: '/app',
       reset: true,
       partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP2),
+      }),
       commandConfig: COMMAND_CONFIG,
     }
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
@@ -347,7 +352,6 @@ describe('ensureGenerateContext', () => {
       specifications: [],
       remoteFlags: [],
     })
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -432,7 +436,6 @@ describe('ensureDevContext', async () => {
         specifications: [],
         remoteFlags: [],
       })
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
@@ -707,11 +710,14 @@ api_version = "2023-04"
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
     // vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const options = devOptions()
+    const options = devOptions({
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP1),
+      }),
+    })
     const got = await ensureDevContext(options)
 
     // Then
@@ -727,11 +733,14 @@ api_version = "2023-04"
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const options = devOptions()
+    const options = devOptions({
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP1),
+      }),
+    })
     const got = await ensureDevContext(options)
 
     // Then
@@ -778,7 +787,6 @@ api_version = "2023-04"
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTransferDisabledStoreIfNeeded).mockResolvedValueOnce(true)
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
     const options = devOptions({apiKey: 'key2', storeFqdn: 'domain1'})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
@@ -810,7 +818,6 @@ api_version = "2023-04"
   test('throws if the store input is not valid', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
     const options = devOptions({
       apiKey: 'key1',
@@ -828,7 +835,6 @@ api_version = "2023-04"
   test('resets cached state if reset is true', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1)
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     const options = devOptions({reset: true})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
@@ -864,7 +870,6 @@ api_version = "2023-04"
         specifications: [],
         remoteFlags: [],
       })
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
       const options = devOptions({reset: true})
@@ -939,7 +944,6 @@ api_version = "2023-04"
         specifications: [],
         remoteFlags: [],
       })
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
       const options = devOptions()
@@ -966,7 +970,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue(app.configuration)
@@ -1083,6 +1086,7 @@ describe('ensureDeployContext', () => {
           hasMorePages: false,
         }
       },
+      appFromId: () => Promise.resolve(APP2),
     })
     const opts: DeployContextOptions = {...deployOptions(app), developerPlatformClient}
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
@@ -1154,6 +1158,7 @@ describe('ensureDeployContext', () => {
           hasMorePages: false,
         }
       },
+      appFromId: () => Promise.resolve(APP2)
     })
     const opts = {...deployOptions(app, true), developerPlatformClient}
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
@@ -1198,7 +1203,6 @@ describe('ensureDeployContext', () => {
       allExtensions: [await testAppConfigExtensions()],
     })
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(appWithExtensions)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(appWithExtensions)
@@ -1229,7 +1233,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
@@ -1282,7 +1285,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
@@ -1330,7 +1332,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue((app as any).configuration)
@@ -1383,7 +1384,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
@@ -1436,7 +1436,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue(app.configuration)
@@ -1483,7 +1482,6 @@ describe('ensureDeployContext', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)

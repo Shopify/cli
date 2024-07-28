@@ -28,7 +28,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {ExtensionCreateSchema} from '../../api/graphql/extension_create.js'
 import appPOSSpec from '../../models/extensions/specifications/app_config_point_of_sale.js'
 import appWebhookSubscriptionSpec from '../../models/extensions/specifications/app_config_webhook_subscription.js'
-import {Flag} from '../dev/fetch.js'
+import {Flag} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
