@@ -1,7 +1,7 @@
 import {PartnersClient} from './partners-client.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {Organization} from '../../models/organization.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
 import {
   testPartnersUserSession,
   testApp,
@@ -11,6 +11,8 @@ import {
 import {appNamePrompt} from '../../prompts/dev.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {describe, expect, vi, test} from 'vitest'
+import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
+import {NoOrgError} from '../../services/dev/fetch.js'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -40,6 +42,34 @@ const ORG2: Organization = {
 }
 
 const APP1 = testOrganizationApp({apiKey: 'key1'})
+const APP2 = testOrganizationApp({
+  id: '2',
+  title: 'app2',
+  apiKey: 'key2',
+  apiSecretKeys: [{secret: 'secret2'}],
+})
+
+const STORE1: OrganizationStore = {
+  shopId: '1',
+  link: 'link1',
+  shopDomain: 'domain1',
+  shopName: 'store1',
+  transferDisabled: false,
+  convertableToPartnerTest: false,
+}
+
+const FETCH_ORG_RESPONSE_VALUE = {
+  organizations: {
+    nodes: [
+      {
+        id: ORG1.id,
+        businessName: ORG1.businessName,
+        apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+        stores: {nodes: [STORE1]},
+      },
+    ],
+  },
+}
 
 describe('createApp', () => {
   test('sends request to create app with launchable defaults and returns it', async () => {
@@ -106,5 +136,34 @@ describe('createApp', () => {
 
     // Then
     await expect(got).rejects.toThrow(`some-error`)
+  })
+})
+
+describe('fetchApp', async () => {
+  test('returns fetched apps', async () => {
+    // Given
+    const partnersClient = new PartnersClient(testPartnersUserSession)
+    vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
+    const partnerMarkedOrg = {...ORG1, source: 'Partners'}
+
+    // When
+    const got = await partnersClient.orgAndApps(ORG1.id)
+
+    // Then
+    expect(got).toEqual({organization: partnerMarkedOrg, apps: [APP1, APP2], hasMorePages: false})
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
+  })
+
+  test('throws if there are no organizations', async () => {
+    // Given
+    const partnersClient = new PartnersClient(testPartnersUserSession)
+    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
+
+    // When
+    const got = () => partnersClient.orgAndApps(ORG1.id)
+
+    // Then
+    await expect(got).rejects.toThrowError(new NoOrgError(testPartnersUserSession.accountInfo))
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })

@@ -1,9 +1,9 @@
 import {showEnv} from './show.js'
-import {fetchOrgAndApps, fetchOrganizations} from '../../dev/fetch.js'
+import {fetchOrganizations} from '../../dev/fetch.js'
 import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
@@ -31,15 +31,12 @@ describe('env show', () => {
 
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-    vi.mocked(fetchOrgAndApps).mockResolvedValue({
-      organization,
-      stores: [],
-      apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
-    })
     vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
 
     // When
-    const result = await showEnv(app)
+    const result = await showEnv(app, testDeveloperPlatformClient({
+      orgAndApps: () => Promise.resolve({organization, apps: [organizationApp], hasMorePages: false}),
+    }))
 
     // Then
     expect(file.writeFile).not.toHaveBeenCalled()

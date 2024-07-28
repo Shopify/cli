@@ -1,16 +1,12 @@
 import {
-  MinimalOrganizationApp,
   Organization,
   OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
-
-import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   AccountInfo,
-  PartnersSession,
   fetchCurrentAccountInformation,
   isServiceAccount,
   isUserAccount,
@@ -20,7 +16,6 @@ import {
   allDeveloperPlatformClients,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -84,18 +79,6 @@ export class NoOrgError extends AbortError {
   }
 }
 
-interface OrganizationAppsResponse {
-  pageInfo: {
-    hasNextPage: boolean
-  }
-  nodes: MinimalOrganizationApp[]
-}
-
-interface FetchResponse {
-  organization: Organization
-  apps: OrganizationAppsResponse
-  stores: OrganizationStore[]
-}
 
 /**
  * Fetch all organizations the user belongs to
@@ -117,28 +100,6 @@ export async function fetchOrganizations(): Promise<Organization[]> {
     throw new NoOrgError(accountInfo)
   }
   return organizations
-}
-
-/**
- * Fetch all apps and stores for the given organization
- * @param orgId - Organization ID
- * @param token - Token to access partners API
- * @returns Current organization details and list of apps and stores
- */
-export async function fetchOrgAndApps(
-  orgId: string,
-  partnersSession: PartnersSession,
-  title?: string,
-): Promise<FetchResponse> {
-  const query = FindOrganizationQuery
-  const params: {id: string; title?: string} = {id: orgId}
-  if (title) params.title = title
-  const result: FindOrganizationQuerySchema = await partnersRequest(query, partnersSession.token, params)
-  const org = result.organizations.nodes[0]
-  if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
-  const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
-  const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
-  return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
 }
 
 export async function fetchAppPreviewMode(

@@ -1,5 +1,4 @@
 import {
-  fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
   fetchStoreByDomain,
@@ -122,10 +121,10 @@ const devOptions = (options: object = {}): DevContextOptions => {
   }
 }
 
-const FETCH_RESPONSE = {
+const ORG_AND_APPS_RESPONSE = {
   organization: ORG1,
-  apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
-  stores: [STORE1, STORE2],
+  apps: [APP1, APP2],
+  hasMorePages: false,
 }
 
 const DEFAULT_SELECT_APP_OPTIONS = {
@@ -199,7 +198,6 @@ beforeEach(async () => {
   vi.mocked(selectStore).mockResolvedValue(STORE1)
   vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
   vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
-  vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
   vi.mocked(getPackageManager).mockResolvedValue('npm')
   vi.mocked(isWebType).mockReturnValue(true)
 
@@ -739,6 +737,7 @@ api_version = "2023-04"
     const options = devOptions({
       developerPlatformClient: buildDeveloperPlatformClient({
         appFromId: () => Promise.resolve(APP1),
+        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE)
       }),
     })
     const got = await ensureDevContext(options)
@@ -780,7 +779,7 @@ api_version = "2023-04"
       ],
       headline: 'Using these settings:',
     })
-    expect(fetchOrgAndApps).not.toBeCalled()
+    expect(options.developerPlatformClient.orgAndApps).not.toBeCalled()
   })
 
   test('returns selected data and updates internal state, with inputs from flags', async () => {
@@ -788,7 +787,14 @@ api_version = "2023-04"
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTransferDisabledStoreIfNeeded).mockResolvedValueOnce(true)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
-    const options = devOptions({apiKey: 'key2', storeFqdn: 'domain1'})
+    const options = devOptions({
+      apiKey: 'key2',
+      storeFqdn: 'domain1',
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP2),
+        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE)
+      }),
+    })
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
     // When
@@ -812,7 +818,7 @@ api_version = "2023-04"
     expect(fetchOrganizations).toBeCalled()
     expect(selectOrCreateApp).not.toBeCalled()
     expect(selectStore).not.toBeCalled()
-    expect(fetchOrgAndApps).not.toBeCalled()
+    expect(options.developerPlatformClient.orgAndApps).not.toBeCalled()
   })
 
   test('throws if the store input is not valid', async () => {
