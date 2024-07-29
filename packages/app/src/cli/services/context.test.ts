@@ -929,7 +929,7 @@ api_version = "2023-04"
   })
 })
 
-describe('ensureDeploy Context', () => {
+describe('ensureDeployContext', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
