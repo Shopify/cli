@@ -1065,8 +1065,7 @@ describe('ensureDeploy Context', () => {
     const got = await ensureDeployContext(opts)
 
     // Then
-    // TODO: try to assert exact arguments.
-    expect(link).toHaveBeenCalled()
+    expect(link).toBeCalledWith({directory: app.directory}, false)
 
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
