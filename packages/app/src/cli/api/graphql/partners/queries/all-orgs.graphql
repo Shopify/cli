@@ -3,7 +3,6 @@ query AllOrgs {
     nodes {
       id
       businessName
-      website
     }
   }
 }
