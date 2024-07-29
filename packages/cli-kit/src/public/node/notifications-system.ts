@@ -43,9 +43,13 @@ export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Pro
     const commandId = getCurrentCommandId()
     const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
     await renderNotifications(notificationsToShow)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error: unknown) {
-    outputDebug('Error retrieving notifications')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+  } catch (error: any) {
+    const errorMessage = `Error retrieving notifications: ${error.message}`
+    outputDebug(errorMessage)
+    // This is very prone to becoming a circular dependency, so we import it dynamically
+    const {sendErrorToBugsnag} = await import('./error-handler.js')
+    await sendErrorToBugsnag(errorMessage, 'unexpected_error')
   }
 }
 
@@ -93,7 +97,7 @@ export async function getNotifications(): Promise<Notifications> {
  * Fetch notifications from GitHub.
  */
 async function fetchNotifications(): Promise<string> {
-  const response = await fetch(URL)
+  const response = await fetch(URL, {signal: AbortSignal.timeout(3 * 1000)})
   return response.text() as unknown as string
 }
 
