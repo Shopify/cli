@@ -45,6 +45,7 @@ export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Pro
     const notifications = await getNotifications()
     const commandId = getCurrentCommandId()
     const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
+    outputDebug(`Notifications to show: ${notificationsToShow.length}`)
     await renderNotifications(notificationsToShow)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
   } catch (error: any) {
@@ -101,6 +102,7 @@ export async function getNotifications(): Promise<Notifications> {
  * Fetch notifications from GitHub.
  */
 async function fetchNotifications(): Promise<string> {
+  outputDebug(`No cached notifications found. Fetching from ${URL}...`)
   const response = await fetch(URL, {signal: AbortSignal.timeout(3 * 1000)})
   if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
   return response.text() as unknown as string
