@@ -72,6 +72,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   const {developerPlatformClient, app} = options
   await installJavy(app)
 
+  const refreshToken = async () => {
+    return developerPlatformClient.refreshToken()
+  }
+
   const dir = tempDirectory()
 
   // Uncomment this to open the temp directory automatically for debugging
@@ -120,7 +124,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     const networkStartTime = startHRTime()
     await performActionWithRetryAfterRecovery(async () => {
       await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
-    }, developerPlatformClient.refreshToken.bind(developerPlatformClient))
+    }, refreshToken)
 
     const endTime = endHRTimeInMs(event.startTime)
     const endNetworkTime = endHRTimeInMs(networkStartTime)

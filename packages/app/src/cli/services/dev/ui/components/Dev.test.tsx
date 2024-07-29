@@ -27,6 +27,7 @@ const testApp = {
   canEnablePreviewMode: true,
   developmentStorePreviewEnabled: false,
   apiKey: '123',
+  id: '123',
   developerPlatformClient,
   extensions: [],
 }

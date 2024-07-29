@@ -30,6 +30,7 @@ export interface DevProps {
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
+    id: string
     apiKey: string
     developerPlatformClient: DeveloperPlatformClient
     extensions: ExtensionInstance[]
@@ -71,7 +72,7 @@ const Dev: FunctionComponent<DevProps> = ({
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
     outputDebug(`Shutting down dev in shop: ${shopFqdn}`)
-    await app.developerPlatformClient.devSessionDelete({appId: app.apiKey, shopFqdn})
+    await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     if (err) {
       setStatusMessage('Shutting down dev because of an error ...')
     } else {

@@ -151,6 +151,7 @@ describe('ui', () => {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
+        id: '123',
         developerPlatformClient,
         extensions: [],
       }
@@ -193,6 +194,7 @@ describe('ui', () => {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
+        id: '123',
         developerPlatformClient,
         extensions: [],
       }
@@ -231,6 +233,7 @@ describe('ui', () => {
         canEnablePreviewMode: false,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
+        id: '123',
         developerPlatformClient,
         extensions: [],
       }
@@ -269,6 +272,7 @@ describe('ui', () => {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
         apiKey: '123',
+        id: '123',
         developerPlatformClient,
         extensions: [],
       }

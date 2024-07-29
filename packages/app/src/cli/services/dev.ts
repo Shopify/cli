@@ -322,6 +322,7 @@ async function launchDevProcesses({
         }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
+    id: config.remoteApp.id,
     developerPlatformClient,
     extensions: config.localApp.allExtensions,
   }
