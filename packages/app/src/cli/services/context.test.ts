@@ -932,7 +932,7 @@ api_version = "2023-04"
 describe('ensureDeploy Context', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
-    const app = testApp()
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -943,6 +943,8 @@ describe('ensureDeploy Context', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
 
     // When
     const got = await ensureDeployContext(deployOptions(app))
@@ -998,6 +1000,8 @@ describe('ensureDeploy Context', () => {
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
@@ -1024,7 +1028,7 @@ describe('ensureDeploy Context', () => {
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
     // Given
-    const app = testApp()
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
       app: APP1.apiKey,
       extensions: {},
@@ -1035,6 +1039,7 @@ describe('ensureDeploy Context', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue(app.configuration)
     const developerPlatformClient = buildDeveloperPlatformClient({
       async orgAndApps(_orgId: string) {
         return {
@@ -1075,14 +1080,19 @@ describe('ensureDeploy Context', () => {
 
   test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
     // Given
-    const app = testApp()
+    const app = testAppWithConfig()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue(app.configuration)
+
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromId: vi.fn().mockRejectedValue(new AbortError("Couldn't find the app with Client ID key1")),
+    })
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+
     const opts = {
       ...deployOptions(app),
-      developerPlatformClient: testDeveloperPlatformClient({
-        appFromId: vi.fn().mockRejectedValue(new AbortError("Couldn't find the app with Client ID key1")),
-      }),
+      developerPlatformClient,
     }
 
     // When
@@ -1148,7 +1158,7 @@ describe('ensureDeploy Context', () => {
   })
   test('load the app extension using the remote extensions specifications', async () => {
     // Given
-    const app = testApp()
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1164,6 +1174,8 @@ describe('ensureDeploy Context', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(appWithExtensions)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(appWithExtensions)
+    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
 
     // When
     const got = await ensureDeployContext(deployOptions(app))
@@ -1195,6 +1207,7 @@ describe('ensureDeploy Context', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
 
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
@@ -1247,7 +1260,7 @@ describe('ensureDeploy Context', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     vi.mocked(link).mockResolvedValue(app.configuration)
-    // vi.mocked(selectDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
@@ -1447,6 +1460,8 @@ describe('ensureDeploy Context', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
