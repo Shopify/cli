@@ -119,7 +119,7 @@ export function filterNotifications(
   notifications: Notification[],
   commandId: string,
   currentSurfaces?: string[],
-  today: Date = new Date(),
+  today: Date = new Date(new Date().setUTCHours(0, 0, 0, 0)),
   currentVersion: string = CLI_KIT_VERSION,
 ): Notification[] {
   return notifications
