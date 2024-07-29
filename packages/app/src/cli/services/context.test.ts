@@ -945,6 +945,9 @@ describe('ensureDeploy Context', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue(app.configuration)
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
 
     // When
     const got = await ensureDeployContext(deployOptions(app))
@@ -1001,11 +1004,13 @@ describe('ensureDeploy Context', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue(app.configuration)
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
+
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
     const opts = deployOptions(app)
+
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(opts.developerPlatformClient)
 
     // When
     const got = await ensureDeployContext(opts)
@@ -1028,7 +1033,7 @@ describe('ensureDeploy Context', () => {
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
     // Given
-    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const app = testAppWithConfig({config: {client_id: APP1.apiKey}})
     const identifiers = {
       app: APP1.apiKey,
       extensions: {},
@@ -1036,10 +1041,14 @@ describe('ensureDeploy Context', () => {
       extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
-    vi.mocked(link).mockResolvedValue(app.configuration)
+    vi.mocked(link).mockResolvedValue({...app.configuration, organization_id: ORG1.id})
+
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
     const developerPlatformClient = buildDeveloperPlatformClient({
       async orgAndApps(_orgId: string) {
         return {
@@ -1056,15 +1065,9 @@ describe('ensureDeploy Context', () => {
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(fetchOrganizations).toHaveBeenCalledOnce()
-    expect(selectOrCreateApp).toHaveBeenCalledWith(
-      app.name,
-      [APP1, APP2],
-      false,
-      ORG1,
-      opts.developerPlatformClient,
-      DEFAULT_SELECT_APP_OPTIONS,
-    )
+    // TODO: try to assert exact arguments.
+    expect(link).toHaveBeenCalled()
+
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers,

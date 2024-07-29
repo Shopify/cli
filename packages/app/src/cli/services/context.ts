@@ -428,8 +428,10 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const {reset, force, noRelease} = options
   let developerPlatformClient = options.developerPlatformClient
   // do the link here
+  // MITCH: do a refactor to call getAppContext directly and not do this.
   const performAppLink = await decideOnLinkStrategy(options.app.directory, options.reset, true)
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, performAppLink)
+
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
@@ -632,6 +634,7 @@ export async function fetchOrCreateOrganizationApp(
   return remoteApp
 }
 
+// TODO: Add an issue to potentially delete this method in a separate PR
 export async function fetchAppAndIdentifiers(
   options: {
     app: AppInterface
@@ -661,6 +664,7 @@ export async function fetchAppAndIdentifiers(
   if (performAppLink) {
     envIdentifiers = {app: undefined, extensions: {}}
     reuseDevCache = false
+    // TODO: should we pass this in? We read the cached info outside this.
     const configuration = await link(
       {
         directory: app.directory,
@@ -819,7 +823,7 @@ export async function getAppContext({
   }
 }
 
-async function decideOnLinkStrategy(
+export async function decideOnLinkStrategy(
   directory: string,
   reset: boolean,
   enableLinkingPrompt: boolean,
