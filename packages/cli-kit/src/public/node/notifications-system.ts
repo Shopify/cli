@@ -102,6 +102,7 @@ export async function getNotifications(): Promise<Notifications> {
  */
 async function fetchNotifications(): Promise<string> {
   const response = await fetch(URL, {signal: AbortSignal.timeout(3 * 1000)})
+  if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
   return response.text() as unknown as string
 }
 
