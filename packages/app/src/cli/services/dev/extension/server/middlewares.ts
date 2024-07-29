@@ -54,6 +54,7 @@ export async function fileServerMiddleware(
     '.html': 'text/html',
     '.js': 'text/javascript',
     '.json': 'application/json',
+    '.wasm': 'application/wasm',
     '.css': 'text/css',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',

@@ -13,21 +13,10 @@ import {
   REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON,
   REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
 } from '../utils.js'
+import {AppLogData} from '../types.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
-
-export interface AppLogData {
-  shop_id: number
-  api_client_id: number
-  payload: string
-  log_type: string
-  source: string
-  source_namespace: string
-  cursor: string
-  status: 'success' | 'failure'
-  log_timestamp: string
-}
 
 export const pollAppLogs = async ({
   stdout,

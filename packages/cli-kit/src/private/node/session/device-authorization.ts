@@ -4,7 +4,10 @@ import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
-import {BugError} from '../../../public/node/error.js'
+import {AbortError, BugError} from '../../../public/node/error.js'
+import {isCloudEnvironment} from '../../../public/node/context/local.js'
+import {openURL} from '../../../public/node/system.js'
+import {isTTY, keypress} from '../../../public/node/ui.js'
 
 export interface DeviceAuthorizationResponse {
   deviceCode: string
@@ -27,7 +30,7 @@ export interface DeviceAuthorizationResponse {
  */
 export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
   const fqdn = await identityFqdn()
-  const identityClientId = await clientId()
+  const identityClientId = clientId()
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
   const url = `https://${fqdn}/oauth/device_authorization`
 
@@ -46,12 +49,25 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   }
 
   outputInfo('\nTo run this command, log in to Shopify.')
+
+  if (!isTTY()) {
+    throw new AbortError(
+      'Authorization is required to continue, but the current environment does not support interactive prompts.',
+      'To resolve this, specify credentials in your environment, or run the command in an interactive environment such as your local terminal.',
+    )
+  }
+
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
-  outputInfo(
-    outputContent`👉 Open this link to start the auth process: ${outputToken.green(
-      jsonResult.verification_uri_complete,
-    )}`,
-  )
+  const linkToken = outputToken.link(jsonResult.verification_uri_complete)
+
+  if (isCloudEnvironment()) {
+    outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
+  } else {
+    outputInfo('👉 Press any key to open the login page on your browser')
+    await keypress()
+    await openURL(jsonResult.verification_uri_complete)
+    outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
+  }
 
   return {
     deviceCode: jsonResult.device_code,

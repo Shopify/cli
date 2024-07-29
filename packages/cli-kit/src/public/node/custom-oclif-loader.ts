@@ -1,11 +1,19 @@
 import {fileExistsSync} from './fs.js'
 import {cwd, joinPath, sniffForPath} from './path.js'
+import {execaSync} from 'execa'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
-    const path = sniffForPath() ?? cwd()
+    const currentPath = cwd()
+
+    let path = sniffForPath() ?? currentPath
+    const currentPathMightBeHydrogenMonorepo = currentPath.toLowerCase().includes('shopify/hydrogen')
+    const ignoreHydrogenMonorepo = process.env.IGNORE_HYDROGEN_MONOREPO
+    if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
+      path = execaSync('npm', ['prefix']).stdout.trim()
+    }
     if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
       // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
       // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)

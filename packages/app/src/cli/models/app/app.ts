@@ -18,6 +18,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 // Schemas for loading app configuration
 
@@ -32,7 +34,7 @@ export const LegacyAppSchema = zod
       .string()
       .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
       .default(''),
-    extension_directories: zod.array(zod.string()).optional(),
+    extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
     web_directories: zod.array(zod.string()).optional(),
     webhooks: zod
       .object({
@@ -43,11 +45,16 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
+function removeTrailingPathSeparator(value: string[] | undefined) {
+  // eslint-disable-next-line no-useless-escape
+  return value?.map((dir) => dir.replace(/[\/\\]+$/, ''))
+}
 /**
  * Schema for a normal, linked app. Properties from modules are not validated.
  */
 export const AppSchema = zod.object({
   client_id: zod.string(),
+  app_id: zod.string().optional(),
   organization_id: zod.string().optional(),
   build: zod
     .object({
@@ -56,7 +63,7 @@ export const AppSchema = zod.object({
       include_config_on_deploy: zod.boolean().optional(),
     })
     .optional(),
-  extension_directories: zod.array(zod.string()).optional(),
+  extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
   web_directories: zod.array(zod.string()).optional(),
 })
 
@@ -250,6 +257,8 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): AppCreationDefaultOptions
+  manifest: () => Promise<JsonMapType>
+  removeExtension: (extensionHandle: string) => void
 }
 
 type AppConstructor<
@@ -333,6 +342,28 @@ export class App<
     )
   }
 
+  async manifest(): Promise<JsonMapType> {
+    const modules = await Promise.all(
+      this.realExtensions.map(async (module) => {
+        const config = await module.commonDeployConfig('', this.configuration)
+        return {
+          type: module.externalType,
+          handle: module.handle,
+          uid: module.uid,
+          assets: module.uid,
+          target: module.contextValue,
+          config: (config ?? {}) as JsonMapType,
+        }
+      }),
+    )
+    const realModules = getArrayRejectingUndefined(modules)
+    return {
+      name: this.name,
+      handle: '',
+      modules: realModules,
+    }
+  }
+
   async updateDependencies() {
     const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
@@ -389,6 +420,10 @@ export class App<
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
     }
+  }
+
+  removeExtension(extensionHandle: string) {
+    this.realExtensions = this.realExtensions.filter((ext) => ext.handle !== extensionHandle)
   }
 
   get includeConfigOnDeploy() {

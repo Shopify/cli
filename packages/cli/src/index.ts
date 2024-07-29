@@ -82,6 +82,42 @@ PluginPluginsCommands.plugins.hidden = true
 // Remove default description because it injects a path from the generating computer, making it fail on CI
 PluginPluginsCommands['plugins:install'].description = ''
 
+const appCommands = Object.keys(AppCommands) as (keyof typeof AppCommands)[]
+appCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(AppCommands[command] as any).customPluginName = '@shopify/app'
+})
+
+const themeCommands = Object.keys(ThemeCommands) as (keyof typeof ThemeCommands)[]
+themeCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(ThemeCommands[command] as any).customPluginName = '@shopify/theme'
+})
+
+const hydrogenCommands = Object.keys(HydrogenCommands) as (keyof typeof HydrogenCommands)[]
+hydrogenCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(HydrogenCommands[command] as any).customPluginName = '@shopify/cli-hydrogen'
+})
+
+const pluginCommandsCommands = Object.keys(PluginCommandsCommands) as (keyof typeof PluginCommandsCommands)[]
+pluginCommandsCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(PluginCommandsCommands[command] as any).customPluginName = '@oclif/plugin-commands'
+})
+
+const didYouMeanCommands = Object.keys(DidYouMeanCommands) as (keyof typeof DidYouMeanCommands)[]
+didYouMeanCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(DidYouMeanCommands[command] as any).customPluginName = '@shopify/plugin-did-you-mean'
+})
+
+const pluginPluginsCommands = Object.keys(PluginPluginsCommands) as (keyof typeof PluginPluginsCommands)[]
+pluginPluginsCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(PluginPluginsCommands[command] as any).customPluginName = '@oclif/plugin-plugins'
+})
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const COMMANDS: any = {
   ...AppCommands,

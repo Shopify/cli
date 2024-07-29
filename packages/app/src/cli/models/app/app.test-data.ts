@@ -25,6 +25,7 @@ import {
   AssetUrlSchema,
   CreateAppOptions,
   DeveloperPlatformClient,
+  DevSessionOptions,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -192,8 +193,9 @@ export async function testUIExtension(
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   const configuration = uiExtension?.configuration ?? {
-    name: uiExtension?.configuration?.name ?? 'test-ui-extension',
-    type: uiExtension?.configuration?.type ?? uiExtension?.type ?? 'product_subscription',
+    name: uiExtension?.name ?? 'test-ui-extension',
+    type: uiExtension?.type ?? 'product_subscription',
+    handle: uiExtension?.handle ?? 'test-ui-extension',
     metafields: [],
     capabilities: {
       block_progress: false,
@@ -202,6 +204,9 @@ export async function testUIExtension(
       collect_buyer_consent: {
         sms_marketing: false,
         customer_privacy: false,
+      },
+      iframe: {
+        sources: [],
       },
     },
     targeting: [{target: 'target1'}, {target: 'target2'}],
@@ -395,7 +400,7 @@ export async function testSingleWebhookSubscriptionExtension({
 
   const webhooksExtension = new ExtensionInstance({
     configuration,
-    configurationPath: '',
+    configurationPath: 'shopify.app.toml',
     directory: './',
     specification: appWebhookSubscriptionSpec,
   })
@@ -1195,6 +1200,7 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
     clientName: 'test',
+    webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     session: () => Promise.resolve(testPartnersUserSession),
@@ -1240,13 +1246,21 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
+    appDeepLink: (app: MinimalAppIdentifiers) =>
+      Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
+    devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
+    devSessionUpdate: (_input: DevSessionOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
+    devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub
   for (const [key, value] of Object.entries(clientStub)) {
     if (typeof value === 'function') {
       retVal[
-        key as keyof Omit<DeveloperPlatformClient, 'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName'>
+        key as keyof Omit<
+          DeveloperPlatformClient,
+          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName'
+        >
       ] = vi.fn().mockImplementation(value)
     }
   }

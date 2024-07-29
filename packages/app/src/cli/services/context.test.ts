@@ -1010,7 +1010,7 @@ describe('ensureDeployContext', () => {
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
     expect(opts.developerPlatformClient.appFromId).toHaveBeenCalledWith({
-      id: APP2.apiKey,
+      id: 'no-id-available',
       apiKey: APP2.apiKey,
       organizationId: '0',
     })

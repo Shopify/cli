@@ -1,5 +1,9 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
+import {
+  PreviewThemeAppExtensionsProcess as PreviewThemeAppExtensionsNextProcess,
+  setupPreviewThemeAppExtensionsProcess as setupPreviewThemeAppExtensionsProcessNext,
+} from './theme-app-extension-next.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
@@ -15,6 +19,7 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {appLogPollingEnabled} from '../../app-logs/utils.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -26,6 +31,7 @@ interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: st
 type DevProcessDefinition =
   | SendWebhookProcess
   | PreviewThemeAppExtensionsProcess
+  | PreviewThemeAppExtensionsNextProcess
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
@@ -81,8 +87,7 @@ export async function setupDevProcesses({
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling =
-    isTruthy(env[environmentVariableNames.enableAppLogPolling]) &&
-    localApp.allExtensions.some((extension) => extension.isFunctionExtension)
+    appLogPollingEnabled() && localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -126,15 +131,23 @@ export async function setupDevProcesses({
       developerPlatformClient,
       proxyUrl: network.proxyUrl,
     }),
-    await setupPreviewThemeAppExtensionsProcess({
-      allExtensions: localApp.allExtensions,
-      storeFqdn,
-      apiKey,
-      developerPlatformClient,
-      theme: commandOptions.theme,
-      themeExtensionPort: commandOptions.themeExtensionPort,
-      notify: commandOptions.notify,
-    }),
+    commandOptions.devPreview
+      ? await setupPreviewThemeAppExtensionsProcessNext({
+          allExtensions: localApp.allExtensions,
+          storeFqdn,
+          developerPlatformClient,
+          theme: commandOptions.theme,
+          themeExtensionPort: commandOptions.themeExtensionPort,
+        })
+      : await setupPreviewThemeAppExtensionsProcess({
+          allExtensions: localApp.allExtensions,
+          storeFqdn,
+          apiKey,
+          developerPlatformClient,
+          theme: commandOptions.theme,
+          themeExtensionPort: commandOptions.themeExtensionPort,
+          notify: commandOptions.notify,
+        }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,
       backendPort: network.backendPort,

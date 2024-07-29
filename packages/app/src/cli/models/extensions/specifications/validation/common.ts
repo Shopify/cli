@@ -17,6 +17,7 @@ export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 
     return httpsRegex.test(uri) || pubSubRegex.test(uri) || arnRegex.test(uri)
   },
   {
-    message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+    message:
+      "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
   },
 )

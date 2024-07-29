@@ -325,7 +325,9 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appId: '1',
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
@@ -336,7 +338,9 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appId: '1',
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -362,7 +366,9 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appId: '1',
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
@@ -375,7 +381,9 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appId: '1',
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -399,7 +407,9 @@ describe('uploadExtensionsBundle', () => {
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
     await uploadExtensionsBundle({
+      appId: '1',
       apiKey: 'app-id',
+      name: 'appName',
       organizationId: '1',
       bundlePath: undefined,
       appModules: [],
@@ -410,12 +420,14 @@ describe('uploadExtensionsBundle', () => {
 
     // Then
     expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+      appId: '1',
       apiKey: 'app-id',
+      name: 'appName',
       organizationId: '1',
       skipPublish: false,
       message: undefined,
       versionTag: undefined,
-      commitReferences: undefined,
+      commitReference: undefined,
     })
   })
 
@@ -508,7 +520,9 @@ describe('uploadExtensionsBundle', () => {
       // Then
       try {
         await uploadExtensionsBundle({
+          appId: '1',
           apiKey: 'app-id',
+          name: 'appName',
           organizationId: '1',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           appModules: [
@@ -608,7 +622,9 @@ describe('uploadExtensionsBundle', () => {
 
       // When
       const result = await uploadExtensionsBundle({
+        appId: '1',
         apiKey: 'app-id',
+        name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [

@@ -5,19 +5,26 @@ export const ActiveAppReleaseQuery = gql`
   query activeAppRelease($appId: ID!) {
     app(id: $appId) {
       id
+      key
+      activeRoot {
+        clientCredentials {
+          secrets {
+            key
+          }
+        }
+      }
       activeRelease {
         id
         version {
-          modules {
-            gid
-            uid
+          name
+          appModules {
+            uuid
             handle
             config
             specification {
               identifier
               externalIdentifier
               name
-              experience
             }
           }
         }
@@ -34,12 +41,10 @@ interface AppModuleSpecification {
   identifier: string
   externalIdentifier: string
   name: string
-  experience: 'EXTENSION' | 'CONFIGURATION' | 'DEPRECATED'
 }
 
 interface AppModule {
-  gid: string
-  uid: string
+  uuid: string
   handle: string
   config: JsonMapType
   specification: AppModuleSpecification
@@ -48,10 +53,19 @@ interface AppModule {
 export interface ActiveAppReleaseQuerySchema {
   app: {
     id: string
+    key: string
+    activeRoot: {
+      clientCredentials: {
+        secrets: {
+          key: string
+        }[]
+      }
+    }
     activeRelease: {
       id: string
       version: {
-        modules: AppModule[]
+        name: string
+        appModules: AppModule[]
       }
     }
   }

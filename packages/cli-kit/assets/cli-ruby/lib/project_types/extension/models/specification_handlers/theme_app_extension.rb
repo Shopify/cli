@@ -16,7 +16,7 @@ module Extension
         SUPPORTED_BUCKETS = %w(assets blocks snippets locales)
         BUNDLE_SIZE_LIMIT = 10 * 1024 * 1024 # 10MB
         LIQUID_SIZE_LIMIT = 100 * 1024 # 100kb
-        SUPPORTED_ASSET_EXTS = %w(.jpg .jpeg .js .json .css .png .svg)
+        SUPPORTED_ASSET_EXTS = %w(.jpg .jpeg .js .json .css .png .svg .wasm)
         SUPPORTED_LOCALE_EXTS = %w(.json)
 
         def create(directory_name, context, getting_started: false)

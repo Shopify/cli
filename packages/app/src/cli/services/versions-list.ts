@@ -93,7 +93,7 @@ export default async function versionList(options: VersionListOptions) {
   const result = await ensureVersionsListContext(options)
   const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
 
-  const {id: appId, organizationId, title} = result.remoteApp
+  const {organizationId, title} = result.remoteApp
 
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, result.remoteApp, options.json)
 
@@ -126,8 +126,8 @@ export default async function versionList(options: VersionListOptions) {
   })
 
   const link = outputToken.link(
-    'Partner Dashboard',
-    `https://partners.shopify.com/${organizationId}/apps/${appId}/versions`,
+    developerPlatformClient.webUiName,
+    [await developerPlatformClient.appDeepLink(result.remoteApp), 'versions'].join('/'),
   )
 
   outputInfo(outputContent`\nView all ${String(totalResults)} app versions in the ${link}`)

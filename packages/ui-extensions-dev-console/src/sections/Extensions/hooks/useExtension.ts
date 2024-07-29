@@ -9,21 +9,6 @@ export function useExtension(uuid: string) {
   return useMemo(
     () => ({
       extension,
-      hide: () =>
-        extensionServer.client.persist('update', {
-          extensions: extensions.map((extension) => ({
-            uuid: extension.uuid,
-            development: {hidden: extension.uuid === uuid ? true : extension.development.hidden},
-          })),
-        }),
-      show: () =>
-        extensionServer.client.persist('update', {
-          extensions: extensions.map((extension) => ({
-            uuid: extension.uuid,
-            development: {hidden: extension.uuid === uuid ? false : extension.development.hidden},
-          })),
-        }),
-
       // dispatch events
       focus: () => extensionServer.client.emit('focus', [{uuid}]),
       unfocus: () => extensionServer.client.emit('unfocus'),

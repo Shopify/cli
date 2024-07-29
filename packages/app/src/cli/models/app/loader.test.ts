@@ -1333,6 +1333,9 @@ wrong = "property"
         customer_privacy = false
         sms_marketing = true
 
+        [extensions.capabilities.iframe]
+        sources = ["https://my-iframe.com"]
+
         [extensions.settings]
           [[extensions.settings.fields]]
           key = "field_key"
@@ -1400,6 +1403,9 @@ wrong = "property"
           collect_buyer_consent: {
             customer_privacy: false,
             sms_marketing: true,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
           },
         },
         settings: {
@@ -1768,6 +1774,9 @@ wrong = "property"
       customer_privacy = true
       sms_marketing = true
 
+      [capabilities.iframe]
+      sources = ["https://my-iframe.com"]
+
       [settings]
         [[settings.fields]]
         key = "field_key"
@@ -1804,6 +1813,9 @@ wrong = "property"
           collect_buyer_consent: {
             customer_privacy: true,
             sms_marketing: true,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
           },
         },
         settings: {
@@ -2583,7 +2595,8 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2610,7 +2623,8 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2776,7 +2790,8 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 

@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.64.0
+
+### Patch Changes
+
+- Updated dependencies [f76debde5]
+- Updated dependencies [593019155]
+  - @shopify/cli-kit@3.64.0
+  - @shopify/create-app@3.64.0
+  - @shopify/plugin-cloudflare@3.64.0
+
 ## 3.63.0
 
 ### Minor Changes
