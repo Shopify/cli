@@ -8,7 +8,7 @@ import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 
-const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications/notifications.json'
+const URL = 'https://raw.githubusercontent.com/Shopify/cli/main/notifications.json'
 
 const NotificationSchema = zod.object({
   id: zod.string(),
