@@ -1,4 +1,5 @@
 import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy, ExportJavyBuilder, jsExports} from './build.js'
+import {javyBinary, functionRunnerBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -141,17 +142,8 @@ describe('runJavy', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      [
-        'exec',
-        '--',
-        'javy-cli',
-        'compile',
-        '-d',
-        '-o',
-        joinPath(ourFunction.directory, 'dist/index.wasm'),
-        'dist/function.js',
-      ],
+      javyBinary().path,
+      ['compile', '-d', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -173,8 +165,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm')],
+      functionRunnerBinary().path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm')],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -194,8 +186,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--json'],
+      functionRunnerBinary().path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--json'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -215,16 +207,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      [
-        'exec',
-        '--',
-        'function-runner',
-        '-f',
-        joinPath(ourFunction.directory, 'dist/index.wasm'),
-        '--input',
-        'input.json',
-      ],
+      functionRunnerBinary().path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--input', 'input.json'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -244,8 +228,8 @@ describe('runFunctionRunner', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      'npm',
-      ['exec', '--', 'function-runner', '-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--export', 'foo'],
+      functionRunnerBinary().path,
+      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--export', 'foo'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -325,11 +309,8 @@ describe('ExportJavyBuilder', () => {
         // Then
         await expect(got).resolves.toBeUndefined()
         expect(exec).toHaveBeenCalledWith(
-          'npm',
+          javyBinary().path,
           [
-            'exec',
-            '--',
-            'javy-cli',
             'compile',
             '-d',
             '-o',

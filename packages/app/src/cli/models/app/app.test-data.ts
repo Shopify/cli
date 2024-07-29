@@ -205,6 +205,9 @@ export async function testUIExtension(
         sms_marketing: false,
         customer_privacy: false,
       },
+      iframe: {
+        sources: [],
+      },
     },
     targeting: [{target: 'target1'}, {target: 'target2'}],
   }

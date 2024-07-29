@@ -34,7 +34,7 @@ export function jsonSchemaValidate(
   subject: object,
   schema: SchemaObject,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
-  const ajv = new Ajv()
+  const ajv = new Ajv({allowUnionTypes: true})
   const validator = ajv.compile(schema)
   validator(subject)
 

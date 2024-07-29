@@ -100,7 +100,7 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
-import {ListOrganizations} from '../../api/graphql/business-platform/generated/organizations.js'
+import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
@@ -206,15 +206,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const {app} = await this.fetchApp(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
+    const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
     const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       id: app.id,
       title: name,
-      apiKey: app.id,
-      _temporaryApiKey: app.key,
-      organizationId: appIdentifiers.organizationId,
+      apiKey: app.key,
       apiSecretKeys,
+      organizationId: appIdentifiers.organizationId,
       grantedScopes: (appAccessModule?.config?.scopes as string[] | undefined) ?? [],
+      applicationUrl: appHomeModule?.config?.app_url as string | undefined,
       flags: [],
       developerPlatformClient: this,
     }
@@ -265,7 +266,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const minimalOrganizationApps = result.apps.map((app) => {
       return {
         id: app.id,
-        apiKey: app.id,
+        apiKey: app.key,
         title: app.activeRelease.version.name,
         organizationId,
       }
@@ -350,7 +351,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       ...createdApp,
       title: name,
-      apiKey: createdApp.id,
+      apiKey: createdApp.key,
       apiSecretKeys: [],
       grantedScopes: options?.scopesArray ?? [],
       organizationId: org.id,
@@ -465,7 +466,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           uuid: versionInfo.id,
           versionTag: versionInfo.metadata.versionTag,
           location: [
-            await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
+            await this.appDeepLink({organizationId, id: appId}),
             'versions',
             numberFromGid(versionInfo.id),
           ].join('/'),
@@ -578,7 +579,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async deploy({
-    apiKey,
+    appId,
     name,
     appModules,
     organizationId,
@@ -596,7 +597,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       updatedName = JSON.parse(brandingModule.config).name
     }
     const variables: CreateAppVersionMutationVariables = {
-      appId: apiKey,
+      appId,
       name: updatedName,
       appSource: {
         assetsUrl: bundleUrl,
@@ -628,7 +629,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.metadata.versionTag,
-          location: [await this.appDeepLink({organizationId, id: apiKey, apiKey}), `versions/${version.id}`].join('/'),
+          location: [await this.appDeepLink({organizationId, id: appId}), `versions/${version.id}`].join('/'),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -643,7 +644,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
     if (noRelease) return versionResult
 
-    const releaseVariables: ReleaseVersionMutationVariables = {appId: apiKey, versionId: version.id}
+    const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId: version.id}
     const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
       organizationId,
       ReleaseVersionMutation,
@@ -679,7 +680,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
           message: releaseResult.appReleaseCreate.release.version.metadata.message,
           location: [
-            await this.appDeepLink({organizationId, id: appId, apiKey: appId}),
+            await this.appDeepLink({organizationId, id: appId}),
             'versions',
             numberFromGid(releaseResult.appReleaseCreate.release.version.id),
           ].join('/'),
@@ -772,7 +773,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return input.toLowerCase()
   }
 
-  async appDeepLink({id, organizationId}: MinimalAppIdentifiers): Promise<string> {
+  async appDeepLink({id, organizationId}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
     return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
   }
 

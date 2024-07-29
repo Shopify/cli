@@ -1,3 +1,4 @@
+import {functionRunnerBinary, installBinary, javyBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -165,9 +166,9 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   extra: string[] = [],
 ) {
-  const args = ['exec', '--', 'javy-cli', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
+  const args = ['compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
 
-  return exec('npm', args, {
+  return exec(javyBinary().path, args, {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
@@ -178,7 +179,8 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
-    await exec('npm', ['exec', '--', 'javy-cli', '--version'], {cwd: app.directory})
+    const javy = javyBinary()
+    await installBinary(javy)
   }
 }
 
@@ -189,19 +191,18 @@ interface FunctionRunnerOptions {
 }
 
 export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigType>, options: FunctionRunnerOptions) {
+  const functionRunner = functionRunnerBinary()
+  await installBinary(functionRunner)
+
   const outputAsJson = options.json ? ['--json'] : []
   const withInput = options.input ? ['--input', options.input] : []
   const exportName = options.export ? ['--export', options.export] : []
-  return exec(
-    'npm',
-    ['exec', '--', 'function-runner', '-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName],
-    {
-      cwd: fun.directory,
-      stdin: 'inherit',
-      stdout: 'inherit',
-      stderr: 'inherit',
-    },
-  )
+  return exec(functionRunner.path, ['-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName], {
+    cwd: fun.directory,
+    stdin: 'inherit',
+    stdout: 'inherit',
+    stderr: 'inherit',
+  })
 }
 
 export interface JavyBuilder {

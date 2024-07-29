@@ -102,11 +102,16 @@ interface CollectBuyerConsentCapabilities {
   customerPrivacy: boolean
 }
 
+interface IframeCapabilities {
+  sources: string[]
+}
+
 interface Capabilities {
   apiAccess: boolean
   blockProgress: boolean
   networkAccess: boolean
   collectBuyerConsent: CollectBuyerConsentCapabilities
+  iframe: IframeCapabilities
 }
 
 export interface ExtensionPayload {

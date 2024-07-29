@@ -6,6 +6,7 @@ export const CreateAppMutation = gql`
     appCreate(appSource: $appSource, name: $name) {
       app {
         id
+        key
       }
       userErrors {
         category
@@ -32,6 +33,7 @@ export interface CreateAppMutationSchema {
   appCreate: {
     app: {
       id: string
+      key: string
     }
     userErrors: {
       field: string[]
