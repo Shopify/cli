@@ -633,7 +633,6 @@ export async function fetchOrCreateOrganizationApp(
   return remoteApp
 }
 
-// TODO: Add an issue to potentially delete this method in a separate PR
 export async function fetchAppAndIdentifiers(
   options: {
     app: AppInterface
