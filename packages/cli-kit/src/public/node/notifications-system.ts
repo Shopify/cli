@@ -6,6 +6,7 @@ import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
+import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications/notifications.json'
 
@@ -102,7 +103,7 @@ export async function getNotifications(): Promise<Notifications> {
  * Fetch notifications from GitHub.
  */
 async function fetchNotifications(): Promise<string> {
-  outputDebug(`No cached notifications found. Fetching from ${URL}...`)
+  outputDebug(`No cached notifications found. Fetching them...`)
   const response = await fetch(URL, {signal: AbortSignal.timeout(3 * 1000)})
   if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
   return response.text() as unknown as string
