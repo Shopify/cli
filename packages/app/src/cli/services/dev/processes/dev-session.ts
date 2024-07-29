@@ -16,7 +16,7 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
 
-export interface DevSessionOptions {
+interface DevSessionOptions {
   extensions: ExtensionInstance[]
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
@@ -27,7 +27,7 @@ export interface DevSessionOptions {
   appId: string
 }
 
-export interface DevSessionProcessOptions extends DevSessionOptions {
+interface DevSessionProcessOptions extends DevSessionOptions {
   bundlePath: string
   stdout: Writable
   stderr: Writable
@@ -63,7 +63,7 @@ export async function setupDevSessionProcess({
   }
 }
 
-export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
+const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
