@@ -385,9 +385,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.businessPlatformToken(),
       orgId,
     )
-    const shopArray = storesResult?.organization?.properties?.edges.map((value) => value.node as ShopNode) ?? null
+    const shopArray = storesResult?.organization!.properties!.edges.map((value) => value.node as ShopNode) ?? []
 
-    return shopArray ? mapBusinessPlatformStoresToOrganizationStores(shopArray) : []
+    return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
   async appExtensionRegistrations(
@@ -733,15 +733,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
 
     const {organization} = storesResult
-    const bpStoresArray = organization?.properties?.edges.map((value) => value.node as ShopNode) ?? []
-    const storesArray = bpStoresArray.length > 0 ? mapBusinessPlatformStoresToOrganizationStores(bpStoresArray) : []
+    const bpStoresArray = organization!.properties!.edges.map((value) => value.node as ShopNode) ?? []
+    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
 
     return {
       organizations: {
         nodes: [
           {
-            id: organization?.id ?? orgId,
-            businessName: organization?.name ?? '',
+            id: organization!.id,
+            businessName: organization!.name,
             website: 'N/A',
             stores: {
               nodes: storesArray,

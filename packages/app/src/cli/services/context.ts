@@ -177,12 +177,13 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
 
   const organization = await fetchOrgFromId(orgId, developerPlatformClient)
 
-  // if we have selected an app or a dev store from a command flag, we keep them
+  // we select an app or a dev store from a command flag
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
 
+  // if no stores or apps were selected previously from a command,
+  // we try to load the app or the dev store from the current config or cache
+  // if that's not available, we prompt the user to choose an existing one or create a new one
   if (!selectedApp || !selectedStore) {
-    // if not, we try to load the app or the dev store from the current config or cache
-    // if that's not available, we prompt the user to choose an existing one or create a new one
     const [cachedApp, cachedStore] = await Promise.all([
       selectedApp ||
         remoteApp ||
