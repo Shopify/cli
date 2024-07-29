@@ -57,6 +57,7 @@ const upToDateDec2000: Notification = {
   id: 'upToDateDec2000',
   message: 'message',
   type: 'info',
+  frequency: 'always',
   ownerChannel: 'channel',
   maxDate: '2000-12-31',
 }
