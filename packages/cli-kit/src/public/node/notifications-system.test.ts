@@ -261,7 +261,7 @@ afterEach(() => {
 describe('notifications-system filter notifications', () => {
   test.each(testCases)('Filter for %name', ({input, commandId, version, date, surfaces, output}) => {
     // When
-    const result = filterNotifications(input, commandId, surfaces, new Date(date), version, 10)
+    const result = filterNotifications(input, commandId, surfaces, new Date(date), version)
 
     // Then
     expect(result).toEqual(output)
