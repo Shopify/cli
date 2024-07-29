@@ -11,6 +11,7 @@ import {
   AppVersionIdentifiers,
   DeveloperPlatformClient,
   Paginateable,
+  DevSessionOptions,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
@@ -153,6 +154,7 @@ import {
 } from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -188,6 +190,7 @@ function getAppVars(
 
 export class PartnersClient implements DeveloperPlatformClient {
   public clientName = 'partners'
+  public webUiName = 'Partner Dashboard'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
   private _session: PartnersSession | undefined
@@ -484,5 +487,24 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
     return this.request(AppLogsSubscribeMutation, input)
+  }
+
+  async appDeepLink({id, organizationId}: MinimalAppIdentifiers): Promise<string> {
+    return `https://${await partnersFqdn()}/${organizationId}/apps/${id}`
+  }
+
+  async devSessionCreate(_input: DevSessionOptions): Promise<never> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
+  }
+
+  async devSessionUpdate(_input: DevSessionOptions): Promise<never> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
+  }
+
+  async devSessionDelete(_input: unknown): Promise<never> {
+    // Dev Sessions are not supported in partners client.
+    throw new Error('Unsupported operation')
   }
 }

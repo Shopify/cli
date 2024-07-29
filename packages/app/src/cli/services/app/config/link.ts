@@ -361,6 +361,7 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
         scopes: undefined,
       },
       {
+        app_id: remoteApp.id,
         client_id: remoteApp.apiKey,
         path: configFilePath,
         ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),

@@ -1,5 +1,5 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {AppLogData} from './poll-app-logs.js'
+import {AppLogData} from '../types.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -38,7 +38,7 @@ describe('writeAppLogsToFile', () => {
     const returnedPath = await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
 
     // Then
-    expect(returnedPath.startsWith(path)).toBe(true)
+    expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
   })
 

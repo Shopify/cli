@@ -57,8 +57,14 @@ export async function uploadThemeExtensions(
 }
 
 interface UploadExtensionsBundleOptions {
+  /** The ID of the application */
+  appId: string
+
   /** The application API key */
   apiKey: string
+
+  /** The app name */
+  name: string
 
   /** The ID of the organization owning the application */
   organizationId: string
@@ -137,7 +143,9 @@ export async function uploadExtensionsBundle(
   }
 
   const variables: AppDeployOptions = {
+    appId: options.appId,
     apiKey: options.apiKey,
+    name: options.name,
     organizationId: options.organizationId,
     skipPublish: !options.release,
     message: options.message,
@@ -290,7 +298,9 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
           : sectionBody.find((listToken) => listToken.list.title === GENERIC_ERRORS_TITLE)
 
       if (errorsList) {
-        errorsList.list.items.push(errorMessage)
+        if (!errorsList.list.items.includes(errorMessage)) {
+          errorsList.list.items.push(errorMessage)
+        }
       } else {
         sectionBody.push({
           list: {

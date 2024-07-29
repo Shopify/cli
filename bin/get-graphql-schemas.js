@@ -18,8 +18,18 @@ const schemas = [
   {
     repo: 'business-platform',
     pathToFile: 'db/graphql/destinations_schema.graphql',
-    localPath: './packages/app/src/cli/api/graphql/business-platform/destinations_schema.graphql',
+    localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
+  {
+    repo: 'business-platform',
+    pathToFile: 'db/graphql/organizations_schema.graphql',
+    localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'db/graphql/app_dev_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+  }
 ]
 
 function runCommand(command, args) {
@@ -88,13 +98,23 @@ async function fetchFileForSchema(schema, octokit) {
   }
 }
 
+async function getGithubPasswordFromDev() {
+  try {
+    // Uses token from `dev`
+    const output = await runCommand('/opt/dev/bin/dev', ['github', 'print-auth'])
+    const password = extractPassword(output)
+    return password
+  } catch (error) {
+    console.warn(`Soft-error fetching password from dev: ${error.message}`)
+    process.exit(0)
+  }
+}
+
 async function fetchFiles() {
   let password = undefined
   let tokenFromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
   if (!tokenFromEnv) {
-    // Uses token from `dev`
-    const output = await runCommand('/opt/dev/bin/dev', ['github', 'print-auth'])
-    password = extractPassword(output)
+    password = await getGithubPasswordFromDev()
   }
   const authToken = password || tokenFromEnv
 

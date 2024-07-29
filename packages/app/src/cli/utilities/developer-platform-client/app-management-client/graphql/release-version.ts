@@ -1,16 +1,24 @@
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
 export const ReleaseVersionMutation = gql`
   mutation ReleaseVersion($appId: ID!, $versionId: ID!) {
-    versionRelease(appId: $appId, versionId: $versionId) {
+    appReleaseCreate(appId: $appId, versionId: $versionId) {
       release {
         version {
-          versionTag
+          id
+          metadata {
+            message
+            versionTag
+          }
         }
       }
       userErrors {
         field
         message
+        category
+        code
+        on
       }
     }
   }
@@ -22,15 +30,22 @@ export interface ReleaseVersionMutationVariables {
 }
 
 export interface ReleaseVersionMutationSchema {
-  versionRelease: {
+  appReleaseCreate: {
     release: {
       version: {
-        versionTag: string
+        id: string
+        metadata: {
+          message: string
+          versionTag: string
+        }
       }
     }
     userErrors: {
       field: string[]
       message: string
+      category: string
+      code: string
+      on: JsonMapType
     }[]
   }
 }

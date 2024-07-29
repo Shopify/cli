@@ -31,10 +31,11 @@ import {
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import colors from '@shopify/cli-kit/node/colors'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
 
@@ -417,7 +418,7 @@ wrong = "property"
     })
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Validation errors in/)
+    await expect(loadTestingApp()).rejects.toThrow(/Validation errors/)
   })
 
   test('throws an error if the extension type is invalid', async () => {
@@ -1332,6 +1333,9 @@ wrong = "property"
         customer_privacy = false
         sms_marketing = true
 
+        [extensions.capabilities.iframe]
+        sources = ["https://my-iframe.com"]
+
         [extensions.settings]
           [[extensions.settings.fields]]
           key = "field_key"
@@ -1399,6 +1403,9 @@ wrong = "property"
           collect_buyer_consent: {
             customer_privacy: false,
             sms_marketing: true,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
           },
         },
         settings: {
@@ -1767,6 +1774,9 @@ wrong = "property"
       customer_privacy = true
       sms_marketing = true
 
+      [capabilities.iframe]
+      sources = ["https://my-iframe.com"]
+
       [settings]
         [[settings.fields]]
         key = "field_key"
@@ -1803,6 +1813,9 @@ wrong = "property"
           collect_buyer_consent: {
             customer_privacy: true,
             sms_marketing: true,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
           },
         },
         settings: {
@@ -2483,9 +2496,9 @@ describe('parseConfigurationObject', () => {
         message: 'Boolean is required',
       },
     ]
-    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
-      errorObject,
-    )}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
 
     const abortOrReport = vi.fn()
 
@@ -2510,9 +2523,9 @@ describe('parseConfigurationObject', () => {
         message: 'Expected string, received array',
       },
     ]
-    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
-      errorObject,
-    )}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2559,9 +2572,9 @@ describe('parseConfigurationObject', () => {
         message: 'Invalid input',
       },
     ]
-    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
-      errorObject,
-    )}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
@@ -2582,7 +2595,8 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2609,7 +2623,8 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2712,16 +2727,14 @@ describe('WebhooksSchema', () => {
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      subscriptions: [
-        {uri: 'https://example.com', topics: ['products/create', 'products/create']},
-        {uri: 'https://example.com', topics: ['products/create']},
-      ],
+      subscriptions: [{uri: 'https://example.com', topics: ['products/create', 'products/create']}],
     }
+    const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2736,11 +2749,12 @@ describe('WebhooksSchema', () => {
         {uri: 'https://example.com', topics: ['products/create', 'products/update']},
       ],
     }
+    const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2776,7 +2790,8 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "URI isn't correct URI format of https://, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
+      message:
+        "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2814,11 +2829,12 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
+    const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2839,11 +2855,12 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
+    const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: pubsub://my-project-123:my-topic`)
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2864,11 +2881,14 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
+    const webhookFields = colors.dim(
+      `\n\ntopic: products/create\nuri: arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path`,
+    )
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+      path: ['webhooks', 'subscriptions'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2891,11 +2911,50 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
+    const webhookFields = colors.dim(`\n\ntopic: products/update\nuri: https://example.com\nfilter: title:shoes`)
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic`, `uri` and `filter`',
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
-      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/update'],
+      path: ['webhooks', 'subscriptions'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('shows multiple duplicate subscriptions in error message', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com',
+          filter: 'title:shoes',
+        },
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com',
+        },
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com',
+        },
+      ],
+    }
+    const webhookFields =
+      colors.dim(`\n\ntopic: products/update\nuri: https://example.com\nfilter: title:shoes`) +
+      colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
+      fatal: true,
+      path: ['webhooks', 'subscriptions'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2993,9 +3052,9 @@ describe('WebhooksSchema', () => {
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
-    const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
-      err,
-    )}`
+    const expectedFormatted = outputContent`\n${outputToken.errorText(
+      'Validation errors',
+    )} in tmp:\n\n${parseHumanReadableError(err)}`
     const abortOrReport = vi.fn()
 
     const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)

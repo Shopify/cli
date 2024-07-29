@@ -33,7 +33,8 @@
     "build-docs": "sh ./bin/docs/build-docs.sh",
     "knip": "knip",
     "graphql-codegen": "nx run-many --target=graphql-codegen --all",
-    "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js"
+    "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
+    "deploy-experimental": "node bin/deploy-experimental.js"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",

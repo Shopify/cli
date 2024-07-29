@@ -4,12 +4,14 @@ import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
+import Demo from './cli/commands/demo/index.js'
 import Catalog from './cli/commands/demo/catalog.js'
 import GenerateFile from './cli/commands/demo/generate-file.js'
 import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
+import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import ThemeCommands from '@shopify/theme'
@@ -78,6 +80,42 @@ PluginPluginsCommands.plugins.hidden = true
 // Remove default description because it injects a path from the generating computer, making it fail on CI
 PluginPluginsCommands['plugins:install'].description = ''
 
+const appCommands = Object.keys(AppCommands) as (keyof typeof AppCommands)[]
+appCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(AppCommands[command] as any).customPluginName = '@shopify/app'
+})
+
+const themeCommands = Object.keys(ThemeCommands) as (keyof typeof ThemeCommands)[]
+themeCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(ThemeCommands[command] as any).customPluginName = '@shopify/theme'
+})
+
+const hydrogenCommands = Object.keys(HydrogenCommands) as (keyof typeof HydrogenCommands)[]
+hydrogenCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(HydrogenCommands[command] as any).customPluginName = '@shopify/cli-hydrogen'
+})
+
+const pluginCommandsCommands = Object.keys(PluginCommandsCommands) as (keyof typeof PluginCommandsCommands)[]
+pluginCommandsCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(PluginCommandsCommands[command] as any).customPluginName = '@oclif/plugin-commands'
+})
+
+const didYouMeanCommands = Object.keys(DidYouMeanCommands) as (keyof typeof DidYouMeanCommands)[]
+didYouMeanCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(DidYouMeanCommands[command] as any).customPluginName = '@shopify/plugin-did-you-mean'
+})
+
+const pluginPluginsCommands = Object.keys(PluginPluginsCommands) as (keyof typeof PluginPluginsCommands)[]
+pluginPluginsCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(PluginPluginsCommands[command] as any).customPluginName = '@oclif/plugin-plugins'
+})
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const COMMANDS: any = {
   ...AppCommands,
@@ -92,9 +130,11 @@ export const COMMANDS: any = {
   help: HelpCommand,
   'auth:logout': Logout,
   'debug:command-flags': CommandFlags,
+  demo: Demo,
   'demo:catalog': Catalog,
   'demo:generate-file': GenerateFile,
   'demo:print-ai-prompt': PrintAIPrompt,
+  'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,

@@ -68,6 +68,7 @@ interface DevContextOutput {
 }
 
 export interface GenerateContextOptions {
+  appId?: string
   apiKey?: string
   directory: string
   reset: boolean
@@ -86,10 +87,10 @@ export interface GenerateContextOptions {
  * The selection is then cached as the "dev" app for the current directory.
  */
 export async function ensureGenerateContext(options: GenerateContextOptions): Promise<OrganizationApp> {
-  const {apiKey} = options
+  const {appId, apiKey} = options
   let developerPlatformClient = options.developerPlatformClient
   if (apiKey) {
-    const app = await appFromId({apiKey, developerPlatformClient})
+    const app = await appFromId({id: appId, apiKey, developerPlatformClient})
     if (!app) {
       const errorMessage = InvalidApiKeyErrorMessage(apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -106,6 +107,7 @@ export async function ensureGenerateContext(options: GenerateContextOptions): Pr
     const app =
       remoteApp ||
       (await appFromId({
+        id: cachedInfo.appGid,
         apiKey: cachedInfo.appId,
         organizationId: org.id,
         developerPlatformClient,
@@ -183,7 +185,8 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     const [_selectedApp, _selectedStore] = await Promise.all([
       selectedApp ||
         remoteApp ||
-        (cachedInfo?.appId && appFromId({apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
+        (cachedInfo?.appId &&
+          appFromId({id: cachedInfo.appGid, apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
       selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
     ])
 
@@ -265,6 +268,7 @@ const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command
 
 interface AppFromIdOptions {
   apiKey: string
+  id?: string
   organizationId?: string
   developerPlatformClient: DeveloperPlatformClient
 }
@@ -281,7 +285,7 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
     }
   }
   const app = await developerPlatformClient.appFromId({
-    id: options.apiKey,
+    id: options.id ?? 'no-id-available',
     apiKey: options.apiKey,
     organizationId,
   })
@@ -362,6 +366,7 @@ async function fetchDevAppAndPrompt(
 
   const remoteApp = await appFromId({
     apiKey: devAppId,
+    id: cachedInfo.appGid,
     organizationId: cachedInfo.orgId ?? '0',
     developerPlatformClient,
   })
@@ -648,7 +653,13 @@ export async function fetchAppAndIdentifiers(
 
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = options.apiKey ?? app.configuration.client_id
-    remoteApp = await appFromId({apiKey, organizationId: app.configuration.organization_id, developerPlatformClient})
+    const appGid = app.configuration.app_id
+    remoteApp = await appFromId({
+      id: appGid,
+      apiKey,
+      organizationId: app.configuration.organization_id,
+      developerPlatformClient,
+    })
   } else if (options.apiKey) {
     remoteApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
   } else if (envIdentifiers.app) {
@@ -769,6 +780,7 @@ export async function getAppContext({
   if (isCurrentAppSchema(configuration)) {
     remoteApp = await appFromId({
       apiKey: configuration.client_id,
+      id: configuration.app_id,
       organizationId: configuration.organization_id,
       developerPlatformClient,
     })

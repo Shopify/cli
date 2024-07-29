@@ -198,6 +198,50 @@ const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   },
 }
 
+const VERSION_DIFF_DELETED_CLI_WEBHOOK: AppVersionsDiffExtensionSchema = {
+  uuid: 'UUID_WEBOOK',
+  registrationTitle: 'Webhook Subscription Deleted',
+  specification: {
+    identifier: 'webhook_subscription',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
+const APP_URL_SPEC: AppModuleVersion = {
+  registrationId: 'C_A',
+  registrationUuid: 'UUID_C_A',
+  registrationTitle: 'Registration title',
+  type: 'app_home',
+  config: {app_url: 'https://myapp.com'},
+  specification: {
+    identifier: 'app_home',
+    name: 'App Ui',
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
+const API_VERSION_SPEC: AppModuleVersion = {
+  registrationId: 'C_Z',
+  registrationUuid: 'UUID_C_Z',
+  registrationTitle: 'Registration title',
+  type: 'webhooks',
+  config: {api_version: '2023-04'},
+  specification: {
+    identifier: 'webhooks',
+    name: 'Webhooks',
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
 const APP_CONFIGURATION: CurrentAppConfiguration = {
   path: 'shopify.app.development.toml',
   name: 'my app',
@@ -277,6 +321,9 @@ beforeAll(async () => {
         collect_buyer_consent: {
           sms_marketing: false,
         },
+        iframe: {
+          sources: [],
+        },
       },
     },
     entrySourceFilePath: '',
@@ -296,6 +343,9 @@ beforeAll(async () => {
         collect_buyer_consent: {
           sms_marketing: false,
         },
+        iframe: {
+          sources: [],
+        },
       },
     },
     entrySourceFilePath: '',
@@ -314,6 +364,9 @@ beforeAll(async () => {
         api_access: false,
         collect_buyer_consent: {
           sms_marketing: false,
+        },
+        iframe: {
+          sources: [],
         },
       },
     },
@@ -633,6 +686,39 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
         toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
         toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
+      },
+      versionDetails: versionDiff.versionDetails,
+    })
+  })
+
+  test('exclude webhook subscription modules from the version diff', async () => {
+    // Given
+    const versionDiff = {
+      versionsDiff: {
+        added: [],
+        updated: [],
+        removed: [VERSION_DIFF_DELETED_CLI_B, VERSION_DIFF_DELETED_CLI_WEBHOOK],
+      },
+      versionDetails: {
+        id: 1,
+        uuid: 'uuid',
+        location: 'location',
+        versionTag: '1.0.0',
+        message: 'message',
+        appModuleVersions: [],
+      },
+    }
+    vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
+
+    // When
+    const result = await extensionsIdentifiersReleaseBreakdown(developerPlatformClient, testOrganizationApp(), ' 1.0.0')
+
+    // Then
+    expect(result).toEqual({
+      extensionIdentifiersBreakdown: {
+        toCreate: [],
+        toUpdate: [],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -1280,6 +1366,208 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: ['pos'],
+      })
+    })
+
+    test('relative path declarative webhook subscriptions do not show up in the diff when not changed', async () => {
+      // Given
+      const configToReleaseAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'webhook_subscription',
+        config: {topics: ['products/create'], uri: '/webhooks'},
+        specification: {
+          identifier: 'webhook_subscription',
+          name: 'Webhook Subscription',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const configActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'webhook_subscription',
+        config: {
+          topics: ['products/create'],
+          uri: 'https://myapp.com/webhooks',
+        },
+        specification: {
+          identifier: 'webhook_subscription',
+          name: 'Webhook Subscription',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const activeVersion = {appModuleVersions: [configActiveAppModule, APP_URL_SPEC, API_VERSION_SPEC]}
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+      })
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], APP_CONFIGURATION),
+        versionAppModules: [configToReleaseAppModule, APP_URL_SPEC, API_VERSION_SPEC],
+        release: true,
+      })
+
+      // Then
+      expect(result).toEqual({
+        existingFieldNames: ['webhooks', 'application_url'],
+        existingUpdatedFieldNames: [],
+        newFieldNames: [],
+        deletedFieldNames: [],
+      })
+    })
+    test('relative path declarative webhook subscriptions show up in the diff when changed', async () => {
+      // Given
+      const configToReleaseAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'webhook_subscription',
+        config: {topics: ['products/create'], uri: '/webhooks-new'},
+        specification: {
+          identifier: 'webhook_subscription',
+          name: 'Webhook Subscription',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const configActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'webhook_subscription',
+        config: {
+          topics: ['products/create'],
+          uri: 'https://myapp.com/webhooks',
+        },
+        specification: {
+          identifier: 'webhook_subscription',
+          name: 'Webhook Subscription',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const activeVersion = {appModuleVersions: [configActiveAppModule, APP_URL_SPEC, API_VERSION_SPEC]}
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+      })
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], APP_CONFIGURATION),
+        versionAppModules: [configToReleaseAppModule, APP_URL_SPEC, API_VERSION_SPEC],
+        release: true,
+      })
+
+      // Then
+      expect(result).toEqual({
+        existingFieldNames: ['application_url'],
+        existingUpdatedFieldNames: ['webhooks'],
+        newFieldNames: [],
+        deletedFieldNames: [],
+      })
+    })
+    test('relative path declarative webhook subscriptions show up in the diff when application_url is changed', async () => {
+      // Given
+      const configToReleaseAppModule: AppModuleVersion = {
+        registrationId: 'C_Y',
+        registrationUuid: 'UUID_C_Y',
+        registrationTitle: 'Registration title',
+        type: 'app_home',
+        config: {app_url: 'https://myapp.com/new'},
+        specification: {
+          identifier: 'app_home',
+          name: 'App Ui',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const configActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_Y',
+        registrationUuid: 'UUID_C_Y',
+        registrationTitle: 'Registration title',
+        type: 'app_home',
+        config: {app_url: 'https://myapp.com'},
+        specification: {
+          identifier: 'app_home',
+          name: 'App Ui',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const webhookConfigToReleaseAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'webhook_subscription',
+        config: {topics: ['products/create'], uri: '/webhooks'},
+        specification: {
+          identifier: 'webhook_subscription',
+          name: 'Webhook Subscription',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const webhookConfigActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'webhook_subscription',
+        config: {topics: ['products/create'], uri: 'https://myapp.com/webhooks'},
+        specification: {
+          identifier: 'webhook_subscription',
+          name: 'Webhook Subscription',
+          experience: 'extension',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const activeVersion = {appModuleVersions: [configActiveAppModule, API_VERSION_SPEC, webhookConfigActiveAppModule]}
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+      })
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], APP_CONFIGURATION),
+        versionAppModules: [configToReleaseAppModule, API_VERSION_SPEC, webhookConfigToReleaseAppModule],
+        release: true,
+      })
+
+      // Then
+      expect(result).toEqual({
+        existingFieldNames: [],
+        existingUpdatedFieldNames: ['application_url', 'webhooks'],
+        newFieldNames: [],
+        deletedFieldNames: [],
       })
     })
   })

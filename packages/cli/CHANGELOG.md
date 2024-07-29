@@ -1,5 +1,21 @@
 # @shopify/cli
 
+## 3.64.0
+
+### Minor Changes
+
+- cb06f10e1: Added extension type pos_ui_extension to the ui_extension migration process
+
+## 3.63.0
+
+### Minor Changes
+
+- 7742994a5: Log streaming for Shopify Functions within `app dev` and re-execution of function runs via `app function replay` are available in beta. See [Shopify Functions documentation](https://shopify.dev/docs/apps/build/functions/log-streaming-and-replay) for more information.
+
+### Patch Changes
+
+- 9d3a6bade: Updated nx and eslint rules
+
 ## 3.62.0
 
 ## 3.61.0

@@ -25,16 +25,17 @@ export class LinkContentToken extends ContentToken<OutputMessage> {
   link: string
   fallback: string | undefined
 
-  constructor(value: OutputMessage, link: string, fallback?: string) {
+  constructor(value: OutputMessage, link?: string, fallback?: string) {
     super(value)
-    this.link = link
+    this.link = link ?? stringifyMessage(value)
     this.fallback = fallback
   }
 
   output() {
     const text = colors.green(stringifyMessage(this.value))
     const url = this.link ?? ''
-    return terminalLink(text, url, {fallback: () => this.fallback ?? `${text} ( ${url} )`})
+    const defaultFallback = this.value === this.link ? text : `${text} ( ${url} )`
+    return terminalLink(text, url, {fallback: () => this.fallback ?? defaultFallback})
   }
 }
 

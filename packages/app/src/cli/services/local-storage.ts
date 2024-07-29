@@ -7,6 +7,7 @@ export interface CachedAppInfo {
   directory: string
   configFile?: string
   appId?: string
+  appGid?: string
   title?: string
   orgId?: string
   storeFqdn?: string
