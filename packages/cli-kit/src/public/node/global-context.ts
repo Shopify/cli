@@ -1,6 +1,5 @@
 export interface GlobalContext {
   currentCommandId: string
-  [key: string]: string
 }
 
 let _globalContext: GlobalContext | undefined
