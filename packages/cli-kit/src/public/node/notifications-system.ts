@@ -128,6 +128,7 @@ export function filterNotifications(
     .filter((notification) => filterByCommand(notification, commandId))
     .filter((notification) => filterBySurface(notification, commandId, currentSurfaces))
     .filter((notification) => filterByFrequency(notification))
+    .slice(0, 2)
 }
 
 /**
