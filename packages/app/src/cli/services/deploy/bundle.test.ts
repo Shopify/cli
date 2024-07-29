@@ -40,7 +40,7 @@ describe('bundleAndBuildExtensions', () => {
             type: 'web_pixel_extension_external',
             handle: 'test-ui-extension',
             uid: 'test-ui-extension-uid',
-            assets: 'test-ui-extension-uid',
+            assets: 'test-ui-extension',
             target: '',
             config: {},
           },

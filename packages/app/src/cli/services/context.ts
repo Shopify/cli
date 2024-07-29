@@ -298,7 +298,7 @@ const storeFromFqdn = async (
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> => {
   return {
-    shopId: '5',
+    shopId: '1',
     link: 'string',
     shopDomain: storeFqdn,
     shopName: 'name',
@@ -734,7 +734,7 @@ async function fetchDevDataFromOptions(
     // )
 
     selectedStore = {
-      shopId: '5',
+      shopId: '1',
       link: 'string',
       shopDomain: options.storeFqdn,
       shopName: 'name',

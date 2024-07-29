@@ -1,7 +1,7 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {outputDebug, OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
@@ -71,8 +71,6 @@ const Dev: FunctionComponent<DevProps> = ({
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
-    outputDebug(`Shutting down dev in shop: ${shopFqdn}`)
-    await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     if (err) {
       setStatusMessage('Shutting down dev because of an error ...')
     } else {
@@ -85,6 +83,7 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
+    await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     await developerPreview.disable()
   })
 
