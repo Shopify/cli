@@ -3,33 +3,36 @@ import {renderError, renderInfo, renderWarning} from './ui.js'
 import {getCurrentCommandId} from './global-context.js'
 import {fileExists, readFile} from './fs.js'
 import {outputDebug} from './output.js'
+import {zod} from './schema.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/notifications/notifications.json'
 
-export interface Notifications {
-  notifications: Notification[]
-}
+const NotificationSchema = zod.object({
+  id: zod.string(),
+  message: zod.string(),
+  type: zod.enum(['info', 'warning', 'error']),
+  frequency: zod.enum(['always', 'once', 'once_a_day', 'once_a_week']),
+  ownerChannel: zod.string(),
+  cta: zod
+    .object({
+      label: zod.string(),
+      url: zod.string().url(),
+    })
+    .optional(),
+  title: zod.string().optional(),
+  minVersion: zod.string().optional(),
+  maxVersion: zod.string().optional(),
+  minDate: zod.string().optional(),
+  maxDate: zod.string().optional(),
+  commands: zod.array(zod.string()).optional(),
+  surface: zod.string().optional(),
+})
+export type Notification = zod.infer<typeof NotificationSchema>
 
-export interface Notification {
-  id: string
-  message: string
-  type: 'info' | 'warning' | 'error'
-  ownerChannel: string
-  cta?: {
-    label: string
-    url: string
-  }
-  title?: string
-  minVersion?: string
-  maxVersion?: string
-  minDate?: string
-  maxDate?: string
-  commands?: string[]
-  surface?: 'app' | 'theme' | 'hydrogen' | string
-  frequency?: 'always' | 'once' | 'once_a_day' | 'once_a_week'
-}
+const NotificationsSchema = zod.object({notifications: zod.array(NotificationSchema)})
+export type Notifications = zod.infer<typeof NotificationsSchema>
 
 /**
  * Shows notifications to the user if they meet the criteria specified in the notifications.json file.
@@ -90,7 +93,8 @@ async function renderNotifications(notifications: Notification[]) {
 export async function getNotifications(): Promise<Notifications> {
   const cacheKey: NotificationsKey = `notifications-${URL}`
   const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, 24 * 3600 * 1000)
-  return JSON.parse(rawNotifications)
+  const notifications: object = JSON.parse(rawNotifications)
+  return NotificationsSchema.parse(notifications)
 }
 
 /**
@@ -236,5 +240,6 @@ export async function getLocalNotifications(): Promise<Notifications> {
   if (!(await fileExists(filePath))) return {notifications: []}
 
   const rawNotifications = await readFile(filePath)
-  return JSON.parse(rawNotifications)
+  const notifications: object = JSON.parse(rawNotifications)
+  return NotificationsSchema.parse(notifications)
 }
