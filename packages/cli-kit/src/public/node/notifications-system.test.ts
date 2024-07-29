@@ -10,6 +10,8 @@ const betweenVersins1and2: Notification = {
   id: 'betweenVersins1and2',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   minVersion: '1.0',
   maxVersion: '2.0',
 }
@@ -18,6 +20,8 @@ const betweenDatesIn2000: Notification = {
   id: 'betweenDatesIn2000',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   minDate: '2000-01-01',
   maxDate: '2000-12-31',
 }
@@ -26,6 +30,8 @@ const fromVersion1: Notification = {
   id: 'fromVersion1',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   minVersion: '1.0',
 }
 
@@ -33,6 +39,8 @@ const upToVersion2: Notification = {
   id: 'upToVersion2',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   maxVersion: '2.0',
 }
 
@@ -40,6 +48,8 @@ const fromDateJan2000: Notification = {
   id: 'fromDateJan2000',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   minDate: '2000-01-01',
 }
 
@@ -47,6 +57,7 @@ const upToDateDec2000: Notification = {
   id: 'upToDateDec2000',
   message: 'message',
   type: 'info',
+  ownerChannel: 'channel',
   maxDate: '2000-12-31',
 }
 
@@ -54,6 +65,8 @@ const onlyForDevCommand: Notification = {
   id: 'onlyForDevCommand',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   commands: ['app:dev'],
 }
 
@@ -61,6 +74,8 @@ const onlyForThemeSurface: Notification = {
   id: 'onlyForThemeSurface',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   surface: 'theme',
 }
 
@@ -68,6 +83,8 @@ const unknownSurface: Notification = {
   id: 'unknownSurface',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   surface: 'unknown',
 }
 
@@ -75,6 +92,8 @@ const extensionSurface: Notification = {
   id: 'extensionSurface',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
   surface: 'ui-extension',
 }
 
@@ -83,6 +102,7 @@ const showOnce: Notification = {
   message: 'message',
   type: 'info',
   frequency: 'once',
+  ownerChannel: 'channel',
 }
 
 const showOnceADay: Notification = {
@@ -90,6 +110,7 @@ const showOnceADay: Notification = {
   message: 'message',
   type: 'info',
   frequency: 'once_a_day',
+  ownerChannel: 'channel',
 }
 
 const showOnceAWeek: Notification = {
@@ -97,6 +118,7 @@ const showOnceAWeek: Notification = {
   message: 'message',
   type: 'info',
   frequency: 'once_a_week',
+  ownerChannel: 'channel',
 }
 
 const showAlways: Notification = {
@@ -104,24 +126,31 @@ const showAlways: Notification = {
   message: 'message',
   type: 'info',
   frequency: 'always',
+  ownerChannel: 'channel',
 }
 
 const infoNotification: Notification = {
   id: 'infoNotification',
   message: 'message',
   type: 'info',
+  frequency: 'always',
+  ownerChannel: 'channel',
 }
 
 const errorNotification: Notification = {
   id: 'errorNotification',
   message: 'message',
   type: 'error',
+  frequency: 'always',
+  ownerChannel: 'channel',
 }
 
 const warningNotification: Notification = {
   id: 'warningNotification',
   message: 'message',
   type: 'warning',
+  frequency: 'always',
+  ownerChannel: 'channel',
 }
 
 const defaultInput = [
@@ -231,7 +260,7 @@ afterEach(() => {
 describe('notifications-system filter notifications', () => {
   test.each(testCases)('Filter for %name', ({input, commandId, version, date, surfaces, output}) => {
     // When
-    const result = filterNotifications(input, commandId, surfaces, new Date(date), version)
+    const result = filterNotifications(input, commandId, surfaces, new Date(date), version, 10)
 
     // Then
     expect(result).toEqual(output)

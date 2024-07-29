@@ -116,6 +116,7 @@ async function fetchNotifications(): Promise<string> {
  * @param currentSurfaces - The surfaces present in the current project (usually for app extensions).
  * @param today - The current date.
  * @param currentVersion - The current version of the CLI.
+ * @param limit - Number of notifications to show (2 by default).
  * @returns - The filtered notifications.
  */
 export function filterNotifications(
@@ -124,6 +125,7 @@ export function filterNotifications(
   currentSurfaces?: string[],
   today: Date = new Date(new Date().setUTCHours(0, 0, 0, 0)),
   currentVersion: string = CLI_KIT_VERSION,
+  limit = 2,
 ): Notification[] {
   return notifications
     .filter((notification) => filterByVersion(notification, currentVersion))
@@ -131,7 +133,7 @@ export function filterNotifications(
     .filter((notification) => filterByCommand(notification, commandId))
     .filter((notification) => filterBySurface(notification, commandId, currentSurfaces))
     .filter((notification) => filterByFrequency(notification))
-    .slice(0, 2)
+    .slice(0, limit)
 }
 
 /**
