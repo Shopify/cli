@@ -385,8 +385,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.businessPlatformToken(),
       orgId,
     )
-    const shopArray = storesResult?.organization!.properties!.edges.map((value) => value.node as ShopNode) ?? []
+    const organization = storesResult.organization
 
+    if (!organization) {
+      throw new AbortError(`No organization found`)
+    }
+
+    const shopArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
     return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
@@ -732,16 +737,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
       queryVariables,
     )
 
-    const {organization} = storesResult
-    const bpStoresArray = organization!.properties!.edges.map((value) => value.node as ShopNode) ?? []
+    const organization = storesResult.organization
+
+    if (!organization) {
+      throw new AbortError(`No organization found`)
+    }
+
+    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
 
     return {
       organizations: {
         nodes: [
           {
-            id: organization!.id,
-            businessName: organization!.name,
+            id: organization.id,
+            businessName: organization.name,
             website: 'N/A',
             stores: {
               nodes: storesArray,
