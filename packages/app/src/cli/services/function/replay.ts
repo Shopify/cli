@@ -30,24 +30,24 @@ interface ReplayOptions {
 }
 
 export interface FunctionRunData {
-  shop_id: number
-  api_client_id: number
+  shopId: number
+  apiClientId: number
   payload: {
     input: unknown
-    input_bytes: number
+    inputBytes: number
     output: unknown
-    output_bytes: number
-    function_id: string
+    outputBytes: number
+    functionId: string
     export: string
     logs: string
-    fuel_consumed: number
+    fuelConsumed: number
   }
-  log_type: string
+  logType: string
   cursor: string
   status: string
   source: string
-  source_namespace: string
-  log_timestamp: string
+  sourceNamespace: string
+  logTimestamp: string
   identifier: string
 }
 

@@ -2,6 +2,7 @@ import {AppLogData} from '../types.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
 
 interface AppLogFile {
@@ -26,10 +27,13 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
-    const toSaveData = {
-      ...appLog,
-      payload: JSON.parse(appLog.payload),
-    }
+    const toSaveData = camelcaseKeys(
+      {
+        ...appLog,
+        payload: JSON.parse(appLog.payload),
+      },
+      {deep: true},
+    )
 
     const logData = JSON.stringify(toSaveData, null, 2)
 
