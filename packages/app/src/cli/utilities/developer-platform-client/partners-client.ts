@@ -144,7 +144,11 @@ import {
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {FindAppQuery, FindAppQuerySchema, FindAppQueryVariables} from '../../api/graphql/find_app.js'
-import {FindOrganizationQuery, FindOrganizationQuerySchema, FindOrganizationQueryVariables} from '../../api/graphql/find_org.js'
+import {
+  FindOrganizationQuery,
+  FindOrganizationQuerySchema,
+  FindOrganizationQueryVariables,
+} from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -535,10 +539,12 @@ export class PartnersClient implements DeveloperPlatformClient {
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
     const params: FindOrganizationQueryVariables = {id: orgId}
     if (title) params.title = title
-    const partnersSession = await this.session()
     const result: FindOrganizationQuerySchema = await this.request(FindOrganizationQuery, params)
     const org = result.organizations.nodes[0]
-    if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
+    if (!org) {
+      const partnersSession = await this.session()
+      throw new NoOrgError(partnersSession.accountInfo, orgId)
+    }
     const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
