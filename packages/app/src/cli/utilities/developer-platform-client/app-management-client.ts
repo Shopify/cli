@@ -696,7 +696,29 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+    return {
+      organizations: {
+        nodes: [
+          {
+            id: _orgId,
+            businessName: 'Fake Business',
+            website: 'https://example.com',
+            stores: {
+              nodes: [
+                {
+                  shopId: '1',
+                  link: `https://${_shopDomain}`,
+                  shopDomain: _shopDomain,
+                  shopName: 'Fake Shop',
+                  transferDisabled: true,
+                  convertableToPartnerTest: true,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    }
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {

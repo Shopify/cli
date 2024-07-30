@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchOrgFromId, fetchOrganizations} from './dev/fetch.js'
-import {selectStore} from './dev/select-store.js'
+import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
+import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -41,6 +41,7 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -297,22 +298,14 @@ const storeFromFqdn = async (
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> => {
-  return {
-    shopId: '1',
-    link: 'string',
-    shopDomain: storeFqdn,
-    shopName: 'name',
-    transferDisabled: true,
-    convertableToPartnerTest: true,
+  const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
+  if (result?.store) {
+    // never automatically convert a store provided via the cache
+    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
+    return result.store
+  } else {
+    throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
   }
-  // const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
-  // if (result?.store) {
-  //   // never automatically convert a store provided via the cache
-  //   await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
-  //   return result.store
-  // } else {
-  //   throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
-  // }
 }
 
 function buildOutput(
@@ -706,41 +699,32 @@ async function fetchDevDataFromOptions(
       }
     })(),
     (async () => {
-      // if (options.storeFqdn && false) {
-      //   const orgWithStore = await fetchStoreByDomain(orgId, options.storeFqdn, developerPlatformClient)
-      //   if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
-      //   if (!orgWithStore.store) {
-      //     const partners = await partnersFqdn()
-      //     const org = orgWithStore.organization
-      //     throw new AbortError(
-      //       `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
-      //       `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
-      //     )
-      //   }
-      //   return orgWithStore as {store: OrganizationStore; organization: Organization}
-      // }
+      if (options.storeFqdn) {
+        const orgWithStore = await fetchStoreByDomain(orgId, options.storeFqdn, developerPlatformClient)
+        if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
+        if (!orgWithStore.store) {
+          const partners = await partnersFqdn()
+          const org = orgWithStore.organization
+          throw new AbortError(
+            `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
+            `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
+          )
+        }
+        return orgWithStore as {store: OrganizationStore; organization: Organization}
+      }
     })(),
   ])
   let selectedStore: OrganizationStore | undefined
 
   if (options.storeFqdn) {
-    // selectedStore = orgWithStore!.store
-    // // never automatically convert a store provided via the command line
-    // await convertToTransferDisabledStoreIfNeeded(
-    //   selectedStore,
-    //   orgWithStore!.organization.id,
-    //   developerPlatformClient,
-    //   'never',
-    // )
-
-    selectedStore = {
-      shopId: '1',
-      link: 'string',
-      shopDomain: options.storeFqdn,
-      shopName: 'name',
-      transferDisabled: true,
-      convertableToPartnerTest: true,
-    }
+    selectedStore = orgWithStore!.store
+    // never automatically convert a store provided via the command line
+    await convertToTransferDisabledStoreIfNeeded(
+      selectedStore,
+      orgWithStore!.organization.id,
+      developerPlatformClient,
+      'never',
+    )
   }
 
   return {app: selectedApp, store: selectedStore}
