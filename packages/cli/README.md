@@ -1612,8 +1612,8 @@ USAGE
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --port=<value>         [default: 9293] Local port to serve authentication service.
@@ -1643,8 +1643,8 @@ FLAGS
   -d, --development          Delete your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -f, --force                Skip confirmation.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>...     Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
@@ -1684,8 +1684,8 @@ FLAGS
       Hot reload only files that match the specified pattern.
 
   -s, --store=<value>
-      Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com,
-      https://johns-apparel.myshopify.com).
+      Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
+      https://example.myshopify.com).
 
   -t, --theme=<value>
       Theme ID or name of the remote theme.
@@ -1778,8 +1778,8 @@ USAGE
 FLAGS
   -d, --development          Retrieve info from your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --json                 Output the theme info as JSON.
       --no-color             Disable color output.
@@ -1854,8 +1854,8 @@ USAGE
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
       --id=<value>           Only list theme with the given ID.
       --json                 Output the theme list as JSON.
       --name=<value>         Only list themes that contain the given name.
@@ -1883,8 +1883,8 @@ FLAGS
   -d, --development          Open your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Open your live (published) theme.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
@@ -1940,8 +1940,8 @@ USAGE
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -f, --force                Skip confirmation.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
@@ -1977,8 +1977,8 @@ FLAGS
   -l, --live                 Pull theme files from your remote live theme.
   -n, --nodelete             Runs the pull command without deleting local files.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
   -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
       --no-color             Disable color output.
@@ -2012,8 +2012,8 @@ FLAGS
   -n, --nodelete             Runs the push command without deleting local files.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
   -p, --publish              Publish as the live theme after uploading.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
   -u, --unpublished          Create a new unpublished theme and push to it.
   -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
@@ -2073,8 +2073,8 @@ FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Rename your remote live theme.
   -n, --name=<value>         The new name for the theme.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
@@ -2099,8 +2099,8 @@ USAGE
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
-  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
