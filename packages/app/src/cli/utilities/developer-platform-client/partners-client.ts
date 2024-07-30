@@ -143,8 +143,8 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
-import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
+import {FindAppQuery, FindAppQuerySchema, FindAppQueryVariables} from '../../api/graphql/find_app.js'
+import {FindOrganizationQuery, FindOrganizationQuerySchema, FindOrganizationQueryVariables} from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -260,9 +260,8 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, await this.token(), {
-      apiKey,
-    })
+    const variables: FindAppQueryVariables = {apiKey}
+    const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
     const app = res.app
     if (app) {
       const flags = filterDisabledFlags(app.disabledFlags)
@@ -534,11 +533,10 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
-    const query = FindOrganizationQuery
-    const params: {id: string; title?: string} = {id: orgId}
+    const params: FindOrganizationQueryVariables = {id: orgId}
     if (title) params.title = title
     const partnersSession = await this.session()
-    const result: FindOrganizationQuerySchema = await partnersRequest(query, partnersSession.token, params)
+    const result: FindOrganizationQuerySchema = await this.request(FindOrganizationQuery, params)
     const org = result.organizations.nodes[0]
     if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
     const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
