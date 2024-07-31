@@ -36,12 +36,12 @@ import {
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {

@@ -1,7 +1,6 @@
 /* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {installJavy} from '../../function/build.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
@@ -17,7 +16,6 @@ import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
-  extensions: ExtensionInstance[]
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   apiKey: string
@@ -44,11 +42,6 @@ export async function setupDevSessionProcess({
   developerPlatformClient,
   ...options
 }: Omit<DevSessionOptions, 'extensions'>): Promise<DevSessionProcess | undefined> {
-  const draftableExtensions = app.draftableExtensions
-  if (draftableExtensions.length === 0) {
-    return
-  }
-
   return {
     type: 'dev-session',
     prefix: 'extensions',
@@ -58,7 +51,6 @@ export async function setupDevSessionProcess({
       apiKey,
       developerPlatformClient,
       ...options,
-      extensions: draftableExtensions,
     },
   }
 }
