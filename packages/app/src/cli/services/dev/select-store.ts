@@ -39,9 +39,11 @@ export async function selectStore(
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> {
+  const clientName = developerPlatformClient.clientName
+
   // If no stores, guide the developer through creating one
   // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
-  let store = await selectStorePrompt(stores)
+  let store = await selectStorePrompt(stores, clientName)
   if (!store) {
     outputInfo(`\n${await CreateStoreLink(org.id)}`)
     await sleep(5)
@@ -63,7 +65,7 @@ export async function selectStore(
   )
   while (!storeIsValid) {
     // eslint-disable-next-line no-await-in-loop
-    store = await selectStorePrompt(stores)
+    store = await selectStorePrompt(stores, clientName)
     if (!store) {
       throw new CancelExecution()
     }
