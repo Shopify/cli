@@ -7,7 +7,6 @@ on:
 
 env:
   PNPM_VERSION: '8.15.7'
-  NODE_ENV: 'production'
 
 jobs:
   snapit:
@@ -15,18 +14,16 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        name: Checkout [${{ github.ref_name }}]
-        with:
-          fetch-depth: 1
+      - name: Checkout default branch
+        uses: actions/checkout@v4
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.20.3
+          node-version: 22.2.0
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Bundle
-        run: pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream
+        run: NODE_ENV=production pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream
       - name: Duplicate CLI package
         run: node bin/create-cli-duplicate-package.js
       - name: Create snapshot version
