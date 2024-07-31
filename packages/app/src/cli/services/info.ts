@@ -131,7 +131,7 @@ class AppInfo {
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
-      promptLinkingApp: false,
+      enableLinkingPrompt: false,
     })
     developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
