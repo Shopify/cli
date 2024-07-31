@@ -31,11 +31,22 @@ function transformToPrivacyComplianceWebhooksModule(content: object, appConfigur
     appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
   }
 
-  return compact({
+  const urls = compact({
     customers_redact_url: relativeUri(getCustomersDeletionUri(webhooks), appUrl),
     customers_data_request_url: relativeUri(getCustomersDataRequestUri(webhooks), appUrl),
     shop_redact_url: relativeUri(getShopDeletionUri(webhooks), appUrl),
   })
+
+  if (Object.keys(urls).length === 0) {
+    return urls
+  } else {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {api_version} = webhooks
+    return {
+      api_version,
+      ...urls,
+    }
+  }
 }
 
 function transformFromPrivacyComplianceWebhooksModule(content: object, options?: {flags?: Flag[]}) {
