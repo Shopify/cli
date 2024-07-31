@@ -249,6 +249,7 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   let dotEnvFile: DotEnvFile | undefined
   const dotEnvPath = joinPath(appDirectory, getDotEnvFileName(configurationPath))
   if (await fileExists(dotEnvPath)) {
+    outputDebug('Loading contents of .env file found at ' + dotEnvPath)
     dotEnvFile = await readAndParseDotEnv(dotEnvPath)
   }
   return dotEnvFile
