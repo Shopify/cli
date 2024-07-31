@@ -796,6 +796,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
+    // Hardcoded until we have a proper implementation
+    return {publicApiVersions: ['unstable']}
     throw new BugError('Not implemented: apiVersions')
   }
 
