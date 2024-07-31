@@ -5,7 +5,7 @@ export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): 
   if (functionRuns.length === 0) return undefined
   const toAnswer = (functionRun: FunctionRunData) => {
     return {
-      label: `${functionRun.log_timestamp} (${functionRun.status}) - ${functionRun.identifier}`,
+      label: `${functionRun.logTimestamp} (${functionRun.status}) - ${functionRun.identifier}`,
       value: functionRun,
     }
   }

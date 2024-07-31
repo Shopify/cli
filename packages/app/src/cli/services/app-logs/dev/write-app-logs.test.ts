@@ -3,6 +3,7 @@ import {AppLogData} from '../types.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
+import camelcaseKeys from 'camelcase-keys'
 
 vi.mock('@shopify/cli-kit/node/logs')
 
@@ -28,8 +29,6 @@ describe('writeAppLogsToFile', () => {
 
   test('calls writeLog with the right data', async () => {
     // Given
-    const logData = expectedLogDataFromAppEvent(APP_LOG)
-
     // determine the fileName and path
     const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
     const path = joinPath(API_KEY, fileName)
@@ -39,7 +38,7 @@ describe('writeAppLogsToFile', () => {
 
     // Then
     expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
-    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), logData)
+    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), expectedLogDataFromAppEvent(APP_LOG))
   })
 
   test('prints and re-throws parsing errors', async () => {
@@ -56,9 +55,12 @@ describe('writeAppLogsToFile', () => {
 })
 
 function expectedLogDataFromAppEvent(event: AppLogData): string {
-  const data = {
-    ...event,
-    payload: JSON.parse(event.payload),
-  }
+  const data = camelcaseKeys(
+    {
+      ...event,
+      payload: JSON.parse(event.payload),
+    },
+    {deep: true},
+  )
   return JSON.stringify(data, null, 2)
 }
