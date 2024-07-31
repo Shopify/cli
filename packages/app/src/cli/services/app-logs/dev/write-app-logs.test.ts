@@ -10,7 +10,7 @@ vi.mock('@shopify/cli-kit/node/logs')
 const APP_LOG: AppLogData = {
   shop_id: 1,
   api_client_id: 2,
-  payload: JSON.stringify({someJson: 'someJSOn'}),
+  payload: JSON.stringify({someJson: 'someJSOn', logs: 'Line 1!\n Line2!\n'}),
   log_type: 'function_run',
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
@@ -55,10 +55,15 @@ describe('writeAppLogsToFile', () => {
 })
 
 function expectedLogDataFromAppEvent(event: AppLogData): string {
+  const payload = JSON.parse(event.payload)
+
+  if (event.log_type === 'function_run') {
+    payload.logs = payload.logs.split('\n').filter(Boolean)
+  }
   const data = camelcaseKeys(
     {
       ...event,
-      payload: JSON.parse(event.payload),
+      payload,
     },
     {deep: true},
   )

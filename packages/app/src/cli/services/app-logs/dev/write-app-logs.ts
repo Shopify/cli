@@ -27,10 +27,16 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
+    const payload = JSON.parse(appLog.payload)
+
+    if (appLog.log_type === 'function_run') {
+      payload.logs = payload.logs.split('\n').filter(Boolean)
+    }
+
     const toSaveData = camelcaseKeys(
       {
         ...appLog,
-        payload: JSON.parse(appLog.payload),
+        payload,
       },
       {deep: true},
     )
