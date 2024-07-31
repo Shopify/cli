@@ -40,7 +40,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, sniffForJson} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
@@ -828,6 +828,7 @@ interface ReusedValuesOptions {
  */
 function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
+  if (sniffForJson()) return
 
   let updateURLs = 'Not yet configured'
   if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'

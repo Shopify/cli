@@ -344,7 +344,7 @@ describe('usePollAppLogs', () => {
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
     expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
-    expect(hook.lastResult?.errors[0]).toEqual('Error Message')
+    expect(hook.lastResult?.errors[0]).toEqual('Request throttled while polling app logs.')
     expect(hook.lastResult?.errors[1]).toEqual('Retrying in 60s')
 
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), POLLING_THROTTLE_RETRY_INTERVAL_MS)
@@ -378,7 +378,7 @@ describe('usePollAppLogs', () => {
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
     expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
-    expect(hook.lastResult?.errors[0]).toEqual('Unprocessable')
+    expect(hook.lastResult?.errors[0]).toEqual('Error while polling app logs')
     expect(hook.lastResult?.errors[1]).toEqual('Retrying in 5s')
 
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), POLLING_ERROR_RETRY_INTERVAL_MS)

@@ -1620,6 +1620,14 @@
           "name": "graphiql-port",
           "type": "option"
         },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Log the run result as a JSON object.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",

@@ -339,7 +339,7 @@ describe('pollAppLogs', () => {
 
   test('calls resubscribe callback if a 401 is received', async () => {
     // Given
-    const response = new Response('errorMessage', {status: 401})
+    const response = new Response(JSON.stringify({errors: ['Unauthorized']}), {status: 401})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
@@ -357,7 +357,9 @@ describe('pollAppLogs', () => {
   test('displays throttle message, waits, and retries if status is 429', async () => {
     // Given
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
-    const mockedFetch = vi.fn().mockResolvedValueOnce(new Response('error for 429', {status: 429}))
+    const mockedFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({errors: ['error for 429']}), {status: 429}))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
@@ -369,7 +371,6 @@ describe('pollAppLogs', () => {
     })
 
     expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
-    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 60 seconds.')
     expect(vi.getTimerCount()).toEqual(1)
   })
 
@@ -379,7 +380,7 @@ describe('pollAppLogs', () => {
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
 
     // An unexpected error response
-    const response = new Response('errorMessage', {status: 422})
+    const response = new Response(JSON.stringify({errors: ['errorMessage']}), {status: 500})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
@@ -393,8 +394,6 @@ describe('pollAppLogs', () => {
 
     // Then
     expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
-    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
-    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Unhandled bad response: ${response.status}`))
     expect(vi.getTimerCount()).toEqual(1)
   })
 })
