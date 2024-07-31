@@ -26,6 +26,8 @@ jobs:
         run: NODE_ENV=production pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream
       - name: Duplicate CLI package
         run: node bin/create-cli-duplicate-package.js
+      - name: Reinstall dependencies for the duplicated package
+        run: pnpm install
       - name: Create snapshot version
         uses: Shopify/snapit@256ef2eae04f7b3b149b8a915a1bf00b020df8c5 # pin@main
         with:
