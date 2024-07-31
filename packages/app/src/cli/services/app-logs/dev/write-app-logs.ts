@@ -13,10 +13,13 @@ interface AppLogFile {
 
 export const writeAppLogsToFile = async ({
   appLog,
+  appLogPayload,
   apiKey,
   stdout,
 }: {
   appLog: AppLogData
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  appLogPayload: any
   apiKey: string
   stdout: Writable
 }): Promise<AppLogFile> => {
@@ -28,16 +31,14 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
-    const payload = JSON.parse(appLog.payload)
-
     if (appLog.log_type === LOG_TYPE_FUNCTION_RUN) {
-      payload.logs = payload.logs.split('\n').filter(Boolean)
+      appLogPayload.logs = appLogPayload.logs.split('\n').filter(Boolean)
     }
 
     const toSaveData = camelcaseKeys(
       {
         ...appLog,
-        payload,
+        payload: appLogPayload,
       },
       {deep: true},
     )

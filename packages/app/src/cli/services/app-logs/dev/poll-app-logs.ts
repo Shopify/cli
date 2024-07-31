@@ -88,6 +88,7 @@ export const pollAppLogs = async ({
 
           const logFile = await writeAppLogsToFile({
             appLog: log,
+            appLogPayload: payload,
             apiKey,
             stdout,
           })

@@ -35,23 +35,16 @@ describe('writeAppLogsToFile', () => {
     const path = joinPath(API_KEY, fileName)
 
     // When
-    const returnedPath = await writeAppLogsToFile({appLog: APP_LOG, apiKey: API_KEY, stdout})
+    const returnedPath = await writeAppLogsToFile({
+      appLog: APP_LOG,
+      appLogPayload: JSON.parse(APP_LOG.payload),
+      apiKey: API_KEY,
+      stdout,
+    })
 
     // Then
     expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
     expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), expectedLogDataFromAppEvent(APP_LOG))
-  })
-
-  test('prints and re-throws parsing errors', async () => {
-    // Given
-    const appLog = {
-      ...APP_LOG,
-      payload: 'invalid JSON',
-    }
-
-    // When/Then
-    await expect(writeAppLogsToFile({appLog, apiKey: API_KEY, stdout})).rejects.toThrow()
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error while writing log to file: '))
   })
 })
 
