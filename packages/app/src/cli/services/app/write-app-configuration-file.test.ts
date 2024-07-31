@@ -12,14 +12,20 @@ const FULL_CONFIGURATION = {
     dev_store_url: 'example.myshopify.com',
   },
   ...DEFAULT_CONFIG,
+  application_url: 'https://myapp.com/',
   auth: {redirect_urls: ['https://example.com/redirect', 'https://example.com/redirect2']},
   webhooks: {
     api_version: '2023-07',
-    privacy_compliance: {
-      customer_deletion_url: 'https://example.com/auth/callback1',
-      customer_data_request_url: 'https://example.com/auth/callback2',
-      shop_deletion_url: 'https://example.com/auth/callback3',
-    },
+    subscriptions: [
+      {
+        topics: ['products/create'],
+        uri: 'https://myapp.com/webhooks',
+      },
+      {
+        compliance_topics: ['customer_deletion_url', 'customer_data_request_url'],
+        uri: 'https://myapp.com/webhooks',
+      },
+    ],
   },
   app_proxy: {
     url: 'https://example.com/auth/prox',
@@ -50,7 +56,7 @@ describe('writeAppConfigurationFile', () => {
 
 client_id = "api-key"
 name = "my app"
-application_url = "https://myapp.com"
+application_url = "https://myapp.com/"
 embedded = true
 
 [build]
@@ -71,10 +77,10 @@ redirect_urls = [
 [webhooks]
 api_version = "2023-07"
 
-  [webhooks.privacy_compliance]
-  customer_deletion_url = "https://example.com/auth/callback1"
-  customer_data_request_url = "https://example.com/auth/callback2"
-  shop_deletion_url = "https://example.com/auth/callback3"
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "/webhooks"
+  compliance_topics = [ "customer_deletion_url", "customer_data_request_url" ]
 
 [app_proxy]
 url = "https://example.com/auth/prox"
