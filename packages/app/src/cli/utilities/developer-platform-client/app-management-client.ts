@@ -109,6 +109,14 @@ import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.j
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
+import {
+  FetchDevStoreByDomain,
+  FetchDevStoreByDomainQueryVariables,
+} from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
+import {
+  ListAppDevStores,
+  ListAppDevStoresQuery,
+} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -116,13 +124,21 @@ import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
-import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformRequest,
+  businessPlatformRequestDoc,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
+type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
+type Properties = NonNullable<OrgType['properties']>
+type ShopEdge = NonNullable<Properties['edges'][number]>
+type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
@@ -360,8 +376,23 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async devStoresForOrg(_orgId: string): Promise<OrganizationStore[]> {
-    return []
+  // we are returning OrganizationStore type here because we want to keep types consistent btwn
+  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
+  // from the Partners OrganizationStore schema, we will return this type for now
+  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+    const storesResult = await businessPlatformOrganizationsRequest<ListAppDevStoresQuery>(
+      ListAppDevStores,
+      await this.businessPlatformToken(),
+      orgId,
+    )
+    const organization = storesResult.organization
+
+    if (!organization) {
+      throw new AbortError(`No organization found`)
+    }
+
+    const shopArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
   async appExtensionRegistrations(
@@ -694,8 +725,41 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+  // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
+  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
+  // from the Partners FindByStoreDomainSchema, we will return this type for now
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
+    const storesResult = await businessPlatformOrganizationsRequest(
+      FetchDevStoreByDomain,
+      await this.businessPlatformToken(),
+      orgId,
+      queryVariables,
+    )
+
+    const organization = storesResult.organization
+
+    if (!organization) {
+      throw new AbortError(`No organization found`)
+    }
+
+    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
+
+    return {
+      organizations: {
+        nodes: [
+          {
+            id: organization.id,
+            businessName: organization.name,
+            website: 'N/A',
+            stores: {
+              nodes: storesArray,
+            },
+          },
+        ],
+      },
+    }
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -916,4 +980,18 @@ export async function allowedTemplates(
 
 function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
+}
+
+function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]): OrganizationStore[] {
+  return storesArray.map((store: ShopNode) => {
+    const {externalId, primaryDomain, name} = store
+    return {
+      shopId: externalId,
+      link: primaryDomain,
+      shopDomain: primaryDomain,
+      shopName: name,
+      transferDisabled: true,
+      convertableToPartnerTest: true,
+    } as OrganizationStore
+  })
 }

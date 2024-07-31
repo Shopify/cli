@@ -1,4 +1,4 @@
-import {GraphQLVariables, graphqlRequest, graphqlRequestDoc} from './graphql.js'
+import {Exact, GraphQLVariables, graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {handleDeprecations} from './partners.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -58,5 +58,33 @@ export async function businessPlatformRequestDoc<TResult, TVariables extends Var
     ...(await setupRequest(token)),
     query,
     variables,
+  })
+}
+
+/**
+ * Executes a GraphQL query against the Business Platform Organizations API.
+ *
+ * @param query - GraphQL query to execute.
+ * @param token - Business Platform token.
+ * @param organizationId - Organization ID as a numeric value.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <T>.
+ */
+export async function businessPlatformOrganizationsRequest<TResult>(
+  query: TypedDocumentNode<TResult, GraphQLVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>,
+  token: string,
+  organizationId: string,
+  variables?: GraphQLVariables,
+): Promise<TResult> {
+  const api = 'BusinessPlatform'
+  const fqdn = await businessPlatformFqdn()
+  const url = `https://${fqdn}/organizations/api/unstable/organization/${organizationId}/graphql`
+  return graphqlRequestDoc({
+    query,
+    api,
+    url,
+    token,
+    variables,
+    responseOptions: {onResponse: handleDeprecations},
   })
 }
