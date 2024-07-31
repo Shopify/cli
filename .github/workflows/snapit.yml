@@ -24,7 +24,7 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Bundle
-        run: pnpm bundle
+        run: pnpm nx run-many --target=bundle --all --skip-nx-cache
       - name: Duplicate CLI package
         run: node bin/create-cli-duplicate-package.js
       - name: Create snapshot version
