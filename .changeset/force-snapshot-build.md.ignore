@@ -1,3 +1,4 @@
 ---
 '@shopify/cli': patch
+'shopify': patch
 ---

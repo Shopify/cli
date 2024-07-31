@@ -45,6 +45,16 @@ const flowExtensionB: ExtensionRegistration = {
   },
 }
 
+const marketingActivityExtension: ExtensionRegistration = {
+  id: 'idC',
+  title: 'titleC',
+  uuid: 'uuidC',
+  type: 'marketing_activity_extension',
+  activeVersion: {
+    config: '{}',
+  },
+}
+
 describe('import-extensions', () => {
   beforeEach(() => {
     // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
@@ -54,7 +64,7 @@ describe('import-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
+    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB, marketingActivityExtension])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
 
     // When
@@ -64,7 +74,7 @@ describe('import-extensions', () => {
       await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
         buildTomlObject,
       })
 
@@ -79,13 +89,16 @@ describe('import-extensions', () => {
 
       const tomlPathB = joinPath(tmpDir, 'extensions', 'title-b', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathB)).toBe(false)
+
+      const tomlPathC = joinPath(tmpDir, 'extensions', 'title-c', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathC)).toBe(false)
     })
   })
 
   test('selecting All imports all extensions', async () => {
     // Given
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
+    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB, marketingActivityExtension])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
 
     // When
@@ -95,13 +108,13 @@ describe('import-extensions', () => {
       await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
         buildTomlObject,
       })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
-        body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b',
+        body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b\n• "titleC" at: extensions/title-c',
       })
 
       // Then
@@ -110,6 +123,9 @@ describe('import-extensions', () => {
 
       const tomlPathB = joinPath(tmpDir, 'extensions', 'title-b', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathB)).toBe(true)
+
+      const tomlPathC = joinPath(tmpDir, 'extensions', 'title-c', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathC)).toBe(true)
     })
   })
 
@@ -124,7 +140,7 @@ describe('import-extensions', () => {
       await importExtensions({
         app,
         developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+        extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
         buildTomlObject,
       })
 
@@ -140,6 +156,9 @@ describe('import-extensions', () => {
 
       const tomlPathB = joinPath(tmpDir, 'extensions', 'title-b', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathB)).toBe(false)
+
+      const tomlPathC = joinPath(tmpDir, 'extensions', 'title-c', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathC)).toBe(false)
     })
   })
 })

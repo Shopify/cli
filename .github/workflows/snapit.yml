@@ -22,11 +22,17 @@ jobs:
           node-version: 22.2.0
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
+      - name: Bundle
+        run: NODE_ENV=production pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream
+      - name: Duplicate CLI package
+        run: node bin/create-cli-duplicate-package.js
+      - name: Reinstall dependencies for the duplicated package
+        run: pnpm install --no-frozen-lockfile
       - name: Create snapshot version
         uses: Shopify/snapit@256ef2eae04f7b3b149b8a915a1bf00b020df8c5 # pin@main
         with:
           global_install: 'true'
-          github_comment_included_packages: '@shopify/cli'
+          github_comment_included_packages: 'shopify'
           custom_message_suffix: "\n> After installing, validate the version by running just `shopify` in your terminal\n> If the versions don't match, you might have multiple global instances installed.\n> Use `which shopify` to find out which one you are running and uninstall it."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
