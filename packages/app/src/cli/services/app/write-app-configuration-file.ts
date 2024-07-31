@@ -1,5 +1,6 @@
 import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {reduceWebhooks} from '../../models/extensions/specifications/transform/app_config_webhook.js'
+import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -97,7 +98,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
 function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfiguration) {
   const webhooksConfig = config.webhooks
   if (webhooksConfig?.subscriptions?.length) {
-    const appUrl = config?.application_url as string | undefined
+    const appUrl = removeTrailingSlash(config?.application_url) as string | undefined
     webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
     webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({
       uri: appUrl && uri.includes(appUrl) ? uri.replace(appUrl, '') : uri,
