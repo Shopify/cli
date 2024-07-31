@@ -1,4 +1,5 @@
 import {AppLogData} from '../types.js'
+import {LOG_TYPE_FUNCTION_RUN} from '../utils.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -29,7 +30,7 @@ export const writeAppLogsToFile = async ({
   try {
     const payload = JSON.parse(appLog.payload)
 
-    if (appLog.log_type === 'function_run') {
+    if (appLog.log_type === LOG_TYPE_FUNCTION_RUN) {
       payload.logs = payload.logs.split('\n').filter(Boolean)
     }
 

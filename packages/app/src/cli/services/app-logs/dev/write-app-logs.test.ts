@@ -1,5 +1,6 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {AppLogData} from '../types.js'
+import {LOG_TYPE_FUNCTION_RUN} from '../utils.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -57,7 +58,7 @@ describe('writeAppLogsToFile', () => {
 function expectedLogDataFromAppEvent(event: AppLogData): string {
   const payload = JSON.parse(event.payload)
 
-  if (event.log_type === 'function_run') {
+  if (event.log_type === LOG_TYPE_FUNCTION_RUN) {
     payload.logs = payload.logs.split('\n').filter(Boolean)
   }
   const data = camelcaseKeys(
