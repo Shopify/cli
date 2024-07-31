@@ -175,14 +175,16 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     orgId = org.id
   }
 
-  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
   const organization = await fetchOrgFromId(orgId, developerPlatformClient)
 
+  // we select an app or a dev store from a command flag
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
+
+  // if no stores or apps were selected previously from a command,
+  // we try to load the app or the dev store from the current config or cache
+  // if that's not available, we prompt the user to choose an existing one or create a new one
   if (!selectedApp || !selectedStore) {
-    // if we have selected an app or a dev store from a command flag, we keep them
-    // if not, we try to load the app or the dev store from the current config or cache
-    // if that's not available, we prompt the user to choose an existing one or create a new one
-    const [_selectedApp, _selectedStore] = await Promise.all([
+    const [cachedApp, cachedStore] = await Promise.all([
       selectedApp ||
         remoteApp ||
         (cachedInfo?.appId &&
@@ -190,8 +192,8 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
       selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
     ])
 
-    if (_selectedApp) {
-      selectedApp = _selectedApp
+    if (cachedApp) {
+      selectedApp = cachedApp
     } else {
       const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
       // get toml names somewhere close to here
@@ -199,8 +201,8 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
       selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
     }
 
-    if (_selectedStore) {
-      selectedStore = _selectedStore
+    if (cachedStore) {
+      selectedStore = cachedStore
     } else {
       const allStores = await developerPlatformClient.devStoresForOrg(orgId)
       selectedStore = await selectStore(allStores, organization, developerPlatformClient)
