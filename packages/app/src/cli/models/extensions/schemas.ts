@@ -49,6 +49,7 @@ export const FieldSchema = zod.object({
   name: zod.string().optional(),
   description: zod.string().optional(),
   required: zod.boolean().optional(),
+  default_value: zod.any().optional(),
   type: zod.string(),
   validations: zod.array(zod.any()).optional(),
 })
