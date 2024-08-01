@@ -47,6 +47,7 @@ import {
   AssetUrlSchema,
   AppVersionIdentifiers,
   DevSessionOptions,
+  filterDisabledFlags,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -57,7 +58,6 @@ import {
   OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
-import {filterDisabledFlags} from '../../services/dev/fetch.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   ExtensionRegistration,

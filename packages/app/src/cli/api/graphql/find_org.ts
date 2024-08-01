@@ -22,6 +22,11 @@ export const FindOrganizationQuery = gql`
   }
 `
 
+export interface FindOrganizationQueryVariables {
+  id: string
+  title?: string
+}
+
 export interface FindOrganizationQuerySchema {
   organizations: {
     nodes: {

@@ -1,5 +1,4 @@
 import {selectStore} from './select-store.js'
-import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {
   reloadStoreListPrompt,
@@ -139,7 +138,6 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
-    vi.mocked(fetchAllDevStores).mockResolvedValue([])
     const developerPlatformClient = testDeveloperPlatformClient()
 
     // When

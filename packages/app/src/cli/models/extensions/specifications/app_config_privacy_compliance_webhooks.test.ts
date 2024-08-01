@@ -1,5 +1,5 @@
 import spec from './app_config_privacy_compliance_webhooks.js'
-import {Flag} from '../../../services/dev/fetch.js'
+import {Flag} from '../../../utilities/developer-platform-client.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {isEmpty} from '@shopify/cli-kit/common/object'
 import {describe, expect, test} from 'vitest'
