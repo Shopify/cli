@@ -109,10 +109,7 @@ import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.j
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
-import {
-  FetchDevStoreByDomain,
-  FetchDevStoreByDomainQueryVariables,
-} from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
+
 import {
   ListAppDevStores,
   ListAppDevStoresQuery,
@@ -730,32 +727,56 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners FindByStoreDomainSchema, we will return this type for now
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
-    const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
-    const storesResult = await businessPlatformOrganizationsRequest(
-      FetchDevStoreByDomain,
-      await this.businessPlatformToken(),
-      orgId,
-      queryVariables,
-    )
+    // const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
+    // const storesResult = await businessPlatformOrganizationsRequest(
+    //   FetchDevStoreByDomain,
+    //   await this.businessPlatformToken(),
+    //   orgId,
+    //   queryVariables,
+    // )
 
-    const organization = storesResult.organization
+    // const organization = storesResult.organization
 
-    if (!organization) {
-      throw new AbortError(`No organization found`)
-    }
+    // if (!organization) {
+    //   throw new AbortError(`No organization found`)
+    // }
 
-    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
-    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
+    // const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    // const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
 
+    // return {
+    //   organizations: {
+    //     nodes: [
+    //       {
+    //         id: organization.id,
+    //         businessName: organization.name,
+    //         website: 'N/A',
+    //         stores: {
+    //           nodes: storesArray,
+    //         },
+    //       },
+    //     ],
+    //   },
+    // }
+    // Harcoded result until the API is available
     return {
       organizations: {
         nodes: [
           {
-            id: organization.id,
-            businessName: organization.name,
+            id: orgId,
+            businessName: 'Fake Name',
             website: 'N/A',
             stores: {
-              nodes: storesArray,
+              nodes: [
+                {
+                  shopId: '1',
+                  link: shopDomain,
+                  shopDomain,
+                  shopName: 'Shop Name',
+                  transferDisabled: true,
+                  convertableToPartnerTest: true,
+                },
+              ],
             },
           },
         ],
