@@ -140,7 +140,7 @@ async function initialBuild(options: DevSessionProcessOptions) {
 }
 
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, updating: boolean) {
-  outputDebug('Building and uploading extensions', options.stdout)
+  outputDebug('Bundling and uploading extensions', options.stdout)
   // Build and bundle all extensions in a zip file (including the manifest file)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
   // options.stdout.write('Building manifest...')

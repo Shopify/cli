@@ -2,7 +2,7 @@
     organization {
       id
       name
-      properties(filters: {field: STORE_TYPE, operator: EQUALS, value: "production"}, search: $domain, offeringHandles: ["shop"]) {
+      properties(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, search: $domain, offeringHandles: ["shop"]) {
         edges {
           node {
             ... on Shop {
