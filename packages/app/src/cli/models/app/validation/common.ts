@@ -9,9 +9,10 @@ export function validateUrl(zodType: zod.ZodString, {httpsOnly = false, message 
 function isValidUrl(input: string, httpsOnly: boolean) {
   try {
     const url = new URL(input)
-    return httpsOnly ? url.protocol === 'https:' : url.protocol === 'http:' || url.protocol === 'https:'
+    return httpsOnly ? url.protocol === 'https:' : url.protocol.startsWith('http')
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (TypeError) {
+    // new URL() throws a TypeError if the input is not a valid URL
     return false
   }
 }
