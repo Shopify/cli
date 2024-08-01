@@ -242,9 +242,8 @@ module ShopifyCLI
 
           new_session_id = extract_shopify_essential_from_response_headers(response_headers)
           if new_session_id
-            @ctx.debug("New _shopify_essential cookie from response")
-            @secure_session_id = new_session_id
-            @last_session_cookie_refresh = Time.now
+            @ctx.debug("Renew _shopify_essential cookie by the response")
+            @secure_session_id = secure_session_id
           end
 
           response_headers
