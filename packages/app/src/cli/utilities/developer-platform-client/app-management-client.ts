@@ -752,7 +752,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
           {
             id: organization.id,
             businessName: organization.name,
-            website: 'N/A',
             stores: {
               nodes: storesArray,
             },

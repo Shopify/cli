@@ -77,13 +77,11 @@ const APP2 = testOrganizationApp({
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  website: '',
   source: OrganizationSource.Partners,
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  website: '',
   source: OrganizationSource.Partners,
 }
 

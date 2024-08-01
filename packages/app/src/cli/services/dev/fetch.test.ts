@@ -37,7 +37,6 @@ const FETCH_STORE_RESPONSE_VALUE: FindStoreByDomainSchema = {
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        website: 'https://example.com',
         stores: {nodes: [STORE1]},
       },
     ],

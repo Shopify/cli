@@ -24,7 +24,6 @@ describe('env show', () => {
       id: '123',
       flags: {},
       businessName: 'test',
-      website: '',
       apps: {nodes: []},
     }
     const organizationApp = testOrganizationApp()

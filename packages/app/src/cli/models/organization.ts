@@ -9,7 +9,6 @@ export enum OrganizationSource {
 export interface Organization {
   id: string
   businessName: string
-  website?: string
   source?: OrganizationSource
 }
 
