@@ -40,7 +40,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, sniffForJson} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
@@ -164,7 +164,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   let developerPlatformClient = options.developerPlatformClient
   const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,
-    promptLinkingApp: !options.apiKey,
+    enableLinkingPrompt: !options.apiKey,
   })
   developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
 
@@ -429,7 +429,9 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const {reset, force, noRelease} = options
   let developerPlatformClient = options.developerPlatformClient
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
+  // do the link here
+  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, true)
+
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
@@ -556,7 +558,7 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
   let developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient)
+  const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, true)
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -638,19 +640,22 @@ export async function fetchAppAndIdentifiers(
     reset: boolean
     apiKey?: string
   },
-  developerPlatformClient: DeveloperPlatformClient,
+  initialDeveloperPlatformClient: DeveloperPlatformClient,
   reuseFromDev = true,
+  enableLinkingPrompt = false,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
+  let developerPlatformClient = initialDeveloperPlatformClient
   const app = options.app
   let reuseDevCache = reuseFromDev
   let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
   let remoteApp: OrganizationApp | undefined
 
-  if (options.reset) {
+  const configuration = await linkIfNecessary(app.directory, options.reset, enableLinkingPrompt)
+  if (configuration !== undefined) {
     envIdentifiers = {app: undefined, extensions: {}}
     reuseDevCache = false
-    const configuration = await link({directory: app.directory, developerPlatformClient})
     app.configuration = configuration
+    developerPlatformClient = selectDeveloperPlatformClient({configuration})
   }
 
   if (isCurrentAppSchema(app.configuration)) {
@@ -750,26 +755,15 @@ export async function getAppContext({
   directory,
   developerPlatformClient,
   configName,
-  promptLinkingApp = true,
+  enableLinkingPrompt = true,
 }: {
   reset: boolean
   directory: string
   developerPlatformClient: DeveloperPlatformClient
   configName?: string
-  promptLinkingApp?: boolean
+  enableLinkingPrompt?: boolean
 }): Promise<AppContext> {
-  const previousCachedInfo = getCachedAppInfo(directory)
-
-  if (reset) clearCachedAppInfo(directory)
-
-  const firstTimeSetup = previousCachedInfo === undefined
-  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
-  const usingConfigWithNoTomls =
-    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
-
-  if (promptLinkingApp && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
-    await link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
-  }
+  await linkIfNecessary(directory, reset, enableLinkingPrompt)
 
   let cachedInfo = getCachedAppInfo(directory)
 
@@ -807,6 +801,26 @@ export async function getAppContext({
   }
 }
 
+async function linkIfNecessary(
+  directory: string,
+  reset: boolean,
+  enableLinkingPrompt: boolean,
+): Promise<CurrentAppConfiguration | undefined> {
+  const previousCachedInfo = getCachedAppInfo(directory)
+
+  if (reset) clearCachedAppInfo(directory)
+
+  const firstTimeSetup = previousCachedInfo === undefined
+  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
+  const usingConfigWithNoTomls: boolean =
+    previousCachedInfo?.configFile !== undefined && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+
+  const performAppLink = enableLinkingPrompt && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)
+  if (performAppLink) {
+    return link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
+  }
+}
+
 /**
  * Fetch all orgs the user belongs to and show a prompt to select one of them
  * @param developerPlatformClient - The client to access the platform API
@@ -830,6 +844,7 @@ interface ReusedValuesOptions {
  */
 function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
+  if (sniffForJson()) return
 
   let updateURLs = 'Not yet configured'
   if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'

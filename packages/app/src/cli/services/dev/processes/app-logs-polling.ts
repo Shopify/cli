@@ -45,7 +45,7 @@ export async function setupAppLogsPollingProcess({
 }
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
-  {stdout, stderr, abortSignal},
+  {stdout, stderr: _stderr, abortSignal: _abortSignal},
   {developerPlatformClient, appLogsSubscribeVariables},
 ) => {
   try {
@@ -59,10 +59,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       appLogsFetchInput: {jwtToken},
       apiKey,
       resubscribeCallback: () => {
-        return subscribeAndStartPolling(
-          {stdout, stderr, abortSignal},
-          {developerPlatformClient, appLogsSubscribeVariables},
-        )
+        return subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
       },
     })
     // eslint-disable-next-line no-catch-all/no-catch-all,no-empty

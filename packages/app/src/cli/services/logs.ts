@@ -1,9 +1,12 @@
 import {DevContextOptions, ensureDevContext} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs} from './app-logs/utils.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {loadAppConfiguration} from '../models/app/loader.js'
+import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
 import {AppInterface} from '../models/app/app.js'
+import {loadAppConfiguration} from '../models/app/loader.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+
+export type Format = 'json' | 'text'
 
 interface LogsOptions {
   directory: string
@@ -14,6 +17,7 @@ interface LogsOptions {
   status?: string
   configName?: string
   userProvidedConfigName?: string
+  format: Format
 }
 
 export async function logs(commandOptions: LogsOptions) {
@@ -37,13 +41,23 @@ export async function logs(commandOptions: LogsOptions) {
     filters,
   }
 
-  await renderLogs({
-    options: {
-      variables,
-      developerPlatformClient: logsConfig.developerPlatformClient,
-    },
-    pollOptions,
-  })
+  if (commandOptions.format === 'json') {
+    await renderJsonLogs({
+      options: {
+        variables,
+        developerPlatformClient: logsConfig.developerPlatformClient,
+      },
+      pollOptions,
+    })
+  } else {
+    await renderLogs({
+      options: {
+        variables,
+        developerPlatformClient: logsConfig.developerPlatformClient,
+      },
+      pollOptions,
+    })
+  }
 }
 
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{

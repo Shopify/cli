@@ -1,7 +1,7 @@
 import Dev from './dev.js'
 import Command from '../../utilities/app-command.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
-import {logs} from '../../services/logs.js'
+import {logs, Format} from '../../services/logs.js'
 import {appLogPollingEnabled} from '../../services/app-logs/utils.js'
 import {Flags} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -32,6 +32,11 @@ export default class Logs extends Command {
       options: ['success', 'failure'],
       env: 'SHOPIFY_FLAG_STATUS',
     }),
+    json: Flags.boolean({
+      char: 'j',
+      description: 'Log the run result as a JSON object.',
+      env: 'SHOPIFY_FLAG_JSON',
+    }),
   }
 
   public async run(): Promise<void> {
@@ -53,6 +58,7 @@ export default class Logs extends Command {
       status: flags.status,
       configName: flags.config,
       reset: flags.reset,
+      format: (flags.json ? 'json' : 'text') as Format,
     }
 
     await logs(logOptions)

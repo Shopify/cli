@@ -4,6 +4,7 @@ import {
   NetworkAccessRequestExecutedLog,
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
+  ErrorResponse,
 } from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
@@ -126,6 +127,38 @@ export const fetchAppLogs = async (
       Authorization: `Bearer ${jwtToken}`,
     },
   })
+}
+
+interface FetchAppLogsErrorOptions {
+  response: ErrorResponse
+  onThrottle: (retryIntervalMs: number) => void
+  onUnknownError: (retryIntervalMs: number) => void
+  onResubscribe: () => Promise<string>
+}
+
+export const handleFetchAppLogsError = async (
+  input: FetchAppLogsErrorOptions,
+): Promise<{retryIntervalMs: number; nextJwtToken: string | null}> => {
+  const {errors} = input.response
+
+  let retryIntervalMs = POLLING_INTERVAL_MS
+  let nextJwtToken = null
+
+  if (errors.length > 0) {
+    outputDebug(`Errors: ${errors.map((error) => error.message).join(', ')}`)
+
+    if (errors.some((error) => error.status === 401)) {
+      nextJwtToken = await input.onResubscribe()
+    } else if (errors.some((error) => error.status === 429)) {
+      retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
+      input.onThrottle(retryIntervalMs)
+    } else {
+      retryIntervalMs = POLLING_ERROR_RETRY_INTERVAL_MS
+      input.onUnknownError(retryIntervalMs)
+    }
+  }
+
+  return {retryIntervalMs, nextJwtToken}
 }
 
 export const subscribeToAppLogs = async (
