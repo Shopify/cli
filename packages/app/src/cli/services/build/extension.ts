@@ -89,7 +89,6 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   if (options.appURL) {
     env.APP_URL = options.appURL
   }
-
   try {
     await bundleExtension({
       minify: true,
@@ -104,6 +103,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       stderr: options.stderr,
       stdout: options.stdout,
     })
+    console.log('BUILT?')
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
     throw new AbortError(
