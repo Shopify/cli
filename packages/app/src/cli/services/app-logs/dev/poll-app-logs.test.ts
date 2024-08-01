@@ -1,10 +1,12 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
+import {FunctionRunLog} from '../types.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
+import camelcaseKeys from 'camelcase-keys'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -264,15 +266,22 @@ describe('pollAppLogs', () => {
       },
     })
 
+    const appLogPayloadZero = new FunctionRunLog(
+      camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[0]!.payload), {deep: true}),
+    )
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[0],
-      appLogPayload: JSON.parse(RESPONSE_DATA.app_logs[0]!.payload),
+      appLogPayload: appLogPayloadZero,
       apiKey: API_KEY,
       stdout,
     })
+
+    const appLogPayloadOne = new FunctionRunLog(
+      camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[1]!.payload), {deep: true}),
+    )
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[1],
-      appLogPayload: JSON.parse(RESPONSE_DATA.app_logs[1]!.payload),
+      appLogPayload: appLogPayloadOne,
       apiKey: API_KEY,
       stdout,
     })

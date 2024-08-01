@@ -1,5 +1,4 @@
-import {AppLogData} from '../types.js'
-import {LOG_TYPE_FUNCTION_RUN} from '../utils.js'
+import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -19,7 +18,7 @@ export const writeAppLogsToFile = async ({
 }: {
   appLog: AppLogData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  appLogPayload: any
+  appLogPayload: AppLogPayload | any
   apiKey: string
   stdout: Writable
 }): Promise<AppLogFile> => {
@@ -31,10 +30,6 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
-    if (appLog.log_type === LOG_TYPE_FUNCTION_RUN) {
-      appLogPayload.logs = appLogPayload.logs.split('\n').filter(Boolean)
-    }
-
     const toSaveData = camelcaseKeys(
       {
         ...appLog,
@@ -42,6 +37,10 @@ export const writeAppLogsToFile = async ({
       },
       {deep: true},
     )
+
+    if (appLogPayload instanceof FunctionRunLog) {
+      toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
+    }
 
     const logData = JSON.stringify(toSaveData, null, 2)
 

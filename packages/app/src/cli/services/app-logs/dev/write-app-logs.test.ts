@@ -1,6 +1,5 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
-import {AppLogData} from '../types.js'
-import {LOG_TYPE_FUNCTION_RUN} from '../utils.js'
+import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -19,6 +18,20 @@ const APP_LOG: AppLogData = {
   source_namespace: 'extensions',
   log_timestamp: '2024-05-22T15:06:41.827379Z',
 }
+
+const NEW_APP_LOG: AppLogData = {
+  shop_id: 1,
+  api_client_id: 2,
+  payload: JSON.stringify({someJson: 'someJSOn'}),
+  log_type: 'new_app_log_type',
+  cursor: '2024-05-22T15:06:43.841156Z',
+  status: 'success',
+  source: 'my-function',
+  source_namespace: 'extensions',
+  log_timestamp: '2024-05-22T15:06:41.827379Z',
+}
+
+const FUNCTION_RUN_PAYLOAD = new FunctionRunLog(camelcaseKeys(JSON.parse(APP_LOG.payload)))
 const API_KEY = 'apiKey'
 
 describe('writeAppLogsToFile', () => {
@@ -28,7 +41,7 @@ describe('writeAppLogsToFile', () => {
     stdout = {write: vi.fn()}
   })
 
-  test('calls writeLog with the right data', async () => {
+  test('calls writeLog with the FunctionRunLog payload type', async () => {
     // Given
     // determine the fileName and path
     const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
@@ -37,29 +50,54 @@ describe('writeAppLogsToFile', () => {
     // When
     const returnedPath = await writeAppLogsToFile({
       appLog: APP_LOG,
-      appLogPayload: JSON.parse(APP_LOG.payload),
+      appLogPayload: FUNCTION_RUN_PAYLOAD,
       apiKey: API_KEY,
       stdout,
     })
 
     // Then
     expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
-    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), expectedLogDataFromAppEvent(APP_LOG))
+    expect(writeLog).toHaveBeenCalledWith(
+      expect.stringContaining(path),
+      expectedLogDataFromAppEvent(APP_LOG, FUNCTION_RUN_PAYLOAD),
+    )
+  })
+
+  test('calls writeLog with strings when no matching payload type', async () => {
+    // Given
+    // determine the fileName and path
+    const fileName = `20240522_150641_827Z_${APP_LOG.source_namespace}_${APP_LOG.source}`
+    const path = joinPath(API_KEY, fileName)
+
+    // When
+    const returnedPath = await writeAppLogsToFile({
+      appLog: NEW_APP_LOG,
+      appLogPayload: JSON.parse(NEW_APP_LOG.payload),
+      apiKey: API_KEY,
+      stdout,
+    })
+
+    // Then
+    expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
+    expect(writeLog).toHaveBeenCalledWith(
+      expect.stringContaining(path),
+      expectedLogDataFromAppEvent(NEW_APP_LOG, JSON.parse(NEW_APP_LOG.payload)),
+    )
   })
 })
 
-function expectedLogDataFromAppEvent(event: AppLogData): string {
-  const payload = JSON.parse(event.payload)
-
-  if (event.log_type === LOG_TYPE_FUNCTION_RUN) {
-    payload.logs = payload.logs.split('\n').filter(Boolean)
-  }
+function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload | string): string {
   const data = camelcaseKeys(
     {
       ...event,
-      payload,
+      payload: payload as any,
     },
     {deep: true},
   )
+
+  if (payload instanceof FunctionRunLog) {
+    data.payload.logs = payload.logs.split('\n').filter(Boolean)
+  }
+
   return JSON.stringify(data, null, 2)
 }

@@ -13,9 +13,10 @@ import {
   REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
   handleFetchAppLogsError,
 } from '../utils.js'
-import {AppLogData, ErrorResponse} from '../types.js'
+import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
 
 export const pollAppLogs = async ({
@@ -74,12 +75,12 @@ export const pollAppLogs = async ({
       const {app_logs: appLogs} = data
 
       for (const log of appLogs) {
-        const payload = JSON.parse(log.payload)
-
+        let payload = JSON.parse(log.payload)
         // eslint-disable-next-line no-await-in-loop
         await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
           if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
             handleFunctionRunLog(log, payload, stdout)
+            payload = new FunctionRunLog(camelcaseKeys(payload, {deep: true}))
           } else if (log.log_type.startsWith(LOG_TYPE_FUNCTION_NETWORK_ACCESS)) {
             handleFunctionNetworkAccessLog(log, payload, stdout)
           } else {
