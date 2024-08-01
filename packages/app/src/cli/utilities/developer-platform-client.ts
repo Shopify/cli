@@ -58,6 +58,11 @@ import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-ses
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
+export enum ClientName {
+  AppManagement = 'app-management',
+  Partners = 'partners',
+}
+
 export type Paginateable<T> = T & {
   hasMorePages: boolean
 }

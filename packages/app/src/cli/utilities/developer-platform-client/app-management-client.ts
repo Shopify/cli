@@ -48,6 +48,7 @@ import {
   AppVersionIdentifiers,
   DevSessionOptions,
   filterDisabledFlags,
+  ClientName,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -145,7 +146,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
-  public clientName = 'app-management'
+  public clientName = ClientName.AppManagement
   public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true

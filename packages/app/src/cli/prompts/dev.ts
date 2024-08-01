@@ -59,7 +59,7 @@ export async function selectAppPrompt(
 
 export async function selectStorePrompt(
   stores: OrganizationStore[],
-  clientName: string,
+  showDomainOnPrompt: boolean,
 ): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
@@ -69,7 +69,7 @@ export async function selectStorePrompt(
 
   const storeList = stores.map((store) => {
     let label = store.shopName
-    if (clientName === 'app-management') {
+    if (showDomainOnPrompt && store.shopDomain) {
       label = `${store.shopName} (${store.shopDomain})`
     }
     return {label, value: store.shopId}

@@ -135,13 +135,13 @@ describe('selectApp', () => {
 })
 
 describe('selectStore', () => {
-  const defaultClientName = 'partners'
+  const defaultShowDomainOnPrompt = false
   test('returns undefined if store list is empty', async () => {
     // Given
     const stores: OrganizationStore[] = []
 
     // When
-    const got = await selectStorePrompt(stores, defaultClientName)
+    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
 
     // Then
     expect(got).toEqual(undefined)
@@ -154,7 +154,7 @@ describe('selectStore', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const got = await selectStorePrompt(stores, defaultClientName)
+    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
 
     // Then
     expect(got).toEqual(STORE1)
@@ -168,7 +168,7 @@ describe('selectStore', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores, defaultClientName)
+    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
 
     // Then
     expect(got).toEqual(STORE2)
@@ -181,14 +181,13 @@ describe('selectStore', () => {
     })
   })
 
-  test('renders stores list with domain if client is app-management ', async () => {
+  test('renders stores list with domain if showDomainOnPrompt is true ', async () => {
     // Given
-    const clientName = 'app-management'
     const stores: OrganizationStore[] = [STORE1, STORE2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores, clientName)
+    const got = await selectStorePrompt(stores, true)
 
     // Then
     expect(got).toEqual(STORE2)
