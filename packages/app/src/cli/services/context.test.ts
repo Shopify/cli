@@ -911,11 +911,14 @@ api_version = "2023-04"
 
     test('Does not display used dev values when using json output', async () => {
       vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
       // When
-      const options = devOptions()
+      const options = devOptions({
+        developerPlatformClient: buildDeveloperPlatformClient({
+          appFromId: () => Promise.resolve(APP1),
+        }),
+      })
       process.argv = ['', '', '--json']
       await ensureDevContext(options)
 
