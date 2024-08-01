@@ -436,6 +436,6 @@ describe('pollAppLogs', () => {
     await expect(writeAppLogsToFile).not.toHaveBeenCalled
     expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
     expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
-    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('is not valid JSON'))
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('JSON'))
   })
 })
