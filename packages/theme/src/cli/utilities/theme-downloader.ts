@@ -1,8 +1,8 @@
 import {applyIgnoreFilters} from './asset-ignore.js'
 
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {ThemeFileSystem, Theme, Checksum} from '@shopify/cli-kit/node/themes/types'
+import {fetchThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface DownloadOptions {
@@ -51,26 +51,35 @@ async function buildDownloadTasks(
   session: AdminSession,
   options: DownloadOptions,
 ) {
-  const checksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
+  const max_filenames = 50
+  var checksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
+  // const original_size = checksums.length
+  checksums = checksums.filter((checksum) => {
+    const remoteChecksumValue = checksum.checksum
+    const localAsset = themeFileSystem.files.get(checksum.key)
 
-  return checksums
-    .map((checksum) => {
-      const remoteChecksumValue = checksum.checksum
-      const localAsset = themeFileSystem.files.get(checksum.key)
+    if (localAsset?.checksum && localAsset?.checksum !== remoteChecksumValue) {
+      // console.log(`File ${checksum.key} has checksum mismatch ${localAsset?.checksum} != ${remoteChecksumValue}`)
+    }
+    if (localAsset?.checksum === remoteChecksumValue) {
+      return false
+    } else {
+      return true
+    }
+  })
+  // console.log(`Downloading ${checksums.length} files out of ${original_size}`)
+  const filenames = checksums.map((c) => c.key)
 
-      if (localAsset?.checksum === remoteChecksumValue) {
-        return
-      }
-
-      const progress = progressPct(remoteChecksums, checksum)
-      const title = `Pulling theme "${theme.name}" (#${theme.id}) from ${session.storeFqdn} [${progress}%]`
-
-      return {
-        title,
-        task: async () => downloadFile(theme, themeFileSystem, checksum, session),
-      }
+  var batches = []
+  for (let i = 0; i < filenames.length; i += max_filenames) {
+    const batch_filenames = filenames.slice(i, i + max_filenames)
+    const title = `Downloading files ${i}..${i + batch_filenames.length} / ${filenames.length} files`
+    batches.push({
+      title,
+      task: async () => downloadFiles(theme, themeFileSystem, batch_filenames, session),
     })
-    .filter(notNull)
+  }
+  return batches
 }
 
 async function downloadFile(theme: Theme, fileSystem: ThemeFileSystem, checksum: Checksum, session: AdminSession) {
@@ -79,6 +88,15 @@ async function downloadFile(theme: Theme, fileSystem: ThemeFileSystem, checksum:
   if (!themeAsset) return
 
   await fileSystem.write(themeAsset)
+}
+
+async function downloadFiles(theme: Theme, fileSystem: ThemeFileSystem, filenames: string[], session: AdminSession) {
+  const assets = await fetchThemeAssets(theme.id, filenames, session)
+  if (!assets) return
+
+  assets.forEach(async (asset: ThemeAsset) => {
+    await fileSystem.write(asset)
+  })
 }
 
 function progressPct(themeChecksums: Checksum[], checksum: Checksum): number {

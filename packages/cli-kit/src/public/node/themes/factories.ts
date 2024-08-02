@@ -1,5 +1,5 @@
-import {AssetParams} from './api.js'
-import {Result, Checksum, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
+import { AssetParams } from './api.js'
+import { Result, Checksum, Theme, ThemeAsset, Operation } from '@shopify/cli-kit/node/themes/types'
 
 interface RemoteThemeResponse {
   id: number
@@ -17,7 +17,7 @@ interface RemoteAssetResponse {
 }
 
 export interface RemoteBulkUploadResponse {
-  body: {asset?: RemoteAssetResponse; errors?: {asset: string[]}}
+  body: { asset?: RemoteAssetResponse; errors?: { asset: string[] } }
   code: number
 }
 
@@ -27,7 +27,7 @@ export function buildTheme(themeJson?: RemoteThemeResponse): Theme | undefined {
   themeJson.processing ??= false
   themeJson.createdAtRuntime ??= false
 
-  const {id, name, role, processing, createdAtRuntime} = themeJson
+  const { id, name, role, processing, createdAtRuntime } = themeJson
 
   return {
     id,
@@ -41,15 +41,15 @@ export function buildTheme(themeJson?: RemoteThemeResponse): Theme | undefined {
 export function buildChecksum(asset?: RemoteAssetResponse): Checksum | undefined {
   if (!asset) return
 
-  const {key, checksum} = asset
-  return {key, checksum}
+  const { key, checksum } = asset
+  return { key, checksum }
 }
 
 export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undefined {
   if (!asset) return
 
-  const {key, checksum, attachment, value} = asset
-  return {key, checksum, attachment, value}
+  const { key, checksum, attachment, value } = asset
+  return { key, checksum, attachment, value }
 }
 
 export function buildBulkUploadResults(
