@@ -9,8 +9,11 @@ export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platf
 
 export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'business-platform', 'app-management']
 
+const DEFAULT_RETRY_DELAY_MS = 1000
+const DEFAULT_RETRY_LIMIT = 10
+
 interface RequestOptions<T> {
-  request: Promise<T>
+  request: () => Promise<T>
   url: string
 }
 
@@ -27,38 +30,195 @@ function responseHeaderIsInteresting(header: string): boolean {
   return interestingResponseHeaders.has(header)
 }
 
-export async function debugLogResponseInfo<T extends {headers: Headers; status: number}>(
-  {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
-): Promise<T> {
+type VerboseResponse<T> = {
+  duration: number
+  sanitizedHeaders: string
+  sanitizedUrl: string
+  requestId?: string
+} & (
+  | {status: 'ok'; response: T}
+  | {status: 'client-error'; clientError: ClientError}
+  | {status: 'unknown-error'; error: unknown}
+  | {status: 'can-retry'; clientError: ClientError; delayMs: number | undefined}
+)
+
+export async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
+  request,
+  url,
+}: RequestOptions<T>): Promise<VerboseResponse<T>> {
   const t0 = performance.now()
+  let duration = 0
   const responseHeaders: {[key: string]: string} = {}
+  const sanitizedUrl = sanitizeURL(url)
   let response: T = {} as T
   try {
-    response = await request
+    response = await request()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response.headers.forEach((value: any, key: any) => {
       if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
     })
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
+    const t1 = performance.now()
+    duration = Math.round(t1 - t0)
+
     if (err instanceof ClientError) {
       if (err.response?.headers) {
         for (const [key, value] of err.response?.headers as Iterable<[string, string]>) {
           if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
         }
       }
+      const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
+
+      if (err.response.errors?.some((error) => error.extensions?.code === '429') || err.response.status === 429) {
+        let delayMs: number | undefined
+
+        try {
+          delayMs = responseHeaders['retry-after'] ? Number.parseInt(responseHeaders['retry-after'], 10) : undefined
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          // ignore errors in extracting retry-after header
+        }
+        return {
+          status: 'can-retry',
+          clientError: err,
+          duration,
+          sanitizedHeaders,
+          sanitizedUrl,
+          requestId: responseHeaders['x-request-id'],
+          delayMs,
+        }
+      }
+
+      return {
+        status: 'client-error',
+        clientError: err,
+        duration,
+        sanitizedHeaders,
+        sanitizedUrl,
+        requestId: responseHeaders['x-request-id'],
+      }
     }
-    if (errorHandler) {
-      throw errorHandler(err, responseHeaders['x-request-id'])
-    } else {
-      throw err
+    return {
+      status: 'unknown-error',
+      error: err,
+      duration,
+      sanitizedHeaders: sanitizedHeadersOutput(responseHeaders),
+      sanitizedUrl,
+      requestId: responseHeaders['x-request-id'],
     }
-  } finally {
-    const t1 = performance.now()
-    outputDebug(`Request to ${sanitizeURL(url)} completed in ${Math.round(t1 - t0)} ms
-With response headers:
-${sanitizedHeadersOutput(responseHeaders)}
-    `)
   }
-  return response
+  const t1 = performance.now()
+  duration = Math.round(t1 - t0)
+  return {
+    status: 'ok',
+    response,
+    duration,
+    sanitizedHeaders: sanitizedHeadersOutput(responseHeaders),
+    sanitizedUrl,
+    requestId: responseHeaders['x-request-id'],
+  }
+}
+
+export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
+  {request, url}: RequestOptions<T>,
+  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+): Promise<T> {
+  const result = await makeVerboseRequest({request, url})
+
+  outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
+With response headers:
+${result.sanitizedHeaders}
+    `)
+
+  switch (result.status) {
+    case 'ok': {
+      return result.response
+    }
+    case 'client-error': {
+      if (errorHandler) {
+        throw errorHandler(result.clientError, result.requestId)
+      } else {
+        throw result.clientError
+      }
+    }
+    case 'unknown-error': {
+      if (errorHandler) {
+        throw errorHandler(result.error, result.requestId)
+      } else {
+        throw result.error
+      }
+    }
+    case 'can-retry': {
+      if (errorHandler) {
+        throw errorHandler(result.clientError, result.requestId)
+      } else {
+        throw result.clientError
+      }
+    }
+  }
+}
+
+export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
+  {request, url}: RequestOptions<T>,
+  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  retryOptions: {
+    limitRetriesTo?: number
+    defaultDelayMs?: number
+    scheduleDelay: (fn: () => void, delay: number) => void
+  } = {
+    scheduleDelay: setTimeout,
+  },
+): Promise<T> {
+  let retriesUsed = 0
+  const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
+
+  let result = await makeVerboseRequest({request, url})
+
+  outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
+With response headers:
+${result.sanitizedHeaders}
+    `)
+
+  while (true) {
+    if (result.status === 'ok') {
+      if (retriesUsed > 0) {
+        outputDebug(`Request to ${result.sanitizedUrl} succeeded after ${retriesUsed} retries`)
+      }
+      return result.response
+    } else if (result.status === 'client-error') {
+      if (errorHandler) {
+        throw errorHandler(result.clientError, result.requestId)
+      } else {
+        throw result.clientError
+      }
+    } else if (result.status === 'unknown-error') {
+      if (errorHandler) {
+        throw errorHandler(result.error, result.requestId)
+      } else {
+        throw result.error
+      }
+    }
+
+    if (limitRetriesTo <= retriesUsed) {
+      outputDebug(`${limitRetriesTo} retries exhausted for request to ${result.sanitizedUrl}`)
+      if (errorHandler) {
+        throw errorHandler(result.clientError, result.requestId)
+      } else {
+        throw result.clientError
+      }
+    }
+    retriesUsed += 1
+
+    // prefer to wait based on a header if given; the caller's preference if not; and a default if neither.
+    const retryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS
+    outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${retryDelayMs} ms`)
+
+    // eslint-disable-next-line no-await-in-loop
+    result = await new Promise<VerboseResponse<T>>((resolve) =>
+      retryOptions.scheduleDelay(() => {
+        resolve(makeVerboseRequest({request, url}))
+      }, retryDelayMs),
+    )
+  }
 }

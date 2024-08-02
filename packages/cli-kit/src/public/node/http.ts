@@ -4,7 +4,7 @@ import {runWithTimer} from './metadata.js'
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {sanitizeURL} from '../../private/node/api/urls.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
-import {debugLogResponseInfo} from '../../private/node/api.js'
+import {simpleRequestWithDebugLog} from '../../private/node/api.js'
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
 
@@ -35,7 +35,7 @@ export type Response = ReturnType<typeof nodeFetch>
  */
 export async function fetch(url: RequestInfo, init?: RequestInit): Response {
   return runWithTimer('cmd_all_timing_network_ms')(() =>
-    debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, init)}),
+    simpleRequestWithDebugLog({url: url.toString(), request: () => nodeFetch(url, init)}),
   )
 }
 
@@ -63,7 +63,10 @@ With request headers:
 ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
 `)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, {...init, agent: await httpsAgent()})})
+    return simpleRequestWithDebugLog({
+      url: url.toString(),
+      request: async () => nodeFetch(url, {...init, agent: await httpsAgent()}),
+    })
   })
 }
 
