@@ -161,9 +161,32 @@ module ShopifyCLI
             times: 2)
         end
 
-        def xtest_update_session_cookie_when_returned_from_backend
-          stub_session_id_request
+        def test_update_session_cookie_when_returned_from_backend
           new_shopify_essential = "#{SECURE_SESSION_ID}2"
+
+          stub_request(:head, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0&preview_theme_id=123456789")
+            .with(
+              headers: {
+                "Host" => "dev-theme-server-store.myshopify.com",
+              },
+            )
+            .to_return([
+              {
+                status: 200,
+                headers: {
+                  "Set-Cookie" => "_shopify_essential=#{SECURE_SESSION_ID}",
+                },
+              },
+              {
+                status: 200,
+                headers: {
+                  "Set-Cookie" => "_shopify_essential=#{new_shopify_essential}",
+                },
+              },
+            ])
+
+          # Force the _shopify_essential cookie to be refreshed.
+          @proxy.stubs(:secure_session_id_expired?).returns(true)
 
           # POST response returning a new session cookie (Set-Cookie)
           stub_request(:post, "https://dev-theme-server-store.myshopify.com/account/login?_fd=0&pb=0")
