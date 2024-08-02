@@ -30,7 +30,8 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
-    const toSaveData = camelcaseKeys(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const toSaveData: any = camelcaseKeys(
       {
         ...appLog,
         payload: appLogPayload,
