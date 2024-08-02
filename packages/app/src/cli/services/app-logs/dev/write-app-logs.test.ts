@@ -56,11 +56,23 @@ describe('writeAppLogsToFile', () => {
     })
 
     // Then
+    const expectedSaveData = {
+      shopId: APP_LOG.shop_id,
+      apiClientId: APP_LOG.api_client_id,
+      payload: {
+        logs: ['Line 1!', ' Line2!'],
+      },
+      logType: APP_LOG.log_type,
+      cursor: APP_LOG.cursor,
+      status: APP_LOG.status,
+      source: APP_LOG.source,
+      sourceNamespace: APP_LOG.source_namespace,
+      logTimestamp: APP_LOG.log_timestamp,
+    }
+    const expectedLogData = JSON.stringify(expectedSaveData, null, 2)
+
     expect(returnedPath.fullOutputPath.startsWith(path)).toBe(true)
-    expect(writeLog).toHaveBeenCalledWith(
-      expect.stringContaining(path),
-      expectedLogDataFromAppEvent(APP_LOG, FUNCTION_RUN_PAYLOAD),
-    )
+    expect(writeLog).toHaveBeenCalledWith(expect.stringContaining(path), expectedLogData)
   })
 
   test('calls writeLog with strings when no matching payload type', async () => {
@@ -86,18 +98,14 @@ describe('writeAppLogsToFile', () => {
   })
 })
 
-function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload | string): string {
-  const data = camelcaseKeys(
+function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload | any): string {
+  const data: any = camelcaseKeys(
     {
       ...event,
-      payload: payload as any,
+      payload,
     },
     {deep: true},
   )
-
-  if (payload instanceof FunctionRunLog) {
-    data.payload.logs = payload.logs.split('\n').filter(Boolean)
-  }
 
   return JSON.stringify(data, null, 2)
 }
