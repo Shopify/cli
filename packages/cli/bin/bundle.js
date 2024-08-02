@@ -44,12 +44,19 @@ esBuild({
   define: {
     // Necessary for theme-check-node to work
     'process.env.WEBPACK_MODE': 'true',
+    'import.meta.vitest': 'false',
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
   sourcemap: true,
   loader: {'.node': 'copy'},
   splitting: true,
+  // these tree shaking and minify options remove any in-source tests from the bundle
+  treeShaking: true,
+  minifyWhitespace: false,
+  minifySyntax: true,
+  minifyIdentifiers: false,
+
   plugins: [
     ShopifyVSCodePlugin,
     GraphiQLImportsPlugin,
