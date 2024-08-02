@@ -1,5 +1,5 @@
 import {DevServerSession} from './theme-environment/types.js'
-import {evaluate} from './repl/evaluater.js'
+import {evaluate, SessionItem} from './repl/evaluater.js'
 import {presentValue} from './repl/presenter.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {consoleWarn, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
@@ -17,10 +17,11 @@ export async function replLoop(themeSession: DevServerSession, themeId: string, 
       input: process.stdin,
       output: process.stdout,
     })
+    const replSession: SessionItem[] = []
 
     rl.on('line', (input) => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      handleInput(input, themeSession, themeId, url, rl)
+      handleInput(input, themeSession, themeId, url, rl, replSession)
     })
     rl.prompt()
   } catch (error) {
@@ -35,6 +36,7 @@ export async function handleInput(
   themeId: string,
   url: string,
   rl: Interface,
+  replSession: SessionItem[],
 ) {
   if (hasDelimiter(inputValue)) {
     consoleWarn(
@@ -42,7 +44,7 @@ export async function handleInput(
     )
     return rl.prompt()
   }
-  const evaluatedValue = await evaluate(themeSession, inputValue, themeId, url)
+  const evaluatedValue = await evaluate(inputValue, {themeSession, themeId, url, replSession})
   presentValue(evaluatedValue)
   rl.prompt()
 }
