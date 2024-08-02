@@ -42,7 +42,7 @@ type VerboseResponse<T> = {
   | {status: 'can-retry'; clientError: ClientError; delayMs: number | undefined}
 )
 
-export async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
+async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
   request,
   url,
 }: RequestOptions<T>): Promise<VerboseResponse<T>> {
