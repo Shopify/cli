@@ -22,7 +22,7 @@ export async function calculateChecksum(fileKey: string, fileContent: string | B
      * approach here (note that already escaped forward slashes are not
      * re-escaped).
      */
-    if (!isThemeAsset(fileKey)) {
+    if (!isThemeAsset(fileKey) || fileKey.startsWith('locales/')) {
       content = content.replace(/(?<!\\)\//g, '\\/')
     }
   }

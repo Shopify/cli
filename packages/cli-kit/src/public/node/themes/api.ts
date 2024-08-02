@@ -1,15 +1,11 @@
 import {storeAdminUrl} from './urls.js'
 import * as throttler from '../api/rest-api-throttler.js'
-import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
+import {adminRequest, restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {
-  buildBulkUploadResults,
-  buildChecksum,
-  buildTheme,
-  buildThemeAsset,
-} from '@shopify/cli-kit/node/themes/factories'
+import {buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {gql} from 'graphql-request'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
@@ -19,11 +15,57 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
   return buildTheme(response.json.theme)
 }
 
+interface ThemesResult {
+  themes: {
+    nodes: Theme[]
+    pageInfo: {
+      hasNextPage: boolean
+      endCursor: string
+    }
+  }
+}
+
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
-  const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
-  const themes = response.json?.themes
-  if (themes?.length > 0) return themes.map(buildTheme)
-  return []
+  let cursor = null
+  const themes: Theme[] = []
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const response: ThemesResult = await adminRequest(
+      gql`
+      query {
+        themes(first: 50, after: ${cursor}) {
+          nodes {
+            id
+            name
+            role
+            prefix
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `,
+      session,
+    )
+    response.themes.nodes.forEach((theme: Theme) => {
+      theme.role = theme.role.toLowerCase()
+      // Strip off gid://shopify/Theme/ from the id
+      // We should probably leave this as a gid for subsequent requests
+      theme.id = parseInt((theme.id as unknown as string).split('/').pop() as string, 10)
+
+      const t = buildTheme(theme)
+      if (t !== undefined) {
+        themes.push(t)
+      }
+    })
+    if (response.themes.pageInfo.hasNextPage) {
+      cursor = `"${response.themes.pageInfo.endCursor}"`
+    } else {
+      return themes
+    }
+  }
 }
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
@@ -31,11 +73,92 @@ export async function createTheme(params: ThemeParams, session: AdminSession): P
   return buildTheme({...response.json.theme, createdAtRuntime: true})
 }
 
+interface PageInfo {
+  endCursor: string
+  hasNextPage: boolean
+}
+
+interface ThemeFile {
+  filename: string
+  file: {
+    checksumMd5: string
+    body: {
+      content: string
+      contentBase64: string
+      url: string
+    }
+  }
+}
+
+interface ThemeFilesResult {
+  theme: {
+    files: {
+      nodes: ThemeFile[]
+      pageInfo: PageInfo
+    }
+  }
+}
+
 export async function fetchThemeAsset(id: number, key: Key, session: AdminSession): Promise<ThemeAsset | undefined> {
   const response = await request('GET', `/themes/${id}/assets`, session, undefined, {
     'asset[key]': key,
   })
   return buildThemeAsset(response.json.asset)
+}
+
+export async function fetchThemeAssets(
+  id: number,
+  filenames: Key[],
+  session: AdminSession,
+): Promise<ThemeAsset[] | undefined> {
+  const assets: ThemeAsset[] = []
+  let cursor = ''
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const response: ThemeFilesResult = await adminRequest(
+      gql`
+      query {
+        theme(id: "gid://shopify/Theme/${id}") {
+          files(first: 100, after: "${cursor}", filenames: ${JSON.stringify(filenames)}) {
+            nodes {
+              filename
+              file {
+                checksumMd5
+                body {
+                  ... on ThemeFileBodyText { content }
+                  ... on ThemeFileBodyBase64 { contentBase64 }
+                  ... on ThemeFileBodyUrl { url }
+                }
+              }
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+          }
+        }
+      }
+      `,
+      session,
+    )
+    response.theme.files.nodes.forEach((file) => {
+      if (file.file.body.url) {
+        // console.log(`${file.filename} has url content`)
+        throw new Error('URL content not supported yet')
+      }
+      assets.push({
+        key: file.filename,
+        checksum: file.file.checksumMd5,
+        value: file.file.body.content,
+        attachment: file.file.body.contentBase64,
+      })
+    })
+    if (response.theme.files.pageInfo.hasNextPage) {
+      cursor = response.theme.files.pageInfo.endCursor
+    } else {
+      return assets
+    }
+  }
 }
 
 export async function deleteThemeAsset(id: number, key: Key, session: AdminSession): Promise<boolean> {
@@ -50,20 +173,79 @@ export async function bulkUploadThemeAssets(
   assets: AssetParams[],
   session: AdminSession,
 ): Promise<Result[]> {
-  const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
-  if (response.status !== 207) {
-    throw new AbortError('Upload failed, could not reach the server')
-  }
-  return buildBulkUploadResults(response.json.results, assets)
+  const filesParam: unknown = assets.map((asset) => {
+    return {
+      filename: asset.key,
+      // TODO: Add checksumMd5 and size
+      // TODO: Handle URL uploads
+      body: {
+        type: 'TEXT',
+        value: asset.value,
+      },
+    }
+  })
+
+  const response: unknown = await adminRequest(
+    gql`
+    mutation themeFilesWrite($files: [ThemeFilesWriteFileInput!]!){
+      themeFilesWrite(
+        themeId: "gid://shopify/Theme/${id}",
+        files: $files,
+      ) {
+        updatedThemeFiles {
+          filename
+        }
+      }
+    }
+    `,
+    session,
+    {files: filesParam},
+  )
+
+  // console.log(response.themeFilesWrite.updatedThemeFiles)
+
+  return []
+  // const response = await request('PUT', `/themes/${id}/assets/bulk`, session, { assets })
+  // if (response.status !== 207) {
+  //   throw new AbortError('Upload failed, could not reach the server')
+  // }
+  // return buildBulkUploadResults(response.json.results, assets)
 }
 
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
-  const response = await request('GET', `/themes/${id}/assets`, session, undefined, {fields: 'key,checksum'})
-  const assets = response.json.assets
+  const checksums: Checksum[] = []
 
-  if (assets?.length > 0) return assets.map(buildChecksum)
-
-  return []
+  let cursor = ''
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const response: ThemeFilesResult = await adminRequest(
+      gql`
+      query {
+        theme(id: "gid://shopify/Theme/${id}") {
+          files(first: 250, after: "${cursor}") {
+            nodes {
+              filename
+              file { checksumMd5 }
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+          }
+        }
+      }
+      `,
+      session,
+    )
+    response.theme.files.nodes.forEach((file) => {
+      checksums.push({key: file.filename, checksum: file.file.checksumMd5})
+    })
+    if (response.theme.files.pageInfo.hasNextPage) {
+      cursor = response.theme.files.pageInfo.endCursor
+    } else {
+      return checksums
+    }
+  }
 }
 
 interface UpgradeThemeOptions {

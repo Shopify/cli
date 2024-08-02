@@ -17,9 +17,9 @@ interface UploadOptions {
 type FileBatch = Checksum[]
 
 // Limits for Bulk Requests
-export const MAX_BATCH_FILE_COUNT = 10
-// 100KB
-export const MAX_BATCH_BYTESIZE = 102400
+export const MAX_BATCH_FILE_COUNT = 50
+// 10MB
+export const MAX_BATCH_BYTESIZE = 1024000
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
 export async function uploadTheme(
