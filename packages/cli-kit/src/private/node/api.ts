@@ -14,7 +14,18 @@ interface RequestOptions<T> {
   url: string
 }
 
-const interestingResponseHeaders = new Set(['cache-control', 'content-type', 'etag', 'x-request-id'])
+const interestingResponseHeaders = new Set([
+  'cache-control',
+  'content-type',
+  'etag',
+  'x-request-id',
+  'server-timing',
+  'retry-after',
+])
+
+function responseHeaderIsInteresting(header: string): boolean {
+  return interestingResponseHeaders.has(header)
+}
 
 export async function debugLogResponseInfo<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
@@ -27,13 +38,13 @@ export async function debugLogResponseInfo<T extends {headers: Headers; status: 
     response = await request
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response.headers.forEach((value: any, key: any) => {
-      if (interestingResponseHeaders.has(key)) responseHeaders[key] = value
+      if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
     })
   } catch (err) {
     if (err instanceof ClientError) {
       if (err.response?.headers) {
         for (const [key, value] of err.response?.headers as Iterable<[string, string]>) {
-          if (interestingResponseHeaders.has(key)) responseHeaders[key] = value
+          if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
         }
       }
     }
