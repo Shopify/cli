@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.65.0
+
+### Minor Changes
+
+- 2387329cad: Introduce `.wasm` asset support for theme app extensions
+
+### Patch Changes
+
+- 253d1cec0a: Fix webhook URI transformation in TOML to relative path when the app URL ends with a slash
+- Updated dependencies [00d80ea3d1]
+  - @shopify/create-app@3.65.0
+  - @shopify/cli-kit@3.65.0
+  - @shopify/plugin-cloudflare@3.65.0
+
 ## 3.64.0
 
 ### Patch Changes
