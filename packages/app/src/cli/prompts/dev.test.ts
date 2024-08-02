@@ -135,12 +135,13 @@ describe('selectApp', () => {
 })
 
 describe('selectStore', () => {
+  const defaultShowDomainOnPrompt = false
   test('returns undefined if store list is empty', async () => {
     // Given
     const stores: OrganizationStore[] = []
 
     // When
-    const got = await selectStorePrompt(stores)
+    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
 
     // Then
     expect(got).toEqual(undefined)
@@ -153,7 +154,7 @@ describe('selectStore', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const got = await selectStorePrompt(stores)
+    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
 
     // Then
     expect(got).toEqual(STORE1)
@@ -167,7 +168,7 @@ describe('selectStore', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores)
+    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
 
     // Then
     expect(got).toEqual(STORE2)
@@ -176,6 +177,25 @@ describe('selectStore', () => {
       choices: [
         {label: 'store1', value: '1'},
         {label: 'store2', value: '2'},
+      ],
+    })
+  })
+
+  test('renders stores list with domain if showDomainOnPrompt is true ', async () => {
+    // Given
+    const stores: OrganizationStore[] = [STORE1, STORE2]
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
+
+    // When
+    const got = await selectStorePrompt(stores, true)
+
+    // Then
+    expect(got).toEqual(STORE2)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [
+        {label: 'store1 (domain1)', value: '1'},
+        {label: 'store2 (domain2)', value: '2'},
       ],
     })
   })

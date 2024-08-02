@@ -57,13 +57,23 @@ export async function selectAppPrompt(
   return currentAppChoices.find((app) => app.apiKey === apiKey)!
 }
 
-export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
+export async function selectStorePrompt(
+  stores: OrganizationStore[],
+  showDomainOnPrompt: boolean,
+): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
-  const storeList = stores.map((store) => ({label: store.shopName, value: store.shopId}))
+
+  const storeList = stores.map((store) => {
+    let label = store.shopName
+    if (showDomainOnPrompt && store.shopDomain) {
+      label = `${store.shopName} (${store.shopDomain})`
+    }
+    return {label, value: store.shopId}
+  })
 
   const id = await renderAutocompletePrompt({
     message: 'Which store would you like to use to view your project?',

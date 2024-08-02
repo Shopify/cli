@@ -13,6 +13,7 @@ import {
   Paginateable,
   DevSessionOptions,
   filterDisabledFlags,
+  ClientName,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -209,7 +210,7 @@ interface OrgAndAppsResponse {
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
-  public clientName = 'partners'
+  public clientName = ClientName.Partners
   public webUiName = 'Partner Dashboard'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
