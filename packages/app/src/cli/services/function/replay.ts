@@ -52,6 +52,20 @@ export interface FunctionRunData {
 }
 
 export async function replay(options: ReplayOptions) {
+  runReplay(options)
+}
+
+async function launchReplayProcess(options: ReplayOptions) {
+  const {watch, extension, app} = options
+  const abortController = new AbortController()
+
+  return renderReplay({
+    selectedRun,
+    abortController,
+  })
+}
+
+async function runReplay(options: ReplayOptions) {
   const {watch, extension, app} = options
   const abortController = new AbortController()
 

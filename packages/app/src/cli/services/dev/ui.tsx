@@ -94,6 +94,13 @@ export async function renderDev({
   }
 }
 
+export async function renderReplay({
+  selectedRed,
+  abortController,
+}: ReplayProps) {
+  console.log('in renderReplay')
+}
+
 async function partnersURL(organizationId: string, appId: string) {
   return {
     link: {
