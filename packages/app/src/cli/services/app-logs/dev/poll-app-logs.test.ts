@@ -1,10 +1,12 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
+import {FunctionRunLog} from '../types.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
+import camelcaseKeys from 'camelcase-keys'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -264,18 +266,28 @@ describe('pollAppLogs', () => {
       },
     })
 
+    const appLogPayloadZero = new FunctionRunLog(
+      camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[0]!.payload), {deep: true}),
+    )
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[0],
+      appLogPayload: appLogPayloadZero,
       apiKey: API_KEY,
       stdout,
     })
+
+    const appLogPayloadOne = new FunctionRunLog(
+      camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[1]!.payload), {deep: true}),
+    )
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[1],
+      appLogPayload: appLogPayloadOne,
       apiKey: API_KEY,
       stdout,
     })
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[2],
+      appLogPayload: JSON.parse(RESPONSE_DATA.app_logs[2]!.payload),
       apiKey: API_KEY,
       stdout,
     })
@@ -395,5 +407,44 @@ describe('pollAppLogs', () => {
     // Then
     expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
     expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('displays error message, waits, and retries if response contained bad JSON', async () => {
+    // Given
+    const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+
+    const badFunctionLogPayload = 'invalid json'
+    const responseDataWithBadJson = {
+      app_logs: [
+        {
+          shop_id: 1,
+          api_client_id: 1830457,
+          payload: badFunctionLogPayload,
+          log_type: FUNCTION_RUN,
+          cursor: '2024-05-23T19:17:02.321773Z',
+          status: 'success',
+          source: SOURCE,
+          source_namespace: 'extensions',
+          log_timestamp: '2024-05-23T19:17:00.240053Z',
+        },
+      ],
+    }
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(responseDataWithBadJson))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+    })
+
+    // When/Then
+    await expect(writeAppLogsToFile).not.toHaveBeenCalled
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('JSON'))
   })
 })
