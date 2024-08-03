@@ -1,6 +1,6 @@
 import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {consoleLog, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 export interface SessionItem {
   type: string
@@ -14,7 +14,7 @@ export interface EvaluationConfig {
   replSession: SessionItem[]
 }
 
-export async function evaluate(snippet: string, config: EvaluationConfig): Promise<string | undefined> {
+export async function evaluate(snippet: string, config: EvaluationConfig): Promise<string | number | undefined> {
   try {
     return evaluateSnippet(config, snippet)
 
@@ -25,7 +25,7 @@ export async function evaluate(snippet: string, config: EvaluationConfig): Promi
   }
 }
 
-async function evaluateSnippet(config: EvaluationConfig, snippet: string): Promise<string | undefined> {
+async function evaluateSnippet(config: EvaluationConfig, snippet: string): Promise<string | number | undefined> {
   return (
     (await evalResult(config, snippet)) ||
     (await evalContext(config, snippet)) ||
@@ -50,13 +50,16 @@ async function evalContext(config: EvaluationConfig, snippet: string) {
   const {status, text} = await makeRequest(config, json)
 
   if (successfulRequest(status, text)) {
+    consoleLog(text)
+    consoleLog(JSON.parse(json))
     config.replSession.push(JSON.parse(json))
   }
 }
 
 async function evalAssignmentContext(config: EvaluationConfig, snippet: string) {
   outputDebug(`Evaluating assignment context - ${snippet}`)
-  return evalContext(config, `assign ${snippet}`)
+
+  return isSmartAssignment(snippet) ? evalContext(config, `assign ${snippet}`) : undefined
 }
 
 async function makeRequest(config: EvaluationConfig, snippet: string): Promise<{text: string; status: number}> {
@@ -85,6 +88,11 @@ async function sendRenderRequest(config: EvaluationConfig, requestBody: string) 
   })
 }
 
+function isSmartAssignment(input: string): boolean {
+  const regex = /^\s*((?:\(?[\w\-.[\]]\)?)+)\s*=\s*(.*)\s*/m
+  return regex.test(input)
+}
+
 function successfulRequest(status: number, text: string) {
   return status === 200 && !hasLiquidError(text)
 }
@@ -93,10 +101,10 @@ function hasLiquidError(body: string): boolean {
   return /Liquid syntax error/.test(body)
 }
 
-function parseDisplayResult(result: string): string | undefined {
+function parseDisplayResult(result: string): string | number | undefined {
   const match = result.match(/>([^<]+)</)
   if (!match || !match[1]) return
 
   const displayObject = JSON.parse(match[1])?.find((item: SessionItem) => item.type === 'display')
-  return displayObject?.value.toString()
+  return displayObject?.value
 }
