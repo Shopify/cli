@@ -44,7 +44,7 @@ export async function handleInput(
     )
     return rl.prompt()
   }
-  const evaluatedValue = await evaluate(inputValue, {themeSession, themeId, url, replSession})
+  const evaluatedValue = await evaluate({snippet: inputValue, themeSession, themeId, url, replSession})
   presentValue(evaluatedValue)
   rl.prompt()
 }

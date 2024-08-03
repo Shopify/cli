@@ -12,11 +12,12 @@ export interface EvaluationConfig {
   themeId: string
   url: string
   replSession: SessionItem[]
+  snippet: string
 }
 
-export async function evaluate(snippet: string, config: EvaluationConfig): Promise<string | number | undefined> {
+export async function evaluate(config: EvaluationConfig): Promise<string | number | undefined> {
   try {
-    return evaluateSnippet(config, snippet)
+    return evaluateSnippet(config)
 
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -25,65 +26,70 @@ export async function evaluate(snippet: string, config: EvaluationConfig): Promi
   }
 }
 
-async function evaluateSnippet(config: EvaluationConfig, snippet: string): Promise<string | number | undefined> {
+async function evaluateSnippet(config: EvaluationConfig): Promise<string | number | undefined> {
   return (
-    (await evalResult(config, snippet)) ||
-    (await evalContext(config, snippet)) ||
-    (await evalAssignmentContext(config, snippet)) ||
-    (await evalSyntaxError(config, snippet)) ||
+    (await evalResult(config)) ||
+    (await evalContext(config)) ||
+    (await evalAssignmentContext(config)) ||
+    (await evalSyntaxError(config)) ||
     undefined
   )
 }
 
-async function evalResult(config: EvaluationConfig, snippet: string) {
-  outputDebug(`Evaluating snippet - ${snippet}`)
+async function evalResult(config: EvaluationConfig) {
+  outputDebug(`Evaluating snippet - ${config.snippet}`)
 
-  const input = `{ "type": "display", "value": {{ ${snippet} | json }} }`
-  const {status, text} = await makeRequest(config, input)
+  const input = `{ "type": "display", "value": {{ ${config.snippet} | json }} }`
+  const {status, text} = await makeRequest({...config, snippet: input})
 
   return successfulRequest(status, text) ? parseDisplayResult(text) : undefined
 }
 
-async function evalContext(config: EvaluationConfig, snippet: string) {
-  outputDebug(`Evaluating context - ${snippet}`)
+async function evalContext(config: EvaluationConfig) {
+  outputDebug(`Evaluating context - ${config.snippet}`)
 
-  const json = `{ "type": "context", "value": "{% ${snippet.replace(/"/g, '\\"')} %}" }`
-  const {status, text} = await makeRequest(config, json)
+  const json = `{ "type": "context", "value": "{% ${config.snippet.replace(/"/g, '\\"')} %}" }`
+  const {status, text} = await makeRequest({...config, snippet: json})
 
   if (successfulRequest(status, text)) {
     config.replSession.push(JSON.parse(json))
   }
 }
 
-async function evalAssignmentContext(config: EvaluationConfig, snippet: string) {
-  outputDebug(`Evaluating assignment context - ${snippet}`)
+async function evalAssignmentContext(config: EvaluationConfig) {
+  outputDebug(`Evaluating assignment context - ${config.snippet}`)
 
-  return isSmartAssignment(snippet) ? evalContext(config, `assign ${snippet}`) : undefined
+  if (isSmartAssignment(config.snippet)) {
+    config.snippet = `assign ${config.snippet}`
+    outputInfo(outputContent`${outputToken.gray(`${config.snippet}`)}`)
+    return evalContext(config)
+  }
 }
 
-async function evalSyntaxError(config: EvaluationConfig, snippet: string) {
-  outputDebug(`Evaluating syntax error - ${snippet}`)
+async function evalSyntaxError(config: EvaluationConfig) {
+  outputDebug(`Evaluating syntax error - ${config.snippet}`)
 
   let body = ''
-  if (!isStandardAssignment(snippet)) {
-    const {text} = await makeRequest(config, `{{ ${snippet} }}`)
+  if (!isStandardAssignment(config.snippet)) {
+    const {text} = await makeRequest({...config, snippet: `{{ ${config.snippet} }}`})
     body = text
   }
 
   if (!hasLiquidError(body)) {
-    const {text} = await makeRequest(config, `{% ${snippet} %}`)
+    const {text} = await makeRequest({...config, snippet: `{% ${config.snippet} %}`})
     body = text
   }
 
   if (hasLiquidError(body)) {
     const error = body.replace(/ \(snippets\/eval line \d+\)/, '')
-    printSyntaxError(snippet, error)
+    printSyntaxError(config.snippet, error)
   }
 }
 
 function printSyntaxError(snippet: string, error: string) {
   if (error.includes('Unknown tag')) {
     outputInfo(outputContent`${outputToken.errorText(`Unknown object, property, tag, or filter: '${snippet}'`)}`)
+    return
   }
 
   const match = stripHTMLContent(error)
@@ -93,18 +99,18 @@ function printSyntaxError(snippet: string, error: string) {
 }
 
 function isStandardAssignment(input: string): boolean {
-  const regex = /^\s*assign\s*((?:\(?[\w\-.\[\]]\)?)+)\s*=\s*(.*)\s*/m
+  const regex = /^\s*assign\s*((?:\(?[\w\-.[\]]\)?)+)\s*=\s*(.*)\s*/m
   return regex.test(input)
 }
 
-async function makeRequest(config: EvaluationConfig, snippet: string): Promise<{text: string; status: number}> {
-  const requestBody = buildRequestBody(config.replSession, snippet)
+async function makeRequest(config: EvaluationConfig): Promise<{text: string; status: number}> {
+  const requestBody = buildRequestBody(config)
   const response = await sendRenderRequest(config, requestBody)
   return {text: await response.text(), status: 200}
 }
 
-function buildRequestBody(session: SessionItem[], snippet: string): string {
-  const items = [...session.map((item) => JSON.stringify(item)), snippet]
+function buildRequestBody(config: EvaluationConfig): string {
+  const items = [...config.replSession.map((item) => JSON.stringify(item)), config.snippet]
   return `[${items.join(',').replace(/\\"/g, '"')}]`
 }
 
