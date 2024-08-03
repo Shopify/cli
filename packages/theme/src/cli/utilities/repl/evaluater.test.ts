@@ -2,6 +2,7 @@ import {evaluate, EvaluationConfig} from './evaluater.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 vi.mock('../theme-environment/storefront-renderer')
 vi.mock('@shopify/cli-kit/node/output')
@@ -74,11 +75,45 @@ describe('evaluate', () => {
       .mockResolvedValueOnce(mockResponseOne as any)
       .mockResolvedValueOnce(mockResponseTwo as any)
       .mockResolvedValueOnce(mockResponseThree as any)
+      .mockResolvedValue(mockResponseTwo as any)
 
     const result = await evaluate('x = 1', mockConfig)
 
     expect(mockConfig.replSession).toEqual([{type: 'context', value: '{% assign x = 1 %}'}])
     expect(result).toBeUndefined()
+  })
+
+  test('should handle `unknown tag` syntax errors and output an error message', async () => {
+    const mockResponseOne = {
+      status: 200,
+      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
+Liquid syntax error (snippets/eval line 1): Unknown tag 'invalid_tag'</div>`),
+    }
+
+    vi.mocked(render).mockResolvedValue(mockResponseOne as any)
+
+    const result = await evaluate('invalid_tag', mockConfig)
+
+    expect(result).toBeUndefined()
+    expect(outputInfo).toHaveBeenCalledWith(
+      outputContent`${outputToken.errorText("Unknown object, property, tag, or filter: 'invalid_tag'")}`,
+    )
+  })
+
+  test('should handle general liquid syntax errors for unknown objects and output an error message', async () => {
+    const mockResponseOne = {
+      status: 200,
+      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
+Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unknown_object' for nil:NilClass</div>`),
+    }
+    vi.mocked(render).mockResolvedValue(mockResponseOne as any)
+
+    const result = await evaluate('unknown_object', mockConfig)
+
+    expect(result).toBeUndefined()
+    expect(outputInfo).toHaveBeenCalledWith(
+      outputContent`${outputToken.errorText("Liquid error: undefined method 'unknown_object' for nil:NilClass")}`,
+    )
   })
 
   test('should return undefined if the server responds with a liquid syntax error', async () => {
