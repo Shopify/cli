@@ -1,6 +1,6 @@
 import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {consoleLog, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 export interface SessionItem {
   type: string
@@ -30,6 +30,7 @@ async function evaluateSnippet(config: EvaluationConfig, snippet: string): Promi
     (await evalResult(config, snippet)) ||
     (await evalContext(config, snippet)) ||
     (await evalAssignmentContext(config, snippet)) ||
+    (await evalSyntaxError(config, snippet)) ||
     undefined
   )
 }
@@ -50,8 +51,6 @@ async function evalContext(config: EvaluationConfig, snippet: string) {
   const {status, text} = await makeRequest(config, json)
 
   if (successfulRequest(status, text)) {
-    consoleLog(text)
-    consoleLog(JSON.parse(json))
     config.replSession.push(JSON.parse(json))
   }
 }
@@ -60,6 +59,42 @@ async function evalAssignmentContext(config: EvaluationConfig, snippet: string) 
   outputDebug(`Evaluating assignment context - ${snippet}`)
 
   return isSmartAssignment(snippet) ? evalContext(config, `assign ${snippet}`) : undefined
+}
+
+async function evalSyntaxError(config: EvaluationConfig, snippet: string) {
+  outputDebug(`Evaluating syntax error - ${snippet}`)
+
+  let body = ''
+  if (!isStandardAssignment(snippet)) {
+    const {text} = await makeRequest(config, `{{ ${snippet} }}`)
+    body = text
+  }
+
+  if (!hasLiquidError(body)) {
+    const {text} = await makeRequest(config, `{% ${snippet} %}`)
+    body = text
+  }
+
+  if (hasLiquidError(body)) {
+    const error = body.replace(/ \(snippets\/eval line \d+\)/, '')
+    printSyntaxError(snippet, error)
+  }
+}
+
+function printSyntaxError(snippet: string, error: string) {
+  if (error.includes('Unknown tag')) {
+    outputInfo(outputContent`${outputToken.errorText(`Unknown object, property, tag, or filter: '${snippet}'`)}`)
+  }
+
+  const match = stripHTMLContent(error)
+  if (match && match[1]) {
+    outputInfo(outputContent`${outputToken.errorText(match[1])}`)
+  }
+}
+
+function isStandardAssignment(input: string): boolean {
+  const regex = /^\s*assign\s*((?:\(?[\w\-.\[\]]\)?)+)\s*=\s*(.*)\s*/m
+  return regex.test(input)
 }
 
 async function makeRequest(config: EvaluationConfig, snippet: string): Promise<{text: string; status: number}> {
@@ -102,9 +137,12 @@ function hasLiquidError(body: string): boolean {
 }
 
 function parseDisplayResult(result: string): string | number | undefined {
-  const match = result.match(/>([^<]+)</)
+  const match = stripHTMLContent(result)
   if (!match || !match[1]) return
 
   const displayObject = JSON.parse(match[1])?.find((item: SessionItem) => item.type === 'display')
   return displayObject?.value
+}
+function stripHTMLContent(result: string) {
+  return result.match(/>([^<]+)</)
 }
