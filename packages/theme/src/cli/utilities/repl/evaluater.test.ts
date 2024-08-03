@@ -16,6 +16,7 @@ describe('evaluate', () => {
       themeId: 'test-theme-id',
       url: 'https://test-shop.myshopify.com',
       replSession: [],
+      snippet: '',
     }
   })
 
@@ -27,7 +28,7 @@ describe('evaluate', () => {
     }
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    const result = await evaluate('shop.id', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'shop.id'})
 
     expect(result).toBe(123123)
   })
@@ -40,7 +41,7 @@ describe('evaluate', () => {
     }
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    const result = await evaluate('assign x = 1', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'assign x = 1'})
 
     expect(mockConfig.replSession).toEqual([{type: 'context', value: '{% assign x = 1 %}'}])
     expect(result).toBeUndefined()
@@ -77,7 +78,7 @@ describe('evaluate', () => {
       .mockResolvedValueOnce(mockResponseThree as any)
       .mockResolvedValue(mockResponseTwo as any)
 
-    const result = await evaluate('x = 1', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'x = 1'})
 
     expect(mockConfig.replSession).toEqual([{type: 'context', value: '{% assign x = 1 %}'}])
     expect(result).toBeUndefined()
@@ -92,9 +93,10 @@ Liquid syntax error (snippets/eval line 1): Unknown tag 'invalid_tag'</div>`),
 
     vi.mocked(render).mockResolvedValue(mockResponseOne as any)
 
-    const result = await evaluate('invalid_tag', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'invalid_tag'})
 
     expect(result).toBeUndefined()
+    expect(outputInfo).toHaveBeenCalledOnce()
     expect(outputInfo).toHaveBeenCalledWith(
       outputContent`${outputToken.errorText("Unknown object, property, tag, or filter: 'invalid_tag'")}`,
     )
@@ -108,9 +110,10 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     }
     vi.mocked(render).mockResolvedValue(mockResponseOne as any)
 
-    const result = await evaluate('unknown_object', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'unknown_object'})
 
     expect(result).toBeUndefined()
+    expect(outputInfo).toHaveBeenCalledOnce()
     expect(outputInfo).toHaveBeenCalledWith(
       outputContent`${outputToken.errorText("Liquid error: undefined method 'unknown_object' for nil:NilClass")}`,
     )
@@ -124,7 +127,7 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     }
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    const result = await evaluate('asdf', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'asdf'})
 
     expect(result).toBe(undefined)
   })
@@ -136,7 +139,7 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     }
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    const result = await evaluate('asdf', mockConfig)
+    const result = await evaluate({...mockConfig, snippet: 'asdf'})
 
     expect(result).toBe(undefined)
   })
@@ -151,7 +154,7 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
       throw new Error('JSON parsing error')
     })
 
-    await expect(evaluate('asdf', mockConfig)).rejects.toThrow('JSON parsing error')
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow('JSON parsing error')
     jsonParseSpy.mockRestore()
   })
 })
