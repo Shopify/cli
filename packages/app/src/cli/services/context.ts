@@ -430,7 +430,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const {reset, force, noRelease} = options
   let developerPlatformClient = options.developerPlatformClient
   // do the link here
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, true)
+  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, !options.apiKey)
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
