@@ -38,6 +38,11 @@ import {
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
 } from './app-management-client/graphql/app-version-by-id.js'
+import {
+  OrganizationBetaFlagsQuerySchema,
+  OrganizationBetaFlagsQueryVariables,
+  organizationBetaFlagsQuery,
+} from './app-management-client/graphql/organization_beta_flags.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -127,6 +132,7 @@ import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
   businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
   businessPlatformRequest,
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
@@ -381,7 +387,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const storesResult = await businessPlatformOrganizationsRequest<ListAppDevStoresQuery>(
+    const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
@@ -731,7 +737,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // from the Partners FindByStoreDomainSchema, we will return this type for now
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
-    const storesResult = await businessPlatformOrganizationsRequest(
+    const storesResult = await businessPlatformOrganizationsRequestDoc(
       FetchDevStoreByDomain,
       await this.businessPlatformToken(),
       orgId,
@@ -865,15 +871,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   private async organizationBetaFlags(
-    _organizationId: string,
+    organizationId: string,
     allBetaFlags: string[],
-  ): Promise<{[key: string]: boolean}> {
-    // For now, stub everything as false
-    const stub: {[flag: string]: boolean} = {}
+  ): Promise<{[flag: (typeof allBetaFlags)[number]]: boolean}> {
+    const variables: OrganizationBetaFlagsQueryVariables = {organizationId: encodedGidFromId(organizationId)}
+    const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>(
+      organizationBetaFlagsQuery(allBetaFlags),
+      await this.businessPlatformToken(),
+      organizationId,
+      variables,
+    )
+    const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
-      stub[flag] = false
+      result[flag] = Boolean(flagsResult.organization[`flag_${flag}`])
     })
-    return stub
+    return result
   }
 }
 
