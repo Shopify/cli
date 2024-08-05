@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.65.1
+
+### Patch Changes
+
+- bd3b48ec9e: Disable app linking prompt on deploy when API key is provided
+  - @shopify/create-app@3.65.1
+  - @shopify/cli-kit@3.65.1
+  - @shopify/plugin-cloudflare@3.65.1
+
 ## 3.65.0
 
 ### Minor Changes
