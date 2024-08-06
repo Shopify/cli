@@ -7,8 +7,7 @@ export function organizationBetaFlagsQuery(flags: string[]): string {
         id
         ${flags.map((flag) => `flag_${flag}: hasFeatureFlag(handle: "${flag}")`).join('\n        ')}
       }
-    }
-  `
+    }`
 }
 
 export interface OrganizationBetaFlagsQueryVariables {

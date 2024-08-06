@@ -938,7 +938,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
 // just the integer portion of that ID. These functions convert between the two.
 
 // 1234 => gid://organization/Organization/1234 => base64
-function encodedGidFromId(id: string): string {
+export function encodedGidFromId(id: string): string {
   const gid = `gid://organization/Organization/${id}`
   return Buffer.from(gid).toString('base64')
 }
