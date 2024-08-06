@@ -4,6 +4,9 @@ import {render} from './storefront-renderer.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {createApp, defineEventHandler} from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {createServer} from 'node:http'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
@@ -42,6 +45,16 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
 
       // eslint-disable-next-line no-console
       console.log(`${req.method} ${req.url}`)
+
+      if (/^\/cdn\/shop\/t\/\d+\/assets\/.+$/.test(req.url)) {
+        const filePath = joinPath(ctx.directory, req.url.replace(/^\/cdn\/shop\/t\/\d+\//, ''))
+        if (!(await fileExists(filePath))) {
+          return undefined
+        }
+
+        res.setHeader('Content-Type', lookupMimeType(filePath))
+        return readFile(filePath)
+      }
 
       const reqForwardHeaders = Object.entries(req.headers).reduce((acc, [key, value]) => {
         if (value && key !== 'host') acc[key] = Array.isArray(value) ? value.join(';') : value

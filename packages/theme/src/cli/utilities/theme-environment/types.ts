@@ -48,6 +48,11 @@ export interface DevServerContext {
   localThemeFileSystem: ThemeFileSystem
 
   /**
+   * Path to the local theme directory.
+   */
+  directory: string
+
+  /**
    * Additional options for the development server.
    */
   options: {

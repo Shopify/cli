@@ -77,6 +77,7 @@ export async function dev(options: DevOptions) {
     session,
     remoteChecksums,
     localThemeFileSystem,
+    directory: options.directory,
     options: {
       themeEditorSync: options['theme-editor-sync'],
       host,
