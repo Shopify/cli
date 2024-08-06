@@ -8,7 +8,7 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {consoleWarn, outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
@@ -60,6 +60,9 @@ export default class Console extends ThemeCommand {
 
     if (flags['dev-preview']) {
       outputInfo('This feature is currently in development and is not ready for use or testing yet.')
+      if (flags.port) {
+        consoleWarn('Warning: The --dev-preview flag is being used with the port flag.')
+      }
       const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
       await initializeRepl(adminSession, storefrontToken, themeId, url, storePassword)
       return
