@@ -30,7 +30,7 @@ describe('handleInput', () => {
     const inputValue = '{{ collections.first }}'
 
     // When
-    await handleInput(inputValue, themeSesssion, themeId, url, rl)
+    await handleInput(inputValue, themeSesssion, themeId, url, rl, [])
 
     // Then
     expect(consoleWarn).toHaveBeenCalled()
@@ -41,7 +41,7 @@ describe('handleInput', () => {
     const inputValue = 'collections.first'
 
     // When
-    await handleInput(inputValue, themeSesssion, themeId, url, rl)
+    await handleInput(inputValue, themeSesssion, themeId, url, rl, [])
 
     // Then
     expect(consoleWarn).not.toHaveBeenCalled()
