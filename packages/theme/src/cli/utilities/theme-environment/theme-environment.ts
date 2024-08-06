@@ -80,7 +80,16 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
         }
       }
 
-      return response.text()
+      let body = await response.text()
+      if (response.headers.get('content-type')?.startsWith('text/html')) {
+        // Replace
+        body = body.replace(
+          /<(?:link|script)\s?[^>]*\s(?:href|src)="(\/\/[^.]+\.myshopify\.com)\/cdn\/shop\/t\/\d+\/assets\//g,
+          (all, m1) => all.replaceAll(m1, ''),
+        )
+      }
+
+      return body
     }),
   )
 
