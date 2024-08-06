@@ -26,6 +26,7 @@
   ],
   "scripts": {
     "build": "nx build",
+    "dev": "nx dev",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
