@@ -1,7 +1,9 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {uploadTheme} from '../theme-uploader.js'
+import {createApp, defineEventHandler} from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {createServer} from 'node:http'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
   await ensureThemeEnvironmentSetup(theme, ctx)
@@ -26,4 +28,15 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
   })
 }
 
-async function startDevelopmentServer(_theme: Theme, _ctx: DevServerContext) {}
+function startDevelopmentServer(_theme: Theme, ctx: DevServerContext) {
+  const app = createApp()
+
+  app.use(
+    defineEventHandler((_event) => {
+      return 'Hello, world!'
+    }),
+  )
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  return new Promise((resolve) => createServer(app).listen(ctx.options.port, () => resolve(undefined)))
+}
