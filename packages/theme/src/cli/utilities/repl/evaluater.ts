@@ -61,7 +61,7 @@ async function evalAssignmentContext(config: EvaluationConfig) {
 
   if (isSmartAssignment(config.snippet)) {
     config.snippet = `assign ${config.snippet}`
-    outputInfo(outputContent`${outputToken.gray(`${config.snippet}`)}`)
+    outputInfo(outputContent`${outputToken.gray(`> ${config.snippet}`)}`)
     return evalContext(config)
   }
 }
@@ -106,7 +106,7 @@ function isStandardAssignment(input: string): boolean {
 async function makeRequest(config: EvaluationConfig): Promise<{text: string; status: number}> {
   const requestBody = buildRequestBody(config)
   const response = await sendRenderRequest(config, requestBody)
-  return {text: await response.text(), status: 200}
+  return {text: await response.text(), status: response.status}
 }
 
 function buildRequestBody(config: EvaluationConfig): string {

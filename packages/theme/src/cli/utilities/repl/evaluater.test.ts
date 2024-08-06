@@ -33,7 +33,7 @@ describe('evaluate', () => {
     expect(result).toBe(123123)
   })
 
-  test('should add assignments to the session', async () => {
+  test('should add succesful assignments to the session', async () => {
     const mockResponse = {
       status: 200,
       text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
@@ -47,7 +47,24 @@ describe('evaluate', () => {
     expect(result).toBeUndefined()
   })
 
-  test('should translate smart assignments and add them to the session', async () => {
+  test('should not add unsuccessful assignments to the session', async () => {
+    const mockResponse = {
+      status: 200,
+      text: vi
+        .fn()
+        .mockResolvedValue(
+          '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unexpected character = in "{{ x = 1 | json }}"</div>',
+        ),
+    }
+    vi.mocked(render).mockResolvedValue(mockResponse as any)
+
+    const result = await evaluate({...mockConfig, snippet: 'assign x = ;'})
+
+    expect(mockConfig.replSession).toEqual([])
+    expect(result).toBeUndefined()
+  })
+
+  test('should translate equals-sign assignments into variable tag assignments and add them to the session', async () => {
     const mockResponseOne = {
       status: 200,
       text: vi
