@@ -45,6 +45,7 @@
     "@shopify/cli-kit": "3.65.0",
     "@shopify/theme-check-node": "2.8.0",
     "@shopify/theme-language-server-node": "1.11.4",
+    "chokidar": "3.5.3",
     "h3": "0.7.21",
     "yaml": "2.3.2"
   },
