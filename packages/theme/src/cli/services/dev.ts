@@ -9,6 +9,8 @@ import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -63,7 +65,13 @@ export async function dev(options: DevOptions) {
   }
 
   const host = options.host || DEFAULT_HOST
-  const port = options.port || DEFAULT_PORT
+  if (options.port && !(await checkPortAvailability(Number(options.port)))) {
+    throw new AbortError(
+      `Port ${options.port} is not available. Try a different port or remove the --port flag to use an available port.`,
+    )
+  }
+
+  const port = options.port || String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
   const ctx: DevServerContext = {
     session,
