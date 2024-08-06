@@ -1,14 +1,16 @@
-import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
+import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
-import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerContext, DevServerSession} from '../utilities/theme-environment/types.js'
+import {DevServerSession} from '../utilities/theme-environment/types.js'
+import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {consoleLog, outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {createApp, getQuery, IncomingMessage, ServerResponse} from 'h3'
+import {readFile} from '@shopify/cli-kit/node/fs'
+import {createServer} from 'http'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -54,36 +56,147 @@ export async function dev(options: DevOptions) {
 
   outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
-  const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
-  const localThemeFileSystem = await mountThemeFileSystem(options.directory)
   const session: DevServerSession = {
     ...options.adminSession,
     storefrontToken: options.storefrontToken,
+    storefrontPassword: 'zelda',
     expiresAt: new Date(),
   }
 
-  const host = options.host || DEFAULT_HOST
-  const port = options.port || DEFAULT_PORT
+  await setupHTTPServer(9292, session)
+}
 
-  const ctx: DevServerContext = {
-    session,
-    remoteChecksums,
-    localThemeFileSystem,
-    options: {
-      themeEditorSync: options['theme-editor-sync'],
-      host,
-      port,
-      open: options.open,
-      liveReload: options['live-reload'],
-      noDelete: options.noDelete,
-      ignore: options.ignore,
-      only: options.only,
-    },
-  }
+async function setupHTTPServer(port: number, session: DevServerSession) {
+  // State
+  const clients = new Set<ServerResponse>()
 
-  await setupDevServer(options.theme, ctx, () => {
-    renderLinks(options.store, options.theme.id.toString(), host, port)
+  // ===========================================================================
+  // Setup file system events
+  const {default: chokidar} = await import('chokidar')
+
+  const watchPaths = ['/Users/karreiro/src/github.com/Shopify/dawn']
+  const watcher = chokidar.watch(watchPaths, {
+    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
+    persistent: true,
+    ignoreInitial: true,
   })
+
+  watcher.on('all', (event, path) => {
+    consoleLog(`→ sections/announcement-bar.liquid`)
+
+    for (const client of clients) {
+      client.write(`data: ${JSON.stringify({event, path})}\n\n`)
+    }
+  })
+
+  // ===========================================================================
+  // Setup development server
+  const app = createApp({
+    // eslint-disable-next-line node/handle-callback-err
+    onError: (_err) => {},
+  })
+
+  app.use(async (req: IncomingMessage, res: ServerResponse) => {
+    const path = req.url || '/'
+    const params = getQuery(req)
+
+    if (params.section_id) {
+      const response = await render(session, {
+        path: '/',
+        query: [],
+        themeId: '163574120470',
+        cookies: '',
+        sectionId: 'announcement-bar',
+        headers: {},
+        replaceTemplates: {
+          'sections/announcement-bar.liquid': await readFile(
+            '/Users/karreiro/src/github.com/Shopify/dawn/sections/announcement-bar.liquid',
+          ),
+        },
+      })
+
+      res.end(await response.text())
+      return
+    }
+
+    if (path === '/events') {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      })
+
+      clients.add(res)
+
+      req.on('close', () => {
+        res.end()
+      })
+
+      return
+    }
+
+    const response = await render(session, {
+      path: '/',
+      query: [],
+      themeId: '163574120470',
+      cookies: '',
+      sectionId: '',
+      headers: {},
+      replaceTemplates: {
+        'sections/announcement-bar.liquid': await readFile(
+          '/Users/karreiro/src/github.com/Shopify/dawn/sections/announcement-bar.liquid',
+        ),
+      },
+    })
+
+    const hmr = `
+        <script>
+          (() => {
+            console.log('[SSE client] Initializing...')
+
+            function querySelectDOMSections(idSuffix) {
+              const elements = document.querySelectorAll(
+              \`[id^='shopify-section'][id$='\${idSuffix}']\`
+              );
+              return Array.from(elements);
+            }
+
+            function handleMessage(msg) {
+              console.log('>>', msg);
+
+              fetch('?section_id=announcement-bar')
+                .then(response => response.text())
+                .then(text => {
+                  const elements = querySelectDOMSections("announcement-bar");
+
+                  elements.forEach((element) => {
+                    element.outerHTML = text;
+                  });
+
+                  console.log('>>', msg);
+                })
+                .catch(error => {
+                  console.error('Error:', error);
+                });
+            }
+
+            var e = new EventSource("/events")
+            e.onmessage = (msg) => handleMessage(msg)
+          })();
+        </script>
+      `
+
+    res.end((await response.text()) + hmr)
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  const server = createServer(app)
+
+  server.listen(port, () => {
+    consoleLog(`Server running on http://127.0.0.1:${port}`)
+  })
+
+  return server
 }
 
 async function legacyDev(options: DevOptions) {
