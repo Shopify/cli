@@ -1,5 +1,6 @@
 import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 export interface SessionItem {
@@ -98,11 +99,6 @@ function printSyntaxError(snippet: string, error: string) {
   }
 }
 
-function isStandardAssignment(input: string): boolean {
-  const regex = /^\s*assign\s*((?:\(?[\w\-.[\]]\)?)+)\s*=\s*(.*)\s*/m
-  return regex.test(input)
-}
-
 async function makeRequest(config: EvaluationConfig): Promise<{text: string; status: number}> {
   const requestBody = buildRequestBody(config)
   const response = await sendRenderRequest(config, requestBody)
@@ -115,7 +111,7 @@ function buildRequestBody(config: EvaluationConfig): string {
 }
 
 async function sendRenderRequest(config: EvaluationConfig, requestBody: string) {
-  return render(config.themeSession, {
+  const response = await render(config.themeSession, {
     path: config.url,
     query: [],
     themeId: config.themeId,
@@ -127,19 +123,21 @@ async function sendRenderRequest(config: EvaluationConfig, requestBody: string) 
       'snippets/eval.liquid': requestBody,
     },
   })
-}
 
-function isSmartAssignment(input: string): boolean {
-  const regex = /^\s*((?:\(?[\w\-.[\]]\)?)+)\s*=\s*(.*)\s*/m
-  return regex.test(input)
-}
+  if (isExpiredSession(response.status)) {
+    expiredSessionError()
+  }
 
-function successfulRequest(status: number, text: string) {
-  return status === 200 && !hasLiquidError(text)
-}
+  if (isTooManyRequests(response.status)) {
+    tooManyRequestsError()
+  }
 
-function hasLiquidError(body: string): boolean {
-  return /Liquid syntax error/.test(body)
+  const serverTiming = response.headers.get('server-timing')
+  if (isResourceNotFound(serverTiming || '')) {
+    notFoundError()
+  }
+
+  return response
 }
 
 function parseDisplayResult(result: string): string | number | undefined {
@@ -149,6 +147,53 @@ function parseDisplayResult(result: string): string | number | undefined {
   const displayObject = JSON.parse(match[1])?.find((item: SessionItem) => item.type === 'display')
   return displayObject?.value
 }
+
 function stripHTMLContent(result: string) {
   return result.match(/>([^<]+)</)
+}
+
+function hasLiquidError(body: string): boolean {
+  return /Liquid syntax error/.test(body)
+}
+
+function isStandardAssignment(input: string): boolean {
+  const regex = /^\s*assign\s*((?:\(?[\w\-.[\]]\)?)+)\s*=\s*(.*)\s*/m
+  return regex.test(input)
+}
+
+function isExpiredSession(responseStatus: number): boolean {
+  return responseStatus === 401 || responseStatus === 403
+}
+
+function isTooManyRequests(responseStatus: number): boolean {
+  return responseStatus === 430 || responseStatus === 429
+}
+
+function isResourceNotFound(serverTiming: string): boolean {
+  // We don't look for the status code here because the Section Rendering API returns 200 even on unknown paths.
+  return serverTiming.includes('pageType;desc="404"')
+}
+
+function expiredSessionError(): never {
+  outputInfo(outputContent`${outputToken.errorText('Session expired. Please initiate a new one.')}`)
+  throw new AbortSilentError()
+}
+
+function tooManyRequestsError(): never {
+  outputInfo(outputContent`${outputToken.errorText('Evaluations limit reached. Try again later.')}`)
+  throw new AbortSilentError()
+}
+
+function notFoundError(): never {
+  outputInfo(outputContent`${outputToken.errorText('Page not found. Please provide a valid --url value.')}`)
+  throw new AbortSilentError()
+}
+
+function isSmartAssignment(input: string): boolean {
+  const regex = /^\s*((?:\(?[\w\-.[\]]\)?)+)\s*=\s*(.*)\s*/m
+  return regex.test(input)
+}
+
+function successfulRequest(status: number, text: string) {
+  return status === 200 && !hasLiquidError(text)
 }

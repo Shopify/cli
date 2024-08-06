@@ -3,6 +3,7 @@ import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../theme-environment/storefront-renderer')
 vi.mock('@shopify/cli-kit/node/output')
@@ -21,11 +22,11 @@ describe('evaluate', () => {
   })
 
   test('should evaluate a result successfully', async () => {
-    const mockResponse = {
+    const mockResponse = createMockResponse({
       status: 200,
-      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
-[{ "type": "display", "value": 123123 }]</div>`),
-    }
+      text: `<div id="shopify-section-announcement-bar" class="shopify-section">
+[{ "type": "display", "value": 123123 }]</div>`,
+    })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
     const result = await evaluate({...mockConfig, snippet: 'shop.id'})
@@ -34,11 +35,11 @@ describe('evaluate', () => {
   })
 
   test('should add succesful assignments to the session', async () => {
-    const mockResponse = {
+    const mockResponse = createMockResponse({
       status: 200,
-      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
-[{ "type": "context", "value": "assign x = 1" }]</div>`),
-    }
+      text: `<div id="shopify-section-announcement-bar" class="shopify-section">
+[{ "type": "context", "value": "assign x = 1" }]</div>`,
+    })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
     const result = await evaluate({...mockConfig, snippet: 'assign x = 1'})
@@ -48,14 +49,10 @@ describe('evaluate', () => {
   })
 
   test('should not add unsuccessful assignments to the session', async () => {
-    const mockResponse = {
+    const mockResponse = createMockResponse({
       status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unexpected character = in "{{ x = 1 | json }}"</div>',
-        ),
-    }
+      text: '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unexpected character = in "{{ x = 1 | json }}"</div>',
+    })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
     const result = await evaluate({...mockConfig, snippet: 'assign x = ;'})
@@ -65,30 +62,18 @@ describe('evaluate', () => {
   })
 
   test('should translate equals-sign assignments into variable tag assignments and add them to the session', async () => {
-    const mockResponseOne = {
+    const mockResponseOne = createMockResponse({
       status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unexpected character = in "{{ x = 1 | json }}"</div>',
-        ),
-    }
-    const mockResponseTwo = {
+      text: '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unexpected character = in "{{ x = 1 | json }}"</div>',
+    })
+    const mockResponseTwo = createMockResponse({
       status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unknown tag \'x\'</div>',
-        ),
-    }
-    const mockResponseThree = {
+      text: '<div id="shopify-section-announcement-bar" class="shopify-section">\nLiquid syntax error (snippets/eval line 1): Unknown tag \'x\'</div>',
+    })
+    const mockResponseThree = createMockResponse({
       status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          '<div id="shopify-section-announcement-bar" class="shopify-section">\n[{ "type": "context", "value": "" }]</div>',
-        ),
-    }
+      text: '<div id="shopify-section-announcement-bar" class="shopify-section">\n[{ "type": "context", "value": "" }]</div>',
+    })
     vi.mocked(render)
       .mockResolvedValueOnce(mockResponseOne as any)
       .mockResolvedValueOnce(mockResponseTwo as any)
@@ -101,12 +86,12 @@ describe('evaluate', () => {
     expect(result).toBeUndefined()
   })
 
-  test('should handle `unknown tag` syntax errors and output an error message', async () => {
-    const mockResponseOne = {
+  test('should handle `unknown tag` syntax errors and return undefined', async () => {
+    const mockResponseOne = createMockResponse({
       status: 200,
-      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
-Liquid syntax error (snippets/eval line 1): Unknown tag 'invalid_tag'</div>`),
-    }
+      text: `<div id="shopify-section-announcement-bar" class="shopify-section">
+Liquid syntax error (snippets/eval line 1): Unknown tag 'invalid_tag'</div>`,
+    })
 
     vi.mocked(render).mockResolvedValue(mockResponseOne as any)
 
@@ -119,12 +104,12 @@ Liquid syntax error (snippets/eval line 1): Unknown tag 'invalid_tag'</div>`),
     )
   })
 
-  test('should handle general liquid syntax errors for unknown objects and output an error message', async () => {
-    const mockResponseOne = {
+  test('should handle general liquid syntax errors for unknown objects and return undefined', async () => {
+    const mockResponseOne = createMockResponse({
       status: 200,
-      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
-Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unknown_object' for nil:NilClass</div>`),
-    }
+      text: `<div id="shopify-section-announcement-bar" class="shopify-section">
+Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unknown_object' for nil:NilClass</div>`,
+    })
     vi.mocked(render).mockResolvedValue(mockResponseOne as any)
 
     const result = await evaluate({...mockConfig, snippet: 'unknown_object'})
@@ -137,11 +122,11 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
   })
 
   test('should return undefined if the server responds with a liquid syntax error', async () => {
-    const mockResponse = {
+    const mockResponse = createMockResponse({
       status: 200,
-      text: vi.fn().mockResolvedValue(`<div id="shopify-section-announcement-bar" class="shopify-section">
-        [{ "type": "display", "value": "Liquid syntax error: Unknown variable 'shop' in ..."}]</div>`),
-    }
+      text: `<div id="shopify-section-announcement-bar" class="shopify-section">
+        [{ "type": "display", "value": "Liquid syntax error: Unknown variable 'shop' in ..."}]</div>`,
+    })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
     const result = await evaluate({...mockConfig, snippet: 'asdf'})
@@ -149,11 +134,11 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     expect(result).toBe(undefined)
   })
 
-  test('should return undefined if the server responds with a non-200 status code', async () => {
-    const mockResponse = {
+  test('should return undefined and abort if the server responds with a non-200 status code', async () => {
+    const mockResponse = createMockResponse({
       status: 500,
-      text: vi.fn().mockResolvedValue('Internal Server Error'),
-    }
+      text: 'Internal Server Error',
+    })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
     const result = await evaluate({...mockConfig, snippet: 'asdf'})
@@ -162,10 +147,10 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
   })
 
   test('should return undefined if an error occurs during JSON parsing', async () => {
-    const mockResponse = {
+    const mockResponse = createMockResponse({
       status: 200,
-      text: vi.fn().mockResolvedValue('text'),
-    }
+      text: 'text',
+    })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
     const jsonParseSpy = vi.spyOn(JSON, 'parse').mockImplementationOnce(() => {
       throw new Error('JSON parsing error')
@@ -174,4 +159,62 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow('JSON parsing error')
     jsonParseSpy.mockRestore()
   })
+
+  test('should handle expired session and throw AbortSilentError', async () => {
+    const mockResponse = createMockResponse({
+      status: 401,
+      text: 'Unauthorized',
+    })
+    vi.mocked(render).mockResolvedValue(mockResponse as any)
+
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
+    expect(outputInfo).toHaveBeenCalledWith(
+      outputContent`${outputToken.errorText('Session expired. Please initiate a new one.')}`,
+    )
+  })
+
+  test('should handle too many requests and throw AbortSilentError', async () => {
+    const mockResponse = createMockResponse({
+      status: 429,
+      text: 'Too Many Requests',
+    })
+    vi.mocked(render).mockResolvedValue(mockResponse as any)
+
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
+    expect(outputInfo).toHaveBeenCalledWith(
+      outputContent`${outputToken.errorText('Evaluations limit reached. Try again later.')}`,
+    )
+  })
+
+  test('should handle resource not found and throw AbortSilentError', async () => {
+    const mockResponse = createMockResponse({
+      status: 200,
+      text: 'Not Found',
+      headers: {'server-timing': 'pageType;desc="404"'},
+    })
+    vi.mocked(render).mockResolvedValue(mockResponse as any)
+
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
+    expect(outputInfo).toHaveBeenCalledWith(
+      outputContent`${outputToken.errorText('Page not found. Please provide a valid --url value.')}`,
+    )
+  })
 })
+
+function createMockResponse({
+  status,
+  text,
+  headers = {},
+}: {
+  status: number
+  text: string
+  headers?: {[key: string]: string}
+}) {
+  return {
+    status,
+    text: vi.fn().mockResolvedValue(text),
+    headers: {
+      get: vi.fn((header: string) => headers[header] || null),
+    },
+  }
+}
