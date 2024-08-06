@@ -5,12 +5,16 @@ import {uploadTheme} from '../theme-uploader.js'
 import {createApp, defineEventHandler} from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {createServer} from 'node:http'
+
+const updatedTemplates = {} as {[key: string]: string}
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
   await ensureThemeEnvironmentSetup(theme, ctx)
+  await watchTemplates(ctx)
   await startDevelopmentServer(theme, ctx)
 
   onReady()
@@ -68,7 +72,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
         cookies: req.headers.cookie || '',
         sectionId: '',
         headers: reqForwardHeaders,
-        replaceTemplates: {},
+        replaceTemplates: updatedTemplates,
       })
 
       res.statusCode = response.status
@@ -95,4 +99,39 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise((resolve) => createServer(app).listen(ctx.options.port, () => resolve(undefined)))
+}
+
+async function watchTemplates(ctx: DevServerContext) {
+  // Note: check ctx.localThemeFileSystem ?
+  const {default: chokidar} = await import('chokidar')
+
+  const watcher = chokidar.watch([ctx.directory], {
+    ignored: [
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/assets/**',
+      '**/*.test.*',
+      '**/dist/**',
+      '**/*.swp',
+      '.gitignore',
+    ],
+    persistent: true,
+    ignoreInitial: true,
+  })
+
+  watcher.on('all', (event, filePath) => {
+    const key = relativePath(ctx.directory, filePath)
+
+    if (event === 'change' || event === 'add') {
+      readFile(filePath)
+        .then((content) => {
+          updatedTemplates[key] = content
+        })
+        .catch(() => {
+          renderWarning({headline: `Failed to read file ${filePath}`})
+        })
+    } else if (event === 'unlink') {
+      delete updatedTemplates[key]
+    }
+  })
 }
