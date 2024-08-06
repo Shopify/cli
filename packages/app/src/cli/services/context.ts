@@ -35,7 +35,7 @@ import {
 } from '../api/graphql/development_preview.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {Token, TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -266,7 +266,11 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   return result
 }
 
-const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
+const resetHelpMessage: Token[] = [
+  'You can pass ',
+  {command: '--reset'},
+  ' to your command to reset your app configuration.',
+]
 
 interface AppFromIdOptions {
   apiKey: string
@@ -867,12 +871,7 @@ interface CurrentlyUsedConfigInfoOptions {
   configFile?: string
   appDotEnv?: string
   includeConfigOnDeploy?: boolean
-  resetMessage?: (
-    | string
-    | {
-        command: string
-      }
-  )[]
+  resetMessage?: Token[]
 }
 
 export function renderCurrentlyUsedConfigInfo({
