@@ -667,7 +667,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.metadata.versionTag,
-          location: [await this.appDeepLink({organizationId, id: appId}), `versions/${version.id}`].join('/'),
+          location: await this.versionDeepLink(organizationId, appId, version.id),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -845,6 +845,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appDeepLink({id, organizationId}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
     return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+  }
+
+  async versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
+    const appLink = await this.appDeepLink({organizationId, id: appId})
+    return `${appLink}/versions/${numberFromGid(versionId)}`
   }
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
