@@ -1,4 +1,5 @@
-import {javyBinary, functionRunnerBinary} from './binaries.js'
+import {javyBinary, functionRunnerBinary, installBinary} from './binaries.js'
+import {exec} from '@shopify/cli-kit/node/system'
 import {describe, expect, test} from 'vitest'
 
 const javy = javyBinary()
@@ -8,7 +9,11 @@ describe('javy', () => {
   test('properties are set correctly', () => {
     expect(javy.name).toBe('javy')
     expect(javy.version).match(/^v\d\.\d\.\d$/)
-    expect(javy.path).toMatch(/(\/|\\)javy$/)
+    if (process.platform === 'win32') {
+      expect(javy.path).toMatch(/(\/|\\)javy.exe$/)
+    } else {
+      expect(javy.path).toMatch(/(\/|\\)javy$/)
+    }
   })
 
   describe('downloadUrl returns the correct URL', () => {
@@ -101,13 +106,22 @@ describe('javy', () => {
       )
     })
   })
+
+  test('Javy installs and runs', async () => {
+    await installBinary(javy)
+    await exec(javy.path, ['--help'])
+  })
 })
 
 describe('functionRunner', () => {
   test('properties are set correctly', () => {
     expect(functionRunner.name).toBe('function-runner')
     expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
-    expect(functionRunner.path).toMatch(/(\/|\\)function-runner$/)
+    if (process.platform === 'win32') {
+      expect(functionRunner.path).toMatch(/(\/|\\)function-runner.exe$/)
+    } else {
+      expect(functionRunner.path).toMatch(/(\/|\\)function-runner$/)
+    }
   })
 
   describe('downloadUrl returns the correct URL', () => {
@@ -199,5 +213,10 @@ describe('functionRunner', () => {
         'Unsupported platform/architecture combination win32/arm',
       )
     })
+  })
+
+  test('function-runner installs and runs', async () => {
+    await installBinary(functionRunner)
+    await exec(functionRunner.path, ['--help'])
   })
 })
