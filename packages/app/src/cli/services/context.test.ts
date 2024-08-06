@@ -656,11 +656,11 @@ api_version = "2023-04"
             },
           },
           '\n',
-          'You can pass',
+          'You can pass ',
           {
             command: '--reset',
           },
-          'to your command to reset your app configuration.',
+          ' to your command to reset your app configuration.',
         ],
         headline: 'Using shopify.app.toml:',
       })
@@ -765,11 +765,11 @@ api_version = "2023-04"
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using these settings:',
     })
@@ -1268,11 +1268,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml:',
     })
@@ -1315,11 +1315,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml:',
     })
@@ -1367,11 +1367,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml:',
     })
@@ -1419,11 +1419,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml:',
     })
@@ -1465,11 +1465,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml:',
     })
@@ -1509,11 +1509,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass',
+        'You can pass ',
         {
           command: '--reset',
         },
-        'to your command to reset your app configuration.',
+        ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml:',
     })
