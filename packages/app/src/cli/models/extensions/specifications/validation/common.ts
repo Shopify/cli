@@ -1,6 +1,6 @@
-import {httpsRegex} from '../../../app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
+const httpsRegex = /^(https:\/\/)/
 // example PubSub URI - pubsub://{project}:{topic}
 const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
 // example Eventbridge ARN - arn:aws:events:{region}::event-source/aws.partner/shopify.com/{app_id}/{path}
