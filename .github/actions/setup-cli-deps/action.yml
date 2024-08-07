@@ -18,7 +18,7 @@ runs:
         version: ${{ env.PNPM_VERSION }}
         run_install: false
     - name: Install Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
