@@ -6,7 +6,7 @@ import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {bulkUploadThemeAssets, createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('../services/local-storage')
+vi.mock('../../services/local-storage')
 
 describe('REPLThemeManager', () => {
   let adminSession: AdminSession

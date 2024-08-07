@@ -1,10 +1,9 @@
-import {isStorefrontPasswordProtected, isStorefrontPasswordCorrect} from '../theme-environment/storefront-session.js'
 import {ensureValidPassword} from './storefront-password-prompt.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {isStorefrontPasswordProtected, isStorefrontPasswordCorrect} from '../theme-environment/storefront-session.js'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, beforeEach, vi, test, expect} from 'vitest'
 
-vi.mock('../utilities/theme-environment/storefront-session.js')
+vi.mock('../theme-environment/storefront-session.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../utilities/repl-theme-manager.js', () => {
   const REPLThemeManager = vi.fn()
@@ -22,8 +21,6 @@ describe('ensureValidPassword', () => {
   beforeEach(() => {
     vi.mocked(renderTextPrompt).mockResolvedValue('testPassword')
   })
-
-  const adminSession: AdminSession = {storeFqdn: 'test-store.myshopify.com', token: 'token'}
 
   test('should skip prompt for password when correct storefront password is provided', async () => {
     // Given

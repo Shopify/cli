@@ -1,8 +1,8 @@
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {REPLThemeManager} from '../utilities/repl/repl-theme-manager.js'
-import {ensureValidPassword} from '../utilities/prompts.js'
-import {replLoop} from '../utilities/repl/repl.js'
 import {DevServerSession} from '../utilities/theme-environment/types.js'
+import {ensureValidPassword} from '../utilities/repl/storefront-password-prompt.js'
+import {replLoop} from '../utilities/repl/repl.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {consoleLog} from '@shopify/cli-kit/node/output'
 

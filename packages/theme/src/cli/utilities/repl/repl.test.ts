@@ -7,8 +7,8 @@ import {consoleWarn} from '@shopify/cli-kit/node/output'
 import {createInterface} from 'readline'
 
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('./repl/evaluator.js')
-vi.mock('./repl/presenter.js')
+vi.mock('./evaluator.js')
+vi.mock('./presenter.js')
 
 describe('handleInput', () => {
   const themeSesssion: DevServerSession = {
