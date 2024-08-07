@@ -19,7 +19,7 @@ export function formData(): FormData {
   return new FormData()
 }
 
-export type Response = ReturnType<typeof nodeFetch>
+export type Response = Awaited<ReturnType<typeof nodeFetch>>
 
 /**
  * An interface that abstracts way node-fetch. When Node has built-in
@@ -33,7 +33,7 @@ export type Response = ReturnType<typeof nodeFetch>
  * @param init - An object containing any custom settings that you want to apply to the request.
  * @returns A promise that resolves with the response.
  */
-export async function fetch(url: RequestInfo, init?: RequestInit): Response {
+export async function fetch(url: RequestInfo, init?: RequestInit): Promise<Response> {
   return runWithTimer('cmd_all_timing_network_ms')(() =>
     debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, init)}),
   )
@@ -48,7 +48,7 @@ export async function fetch(url: RequestInfo, init?: RequestInit): Response {
  * @param init - An object containing any custom settings that you want to apply to the request.
  * @returns A promise that resolves with the response.
  */
-export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Response {
+export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Promise<Response> {
   const sanitizedUrl = sanitizeURL(url.toString())
   const options: RequestInit = {
     ...(init ?? {}),
