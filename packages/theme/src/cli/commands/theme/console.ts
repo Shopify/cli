@@ -1,12 +1,14 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
+import {ensureReplEnv, initializeRepl} from '../../services/console.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
@@ -32,20 +34,39 @@ export default class Console extends ThemeCommand {
     port: Flags.string({
       description: 'Local port to serve authentication service.',
       env: 'SHOPIFY_FLAG_PORT',
-      default: '9293',
+    }),
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
+    }),
+    'dev-preview': Flags.boolean({
+      hidden: true,
+      description: 'Enables the developer preview for the upcoming `theme console` implementation.',
+      env: 'SHOPIFY_FLAG_BETA',
     }),
   }
 
   async run() {
     const {flags} = await this.parse(Console)
     const store = ensureThemeStore(flags)
-    const {password, url, port} = flags
+    const {url, port, password: themeAccessPassword} = flags
     const cliVersion = CLI_KIT_VERSION
     const theme = `liquid-console-repl-${cliVersion}`
 
-    const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-    const storefrontToken = await ensureAuthenticatedStorefront([], password)
+    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
+    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
     const authUrl = `http://localhost:${port}/password`
+
+    if (flags['dev-preview']) {
+      outputInfo('This feature is currently in development and is not ready for use or testing yet.')
+
+      if (flags.port) {
+        renderPortDeprecationWarning()
+      }
+      const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
+      await initializeRepl(adminSession, storefrontToken, themeId, url, storePassword)
+      return
+    }
 
     renderInfo({
       body: [
@@ -55,10 +76,21 @@ export default class Console extends ThemeCommand {
       ],
     })
 
-    return execCLI2(['theme', 'console', '--url', url, '--port', port, '--theme', theme], {
+    return execCLI2(['theme', 'console', '--url', url, '--port', port ?? '9293', '--theme', theme], {
       store,
       adminToken: adminSession.token,
       storefrontToken,
     })
   }
+}
+function renderPortDeprecationWarning() {
+  renderWarning({
+    headline: ['The', {command: '--port'}, 'flag has been deprecated.'],
+    body: [
+      {command: 'shopify theme console'},
+      'no longer requires a port to run. The',
+      {command: '--port'},
+      'flag is in the process of being deprecated and will be removed soon.',
+    ],
+  })
 }
