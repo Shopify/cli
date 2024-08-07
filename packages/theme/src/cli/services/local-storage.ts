@@ -13,6 +13,7 @@ interface DevelopmentThemeLocalStorageSchema {
 
 let _themeLocalStorageInstance: LocalStorage<ThemeLocalStorageSchema> | undefined
 let _developmentThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
+let _replThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
 
 function themeLocalStorage() {
   if (!_themeLocalStorageInstance) {
@@ -28,6 +29,15 @@ function developmentThemeLocalStorage() {
     })
   }
   return _developmentThemeLocalStorageInstance
+}
+
+function replThemeLocalStorage() {
+  if (!_replThemeLocalStorageInstance) {
+    _replThemeLocalStorageInstance = new LocalStorage<DevelopmentThemeLocalStorageSchema>({
+      projectName: 'shopify-cli-repl-theme-config',
+    })
+  }
+  return _replThemeLocalStorageInstance
 }
 
 export function getThemeStore() {
@@ -51,4 +61,19 @@ export function setDevelopmentTheme(theme: string): void {
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
   developmentThemeLocalStorage().delete(getThemeStore())
+}
+
+export function getREPLTheme(): string | undefined {
+  outputDebug(outputContent`Getting REPL theme...`)
+  return replThemeLocalStorage().get(getThemeStore())
+}
+
+export function setREPLTheme(theme: string): void {
+  outputDebug(outputContent`Setting REPL theme to ${theme}...`)
+  replThemeLocalStorage().set(getThemeStore(), theme)
+}
+
+export function removeREPLTheme(): void {
+  outputDebug(outputContent`Removing REPL theme...`)
+  replThemeLocalStorage().delete(getThemeStore())
 }
