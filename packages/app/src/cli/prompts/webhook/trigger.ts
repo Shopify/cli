@@ -1,5 +1,5 @@
 import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-flags.js'
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
 export async function topicPrompt(availableTopics: string[]): Promise<string> {

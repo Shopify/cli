@@ -7,10 +7,12 @@ import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('./context.js')
 vi.mock('./fetch-extensions.js')
 vi.mock('./context/partner-account-info.js')

@@ -1,7 +1,7 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {capitalize} from '@shopify/cli-kit/common/string'
 

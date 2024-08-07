@@ -5,7 +5,7 @@ import {
   renderConfirmationPrompt,
   renderSelectPrompt,
   renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+} from '@shopify/cli-kit/node/ui-inputs'
 import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'

@@ -12,10 +12,10 @@ import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/ap
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('../utilities/app/config/getTomls')
 
 const ORG1: Organization = {

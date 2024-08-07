@@ -8,6 +8,7 @@ import {
 } from '../services/context/breakdown-extensions.js'
 import {SpyInstance, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
+import * as uiInputs from '@shopify/cli-kit/node/ui-inputs'
 
 vi.mock('@shopify/cli-kit/node/context/local')
 
@@ -16,7 +17,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
     test('and force no prompt should be displayed and true returned', async () => {
       // Given
       const {extensionIdentifiersBreakdown, configExtensionIdentifiersBreakdown} = buildCompleteBreakdownInfo()
-      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt')
+      const renderConfirmationPromptSpyOn = vi.spyOn(uiInputs, 'renderConfirmationPrompt')
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = 'app title'
 
@@ -44,7 +45,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const extensionIdentifiersBreakdown = buildEmptyExtensionsBreakdownInfo()
       const configExtensionIdentifiersBreakdown = buildEmptyConfigExtensionsBreakdownInfo()
 
-      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      const renderConfirmationPromptSpyOn = vi.spyOn(uiInputs, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = 'app title'
 
@@ -90,7 +91,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const breakdownInfo = buildCompleteBreakdownInfo()
       breakdownInfo.extensionIdentifiersBreakdown.onlyRemote = []
 
-      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      const renderConfirmationPromptSpyOn = vi.spyOn(uiInputs, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = 'app title'
 
@@ -143,7 +144,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       breakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildDashboardBreakdownInfo('remote dashboard'))
       breakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildDashboardBreakdownInfo('to create dashboard'))
       const renderDangerousConfirmationPromptSpyOn = vi
-        .spyOn(ui, 'renderDangerousConfirmationPrompt')
+        .spyOn(uiInputs, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = 'app title'
@@ -203,7 +204,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
 
-      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      const renderConfirmationPromptSpyOn = vi.spyOn(uiInputs, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = undefined
 
@@ -255,7 +256,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const breakdownInfo = buildCompleteBreakdownInfo()
       breakdownInfo.configExtensionIdentifiersBreakdown = undefined
 
-      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      const renderConfirmationPromptSpyOn = vi.spyOn(uiInputs, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = undefined
 
@@ -300,7 +301,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       breakdownInfo.configExtensionIdentifiersBreakdown = buildEmptyConfigExtensionsBreakdownInfo()
 
       const renderDangerousConfirmationPromptSpyOn = vi
-        .spyOn(ui, 'renderDangerousConfirmationPrompt')
+        .spyOn(uiInputs, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = 'app title'
@@ -353,7 +354,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const breakdownInfo = buildCompleteBreakdownInfo()
       breakdownInfo.extensionIdentifiersBreakdown.onlyRemote = []
 
-      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      const renderConfirmationPromptSpyOn = vi.spyOn(uiInputs, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = 'app title'
 

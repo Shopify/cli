@@ -6,7 +6,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {mkdir, fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputSuccess, outputToken} from '@shopify/cli-kit/node/output'
 import {resolvePath, joinPath, cwd} from '@shopify/cli-kit/node/path'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {createRequire} from 'module'
 
 const schemaFilename = 'demo-schema.json'

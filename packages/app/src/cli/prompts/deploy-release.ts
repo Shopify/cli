@@ -5,7 +5,8 @@ import {
   ExtensionIdentifierBreakdownInfo,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
-import {InfoTableSection, renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {InfoTableSection} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 interface DeployOrReleaseConfirmationPromptOptions {
   extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown

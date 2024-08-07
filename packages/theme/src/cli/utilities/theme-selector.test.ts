@@ -2,12 +2,12 @@ import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemes} from './theme-selector.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {test, describe, vi, expect} from 'vitest'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('./theme-selector/fetch.js')
 vi.mock('../services/local-storage.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 
 const session = {
   token: 'token',

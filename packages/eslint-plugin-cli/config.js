@@ -1,3 +1,50 @@
+const restrictedImportPatternRules = {
+  'ui-inputs': {
+    group: ['ui-inputs.js', 'ui-inputs'],
+    message: "Importing from 'ui-inputs' is not allowed outside prompt files.",
+  },
+  prompts: {
+    group: ['prompts'],
+    caseSensitive: true,
+    message: "Importing from 'prompts' is not allowed outside command files.",
+  },
+}
+
+const restrictedImportAlwaysOnRules = [
+  {
+    name: 'path',
+    message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
+  },
+  {
+    name: 'node:path',
+    message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
+  },
+  {
+    name: 'child_process',
+    message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
+  },
+  {
+    name: 'node:child_process',
+    message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
+  },
+]
+
+function getRestrictedImportsRule(allowed) {
+  const {uiInputs, prompts} = allowed
+  return {
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: restrictedImportAlwaysOnRules,
+        patterns: [
+          uiInputs ? undefined : restrictedImportPatternRules['ui-inputs'],
+          prompts ? undefined : restrictedImportPatternRules['prompts'],
+        ].filter(Boolean),
+      },
+    ],
+  }
+}
+
 module.exports = {
   settings: {},
   plugins: ['no-catch-all', 'vitest', 'unused-imports', 'eslint-plugin-tsdoc', 'jsdoc', 'import', '@shopify/cli'],
@@ -73,29 +120,6 @@ module.exports = {
     'import/no-extraneous-dependencies': 'error',
     'no-await-in-loop': 'error',
     'unused-imports/no-unused-imports': 'error',
-    'no-restricted-imports': [
-      'error',
-      {
-        paths: [
-          {
-            name: 'path',
-            message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
-          },
-          {
-            name: 'node:path',
-            message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
-          },
-          {
-            name: 'child_process',
-            message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
-          },
-          {
-            name: 'node:child_process',
-            message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
-          },
-        ],
-      },
-    ],
     'vitest/consistent-test-it': [
       'error',
       {
@@ -149,6 +173,7 @@ module.exports = {
         ignoreRestSiblings: true,
       },
     ],
+    ...getRestrictedImportsRule({}),
   },
   overrides: [
     {
@@ -159,6 +184,25 @@ module.exports = {
         '@shopify/cli/required-fields-when-loading-app': 'off',
         '@typescript-eslint/ban-types': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
+        ...getRestrictedImportsRule({uiInputs: true, prompts: true}),
+      },
+    },
+    {
+      files: ['**/cli/commands/**/*.ts'],
+      rules: {
+        ...getRestrictedImportsRule({prompts: true}),
+      },
+    },
+    {
+      files: ['**/cli/services/**/*.ts'],
+      rules: {
+        ...getRestrictedImportsRule({prompts: true}),
+      },
+    },
+    {
+      files: ['**/cli/prompts/**/*.ts'],
+      rules: {
+        ...getRestrictedImportsRule({uiInputs: true}),
       },
     },
   ],

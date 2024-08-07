@@ -1,4 +1,4 @@
-import {renderTextPrompt} from '../ui.js'
+import {renderTextPrompt} from '../ui-inputs.js'
 import {getRandomName} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 

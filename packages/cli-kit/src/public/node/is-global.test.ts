@@ -5,12 +5,12 @@ import {
   isGlobalCLIInstalled,
 } from './is-global.js'
 import {captureOutput, terminalSupportsRawMode} from './system.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderSelectPrompt} from './ui-inputs.js'
 import * as execa from 'execa'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
-vi.mock('./ui.js')
+vi.mock('./ui-inputs.js')
 vi.mock('execa')
 
 const globalNPMPath = '/path/to/global/npm'

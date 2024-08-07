@@ -1,9 +1,11 @@
 import init, {InitOptions} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {renderSelectPrompt, renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderText} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
 
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('@shopify/cli-kit/node/is-global')
 
 const globalCLIResult = {install: true, alreadyInstalled: false}

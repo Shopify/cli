@@ -1,9 +1,9 @@
 import {selectFunctionRunPrompt} from './replay.js'
 import {FunctionRunData} from '../../services/function/replay.js'
 import {describe, expect, vi, test} from 'vitest'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 
 const RUN1: FunctionRunData = {
   shopId: 69665030382,

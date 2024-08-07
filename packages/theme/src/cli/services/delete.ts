@@ -4,14 +4,8 @@ import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {deleteTheme} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {
-  renderConfirmationPrompt,
-  RenderConfirmationPromptOptions,
-  renderSuccess,
-  renderWarning,
-  InlineToken,
-  LinkToken,
-} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning, InlineToken, LinkToken} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, RenderConfirmationPromptOptions} from '@shopify/cli-kit/node/ui-inputs'
 import {pluralize} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'

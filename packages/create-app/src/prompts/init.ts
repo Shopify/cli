@@ -1,6 +1,7 @@
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderText} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 export interface InitOptions {
   name?: string

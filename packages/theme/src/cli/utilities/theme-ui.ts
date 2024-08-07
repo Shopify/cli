@@ -1,5 +1,6 @@
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {Task, renderConfirmationPrompt, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Task, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 export function themeComponent(theme: Theme) {
   return [

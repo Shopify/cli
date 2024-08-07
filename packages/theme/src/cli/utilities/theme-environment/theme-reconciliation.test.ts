@@ -5,10 +5,10 @@ import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/ap
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('./theme-fs.js')
 vi.mock('./theme-downloader.js')

@@ -1,6 +1,7 @@
 import {LocalRemoteSource} from './id-matching.js'
 import {LocalSource, RemoteSource} from './identifiers.js'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 export async function matchConfirmationPrompt(
   local: LocalSource,

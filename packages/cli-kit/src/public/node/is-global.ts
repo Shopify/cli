@@ -3,7 +3,7 @@ import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {cwd, sniffForPath} from './path.js'
 import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderSelectPrompt} from './ui-inputs.js'
 import {execaSync} from 'execa'
 
 let _isGlobal: boolean | undefined

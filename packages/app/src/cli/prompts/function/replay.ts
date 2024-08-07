@@ -1,5 +1,5 @@
 import {FunctionRunData} from '../../services/function/replay.js'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): Promise<FunctionRunData | undefined> {
   if (functionRuns.length === 0) return undefined

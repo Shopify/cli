@@ -3,8 +3,10 @@ import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {deleteTheme} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
-import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-selector.js')

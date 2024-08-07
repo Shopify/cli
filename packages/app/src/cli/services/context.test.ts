@@ -56,7 +56,8 @@ import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderConfirmationPrompt, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {Config} from '@oclif/core'
 
 const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
@@ -169,6 +170,7 @@ vi.mock('./context/identifiers')
 vi.mock('../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('./deploy/mode.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context/partner-account-info.js')

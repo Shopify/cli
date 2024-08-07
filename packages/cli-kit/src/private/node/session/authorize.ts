@@ -4,7 +4,7 @@ import {base64URLEncode, randomBytes, randomHex, sha256} from '../../../public/n
 import {openURL} from '../../../public/node/system.js'
 import {AbortError, CancelExecution} from '../../../public/node/error.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import {keypress, renderConfirmationPrompt} from '../../../public/node/ui.js'
+import {renderConfirmationPrompt, keypress} from '../../../public/node/ui-inputs.js'
 import {outputInfo} from '../../../public/node/output.js'
 import {runWithTimer} from '../../../public/node/metadata.js'
 import {checkPort as isPortAvailable} from 'get-port-please'

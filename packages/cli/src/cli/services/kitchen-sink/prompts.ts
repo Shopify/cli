@@ -4,7 +4,7 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
   renderDangerousConfirmationPrompt,
-} from '@shopify/cli-kit/node/ui'
+} from '@shopify/cli-kit/node/ui-inputs'
 import figures from '@shopify/cli-kit/node/figures'
 
 export async function prompts() {

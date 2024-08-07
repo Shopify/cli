@@ -4,12 +4,14 @@ import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
-import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('@shopify/cli-kit/node/context/local')
 
 let app: AppInterface

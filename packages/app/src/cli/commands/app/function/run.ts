@@ -4,7 +4,7 @@ import {appFlags} from '../../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui-inputs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'

@@ -3,7 +3,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {fileURLToPath} from 'url'
 
 export default class Catalog extends Command {

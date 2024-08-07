@@ -4,9 +4,9 @@ import {ExtensionRegistration} from '../dev/create-extension.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, vi, test, beforeAll} from 'vitest'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 
 const REGISTRATION_A: ExtensionRegistration = {
   uuid: 'UUID_A',

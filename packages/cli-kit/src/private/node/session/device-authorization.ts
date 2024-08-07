@@ -7,7 +7,7 @@ import {outputContent, outputDebug, outputInfo, outputToken} from '../../../publ
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {openURL} from '../../../public/node/system.js'
-import {isTTY, keypress} from '../../../public/node/ui.js'
+import {isTTY, keypress} from '../../../public/node/ui-inputs.js'
 
 export interface DeviceAuthorizationResponse {
   deviceCode: string

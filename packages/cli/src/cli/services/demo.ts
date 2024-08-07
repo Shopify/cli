@@ -9,11 +9,13 @@ import {
   renderConcurrent,
   renderTasks,
   renderWarning,
+} from '@shopify/cli-kit/node/ui'
+import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderSelectPrompt,
   renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+} from '@shopify/cli-kit/node/ui-inputs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {Writable} from 'stream'
 

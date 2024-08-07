@@ -7,7 +7,7 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 export const functionFlags = {
   path: Flags.string({

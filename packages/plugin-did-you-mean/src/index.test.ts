@@ -1,7 +1,7 @@
 import {findAlternativeCommand, shouldRunCommand} from './index.js'
 import {isAutocorrectEnabled} from './services/conf.js'
 import {describe, expect, vi, test} from 'vitest'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 
 interface Config {
   commandIDs: string[]
@@ -20,7 +20,7 @@ function buildConfig(commands: {id: string; hidden: boolean; aliases: string[]}[
 }
 
 vi.mock('./services/conf.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 
 describe('commandNotFound hook', () => {
   test('returns a probable match', () => {

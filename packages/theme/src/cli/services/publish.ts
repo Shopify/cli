@@ -3,7 +3,8 @@ import {themeComponent} from '../utilities/theme-ui.js'
 import {publishTheme} from '@shopify/cli-kit/node/themes/api'
 import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export function renderArgumentsWarning(id: string) {

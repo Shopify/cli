@@ -18,7 +18,8 @@ import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderTextPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 const versionTag = 'unique-version-tag'
@@ -35,6 +36,7 @@ vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
 

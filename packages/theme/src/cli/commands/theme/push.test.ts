@@ -9,7 +9,7 @@ import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui-inputs'
 import {DEVELOPMENT_THEME_ROLE, LIVE_THEME_ROLE, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
@@ -20,7 +20,7 @@ vi.mock('../../services/local-storage.js')
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui-inputs')
 
 const CommandConfig = new Config({root: __dirname})
 
