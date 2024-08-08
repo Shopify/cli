@@ -98,7 +98,6 @@ export async function businessPlatformOrganizationsRequest<T>(
     query,
     ...(await setupOrganizationsRequest(token, organizationId)),
     variables,
-    responseOptions: {onResponse: handleDeprecations},
   })
 }
 
@@ -121,6 +120,5 @@ export async function businessPlatformOrganizationsRequestDoc<TResult>(
     query,
     ...(await setupOrganizationsRequest(token, organizationId)),
     variables,
-    responseOptions: {onResponse: handleDeprecations},
   })
 }
