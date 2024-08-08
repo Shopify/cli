@@ -11,6 +11,7 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import { Replay, ReplayProps } from './ui/components/Replay.js'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -95,10 +96,23 @@ export async function renderDev({
 }
 
 export async function renderReplay({
-  selectedRed,
+  selectedRun,
   abortController,
+  app,
+  extension,
 }: ReplayProps) {
   console.log('in renderReplay')
+  return render(
+    <Replay
+      selectedRun={selectedRun}
+      abortController={abortController}
+      app={app}
+      extension={extension}
+    />,
+    {
+      exitOnCtrlC: false,
+    },
+  )
 }
 
 async function partnersURL(organizationId: string, appId: string) {

@@ -15,6 +15,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
+import {renderReplay} from '../dev/ui.js'
 
 const LOG_SELECTOR_LIMIT = 100
 
@@ -52,16 +53,28 @@ export interface FunctionRunData {
 }
 
 export async function replay(options: ReplayOptions) {
-  runReplay(options)
+  // await launchReplayProcess(options)
+  await runReplay(options)
 }
 
 async function launchReplayProcess(options: ReplayOptions) {
   const {watch, extension, app} = options
   const abortController = new AbortController()
 
+  const {apiKey} = await ensureConnectedAppFunctionContext(options)
+  const functionRunsDir = joinPath(getLogsDir(), apiKey)
+
+  const selectedRun = options.log
+    ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
+    : await getRunFromSelector(functionRunsDir, extension.handle)
+
+  console.log('new launchReplay')
+
   return renderReplay({
     selectedRun,
     abortController,
+    app,
+    extension,
   })
 }
 
@@ -82,24 +95,30 @@ async function runReplay(options: ReplayOptions) {
 
     if (watch) {
       outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-      await setupExtensionWatcher({
-        extension,
+      renderReplay({
+        selectedRun,
+        abortController,
         app,
-        stdout: process.stdout,
-        stderr: process.stderr,
-        onChange: async () => {
-          await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
-          outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-        },
-        onReloadAndBuildError: async (error) => {
-          if (error instanceof FatalError) {
-            renderFatalError(error)
-          } else {
-            outputWarn(`Failed to replay function: ${error.message}`)
-          }
-        },
-        signal: abortController.signal,
+        extension,
       })
+      // await setupExtensionWatcher({
+      //   extension,
+      //   app,
+      //   stdout: process.stdout,
+      //   stderr: process.stderr,
+      //   onChange: async () => {
+      //     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+      //     outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
+      //   },
+      //   onReloadAndBuildError: async (error) => {
+      //     if (error instanceof FatalError) {
+      //       renderFatalError(error)
+      //     } else {
+      //       outputWarn(`Failed to replay function: ${error.message}`)
+      //     }
+      //   },
+      //   signal: abortController.signal,
+      // })
     }
   } catch (error) {
     abortController.abort()

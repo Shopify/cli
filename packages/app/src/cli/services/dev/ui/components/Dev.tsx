@@ -11,6 +11,10 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
+import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
+
+import figures from '@shopify/cli-kit/node/figures'
+
 
 export interface DeveloperPreviewController {
   fetchMode: () => Promise<boolean>
