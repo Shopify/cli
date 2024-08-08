@@ -12,8 +12,8 @@ import {
   setResponseHeaders,
   setResponseStatus,
   removeResponseHeader,
-  sendProxy,
   getProxyRequestHeaders,
+  proxyRequest,
 } from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -64,12 +64,13 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
         return serveLocalAsset(event, ctx.directory)
       }
 
+      // -- Handle proxying routes --
       const isHtmlRequest = event.headers.get('accept')?.includes('text/html')
-
       if (!isHtmlRequest || urlPath.startsWith('/wpm')) {
-        console.log('proxyRequest', `https://${ctx.session.storeFqdn}${event.path}`)
-        return sendProxy(event, `https://${ctx.session.storeFqdn}${event.path}`)
+        return proxyRequest(event, `https://${ctx.session.storeFqdn}${event.path}`)
       }
+
+      // -- Handle HTML rendering requests --
 
       // eslint-disable-next-line no-console
       console.log(`${method} ${urlPath}`)

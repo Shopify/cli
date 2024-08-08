@@ -4,7 +4,7 @@ import {defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-uti
 import {DevServerSession, DevServerRenderContext} from './types.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
-import {fetch, Response} from '@shopify/cli-kit/node/http'
+import {fetch, type Response} from '@shopify/cli-kit/node/http'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
