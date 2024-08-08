@@ -1,40 +1,42 @@
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
-import {H3Event, serveStatic} from 'h3'
+import {defineEventHandler, serveStatic} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stat} from 'fs/promises'
 
-const ASSETS_RE = /^\/cdn\/shop\/t\/\d+\/assets\/(.+)$/
-
-export function isAssetsRequest(event: H3Event) {
-  return ASSETS_RE.test(event.path)
-}
-
+/** Forces assets to be served from local domain */
 export function replaceLocalAssets(html: string) {
+  // Matches assets domain in HTML link/script tags
   return html.replace(
     /<(?:link|script)\s?[^>]*\s(?:href|src)="(\/\/[^.]+\.myshopify\.com)\/cdn\/shop\/t\/\d+\/assets\//g,
     (all, m1) => all.replaceAll(m1, ''),
   )
 }
 
-export async function serveLocalAsset(event: H3Event, rootDir: string) {
-  const filename = event.path.match(ASSETS_RE)?.[1]
-  if (!filename) return
+export function getAssetsHandler(rootDir: string) {
+  return defineEventHandler(async (event) => {
+    if (event.method !== 'GET') return
 
-  const filepath = joinPath(rootDir, 'assets', filename)
+    // Matches asset filenames in an HTTP Request URL path
+    const assetsFilename = event.path.match(/^\/cdn\/shop\/t\/\d+\/assets\/(.+)$/)?.[1]
 
-  return serveStatic(event, {
-    getContents: () => readFile(filepath),
-    getMeta: async () => {
-      const stats = await stat(filepath).catch(() => {})
+    if (assetsFilename) {
+      const filepath = joinPath(rootDir, 'assets', assetsFilename)
 
-      if (stats?.isFile()) {
-        return {
-          size: stats.size,
-          mtime: stats.mtimeMs,
-          type: lookupMimeType(filepath),
-        }
-      }
-    },
+      return serveStatic(event, {
+        getContents: () => readFile(filepath),
+        getMeta: async () => {
+          const stats = await stat(filepath).catch(() => {})
+
+          if (stats?.isFile()) {
+            return {
+              size: stats.size,
+              mtime: stats.mtimeMs,
+              type: lookupMimeType(filepath),
+            }
+          }
+        },
+      })
+    }
   })
 }
