@@ -2,7 +2,7 @@ import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
 import {hmrSection, injectFastRefreshScript} from './hmr.js'
-import {replaceLocalAssets, serveLocalAsset} from './assets.js'
+import {isAssetsRequest, replaceLocalAssets, serveLocalAsset} from './assets.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {
   createApp,
@@ -59,9 +59,8 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       }
 
       // -- Handle local assets --
-      const assetFilename = event.path.match(/^\/cdn\/shop\/t\/\d+\/assets\/(.+)$/)?.[1]
-      if (assetFilename) {
-        return serveLocalAsset(event, joinPath(ctx.directory, 'assets', assetFilename))
+      if (isAssetsRequest(event)) {
+        return serveLocalAsset(event, ctx.directory)
       }
 
       const isHtmlRequest = event.headers.get('accept')?.includes('text/html')
