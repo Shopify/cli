@@ -13,6 +13,7 @@ describe('app_config_app_access', () => {
         access_scopes: {
           scopes: 'read_products,write_products',
           optional_scopes: ['read_customers'],
+          required_scopes: ['write_orders', 'read_inventory'],
           use_legacy_install_flow: true,
         },
         auth: {
@@ -31,6 +32,7 @@ describe('app_config_app_access', () => {
         },
         scopes: 'read_products,write_products',
         optional_scopes: ['read_customers'],
+        required_scopes: ['write_orders', 'read_inventory'],
         use_legacy_install_flow: true,
         redirect_url_allowlist: ['https://example.com/auth/callback'],
       })
@@ -46,6 +48,7 @@ describe('app_config_app_access', () => {
         },
         scopes: 'read_products,write_products',
         optional_scopes: ['read_customers'],
+        required_scopes: ['write_orders', 'read_inventory'],
         use_legacy_install_flow: true,
         redirect_url_allowlist: ['https://example.com/auth/callback'],
       }
@@ -62,6 +65,7 @@ describe('app_config_app_access', () => {
         access_scopes: {
           scopes: 'read_products,write_products',
           optional_scopes: ['read_customers'],
+          required_scopes: ['write_orders', 'read_inventory'],
           use_legacy_install_flow: true,
         },
         auth: {

@@ -1,22 +1,8 @@
-import {
-  MinimalOrganizationApp,
-  Organization,
-  OrganizationApp,
-  OrganizationSource,
-  OrganizationStore,
-} from '../../models/organization.js'
-
-import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
-import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  AllDevStoresByOrganizationQuery,
-  AllDevStoresByOrganizationSchema,
-} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   AccountInfo,
-  PartnersSession,
   fetchCurrentAccountInformation,
   isServiceAccount,
   isUserAccount,
@@ -26,7 +12,6 @@ import {
   allDeveloperPlatformClients,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -90,19 +75,6 @@ export class NoOrgError extends AbortError {
   }
 }
 
-interface OrganizationAppsResponse {
-  pageInfo: {
-    hasNextPage: boolean
-  }
-  nodes: MinimalOrganizationApp[]
-}
-
-interface FetchResponse {
-  organization: Organization
-  apps: OrganizationAppsResponse
-  stores: OrganizationStore[]
-}
-
 /**
  * Fetch all organizations the user belongs to
  * If the user doesn't belong to any org, throw an error
@@ -125,53 +97,6 @@ export async function fetchOrganizations(): Promise<Organization[]> {
   return organizations
 }
 
-/**
- * Fetch all apps and stores for the given organization
- * @param orgId - Organization ID
- * @param token - Token to access partners API
- * @returns Current organization details and list of apps and stores
- */
-export async function fetchOrgAndApps(
-  orgId: string,
-  partnersSession: PartnersSession,
-  title?: string,
-): Promise<FetchResponse> {
-  const query = FindOrganizationQuery
-  const params: {id: string; title?: string} = {id: orgId}
-  if (title) params.title = title
-  const result: FindOrganizationQuerySchema = await partnersRequest(query, partnersSession.token, params)
-  const org = result.organizations.nodes[0]
-  if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
-  const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
-  const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
-  return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
-}
-
-export enum Flag {
-  DeclarativeWebhooks,
-}
-
-const FlagMap: {[key: string]: Flag} = {
-  '5b25141b': Flag.DeclarativeWebhooks,
-}
-
-export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
-  const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
-    apiKey,
-  })
-  const app = res.app
-  if (app) {
-    const flags = filterDisabledFlags(app.disabledFlags)
-    return {...app, flags}
-  }
-}
-
-export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
-  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
-  const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
-  return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
-}
-
 export async function fetchAppPreviewMode(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
@@ -187,14 +112,6 @@ export async function fetchOrgFromId(
   const org = await developerPlatformClient.orgFromId(id)
   if (!org) throw new NoOrgError((await developerPlatformClient.session()).accountInfo, id)
   return org
-}
-
-export async function fetchAllDevStores(orgId: string, token: string): Promise<OrganizationStore[]> {
-  const query = AllDevStoresByOrganizationQuery
-  const result: AllDevStoresByOrganizationSchema = await partnersRequest(query, token, {
-    id: orgId,
-  })
-  return result.organizations.nodes[0]!.stores.nodes
 }
 
 interface FetchStoreByDomainOutput {

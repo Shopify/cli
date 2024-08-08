@@ -3,7 +3,7 @@ import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
 import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription_schema.js'
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {Flag} from '../../../services/dev/fetch.js'
+import {Flag} from '../../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
 

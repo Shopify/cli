@@ -1,16 +1,24 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 type Format = 'json' | 'text'
 
-export async function showEnv(app: AppInterface): Promise<OutputMessage> {
-  return outputEnv(app, 'text')
+export async function showEnv(
+  app: AppInterface,
+  developerPlatformClient: DeveloperPlatformClient = selectDeveloperPlatformClient({configuration: app.configuration}),
+): Promise<OutputMessage> {
+  return outputEnv(app, 'text', developerPlatformClient)
 }
 
-export async function outputEnv(app: AppInterface, format: Format): Promise<OutputMessage> {
-  const orgApp = await fetchAppFromConfigOrSelect(app)
+export async function outputEnv(
+  app: AppInterface,
+  format: Format,
+  developerPlatformClient: DeveloperPlatformClient = selectDeveloperPlatformClient({configuration: app.configuration}),
+): Promise<OutputMessage> {
+  const orgApp = await fetchAppFromConfigOrSelect(app, developerPlatformClient)
 
   await logMetadataForLoadedContext(orgApp)
 

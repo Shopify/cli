@@ -1,5 +1,4 @@
 import {selectStore} from './select-store.js'
-import {fetchAllDevStores} from './fetch.js'
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {
   reloadStoreListPrompt,
@@ -7,6 +6,7 @@ import {
   confirmConversionToTransferDisabledStorePrompt,
 } from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {ClientName} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
@@ -48,6 +48,8 @@ const STORE3: OrganizationStore = {
   convertableToPartnerTest: false,
 }
 
+const defaultShowDomainOnPrompt = false
+
 beforeEach(() => {
   vi.mocked(isSpinEnvironment).mockReturnValue(false)
 })
@@ -62,7 +64,20 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
+  })
+
+  test('selectStorePrompt is called with showDomainOnPrompt = true if clientName is app-management', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+
+    // When
+    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
+
+    // Then
+    expect(got).toEqual(STORE1)
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], true)
   })
 
   test('prompts user to convert store to non-transferable if selection is invalid', async () => {
@@ -75,7 +90,7 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
     expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
@@ -90,7 +105,7 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
     expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
@@ -107,7 +122,7 @@ describe('selectStore', async () => {
     // Then
     expect(got).toEqual(STORE2)
     expect(developerPlatformClient.convertToTransferDisabledStore).not.toHaveBeenCalled()
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
   })
 
   test('throws if store is non convertible', async () => {
@@ -131,7 +146,7 @@ describe('selectStore', async () => {
 
     // Then
     await expect(got).rejects.toThrowError()
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2])
+    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
   })
 
   test('prompts user to create & reload, fetches 10 times and tries again if reload is true', async () => {
@@ -139,7 +154,6 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
-    vi.mocked(fetchAllDevStores).mockResolvedValue([])
     const developerPlatformClient = testDeveloperPlatformClient()
 
     // When

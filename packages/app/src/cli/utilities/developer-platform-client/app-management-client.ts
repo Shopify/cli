@@ -47,6 +47,8 @@ import {
   AssetUrlSchema,
   AppVersionIdentifiers,
   DevSessionOptions,
+  filterDisabledFlags,
+  ClientName,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -57,7 +59,6 @@ import {
   OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
-import {filterDisabledFlags} from '../../services/dev/fetch.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   ExtensionRegistration,
@@ -143,7 +144,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
-  public clientName = 'app-management'
+  public clientName = ClientName.AppManagement
   public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
@@ -765,7 +766,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
           {
             id: orgId,
             businessName: 'Fake Name',
-            website: 'N/A',
             stores: {
               nodes: [
                 {

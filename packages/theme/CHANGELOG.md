@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.65.0
+
+### Patch Changes
+
+- 19f230fca5: Prevent the live theme from being set in the `shopify theme dev` session by Shopify infrastructure
+  - @shopify/cli-kit@3.65.0
+
 ## 3.64.0
 
 ### Patch Changes

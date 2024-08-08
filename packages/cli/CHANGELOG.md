@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.65.0
+
+### Minor Changes
+
+- 28acb03664: [Checkout extensibility] Adds iframe.sources capability
+
+### Patch Changes
+
+- 8da3bd7d02: Replace sample domain with IANA-reserved domain for technical documentation
+
 ## 3.64.0
 
 ### Minor Changes

@@ -5,9 +5,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type AllOrgsQueryVariables = Types.Exact<{[key: string]: never}>
 
-export type AllOrgsQuery = {
-  organizations: {nodes?: ({id: string; businessName: string; website?: string | null} | null)[] | null}
-}
+export type AllOrgsQuery = {organizations: {nodes?: ({id: string; businessName: string} | null)[] | null}}
 
 export const AllOrgs = {
   kind: 'Document',
@@ -36,7 +34,6 @@ export const AllOrgs = {
                     selections: [
                       {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'businessName'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'website'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },

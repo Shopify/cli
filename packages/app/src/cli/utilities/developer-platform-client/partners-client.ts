@@ -12,9 +12,10 @@ import {
   DeveloperPlatformClient,
   Paginateable,
   DevSessionOptions,
+  filterDisabledFlags,
+  ClientName,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -143,6 +144,13 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {FindAppQuery, FindAppQuerySchema, FindAppQueryVariables} from '../../api/graphql/find_app.js'
+import {
+  FindOrganizationQuery,
+  FindOrganizationQuerySchema,
+  FindOrganizationQueryVariables,
+} from '../../api/graphql/find_org.js'
+import {NoOrgError} from '../../services/dev/fetch.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -188,8 +196,21 @@ function getAppVars(
   }
 }
 
+interface OrganizationAppsResponse {
+  pageInfo: {
+    hasNextPage: boolean
+  }
+  nodes: MinimalOrganizationApp[]
+}
+
+interface OrgAndAppsResponse {
+  organization: Organization
+  apps: OrganizationAppsResponse
+  stores: OrganizationStore[]
+}
+
 export class PartnersClient implements DeveloperPlatformClient {
-  public clientName = 'partners'
+  public clientName = ClientName.Partners
   public webUiName = 'Partner Dashboard'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
@@ -244,9 +265,17 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const app = await fetchAppDetailsFromApiKey(apiKey, await this.token())
-    if (app) app.developerPlatformClient = this
-    return app
+    const variables: FindAppQueryVariables = {apiKey}
+    const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
+    const app = res.app
+    if (app) {
+      const flags = filterDisabledFlags(app.disabledFlags)
+      return {
+        ...app,
+        flags,
+        developerPlatformClient: this,
+      }
+    }
   }
 
   async organizations(): Promise<Organization[]> {
@@ -275,7 +304,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
-    const result = await fetchOrgAndApps(orgId, await this.session())
+    const result = await this.fetchOrgAndApps(orgId)
     return {
       organization: result.organization,
       apps: result.apps.nodes,
@@ -284,7 +313,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appsForOrg(organizationId: string, term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
-    const result = await fetchOrgAndApps(organizationId, await this.session(), term)
+    const result = await this.fetchOrgAndApps(organizationId, term)
     return {
       apps: result.apps.nodes,
       hasMorePages: result.apps.pageInfo.hasNextPage,
@@ -506,5 +535,19 @@ export class PartnersClient implements DeveloperPlatformClient {
   async devSessionDelete(_input: unknown): Promise<never> {
     // Dev Sessions are not supported in partners client.
     throw new Error('Unsupported operation')
+  }
+
+  private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
+    const params: FindOrganizationQueryVariables = {id: orgId}
+    if (title) params.title = title
+    const result: FindOrganizationQuerySchema = await this.request(FindOrganizationQuery, params)
+    const org = result.organizations.nodes[0]
+    if (!org) {
+      const partnersSession = await this.session()
+      throw new NoOrgError(partnersSession.accountInfo, orgId)
+    }
+    const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
+    const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
+    return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
   }
 }
