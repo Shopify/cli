@@ -1,7 +1,14 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
-import {hmrSection, injectFastRefreshScript} from './hmr.js'
+import {
+  getReplaceTemplates,
+  triggerHmr,
+  injectFastRefreshScript,
+  getHmrHandler,
+  setReplaceTemplate,
+  deleteReplaceTemplate,
+} from './hmr.js'
 import {getAssetsHandler, replaceLocalAssets} from './assets.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../theme-fs.js'
@@ -20,8 +27,6 @@ import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {createServer} from 'node:http'
-
-const updatedTemplates = {} as {[key: string]: string}
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
   await ensureThemeEnvironmentSetup(theme, ctx)
@@ -50,6 +55,7 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
 function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
+  app.use(getHmrHandler())
   app.use(getAssetsHandler(ctx.directory))
 
   app.use(
@@ -79,7 +85,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
         cookies: headers.get('cookie') || '',
         sectionId: '',
         headers: getProxyRequestHeaders(event),
-        replaceTemplates: updatedTemplates,
+        replaceTemplates: getReplaceTemplates(),
       })
 
       setResponseStatus(event, response.status, response.statusText)
@@ -115,25 +121,23 @@ async function watchTemplates(theme: Theme, ctx: DevServerContext) {
   const getKey = (filePath: string) => relativePath(ctx.directory, filePath)
 
   const updateMemoryTemplate = (filePath: string) => {
-    if (!filePath.endsWith('.liquid') || !filePath.endsWith('.json')) return
+    if (!filePath.endsWith('.liquid') && !filePath.endsWith('.json')) return
 
     const key = getKey(filePath)
 
     readFile(filePath)
       .then((content) => {
-        updatedTemplates[key] = content
+        setReplaceTemplate(key, content)
       })
       .catch((error) => {
         renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`})
       })
       .then(() => {
-        if (key.startsWith('sections/')) {
-          return hmrSection(theme, ctx, key)
-        }
+        return triggerHmr(theme, ctx, key)
       })
       .catch((error) => {
         renderWarning({
-          headline: `Failed to fast refresh section ${key}: ${error.message}\nPlease reload the page.`,
+          headline: `Failed to fast refresh ${key}: ${error.message}\nPlease reload the page.`,
         })
       })
   }
@@ -141,6 +145,6 @@ async function watchTemplates(theme: Theme, ctx: DevServerContext) {
   watcher.on('add', updateMemoryTemplate)
   watcher.on('change', updateMemoryTemplate)
   watcher.on('unlink', (filePath) => {
-    delete updatedTemplates[getKey(filePath)]
+    deleteReplaceTemplate(getKey(filePath))
   })
 }
