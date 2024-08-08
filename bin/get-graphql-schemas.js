@@ -1,9 +1,7 @@
 #! /usr/bin/env node
 import {Octokit} from '@octokit/rest'
-import {createTokenAuth} from '@octokit/auth-token'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as readline from 'readline'
 import {spawn} from 'child_process'
 
 const BRANCH = 'main'
