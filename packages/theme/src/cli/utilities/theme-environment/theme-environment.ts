@@ -4,6 +4,7 @@ import {render} from './storefront-renderer.js'
 import {hmrSection, injectFastRefreshScript} from './hmr.js'
 import {isAssetsRequest, replaceLocalAssets, serveLocalAsset} from './assets.js'
 import {uploadTheme} from '../theme-uploader.js'
+import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../theme-fs.js'
 import {
   createApp,
   defineEventHandler,
@@ -101,43 +102,47 @@ async function watchTemplates(theme: Theme, ctx: DevServerContext) {
   // Note: check ctx.localThemeFileSystem ?
   const {default: chokidar} = await import('chokidar')
 
-  const watcher = chokidar.watch([ctx.directory], {
-    ignored: [
-      '**/node_modules/**',
-      '**/.git/**',
-      '**/assets/**',
-      '**/*.test.*',
-      '**/dist/**',
-      '**/*.swp',
-      '.gitignore',
-    ],
+  const directoriesToWatch = new Set(
+    THEME_DIRECTORY_PATTERNS.filter((pattern) => !pattern.includes('assets')).map((pattern) =>
+      joinPath(ctx.directory, pattern.split('/').shift() ?? ''),
+    ),
+  )
+
+  const watcher = chokidar.watch([...directoriesToWatch], {
+    ignored: [...THEME_DEFAULT_IGNORE_PATTERNS, '**/assets/**'],
     persistent: true,
     ignoreInitial: true,
   })
 
-  watcher.on('all', (event, filePath) => {
-    const key = relativePath(ctx.directory, filePath)
+  const getKey = (filePath: string) => relativePath(ctx.directory, filePath)
 
-    if (event === 'unlink') {
-      delete updatedTemplates[key]
-    } else if (event === 'change' || event === 'add') {
-      readFile(filePath)
-        .then((content) => {
-          updatedTemplates[key] = content
+  const updateMemoryTemplate = (filePath: string) => {
+    if (!filePath.endsWith('.liquid') || !filePath.endsWith('.json')) return
+
+    const key = getKey(filePath)
+
+    readFile(filePath)
+      .then((content) => {
+        updatedTemplates[key] = content
+      })
+      .catch((error) => {
+        renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`})
+      })
+      .then(() => {
+        if (key.startsWith('sections/')) {
+          return hmrSection(theme, ctx, key)
+        }
+      })
+      .catch((error) => {
+        renderWarning({
+          headline: `Failed to fast refresh section ${key}: ${error.message}\nPlease reload the page.`,
         })
-        .catch((error) => {
-          renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`})
-        })
-        .then(() => {
-          if (key.startsWith('sections/')) {
-            return hmrSection(theme, ctx, key)
-          }
-        })
-        .catch((error) => {
-          renderWarning({
-            headline: `Failed to fast refresh section ${key}: ${error.message}\nPlease reload the page.`,
-          })
-        })
-    }
+      })
+  }
+
+  watcher.on('add', updateMemoryTemplate)
+  watcher.on('change', updateMemoryTemplate)
+  watcher.on('unlink', (filePath) => {
+    delete updatedTemplates[getKey(filePath)]
   })
 }
