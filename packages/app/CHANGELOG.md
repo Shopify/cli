@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.65.2
+
+### Patch Changes
+
+- e3c44332d5: Fix importing flow extensions with long names
+- 90f6f0f0b5: Fix Javy and function-runner downloads on Windows
+  - @shopify/create-app@3.65.2
+  - @shopify/cli-kit@3.65.2
+  - @shopify/plugin-cloudflare@3.65.2
+
 ## 3.65.1
 
 ### Patch Changes
