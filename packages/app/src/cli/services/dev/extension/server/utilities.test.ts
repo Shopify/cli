@@ -143,10 +143,10 @@ describe('getExtensionPointRedirectUrl()', () => {
       id: 123,
     } as unknown as ExtensionDevOptions
 
-    const result = getExtensionPointRedirectUrl('CustomerAccount::FullPage::RenderWithin', extension, options)
+    const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
 
     expect(result).toBe(
-      'https://shopify.com/123456789/account/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&appId=123&target=CustomerAccount%3A%3AFullPage%3A%3ARenderWithin',
+      'https://shopify.com/123456789/account/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&appId=123&target=customer-account.page.render',
     )
   })
 
