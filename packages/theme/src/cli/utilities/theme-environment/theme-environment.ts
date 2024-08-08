@@ -2,7 +2,7 @@ import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
 import {hmrSection, injectFastRefreshScript} from './hmr.js'
-import {isAssetsRequest, replaceLocalAssets, serveLocalAsset} from './assets.js'
+import {getAssetsHandler, replaceLocalAssets} from './assets.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../theme-fs.js'
 import {
@@ -50,6 +50,8 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
 function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
+  app.use(getAssetsHandler(ctx.directory))
+
   app.use(
     defineEventHandler(async (event) => {
       const {path: urlPath, method, headers} = event
@@ -57,11 +59,6 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       if (method !== 'GET') {
         // Mock the well-known route to avoid errors
         return null
-      }
-
-      // -- Handle local assets --
-      if (isAssetsRequest(event)) {
-        return serveLocalAsset(event, ctx.directory)
       }
 
       // -- Handle proxying routes --
