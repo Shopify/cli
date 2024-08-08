@@ -54,12 +54,12 @@ required = true
 `)
   })
 
-  test('truncates the handle if the title has >30 characters', () => {
+  test('truncates the handle if the title has >50 characters', () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '26237698049',
       uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
-      title: 'flow action @ Char! flow action @ Char! flow action @ Char!',
+      title: 'flow action @ Char! flow action @ Char! flow action @ Char! flow action @ Char!',
       type: 'flow_action_definition',
       draftVersion: {
         config:

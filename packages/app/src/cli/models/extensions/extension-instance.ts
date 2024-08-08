@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import {BaseConfigType} from './schemas.js'
+import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -395,7 +395,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
         const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
-        return hashString(handle).substring(0, 30)
+        return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
     }
   }
 }
