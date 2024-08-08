@@ -6,7 +6,7 @@ import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 
-const DEFAULT_IGNORE_PATTERNS = [
+export const THEME_DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
   '**/.vscode',
   '**/.hg',
@@ -24,7 +24,7 @@ const DEFAULT_IGNORE_PATTERNS = [
   '.prettierrc.json',
 ]
 
-const THEME_DIRECTORY_PATTERNS = [
+export const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',
   'config/**/*.json',
   'layout/**/*.liquid',
@@ -48,7 +48,7 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
   const filesPaths = await glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
-    ignore: DEFAULT_IGNORE_PATTERNS,
+    ignore: THEME_DEFAULT_IGNORE_PATTERNS,
   })
 
   const assets = await Promise.all(
