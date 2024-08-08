@@ -9,12 +9,14 @@ import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {createServer} from 'node:http'
+import {EventEmitter} from 'node:events'
 
 const updatedTemplates = {} as {[key: string]: string}
+const eventEmitter = new EventEmitter()
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
   await ensureThemeEnvironmentSetup(theme, ctx)
-  await watchTemplates(ctx)
+  await watchTemplates(theme, ctx)
   await startDevelopmentServer(theme, ctx)
 
   onReady()
@@ -56,7 +58,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
           return undefined
         }
 
-        res.setHeader('Content-Type', lookupMimeType(filePath))
+        res.setHeader('content-type', lookupMimeType(filePath))
         return readFile(filePath)
       }
 
@@ -87,10 +89,12 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       let body = await response.text()
       if (response.headers.get('content-type')?.startsWith('text/html')) {
         // Replace
-        body = body.replace(
-          /<(?:link|script)\s?[^>]*\s(?:href|src)="(\/\/[^.]+\.myshopify\.com)\/cdn\/shop\/t\/\d+\/assets\//g,
-          (all, m1) => all.replaceAll(m1, ''),
-        )
+        body = body
+          .replace(
+            /<(?:link|script)\s?[^>]*\s(?:href|src)="(\/\/[^.]+\.myshopify\.com)\/cdn\/shop\/t\/\d+\/assets\//g,
+            (all, m1) => all.replaceAll(m1, ''),
+          )
+          .replace(/<\/head>/, `${createFastRefreshScript()}</head>`)
       }
 
       return body
@@ -101,7 +105,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   return new Promise((resolve) => createServer(app).listen(ctx.options.port, () => resolve(undefined)))
 }
 
-async function watchTemplates(ctx: DevServerContext) {
+async function watchTemplates(theme: Theme, ctx: DevServerContext) {
   // Note: check ctx.localThemeFileSystem ?
   const {default: chokidar} = await import('chokidar')
 
@@ -126,12 +130,51 @@ async function watchTemplates(ctx: DevServerContext) {
       readFile(filePath)
         .then((content) => {
           updatedTemplates[key] = content
+
+          if (key.startsWith('sections/')) {
+            return hmrSection(theme, ctx, key).catch((error) => {
+              renderWarning({
+                headline: `Failed to fast refresh section ${key}: ${error.message}\nPlease reload the page.`,
+              })
+            })
+          }
         })
-        .catch(() => {
-          renderWarning({headline: `Failed to read file ${filePath}`})
+        .catch((error) => {
+          renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`})
         })
     } else if (event === 'unlink') {
       delete updatedTemplates[key]
     }
   })
+}
+
+async function hmrSection(theme: Theme, ctx: DevServerContext, key: string) {
+  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
+  if (!sectionId) return
+
+  const response = await render(ctx.session, {
+    path: '/',
+    query: [],
+    themeId: theme.id.toString(),
+    cookies: '',
+    sectionId,
+    headers: {},
+    replaceTemplates: {[key]: updatedTemplates[key]!},
+  })
+
+  const content = await response.text()
+  console.log('content:', content, response.status, response.statusText, {
+    key,
+    sectionId,
+  })
+
+  eventEmitter.emit('request', {key, content})
+}
+
+function createFastRefreshScript() {
+  function fastRefreshScript() {
+    console.log('fastRefreshScript')
+  }
+
+  return `<script>(${fastRefreshScript.toString()})()</script>`
 }
