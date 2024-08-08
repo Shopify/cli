@@ -1,6 +1,6 @@
 import {ensureValidPassword} from './storefront-password-prompt.js'
 import {isStorefrontPasswordProtected, isStorefrontPasswordCorrect} from '../theme-environment/storefront-session.js'
-import {getStorefrontPassword, setStorefrontPassword} from '../../services/local-storage.js'
+import {getStorefrontPassword, removeStorefrontPassword, setStorefrontPassword} from '../../services/local-storage.js'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, beforeEach, vi, test, expect} from 'vitest'
 
@@ -64,7 +64,6 @@ describe('ensureValidPassword', () => {
     expect(isStorefrontPasswordCorrect).toHaveBeenCalledWith('testPassword', 'test-store')
   })
 
-  // should set the password in local storage when a password is provided
   test('should set the password in local storage when a password is validated', async () => {
     // Given
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
@@ -77,7 +76,6 @@ describe('ensureValidPassword', () => {
     expect(setStorefrontPassword).toHaveBeenCalledWith('testPassword')
   })
 
-  // should prompt user for password if local storage password is no longer correct
   test('should prompt user for password if local storage password is no longer correct', async () => {
     // Given
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
@@ -91,5 +89,6 @@ describe('ensureValidPassword', () => {
     // Then
     expect(renderTextPrompt).toHaveBeenCalled()
     expect(setStorefrontPassword).toHaveBeenCalledWith('correctPassword')
+    expect(removeStorefrontPassword).toHaveBeenCalled()
   })
 })
