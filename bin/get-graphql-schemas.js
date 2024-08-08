@@ -132,4 +132,16 @@ async function fetchFiles() {
   }
 }
 
-fetchFiles()
+async function fetchFilesFromSpin() {
+  for (const schema of schemas) {
+    const remotePath = `~/src/github.com/Shopify/${schema.repo}/${schema.pathToFile}`
+    const localPath = schema.localPath
+    await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+  }
+}
+
+if (process.env.SPIN_INSTANCE) {
+  fetchFilesFromSpin()
+} else {
+  fetchFiles()
+}
