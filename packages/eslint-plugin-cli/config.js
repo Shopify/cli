@@ -70,7 +70,7 @@ module.exports = {
     'callback-return': 'off',
     'no-undefined': 'off',
     'node/no-deprecated-api': 'off',
-    'import/no-extraneous-dependencies': 'error',
+    'import/no-extraneous-dependencies': ['error', {packageDir: ['../..', '.']}],
     'no-await-in-loop': 'error',
     'unused-imports/no-unused-imports': 'error',
     'no-restricted-imports': [

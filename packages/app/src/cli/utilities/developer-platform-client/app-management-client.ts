@@ -800,13 +800,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
         userErrors: [],
       },
     }
-    // throw new BugError('Not implemented: sendSampleWebhook')
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
     outputWarn('⚠️ apiVersions is not implemented')
     return {publicApiVersions: ['unstable']}
-    // throw new BugError('Not implemented: apiVersions')
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
@@ -824,7 +822,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
     outputWarn('⚠️ updateURLs is not implemented')
     return {appUpdate: {userErrors: []}}
-    // throw new BugError('Not implemented: updateURLs')
   }
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {

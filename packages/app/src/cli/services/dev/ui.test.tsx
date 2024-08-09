@@ -144,6 +144,7 @@ describe('ui', () => {
 
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
+      const shopFqdn = 'mystore.shopify.io'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234

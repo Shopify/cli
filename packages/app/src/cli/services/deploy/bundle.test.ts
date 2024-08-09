@@ -48,7 +48,7 @@ describe('bundleAndBuildExtensions', () => {
             type: 'theme_external',
             handle: 'theme-extension-name',
             uid: themeExtension.uid,
-            assets: themeExtension.uid,
+            assets: 'theme-extension-name',
             target: '',
             config: {
               theme_extension: {

@@ -1,7 +1,7 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
-import {debugLogResponseInfo} from '../../../private/node/api.js'
 import {runWithTimer} from '../metadata.js'
+import {retryAwareRequest} from '../../../private/node/api.js'
 import {GraphQLClient, rawRequest, RequestDocument, resolveRequestDocument, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
@@ -60,8 +60,8 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   const client = new GraphQLClient(url, clientOptions)
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    const response = await debugLogResponseInfo(
-      {request: client.rawRequest<TResult>(queryAsString, variables), url},
+    const response = await retryAwareRequest(
+      {request: () => client.rawRequest<TResult>(queryAsString, variables), url},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
     )
 
