@@ -9,7 +9,7 @@ describe('developerPreviewController', () => {
   test('does not refresh the tokens when they are still valid', async () => {
     // Given
     const developerPlatformClient = testDeveloperPlatformClient()
-    const controller = developerPreviewController('apiKey', developerPlatformClient)
+    const controller = developerPreviewController('apiKey', developerPlatformClient, false)
     vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce(true)
 
     // When
@@ -22,7 +22,7 @@ describe('developerPreviewController', () => {
   test('refreshes the tokens when they expire', async () => {
     // Given
     const developerPlatformClient = testDeveloperPlatformClient()
-    const controller = developerPreviewController('apiKey', developerPlatformClient)
+    const controller = developerPreviewController('apiKey', developerPlatformClient, false)
     vi.mocked(fetchAppPreviewMode).mockRejectedValueOnce(new Error('expired token'))
     vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce(true)
 
