@@ -36,7 +36,7 @@ import {
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {normalizeStoreFqdn, partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
@@ -258,7 +258,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     organization,
   })
 
-  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
+  const result = await buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
   await logMetadataForLoadedContext({
     organizationId: result.remoteApp.organizationId,
     apiKey: result.remoteApp.apiKey,
@@ -314,19 +314,19 @@ const storeFromFqdn = async (
   }
 }
 
-function buildOutput(
+async function buildOutput(
   app: OrganizationApp,
   store: OrganizationStore,
   localApp: AppInterface,
   cachedInfo?: CachedAppInfo,
-): DevContextOutput {
+): Promise<DevContextOutput> {
   return {
     remoteApp: {
       ...app,
       apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
     },
     remoteAppUpdated: app.apiKey !== cachedInfo?.previousAppId,
-    storeFqdn: store.shopDomain,
+    storeFqdn: await normalizeStoreFqdn(store.shopDomain),
     storeId: store.shopId,
     updateURLs: cachedInfo?.updateURLs,
     localApp,
