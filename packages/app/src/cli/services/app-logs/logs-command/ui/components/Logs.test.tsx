@@ -63,7 +63,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
       prefix: {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
-        description: `export "run" executed in 0.5124 M instructions`,
+        description: `export "run" executed in 0.5124M instructions`,
         status: STATUS === 'success' ? 'Success' : 'Failure',
         source: SOURCE,
       },
@@ -171,96 +171,97 @@ describe('Logs', () => {
     const lastFrame = renderInstance.lastFrame()
 
     expect(unstyled(lastFrame!)).toMatchInlineSnapshot(`
-    "2024-06-18 16:02:04.868 my-function Success export \\"run\\" executed in 0.5124 M instructions
-    test logs
-    Input (10 bytes):
-    {
-      \\"test\\": \\"input\\"
-    }
-    Output (10 bytes):
-    {
-      \\"test\\": \\"output\\"
-    }
+    "2024-06-18 16:02:04.868 my-function Success export \\"run\\" executed in 0.5124M instructions
+        test logs
+        Input (10 bytes):
+        {
+          \\"test\\": \\"input\\"
+        }
+
+        Output (10 bytes):
+        {
+          \\"test\\": \\"output\\"
+        }
     2024-06-18 16:02:04.868 my-function Success network access response from cache
-    Cache write time: 2023-05-12T15:17:01.000Z
-    Cache TTL: 300 s
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    HTTP response:
-    {
-      \\"status\\": 200,
-      \\"body\\": \\"Success\\",
-      \\"headers\\": {
-        \\"header1\\": \\"value1\\"
-      }
-    }
+        Cache write time: 2023-05-12T15:17:01.000Z
+        Cache TTL: 300 s
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+        HTTP response:
+        {
+          \\"status\\": 200,
+          \\"body\\": \\"Success\\",
+          \\"headers\\": {
+            \\"header1\\": \\"value1\\"
+          }
+        }
     2024-06-18 16:02:04.868 my-function Success network access request executed in 80 ms
-    Attempt: 1
-    Connect time: 40 ms
-    Write read time: 40 ms
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    HTTP response:
-    {
-      \\"status\\": 200,
-      \\"body\\": \\"Success\\",
-      \\"headers\\": {
-        \\"header1\\": \\"value1\\"
-      }
-    }
+        Attempt: 1
+        Connect time: 40 ms
+        Write read time: 40 ms
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+        HTTP response:
+        {
+          \\"status\\": 200,
+          \\"body\\": \\"Success\\",
+          \\"headers\\": {
+            \\"header1\\": \\"value1\\"
+          }
+        }
     2024-06-18 16:02:04.868 my-function Failure network access request executed
-    Attempt: 1
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    Error: Timeout Error
+        Attempt: 1
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+        Error: Timeout Error
     2024-06-18 16:02:04.868 my-function Success network access request executing in background
-    Reason: No cached response available
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
+        Reason: No cached response available
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
     2024-06-18 16:02:04.868 my-function Success network access request executing in background
-    Reason: Cache is about to expire
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }"
+        Reason: Cache is about to expire
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }"
     `)
 
     renderInstance.unmount()
