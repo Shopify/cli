@@ -2714,6 +2714,14 @@
           "required": false,
           "type": "option"
         },
+        "diff": {
+          "allowNo": false,
+          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
+          "hidden": true,
+          "name": "diff",
+          "required": false,
+          "type": "boolean"
+        },
         "force-sfapi-version": {
           "description": "Force generating Storefront API types for a specific version instead of using the one provided in Hydrogen. A token can also be provided with this format: `<version>:<token>`.",
           "hasDynamicHelp": false,
@@ -3153,6 +3161,15 @@
           "name": "env-branch",
           "type": "option"
         },
+        "env-file": {
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "env-file",
+          "required": false,
+          "type": "option"
+        },
         "host": {
           "allowNo": false,
           "description": "Expose the server to the local network",
@@ -3282,6 +3299,15 @@
           "name": "env-branch",
           "type": "option"
         },
+        "env-file": {
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "env-file",
+          "required": false,
+          "type": "option"
+        },
         "force": {
           "allowNo": false,
           "char": "f",
@@ -3328,10 +3354,12 @@
           "type": "option"
         },
         "env-file": {
-          "description": "Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.",
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "env-file",
+          "required": false,
           "type": "option"
         },
         "path": {
@@ -3855,6 +3883,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "env-branch",
+          "type": "option"
+        },
+        "env-file": {
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "env-file",
+          "required": false,
           "type": "option"
         },
         "inspector-port": {

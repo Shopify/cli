@@ -62,7 +62,47 @@ export async function businessPlatformRequestDoc<TResult, TVariables extends Var
 }
 
 /**
+ * Sets up the request to the Business Platform Organizations API.
+ *
+ * @param token - Business Platform token.
+ * @param organizationId - Organization ID as a numeric (non-GID) value.
+ */
+async function setupOrganizationsRequest(token: string, organizationId: string) {
+  const api = 'BusinessPlatform'
+  const fqdn = await businessPlatformFqdn()
+  const url = `https://${fqdn}/organizations/api/unstable/organization/${organizationId}/graphql`
+  return {
+    token,
+    api,
+    url,
+    responseOptions: {onResponse: handleDeprecations},
+  }
+}
+
+/**
  * Executes a GraphQL query against the Business Platform Organizations API.
+ *
+ * @param query - GraphQL query to execute.
+ * @param token - Business Platform token.
+ * @param organizationId - Organization ID as a numeric (non-GID) value.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <T>.
+ */
+export async function businessPlatformOrganizationsRequest<T>(
+  query: string,
+  token: string,
+  organizationId: string,
+  variables?: GraphQLVariables,
+): Promise<T> {
+  return graphqlRequest<T>({
+    query,
+    ...(await setupOrganizationsRequest(token, organizationId)),
+    variables,
+  })
+}
+
+/**
+ * Executes a GraphQL query against the Business Platform Organizations API. Uses typed documents.
  *
  * @param query - GraphQL query to execute.
  * @param token - Business Platform token.
@@ -70,21 +110,15 @@ export async function businessPlatformRequestDoc<TResult, TVariables extends Var
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function businessPlatformOrganizationsRequest<TResult>(
+export async function businessPlatformOrganizationsRequestDoc<TResult>(
   query: TypedDocumentNode<TResult, GraphQLVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>,
   token: string,
   organizationId: string,
   variables?: GraphQLVariables,
 ): Promise<TResult> {
-  const api = 'BusinessPlatform'
-  const fqdn = await businessPlatformFqdn()
-  const url = `https://${fqdn}/organizations/api/unstable/organization/${organizationId}/graphql`
   return graphqlRequestDoc({
     query,
-    api,
-    url,
-    token,
+    ...(await setupOrganizationsRequest(token, organizationId)),
     variables,
-    responseOptions: {onResponse: handleDeprecations},
   })
 }

@@ -7,7 +7,7 @@ export interface hydrogenenvpush {
   '--env <value>'?: string
 
   /**
-   * Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.
+   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.
    *
    */
   '--env-file <value>'?: string

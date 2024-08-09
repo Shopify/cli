@@ -43,6 +43,12 @@ export interface hydrogenpreview {
   '--env-branch <value>'?: string
 
   /**
+   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.
+   *
+   */
+  '--env-file <value>'?: string
+
+  /**
    * The port where the inspector is available. Defaults to 9229.
    * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT
    */

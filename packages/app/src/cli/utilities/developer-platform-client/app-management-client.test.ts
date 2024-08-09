@@ -1,16 +1,44 @@
-import {AppManagementClient, GatedExtensionTemplate, allowedTemplates, diffAppModules} from './app-management-client.js'
+import {
+  AppManagementClient,
+  GatedExtensionTemplate,
+  allowedTemplates,
+  diffAppModules,
+  encodedGidFromId,
+} from './app-management-client.js'
 import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
+import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
 
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/api/business-platform')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
 const extensionC = await testUIExtension({uid: 'extension-c-uuid'})
+
+const templateWithoutRules: GatedExtensionTemplate = testRemoteExtensionTemplates[0]!
+const allowedTemplate: GatedExtensionTemplate = {
+  ...testRemoteExtensionTemplates[1]!,
+  organizationBetaFlags: ['allowedFlag'],
+  minimumCliVersion: '1.0.0',
+}
+const templateDisallowedByCliVersion: GatedExtensionTemplate = {
+  ...testRemoteExtensionTemplates[2]!,
+  organizationBetaFlags: ['allowedFlag'],
+  // minimum CLI version is higher than the current CLI version
+  minimumCliVersion: `1${CLI_KIT_VERSION}`,
+}
+const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
+  ...testRemoteExtensionTemplates[3]!,
+  // organization beta flag is not allowed
+  organizationBetaFlags: ['notAllowedFlag'],
+  minimumCliVersion: '1.0.0',
+}
 
 function moduleFromExtension(extension: ExtensionInstance): AppModule {
   return {
@@ -49,19 +77,68 @@ describe('diffAppModules', () => {
 describe('templateSpecifications', () => {
   test('returns the templates with sortPriority to enforce order', async () => {
     // Given
-    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(testRemoteExtensionTemplates))
+    const orgApp = testOrganizationApp()
+    const templates: GatedExtensionTemplate[] = [templateWithoutRules, allowedTemplate]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
     vi.mocked(fetch).mockImplementation(mockedFetch)
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromId(orgApp.organizationId),
+        flag_allowedFlag: true,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
     const client = new AppManagementClient()
-    const got = await client.templateSpecifications(testOrganizationApp())
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const got = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
     const gotSortPriorities = got.map((template) => template.sortPriority)
 
     // Then
-    expect(got.length).toEqual(testRemoteExtensionTemplates.length)
-    expect(gotLabels).toEqual(testRemoteExtensionTemplates.map((template) => template.name))
+    expect(got.length).toEqual(templates.length)
+    expect(gotLabels).toEqual(templates.map((template) => template.name))
     expect(gotSortPriorities).toEqual(gotSortPriorities.sort())
+  })
+
+  test('returns only allowed templates', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templates: GatedExtensionTemplate[] = [templateWithoutRules, allowedTemplate, templateDisallowedByBetaFlag]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromId(orgApp.organizationId),
+        flag_allowedFlag: true,
+        flag_notAllowedFlag: false,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const got = await client.templateSpecifications(orgApp)
+    const gotLabels = got.map((template) => template.name)
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalledWith(
+      `
+    query OrganizationBetaFlags($organizationId: OrganizationID!) {
+      organization(organizationId: $organizationId) {
+        id
+        flag_allowedFlag: hasFeatureFlag(handle: "allowedFlag")
+        flag_notAllowedFlag: hasFeatureFlag(handle: "notAllowedFlag")
+      }
+    }`,
+      'business-platform-token',
+      orgApp.organizationId,
+      {organizationId: encodedGidFromId(orgApp.organizationId)},
+    )
+    const expectedAllowedTemplates = [templateWithoutRules, allowedTemplate]
+    expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
   })
 
   test('fails with an error message when fetching the specifications list fails', async () => {
@@ -80,24 +157,6 @@ describe('templateSpecifications', () => {
 describe('allowedTemplates', () => {
   test('filters templates by betas', async () => {
     // Given
-    const templateWithoutRules: GatedExtensionTemplate = testRemoteExtensionTemplates[0]!
-    const allowedTemplate: GatedExtensionTemplate = {
-      ...testRemoteExtensionTemplates[1]!,
-      organizationBetaFlags: ['allowedFlag'],
-      minimumCliVersion: '1.0.0',
-    }
-    const templateDisallowedByCliVersion: GatedExtensionTemplate = {
-      ...testRemoteExtensionTemplates[2]!,
-      organizationBetaFlags: ['allowedFlag'],
-      // minimum CLI version is higher than the current CLI version
-      minimumCliVersion: `1${CLI_KIT_VERSION}`,
-    }
-    const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
-      ...testRemoteExtensionTemplates[3]!,
-      // organization beta flag is not allowed
-      organizationBetaFlags: ['notAllowedFlag'],
-      minimumCliVersion: '1.0.0',
-    }
     const templates: GatedExtensionTemplate[] = [
       templateWithoutRules,
       allowedTemplate,

@@ -15,7 +15,7 @@ import {pipeline} from 'stream'
 // eslint-disable-next-line no-restricted-imports
 import {execSync, execFileSync} from 'child_process'
 
-export const CURRENT_CLOUDFLARE_VERSION = '2024.6.1'
+export const CURRENT_CLOUDFLARE_VERSION = '2024.8.2'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CURRENT_CLOUDFLARE_VERSION}/`
 
 const LINUX_URL: {[key: string]: string} = {
@@ -26,7 +26,7 @@ const LINUX_URL: {[key: string]: string} = {
 }
 
 const MACOS_URL: {[key: string]: string} = {
-  arm64: 'cloudflared-darwin-amd64.tgz',
+  arm64: 'cloudflared-darwin-arm64.tgz',
   x64: 'cloudflared-darwin-amd64.tgz',
 }
 
