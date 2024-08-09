@@ -785,6 +785,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+    outputWarn('⚠️ sendSampleWebhook is not implemented')
     return {
       sendSampleWebhook: {
         samplePayload: '',
@@ -797,9 +798,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    // Hardcoded until we have a proper implementation
+    outputWarn('⚠️ apiVersions is not implemented')
     return {publicApiVersions: ['unstable']}
-    throw new BugError('Not implemented: apiVersions')
+    // throw new BugError('Not implemented: apiVersions')
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
@@ -815,7 +816,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    outputWarn('updateURLs is not implemented')
+    outputWarn('⚠️ updateURLs is not implemented')
     return {appUpdate: {userErrors: []}}
     // throw new BugError('Not implemented: updateURLs')
   }
