@@ -9,7 +9,8 @@ export class ShopifyConfig extends Config {
     const currentPath = cwd()
 
     let path = sniffForPath() ?? currentPath
-    const currentPathMightBeHydrogenMonorepo = currentPath.toLowerCase().includes('shopify/hydrogen')
+    // Hydrogen CI uses `hydrogen/hydrogen` path, while local dev uses `shopify/hydrogen`.
+    const currentPathMightBeHydrogenMonorepo = /(shopify|hydrogen)\/hydrogen/i.test(currentPath)
     const ignoreHydrogenMonorepo = process.env.IGNORE_HYDROGEN_MONOREPO
     if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
       path = execaSync('npm', ['prefix']).stdout.trim()
