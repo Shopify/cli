@@ -4796,6 +4796,14 @@
       "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "flags": {
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `theme console` implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -4822,7 +4830,6 @@
           "type": "option"
         },
         "port": {
-          "default": "9293",
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
@@ -4837,6 +4844,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "url": {

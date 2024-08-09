@@ -4282,6 +4282,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--store-password <value>",
+                "value": "string",
+                "description": "The password for storefronts with password protection.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_PASSWORD"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--url <value>",
                 "value": "string",
                 "description": "The url to be used as context",
@@ -4316,7 +4325,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE"
               }
             ],
-            "value": "export interface themeconsole {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Local port to serve authentication service.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeconsole {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Local port to serve authentication service.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

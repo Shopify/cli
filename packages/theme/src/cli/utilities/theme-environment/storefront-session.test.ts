@@ -1,4 +1,8 @@
-import {getStorefrontSessionCookies, isStorefrontPasswordProtected} from './storefront-session.js'
+import {
+  getStorefrontSessionCookies,
+  isStorefrontPasswordCorrect,
+  isStorefrontPasswordProtected,
+} from './storefront-session.js'
 import {describe, expect, test, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 
@@ -126,7 +130,79 @@ describe('Storefront API', () => {
       headers: {
         ...mock.headers,
         raw: vi.fn().mockReturnValue({'set-cookie': setCookieArray}),
+        get: vi.fn().mockImplementation((key) => mock.headers?.[key]),
       },
     } as any
   }
+
+  describe('isStorefrontPasswordCorrect', () => {
+    test('returns true when the password is correct', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 302,
+          headers: {
+            location: 'https://store.myshopify.com/',
+          },
+        }),
+      )
+
+      // When
+      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
+
+      // Then
+      expect(result).toBe(true)
+    })
+
+    test('returns false when the password is incorrect', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 401,
+        }),
+      )
+
+      // When
+      const result = await isStorefrontPasswordCorrect('wrong-password', 'store.myshopify.com')
+
+      // Then
+      expect(result).toBe(false)
+    })
+
+    test('returns false when the redirect location is incorrect', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 302,
+          headers: {
+            location: 'https://random-location.com/',
+          },
+        }),
+      )
+
+      // When
+      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
+
+      // Then
+      expect(result).toBe(false)
+    })
+
+    test('throws an error when the server responds with "Too Many Requests"', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 429,
+          headers: {
+            'retry-after': '60',
+          },
+        }),
+      )
+
+      // When
+      const result = isStorefrontPasswordCorrect('wrong-password', 'store.myshopify.com')
+
+      // Then
+      await expect(result).rejects.toThrow('Too many incorrect password attempts. Please try again after 60 seconds.')
+    })
+  })
 })
