@@ -9,43 +9,31 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
-interface PreviewThemeAppExtensionsOptions {
+interface ThemeAppExtensionServerOptions {
   adminSession: AdminSession
   developerPlatformClient: DeveloperPlatformClient
   themeId?: string
   themeExtensionPort?: number
 }
 
-export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThemeAppExtensionsOptions> {
-  type: 'theme-app-extensions'
-}
-
-const runThemeAppExtensionsServerNext: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
-  {stdout: _stdout, stderr: _stderr, abortSignal: _abortSignal},
-  {
-    adminSession: _adminSession,
-    developerPlatformClient: _developerPlatformClient,
-    themeId: _themeId,
-    themeExtensionPort: _themeExtensionPort,
-  },
-) => {
-  await initializeFSWatcher()
-  await startThemeAppExtensionDevelopmentServer()
-}
-
-export async function setupPreviewThemeAppExtensionsProcess({
-  allExtensions,
-  storeFqdn,
-  theme,
-  themeExtensionPort,
-  developerPlatformClient,
-}: Pick<PreviewThemeAppExtensionsOptions, 'developerPlatformClient'> & {
+interface HostThemeSetupOptions {
   allExtensions: ExtensionInstance[]
   storeFqdn: string
   theme?: string
   themeExtensionPort?: number
-}): Promise<PreviewThemeAppExtensionsProcess | undefined> {
+  developerPlatformClient: DeveloperPlatformClient
+}
+
+export interface PreviewThemeAppExtensionsProcess extends BaseProcess<ThemeAppExtensionServerOptions> {
+  type: 'theme-app-extensions'
+}
+
+export async function setupPreviewThemeAppExtensionsProcess(
+  options: HostThemeSetupOptions,
+): Promise<PreviewThemeAppExtensionsProcess | undefined> {
   outputInfo('This feature is currently in development and is not ready for use or testing yet.')
+
+  const {allExtensions, storeFqdn, theme, themeExtensionPort, developerPlatformClient} = options
 
   const themeExtensions = allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length === 0) {
@@ -101,6 +89,13 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
   }
 
   return hostTheme.id.toString()
+}
+const runThemeAppExtensionsServerNext: DevProcessFunction<ThemeAppExtensionServerOptions> = async (
+  {stdout: _stdout, stderr: _stderr, abortSignal: _abortSignal},
+  _PreviewThemeAppExtensionsOptions,
+) => {
+  await initializeFSWatcher()
+  await startThemeAppExtensionDevelopmentServer()
 }
 
 async function initializeFSWatcher() {}
