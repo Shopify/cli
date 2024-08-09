@@ -2,7 +2,7 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -80,6 +80,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
 export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: string): Promise<string> {
   let hostTheme: Theme | undefined
   if (theme) {
+    outputDebug(`Fetching theme with provided id ${theme}`)
     hostTheme = await fetchTheme(parseInt(theme, 10), adminSession)
   } else {
     const themeManager = new HostThemeManager(adminSession, {devPreview: true})
@@ -87,6 +88,7 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
       {
         title: 'Configuring host theme for theme app extension',
         task: async () => {
+          outputDebug('Finding or creating host theme for theme app extensions')
           hostTheme = await themeManager.findOrCreate()
         },
       },
