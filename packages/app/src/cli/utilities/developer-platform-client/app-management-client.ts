@@ -115,15 +115,14 @@ import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.j
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
-
-import {
-  ListAppDevStores,
-  ListAppDevStoresQuery,
-} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
   FetchDevStoreByDomain,
   FetchDevStoreByDomainQueryVariables,
 } from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
+import {
+  ListAppDevStores,
+  ListAppDevStoresQuery,
+} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
