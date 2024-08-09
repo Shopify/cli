@@ -1,20 +1,19 @@
-import {Box, Text, Static, useInput, useStdin} from '@shopify/cli-kit/node/ink'
-import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
-
-import figures from '@shopify/cli-kit/node/figures'
 import {FunctionRunData} from '../../../function/replay.js'
-import {AbortController} from '@shopify/cli-kit/node/abort'
 import {setupExtensionWatcher} from '../../extension/bundler.js'
-import {exec} from '@shopify/cli-kit/node/system'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../../../models/app/app.js'
+import {prettyPrintJsonIfPossible} from '../../../app-logs/utils.js'
+import {exec} from '@shopify/cli-kit/node/system'
+import figures from '@shopify/cli-kit/node/figures'
+import {AbortController} from '@shopify/cli-kit/node/abort'
+import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
+import {Box, Text, Static, useInput, useStdin} from '@shopify/cli-kit/node/ink'
+import {handleCtrlC} from '@shopify/cli-kit/node/ui'
+import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
-import { prettyPrintJsonIfPossible } from '../../../app-logs/utils.js'
-import { handleCtrlC } from '@shopify/cli-kit/node/ui'
-import { useAbortSignal } from '@shopify/cli-kit/node/ui/hooks'
-import { isUnitTest } from '@shopify/cli-kit/node/context/local'
-import { treeKill } from '@shopify/cli-kit/node/tree-kill'
 
 export interface ReplayProps {
   selectedRun: FunctionRunData
@@ -28,10 +27,10 @@ interface FunctionRun {
   input: string
   output: string
   logs: string
-  name: string,
-  size: number,
-  memory_usage: number,
-  instructions: number,
+  name: string
+  size: number
+  memory_usage: number
+  instructions: number
 }
 
 interface SystemMessage {
@@ -52,16 +51,15 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
     memory_usage: 0,
     instructions: selectedRun.payload.fuelConsumed,
   } as FunctionRun
-
-  // const [functionRuns, setFunctionRuns] = useState<FunctionRun[]>([])
-  // const [replayLogs, setReplayLogs] = useState<String[]>([])
   const [logs, setLogs] = useState<ReplayLog[]>([])
-  const [recentFunctionRuns, setRecentFunctionRuns] = useState<[FunctionRun, FunctionRun]>([functionRunFromSelectedRun, functionRunFromSelectedRun])
+  const [recentFunctionRuns, setRecentFunctionRuns] = useState<[FunctionRun, FunctionRun]>([
+    functionRunFromSelectedRun,
+    functionRunFromSelectedRun,
+  ])
 
   const [error, setError] = useState<string | undefined>(undefined)
 
   const {input, export: runExport} = selectedRun.payload
-
 
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
@@ -70,7 +68,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
     return recentFunctionRuns[0].instructions - recentFunctionRuns[1].instructions
   }, [recentFunctionRuns])
 
-  const [statusMessage, setStatusMessage] = useState("Default Status Message")
+  const [statusMessage, setStatusMessage] = useState('Default Status Message')
   useEffect(() => {
     const startWatchingFunction = async () => {
       const customStdout = new Writable({
@@ -80,36 +78,18 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
         },
       })
 
-      ;(global as any).andrewStdout = customStdout
-
       await setupExtensionWatcher({
         extension,
         app,
         stdout: customStdout, // TODO
         stderr: customStdout, // TODO
         onChange: async () => {
-          // console.log("in onChange")
-          // setLogs((logs) => [...logs, {type: 'systemMessage', message: 'Changes detected, rebuilding and rerunning'}])
           const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
-          // console.log("++++ the functionRun in onChange")
-          // console.log(JSON.parse(functionRun.output).JsonOutput)
-          // console.log("the function run to be added")
-          // console.log(functionRun)
-          // console.log("function after output is swapped")
-          // functionRun.output = JSON.parse(functionRun.output).JsonOutput
-          // console.log("all the functionRuns")
-          // console.log(functionRuns)
 
           setRecentFunctionRuns((recentFunctionRuns) => {
             return [functionRun, recentFunctionRuns[0]]
           })
-          // setPrevLatestFunctionRun(latestFunctionRun)
-          // setLatestFunctionRun(functionRun)
-          // console.log(">>>> new latest logs")
-          // console.log("prev")
-          // console.log(prevLatestFunctionRun)
-          // console.log("latest")
-          // console.log(latestFunctionRun)
+
           setLogs((logs) => [...logs, functionRun])
         },
         onReloadAndBuildError: async (error) => {
@@ -124,7 +104,6 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
 
     // TODO: return a way to clean up watcher
   }, [input, runExport, app, extension])
-
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
     if (err) {
@@ -189,39 +168,37 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
         borderTop
       >
         {canUseShortcuts ? (
-        <Box flexDirection="column">
-          <Box flexDirection="row">
-            <Text>
-              {figures.pointerSmall}&nbsp;
-            </Text>
-            {(selectedRun.status === "success") ? (
-              <Text color="white" backgroundColor="green">
-                {selectedRun.status.toUpperCase()}
-              </Text>
-              ) : (
-              <Text color="white" backgroundColor="red">
-                {selectedRun.status.toUpperCase()}
-              </Text>
-              )}
-            <Text>
-              &nbsp;| Watching for changes to {selectedRun.source}...
-            </Text>
-          </Box>
           <Box flexDirection="column">
-            <Text>{figures.pointerSmall} Instruction count delta: {delta}</Text>
+            <Box flexDirection="row">
+              <Text>{figures.pointerSmall}&nbsp;</Text>
+              {selectedRun.status === 'success' ? (
+                <Text color="white" backgroundColor="green">
+                  {selectedRun.status.toUpperCase()}
+                </Text>
+              ) : (
+                <Text color="white" backgroundColor="red">
+                  {selectedRun.status.toUpperCase()}
+                </Text>
+              )}
+              <Text>&nbsp;| Watching for changes to {selectedRun.source}...</Text>
+            </Box>
+            <Box flexDirection="column">
+              <Text>
+                {figures.pointerSmall} Instruction count delta: {delta}
+              </Text>
+            </Box>
+            <Text>
+              {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} diff output with original
+            </Text>
+            <Text>
+              {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
+            </Text>
           </Box>
-          <Text>
-            {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} diff output with original
-          </Text>
-          <Text>
-            {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
-          </Text>
-        </Box>
         ) : null}
         <Box marginTop={canUseShortcuts ? 1 : 0}>
-            <Text>{statusMessage}</Text>
-          </Box>
-          {error ? <Text color="red">{error}</Text> : null}
+          <Text>{statusMessage}</Text>
+        </Box>
+        {error ? <Text color="red">{error}</Text> : null}
       </Box>
     </>
   )
@@ -231,11 +208,17 @@ function ReplayLog({log}: {log: ReplayLog}) {
   if (log.type === 'functionRun') {
     return (
       <Box flexDirection="column">
-        <Text color="black" backgroundColor="yellow">Input</Text>
+        <Text color="black" backgroundColor="yellow">
+          Input
+        </Text>
         <Text>{prettyPrintJsonIfPossible(log.input)}</Text>
-        <Text color="black" backgroundColor="blue">Logs</Text>
+        <Text color="black" backgroundColor="blue">
+          Logs
+        </Text>
         <Text>{log.logs}</Text>
-        <Text color="black" backgroundColor="green">Output</Text>
+        <Text color="black" backgroundColor="green">
+          Output
+        </Text>
         <Text>{prettyPrintJsonIfPossible(log.output)}</Text>
       </Box>
     )

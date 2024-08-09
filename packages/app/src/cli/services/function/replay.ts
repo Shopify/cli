@@ -3,19 +3,17 @@ import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
+import {renderReplay} from '../dev/ui.js'
 
-import {setupExtensionWatcher} from '../dev/extension/bundler.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
-import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
-import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
-import {renderReplay} from '../dev/ui.js'
 
 const LOG_SELECTOR_LIMIT = 100
 
@@ -53,32 +51,6 @@ export interface FunctionRunData {
 }
 
 export async function replay(options: ReplayOptions) {
-  // await launchReplayProcess(options)
-  await runReplay(options)
-}
-
-async function launchReplayProcess(options: ReplayOptions) {
-  const {watch, extension, app} = options
-  const abortController = new AbortController()
-
-  const {apiKey} = await ensureConnectedAppFunctionContext(options)
-  const functionRunsDir = joinPath(getLogsDir(), apiKey)
-
-  const selectedRun = options.log
-    ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
-    : await getRunFromSelector(functionRunsDir, extension.handle)
-
-  console.log('new launchReplay')
-
-  return renderReplay({
-    selectedRun,
-    abortController,
-    app,
-    extension,
-  })
-}
-
-async function runReplay(options: ReplayOptions) {
   const {watch, extension, app} = options
   const abortController = new AbortController()
 
@@ -95,30 +67,12 @@ async function runReplay(options: ReplayOptions) {
 
     if (watch) {
       outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-      renderReplay({
+      await renderReplay({
         selectedRun,
         abortController,
         app,
         extension,
       })
-      // await setupExtensionWatcher({
-      //   extension,
-      //   app,
-      //   stdout: process.stdout,
-      //   stderr: process.stderr,
-      //   onChange: async () => {
-      //     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
-      //     outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-      //   },
-      //   onReloadAndBuildError: async (error) => {
-      //     if (error instanceof FatalError) {
-      //       renderFatalError(error)
-      //     } else {
-      //       outputWarn(`Failed to replay function: ${error.message}`)
-      //     }
-      //   },
-      //   signal: abortController.signal,
-      // })
     }
   } catch (error) {
     abortController.abort()

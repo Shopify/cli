@@ -1,5 +1,6 @@
 import {PartnersURLs} from './urls.js'
 import {Dev, DevProps} from './ui/components/Dev.js'
+import {Replay, ReplayProps} from './ui/components/Replay.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
@@ -11,7 +12,6 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import { Replay, ReplayProps } from './ui/components/Replay.js'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -95,20 +95,9 @@ export async function renderDev({
   }
 }
 
-export async function renderReplay({
-  selectedRun,
-  abortController,
-  app,
-  extension,
-}: ReplayProps) {
-  console.log('in renderReplay')
+export async function renderReplay({selectedRun, abortController, app, extension}: ReplayProps) {
   return render(
-    <Replay
-      selectedRun={selectedRun}
-      abortController={abortController}
-      app={app}
-      extension={extension}
-    />,
+    <Replay selectedRun={selectedRun} abortController={abortController} app={app} extension={extension} />,
     {
       exitOnCtrlC: false,
     },
