@@ -7,7 +7,7 @@ import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/sess
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
@@ -55,6 +55,14 @@ export async function setupPreviewThemeAppExtensionsProcess({
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
 
   const themeId = await findOrCreateHostTheme(adminSession, theme)
+
+  renderInfo({
+    headline: {info: 'Setup your theme app extension in the host theme:'},
+    link: {
+      label: `https://${adminSession.storeFqdn}/admin/themes/${themeId}/editor`,
+      url: `https://${adminSession.storeFqdn}/admin/themes/${themeId}/editor`,
+    },
+  })
 
   return {
     type: 'theme-app-extensions',
