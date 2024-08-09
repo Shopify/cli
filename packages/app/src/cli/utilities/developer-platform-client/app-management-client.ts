@@ -133,6 +133,7 @@ import {
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
@@ -783,11 +784,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    throw new BugError('Not implemented: sendSampleWebhook')
+    outputWarn('⚠️ sendSampleWebhook is not implemented')
+    return {
+      sendSampleWebhook: {
+        samplePayload: '',
+        headers: '{}',
+        success: true,
+        userErrors: [],
+      },
+    }
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    throw new BugError('Not implemented: apiVersions')
+    outputWarn('⚠️ apiVersions is not implemented')
+    return {publicApiVersions: ['unstable']}
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
@@ -803,7 +813,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    throw new BugError('Not implemented: updateURLs')
+    outputWarn('⚠️ updateURLs is not implemented')
+    return {appUpdate: {userErrors: []}}
   }
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
