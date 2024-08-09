@@ -11,7 +11,7 @@ import {
 } from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
-export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
+export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
