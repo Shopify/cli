@@ -85,7 +85,7 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
     const themeManager = new HostThemeManager(adminSession, {devPreview: true})
     const tasks: Task[] = [
       {
-        title: 'Configuring up host theme for theme app extension',
+        title: 'Configuring host theme for theme app extension',
         task: async () => {
           hostTheme = await themeManager.findOrCreate()
         },
