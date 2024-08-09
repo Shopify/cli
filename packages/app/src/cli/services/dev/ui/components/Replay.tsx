@@ -10,6 +10,7 @@ import {ExtensionInstance} from '../../../../models/extensions/extension-instanc
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../../../models/app/app.js'
 import {Writable} from 'stream'
+import { prettyPrintJsonIfPossible } from '../../../app-logs/utils.js'
 
 export interface ReplayProps {
   selectedRun: FunctionRunData
@@ -83,66 +84,11 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     startWatchingFunction()
 
-    // let i = 0;
-    // setInterval(() => {
-    //   i++
-    //   setFunctionRuns((functionRuns) => [...functionRuns, {input: '{\n' +
-    //   '  "cart": {\n' +
-    //   '    "lines": [\n' +
-    //   '      {\n' +
-    //   '        "quantity": 3,\n' +
-    //   '        "merchandise": {\n' +
-    //   '          "typename": "ProductVariant",\n' +
-    //   '          "id": "gid://shopify/ProductVariant/45334064595182"\n' +
-    //   '        }\n' +
-    //   '      }\n' +
-    //   '    ]\n' +
-    //   '  }\n' +
-    //   '}', output: '2', logs: '3'}])
-    //   if (i % 5 === 0) {
-    //     console.log('here')
-    //   }
-    // }, 1000)
-
     // TODO: return a way to clean up watcher
   }, [input, runExport, app, extension])
 
   return (
     <>
-      {/* <ConcurrentOutput
-        processes={errorHandledProcesses}
-        prefixColumnSize={calculatePrefixColumnSize(errorHandledProcesses, app.extensions)}
-        abortSignal={abortController.signal}
-        keepRunningAfterProcessesResolve={true}
-      /> */}
-      {/* eslint-disable-next-line no-negated-condition */}
-      {/* {!isAborted ? ( */}
-      {/* {
-          console.log("in the return")
-      } */}
-      {/* {
-          console.log("logging functionRuns")
-      }
-      {
-        console.log(functionRuns)
-      } */}
-      {/* {
-        console.log("iterating over output")
-      }
-      {
-         functionRuns.map((run) => (
-          console.log(JSON.stringify(run.output))))
-      }
-      {
-        console.log("attempting to create")
-      }
-      {functionRuns.map((run, index) => (
-        <Text key={`functionRuns${index}`}>{JSON.stringify(run)}</Text>
-      ))} */}
-
-      {/* {console.log("printing logs")} */}
-      {/* {console.log(logs)} */}
-
       {/* Scrolling upper section */}
       <Static items={logs}>
         {(log, index) => {
@@ -167,9 +113,23 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
       >
         {/* {canUseShortcuts ? ( */}
         <Box flexDirection="column">
+          <Box flexDirection="row">
           <Text>
-            {figures.pointerSmall} {selectedRun.status.toUpperCase()} | Watching for changes to {selectedRun.source}...
+            {figures.pointerSmall}&nbsp;
           </Text>
+          {(selectedRun.status === "success") ? (
+            <Text color="white" backgroundColor="green">
+              {selectedRun.status.toUpperCase()}
+            </Text>
+            ) : (
+            <Text color="white" backgroundColor="red">
+              {selectedRun.status.toUpperCase()}
+            </Text>
+            )}
+          <Text>
+            &nbsp;| Watching for changes to {selectedRun.source}...
+          </Text>
+          </Box>
           <Text>
             {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} diff output with original
           </Text>
@@ -177,20 +137,23 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
             {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
           </Text>
         </Box>
-        {/* ) : null} */}
-        {/* <Box marginTop={canUseShortcuts ? 1 : 0}> */}
-        {/* <Text>{statusMessage}</Text> */}
-        {/* </Box> */}
-        {/* {error ? <Text color="red">{error}</Text> : null} */}
       </Box>
-      {/* ) : null} */}
     </>
   )
 }
 
 function ReplayLog({log}: {log: ReplayLog}) {
   if (log.type === 'functionRun') {
-    return <Text>{log.logs}</Text>
+    return (
+      <Box flexDirection="column">
+        <Text color="black" backgroundColor="yellow">Input</Text>
+        <Text>{prettyPrintJsonIfPossible(log.input)}</Text>
+        <Text color="black" backgroundColor="blue">Logs</Text>
+        <Text>{log.logs}</Text>
+        <Text color="black" backgroundColor="green">Output</Text>
+        <Text>{prettyPrintJsonIfPossible(log.output)}</Text>
+      </Box>
+    )
   }
 
   if (log.type === 'systemMessage') {
@@ -218,7 +181,6 @@ async function runFunctionRunnerWithLogInput(
   input: string,
   exportName: string,
 ): Promise<FunctionRun> {
-  // console.log("in custom runFunctionRunnerWithLogInput")
   let functionRunnerOutput = ''
   const customStdout = new Writable({
     write(chunk, _encoding, next) {
@@ -234,11 +196,6 @@ async function runFunctionRunnerWithLogInput(
     stderr: 'inherit',
   })
 
-  // console.log('functionRunnerOutput')
-  // console.log(functionRunnerOutput)
-
-  // console.log("about to parse")
   const result = JSON.parse(functionRunnerOutput)
-  // console.log(result.output)
   return {...result, type: 'functionRun'}
 }
