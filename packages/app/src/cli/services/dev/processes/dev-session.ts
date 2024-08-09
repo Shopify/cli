@@ -183,16 +183,20 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
 
   // options.stdout.write('Creating/Updating dev session...')
   let errors: {message: string}[] | undefined
-  if (updating) {
-    const result = await options.developerPlatformClient.devSessionUpdate(payload)
-    errors = result.devSessionUpdate?.userErrors
-  } else {
-    const result = await options.developerPlatformClient.devSessionCreate(payload)
-    errors = result.devSessionCreate?.userErrors
-  }
-
-  if (errors && errors.length > 0) {
-    options.stderr.write('Dev Session Error')
-    options.stderr.write(JSON.stringify(errors, null, 2))
+  try {
+    if (updating) {
+      const result = await options.developerPlatformClient.devSessionUpdate(payload)
+      errors = result.devSessionUpdate?.userErrors
+    } else {
+      const result = await options.developerPlatformClient.devSessionCreate(payload)
+      errors = result.devSessionCreate?.userErrors
+    }
+    if (errors && errors.length > 0) {
+      throw new Error(JSON.stringify(errors, null, 2))
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    options.stderr.write('❌ Dev Session Error')
+    options.stderr.write(error.message)
   }
 }
