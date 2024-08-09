@@ -52,7 +52,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
         }
         retryIntervalMs = result.retryIntervalMs
       } else {
-        setErrors([])
+        setErrors((errors) => (errors.length ? [] : errors))
       }
 
       const {cursor: nextCursor, appLogs} = response as SuccessResponse

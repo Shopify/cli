@@ -13,6 +13,12 @@ export interface hydrogenenvpull {
   '--env-branch <value>'?: string
 
   /**
+   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.
+   *
+   */
+  '--env-file <value>'?: string
+
+  /**
    * Overwrites the destination directory and files if they already exist.
    * @environment SHOPIFY_HYDROGEN_FLAG_FORCE
    */
