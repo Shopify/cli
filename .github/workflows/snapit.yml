@@ -29,7 +29,7 @@ jobs:
       - name: Reinstall dependencies for the duplicated package
         run: pnpm install --no-frozen-lockfile
       - name: Create snapshot version
-        uses: Shopify/snapit@256ef2eae04f7b3b149b8a915a1bf00b020df8c5 # pin@main
+        uses: Shopify/snapit@0c0d2dd62c9b0c94b7d03e1f54e72f18548e7752 # pin@main
         with:
           global_install: 'true'
           github_comment_included_packages: 'shopify'
