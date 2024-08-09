@@ -843,15 +843,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return input.toLowerCase()
   }
 
-  async appDeepLink({id, organizationId}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
-    return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
-  }
-
-  async versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
-    const appLink = await this.appDeepLink({organizationId, id: appId})
-    return `${appLink}/versions/${numberFromGid(versionId)}`
-  }
-
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
@@ -968,6 +959,18 @@ function idFromEncodedGid(gid: string): string {
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
+}
+
+async function appDeepLink({
+  id,
+  organizationId,
+}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
+  return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+}
+
+export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
+  const appLink = await appDeepLink({organizationId, id: appId})
+  return `${appLink}/versions/${numberFromGid(versionId)}`
 }
 
 interface DiffAppModulesInput {
