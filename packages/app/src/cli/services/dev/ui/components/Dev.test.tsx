@@ -86,6 +86,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -166,6 +167,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
       {stdin: new Stdin({isTTY: false})},
     )
@@ -203,6 +205,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -229,6 +232,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -257,6 +261,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -300,6 +305,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -364,6 +370,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -422,6 +429,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -474,6 +482,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -518,6 +527,7 @@ describe('Dev', () => {
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -588,6 +598,7 @@ describe('Dev', () => {
         }}
         pollingTime={200}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -642,6 +653,7 @@ describe('Dev', () => {
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -682,6 +694,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -745,6 +758,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -795,6 +809,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -834,6 +849,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -873,6 +889,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -910,6 +927,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 

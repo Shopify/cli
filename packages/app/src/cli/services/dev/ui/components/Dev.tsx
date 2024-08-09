@@ -37,6 +37,7 @@ export interface DevProps {
   pollingTime?: number
   developerPreview: DeveloperPreviewController
   isEditionWeek?: boolean
+  shopFqdn: string
 }
 
 const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: ExtensionInstance[]) => {
