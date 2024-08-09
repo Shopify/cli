@@ -28,7 +28,7 @@ describe('renderJsonLogs', () => {
   test('should handle success response correctly', async () => {
     const mockSuccessResponse = {
       cursor: 'next-cursor',
-      appLogs: [{message: 'Log 1'}, {message: 'Log 2'}],
+      appLogs: [{payload: JSON.stringify({message: 'Log 1'})}, {payload: JSON.stringify({message: 'Log 2'})}],
     }
     const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
@@ -41,8 +41,8 @@ describe('renderJsonLogs', () => {
       },
     })
 
-    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({message: 'Log 1'}))
-    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({message: 'Log 2'}))
+    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({payload: {message: 'Log 1'}}, null, 2))
+    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({payload: {message: 'Log 2'}}, null, 2))
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)
   })

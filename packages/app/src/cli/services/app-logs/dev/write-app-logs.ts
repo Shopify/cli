@@ -1,8 +1,8 @@
-import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
+import {AppLogData, AppLogPayload} from '../types.js'
+import {toFormattedAppLogJson} from '../utils.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
 
 interface AppLogFile {
@@ -30,22 +30,7 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const toSaveData: any = camelcaseKeys(
-      {
-        ...appLog,
-        payload: appLogPayload,
-      },
-      {deep: true},
-    )
-
-    if (appLogPayload instanceof FunctionRunLog) {
-      toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
-    }
-
-    const logData = JSON.stringify(toSaveData, null, 2)
-
-    await writeLog(path, logData)
+    await writeLog(path, toFormattedAppLogJson(appLog, appLogPayload))
     return {
       fullOutputPath,
       identifier,
