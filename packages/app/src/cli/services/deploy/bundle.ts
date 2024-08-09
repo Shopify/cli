@@ -12,7 +12,7 @@ import {Writable} from 'stream'
 interface BundleOptions {
   app: AppInterface
   bundlePath?: string
-  identifiers: Identifiers
+  identifiers?: Identifiers
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions, systemEnvironment = process.env) {
