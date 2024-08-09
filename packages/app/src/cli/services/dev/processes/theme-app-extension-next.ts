@@ -7,6 +7,7 @@ import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/sess
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
@@ -72,13 +73,23 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
   let hostTheme: Theme | undefined
   if (theme) {
     hostTheme = await fetchTheme(parseInt(theme, 10), adminSession)
-    if (!hostTheme) {
-      throw new AbortError(`Could not find a theme on shop ${adminSession.storeFqdn} with id ${theme}`)
-    }
   } else {
     const themeManager = new HostThemeManager(adminSession, {devPreview: true})
-    hostTheme = await themeManager.findOrCreate()
+    const tasks: Task[] = [
+      {
+        title: 'Configuring up host theme for theme app extension',
+        task: async () => {
+          hostTheme = await themeManager.findOrCreate()
+        },
+      },
+    ]
+    await renderTasks(tasks)
   }
+
+  if (!hostTheme) {
+    throw new AbortError(`Could not find or create a host theme for theme app extensions`)
+  }
+
   return hostTheme.id.toString()
 }
 
