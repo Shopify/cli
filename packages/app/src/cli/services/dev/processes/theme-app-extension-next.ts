@@ -76,7 +76,7 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
       throw new AbortError(`Could not find a theme on shop ${adminSession.storeFqdn} with id ${theme}`)
     }
   } else {
-    const themeManager = new HostThemeManager(adminSession)
+    const themeManager = new HostThemeManager(adminSession, {devPreview: true})
     hostTheme = await themeManager.findOrCreate()
   }
   return hostTheme.id.toString()
