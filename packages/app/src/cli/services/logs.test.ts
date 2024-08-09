@@ -5,6 +5,7 @@ import * as renderLogs from './app-logs/logs-command/ui.js'
 import * as renderJsonLogs from './app-logs/logs-command/render-json-logs.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {buildVersionedAppSchema, testApp, testOrganizationApp} from '../models/app/app.test-data.js'
+import {renderText} from '@shopify/cli-kit/node/ui'
 import {describe, test, vi, expect} from 'vitest'
 
 vi.mock('../models/app/loader.js')
@@ -12,6 +13,7 @@ vi.mock('./context.js')
 vi.mock('./app-logs/logs-command/ui.js')
 vi.mock('./app-logs/logs-command/render-json-logs.js')
 vi.mock('./app-logs/utils.js')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('logs', () => {
   test('should call json handler when format is json', async () => {
@@ -33,10 +35,11 @@ describe('logs', () => {
     })
 
     // Then
+    expect(renderText).toHaveBeenCalledWith({text: 'Waiting for app logs...'})
     expect(spy).toHaveBeenCalled()
   })
 
-  test('should call text handler when format is texxt', async () => {
+  test('should call text handler when format is text', async () => {
     // Given
     await setupDevContext()
     const spy = vi.spyOn(renderLogs, 'renderLogs')
@@ -55,6 +58,7 @@ describe('logs', () => {
     })
 
     // Then
+    expect(renderText).toHaveBeenCalledWith({text: 'Waiting for app logs...'})
     expect(spy).toHaveBeenCalled()
   })
 })
