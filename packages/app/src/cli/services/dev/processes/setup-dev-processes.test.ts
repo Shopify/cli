@@ -124,6 +124,7 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
+      consistentDev: false,
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
@@ -321,6 +322,7 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
+      consistentDev: false,
     })
 
     expect(res.processes[6]).toMatchObject({
@@ -415,6 +417,7 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
+      consistentDev: false,
     })
 
     res.processes.forEach((process) => {
@@ -508,6 +511,7 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
+      consistentDev: false,
     })
 
     expect(res.processes[3]).toMatchObject({
