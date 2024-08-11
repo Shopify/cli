@@ -1,8 +1,11 @@
+import {CLI_KIT_VERSION} from '../../common/version.js'
+import {checkForNewVersion, packageManagerFromUserAgent} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
-import {outputDebug} from '../../../public/node/output.js'
+import {outputDebug, outputInfo, getOutputUpdateCLIReminder} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {Hook} from '@oclif/core'
+import {checkForCachedNewVersion} from '../node-package-manager.js'
 
 export declare interface CommandContent {
   command: string
@@ -18,6 +21,7 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
+  warnOnAvailableUpgrade()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
@@ -79,5 +83,20 @@ function findAlias(aliases: string[]) {
   )
   if (existingAlias) {
     return existingAlias.replace(/:/g, ' ')
+  }
+}
+
+function warnOnAvailableUpgrade() {
+  const cliDependency = '@shopify/cli'
+  const currentVersion = CLI_KIT_VERSION
+
+  // Check in the background, once daily
+  void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
+
+  // Warn if we previously found a new version
+  const lastVersion = checkForCachedNewVersion(cliDependency, currentVersion)
+  if (lastVersion) {
+    const packageManager = packageManagerFromUserAgent()
+    outputInfo(getOutputUpdateCLIReminder(packageManager, lastVersion))
   }
 }

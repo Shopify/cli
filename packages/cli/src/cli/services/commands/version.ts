@@ -1,15 +1,6 @@
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {checkForNewVersion, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
-import {outputInfo, outputContent, outputToken, getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export async function versionService(): Promise<void> {
-  const cliDependency = '@shopify/cli'
-  const currentVersion = CLI_KIT_VERSION
-  outputInfo(outputContent`Current Shopify CLI version: ${outputToken.yellow(currentVersion)}`.value)
-  // Check a max of once daily
-  const lastVersion = await checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
-  if (lastVersion) {
-    const packageManager = packageManagerFromUserAgent()
-    outputInfo(getOutputUpdateCLIReminder(packageManager, lastVersion))
-  }
+  outputInfo(outputContent`Current Shopify CLI version: ${outputToken.yellow(CLI_KIT_VERSION)}`.value)
 }
