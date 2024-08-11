@@ -22,7 +22,8 @@ import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
 import latestVersion from 'latest-version'
-import {vi, describe, test, expect} from 'vitest'
+import {vi, describe, test, expect, beforeEach} from 'vitest'
+import {cacheClear} from '../../private/node/conf-store.js'
 
 vi.mock('../../version.js')
 vi.mock('./system.js')
@@ -524,6 +525,8 @@ describe('addNPMDependenciesIfNeeded', () => {
 })
 
 describe('checkForNewVersion', () => {
+  beforeEach(() => cacheClear())
+
   test('returns undefined when last version is lower or equals than current version', async () => {
     // Given
     const currentVersion = '2.2.2'
@@ -574,6 +577,7 @@ describe('checkForNewVersion', () => {
 
     // When
     await checkForNewVersion(dependency, currentVersion)
+    vi.setSystemTime(vi.getRealSystemTime() + 1000 * 3600 * 1000 - 10)
     const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
 
     // Then

@@ -1,3 +1,4 @@
+import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -28,7 +29,7 @@ let _instance: LocalStorage<ConfSchema> | undefined
  */
 function cliKitStore() {
   if (!_instance) {
-    _instance = new LocalStorage<ConfSchema>({projectName: 'shopify-cli-kit'})
+    _instance = new LocalStorage<ConfSchema>({projectName: `shopify-cli-kit${isUnitTest() ? '-test' : ''}`})
   }
   return _instance
 }
@@ -88,4 +89,8 @@ export async function cacheRetrieveOrRepopulate(
   cache[key] = {value, timestamp: Date.now()}
   config.set('cache', cache)
   return value
+}
+
+export function cacheClear(config = cliKitStore()): void {
+  config.delete('cache')
 }

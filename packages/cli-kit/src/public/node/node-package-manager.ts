@@ -249,7 +249,7 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * Given an NPM dependency, it checks if there's a more recent version, and if there is, it returns its value.
  * @param dependency - The dependency name (e.g. react)
  * @param currentVersion - The current version.
- * @param refreshIfOlderThanSeconds - If the last check was done more than this amount of seconds ago, it will
+ * @param cacheExpiryInHours - If the last check was done more than this amount of hours ago, it will
  * refresh the cache. Defaults to always refreshing.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
@@ -266,7 +266,7 @@ export async function checkForNewVersion(
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   let lastVersion
   try {
-    lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 24 * 1000)
+    lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return undefined
