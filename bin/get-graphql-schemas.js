@@ -1,9 +1,7 @@
 #! /usr/bin/env node
 import {Octokit} from '@octokit/rest'
-import {createTokenAuth} from '@octokit/auth-token'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as readline from 'readline'
 import {spawn} from 'child_process'
 
 const BRANCH = 'main'
@@ -134,4 +132,16 @@ async function fetchFiles() {
   }
 }
 
-fetchFiles()
+async function fetchFilesFromSpin() {
+  for (const schema of schemas) {
+    const remotePath = `~/src/github.com/Shopify/${schema.repo}/${schema.pathToFile}`
+    const localPath = schema.localPath
+    await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+  }
+}
+
+if (process.env.SPIN_INSTANCE) {
+  fetchFilesFromSpin()
+} else {
+  fetchFiles()
+}
