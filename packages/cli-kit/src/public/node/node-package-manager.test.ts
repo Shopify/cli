@@ -17,6 +17,7 @@ import {
   DependencyVersion,
   PackageJsonNotFoundError,
   UnknownPackageManagerError,
+  checkForCachedNewVersion,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -521,6 +522,52 @@ describe('addNPMDependenciesIfNeeded', () => {
         cwd: tmpDir,
       })
     })
+  })
+})
+
+describe('checkForCachedNewVersion', () => {
+  beforeEach(() => cacheClear())
+
+  test('returnes undefined when there is no cached value', () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const dependency = 'dependency'
+
+    // When
+    const result = checkForCachedNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBeUndefined()
+  })
+
+  test('returnes undefined when the cached value is lower than or equal to the current version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.2'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    await checkForNewVersion(dependency, currentVersion)
+
+    // When
+    const result = checkForCachedNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBe(undefined)
+  })
+
+  test('returnes a version string when the cached value is greater than the current version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    await checkForNewVersion(dependency, currentVersion)
+
+    // When
+    const result = checkForCachedNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toEqual(newestVersion)
   })
 })
 

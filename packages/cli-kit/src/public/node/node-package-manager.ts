@@ -5,7 +5,7 @@ import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
-import {PackageVersionKey, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -271,6 +271,26 @@ export async function checkForNewVersion(
   } catch (error) {
     return undefined
   }
+
+  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+    return lastVersion
+  } else {
+    return undefined
+  }
+}
+
+/**
+ * Given an NPM dependency, it checks if there's a cached more recent version, and if there is, it returns its value.
+ * @param dependency - The dependency name (e.g. react)
+ * @param currentVersion - The current version.
+ * @returns A more recent version or undefined if there's no more recent version.
+ */
+export function checkForCachedNewVersion(
+  dependency: string,
+  currentVersion: string,
+): string | undefined {
+  const cacheKey: PackageVersionKey = `npm-package-${dependency}`
+  const lastVersion = cacheRetrieve(cacheKey)
 
   if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
     return lastVersion
