@@ -1,4 +1,4 @@
-import {ConfSchema, cacheRetrieveOrRepopulate, getSession, removeSession, setSession} from './conf-store.js'
+import {ConfSchema, cacheRetrieve, cacheRetrieveOrRepopulate, getSession, removeSession, setSession} from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -134,6 +134,37 @@ describe('cacheRetrieveOrRepopulate', () => {
       // Then
       // Fetches a new value because the old one is wrong
       expect(got).toEqual('URL2')
+    })
+  })
+})
+
+describe('cacheRetrieve', () => {
+  test('returns the value if the cache is populated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      const cacheValue = {'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now()}}
+      config.set('cache', cacheValue)
+
+      // When
+      const got = cacheRetrieve('identity-introspection-url-IDENTITYURL', config)
+
+      // Then
+      expect(got).toEqual('URL1')
+    })
+  })
+
+  test('returns undefined if the cache is not populated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      config.set('cache', {})
+
+      // When
+      const got = cacheRetrieve('identity-introspection-url-IDENTITYURL', config)
+
+      // Then
+      expect(got).toBeUndefined()
     })
   })
 })

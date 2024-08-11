@@ -63,6 +63,7 @@ export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()):
 }
 
 type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['value']
+
 /**
  * Fetch from cache, or run the provided function to get the value, and cache it
  * before returning it.
@@ -89,6 +90,20 @@ export async function cacheRetrieveOrRepopulate(
   cache[key] = {value, timestamp: Date.now()}
   config.set('cache', cache)
   return value
+}
+
+/**
+ * Fetch from cache if already populated, otherwise return undefined.
+ * @param key - The key to use for the cache.
+ * @returns The value from the cache or the result of the function.
+ */
+export function cacheRetrieve(
+  key: keyof Cache,
+  config = cliKitStore(),
+): CacheValueForKey<typeof key> | undefined {
+  const cache: Cache = config.get('cache') || {}
+  const cached = cache[key]
+  return cached?.value
 }
 
 export function cacheClear(config = cliKitStore()): void {
