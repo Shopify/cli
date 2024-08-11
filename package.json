@@ -43,7 +43,6 @@
     "@graphql-codegen/near-operation-file-preset": "3.0.0",
     "@nx/eslint-plugin": "19.3.0",
     "@nx/workspace": "19.3.0",
-    "@octokit/auth-token": "5.1.1",
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "20.1.1",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
