@@ -6,7 +6,6 @@ import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {relativePath} from '@shopify/cli-kit/node/path'
 import {
@@ -15,7 +14,6 @@ import {
   outputToken,
   formatSection,
   stringifyMessage,
-  getOutputUpdateCLIReminder,
 } from '@shopify/cli-kit/node/output'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
@@ -269,25 +267,13 @@ class AppInfo {
   async systemInfoSection(): Promise<[string, string]> {
     const title = 'Tooling and System'
     const {platform, arch} = platformAndArch()
-    const versionUpgradeMessage = await this.versionUpgradeMessage()
-    const cliVersionInfo = [CLI_KIT_VERSION, versionUpgradeMessage].join(' ').trim()
     const lines: string[][] = [
-      ['Shopify CLI', cliVersionInfo],
+      ['Shopify CLI', CLI_KIT_VERSION],
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
     return [title, `${linesToColumns(lines)}`]
-  }
-
-  async versionUpgradeMessage(): Promise<string> {
-    const cliDependency = '@shopify/cli'
-    // Check a max of once daily
-    const newestVersion = await checkForNewVersion(cliDependency, CLI_KIT_VERSION, {cacheExpiryInHours: 24})
-    if (newestVersion) {
-      return getOutputUpdateCLIReminder(this.app.packageManager, newestVersion)
-    }
-    return ''
   }
 }
