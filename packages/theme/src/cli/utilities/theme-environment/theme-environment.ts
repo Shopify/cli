@@ -95,7 +95,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       const html = await response.text()
       removeResponseHeader(event, 'content-encoding')
 
-      return injectFastRefreshScript(replaceLocalAssets(html))
+      return injectFastRefreshScript(replaceLocalAssets(html, ctx.localThemeFileSystem))
     }),
   )
 
