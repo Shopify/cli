@@ -42,8 +42,8 @@ export async function logs(commandOptions: LogsOptions) {
     filters,
   }
 
-  renderText({text: 'Waiting for app logs...'})
   if (commandOptions.format === 'json') {
+    renderText({text: JSON.stringify({INFO: 'Waiting for app logs...'})})
     await renderJsonLogs({
       options: {
         variables,
@@ -52,6 +52,7 @@ export async function logs(commandOptions: LogsOptions) {
       pollOptions,
     })
   } else {
+    renderText({text: 'Waiting for app logs...'})
     await renderLogs({
       options: {
         variables,

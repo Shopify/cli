@@ -35,7 +35,7 @@ describe('logs', () => {
     })
 
     // Then
-    expect(renderText).toHaveBeenCalledWith({text: 'Waiting for app logs...'})
+    expect(renderText).toHaveBeenCalledWith({text: {INFO: 'Waiting for app logs...'}})
     expect(spy).toHaveBeenCalled()
   })
 
