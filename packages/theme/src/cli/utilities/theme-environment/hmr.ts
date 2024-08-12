@@ -54,18 +54,24 @@ export function getHmrHandler() {
 }
 
 export async function triggerHmr(theme: Theme, ctx: DevServerContext, key: string) {
-  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
+  const type = key.split('/')[0]
 
-  if (!sectionId) {
+  if (type === 'section') {
+    await refreshSections(theme, ctx, key)
+  } else {
     emitHmrEvent({type: 'other', key})
-    return
   }
+}
 
+async function refreshSections(theme: Theme, ctx: DevServerContext, key: string) {
   const sectionTemplate = updatedReplaceTemplates[key]
+
   if (!sectionTemplate) {
     renderWarning({headline: 'No template found for HMR event.', body: `Template ${key} not found.`})
     return
   }
+
+  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
 
   const response = await render(ctx.session, {
     path: '/',
@@ -87,7 +93,7 @@ function injectFunction(fn: () => void) {
 }
 
 export function injectFastRefreshScript(html: string) {
-  // These function runs in the browser:
+  // These function run in the browser:
 
   function fastRefreshScript() {
     const evtSource = new EventSource('/__hmr', {withCredentials: true})
