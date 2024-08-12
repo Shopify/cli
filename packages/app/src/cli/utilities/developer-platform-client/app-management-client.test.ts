@@ -4,6 +4,7 @@ import {
   allowedTemplates,
   diffAppModules,
   encodedGidFromId,
+  versionDeepLink,
 } from './app-management-client.js'
 import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -170,5 +171,20 @@ describe('allowedTemplates', () => {
     // Then
     expect(got.length).toEqual(2)
     expect(got).toEqual([templateWithoutRules, allowedTemplate])
+  })
+})
+
+describe('versionDeepLink', () => {
+  test('generates the expected URL', async () => {
+    // Given
+    const orgId = '1'
+    const appId = 'gid://shopify/Version/2'
+    const versionId = 'gid://shopify/Version/3'
+
+    // When
+    const got = await versionDeepLink(orgId, appId, versionId)
+
+    // Then
+    expect(got).toEqual('https://dev.shopify.com/dashboard/1/apps/2/versions/3')
   })
 })
