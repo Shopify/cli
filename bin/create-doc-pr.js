@@ -44,6 +44,8 @@ async function createPR() {
         },
       ],
     })
+
+  console.log("PR URL": response.url)
 }
 
 async function versionToRelease() {
