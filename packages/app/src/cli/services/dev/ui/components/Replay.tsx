@@ -170,7 +170,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
         {canUseShortcuts ? (
           <Box flexDirection="column">
             <Box flexDirection="row">
-              <Text>{figures.pointerSmall}&nbsp;</Text>
+              {/* <Text>{figures.pointerSmall}&nbsp;</Text>
               {selectedRun.status === 'success' ? (
                 <Text color="white" backgroundColor="green">
                   {selectedRun.status.toUpperCase()}
@@ -179,17 +179,14 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
                 <Text color="white" backgroundColor="red">
                   {selectedRun.status.toUpperCase()}
                 </Text>
-              )}
-              <Text>&nbsp;| Watching for changes to {selectedRun.source}...</Text>
+              )} */}
+              <Text>{figures.pointerSmall} Watching for changes to {selectedRun.source}...</Text>
             </Box>
             <Box flexDirection="column">
               <Text>
                 {figures.pointerSmall} Instruction count delta: {delta}
               </Text>
             </Box>
-            <Text>
-              {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} diff output with original
-            </Text>
             <Text>
               {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
             </Text>
