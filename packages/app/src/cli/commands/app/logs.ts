@@ -49,12 +49,14 @@ export default class Logs extends Command {
 
     const apiKey = flags['client-id'] || flags['api-key']
 
+    const sources = flags.source?.split(',')
+
     await checkFolderIsValidApp(flags.path)
     const logOptions = {
       apiKey,
       directory: flags.path,
       storeFqdn: flags.store,
-      source: flags.source,
+      sources,
       status: flags.status,
       configName: flags.config,
       reset: flags.reset,

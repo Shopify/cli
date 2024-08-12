@@ -177,7 +177,7 @@ const POLL_APP_LOGS_FOR_LOGS_UNKNOWN_RESPONSE = {
   errors: [{status: 422, message: 'Unprocessable'}],
 }
 
-const EMPTY_FILTERS = {status: undefined, source: undefined}
+const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 describe('usePollAppLogs', () => {
   beforeEach(() => {
