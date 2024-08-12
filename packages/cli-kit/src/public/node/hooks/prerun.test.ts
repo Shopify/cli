@@ -1,6 +1,6 @@
+import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
 import {packageManagerFromUserAgent, checkForCachedNewVersion} from '../node-package-manager.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
-import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
 import {describe, expect, test, vi, afterEach} from 'vitest'
 
 vi.mock('../node-package-manager')

@@ -85,7 +85,10 @@ function findAlias(aliases: string[]) {
   }
 }
 
-export function warnOnAvailableUpgrade() {
+/**
+ * Warns the user if there is a new version of the CLI available
+ */
+export function warnOnAvailableUpgrade(): void {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
   if (currentVersion.startsWith('0.0.0')) {

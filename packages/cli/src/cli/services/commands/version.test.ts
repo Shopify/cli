@@ -1,6 +1,5 @@
 import {versionService} from './version.js'
 import {afterEach, describe, expect, vi, test} from 'vitest'
-import {checkForNewVersion, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/node-package-manager')
