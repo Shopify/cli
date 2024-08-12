@@ -5,6 +5,8 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
   ErrorResponse,
+  AppLogPayload,
+  AppLogData,
 } from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
@@ -15,6 +17,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import camelcaseKeys from 'camelcase-keys'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -159,6 +162,42 @@ export const handleFetchAppLogsError = async (
   }
 
   return {retryIntervalMs, nextJwtToken}
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const toFormattedAppLogJson = (appLog: AppLogData, appLogPayload: AppLogPayload | any): string => {
+  const {cursor: _, ...appLogWithoutCursor} = appLog
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const toSaveData: any = camelcaseKeys(
+    {
+      ...appLogWithoutCursor,
+      payload: appLogPayload,
+    },
+    {deep: true},
+  )
+
+  if (appLogPayload instanceof FunctionRunLog) {
+    toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
+  }
+
+  return JSON.stringify(toSaveData, null, 2)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const parseAppLogPayload = (payload: string, logType: string): AppLogPayload | any => {
+  const parsedPayload = camelcaseKeys(JSON.parse(payload), {deep: true})
+
+  if (logType === LOG_TYPE_FUNCTION_RUN) {
+    return new FunctionRunLog(parsedPayload)
+  } else if (logType === LOG_TYPE_RESPONSE_FROM_CACHE) {
+    return new NetworkAccessResponseFromCacheLog(parsedPayload)
+  } else if (logType === LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND) {
+    return new NetworkAccessRequestExecutionInBackgroundLog(parsedPayload)
+  } else if (logType === LOG_TYPE_REQUEST_EXECUTION) {
+    return new NetworkAccessRequestExecutedLog(parsedPayload)
+  } else {
+    return parsedPayload
+  }
 }
 
 export const subscribeToAppLogs = async (
