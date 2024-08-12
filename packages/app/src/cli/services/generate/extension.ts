@@ -125,7 +125,7 @@ async function themeExtensionInit({directory, url, type, name, extensionFlavor, 
   })
 }
 
-async function functionExtensionInit({directory, url, app, name, extensionFlavor}: ExtensionInitOptions) {
+async function functionExtensionInit({directory, url, app, name, extensionFlavor, uid}: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
   const taskList = []
 
@@ -138,6 +138,7 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
           name,
           handle: slugify(name),
           flavor: extensionFlavor?.value,
+          uid,
         })
       })
 
@@ -179,7 +180,7 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
   await renderTasks(taskList)
 }
 
-async function uiExtensionInit({directory, url, app, name, extensionFlavor}: ExtensionInitOptions) {
+async function uiExtensionInit({directory, url, app, name, extensionFlavor, uid}: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
 
   const tasks = [
@@ -195,6 +196,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
             name,
             handle: slugify(name),
             flavor: extensionFlavor?.value ?? '',
+            uid,
           })
         })
 
