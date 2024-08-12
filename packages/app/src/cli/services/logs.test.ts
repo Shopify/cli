@@ -5,7 +5,7 @@ import * as renderLogs from './app-logs/logs-command/ui.js'
 import * as renderJsonLogs from './app-logs/logs-command/render-json-logs.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {buildVersionedAppSchema, testApp, testOrganizationApp} from '../models/app/app.test-data.js'
-import {renderText} from '@shopify/cli-kit/node/ui'
+import {consoleLog} from '@shopify/cli-kit/node/output'
 import {describe, test, vi, expect} from 'vitest'
 
 vi.mock('../models/app/loader.js')
@@ -13,7 +13,7 @@ vi.mock('./context.js')
 vi.mock('./app-logs/logs-command/ui.js')
 vi.mock('./app-logs/logs-command/render-json-logs.js')
 vi.mock('./app-logs/utils.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/output')
 
 describe('logs', () => {
   test('should call json handler when format is json', async () => {
@@ -35,7 +35,7 @@ describe('logs', () => {
     })
 
     // Then
-    expect(renderText).toHaveBeenCalledWith({text: {INFO: 'Waiting for app logs...'}})
+    expect(consoleLog).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
     expect(spy).toHaveBeenCalled()
   })
 
@@ -58,7 +58,7 @@ describe('logs', () => {
     })
 
     // Then
-    expect(renderText).toHaveBeenCalledWith({text: 'Waiting for app logs...'})
+    expect(consoleLog).toHaveBeenCalledWith('Waiting for app logs...\n')
     expect(spy).toHaveBeenCalled()
   })
 })
