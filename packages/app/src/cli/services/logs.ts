@@ -5,6 +5,7 @@ import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {consoleLog} from '@shopify/cli-kit/node/output'
 
 export type Format = 'json' | 'text'
 
@@ -42,6 +43,7 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   if (commandOptions.format === 'json') {
+    consoleLog(JSON.stringify({message: 'Waiting for app logs...'}))
     await renderJsonLogs({
       options: {
         variables,
@@ -50,6 +52,7 @@ export async function logs(commandOptions: LogsOptions) {
       pollOptions,
     })
   } else {
+    consoleLog('Waiting for app logs...\n')
     await renderLogs({
       options: {
         variables,
