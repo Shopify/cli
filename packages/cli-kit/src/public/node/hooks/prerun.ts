@@ -89,6 +89,9 @@ function findAlias(aliases: string[]) {
 function warnOnAvailableUpgrade() {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
+  if (currentVersion.startsWith('0.0.0')) {
+    return
+  }
 
   // Check in the background, once daily
   void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
