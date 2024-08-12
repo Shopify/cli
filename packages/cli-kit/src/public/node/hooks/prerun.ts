@@ -89,6 +89,7 @@ export function warnOnAvailableUpgrade() {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
   if (currentVersion.startsWith('0.0.0')) {
+    // This is a nightly/snapshot/experimental version, so we don't want to check for updates
     return
   }
 
