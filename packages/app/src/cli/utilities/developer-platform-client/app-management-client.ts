@@ -845,11 +845,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDeepLink({id, organizationId})
   }
 
-  async versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
-    const appLink = await this.appDeepLink({organizationId, id: appId})
-    return `${appLink}/versions/${numberFromGid(versionId)}`
-  }
-
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
