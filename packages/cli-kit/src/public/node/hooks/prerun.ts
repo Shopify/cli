@@ -1,7 +1,7 @@
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {checkForNewVersion, packageManagerFromUserAgent} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
-import {outputDebug, outputInfo, getOutputUpdateCLIReminder} from '../../../public/node/output.js'
+import {outputDebug, outputWarn, getOutputUpdateCLIReminder} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {Hook} from '@oclif/core'
@@ -97,6 +97,6 @@ function warnOnAvailableUpgrade() {
   const lastVersion = checkForCachedNewVersion(cliDependency, currentVersion)
   if (lastVersion) {
     const packageManager = packageManagerFromUserAgent()
-    outputInfo(getOutputUpdateCLIReminder(packageManager, lastVersion))
+    outputWarn(getOutputUpdateCLIReminder(packageManager, lastVersion))
   }
 }
