@@ -1,5 +1,72 @@
-import {parseCommandContent} from './prerun.js'
-import {describe, expect, test} from 'vitest'
+import {packageManagerFromUserAgent, checkForCachedNewVersion} from '../node-package-manager.js'
+import {mockAndCaptureOutput} from '../testing/output.js'
+import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
+import {describe, expect, test, vi, afterEach} from 'vitest'
+
+vi.mock('../node-package-manager')
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
+})
+
+describe('warnOnAvailableUpgrade', () => {
+  test('displays latest version and yarn upgrade message when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.0.10')
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('yarn')
+
+    // When
+    warnOnAvailableUpgrade()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+        "💡 Version 3.0.10 available! Run \`yarn shopify upgrade\`"
+      `)
+  })
+
+  test('displays latest version and pnpm upgrade message when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.0.10')
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('pnpm')
+
+    // When
+    warnOnAvailableUpgrade()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+        "💡 Version 3.0.10 available! Run \`pnpm shopify upgrade\`"
+      `)
+  })
+
+  test('displays latest version and npm upgrade message when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.0.10')
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('npm')
+
+    // When
+    warnOnAvailableUpgrade()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+        "💡 Version 3.0.10 available! Run \`npm run shopify upgrade\`"
+      `)
+  })
+
+  test('displays nothing when no newer version exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
+
+    // When
+    warnOnAvailableUpgrade()
+
+    // Then
+    expect(outputMock.warn()).toEqual('')
+  })
+})
 
 describe('parseCommandContent', () => {
   test('when a create command is used should return the correct command content', async () => {
