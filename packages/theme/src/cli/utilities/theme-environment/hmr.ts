@@ -1,7 +1,15 @@
 // eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
 /// <reference lib="dom" />
 import {render} from './storefront-renderer.js'
-import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
+import {
+  createEventStream,
+  defineEventHandler,
+  getProxyRequestHeaders,
+  getQuery,
+  removeResponseHeader,
+  setResponseHeaders,
+  setResponseStatus,
+} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -85,6 +93,10 @@ export function getHmrHandler(theme: Theme, ctx: DevServerContext) {
         replaceTemplates: {[sectionKey]: sectionTemplate},
       })
 
+      setResponseStatus(event, response.status, response.statusText)
+      setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
+      removeResponseHeader(event, 'content-encoding')
+
       return response.text()
     }
   })
@@ -124,6 +136,8 @@ export function injectFastRefreshScript(html: string) {
   // These function run in the browser:
 
   function fastRefreshScript() {
+    // eslint-disable-next-line no-console
+    const logInfo = console.info.bind(console, '[HMR]')
     const evtSource = new EventSource('/__hmr/subscribe', {withCredentials: true})
 
     evtSource.onopen = () => {
@@ -152,17 +166,22 @@ export function injectFastRefreshScript(html: string) {
 
               const updatedSection = await response.text()
 
-              // eslint-disable-next-line require-atomic-updates
-              element.outerHTML = updatedSection
+              // SFR will send a header to indicate it used the replace-templates
+              // to render the section. If it didn't, we need to do a full reload.
+              if (response.headers.get('x-templates-from-params') === '1') {
+                // eslint-disable-next-line require-atomic-updates
+                element.outerHTML = updatedSection
+              } else {
+                logInfo('Full reload:', data.key)
+                window.location.reload()
+              }
             }),
           )
 
-          // eslint-disable-next-line no-console
-          console.info(`[HMR] Updated sections for "${data.key}":`, data.names)
+          logInfo(`Updated sections for "${data.key}":`, data.names)
         }
       } else if (data.type === 'other') {
-        // eslint-disable-next-line no-console
-        console.info('[HMR] Full reload:', data.key)
+        logInfo('Full reload:', data.key)
         window.location.reload()
       }
     }
