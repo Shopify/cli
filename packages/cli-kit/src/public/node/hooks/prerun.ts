@@ -94,9 +94,9 @@ function warnOnAvailableUpgrade() {
   void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
 
   // Warn if we previously found a new version
-  const lastVersion = checkForCachedNewVersion(cliDependency, currentVersion)
-  if (lastVersion) {
+  const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
+  if (newerVersion) {
     const packageManager = packageManagerFromUserAgent()
-    outputWarn(getOutputUpdateCLIReminder(packageManager, lastVersion))
+    outputWarn(getOutputUpdateCLIReminder(packageManager, newerVersion))
   }
 }
