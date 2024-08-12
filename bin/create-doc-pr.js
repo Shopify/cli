@@ -27,8 +27,6 @@ async function createPR() {
     files[`db/data/docs/templated_apis/shopify_cli/${fileName}`] = (await readFile(path.join(generatedDirectory, fileName))).toString()
   }
 
-  console.log(files)
-
   const response = await octokit
     .createPullRequest({
       owner: "shopify",
@@ -47,7 +45,7 @@ async function createPR() {
       ],
     })
 
-  console.log("PR URL", response.url)
+  console.log(`PR URL: https://github.com/shopify/shopify-dev/pull/${response.data.number}`)
 }
 
 async function versionToRelease() {
