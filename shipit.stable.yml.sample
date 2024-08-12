@@ -21,3 +21,4 @@ deploy:
     #    This will prevent publishes from being tagged as latest.
     # 2. Remove the following line, which updates Homebrew
     - bash -i -c "./bin/package.js"
+    - bash -i -c "./bin/create-doc-pr.js"
