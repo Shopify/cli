@@ -29,7 +29,7 @@ export function getAssetsHandler(rootDir: string) {
     if (event.method !== 'GET') return
 
     // Matches asset filenames in an HTTP Request URL path
-    const assetsFilename = event.path.match(/^\/assets\/(.+)$/)?.[1]
+    const assetsFilename = event.path.match(/^\/assets\/([^?]+)(\?|$)/)?.[1]
 
     if (assetsFilename) {
       const filepath = joinPath(rootDir, 'assets', assetsFilename)
