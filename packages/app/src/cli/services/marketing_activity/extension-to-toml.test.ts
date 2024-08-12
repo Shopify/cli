@@ -89,7 +89,7 @@ is_automation = false
     expect(got).toEqual(`[[extensions]]
 type = "marketing_activity_extension_cli"
 name = "test mae"
-handle = "mae-test-123455555555544444"
+handle = "mae-test-12345555555554444447777778888888123455"
 title = "test mae"
 description = "test mae description"
 app_api_url = "https://google.es"

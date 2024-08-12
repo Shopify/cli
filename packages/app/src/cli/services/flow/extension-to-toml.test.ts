@@ -74,7 +74,7 @@ required = true
     expect(got).toEqual(`[[extensions]]
 type = "flow_action"
 name = "action title"
-handle = "flow-action-char-flow-actio"
+handle = "flow-action-char-flow-action-char-flow-actio"
 description = "action description"
 runtime_url = "https://google.es"
 config_page_url = "https://destinationsurl.test.dev"
