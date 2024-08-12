@@ -136,10 +136,10 @@ import {
   businessPlatformRequest,
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
@@ -503,11 +503,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
           id: parseInt(versionInfo.id, 10),
           uuid: versionInfo.id,
           versionTag: versionInfo.metadata.versionTag,
-          location: [
-            await this.appDeepLink({organizationId, id: appId}),
-            'versions',
-            numberFromGid(versionInfo.id),
-          ].join('/'),
+          location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join(
+            '/',
+          ),
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
             return {
@@ -667,7 +665,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.metadata.versionTag,
-          location: [await this.appDeepLink({organizationId, id: appId}), `versions/${version.id}`].join('/'),
+          location: await versionDeepLink(organizationId, appId, version.id),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -718,7 +716,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
           message: releaseResult.appReleaseCreate.release.version.metadata.message,
           location: [
-            await this.appDeepLink({organizationId, id: appId}),
+            await appDeepLink({organizationId, id: appId}),
             'versions',
             numberFromGid(releaseResult.appReleaseCreate.release.version.id),
           ].join('/'),
@@ -844,7 +842,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appDeepLink({id, organizationId}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
-    return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+    return appDeepLink({id, organizationId})
   }
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
@@ -963,6 +961,18 @@ function idFromEncodedGid(gid: string): string {
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
+}
+
+async function appDeepLink({
+  id,
+  organizationId,
+}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
+  return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+}
+
+export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
+  const appLink = await appDeepLink({organizationId, id: appId})
+  return `${appLink}/versions/${numberFromGid(versionId)}`
 }
 
 interface DiffAppModulesInput {
