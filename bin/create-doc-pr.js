@@ -1,8 +1,10 @@
+#!/usr/bin/env node
+
 import { Octokit } from "@octokit/core";
 import * as path from "pathe"
 import {fileURLToPath} from "node:url"
 import { createPullRequest } from "octokit-plugin-create-pull-request";
-import {createRequire} from 'module'
+import {createRequire} from 'node:module'
 import {findUp} from "find-up"
 
 const require = createRequire(import.meta.url)
