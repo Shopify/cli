@@ -68,6 +68,7 @@ const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
     return developerPlatformClient.refreshToken()
   }
 
+  // Create a temporary directory in the system
   const dir = tempDirectory()
 
   // Uncomment this to open the temp directory automatically for debugging
@@ -123,11 +124,17 @@ const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
     processOptions.stdout.write(`Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
   })
 
+  // Start watching for changes in the app
   await appWatcher.start()
   processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
 }
 
-// Build all extensions into the bundle path
+/**
+ * Build all extensions for the initial bundle
+ * All subsequent changes in extensions will trigger individual builds
+ *
+ * @param options - The options for the process
+ */
 async function initialBuild(options: DevSessionProcessOptions) {
   const allPromises = options.app.realExtensions.map((extension) => {
     return extension.buildForBundle(
@@ -139,33 +146,37 @@ async function initialBuild(options: DevSessionProcessOptions) {
   await Promise.all(allPromises)
 }
 
+/**
+ * Bundle all extensions and upload them to the developer platform
+ * Generate a new manifest in the bundle folder, zip it and upload it to GCS.
+ * Then create or update the dev session with the new assets URL.
+ *
+ * @param options - The options for the process
+ * @param updating - Whether the dev session is being updated or created
+ */
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, updating: boolean) {
   outputDebug('Bundling and uploading extensions', options.stdout)
-  // Build and bundle all extensions in a zip file (including the manifest file)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
-  // options.stdout.write('Building manifest...')
 
-  // Include manifest in bundle
+  // Generate app manifest in the bundle folder (overwriting the previous one)
   const appManifest = await options.app.manifest()
   const manifestPath = joinPath(options.bundlePath, 'manifest.json')
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 
   // Create zip file with everything
-  // options.stdout.write('Creating zip file...')
   await zip({
     inputDirectory: options.bundlePath,
     outputZipPath: bundleZipPath,
   })
 
-  // Upload zip file to GCS
-  // options.stdout.write('Getting signed URL...')
+  // Get a signed URL to upload the zip file
   const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
     apiKey: options.appId,
     organizationId: options.organizationId,
     id: options.appId,
   })
 
-  // options.stdout.write('Uploading zip file...')
+  // Upload the zip file
   const form = formData()
   const buffer = readFileSync(bundleZipPath)
   form.append('my_upload', buffer)
@@ -175,13 +186,9 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     headers: form.getHeaders(),
   })
 
-  const payload = {
-    shopFqdn: options.storeFqdn,
-    appId: options.appId,
-    assetsUrl: signedURL,
-  }
+  const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
-  // options.stdout.write('Creating/Updating dev session...')
+  // Create or update the dev session
   let errors: {message: string}[] | undefined
   try {
     if (updating) {
