@@ -1,20 +1,25 @@
 // eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
 /// <reference lib="dom" />
 import {render} from './storefront-renderer.js'
-import {DevServerContext} from './types.js'
-import {createEventStream, defineEventHandler} from 'h3'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
+import type {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {DevServerContext} from './types.js'
+
+interface TemplateWithSections {
+  sections?: {[key: string]: {type: string}}
+}
 
 const eventEmitter = new EventEmitter()
 const updatedReplaceTemplates = {} as {[key: string]: string}
+const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
 
 type HmrEvent =
   | {
       type: 'section'
       key: string
-      content: string
+      names: string[]
     }
   | {
       type: 'other'
@@ -31,61 +36,84 @@ export function getReplaceTemplates() {
 
 export function setReplaceTemplate(key: string, content: string) {
   updatedReplaceTemplates[key] = content
+  if (key.endsWith('.json')) {
+    parsedJsonTemplates[key] = JSON.parse(content)
+  }
 }
 
 export function deleteReplaceTemplate(key: string) {
   delete updatedReplaceTemplates[key]
+  delete parsedJsonTemplates[key]
 }
 
-export function getHmrHandler() {
-  return defineEventHandler((event) => {
-    if (event.path !== '/__hmr') return
+export function getHmrHandler(theme: Theme, ctx: DevServerContext) {
+  return defineEventHandler(async (event) => {
+    const endpoint = event.path.split('?')[0]
 
-    const eventStream = createEventStream(event)
+    if (endpoint === '/__hmr/subscribe') {
+      const eventStream = createEventStream(event)
 
-    eventEmitter.on('hmr', (event: HmrEvent) => {
-      eventStream.push(JSON.stringify(event)).catch((error: Error) => {
-        renderWarning({headline: 'Failed to send HMR event.', body: error?.stack})
+      eventEmitter.on('hmr', (event: HmrEvent) => {
+        eventStream.push(JSON.stringify(event)).catch((error: Error) => {
+          renderWarning({headline: 'Failed to send HMR event.', body: error?.stack})
+        })
       })
-    })
 
-    return eventStream.send()
+      return eventStream.send()
+    } else if (endpoint === '/__hmr/render') {
+      const queryParams = getQuery(event)
+      const sectionId = queryParams['section-id']
+      const sectionKey = queryParams['section-template-name']
+
+      if (typeof sectionId !== 'string' || typeof sectionKey !== 'string') {
+        return
+      }
+
+      const sectionTemplate = updatedReplaceTemplates[sectionKey]
+      if (!sectionTemplate) {
+        renderWarning({headline: 'No template found for HMR event.', body: `Template ${sectionKey} not found.`})
+        return
+      }
+
+      const response = await render(ctx.session, {
+        path: '/',
+        query: [],
+        themeId: String(theme.id),
+        cookies: event.headers.get('cookie') || '',
+        sectionId,
+        headers: getProxyRequestHeaders(event),
+        replaceTemplates: {[sectionKey]: sectionTemplate},
+      })
+
+      return response.text()
+    }
   })
 }
 
-export async function triggerHmr(theme: Theme, ctx: DevServerContext, key: string) {
+export async function triggerHmr(key: string) {
   const type = key.split('/')[0]
 
-  if (type === 'section') {
-    await refreshSections(theme, ctx, key)
+  if (type === 'sections') {
+    await refreshSections(key)
   } else {
     emitHmrEvent({type: 'other', key})
   }
 }
 
-async function refreshSections(theme: Theme, ctx: DevServerContext, key: string) {
-  const sectionTemplate = updatedReplaceTemplates[key]
+async function refreshSections(key: string) {
+  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
+  if (!sectionId) return
 
-  if (!sectionTemplate) {
-    renderWarning({headline: 'No template found for HMR event.', body: `Template ${key} not found.`})
-    return
+  const sectionsToUpdate: string[] = []
+  for (const {sections} of Object.values(parsedJsonTemplates)) {
+    for (const [name, {type}] of Object.entries(sections || {})) {
+      if (type === sectionId) {
+        sectionsToUpdate.push(name)
+      }
+    }
   }
 
-  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
-
-  const response = await render(ctx.session, {
-    path: '/',
-    query: [],
-    themeId: String(theme.id),
-    cookies: '',
-    sectionId,
-    headers: {},
-    replaceTemplates: {[key]: sectionTemplate},
-  })
-
-  const content = await response.text()
-
-  emitHmrEvent({type: 'section', key, content})
+  emitHmrEvent({type: 'section', key, names: sectionsToUpdate})
 }
 
 function injectFunction(fn: () => void) {
@@ -96,26 +124,41 @@ export function injectFastRefreshScript(html: string) {
   // These function run in the browser:
 
   function fastRefreshScript() {
-    const evtSource = new EventSource('/__hmr', {withCredentials: true})
+    const evtSource = new EventSource('/__hmr/subscribe', {withCredentials: true})
 
     evtSource.onopen = () => {
       // eslint-disable-next-line no-console
       console.info('[HMR] Connected')
     }
 
-    evtSource.onmessage = (event) => {
+    evtSource.onmessage = async (event) => {
       if (typeof event.data !== 'string') return
 
       const data = JSON.parse(event.data) as HmrEvent
       if (data.type === 'section') {
-        const id = data.content.match(/id="([^"]+)"/)?.[1]
-        if (id) {
-          const existingElement = document.getElementById(id)
-          if (existingElement) {
-            existingElement.outerHTML = data.content
-            // eslint-disable-next-line no-console
-            console.info('[HMR] Updated section:', data.key)
-          }
+        const elements = data.names.flatMap((name) =>
+          Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
+        )
+
+        if (elements.length > 0) {
+          await Promise.all(
+            elements.map(async (element) => {
+              const sectionId = element.id.replace(/^shopify-section-/, '')
+              const response = await fetch(
+                `/__hmr/render?section-id=${encodeURIComponent(sectionId)}&section-template-name=${encodeURIComponent(
+                  data.key,
+                )}`,
+              )
+
+              const updatedSection = await response.text()
+
+              // eslint-disable-next-line require-atomic-updates
+              element.outerHTML = updatedSection
+            }),
+          )
+
+          // eslint-disable-next-line no-console
+          console.info(`[HMR] Updated sections for "${data.key}":`, data.names)
         }
       } else if (data.type === 'other') {
         // eslint-disable-next-line no-console

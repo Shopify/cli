@@ -24,13 +24,13 @@ import {
 } from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {createServer} from 'node:http'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
   await ensureThemeEnvironmentSetup(theme, ctx)
-  await watchTemplates(theme, ctx)
+  await watchTemplates(ctx)
   await startDevelopmentServer(theme, ctx)
 
   onReady()
@@ -55,7 +55,7 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
 function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
-  app.use(getHmrHandler())
+  app.use(getHmrHandler(theme, ctx))
   app.use(getAssetsHandler(ctx.directory))
 
   app.use(
@@ -102,8 +102,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   return new Promise((resolve) => createServer(toNodeListener(app)).listen(ctx.options.port, () => resolve(undefined)))
 }
 
-async function watchTemplates(theme: Theme, ctx: DevServerContext) {
-  // Note: check ctx.localThemeFileSystem ?
+async function watchTemplates(ctx: DevServerContext) {
   const {default: chokidar} = await import('chokidar')
 
   const directoriesToWatch = new Set(
@@ -112,39 +111,37 @@ async function watchTemplates(theme: Theme, ctx: DevServerContext) {
     ),
   )
 
-  const watcher = chokidar.watch([...directoriesToWatch], {
-    ignored: [...THEME_DEFAULT_IGNORE_PATTERNS, '**/assets/**'],
-    persistent: true,
-    ignoreInitial: true,
-  })
-
+  let initialized = false
   const getKey = (filePath: string) => relativePath(ctx.directory, filePath)
 
-  const updateMemoryTemplate = (filePath: string) => {
-    if (!filePath.endsWith('.liquid') && !filePath.endsWith('.json')) return
+  chokidar
+    .watch([...directoriesToWatch], {
+      ignored: [...THEME_DEFAULT_IGNORE_PATTERNS, '**/assets/**'],
+      persistent: true,
+      ignoreInitial: false,
+    })
+    .on('ready', () => (initialized = true))
+    .on('add', updateMemoryTemplate)
+    .on('change', updateMemoryTemplate)
+    .on('unlink', (filePath) => deleteReplaceTemplate(getKey(filePath)))
+
+  function updateMemoryTemplate(filePath: string) {
+    const extension = extname(filePath)
+    // console.debug('lala', filePath, Boolean(extension), {extension})
+    if (!['.liquid', '.json'].includes(extension)) return
+
+    // During initialization we only want to process
+    // JSON files to cache their contents early
+    if (!initialized && extension !== '.json') return
 
     const key = getKey(filePath)
 
     readFile(filePath)
-      .then((content) => {
-        setReplaceTemplate(key, content)
-      })
-      .catch((error) => {
-        renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`})
-      })
-      .then(() => {
-        return triggerHmr(theme, ctx, key)
-      })
-      .catch((error) => {
-        renderWarning({
-          headline: `Failed to fast refresh ${key}: ${error.message}\nPlease reload the page.`,
-        })
-      })
+      .then((content) => setReplaceTemplate(key, content))
+      .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
+      .then(() => triggerHmr(key))
+      .catch((error) =>
+        renderWarning({headline: `Failed to fast refresh ${key}: ${error.message}\nPlease reload the page.`}),
+      )
   }
-
-  watcher.on('add', updateMemoryTemplate)
-  watcher.on('change', updateMemoryTemplate)
-  watcher.on('unlink', (filePath) => {
-    deleteReplaceTemplate(getKey(filePath))
-  })
 }
