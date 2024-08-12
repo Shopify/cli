@@ -8,13 +8,7 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {relativePath} from '@shopify/cli-kit/node/path'
-import {
-  OutputMessage,
-  outputContent,
-  outputToken,
-  formatSection,
-  stringifyMessage,
-} from '@shopify/cli-kit/node/output'
+import {OutputMessage, outputContent, outputToken, formatSection, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 export type Format = 'json' | 'text'

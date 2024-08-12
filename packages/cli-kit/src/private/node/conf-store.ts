@@ -97,10 +97,7 @@ export async function cacheRetrieveOrRepopulate(
  * @param key - The key to use for the cache.
  * @returns The value from the cache or the result of the function.
  */
-export function cacheRetrieve(
-  key: keyof Cache,
-  config = cliKitStore(),
-): CacheValueForKey<typeof key> | undefined {
+export function cacheRetrieve(key: keyof Cache, config = cliKitStore()): CacheValueForKey<typeof key> | undefined {
   const cache: Cache = config.get('cache') || {}
   const cached = cache[key]
   return cached?.value

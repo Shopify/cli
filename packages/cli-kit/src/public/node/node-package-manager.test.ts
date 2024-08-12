@@ -22,9 +22,9 @@ import {
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
+import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
-import {cacheClear} from '../../private/node/conf-store.js'
 
 vi.mock('../../version.js')
 vi.mock('./system.js')
@@ -573,7 +573,9 @@ describe('checkForCachedNewVersion', () => {
 
 describe('checkForNewVersion', () => {
   beforeEach(() => cacheClear())
-  afterEach(() => { vi.useRealTimers() })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
   test('returns undefined when last version is lower or equals than current version', async () => {
     // Given

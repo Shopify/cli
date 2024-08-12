@@ -1,4 +1,11 @@
-import {ConfSchema, cacheRetrieve, cacheRetrieveOrRepopulate, getSession, removeSession, setSession} from './conf-store.js'
+import {
+  ConfSchema,
+  cacheRetrieve,
+  cacheRetrieveOrRepopulate,
+  getSession,
+  removeSession,
+  setSession,
+} from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'

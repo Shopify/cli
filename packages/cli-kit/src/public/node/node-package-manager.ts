@@ -285,10 +285,7 @@ export async function checkForNewVersion(
  * @param currentVersion - The current version.
  * @returns A more recent version or undefined if there's no more recent version.
  */
-export function checkForCachedNewVersion(
-  dependency: string,
-  currentVersion: string,
-): string | undefined {
+export function checkForCachedNewVersion(dependency: string, currentVersion: string): string | undefined {
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
   const lastVersion = cacheRetrieve(cacheKey)
 

@@ -1,11 +1,10 @@
 import {CLI_KIT_VERSION} from '../../common/version.js'
-import {checkForNewVersion, packageManagerFromUserAgent} from '../node-package-manager.js'
+import {checkForNewVersion, packageManagerFromUserAgent, checkForCachedNewVersion} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
 import {outputDebug, outputWarn, getOutputUpdateCLIReminder} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {Hook} from '@oclif/core'
-import {checkForCachedNewVersion} from '../node-package-manager.js'
 
 export declare interface CommandContent {
   command: string
@@ -94,6 +93,7 @@ function warnOnAvailableUpgrade() {
   }
 
   // Check in the background, once daily
+  // eslint-disable-next-line no-void
   void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
 
   // Warn if we previously found a new version
