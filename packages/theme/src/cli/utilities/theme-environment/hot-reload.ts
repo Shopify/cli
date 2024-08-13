@@ -67,11 +67,12 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
   let initialized = false
   const getKey = (filePath: string) => relativePath(ctx.directory, filePath)
   const handleFileUpdate = (filePath: string) => {
-    const extension = extname(filePath)
-
     const key = getKey(filePath)
+    const extension = extname(filePath)
+    const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
+    const isAsset = key.startsWith('assets/')
 
-    if (['.liquid', '.json'].includes(extension)) {
+    if (needsTemplateUpdate) {
       // During initialization we only want to process
       // JSON files to cache their contents early
       if (initialized || extension === '.json') {
@@ -82,7 +83,7 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
           })
           .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
       }
-    } else if (initialized) {
+    } else if (initialized && isAsset) {
       triggerHotReload(key)
     }
   }
