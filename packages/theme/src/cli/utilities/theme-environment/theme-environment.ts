@@ -3,6 +3,7 @@ import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
 import {setupTemplateWatcher, injectHotReloadScript, getHotReloadHandler} from './hot-reload.js'
 import {getAssetsHandler, replaceLocalAssets} from './assets.js'
+import {getProxyHandler} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {
   createApp,
@@ -12,7 +13,6 @@ import {
   setResponseStatus,
   removeResponseHeader,
   getProxyRequestHeaders,
-  proxyRequest,
 } from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {createServer} from 'node:http'
@@ -50,23 +50,12 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   }
 
   app.use(getAssetsHandler(ctx.directory))
+  app.use(getProxyHandler())
 
   app.use(
+    // -- Handle HTML rendering requests --
     defineEventHandler(async (event) => {
       const {path: urlPath, method, headers} = event
-
-      if (method !== 'GET') {
-        // Mock the well-known route to avoid errors
-        return null
-      }
-
-      // -- Handle proxying routes --
-      const isHtmlRequest = event.headers.get('accept')?.includes('text/html')
-      if (!isHtmlRequest || urlPath.startsWith('/wpm')) {
-        return proxyRequest(event, `https://${ctx.session.storeFqdn}${event.path}`)
-      }
-
-      // -- Handle HTML rendering requests --
 
       // eslint-disable-next-line no-console
       console.log(`${method} ${urlPath}`)
