@@ -1,9 +1,7 @@
 import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
-import {outputContent, outputDebug, outputToken} from '../output.js'
-import {sanitizeVariables} from '../../../private/node/api/graphql.js'
-import {getCachedCommandInfo, setCachedCommandInfo} from '../command-cache.js'
+import {runWithCommandCache} from '../command-cache.js'
 import Bottleneck from 'bottleneck'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 
@@ -42,40 +40,20 @@ export async function appManagementRequest<T>(
   const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
   const {variables, cacheEnabled = false} = options
   const cacheKey = hashString(`${query}-${JSON.stringify(variables)}`)
-  let queries = {} as {[key: string]: unknown}
 
-  if (cacheEnabled) {
-    const data = getCachedCommandInfo()
-    if (data) {
-      queries = data.queries as {[key: string]: unknown}
-      if (queries[cacheKey]) {
-        outputDebug(outputContent`Reading from cache ${outputToken.json(api)} GraphQL request:
-    ${outputToken.raw(query.trim())}
-  ${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
-  `)
-        return queries[cacheKey] as T
-      }
-    }
-  }
+  const fn = () =>
+    limiter.schedule<T>(() =>
+      graphqlRequest({
+        query,
+        api,
+        url,
+        token,
+        variables,
+        responseOptions: {onResponse: handleDeprecations},
+      }),
+    )
 
-  const result = await limiter.schedule<T>(() =>
-    graphqlRequest({
-      query,
-      api,
-      url,
-      token,
-      variables,
-      responseOptions: {onResponse: handleDeprecations},
-    }),
-  )
-
-  if (cacheEnabled && query.trim().startsWith('query')) {
-    outputDebug('Caching result...')
-    queries[cacheKey] = result
-    setCachedCommandInfo({queries})
-  }
-
-  return result
+  return cacheEnabled ? runWithCommandCache(cacheKey, fn) : fn()
 }
 
 interface Deprecation {
