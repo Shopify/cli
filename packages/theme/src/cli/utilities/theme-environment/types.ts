@@ -29,6 +29,11 @@ export interface DevServerSession extends AdminSession {
 }
 
 /**
+ * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
+ */
+export type LiveReload = 'hot-reload' | 'full-page' | 'off'
+
+/**
  * Maintains the state of local and remote assets in theme development server.
  */
 export interface DevServerContext {
@@ -90,7 +95,7 @@ export interface DevServerContext {
     /**
      * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
      */
-    liveReload: string
+    liveReload: LiveReload
 
     /**
      * Automatically open the theme preview in the default browser.

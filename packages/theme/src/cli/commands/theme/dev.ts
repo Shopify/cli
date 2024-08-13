@@ -8,6 +8,7 @@ import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -175,7 +176,7 @@ You can run this command only in a directory that matches the [default Shopify t
       theme,
       host: flags.host,
       port: flags.port,
-      'live-reload': flags['live-reload'],
+      'live-reload': flags['live-reload'] as LiveReload,
       force: flags.force,
       open: flags.open,
       flagsToPass,
