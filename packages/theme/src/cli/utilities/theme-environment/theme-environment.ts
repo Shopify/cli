@@ -98,5 +98,9 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
     }),
   )
 
-  return new Promise((resolve) => createServer(toNodeListener(app)).listen(ctx.options.port, () => resolve(undefined)))
+  return new Promise((resolve) =>
+    createServer(toNodeListener(app)).listen({port: ctx.options.port, host: ctx.options.host}, () =>
+      resolve(undefined),
+    ),
+  )
 }
