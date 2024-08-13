@@ -1,4 +1,3 @@
-import {AppConfigurationFileName} from '../models/app/loader.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizePath} from '@shopify/cli-kit/node/path'
@@ -78,53 +77,4 @@ export function clearCurrentConfigFile(
     ...savedApp,
     configFile: undefined,
   })
-}
-
-interface CommandLocalStorage {
-  [key: string]: {[key: string]: unknown}
-}
-
-let _commandLocalStorageInstance: LocalStorage<CommandLocalStorage> | undefined
-
-function commandLocalStorage() {
-  if (!_commandLocalStorageInstance) {
-    _commandLocalStorageInstance = new LocalStorage<CommandLocalStorage>({projectName: 'shopify-cli-app-command'})
-  }
-  return _commandLocalStorageInstance
-}
-
-function setCachedCommandInfo(data: {[key: string]: unknown}): void {
-  const id = process.env.COMMAND_RUN_ID
-
-  if (!id) return
-
-  const store = commandLocalStorage()
-  const info = store.get(id)
-
-  store.set(id, {
-    ...info,
-    ...data,
-  })
-}
-
-export function getCachedCommandInfo() {
-  const id = process.env.COMMAND_RUN_ID
-
-  if (!id) return
-
-  const store = commandLocalStorage()
-  return store.get(id)
-}
-
-export function clearCachedCommandInfo() {
-  const store = commandLocalStorage()
-  store.clear()
-}
-
-export function setCachedCommandTomlMap(tomls: {[clientId: string]: AppConfigurationFileName}) {
-  setCachedCommandInfo({tomls})
-}
-
-export function setCachedCommandTomlPreference(selectedToml: AppConfigurationFileName) {
-  setCachedCommandInfo({selectedToml})
 }

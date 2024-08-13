@@ -9,7 +9,6 @@ import {
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
-import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -20,6 +19,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {setPathValue} from '@shopify/cli-kit/common/object'
+import {getCachedCommandInfo} from '@shopify/cli-kit/node/command-cache'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
@@ -31,7 +31,7 @@ vi.mock('../../../models/app/loader.js', async () => {
     loadAppConfiguration: vi.fn(),
   }
 })
-vi.mock('../../local-storage')
+vi.mock('@shopify/cli-kit/node/command-cache')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')

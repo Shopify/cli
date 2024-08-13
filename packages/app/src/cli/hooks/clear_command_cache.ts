@@ -1,6 +1,6 @@
-import {clearCachedCommandInfo} from '../services/local-storage.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {Hook} from '@oclif/core'
+import {clearCachedCommandInfo} from '@shopify/cli-kit/node/command-cache'
 
 const init: Hook<'init'> = async (_options) => {
   clearCachedCommandInfo()

@@ -25,7 +25,6 @@ import {
 } from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
-import {getCachedCommandInfo} from '../../local-storage.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
@@ -38,6 +37,7 @@ import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {getCachedCommandInfo} from '@shopify/cli-kit/node/command-cache'
 
 export interface LinkOptions {
   directory: string

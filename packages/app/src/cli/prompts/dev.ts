@@ -1,8 +1,8 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
-import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import {setCachedCommandInfo} from '@shopify/cli-kit/node/command-cache'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -26,7 +26,7 @@ export async function selectAppPrompt(
 ): Promise<MinimalAppIdentifiers> {
   const tomls = await getTomls(options?.directory)
 
-  if (tomls) setCachedCommandTomlMap(tomls)
+  if (tomls) setCachedCommandInfo({tomls})
 
   const toAnswer = (app: MinimalOrganizationApp) => {
     if (tomls[app?.apiKey]) {
