@@ -227,7 +227,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const {app} = await this.activeAppVersionRawResult(appIdentifiers)
+    const {app} = await this.fetchApp(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
@@ -303,7 +303,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = SpecificationsQuery
-    const result = await appManagementRequest<SpecificationsQuerySchema>(organizationId, query, await this.token())
+    const result = await appManagementRequest<SpecificationsQuerySchema>(
+      organizationId,
+      query,
+      await this.token(),
+      {},
+      true,
+    )
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -537,7 +543,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionsDiffSchema> {
     const variables: AppVersionByIdQueryVariables = {versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
-      this.activeAppVersionRawResult(app),
+      this.fetchApp(app),
       appManagementRequest<AppVersionByIdQuerySchema>(
         app.organizationId,
         AppVersionByIdQuery,
@@ -575,7 +581,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
-    const result = await this.activeAppVersionRawResult(app)
+    const result = await this.fetchApp(app)
     return {
       appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
         return {
@@ -871,13 +877,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
 
-  private async activeAppVersionRawResult({
-    id,
-    organizationId,
-  }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+  private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
+    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables, true)
   }
 
   private async organizationBetaFlags(
