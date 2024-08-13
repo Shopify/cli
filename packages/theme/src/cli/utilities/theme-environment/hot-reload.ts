@@ -33,6 +33,11 @@ type HotReloadEvent =
       names: string[]
     }
   | {
+      type: 'css'
+      key: string
+      pathname: string
+    }
+  | {
       type: 'other'
       key: string
     }
@@ -155,6 +160,8 @@ function triggerHotReload(key: string) {
 
   if (type === 'sections') {
     hotReloadSections(key)
+  } else if (type === 'assets' && key.endsWith('.css')) {
+    emitHotReloadEvent({type: 'css', key, pathname: `/${key}`})
   } else {
     emitHotReloadEvent({type: 'other', key})
   }
@@ -248,6 +255,15 @@ export function injectHotReloadScript(html: string) {
           })
 
           logInfo(`Updated sections for "${data.key}":`, data.names)
+        }
+      } else if (data.type === 'css') {
+        const elements: HTMLLinkElement[] = Array.from(
+          document.querySelectorAll(`link[rel="stylesheet"][href^="${data.pathname}"]`),
+        )
+
+        for (const element of elements) {
+          element.href = `${data.pathname}?v=${Date.now()}`
+          logInfo('Updated CSS:', data.key)
         }
       } else if (data.type === 'other') {
         fullPageReload(data.key)
