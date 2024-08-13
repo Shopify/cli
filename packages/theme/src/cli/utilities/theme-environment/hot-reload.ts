@@ -178,6 +178,10 @@ export function injectHotReloadScript(html: string) {
                 {signal: controller.signal},
               )
 
+              if (!response.ok) {
+                throw new Error(`Hot reload request failed: ${response.statusText}`)
+              }
+
               const updatedSection = await response.text()
 
               // SFR will send a header to indicate it used the replace-templates
