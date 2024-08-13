@@ -1,9 +1,9 @@
 import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
-import {LocalStorage} from '../local-storage.js'
 import {outputContent, outputDebug, outputToken} from '../output.js'
 import {sanitizeVariables} from '../../../private/node/api/graphql.js'
+import {getCachedCommandInfo, setCachedCommandInfo} from '../command-cache.js'
 import Bottleneck from 'bottleneck'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 
@@ -76,46 +76,6 @@ export async function appManagementRequest<T>(
   }
 
   return result
-}
-
-interface CommandLocalStorage {
-  [key: string]: {[key: string]: unknown}
-}
-
-let _commandLocalStorageInstance: LocalStorage<CommandLocalStorage> | undefined
-
-function commandLocalStorage() {
-  if (!_commandLocalStorageInstance) {
-    _commandLocalStorageInstance = new LocalStorage<CommandLocalStorage>({projectName: 'shopify-cli-app-command'})
-  }
-  return _commandLocalStorageInstance
-}
-
-function setCachedCommandInfo(data: {[key: string]: unknown}): void {
-  const id = process.env.COMMAND_RUN_ID
-
-  if (!id) return
-
-  const store = commandLocalStorage()
-  const info = store.get(id)
-
-  store.set(id, {
-    ...info,
-    ...data,
-  })
-}
-
-/**
- *
- */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function getCachedCommandInfo() {
-  const id = process.env.COMMAND_RUN_ID
-
-  if (!id) return
-
-  const store = commandLocalStorage()
-  return store.get(id)
 }
 
 interface Deprecation {
