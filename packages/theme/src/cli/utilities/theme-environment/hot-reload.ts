@@ -206,9 +206,12 @@ export function injectHotReloadScript(html: string) {
     const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
 
     evtSource.onopen = () => logInfo('Connected')
-    evtSource.onerror = () => {
-      logError('Connection error, trying to reconnect...')
-      setTimeout(hotReloadScript, 2000)
+    evtSource.onerror = (event) => {
+      if (event.eventPhase === EventSource.CLOSED) {
+        logError('Connection closed by the server, attempting to reconnect...')
+      } else {
+        logError('Error occurred, attempting to reconnect...')
+      }
     }
 
     evtSource.onmessage = async (event) => {
