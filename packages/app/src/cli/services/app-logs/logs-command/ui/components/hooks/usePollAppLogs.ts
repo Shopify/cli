@@ -14,6 +14,7 @@ import {
 import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
 import {useState, useEffect} from 'react'
+import {formatDate} from '@shopify/cli-kit/common/string'
 
 interface UsePollAppLogsOptions {
   initialJwt: string
@@ -88,11 +89,23 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
               return
           }
 
+          const utcDateTime = new Date(log.log_timestamp)
+          const localDateTime = new Date(
+            Date.UTC(
+              utcDateTime.getFullYear(),
+              utcDateTime.getMonth(),
+              utcDateTime.getDate(),
+              utcDateTime.getHours(),
+              utcDateTime.getMinutes(),
+              utcDateTime.getSeconds(),
+            ),
+          )
+
           const prefix = {
             status: log.status === 'success' ? 'Success' : 'Failure',
             source: log.source,
             description,
-            logTimestamp: log.log_timestamp,
+            logTimestamp: formatDate(localDateTime),
           }
 
           setAppLogOutputs((prev) => [...prev, {appLog, prefix}])
