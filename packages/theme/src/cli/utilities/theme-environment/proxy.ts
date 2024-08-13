@@ -1,7 +1,8 @@
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {defineEventHandler, proxyRequest, type H3Event} from 'h3'
+import type {DevServerContext} from './types.js'
 
-export function getProxyHandler() {
+export function getProxyHandler(ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') {
       // Mock the well-known route to avoid errors
@@ -9,9 +10,15 @@ export function getProxyHandler() {
     }
 
     if (shouldProxyRequest(event)) {
-      return proxyShopRequest(event)
+      return proxyShopRequest(event, ctx)
     }
   })
+}
+
+export function replaceCdnProxy(content: string, ctx: DevServerContext) {
+  const cdnPath = '/cdn/fonts/'
+  const cdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${cdnPath}`, 'g')
+  return content.replaceAll(cdnRE, cdnPath)
 }
 
 function shouldProxyRequest(event: H3Event) {
@@ -19,11 +26,12 @@ function shouldProxyRequest(event: H3Event) {
   return !isHtmlRequest || event.path.startsWith('/wpm') || event.path.startsWith('/web-pixels-manager')
 }
 
-function proxyShopRequest(event: H3Event) {
+function proxyShopRequest(event: H3Event, ctx: DevServerContext) {
   const target = `https://${ctx.session.storeFqdn}${event.path}`
   const pathname = event.path.split('?')[0]!
 
   return proxyRequest(event, target, {
+    headers: {referer: target},
     async onResponse(_, response) {
       if (!response.ok && response.status !== 404) {
         renderWarning({

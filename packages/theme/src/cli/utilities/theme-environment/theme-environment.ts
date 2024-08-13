@@ -3,7 +3,7 @@ import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
 import {setupTemplateWatcher, injectHotReloadScript, getHotReloadHandler} from './hot-reload.js'
 import {getAssetsHandler, replaceLocalAssets} from './assets.js'
-import {getProxyHandler} from './proxy.js'
+import {getProxyHandler, replaceCdnProxy} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {
   createApp,
@@ -49,8 +49,8 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
     app.use(getHotReloadHandler(theme, ctx))
   }
 
-  app.use(getAssetsHandler(ctx.directory))
-  app.use(getProxyHandler())
+  app.use(getAssetsHandler(ctx))
+  app.use(getProxyHandler(ctx))
 
   app.use(
     // -- Handle HTML rendering requests --
@@ -77,7 +77,8 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       let html = await response.text()
       removeResponseHeader(event, 'content-encoding')
 
-      html = replaceLocalAssets(html, ctx.localThemeFileSystem)
+      html = replaceLocalAssets(html, ctx)
+      html = replaceCdnProxy(html, ctx)
 
       if (ctx.options.liveReload !== 'off') {
         html = injectHotReloadScript(html)
