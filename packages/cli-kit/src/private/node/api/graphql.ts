@@ -17,7 +17,7 @@ ${sanitizedHeadersOutput(headers)}
 `)
 }
 
-function sanitizeVariables(variables: Variables): string {
+export function sanitizeVariables(variables: Variables): string {
   const result: Variables = {...variables}
   if ('apiKey' in result) {
     result.apiKey = '*****'

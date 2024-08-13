@@ -1,7 +1,11 @@
 import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
+import {LocalStorage} from '../local-storage.js'
+import {outputContent, outputDebug, outputToken} from '../output.js'
+import {sanitizeVariables} from '../../../private/node/api/graphql.js'
 import Bottleneck from 'bottleneck'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
 // Jobs are launched every 150ms to add an extra 50ms margin per request.
@@ -29,7 +33,22 @@ export async function appManagementRequest<T>(
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
   const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
-  const result = limiter.schedule<T>(() =>
+  const cacheKey = hashString(`${query}-${JSON.stringify(variables)}`)
+
+  const data = getCachedCommandInfo()
+  let queries = {} as {[key: string]: unknown}
+  if (data) {
+    queries = data.queries as {[key: string]: unknown}
+    if (queries[cacheKey]) {
+      outputDebug(outputContent`Reading from cache ${outputToken.json(api)} GraphQL request:
+  ${outputToken.raw(query.trim())}
+${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
+`)
+      return queries[cacheKey] as T
+    }
+  }
+
+  const result = await limiter.schedule<T>(() =>
     graphqlRequest({
       query,
       api,
@@ -39,8 +58,53 @@ export async function appManagementRequest<T>(
       responseOptions: {onResponse: handleDeprecations},
     }),
   )
+  if (query.trim().startsWith('query')) {
+    outputDebug('Caching result...')
+    queries[cacheKey] = result
+    setCachedCommandInfo({queries})
+  }
 
   return result
+}
+
+interface CommandLocalStorage {
+  [key: string]: {[key: string]: unknown}
+}
+
+let _commandLocalStorageInstance: LocalStorage<CommandLocalStorage> | undefined
+
+function commandLocalStorage() {
+  if (!_commandLocalStorageInstance) {
+    _commandLocalStorageInstance = new LocalStorage<CommandLocalStorage>({projectName: 'shopify-cli-app-command'})
+  }
+  return _commandLocalStorageInstance
+}
+
+function setCachedCommandInfo(data: {[key: string]: unknown}): void {
+  const id = process.env.COMMAND_RUN_ID
+
+  if (!id) return
+
+  const store = commandLocalStorage()
+  const info = store.get(id)
+
+  store.set(id, {
+    ...info,
+    ...data,
+  })
+}
+
+/**
+ *
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getCachedCommandInfo() {
+  const id = process.env.COMMAND_RUN_ID
+
+  if (!id) return
+
+  const store = commandLocalStorage()
+  return store.get(id)
 }
 
 interface Deprecation {
