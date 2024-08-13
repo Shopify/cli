@@ -65,6 +65,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
   const pollingInterval = useRef<NodeJS.Timeout>()
 
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
+
   useEffect(() => {
     const startWatchingFunction = async () => {
       const customStdout = new Writable({
@@ -154,6 +155,8 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
         }}
       </Static>
       {/* Bottom Bar */}
+      {/* eslint-disable-next-line no-negated-condition */}
+      {!isAborted ? (
       <Box
         marginY={1}
         paddingTop={1}
@@ -179,6 +182,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
           </Box>
         ) : null}
       </Box>
+      ) : null }
     </>
   )
 }
