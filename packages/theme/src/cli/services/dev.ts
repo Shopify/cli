@@ -91,7 +91,13 @@ export async function dev(options: DevOptions) {
   }
 
   await setupDevServer(options.theme, ctx, () => {
-    renderLinks(options.store, options.theme.id.toString(), host, port)
+    renderLinks(options.store, String(options.theme.id), host, port)
+
+    if (options.open) {
+      openURL(`http://${host}:${port}`).catch((error: Error) => {
+        renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
+      })
+    }
   })
 }
 
