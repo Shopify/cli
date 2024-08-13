@@ -1,7 +1,6 @@
-// eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
-/// <reference lib="dom" />
-import {render} from './storefront-renderer.js'
-import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../theme-fs.js'
+import {getClientScripts, HotReloadEvent} from './client.js'
+import {render} from '../storefront-renderer.js'
+import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../../theme-fs.js'
 import {
   createEventStream,
   defineEventHandler,
@@ -16,7 +15,7 @@ import {extname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'node:events'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
-import type {DevServerContext} from './types.js'
+import type {DevServerContext} from '../types.js'
 
 interface TemplateWithSections {
   sections?: {[key: string]: {type: string}}
@@ -25,22 +24,6 @@ interface TemplateWithSections {
 const eventEmitter = new EventEmitter()
 const inMemoryTemplates = {} as {[key: string]: string}
 const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
-
-type HotReloadEvent =
-  | {
-      type: 'section'
-      key: string
-      names: string[]
-    }
-  | {
-      type: 'css'
-      key: string
-      pathname: string
-    }
-  | {
-      type: 'full'
-      key: string
-    }
 
 function emitHotReloadEvent(event: HotReloadEvent) {
   eventEmitter.emit('hot-reload', event)
@@ -188,96 +171,6 @@ function hotReloadSections(key: string) {
   emitHotReloadEvent({type: 'section', key, names: sectionsToUpdate})
 }
 
-function injectFunction(fn: () => void) {
-  return `<script>(${fn.toString()})()</script>`
-}
-
 export function injectHotReloadScript(html: string) {
-  // These function run in the browser:
-
-  function hotReloadScript() {
-    const prefix = '[HotReload]'
-    // eslint-disable-next-line no-console
-    const logInfo = console.info.bind(console, prefix)
-    // eslint-disable-next-line no-console
-    const logError = console.error.bind(console, prefix)
-
-    const fullPageReload = (key: string, error?: Error) => {
-      if (error) logError(error)
-      logInfo('Full reload:', key)
-      window.location.reload()
-    }
-
-    const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
-
-    evtSource.onopen = () => logInfo('Connected')
-    evtSource.onerror = (event) => {
-      if (event.eventPhase === EventSource.CLOSED) {
-        logError('Connection closed by the server, attempting to reconnect...')
-      } else {
-        logError('Error occurred, attempting to reconnect...')
-      }
-    }
-
-    evtSource.onmessage = async (event) => {
-      if (typeof event.data !== 'string') return
-
-      const data = JSON.parse(event.data) as HotReloadEvent
-      if (data.type === 'section') {
-        const elements = data.names.flatMap((name) =>
-          Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
-        )
-
-        if (elements.length > 0) {
-          const controller = new AbortController()
-
-          await Promise.all(
-            elements.map(async (element) => {
-              const sectionId = element.id.replace(/^shopify-section-/, '')
-              const response = await fetch(
-                `/__hot-reload/render?section-id=${encodeURIComponent(
-                  sectionId,
-                )}&section-template-name=${encodeURIComponent(data.key)}`,
-                {signal: controller.signal},
-              )
-
-              if (!response.ok) {
-                throw new Error(`Hot reload request failed: ${response.statusText}`)
-              }
-
-              const updatedSection = await response.text()
-
-              // SFR will send a header to indicate it used the replace-templates
-              // to render the section. If it didn't, we need to do a full reload.
-              if (response.headers.get('x-templates-from-params') === '1') {
-                // eslint-disable-next-line require-atomic-updates
-                element.outerHTML = updatedSection
-              } else {
-                controller.abort('Full reload required')
-                fullPageReload(data.key, new Error('Hot reload not supported for this section.'))
-              }
-            }),
-          ).catch((error: Error) => {
-            controller.abort('Request error')
-            fullPageReload(data.key, error)
-          })
-
-          logInfo(`Updated sections for "${data.key}":`, data.names)
-        }
-      } else if (data.type === 'css') {
-        const elements: HTMLLinkElement[] = Array.from(
-          document.querySelectorAll(`link[rel="stylesheet"][href^="${data.pathname}"]`),
-        )
-
-        for (const element of elements) {
-          element.href = `${data.pathname}?v=${Date.now()}`
-          logInfo('Updated CSS:', data.key)
-        }
-      } else if (data.type === 'full') {
-        fullPageReload(data.key)
-      }
-    }
-  }
-
-  return html.replace(/<\/head>/, `${injectFunction(hotReloadScript)}</head>`)
+  return html.replace(/<\/head>/, `${getClientScripts()}</head>`)
 }
