@@ -1,7 +1,7 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerContext, DevServerSession} from '../utilities/theme-environment/types.js'
+import {DevServerContext, DevServerSession, LiveReload} from '../utilities/theme-environment/types.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -11,6 +11,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {openURL} from '@shopify/cli-kit/node/system'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -32,7 +33,7 @@ export interface DevOptions {
   flagsToPass: string[]
   'dev-preview': boolean
   'theme-editor-sync': boolean
-  'live-reload': string
+  'live-reload': LiveReload
   noDelete: boolean
   ignore: string[]
   only: string[]

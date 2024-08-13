@@ -45,7 +45,10 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
 
   const {getInMemoryTemplates} = await setupTemplateWatcher(ctx)
 
-  app.use(getHotReloadHandler(theme, ctx))
+  if (ctx.options.liveReload !== 'off') {
+    app.use(getHotReloadHandler(theme, ctx))
+  }
+
   app.use(getAssetsHandler(ctx.directory))
 
   app.use(
@@ -82,10 +85,16 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
 
       // We are decoding the payload here, remove the header:
-      const html = await response.text()
+      let html = await response.text()
       removeResponseHeader(event, 'content-encoding')
 
-      return injectHotReloadScript(replaceLocalAssets(html, ctx.localThemeFileSystem))
+      html = replaceLocalAssets(html, ctx.localThemeFileSystem)
+
+      if (ctx.options.liveReload !== 'off') {
+        html = injectHotReloadScript(html)
+      }
+
+      return html
     }),
   )
 

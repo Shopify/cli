@@ -38,7 +38,7 @@ type HotReloadEvent =
       pathname: string
     }
   | {
-      type: 'other'
+      type: 'full'
       key: string
     }
 
@@ -84,12 +84,12 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
         readFile(filePath)
           .then((content) => {
             setInMemoryTemplate(key, content)
-            triggerHotReload(key)
+            triggerHotReload(key, ctx)
           })
           .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
       }
     } else if (initialized && isAsset) {
-      triggerHotReload(key)
+      triggerHotReload(key, ctx)
     }
   }
 
@@ -155,7 +155,12 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function triggerHotReload(key: string) {
+function triggerHotReload(key: string, ctx: DevServerContext) {
+  if (ctx.options.liveReload === 'off') return
+  if (ctx.options.liveReload === 'full-page') {
+    return emitHotReloadEvent({type: 'full', key})
+  }
+
   const type = key.split('/')[0]
 
   if (type === 'sections') {
@@ -163,7 +168,7 @@ function triggerHotReload(key: string) {
   } else if (type === 'assets' && key.endsWith('.css')) {
     emitHotReloadEvent({type: 'css', key, pathname: `/${key}`})
   } else {
-    emitHotReloadEvent({type: 'other', key})
+    emitHotReloadEvent({type: 'full', key})
   }
 }
 
@@ -268,7 +273,7 @@ export function injectHotReloadScript(html: string) {
           element.href = `${data.pathname}?v=${Date.now()}`
           logInfo('Updated CSS:', data.key)
         }
-      } else if (data.type === 'other') {
+      } else if (data.type === 'full') {
         fullPageReload(data.key)
       }
     }
