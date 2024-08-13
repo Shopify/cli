@@ -180,7 +180,9 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
                   {selectedRun.status.toUpperCase()}
                 </Text>
               )} */}
-              <Text>{figures.pointerSmall} Watching for changes to {selectedRun.source}...</Text>
+              <Text>
+                {figures.pointerSmall} Watching for changes to {selectedRun.source}...
+              </Text>
             </Box>
             <Box flexDirection="column">
               <Text>
@@ -192,10 +194,6 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
             </Text>
           </Box>
         ) : null}
-        <Box marginTop={canUseShortcuts ? 1 : 0}>
-          <Text>{statusMessage}</Text>
-        </Box>
-        {error ? <Text color="red">{error}</Text> : null}
       </Box>
     </>
   )
@@ -229,17 +227,6 @@ function ReplayLog({log}: {log: ReplayLog}) {
 }
 
 export {Replay}
-
-interface ReplayOptions {
-  app: AppInterface
-  extension: ExtensionInstance<FunctionConfigType>
-  apiKey?: string
-  stdout?: boolean
-  path: string
-  json: boolean
-  watch: boolean
-  log?: string
-}
 
 async function runFunctionRunnerWithLogInput(
   fun: ExtensionInstance<FunctionConfigType>,
