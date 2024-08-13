@@ -1,7 +1,7 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
-import {setupTemplateWatcher, injectHotReloadScript, getHotReloadHandler} from './hot-reload.js'
+import {setupTemplateWatcher, injectHotReloadScript, getHotReloadHandler} from './hot-reload/server.js'
 import {getAssetsHandler, replaceLocalAssets} from './assets.js'
 import {getProxyHandler, replaceCdnProxy} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
