@@ -23,7 +23,7 @@ const eventEmitter = new EventEmitter()
 const updatedReplaceTemplates = {} as {[key: string]: string}
 const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
 
-type HmrEvent =
+type HotReloadEvent =
   | {
       type: 'section'
       key: string
@@ -34,8 +34,8 @@ type HmrEvent =
       key: string
     }
 
-function emitHmrEvent(event: HmrEvent) {
-  eventEmitter.emit('hmr', event)
+function emitHotReloadEvent(event: HotReloadEvent) {
+  eventEmitter.emit('hot-reload', event)
 }
 
 export function getReplaceTemplates() {
@@ -54,21 +54,21 @@ export function deleteReplaceTemplate(key: string) {
   delete parsedJsonTemplates[key]
 }
 
-export function getHmrHandler(theme: Theme, ctx: DevServerContext) {
+export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     const endpoint = event.path.split('?')[0]
 
-    if (endpoint === '/__hmr/subscribe') {
+    if (endpoint === '/__hot-reload/subscribe') {
       const eventStream = createEventStream(event)
 
-      eventEmitter.on('hmr', (event: HmrEvent) => {
+      eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
         eventStream.push(JSON.stringify(event)).catch((error: Error) => {
-          renderWarning({headline: 'Failed to send HMR event.', body: error?.stack})
+          renderWarning({headline: 'Failed to send HotReload event.', body: error?.stack})
         })
       })
 
       return eventStream.send()
-    } else if (endpoint === '/__hmr/render') {
+    } else if (endpoint === '/__hot-reload/render') {
       const queryParams = getQuery(event)
       const sectionId = queryParams['section-id']
       const sectionKey = queryParams['section-template-name']
@@ -79,7 +79,7 @@ export function getHmrHandler(theme: Theme, ctx: DevServerContext) {
 
       const sectionTemplate = updatedReplaceTemplates[sectionKey]
       if (!sectionTemplate) {
-        renderWarning({headline: 'No template found for HMR event.', body: `Template ${sectionKey} not found.`})
+        renderWarning({headline: 'No template found for HotReload event.', body: `Template ${sectionKey} not found.`})
         return
       }
 
@@ -102,17 +102,17 @@ export function getHmrHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-export async function triggerHmr(key: string) {
+export async function triggerHotReload(key: string) {
   const type = key.split('/')[0]
 
   if (type === 'sections') {
-    await refreshSections(key)
+    await hotReloadSections(key)
   } else {
-    emitHmrEvent({type: 'other', key})
+    emitHotReloadEvent({type: 'other', key})
   }
 }
 
-async function refreshSections(key: string) {
+async function hotReloadSections(key: string) {
   const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
   if (!sectionId) return
 
@@ -125,27 +125,27 @@ async function refreshSections(key: string) {
     }
   }
 
-  emitHmrEvent({type: 'section', key, names: sectionsToUpdate})
+  emitHotReloadEvent({type: 'section', key, names: sectionsToUpdate})
 }
 
 function injectFunction(fn: () => void) {
   return `<script>(${fn.toString()})()</script>`
 }
 
-export function injectFastRefreshScript(html: string) {
+export function injectHotReloadScript(html: string) {
   // These function run in the browser:
 
-  function fastRefreshScript() {
+  function hotReloadScript() {
     // eslint-disable-next-line no-console
-    const logInfo = console.info.bind(console, '[HMR]')
-    const evtSource = new EventSource('/__hmr/subscribe', {withCredentials: true})
+    const logInfo = console.info.bind(console, '[HotReload]')
+    const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
 
     evtSource.onopen = () => logInfo('Connected')
 
     evtSource.onmessage = async (event) => {
       if (typeof event.data !== 'string') return
 
-      const data = JSON.parse(event.data) as HmrEvent
+      const data = JSON.parse(event.data) as HotReloadEvent
       if (data.type === 'section') {
         const elements = data.names.flatMap((name) =>
           Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
@@ -156,9 +156,9 @@ export function injectFastRefreshScript(html: string) {
             elements.map(async (element) => {
               const sectionId = element.id.replace(/^shopify-section-/, '')
               const response = await fetch(
-                `/__hmr/render?section-id=${encodeURIComponent(sectionId)}&section-template-name=${encodeURIComponent(
-                  data.key,
-                )}`,
+                `/__hot-reload/render?section-id=${encodeURIComponent(
+                  sectionId,
+                )}&section-template-name=${encodeURIComponent(data.key)}`,
               )
 
               const updatedSection = await response.text()
@@ -184,5 +184,5 @@ export function injectFastRefreshScript(html: string) {
     }
   }
 
-  return html.replace(/<\/head>/, `${injectFunction(fastRefreshScript)}</head>`)
+  return html.replace(/<\/head>/, `${injectFunction(hotReloadScript)}</head>`)
 }
