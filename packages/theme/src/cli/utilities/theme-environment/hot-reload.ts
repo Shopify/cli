@@ -1,6 +1,7 @@
 // eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
 /// <reference lib="dom" />
 import {render} from './storefront-renderer.js'
+import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../theme-fs.js'
 import {
   createEventStream,
   defineEventHandler,
@@ -11,6 +12,8 @@ import {
   setResponseStatus,
 } from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {extname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'node:events'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -20,7 +23,7 @@ interface TemplateWithSections {
 }
 
 const eventEmitter = new EventEmitter()
-const updatedReplaceTemplates = {} as {[key: string]: string}
+const inMemoryTemplates = {} as {[key: string]: string}
 const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
 
 type HotReloadEvent =
@@ -38,20 +41,64 @@ function emitHotReloadEvent(event: HotReloadEvent) {
   eventEmitter.emit('hot-reload', event)
 }
 
-export function getReplaceTemplates() {
-  return {...updatedReplaceTemplates}
+function getInMemoryTemplates() {
+  return {...inMemoryTemplates}
 }
 
-export function setReplaceTemplate(key: string, content: string) {
-  updatedReplaceTemplates[key] = content
+function setInMemoryTemplate(key: string, content: string) {
+  inMemoryTemplates[key] = content
   if (key.endsWith('.json')) {
     parsedJsonTemplates[key] = JSON.parse(content)
   }
 }
 
-export function deleteReplaceTemplate(key: string) {
-  delete updatedReplaceTemplates[key]
+function deleteInMemoryTemplate(key: string) {
+  delete inMemoryTemplates[key]
   delete parsedJsonTemplates[key]
+}
+
+export async function setupTemplateWatcher(ctx: DevServerContext) {
+  const {default: chokidar} = await import('chokidar')
+
+  const directoriesToWatch = new Set(
+    THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(ctx.directory, pattern.split('/').shift() ?? '')),
+  )
+
+  let initialized = false
+  const getKey = (filePath: string) => relativePath(ctx.directory, filePath)
+  const handleFileUpdate = (filePath: string) => {
+    const extension = extname(filePath)
+
+    const key = getKey(filePath)
+
+    if (['.liquid', '.json'].includes(extension)) {
+      // During initialization we only want to process
+      // JSON files to cache their contents early
+      if (initialized || extension === '.json') {
+        readFile(filePath)
+          .then((content) => {
+            setInMemoryTemplate(key, content)
+            triggerHotReload(key)
+          })
+          .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
+      }
+    } else if (initialized) {
+      triggerHotReload(key)
+    }
+  }
+
+  chokidar
+    .watch([...directoriesToWatch], {
+      ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+      persistent: true,
+      ignoreInitial: false,
+    })
+    .on('ready', () => (initialized = true))
+    .on('add', handleFileUpdate)
+    .on('change', handleFileUpdate)
+    .on('unlink', (filePath) => deleteInMemoryTemplate(getKey(filePath)))
+
+  return {getInMemoryTemplates}
 }
 
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
@@ -77,7 +124,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         return
       }
 
-      const sectionTemplate = updatedReplaceTemplates[sectionKey]
+      const sectionTemplate = inMemoryTemplates[sectionKey]
       if (!sectionTemplate) {
         renderWarning({headline: 'No template found for HotReload event.', body: `Template ${sectionKey} not found.`})
         return
@@ -102,17 +149,17 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-export async function triggerHotReload(key: string) {
+function triggerHotReload(key: string) {
   const type = key.split('/')[0]
 
   if (type === 'sections') {
-    await hotReloadSections(key)
+    hotReloadSections(key)
   } else {
     emitHotReloadEvent({type: 'other', key})
   }
 }
 
-async function hotReloadSections(key: string) {
+function hotReloadSections(key: string) {
   const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
   if (!sectionId) return
 
