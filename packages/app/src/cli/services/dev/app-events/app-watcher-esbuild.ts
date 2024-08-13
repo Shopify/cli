@@ -29,21 +29,6 @@ export async function startBundlerForESBuildExtensions(
       stdout: options.stdout,
       watchSignal: options.signal,
       watch: async (result) => onWatchChange(result, extension),
-      //   const error = (result?.errors?.length ?? 0) > 0
-      //   outputDebug(
-      //     `The Javascript bundle of the UI extension with ID ${extension.devUUID} has ${
-      //       error ? 'an error' : 'changed'
-      //     }`,
-      //     error ? options.devOptions.stderr : options.devOptions.stdout,
-      //   )
-      //   try {
-      //     await options.payloadStore.updateExtension(extension, options.devOptions, {
-      //       status: error ? 'error' : 'success',
-      //     })
-      //     // eslint-disable-next-line no-catch-all/no-catch-all
-      //   } catch {
-      //     // ESBuild handles error output
-      //   }
       sourceMaps: true,
     })
   })
