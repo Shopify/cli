@@ -3,12 +3,12 @@ import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
 import {
   getReplaceTemplates,
-  triggerHmr,
-  injectFastRefreshScript,
-  getHmrHandler,
+  triggerHotReload,
+  injectHotReloadScript,
+  getHotReloadHandler,
   setReplaceTemplate,
   deleteReplaceTemplate,
-} from './hmr.js'
+} from './hot-reload.js'
 import {getAssetsHandler, replaceLocalAssets} from './assets.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../theme-fs.js'
@@ -55,7 +55,7 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
 function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
-  app.use(getHmrHandler(theme, ctx))
+  app.use(getHotReloadHandler(theme, ctx))
   app.use(getAssetsHandler(ctx.directory))
 
   app.use(
@@ -95,7 +95,7 @@ function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
       const html = await response.text()
       removeResponseHeader(event, 'content-encoding')
 
-      return injectFastRefreshScript(replaceLocalAssets(html, ctx.localThemeFileSystem))
+      return injectHotReloadScript(replaceLocalAssets(html, ctx.localThemeFileSystem))
     }),
   )
 
@@ -139,7 +139,7 @@ async function watchTemplates(ctx: DevServerContext) {
     readFile(filePath)
       .then((content) => setReplaceTemplate(key, content))
       .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
-      .then(() => triggerHmr(key))
+      .then(() => triggerHotReload(key))
       .catch((error) =>
         renderWarning({headline: `Failed to fast refresh ${key}: ${error.message}\nPlease reload the page.`}),
       )
