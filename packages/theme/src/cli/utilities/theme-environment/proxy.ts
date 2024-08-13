@@ -16,7 +16,7 @@ export function getProxyHandler(ctx: DevServerContext) {
 }
 
 export function replaceCdnProxy(content: string, ctx: DevServerContext) {
-  const cdnPath = '/cdn/fonts/'
+  const cdnPath = '/cdn/'
   const cdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${cdnPath}`, 'g')
   return content.replaceAll(cdnRE, cdnPath)
 }
