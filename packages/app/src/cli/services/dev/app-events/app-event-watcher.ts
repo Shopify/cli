@@ -6,15 +6,13 @@ import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import micromatch from 'micromatch'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {basename} from '@shopify/cli-kit/node/path'
-import {BuildOptions, BuildResult} from 'esbuild'
-import EventEmitter from 'events'
+import {BuildContext, BuildOptions, BuildResult} from 'esbuild'
 import {tempDirectory} from '@shopify/cli-kit/node/fs'
-import {sleep} from '@shopify/cli-kit/node/system'
+import EventEmitter from 'events'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -120,20 +118,33 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   async start() {
-    outputDebug(`Starting app event watcher, build output path: ${this.buildOutputPath}`, this.options.stdout)
+    console.log(`Starting app event watcher, build output path: ${this.buildOutputPath}`)
 
     // Initial build of all extensions
     await this.buildExtensions(this.app.realExtensions)
+    // When a ui-extension is deleted, remove the esbuild watcher?
+    // When a ui-extension is created, add the esbuild watcher?
+    // Make the esbuild callback trigger the event for changes in ui-extensions
 
     // Start the esbuild bundler for extensions that require it
-    await startBundlerForESBuildExtensions(this.app, 'url', this.options, (result, extension) =>
-      this.emit('esbuild', {extension, result}),
-    )
+    const esbuildContexts: {[key: string]: BuildContext<BuildOptions>} = await startBundlerForESBuildExtensions({
+      extensions: this.app.realExtensions.filter((ext) => ext.isESBuildExtension),
+      dotEnvVariables: this.app.dotenv?.variables ?? {},
+      url: this.appURL ?? '',
+      outputPath: this.buildOutputPath,
+      ...this.options,
+    })
+
+    // (this.app, 'url', this.options, this.buildOutputPath, (result, extension) => {
+    //   esBuildLog.push(extension.handle)
+    //   this.emit('esbuild', {extension, result})
+    // })
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (event) => {
       // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
       const extensions = this.app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
+
       handlers[event.type]({event, app: this.app, extensions, options: this.options})
         .then(async (appEvent) => {
           this.app = appEvent.app
@@ -148,8 +159,17 @@ export class AppEventWatcher extends EventEmitter {
             .map((extEvent) => extEvent.extension)
           await this.buildExtensions(extensions)
 
-          // For ESBuild extensions, give esbuild some time to finish the build
-          if (extensions.some((ext) => ext.isESBuildExtension)) sleep(100)
+          /**
+           * For esbuild extensions, we need to wait until the esbuild bundler has finished building the extension.
+           * Since these are two different watchers, we need to ensure that the extension was built before emitting the event.
+           * This is done by checking if the extension handle is in the esBuildLog array.
+           *
+           * If the extension is not in the esBuildLog array, we wait until it is built.
+           */
+          if (extensions.some((ext) => ext.isESBuildExtension)) {
+            // Build with context
+          }
+
           this.emit('all', appEvent)
         })
         .catch((error) => {

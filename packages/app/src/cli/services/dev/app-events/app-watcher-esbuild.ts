@@ -1,24 +1,30 @@
-import {OutputContextOptions} from './file-watcher.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {bundleExtension} from '../../extensions/bundle.js'
-import {AppInterface} from '../../../models/app/app.js'
-import {BuildOptions, BuildResult} from 'esbuild'
+import {getESBuildOptions} from '../../extensions/bundle.js'
+import {BuildContext, BuildOptions, context as esContext} from 'esbuild'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Writable} from 'stream'
 
-export async function startBundlerForESBuildExtensions(
-  app: AppInterface,
-  url: string,
-  options: OutputContextOptions,
-  onWatchChange: (result: BuildResult<BuildOptions> | null, extension: ExtensionInstance) => void,
-) {
-  const extensions = app.realExtensions.filter((extension) => extension.isESBuildExtension)
-  const promises = extensions.map(async (extension) => {
-    return bundleExtension({
+interface DevAppWatcherOptions {
+  extensions: ExtensionInstance[]
+  dotEnvVariables: {[key: string]: string}
+  url: string
+  outputPath: string
+  stderr: Writable
+  stdout: Writable
+  signal: AbortSignal
+}
+
+export async function startBundlerForESBuildExtensions(options: DevAppWatcherOptions) {
+  const contexts: {[key: string]: BuildContext<BuildOptions>} = {}
+
+  const promises = options.extensions.map(async (extension) => {
+    const esbuildOptions = getESBuildOptions({
       minify: false,
-      outputPath: extension.outputPath,
+      outputPath: extension.getOutputPathForDirectory(options.outputPath),
       environment: 'development',
       env: {
-        ...(app.dotenv?.variables ?? {}),
-        APP_URL: url,
+        ...options.dotEnvVariables,
+        APP_URL: options.url,
       },
       stdin: {
         contents: extension.getBundleExtensionStdinContent(),
@@ -28,10 +34,13 @@ export async function startBundlerForESBuildExtensions(
       stderr: options.stderr,
       stdout: options.stdout,
       watchSignal: options.signal,
-      watch: async (result) => onWatchChange(result, extension),
       sourceMaps: true,
     })
+
+    const context = await esContext(esbuildOptions)
+    contexts[extension.handle] = context
   })
 
   await Promise.all(promises)
+  return contexts
 }

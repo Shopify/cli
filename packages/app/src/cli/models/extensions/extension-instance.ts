@@ -331,11 +331,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
     const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.configuration.uid ?? this.handle
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionId)
     }
 
     await this.build(options)
@@ -343,6 +342,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }
+  }
+
+  getOutputPathForDirectory(directory: string, extensionId?: string) {
+    const id = extensionId ?? this.configuration.uid ?? this.handle
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
+    return joinPath(directory, id, outputFile)
   }
 
   get singleTarget() {
