@@ -6,6 +6,7 @@ import {
   subscribeToAppLogs,
   toFormattedAppLogJson,
   parseAppLogPayload,
+  outputIsTTY,
 } from '../utils.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -17,6 +18,7 @@ export async function renderJsonLogs({
   options: SubscribeOptions
 }): Promise<void> {
   const response = await pollAppLogs({cursor, filters, jwtToken})
+  const prettyPrint = outputIsTTY()
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = jwtToken
 
@@ -46,7 +48,7 @@ export async function renderJsonLogs({
 
   if (appLogs) {
     appLogs.forEach((log) => {
-      outputInfo(toFormattedAppLogJson(log, parseAppLogPayload(log.payload, log.log_type)))
+      outputInfo(toFormattedAppLogJson(log, parseAppLogPayload(log.payload, log.log_type), prettyPrint))
     })
   }
 

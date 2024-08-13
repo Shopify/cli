@@ -1,6 +1,6 @@
 import {renderJsonLogs} from './render-json-logs.js'
 import {pollAppLogs} from './poll-app-logs.js'
-import {handleFetchAppLogsError} from '../utils.js'
+import {handleFetchAppLogsError, outputIsTTY} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
@@ -12,6 +12,7 @@ vi.mock('../utils', async (importOriginal) => {
     ...mod,
     fetchAppLogs: vi.fn(),
     handleFetchAppLogsError: vi.fn(),
+    outputIsTTY: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/output')
@@ -32,6 +33,7 @@ describe('renderJsonLogs', () => {
     }
     const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
+    vi.mocked(outputIsTTY).mockImplementation(vi.fn().mockReturnValue(true))
 
     await renderJsonLogs({
       pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
@@ -43,6 +45,29 @@ describe('renderJsonLogs', () => {
 
     expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({payload: {message: 'Log 1'}}, null, 2))
     expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({payload: {message: 'Log 2'}}, null, 2))
+    expect(pollAppLogs).toHaveBeenCalled()
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('should not pretty print logs when stdout is not a tty', async () => {
+    const mockSuccessResponse = {
+      cursor: 'next-cursor',
+      appLogs: [{payload: JSON.stringify({message: 'Log 1'})}, {payload: JSON.stringify({message: 'Log 2'})}],
+    }
+    const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
+    vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
+    vi.mocked(outputIsTTY).mockImplementation(vi.fn().mockReturnValue(false))
+
+    await renderJsonLogs({
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
+      options: {
+        variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
+        developerPlatformClient: testDeveloperPlatformClient(),
+      },
+    })
+
+    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({payload: {message: 'Log 1'}}))
+    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({payload: {message: 'Log 2'}}))
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)
   })
