@@ -6,7 +6,7 @@ const init: Hook<'init'> = async (_options) => {
   clearCachedCommandInfo()
 
   // we want our cache to never collide when commands are running in parallel, so we set it on the current process
-  process.env.COMMAND_RUN_ID = randomUUID()
+  process.env.SHOPIFY_CLI_COMMAND_RUN_ID = randomUUID()
 }
 
 export default init

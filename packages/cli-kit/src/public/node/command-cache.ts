@@ -17,11 +17,11 @@ function commandLocalStorage() {
  * Saves data to the command cache.
  *
  * @param data - Key-value pairs to save.
- * @param commandId - ID of the command to read data from. Defaults to the COMMAND_RUN_ID environment variable.
+ * @param commandId - ID of the command to read data from. Defaults to the SHOPIFY_CLI_COMMAND_RUN_ID environment variable.
  */
 export function setCachedCommandInfo(
   data: {[key: string]: unknown},
-  commandId: string | undefined = process.env.COMMAND_RUN_ID,
+  commandId: string | undefined = process.env.SHOPIFY_CLI_COMMAND_RUN_ID,
 ): void {
   if (!commandId) return
 
@@ -37,11 +37,11 @@ export function setCachedCommandInfo(
 /**
  * Reads data from the command cache.
  *
- * @param commandId - ID of the command to read data from. Defaults to the COMMAND_RUN_ID environment variable.
+ * @param commandId - ID of the command to read data from. Defaults to the SHOPIFY_CLI_COMMAND_RUN_ID environment variable.
  * @returns The data if exists or undefined.
  */
 export function getCachedCommandInfo(
-  commandId: string | undefined = process.env.COMMAND_RUN_ID,
+  commandId: string | undefined = process.env.SHOPIFY_CLI_COMMAND_RUN_ID,
 ): {[key: string]: unknown} | undefined {
   if (!commandId) return
 
