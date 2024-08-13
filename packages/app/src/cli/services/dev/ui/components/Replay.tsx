@@ -64,11 +64,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
 
-  const delta = useMemo(() => {
-    return recentFunctionRuns[0].instructions - recentFunctionRuns[1].instructions
-  }, [recentFunctionRuns])
-
-  const [statusMessage, setStatusMessage] = useState('Default Status Message')
+  const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
   useEffect(() => {
     const startWatchingFunction = async () => {
       const customStdout = new Writable({
@@ -84,12 +80,14 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
         stdout: customStdout, // TODO
         stderr: customStdout, // TODO
         onChange: async () => {
+          setStatusMessage("Re-running with latest changes...")
           const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
 
           setRecentFunctionRuns((recentFunctionRuns) => {
             return [functionRun, recentFunctionRuns[0]]
           })
 
+          setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
           setLogs((logs) => [...logs, functionRun])
         },
         onReloadAndBuildError: async (error) => {
@@ -170,25 +168,11 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
         {canUseShortcuts ? (
           <Box flexDirection="column">
             <Box flexDirection="row">
-              {/* <Text>{figures.pointerSmall}&nbsp;</Text>
-              {selectedRun.status === 'success' ? (
-                <Text color="white" backgroundColor="green">
-                  {selectedRun.status.toUpperCase()}
-                </Text>
-              ) : (
-                <Text color="white" backgroundColor="red">
-                  {selectedRun.status.toUpperCase()}
-                </Text>
-              )} */}
               <Text>
-                {figures.pointerSmall} Watching for changes to {selectedRun.source}...
+                {figures.pointerSmall} {statusMessage}
               </Text>
             </Box>
-            <Box flexDirection="column">
-              <Text>
-                {figures.pointerSmall} Instruction count delta: {delta}
-              </Text>
-            </Box>
+            <StatsDisplay recentFunctionRuns={recentFunctionRuns}/>
             <Text>
               {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
             </Text>
@@ -199,22 +183,72 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
   )
 }
 
+function InputDisplay({input}: {input: string}) {
+  return (
+    <Box flexDirection="column">
+      <Text color="black" backgroundColor="yellow">
+        Input
+      </Text>
+      <Text>{prettyPrintJsonIfPossible(input)}</Text>
+    </Box>
+  )
+}
+
+function LogDisplay({logs}: {logs: string}) {
+  return (
+    <Box flexDirection="column">
+      <Text color="black" backgroundColor="blue">
+        Logs
+      </Text>
+      <Text>{logs}</Text>
+    </Box>
+  )
+}
+
+function OutputDisplay({output}: {output: string}) {
+  return (
+    <Box flexDirection="column">
+      <Text color="black" backgroundColor="green">
+        Output
+      </Text>
+      <Text>{prettyPrintJsonIfPossible(output)}</Text>
+    </Box>
+  )
+}
+
+function BenchmarkDisplay({functionRun}: {functionRun: FunctionRun}) {
+  return (
+    <Box flexDirection="column">
+      <Text color="black" backgroundColor="greenBright">
+        Benchmark Results
+      </Text>
+      <Text>Name: {functionRun.name}</Text>
+      <Text>Linear Memory Usage: {functionRun.memory_usage}KB</Text>
+      <Text>Instructions: {functionRun.instructions / 1000}K</Text>
+      <Text>Size: {functionRun.size}KB</Text>
+    </Box>
+  )
+}
+
+function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRun, FunctionRun]}) {
+  const delta = recentFunctionRuns[0].instructions - recentFunctionRuns[1].instructions
+  return (
+    <Box flexDirection="column">
+      <Text>
+        {figures.pointerSmall} Instruction count delta: {delta}
+      </Text>
+    </Box>
+  )
+}
+
 function ReplayLog({log}: {log: ReplayLog}) {
   if (log.type === 'functionRun') {
     return (
       <Box flexDirection="column">
-        <Text color="black" backgroundColor="yellow">
-          Input
-        </Text>
-        <Text>{prettyPrintJsonIfPossible(log.input)}</Text>
-        <Text color="black" backgroundColor="blue">
-          Logs
-        </Text>
-        <Text>{log.logs}</Text>
-        <Text color="black" backgroundColor="green">
-          Output
-        </Text>
-        <Text>{prettyPrintJsonIfPossible(log.output)}</Text>
+        <InputDisplay input={log.input}/>
+        <LogDisplay logs={log.logs}/>
+        <OutputDisplay output={log.output}/>
+        <BenchmarkDisplay functionRun={log}/>
       </Box>
     )
   }

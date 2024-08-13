@@ -66,7 +66,6 @@ export async function replay(options: ReplayOptions) {
     await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
 
     if (watch) {
-      outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
       await renderReplay({
         selectedRun,
         abortController,
