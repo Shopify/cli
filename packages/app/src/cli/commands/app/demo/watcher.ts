@@ -46,9 +46,6 @@ export default class DemoWatcher extends Command {
           case EventType.Updated:
             outputInfo(`  🔄 Updated: ${colors.yellow(event.extension.handle)}`)
             break
-          case EventType.UpdatedSourceFile:
-            outputInfo(`  🔄 Updated: ${colors.yellow(event.extension.handle)} (🏗️ needs rebuild)`)
-            break
         }
       })
     })

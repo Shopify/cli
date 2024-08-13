@@ -1,6 +1,7 @@
 /* eslint-disable tsdoc/syntax */
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
 import {AppExtensionsDiff, appDiff} from './app-diffing.js'
+import {startBundlerForESBuildExtensions} from './app-watcher-esbuild.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
@@ -10,7 +11,10 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {basename} from '@shopify/cli-kit/node/path'
+import {BuildOptions, BuildResult} from 'esbuild'
 import EventEmitter from 'events'
+import {tempDirectory} from '@shopify/cli-kit/node/fs'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -51,14 +55,12 @@ Examples:
 /**
  * The type of the extension event
  *
- * - Updated: The extension was updated (a file changed, but is not a source file, so it won't require a rebuild)
- * - UpdatedSourceFile: The extension was updated and a source file was changed, so it will require a rebuild
+ * - Updated: The extension was updated
  * - Deleted: The extension was deleted
  * - Created: The extension was created
  */
 export enum EventType {
   Updated,
-  UpdatedSourceFile,
   Deleted,
   Created,
 }
@@ -106,24 +108,48 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
 export class AppEventWatcher extends EventEmitter {
   private app: AppInterface
   private options: OutputContextOptions
+  private appURL?: string
+  private buildOutputPath: string
 
-  constructor(app: AppInterface, options?: OutputContextOptions) {
+  constructor(app: AppInterface, buildOutputPath?: string, appURL?: string, options?: OutputContextOptions) {
     super()
     this.app = app
+    this.appURL = appURL
+    this.buildOutputPath = buildOutputPath ?? tempDirectory()
     this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
   }
 
   async start() {
+    outputDebug(`Starting app event watcher, build output path: ${this.buildOutputPath}`, this.options.stdout)
+
+    // Initial build of all extensions
+    await this.buildExtensions(this.app.realExtensions)
+
+    // Start the esbuild bundler for extensions that require it
+    await startBundlerForESBuildExtensions(this.app, 'url', this.options, (result, extension) =>
+      this.emit('esbuild', {extension, result}),
+    )
+
+    // Start the file system watcher
     await startFileWatcher(this.app, this.options, (event) => {
       // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
       const extensions = this.app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
       handlers[event.type]({event, app: this.app, extensions, options: this.options})
-        .then((appEvent) => {
+        .then(async (appEvent) => {
           this.app = appEvent.app
           if (appEvent.extensionEvents.length === 0) {
             outputDebug('Change detected, but no extensions were affected', this.options.stdout)
             return
           }
+
+          // Find affected created/updated extensions and build them
+          const extensions: ExtensionInstance[] = appEvent.extensionEvents
+            .filter((extEvent) => extEvent.type !== EventType.Deleted)
+            .map((extEvent) => extEvent.extension)
+          await this.buildExtensions(extensions)
+
+          // For ESBuild extensions, give esbuild some time to finish the build
+          if (extensions.some((ext) => ext.isESBuildExtension)) sleep(100)
           this.emit('all', appEvent)
         })
         .catch((error) => {
@@ -136,6 +162,34 @@ export class AppEventWatcher extends EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.addListener('all', listener)
     return this
+  }
+
+  // Subscribe to changes in the esbuild bundler, only if you need to know when an esbuild extension is built.
+  onESBuildChange(listener: (event: {extension: ExtensionInstance; result: BuildResult<BuildOptions> | null}) => void) {
+    this.addListener('esbuild', listener)
+    return this
+  }
+
+  /**
+   * Builds all given extensions except the ones that are built using esbuild.
+   * esbuild extensions are built using a esbuild watcher process.
+   */
+  private async buildExtensions(extensions: ExtensionInstance[]) {
+    const filteredExtensions = extensions.filter((ext) => !ext.isESBuildExtension)
+    const promises = filteredExtensions.map((ext) =>
+      ext.buildForBundle(
+        {
+          app: this.app,
+          stdout: this.options.stdout,
+          stderr: this.options.stderr,
+          useTasks: false,
+          environment: 'development',
+          appURL: this.appURL,
+        },
+        this.buildOutputPath,
+      ),
+    )
+    await Promise.all(promises)
   }
 }
 
@@ -156,15 +210,12 @@ async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerIn
 /**
  * When a file is created, updated or deleted:
  * Return the same app and the updated extension(s) in the event.
- * Is the responsibility of the consumer of the event to build the extension if necessary
  *
  * A file can be shared between multiple extensions in the same folder. The event will include all of the affected ones.
  */
 async function FileChangeHandler({event, app, extensions}: HandlerInput): Promise<AppEvent> {
   const events: ExtensionEvent[] = extensions.map((ext) => {
-    const buildPaths = ext.watchBuildPaths ?? []
-    const type = micromatch.isMatch(event.path, buildPaths) ? EventType.UpdatedSourceFile : EventType.Updated
-    return {type, extension: ext}
+    return {type: EventType.Updated, extension: ext}
   })
   return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
 }
@@ -182,7 +233,6 @@ async function ExtensionFolderCreatedHandler({event, app, options}: HandlerInput
 /**
  * When any config file (toml) is updated, including the app.toml and any extension toml:
  * Reload the app and find which extensions were created, deleted or updated.
- * Is the responsibility of the consumer of the event to build the extension if necessary
  *
  * Since a toml can contain multiple extensions, this could trigger Create, Delete and Update events.
  * The toml is considered a SourceFile because changes in the configuration can affect the build.
@@ -201,7 +251,7 @@ async function TomlChangeHandler({event, app, options}: HandlerInput): Promise<A
 function mapAppDiffToEvents(appDiff: AppExtensionsDiff): ExtensionEvent[] {
   const createdEvents = appDiff.created.map((ext) => ({type: EventType.Created, extension: ext}))
   const deletedEvents = appDiff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
-  const updatedEvents = appDiff.updated.map((ext) => ({type: EventType.UpdatedSourceFile, extension: ext}))
+  const updatedEvents = appDiff.updated.map((ext) => ({type: EventType.Updated, extension: ext}))
   return [...createdEvents, ...deletedEvents, ...updatedEvents]
 }
 
