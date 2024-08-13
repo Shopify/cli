@@ -22,6 +22,7 @@ const limiter = new Bottleneck({
  * @param query - GraphQL query to execute.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param cacheEnabled - Whether to cache the result of the query during the command execution.
  * @returns The response of the query of generic type <T>.
  */
 export async function appManagementRequest<T>(
@@ -29,22 +30,25 @@ export async function appManagementRequest<T>(
   query: string,
   token: string,
   variables?: GraphQLVariables,
+  cacheEnabled = false,
 ): Promise<T> {
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
   const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
   const cacheKey = hashString(`${query}-${JSON.stringify(variables)}`)
-
-  const data = getCachedCommandInfo()
   let queries = {} as {[key: string]: unknown}
-  if (data) {
-    queries = data.queries as {[key: string]: unknown}
-    if (queries[cacheKey]) {
-      outputDebug(outputContent`Reading from cache ${outputToken.json(api)} GraphQL request:
-  ${outputToken.raw(query.trim())}
-${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
-`)
-      return queries[cacheKey] as T
+
+  if (cacheEnabled) {
+    const data = getCachedCommandInfo()
+    if (data) {
+      queries = data.queries as {[key: string]: unknown}
+      if (queries[cacheKey]) {
+        outputDebug(outputContent`Reading from cache ${outputToken.json(api)} GraphQL request:
+    ${outputToken.raw(query.trim())}
+  ${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
+  `)
+        return queries[cacheKey] as T
+      }
     }
   }
 
@@ -58,7 +62,8 @@ ${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
       responseOptions: {onResponse: handleDeprecations},
     }),
   )
-  if (query.trim().startsWith('query')) {
+
+  if (cacheEnabled && query.trim().startsWith('query')) {
     outputDebug('Caching result...')
     queries[cacheKey] = result
     setCachedCommandInfo({queries})
