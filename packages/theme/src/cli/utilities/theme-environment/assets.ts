@@ -1,14 +1,15 @@
+import {replaceCdnProxy} from './proxy.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, serveStatic} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stat} from 'fs/promises'
-import type {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import type {DevServerContext} from './types.js'
 
 /** Forces assets to be served from local domain */
-export function replaceLocalAssets(originalHtml: string, themeFileSystem: ThemeFileSystem) {
+export function replaceLocalAssets(originalHtml: string, ctx: DevServerContext) {
   let html = originalHtml
-  const existingAssets = [...themeFileSystem.files.keys()].filter((key) => key.startsWith('assets'))
+  const existingAssets = [...ctx.localThemeFileSystem.files.keys()].filter((key) => key.startsWith('assets'))
 
   for (const [, matchedUrl] of html.matchAll(/<(?:link|script)\s?[^>]*\s(?:href|src)="([^"]+)"/g)) {
     if (!matchedUrl) continue
@@ -24,7 +25,7 @@ export function replaceLocalAssets(originalHtml: string, themeFileSystem: ThemeF
   return html
 }
 
-export function getAssetsHandler(rootDir: string) {
+export function getAssetsHandler(ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') return
 
@@ -32,10 +33,10 @@ export function getAssetsHandler(rootDir: string) {
     const assetsFilename = event.path.match(/^\/assets\/([^?]+)(\?|$)/)?.[1]
 
     if (assetsFilename) {
-      const filepath = joinPath(rootDir, 'assets', assetsFilename)
+      const filepath = joinPath(ctx.directory, 'assets', assetsFilename)
 
       return serveStatic(event, {
-        getContents: () => readFile(filepath),
+        getContents: () => readFile(filepath).then((content) => replaceCdnProxy(content, ctx)),
         getMeta: async () => {
           const stats = await stat(filepath).catch(() => {})
 
