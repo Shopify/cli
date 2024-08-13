@@ -136,8 +136,18 @@ export function injectHotReloadScript(html: string) {
   // These function run in the browser:
 
   function hotReloadScript() {
+    const prefix = '[HotReload]'
     // eslint-disable-next-line no-console
-    const logInfo = console.info.bind(console, '[HotReload]')
+    const logInfo = console.info.bind(console, prefix)
+    // eslint-disable-next-line no-console
+    const logError = console.error.bind(console, prefix)
+
+    const fullPageReload = (key: string, error?: Error) => {
+      if (error) logError(error)
+      logInfo('Full reload:', key)
+      window.location.reload()
+    }
+
     const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
 
     evtSource.onopen = () => logInfo('Connected')
@@ -152,6 +162,8 @@ export function injectHotReloadScript(html: string) {
         )
 
         if (elements.length > 0) {
+          const controller = new AbortController()
+
           await Promise.all(
             elements.map(async (element) => {
               const sectionId = element.id.replace(/^shopify-section-/, '')
@@ -159,6 +171,7 @@ export function injectHotReloadScript(html: string) {
                 `/__hot-reload/render?section-id=${encodeURIComponent(
                   sectionId,
                 )}&section-template-name=${encodeURIComponent(data.key)}`,
+                {signal: controller.signal},
               )
 
               const updatedSection = await response.text()
@@ -169,17 +182,19 @@ export function injectHotReloadScript(html: string) {
                 // eslint-disable-next-line require-atomic-updates
                 element.outerHTML = updatedSection
               } else {
-                logInfo('Full reload:', data.key)
-                window.location.reload()
+                controller.abort('Full reload required')
+                fullPageReload(data.key, new Error('Hot reload not supported for this section.'))
               }
             }),
-          )
+          ).catch((error: Error) => {
+            controller.abort('Request error')
+            fullPageReload(data.key, error)
+          })
 
           logInfo(`Updated sections for "${data.key}":`, data.names)
         }
       } else if (data.type === 'other') {
-        logInfo('Full reload:', data.key)
-        window.location.reload()
+        fullPageReload(data.key)
       }
     }
   }
