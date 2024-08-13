@@ -152,7 +152,7 @@ const USE_POLL_APP_LOGS_ERRORS_RETURN_VALUE = {
   appLogOutputs: [],
 }
 
-const EMPTY_FILTERS = {status: undefined, source: undefined}
+const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 describe('Logs', () => {
   test('renders prefix and applogs', async () => {

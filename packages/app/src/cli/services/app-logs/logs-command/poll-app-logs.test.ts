@@ -37,7 +37,7 @@ const RESPONSE_DATA_SUCCESS = {
   cursor: RETURNED_CURSOR,
 }
 
-const EMPTY_FILTERS = {status: undefined, source: undefined}
+const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 // Custom mock response with .json method to mock response from poll
 const createMockResponse = (data: any, status = 200, statusText = 'OK') => {
@@ -78,7 +78,7 @@ describe('pollProcess', () => {
     const result = await pollAppLogs({
       jwtToken: MOCKED_JWT_TOKEN,
       cursor: MOCKED_CURSOR,
-      filters: {status: 'failure', source: 'my-function'},
+      filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
     })
 
     expect(result).toEqual({
