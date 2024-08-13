@@ -15,26 +15,32 @@ const limiter = new Bottleneck({
   maxConcurrent: 10,
 })
 
+export interface AppManagementRequestOptions {
+  variables?: GraphQLVariables
+  cacheEnabled?: boolean
+}
+
 /**
  * Executes an org-scoped GraphQL query against the App Management API.
  *
  * @param orgId - The organization ID.
  * @param query - GraphQL query to execute.
  * @param token - Partners token.
- * @param variables - GraphQL variables to pass to the query.
- * @param cacheEnabled - Whether to cache the result of the query during the command execution.
+ * @param options - Additional options for the request:
+ * - variables - GraphQL variables to pass to the query.
+ * - cacheEnabled: Whether to cache the result of the query during the command execution. Disabled by default.
  * @returns The response of the query of generic type <T>.
  */
 export async function appManagementRequest<T>(
   orgId: string,
   query: string,
   token: string,
-  variables?: GraphQLVariables,
-  cacheEnabled = false,
+  options: AppManagementRequestOptions = {},
 ): Promise<T> {
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
   const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
+  const {variables, cacheEnabled = false} = options
   const cacheKey = hashString(`${query}-${JSON.stringify(variables)}`)
   let queries = {} as {[key: string]: unknown}
 

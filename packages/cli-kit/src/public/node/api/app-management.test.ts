@@ -25,7 +25,7 @@ describe('appManagementRequest', () => {
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await appManagementRequest(orgId, 'query', mockedToken, {variables: 'variables'})
+    await appManagementRequest(orgId, 'query', mockedToken, {variables: {name: 'whatever'}})
 
     // Then
     expect(graphqlRequest).toHaveBeenLastCalledWith({
@@ -33,7 +33,7 @@ describe('appManagementRequest', () => {
       api: 'App Management',
       url,
       token: mockedToken,
-      variables: {variables: 'variables'},
+      variables: {name: 'whatever'},
       responseOptions: {onResponse: handleDeprecations},
     })
   })

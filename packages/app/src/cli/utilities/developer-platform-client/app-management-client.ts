@@ -303,13 +303,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = SpecificationsQuery
-    const result = await appManagementRequest<SpecificationsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      {},
-      true,
-    )
+    const result = await appManagementRequest<SpecificationsQuerySchema>(organizationId, query, await this.token(), {
+      cacheEnabled: true,
+    })
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -369,7 +365,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray)
 
     const mutation = CreateAppMutation
-    const result = await appManagementRequest<CreateAppMutationSchema>(org.id, mutation, await this.token(), variables)
+    const result = await appManagementRequest<CreateAppMutationSchema>(org.id, mutation, await this.token(), {
+      variables,
+    })
     if (result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -444,12 +442,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersionsQuery
     const variables: AppVersionsQueryVariables = {appId: id}
-    const result = await appManagementRequest<AppVersionsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
+    const result = await appManagementRequest<AppVersionsQuerySchema>(organizationId, query, await this.token(), {
       variables,
-    )
+    })
     return {
       app: {
         id: result.app.id,
@@ -482,12 +477,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionByTagSchemaInterface> {
     const query = AppVersionsQuery
     const variables: AppVersionsQueryVariables = {appId}
-    const result = await appManagementRequest<AppVersionsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
+    const result = await appManagementRequest<AppVersionsQuerySchema>(organizationId, query, await this.token(), {
       variables,
-    )
+    })
     if (!result.app) {
       throw new AbortError(`App not found for API key: ${apiKey}`)
     }
@@ -498,12 +490,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const query2 = AppVersionByIdQuery
     const variables2: AppVersionByIdQueryVariables = {versionId: version.id}
-    const result2 = await appManagementRequest<AppVersionByIdQuerySchema>(
-      organizationId,
-      query2,
-      await this.token(),
-      variables2,
-    )
+    const result2 = await appManagementRequest<AppVersionByIdQuerySchema>(organizationId, query2, await this.token(), {
+      variables: variables2,
+    })
     const versionInfo = result2.version
 
     return {
@@ -544,12 +533,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables: AppVersionByIdQueryVariables = {versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
       this.fetchApp(app),
-      appManagementRequest<AppVersionByIdQuerySchema>(
-        app.organizationId,
-        AppVersionByIdQuery,
-        await this.token(),
+      appManagementRequest<AppVersionByIdQuerySchema>(app.organizationId, AppVersionByIdQuery, await this.token(), {
         variables,
-      ),
+      }),
     ])
     const currentModules = currentVersion.app.activeRelease.version.appModules
     const selectedVersionModules = selectedVersion.version.appModules
@@ -662,7 +648,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       organizationId,
       CreateAppVersionMutation,
       await this.token(),
-      variables,
+      {variables},
     )
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
@@ -694,7 +680,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       organizationId,
       ReleaseVersionMutation,
       await this.token(),
-      releaseVariables,
+      {variables: releaseVariables},
     )
     if (releaseResult.appReleaseCreate?.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
@@ -712,12 +698,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app: MinimalOrganizationApp
     version: AppVersionIdentifiers
   }): Promise<AppReleaseSchema> {
-    const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId}
+    const variables: ReleaseVersionMutationVariables = {appId, versionId}
     const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
       organizationId,
       ReleaseVersionMutation,
       await this.token(),
-      releaseVariables,
+      {variables},
     )
     return {
       appRelease: {
@@ -880,7 +866,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
     const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables, true)
+    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), {
+      variables,
+      cacheEnabled: true,
+    })
   }
 
   private async organizationBetaFlags(
