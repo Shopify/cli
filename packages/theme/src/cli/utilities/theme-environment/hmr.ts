@@ -140,10 +140,7 @@ export function injectFastRefreshScript(html: string) {
     const logInfo = console.info.bind(console, '[HMR]')
     const evtSource = new EventSource('/__hmr/subscribe', {withCredentials: true})
 
-    evtSource.onopen = () => {
-      // eslint-disable-next-line no-console
-      console.info('[HMR] Connected')
-    }
+    evtSource.onopen = () => logInfo('Connected')
 
     evtSource.onmessage = async (event) => {
       if (typeof event.data !== 'string') return
