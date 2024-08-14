@@ -60,7 +60,7 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = key.startsWith('assets/')
 
-    if (needsTemplateUpdate) {
+    if (needsTemplateUpdate && !isAsset) {
       // During initialization we only want to process
       // JSON files to cache their contents early
       if (initialized || extension === '.json') {
