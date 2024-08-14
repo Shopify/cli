@@ -17,11 +17,9 @@ import {
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {createServer} from 'node:http'
 
-export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
+export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
   await ensureThemeEnvironmentSetup(theme, ctx)
-  await startDevelopmentServer(theme, ctx)
-
-  onReady()
+  return startDevelopmentServer(theme, ctx)
 }
 
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
@@ -40,10 +38,10 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
   })
 }
 
-async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
+async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Promise<{close: () => Promise<void>}> {
   const app = createApp()
 
-  const {getInMemoryTemplates} = await setupTemplateWatcher(ctx)
+  const {getInMemoryTemplates, stopWatcher} = await setupTemplateWatcher(ctx)
 
   if (ctx.options.liveReload !== 'off') {
     app.use(getHotReloadHandler(theme, ctx))
@@ -88,9 +86,21 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext) {
     }),
   )
 
+  const server = createServer(toNodeListener(app))
+
   return new Promise((resolve) =>
-    createServer(toNodeListener(app)).listen({port: ctx.options.port, host: ctx.options.host}, () =>
-      resolve(undefined),
+    server.listen({port: ctx.options.port, host: ctx.options.host}, () =>
+      resolve({
+        close: async () => {
+          await Promise.all([
+            stopWatcher(),
+            new Promise((resolve) => {
+              server.closeAllConnections()
+              server.close(resolve)
+            }),
+          ])
+        },
+      }),
     ),
   )
 }
