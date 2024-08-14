@@ -35,7 +35,7 @@ interface SystemMessage {
 type ReplayLog = FunctionRun | SystemMessage
 
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
-  const {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns} = setupExtensionWatcherForReplay({
+  const {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error} = setupExtensionWatcherForReplay({
     selectedRun,
     abortController,
     app,
@@ -81,6 +81,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
               </Text>
             </Box>
           ) : null}
+          {error ? <Text color="red">{error}</Text> : null}
         </Box>
       ) : null}
     </>

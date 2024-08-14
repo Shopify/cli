@@ -1,14 +1,14 @@
 import {Replay} from './Replay.js'
+import {setupExtensionWatcherForReplay} from './hooks/extension-watcher.js'
 import {testFunctionExtension, testApp} from '../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
+import {FunctionRunData} from '../../replay.js'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import { setupExtensionWatcherForReplay } from './hooks/extension-watcher.js'
-import { FunctionRunData } from '../../replay.js'
 
 vi.mock('./hooks/extension-watcher.js')
 
@@ -48,11 +48,11 @@ const SELECTED_RUN = {
   payload: {
     export: 'run',
     input: {
-      someInput: "someInput"
+      someInput: 'someInput',
     },
     inputBytes: 136,
     output: {
-      someOutput: "someOutput"
+      someOutput: 'someOutput',
     },
     outputBytes: 195,
     logs: 'First Log\nLog the second!,\n1,\nfourth line, length should be above!,\nFifth line!',
@@ -79,19 +79,18 @@ const FUNCTION_RUN_FROM_SELECTED_RUN = {
   instructions: SELECTED_RUN.payload.fuelConsumed,
 } as FunctionRun
 
-const WATCHER_RETURN_VALUE = {
-  logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-  isAborted: false,
-  canUseShortcuts: true,
-  statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
-  recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN]
-}
-
 describe('Replay', () => {
   test('renders a stream of lines from function-runner output, and shortcuts', async () => {
-    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(WATCHER_RETURN_VALUE)
+    const watcherReturnValue = {
+      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      isAborted: false,
+      canUseShortcuts: true,
+      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
+      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      error: '',
+    }
+    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
     vi.mocked(setupExtensionWatcherForReplay).mockImplementation(mockedsetupExtensionWatcherForReplay)
-
 
     const renderInstanceReplay = render(
       <Replay
@@ -153,5 +152,76 @@ describe('Replay', () => {
 
     // unmount so that polling is cleared after every test
     renderInstanceReplay.unmount()
+  })
+
+  test('renders error in the bottom bar when present', async () => {
+    const watcherReturnValue = {
+      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      isAborted: false,
+      canUseShortcuts: true,
+      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
+      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      error: 'some error',
+    }
+    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
+    vi.mocked(setupExtensionWatcherForReplay).mockImplementation(mockedsetupExtensionWatcherForReplay)
+
+    const renderInstanceReplay = render(
+      <Replay
+        selectedRun={SELECTED_RUN}
+        abortController={new AbortController()}
+        app={testApp()}
+        extension={extension}
+      />,
+    )
+
+    // Then
+    expect(unstyled(renderInstanceReplay.lastFrame()!)).toMatchInlineSnapshot(`
+    "Input
+    {
+      \\"someInput\\": \\"someInput\\"
+    }
+    Logs
+    First Log
+    Log the second!,
+    1,
+    fourth line, length should be above!,
+    Fifth line!
+    Output
+    {
+      \\"someOutput\\": \\"someOutput\\"
+    }
+    Benchmark Results
+    Name: product-discount
+    Linear Memory Usage: 0KB
+    Instructions: 532.632K
+    Size: 0KB
+    Input
+    {
+      \\"someInput\\": \\"someInput\\"
+    }
+    Logs
+    First Log
+    Log the second!,
+    1,
+    fourth line, length should be above!,
+    Fifth line!
+    Output
+    {
+      \\"someOutput\\": \\"someOutput\\"
+    }
+    Benchmark Results
+    Name: product-discount
+    Linear Memory Usage: 0KB
+    Instructions: 532.632K
+    Size: 0KB
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+    › Watching for changes to product-discount...
+    › Instruction count delta: 0
+    › Press q │ quit
+    some error
+    "`)
   })
 })

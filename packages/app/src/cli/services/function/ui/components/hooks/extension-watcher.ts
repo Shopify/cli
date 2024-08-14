@@ -7,10 +7,12 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useRef, useState} from 'react'
 import {useInput, useStdin} from '@shopify/cli-kit/node/ink'
-import {handleCtrlC} from '@shopify/cli-kit/node/ui'
+import {handleCtrlC, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
+import {FatalError} from '@shopify/cli-kit/node/error'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 interface FunctionRun {
@@ -93,9 +95,10 @@ export function setupExtensionWatcherForReplay({
       await setupExtensionWatcher({
         extension,
         app,
-        stdout: customStdout, // TODO
-        stderr: customStdout, // TODO
+        stdout: customStdout,
+        stderr: customStdout,
         onChange: async () => {
+          setError('')
           setStatusMessage('Re-running with latest changes...')
           const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
 
@@ -107,18 +110,22 @@ export function setupExtensionWatcherForReplay({
           setLogs((logs) => [...logs, functionRun])
         },
         onReloadAndBuildError: async (error) => {
-          // TODO: handle error
+          setError('Error while reloading and building extension')
+          if (error instanceof FatalError) {
+            renderFatalError(error)
+          } else {
+            outputWarn(`Failed to replay function: ${error.message}`)
+          }
         },
         signal: abortController.signal,
       })
     }
+    // Confirm if this is required: a way to clean up watcher?
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     initialReplay()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     startWatchingFunction()
-
-    // TODO: return a way to clean up watcher
   }, [input, runExport, app, extension])
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
@@ -158,8 +165,7 @@ export function setupExtensionWatcherForReplay({
     },
     {isActive: Boolean(canUseShortcuts)},
   )
-
-  return {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns}
+  return {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error}
 }
 
 async function runFunctionRunnerWithLogInput(
