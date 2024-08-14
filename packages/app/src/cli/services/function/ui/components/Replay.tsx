@@ -1,5 +1,5 @@
-import {FunctionRunData} from '../../../function/replay.js'
-import {setupExtensionWatcher} from '../../extension/bundler.js'
+import {FunctionRunData} from '../../replay.js'
+import {setupExtensionWatcher} from '../../../dev/extension/bundler.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../../../models/app/app.js'
@@ -41,6 +41,7 @@ interface SystemMessage {
 type ReplayLog = FunctionRun | SystemMessage
 
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
+
   const functionRunFromSelectedRun = {
     type: 'functionRun',
     input: selectedRun.payload.input,
@@ -51,6 +52,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
     memory_usage: 0,
     instructions: selectedRun.payload.fuelConsumed,
   } as FunctionRun
+
   const [logs, setLogs] = useState<ReplayLog[]>([])
   const [recentFunctionRuns, setRecentFunctionRuns] = useState<[FunctionRun, FunctionRun]>([
     functionRunFromSelectedRun,
@@ -67,6 +69,18 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
 
   useEffect(() => {
+    // run the selectedRun once
+    const initialReplay =  async () => {
+      setStatusMessage("Replaying log with local function...")
+      const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
+      setRecentFunctionRuns((recentFunctionRuns) => {
+        return [functionRun, recentFunctionRuns[0]]
+      })
+      setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
+      setLogs((logs) => [...logs, functionRun])
+    }
+
+
     const startWatchingFunction = async () => {
       const customStdout = new Writable({
         write(chunk, _enconding, next) {
@@ -98,6 +112,8 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
       })
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    initialReplay()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     startWatchingFunction()
 

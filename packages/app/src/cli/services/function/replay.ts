@@ -63,7 +63,6 @@ export async function replay(options: ReplayOptions) {
       : await getRunFromSelector(functionRunsDir, extension.handle)
 
     const {input, export: runExport} = selectedRun.payload
-    await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
 
     if (watch) {
       await renderReplay({
@@ -72,6 +71,8 @@ export async function replay(options: ReplayOptions) {
         app,
         extension,
       })
+    } else {
+      await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
     }
   } catch (error) {
     abortController.abort()
