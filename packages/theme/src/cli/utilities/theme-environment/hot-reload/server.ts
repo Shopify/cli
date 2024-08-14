@@ -76,7 +76,7 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
     }
   }
 
-  chokidar
+  const watcher = chokidar
     .watch([...directoriesToWatch], {
       ignored: THEME_DEFAULT_IGNORE_PATTERNS,
       persistent: true,
@@ -87,7 +87,7 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
     .on('change', handleFileUpdate)
     .on('unlink', (filePath) => deleteInMemoryTemplate(getKey(filePath)))
 
-  return {getInMemoryTemplates}
+  return {getInMemoryTemplates, stopWatcher: () => watcher.close()}
 }
 
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {

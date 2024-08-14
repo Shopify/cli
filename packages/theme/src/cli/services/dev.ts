@@ -91,15 +91,14 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  await setupDevServer(options.theme, ctx, () => {
-    renderLinks(options.store, String(options.theme.id), host, port)
+  await setupDevServer(options.theme, ctx)
 
-    if (options.open) {
-      openURL(`http://${host}:${port}`).catch((error: Error) => {
-        renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
-      })
-    }
-  })
+  renderLinks(options.store, String(options.theme.id), host, port)
+  if (options.open) {
+    openURL(`http://${host}:${port}`).catch((error: Error) => {
+      renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
+    })
+  }
 }
 
 async function legacyDev(options: DevOptions) {
