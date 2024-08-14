@@ -14,7 +14,7 @@ interface DevAppWatcherOptions {
   signal: AbortSignal
 }
 
-export async function startBundlerForESBuildExtensions(options: DevAppWatcherOptions) {
+export async function createESBuildContextsForExtensions(options: DevAppWatcherOptions) {
   const contexts: {[key: string]: BuildContext<BuildOptions>} = {}
 
   const promises = options.extensions.map(async (extension) => {
