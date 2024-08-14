@@ -69,6 +69,11 @@ export interface Theme {
    * The remote role of the theme.
    */
   role: string
+
+  /**
+   * A public URL where Shopify can access the theme code.
+   */
+  src?: string
 }
 
 /**
