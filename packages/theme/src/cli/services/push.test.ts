@@ -13,7 +13,6 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 
 describe('push', () => {
   const adminSession = {token: '', storeFqdn: ''}
-  const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
 
   beforeEach(() => {
     vi.mocked(uploadTheme).mockResolvedValue(new Map())
