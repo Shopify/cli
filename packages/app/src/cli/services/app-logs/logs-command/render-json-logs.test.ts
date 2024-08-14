@@ -4,7 +4,7 @@ import {handleFetchAppLogsError} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
-import {formatDate} from '@shopify/cli-kit/common/string'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 vi.mock('./poll-app-logs')
 vi.mock('../utils', async (importOriginal) => {
@@ -27,19 +27,8 @@ describe('renderJsonLogs', () => {
   })
 
   test('should handle success response correctly', async () => {
-    const utcTime = new Date(2024, 8, 14)
-    const localTime = formatDate(
-      new Date(
-        Date.UTC(
-          utcTime.getFullYear(),
-          utcTime.getMonth(),
-          utcTime.getDate(),
-          utcTime.getHours(),
-          utcTime.getMinutes(),
-          utcTime.getSeconds(),
-        ),
-      ),
-    )
+    const utcTime = '2024-09-14T05:00:00.000Z'
+    const localTime = formatLocalDate(utcTime)
 
     const mockSuccessResponse = {
       cursor: 'next-cursor',
@@ -61,11 +50,11 @@ describe('renderJsonLogs', () => {
 
     expect(outputInfo).toHaveBeenNthCalledWith(
       1,
-      JSON.stringify({payload: {message: 'Log 1'}, logTimestamp: '2024-09-14T05:00:00.000Z', localTime}),
+      JSON.stringify({payload: {message: 'Log 1'}, logTimestamp: utcTime, localTime}),
     )
     expect(outputInfo).toHaveBeenNthCalledWith(
       2,
-      JSON.stringify({payload: {message: 'Log 2'}, logTimestamp: '2024-09-14T05:00:00.000Z', localTime}),
+      JSON.stringify({payload: {message: 'Log 2'}, logTimestamp: utcTime, localTime}),
     )
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)

@@ -18,7 +18,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import camelcaseKeys from 'camelcase-keys'
-import {formatDate} from '@shopify/cli-kit/common/string'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -171,24 +171,12 @@ export const toFormattedAppLogJson = (
   prettyPrint = true,
 ): string => {
   const {cursor: _, ...appLogWithoutCursor} = appLog
-  const utcDateTime = new Date(appLog.log_timestamp)
-  const localDateTime = new Date(
-    Date.UTC(
-      utcDateTime.getFullYear(),
-      utcDateTime.getMonth(),
-      utcDateTime.getDate(),
-      utcDateTime.getHours(),
-      utcDateTime.getMinutes(),
-      utcDateTime.getSeconds(),
-    ),
-  )
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toSaveData: any = camelcaseKeys(
     {
       ...appLogWithoutCursor,
       payload: appLogPayload,
-      localTime: formatDate(localDateTime),
+      localTime: formatLocalDate(appLog.log_timestamp),
     },
     {deep: true},
   )
