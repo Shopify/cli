@@ -69,6 +69,26 @@ describe('theme-uploader', () => {
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/deleteme.liquid', adminSession)
   })
 
+  test('should not generated assets', async () => {
+    // Given
+    const remote = [
+      {key: 'assets/keepme.liquid', checksum: '1'},
+      {key: 'assets/base.css', checksum: '2'},
+      {key: 'assets/base.css.liquid', checksum: '3'},
+    ]
+    const local = {
+      root: 'tmp',
+      files: new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
+    } as ThemeFileSystem
+
+    // When
+    await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+
+    // Then
+    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
+    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/base.css.liquid', adminSession)
+  })
+
   test('should not delete files if nodelete is set', async () => {
     // Given
     const remote = [

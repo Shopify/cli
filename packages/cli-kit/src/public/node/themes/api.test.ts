@@ -390,7 +390,7 @@ describe('bulkUploadThemeAssets', async () => {
     })
   })
 
-  test('throws an error when the server does not respond', async () => {
+  test('throws an error when the server responds a 404', async () => {
     const id = 123
     const assets: AssetParams[] = [
       {key: 'snippets/product-variant-picker.liquid', value: 'content'},
@@ -408,5 +408,30 @@ describe('bulkUploadThemeAssets', async () => {
       return bulkUploadThemeAssets(id, assets, session)
       // Then
     }).rejects.toThrowError(AbortError)
+  })
+
+  test('throws an error when the server responds a 403', async () => {
+    // Given
+    const id = 123
+    const assets: AssetParams[] = [
+      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
+      {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
+    ]
+    const message = `Cannot delete generated asset 'assets/bla.css'. Delete 'assets/bla.css.liquid' instead.`
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {
+        message,
+      },
+      status: 403,
+      headers: {},
+    })
+
+    // When
+    await expect(async () => {
+      return bulkUploadThemeAssets(id, assets, session)
+
+      // Then
+    }).rejects.toThrowError(new AbortError(message))
   })
 })
