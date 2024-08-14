@@ -20,6 +20,7 @@ describe('startDevServer', () => {
     session: {storefrontToken: '', token: '', storeFqdn: '', expiresAt: new Date()},
     remoteChecksums: [],
     localThemeFileSystem,
+    directory: 'tmp',
     options: {
       ignore: ['assets/*.json'],
       only: ['templates/*.liquid'],
