@@ -40,7 +40,8 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context, () => {})
+    const {close} = await setupDevServer(developmentTheme, context)
+    await close()
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(
@@ -67,7 +68,8 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context, () => {})
+    const {close} = await setupDevServer(developmentTheme, context)
+    await close()
 
     // Then
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
@@ -88,7 +90,8 @@ describe('startDevServer', () => {
     const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
 
     // When
-    await setupDevServer(developmentTheme, context, () => {})
+    const {close} = await setupDevServer(developmentTheme, context)
+    await close()
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {

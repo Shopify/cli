@@ -40,32 +40,33 @@ describe('dev', () => {
       // Given
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockResolvedValue(localThemeFileSystem)
-      vi.mocked(setupDevServer).mockResolvedValue()
+      vi.mocked(setupDevServer).mockResolvedValue({close: async () => {}})
       const devOptions = {...options, 'dev-preview': true, 'theme-editor-sync': true}
 
       // When
       await dev(devOptions)
 
       // Then
-      expect(setupDevServer).toHaveBeenCalledWith(
-        options.theme,
-        {
-          session: {...adminSession, storefrontToken: 'my-storefront-token', expiresAt: expect.any(Date)},
-          remoteChecksums: [],
-          localThemeFileSystem,
-          options: {
-            themeEditorSync: true,
-            host: '127.0.0.1',
-            liveReload: 'hot-reload',
-            open: false,
-            port: '9292',
-            ignore: [],
-            noDelete: false,
-            only: [],
-          },
+      expect(setupDevServer).toHaveBeenCalledWith(options.theme, {
+        session: {
+          ...adminSession,
+          storefrontToken: 'my-storefront-token',
+          expiresAt: expect.any(Date),
         },
-        expect.any(Function),
-      )
+        remoteChecksums: [],
+        localThemeFileSystem,
+        directory: 'my-directory',
+        options: {
+          themeEditorSync: true,
+          host: '127.0.0.1',
+          liveReload: 'hot-reload',
+          open: false,
+          port: '9292',
+          ignore: [],
+          noDelete: false,
+          only: [],
+        },
+      })
     })
   })
 
