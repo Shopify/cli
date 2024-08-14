@@ -41,8 +41,8 @@ describe('renderJsonLogs', () => {
       },
     })
 
-    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({payload: {message: 'Log 1'}}, null, 2))
-    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({payload: {message: 'Log 2'}}, null, 2))
+    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({payload: {message: 'Log 1'}}))
+    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({payload: {message: 'Log 2'}}))
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)
   })

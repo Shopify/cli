@@ -46,7 +46,7 @@ export async function renderJsonLogs({
 
   if (appLogs) {
     appLogs.forEach((log) => {
-      outputInfo(toFormattedAppLogJson(log, parseAppLogPayload(log.payload, log.log_type)))
+      outputInfo(toFormattedAppLogJson(log, parseAppLogPayload(log.payload, log.log_type), false))
     })
   }
 
