@@ -164,10 +164,6 @@ export const handleFetchAppLogsError = async (
   return {retryIntervalMs, nextJwtToken}
 }
 
-export function outputIsTTY(): boolean {
-  return Boolean(process.stdout.isTTY)
-}
-
 export const toFormattedAppLogJson = (
   appLog: AppLogData,
   appLogPayload: AppLogPayload | unknown,
