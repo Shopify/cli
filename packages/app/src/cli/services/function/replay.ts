@@ -11,7 +11,6 @@ import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 
 import {readdirSync} from 'fs'
 
