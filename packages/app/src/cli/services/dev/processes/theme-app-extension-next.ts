@@ -1,7 +1,7 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
+import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'

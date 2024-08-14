@@ -1,5 +1,5 @@
-import {DEFAULT_THEME_ZIP, FALLBACK_THEME_ZIP, HostThemeManager} from './host-theme-manager.js'
 import {waitForThemeToBeProcessed} from './host-theme-watcher.js'
+import {HostThemeManager, DEFAULT_THEME_ZIP, FALLBACK_THEME_ZIP} from './host-theme-manager.js'
 import {createTheme} from '@shopify/cli-kit/node/themes/api'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
