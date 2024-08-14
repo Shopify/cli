@@ -691,6 +691,9 @@ importers:
       '@shopify/theme-language-server-node':
         specifier: 1.11.4
         version: 1.11.4
+      chokidar:
+        specifier: 3.5.3
+        version: 3.5.3
       yaml:
         specifier: 2.3.2
         version: 2.3.2
