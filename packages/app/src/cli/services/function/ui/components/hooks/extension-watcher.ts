@@ -122,10 +122,11 @@ export function setupExtensionWatcherForReplay({
     }
     // Confirm if this is required: a way to clean up watcher?
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    initialReplay()
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    startWatchingFunction()
+    // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/no-floating-promises
+    initialReplay().then(() => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      startWatchingFunction()
+    })
   }, [input, runExport, app, extension])
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
