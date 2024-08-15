@@ -155,7 +155,7 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
   if (type === 'sections') {
     hotReloadSections(key)
   } else if (type === 'assets' && key.endsWith('.css')) {
-    emitHotReloadEvent({type: 'css', key, pathname: `/${key}`})
+    emitHotReloadEvent({type: 'css', key})
   } else {
     emitHotReloadEvent({type: 'full', key})
   }
