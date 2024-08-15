@@ -390,7 +390,7 @@ describe('bulkUploadThemeAssets', async () => {
     })
   })
 
-  test('throws an error when the server responds a 404', async () => {
+  test('throws an error when the server responds with a 404', async () => {
     const id = 123
     const assets: AssetParams[] = [
       {key: 'snippets/product-variant-picker.liquid', value: 'content'},
@@ -410,7 +410,7 @@ describe('bulkUploadThemeAssets', async () => {
     }).rejects.toThrowError(AbortError)
   })
 
-  test('throws an error when the server responds a 403', async () => {
+  test('throws an error when the server responds with a 403', async () => {
     // Given
     const id = 123
     const assets: AssetParams[] = [
