@@ -9,14 +9,22 @@ import {
 } from 'h3'
 import type {DevServerContext} from './types.js'
 
+const IGNORED_ENDPOINTS = [
+  '/.well-known',
+  '/shopify/monorail',
+  '/mini-profiler-resources',
+  '/web-pixels-manager',
+  '/wpm',
+]
+
 export function getProxyHandler(ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
-    if (event.method !== 'GET') {
-      // Mock the well-known route to avoid errors
+    if (IGNORED_ENDPOINTS.some((endpoint) => event.path.startsWith(endpoint))) {
+      // Mock successful status 204 response
       return null
     }
 
-    if (shouldProxyRequest(event)) {
+    if (!event.headers.get('accept')?.includes('text/html')) {
       return proxyStorefrontRequest(event, ctx)
     }
   })
@@ -26,11 +34,6 @@ export function replaceCdnProxy(content: string, ctx: DevServerContext) {
   const cdnPath = '/cdn/'
   const cdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${cdnPath}`, 'g')
   return content.replaceAll(cdnRE, cdnPath)
-}
-
-function shouldProxyRequest(event: H3Event) {
-  const isHtmlRequest = event.headers.get('accept')?.includes('text/html')
-  return !isHtmlRequest || event.path.startsWith('/wpm') || event.path.startsWith('/web-pixels-manager')
 }
 
 // These headers are meaningful only for a single transport-level connection,
