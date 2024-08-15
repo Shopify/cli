@@ -86,7 +86,12 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Prom
       if (!response) return
 
       setResponseStatus(event, response.status, response.statusText)
-      setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
+
+      const LinkHeader = response.headers.get('Link')
+      setResponseHeaders(event, {
+        ...Object.fromEntries(response.headers.entries()),
+        Link: LinkHeader && replaceCdnProxy(LinkHeader, ctx),
+      })
 
       // We are decoding the payload here, remove the header:
       let html = await response.text()
