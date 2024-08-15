@@ -29,7 +29,7 @@ function emitHotReloadEvent(event: HotReloadEvent) {
   eventEmitter.emit('hot-reload', event)
 }
 
-function getInMemoryTemplates() {
+export function getInMemoryTemplates() {
   return {...inMemoryTemplates}
 }
 
@@ -87,7 +87,7 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
     .on('change', handleFileUpdate)
     .on('unlink', (filePath) => deleteInMemoryTemplate(getKey(filePath)))
 
-  return {getInMemoryTemplates, stopWatcher: () => watcher.close()}
+  return {stopWatcher: () => watcher.close()}
 }
 
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {

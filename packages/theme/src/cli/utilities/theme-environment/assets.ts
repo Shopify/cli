@@ -1,11 +1,12 @@
-import {replaceCdnProxy} from './proxy.js'
+import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, serveStatic} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stat} from 'fs/promises'
+import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
-export function getAssetsHandler(ctx: DevServerContext) {
+export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') return
 
@@ -20,7 +21,7 @@ export function getAssetsHandler(ctx: DevServerContext) {
           // const cachedValue = ctx.localThemeFileSystem.files.get(fileKey)?.value
           // if (cachedValue) return replaceCdnProxy(cachedValue, ctx)
 
-          return ctx.localThemeFileSystem.read(fileKey).then((content) => replaceCdnProxy(content as string, ctx))
+          return ctx.localThemeFileSystem.read(fileKey).then((content) => injectCdnProxy(content as string, ctx))
         },
         getMeta: async () => {
           const stats = await stat(joinPath(ctx.directory, fileKey)).catch(() => {})
