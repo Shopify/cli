@@ -72,7 +72,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
     async onResponse(event, response) {
       clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
 
-      if (!response.ok && response.status !== 404) {
+      if (!response.ok && response.status >= 500) {
         renderWarning({
           headline: `Failed to proxy request to ${pathname}`,
           body: `${response.status} - ${response.statusText}`,
