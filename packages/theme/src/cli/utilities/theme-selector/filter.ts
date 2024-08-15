@@ -27,7 +27,15 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
     const error = `The ${store} store doesn't have a theme with the "${identifier}" ID or name`
 
     return filterArray(themes, (theme) => {
-      return `${theme.id}` === identifier || theme.name.toLowerCase().includes(identifier.toLowerCase())
+      if (`${theme.id}` === identifier) {
+        return true
+      }
+
+      if (theme.name.toLowerCase() === identifier.toLowerCase()) {
+        return true
+      }
+
+      return isPartialMatch(theme.name.toLowerCase(), identifier.toLowerCase())
     }).orThrow(error)
   })
 }
@@ -88,4 +96,22 @@ export class Filter {
       return Boolean(val)
     })
   }
+}
+
+function isPartialMatch(themeName: string, identifier: string): boolean {
+  const trimmedIdentifier = identifier.replace(/(^\*)|(\*$)/g, '')
+
+  if (identifier.startsWith('*') && identifier.endsWith('*')) {
+    return themeName.includes(trimmedIdentifier)
+  }
+
+  if (identifier.startsWith('*')) {
+    return themeName.endsWith(trimmedIdentifier)
+  }
+
+  if (identifier.endsWith('*')) {
+    return themeName.startsWith(trimmedIdentifier)
+  }
+
+  return false
 }
