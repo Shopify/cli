@@ -9,10 +9,14 @@ interface CacheValue<T> {
 
 export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
+type MostRecentOccurrenceKey = `most-recent-occurrence-${string}`
+
+type ExportedKey = IntrospectionUrlKey | PackageVersionKey
 
 interface Cache {
   [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
   [packageVersionKey: PackageVersionKey]: CacheValue<string>
+  [MostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
 }
 
 export interface ConfSchema {
@@ -74,7 +78,7 @@ type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['valu
  * @returns The value from the cache or the result of the function.
  */
 export async function cacheRetrieveOrRepopulate(
-  key: keyof Cache,
+  key: ExportedKey,
   fn: () => Promise<CacheValueForKey<typeof key>>,
   timeout?: number,
   config = cliKitStore(),
@@ -97,7 +101,7 @@ export async function cacheRetrieveOrRepopulate(
  * @param key - The key to use for the cache.
  * @returns The value from the cache or the result of the function.
  */
-export function cacheRetrieve(key: keyof Cache, config = cliKitStore()): CacheValueForKey<typeof key> | undefined {
+export function cacheRetrieve(key: ExportedKey, config = cliKitStore()): CacheValueForKey<typeof key> | undefined {
   const cache: Cache = config.get('cache') || {}
   const cached = cache[key]
   return cached?.value
@@ -105,4 +109,44 @@ export function cacheRetrieve(key: keyof Cache, config = cliKitStore()): CacheVa
 
 export function cacheClear(config = cliKitStore()): void {
   config.delete('cache')
+}
+
+interface TimeInterval {
+  days?: number
+  hours?: number
+  minutes?: number
+  seconds?: number
+}
+
+function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds = 0}: TimeInterval): number {
+  return (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds) * 1000
+}
+
+/**
+ * Execute a task only if the most recent occurrence of the task is older than the specified timeout.
+ * @param key - The key to use for the cache.
+ * @param timeout - The maximum valid age of the most recent occurrence, expressed as an object with
+ * days, hours, minutes, and seconds properties.
+ * If the most recent occurrence is older than this, the task will be executed.
+ * @param task - The task to run if the most recent occurrence is older than the timeout.
+ * @returns The result of the task, or undefined if the task was not run.
+ */
+export async function runAtMinimumInterval(
+  key: string,
+  timeout: TimeInterval,
+  task: () => Promise<void>,
+  config = cliKitStore(),
+): Promise<boolean | undefined> {
+  const cache: Cache = config.get('cache') || {}
+  const cacheKey: MostRecentOccurrenceKey = `most-recent-occurrence-${key}`
+  const cached = cache[cacheKey]
+
+  if (cached?.value !== undefined && Date.now() - cached.timestamp < timeIntervalToMilliseconds(timeout)) {
+    return undefined
+  }
+
+  await task()
+  cache[cacheKey] = {value: true, timestamp: Date.now()}
+  config.set('cache', cache)
+  return true
 }

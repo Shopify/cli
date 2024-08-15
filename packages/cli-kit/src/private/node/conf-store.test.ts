@@ -5,9 +5,10 @@ import {
   getSession,
   removeSession,
   setSession,
+  runAtMinimumInterval,
 } from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
@@ -172,6 +173,81 @@ describe('cacheRetrieve', () => {
 
       // Then
       expect(got).toBeUndefined()
+    })
+  })
+})
+
+describe('runAtMinimumInterval', () => {
+  const key = 'TASK'
+  const timeout = {seconds: 1}
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('runs the task as usual when the cache is not populated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+
+      // When
+      let taskRan = false
+      await runAtMinimumInterval(
+        key,
+        timeout,
+        async () => {
+          taskRan = true
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(true)
+    })
+  })
+
+  test('throttles the task when the cache is populated recently', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      await runAtMinimumInterval(key, timeout, async () => {}, config)
+
+      // When
+      let taskRan = false
+      await runAtMinimumInterval(
+        key,
+        timeout,
+        async () => {
+          taskRan = true
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(false)
+    })
+  })
+
+  test('runs the task as usual when the cache is populated but outdated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      await runAtMinimumInterval(key, timeout, async () => {}, config)
+
+      // When
+      let taskRan = false
+      vi.setSystemTime(vi.getRealSystemTime() + 1000)
+      await runAtMinimumInterval(
+        key,
+        timeout,
+        async () => {
+          taskRan = true
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(true)
     })
   })
 })
