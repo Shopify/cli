@@ -7,6 +7,7 @@ import {
   getRequestWebStream,
   type H3Event,
 } from 'h3'
+import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 const IGNORED_ENDPOINTS = [
@@ -17,7 +18,7 @@ const IGNORED_ENDPOINTS = [
   '/wpm',
 ]
 
-export function getProxyHandler(ctx: DevServerContext) {
+export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (IGNORED_ENDPOINTS.some((endpoint) => event.path.startsWith(endpoint))) {
       // Mock successful status 204 response
@@ -30,7 +31,7 @@ export function getProxyHandler(ctx: DevServerContext) {
   })
 }
 
-export function replaceCdnProxy(content: string, ctx: DevServerContext) {
+export function injectCdnProxy(content: string, ctx: DevServerContext) {
   const cdnPath = '/cdn/'
   const cdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${cdnPath}`, 'g')
   return content.replaceAll(cdnRE, cdnPath)
