@@ -1,6 +1,12 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {PollOptions, SubscribeOptions, ErrorResponse, SuccessResponse} from '../types.js'
-import {POLLING_INTERVAL_MS, handleFetchAppLogsError, subscribeToAppLogs} from '../utils.js'
+import {
+  POLLING_INTERVAL_MS,
+  handleFetchAppLogsError,
+  subscribeToAppLogs,
+  toFormattedAppLogJson,
+  parseAppLogPayload,
+} from '../utils.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export async function renderJsonLogs({
@@ -40,7 +46,7 @@ export async function renderJsonLogs({
 
   if (appLogs) {
     appLogs.forEach((log) => {
-      outputInfo(JSON.stringify(log))
+      outputInfo(toFormattedAppLogJson(log, parseAppLogPayload(log.payload, log.log_type), false))
     })
   }
 

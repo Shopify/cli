@@ -38,6 +38,11 @@ import {
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
 } from './app-management-client/graphql/app-version-by-id.js'
+import {
+  OrganizationBetaFlagsQuerySchema,
+  OrganizationBetaFlagsQueryVariables,
+  organizationBetaFlagsQuery,
+} from './app-management-client/graphql/organization_beta_flags.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -127,12 +132,14 @@ import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
   businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
   businessPlatformRequest,
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+import {outputWarn} from '@shopify/cli-kit/node/output'
+import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
@@ -381,7 +388,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const storesResult = await businessPlatformOrganizationsRequest<ListAppDevStoresQuery>(
+    const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
@@ -496,11 +503,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
           id: parseInt(versionInfo.id, 10),
           uuid: versionInfo.id,
           versionTag: versionInfo.metadata.versionTag,
-          location: [
-            await this.appDeepLink({organizationId, id: appId}),
-            'versions',
-            numberFromGid(versionInfo.id),
-          ].join('/'),
+          location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join(
+            '/',
+          ),
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
             return {
@@ -660,7 +665,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.metadata.versionTag,
-          location: [await this.appDeepLink({organizationId, id: appId}), `versions/${version.id}`].join('/'),
+          location: await versionDeepLink(organizationId, appId, version.id),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -711,7 +716,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
           message: releaseResult.appReleaseCreate.release.version.metadata.message,
           location: [
-            await this.appDeepLink({organizationId, id: appId}),
+            await appDeepLink({organizationId, id: appId}),
             'versions',
             numberFromGid(releaseResult.appReleaseCreate.release.version.id),
           ].join('/'),
@@ -731,7 +736,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // from the Partners FindByStoreDomainSchema, we will return this type for now
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
-    const storesResult = await businessPlatformOrganizationsRequest(
+    const storesResult = await businessPlatformOrganizationsRequestDoc(
       FetchDevStoreByDomain,
       await this.businessPlatformToken(),
       orgId,
@@ -783,11 +788,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    throw new BugError('Not implemented: sendSampleWebhook')
+    outputWarn('⚠️ sendSampleWebhook is not implemented')
+    return {
+      sendSampleWebhook: {
+        samplePayload: '',
+        headers: '{}',
+        success: true,
+        userErrors: [],
+      },
+    }
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    throw new BugError('Not implemented: apiVersions')
+    outputWarn('⚠️ apiVersions is not implemented')
+    return {publicApiVersions: ['unstable']}
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
@@ -803,7 +817,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    throw new BugError('Not implemented: updateURLs')
+    outputWarn('⚠️ updateURLs is not implemented')
+    return {appUpdate: {userErrors: []}}
   }
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
@@ -827,7 +842,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appDeepLink({id, organizationId}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
-    return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+    return appDeepLink({id, organizationId})
   }
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
@@ -865,15 +880,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   private async organizationBetaFlags(
-    _organizationId: string,
+    organizationId: string,
     allBetaFlags: string[],
-  ): Promise<{[key: string]: boolean}> {
-    // For now, stub everything as false
-    const stub: {[flag: string]: boolean} = {}
+  ): Promise<{[flag: (typeof allBetaFlags)[number]]: boolean}> {
+    const variables: OrganizationBetaFlagsQueryVariables = {organizationId: encodedGidFromId(organizationId)}
+    const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>(
+      organizationBetaFlagsQuery(allBetaFlags),
+      await this.businessPlatformToken(),
+      organizationId,
+      variables,
+    )
+    const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
-      stub[flag] = false
+      result[flag] = Boolean(flagsResult.organization[`flag_${flag}`])
     })
-    return stub
+    return result
   }
 }
 
@@ -926,7 +947,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
 // just the integer portion of that ID. These functions convert between the two.
 
 // 1234 => gid://organization/Organization/1234 => base64
-function encodedGidFromId(id: string): string {
+export function encodedGidFromId(id: string): string {
   const gid = `gid://organization/Organization/${id}`
   return Buffer.from(gid).toString('base64')
 }
@@ -940,6 +961,18 @@ function idFromEncodedGid(gid: string): string {
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
+}
+
+async function appDeepLink({
+  id,
+  organizationId,
+}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
+  return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+}
+
+export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
+  const appLink = await appDeepLink({organizationId, id: appId})
+  return `${appLink}/versions/${numberFromGid(versionId)}`
 }
 
 interface DiffAppModulesInput {

@@ -177,7 +177,7 @@ const POLL_APP_LOGS_FOR_LOGS_UNKNOWN_RESPONSE = {
   errors: [{status: 422, message: 'Unprocessable'}],
 }
 
-const EMPTY_FILTERS = {status: undefined, source: undefined}
+const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 describe('usePollAppLogs', () => {
   beforeEach(() => {
@@ -211,7 +211,7 @@ describe('usePollAppLogs', () => {
     expect(hook.lastResult?.appLogOutputs[0]!.prefix).toEqual({
       status: 'Success',
       source: SOURCE,
-      description: `export "run" executed in ${(FUEL_CONSUMED / 1000000).toFixed(4)} M instructions`,
+      description: `export "run" executed in ${(FUEL_CONSUMED / 1000000).toFixed(4)}M instructions`,
       logTimestamp: TIME,
     })
 
@@ -374,14 +374,14 @@ describe('usePollAppLogs', () => {
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
-    // Initial invocation, 429 returned
+    // Initial invocation, 422 returned
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
     expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
     expect(hook.lastResult?.errors[0]).toEqual('Error while polling app logs')
     expect(hook.lastResult?.errors[1]).toEqual('Retrying in 5s')
 
-    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), POLLING_ERROR_RETRY_INTERVAL_MS)
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), POLLING_ERROR_RETRY_INTERVAL_MS)
 
     await vi.advanceTimersToNextTimerAsync()
     expect(hook.lastResult?.appLogOutputs).toHaveLength(6)
@@ -390,6 +390,30 @@ describe('usePollAppLogs', () => {
 
     expect(vi.getTimerCount()).toEqual(1)
     timeoutSpy.mockRestore()
+  })
+
+  test('clears error on success', async () => {
+    const mockedPollAppLogs = vi
+      .fn()
+      .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_429_RESPONSE)
+      .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
+    vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
+
+    const hook = renderHook(() =>
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback: vi.fn().mockResolvedValue(MOCKED_JWT_TOKEN),
+      }),
+    )
+
+    // initial poll with errors
+    await vi.advanceTimersByTimeAsync(0)
+    expect(hook.lastResult?.errors).toHaveLength(2)
+
+    // second poll with no errors
+    await vi.advanceTimersToNextTimerAsync()
+    expect(hook.lastResult?.errors).toHaveLength(0)
   })
 })
 

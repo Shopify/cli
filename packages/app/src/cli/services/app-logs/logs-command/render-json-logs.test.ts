@@ -28,21 +28,21 @@ describe('renderJsonLogs', () => {
   test('should handle success response correctly', async () => {
     const mockSuccessResponse = {
       cursor: 'next-cursor',
-      appLogs: [{message: 'Log 1'}, {message: 'Log 2'}],
+      appLogs: [{payload: JSON.stringify({message: 'Log 1'})}, {payload: JSON.stringify({message: 'Log 2'})}],
     }
     const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
 
     await renderJsonLogs({
-      pollOptions: {cursor: 'cursor', filters: {status: undefined, source: undefined}, jwtToken: 'jwtToken'},
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
         variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
     })
 
-    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({message: 'Log 1'}))
-    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({message: 'Log 2'}))
+    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({payload: {message: 'Log 1'}}))
+    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({payload: {message: 'Log 2'}}))
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)
   })
@@ -63,7 +63,7 @@ describe('renderJsonLogs', () => {
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 
     await renderJsonLogs({
-      pollOptions: {cursor: 'cursor', filters: {status: undefined, source: undefined}, jwtToken: 'jwtToken'},
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
         variables: {shopIds: [], apiKey: '', token: ''},
         developerPlatformClient: testDeveloperPlatformClient(),

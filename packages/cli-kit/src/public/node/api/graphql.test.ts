@@ -1,5 +1,5 @@
 import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
-import {debugLogResponseInfo} from '../../../private/node/api.js'
+import {retryAwareRequest} from '../../../private/node/api.js'
 import * as debugRequest from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import {GraphQLClient} from 'graphql-request'
@@ -26,7 +26,7 @@ const mockToken = 'token'
 const mockedAddedHeaders = {some: 'header'}
 
 beforeEach(async () => {
-  vi.mocked(debugLogResponseInfo).mockResolvedValue({
+  vi.mocked(retryAwareRequest).mockResolvedValue({
     status: 200,
     headers: {} as Headers,
   })
@@ -49,13 +49,12 @@ describe('graphqlRequest', () => {
         some: 'header',
       },
     })
-    expect(GraphQLClient.prototype.rawRequest).toHaveBeenCalledWith('query', mockVariables)
     expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledOnce()
     const receivedObject = {
-      request: undefined,
+      request: expect.any(Function),
       url: mockedAddress,
     }
-    expect(debugLogResponseInfo).toHaveBeenCalledWith(receivedObject, expect.any(Function))
+    expect(retryAwareRequest).toHaveBeenCalledWith(receivedObject, expect.any(Function))
   })
 })
 
@@ -89,6 +88,21 @@ describe('graphqlRequestDoc', () => {
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
     })
-    expect(GraphQLClient.prototype.rawRequest).toHaveBeenCalledWith('query QueryName {\n  example\n}', mockVariables)
+
+    expect(retryAwareRequest).toHaveBeenCalledWith(
+      {
+        request: expect.any(Function),
+        url: mockedAddress,
+      },
+      expect.any(Function),
+    )
+    expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledWith(
+      'mockApi',
+      `query QueryName {
+  example
+}`,
+      mockVariables,
+      expect.anything(),
+    )
   })
 })

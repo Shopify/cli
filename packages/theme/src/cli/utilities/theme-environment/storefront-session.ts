@@ -4,12 +4,35 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(storeURL, {
+  const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
     redirect: 'manual',
   })
 
   return response.status === 302
+}
+
+/**
+ * Sends a request to the password redirect page.
+ * If the password is correct, SFR will respond with a 302 to redirect to the storefront
+ */
+export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
+  const response = await fetch(`${prependHttps(store)}/password`, {
+    headers: {
+      'cache-control': 'no-cache',
+      'content-type': 'application/x-www-form-urlencoded',
+    },
+    body: `form_type=storefront_password&utf8=%E2%9C%93&password=${password}`,
+    method: 'POST',
+    redirect: 'manual',
+  })
+
+  if (response.status === 429) {
+    throw new AbortError(
+      `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
+    )
+  }
+  return response.status === 302 && response.headers.get('location') === `${prependHttps(store)}/`
 }
 
 export async function getStorefrontSessionCookies(
@@ -113,4 +136,8 @@ function getCookie(setCookieArray: string[], cookieName: string) {
   const parsedCookie = parseCookies(cookie)
 
   return parsedCookie[cookieName]
+}
+
+function prependHttps(url: string): string {
+  return `https://${url}`
 }

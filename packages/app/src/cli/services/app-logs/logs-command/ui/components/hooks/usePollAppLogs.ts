@@ -52,7 +52,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
         }
         retryIntervalMs = result.retryIntervalMs
       } else {
-        setErrors([])
+        setErrors((errors) => (errors.length ? [] : errors))
       }
 
       const {cursor: nextCursor, appLogs} = response as SuccessResponse
@@ -68,7 +68,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
               appLog = parseFunctionRunPayload(log.payload)
               description = `export "${appLog.export}" executed in ${(appLog.fuelConsumed / ONE_MILLION).toFixed(
                 4,
-              )} M instructions`
+              )}M instructions`
               break
             case LOG_TYPE_RESPONSE_FROM_CACHE:
               appLog = parseNetworkAccessResponseFromCachePayload(log.payload)

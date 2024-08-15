@@ -22,7 +22,8 @@ class DownloadableBinary {
   constructor(name: string, version: string, gitHubRepo: string) {
     this.name = name
     this.version = version
-    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', `${this.name}`)
+    const filename = process.platform === 'win32' ? `${name}.exe` : name
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', filename)
     this.gitHubRepo = gitHubRepo
   }
 

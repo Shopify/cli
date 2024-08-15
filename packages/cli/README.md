@@ -920,7 +920,8 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
     [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
-    [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>] [--sourcemap] [--verbose]
+    [--env-file <value>] [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
+    [--sourcemap] [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
@@ -935,6 +936,8 @@ FLAGS
   --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
                                  using the `env list` command.
   --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --env-file=<value>             [default: .env] Path to an environment file to override existing environment variables.
+                                 Defaults to the '.env' located in your project path `--path`.
   --host                         Expose the server to the local network
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
   --legacy-runtime               [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
@@ -971,13 +974,15 @@ Populate your .env with variables from your Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [-f] [--path <value>]
+  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--path <value>]
 
 FLAGS
   -f, --force               Overwrites the destination directory and files if they already exist.
       --env=<value>         Specifies the environment to perform the operation using its handle. Fetch the handle using
                             the `env list` command.
       --env-branch=<value>  Specifies the environment to perform the operation using its Git branch name.
+      --env-file=<value>    [default: .env] Path to an environment file to override existing environment variables.
+                            Defaults to the '.env' located in your project path `--path`.
       --path=<value>        The path to the directory of the Hydrogen storefront. Defaults to the current directory
                             where the command is run.
 
@@ -996,8 +1001,8 @@ USAGE
 FLAGS
   --env=<value>       Specifies the environment to perform the operation using its handle. Fetch the handle using the
                       `env list` command.
-  --env-file=<value>  Path to an environment file to override existing environment variables for the selected
-                      environment. Defaults to the '.env' located in your project path `--path`.
+  --env-file=<value>  [default: .env] Path to an environment file to override existing environment variables. Defaults
+                      to the '.env' located in your project path `--path`.
   --path=<value>      The path to the directory of the Hydrogen storefront. Defaults to the current directory where the
                       command is run.
 
@@ -1159,8 +1164,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
-    [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>]
+    [--port <value>] [--verbose] [--watch ]
 
 FLAGS
   --build                        Builds the app before starting the preview server.
@@ -1173,6 +1178,8 @@ FLAGS
   --env=<value>                  Specifies the environment to perform the operation using its handle. Fetch the handle
                                  using the `env list` command.
   --env-branch=<value>           Specifies the environment to perform the operation using its Git branch name.
+  --env-file=<value>             [default: .env] Path to an environment file to override existing environment variables.
+                                 Defaults to the '.env' located in your project path `--path`.
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
   --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
@@ -1611,14 +1618,15 @@ USAGE
   $ shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
-  -e, --environment=<value>  The environment to apply to the current command.
-  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
-                             (example.myshopify.com, https://example.myshopify.com).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --port=<value>         [default: 9293] Local port to serve authentication service.
-      --url=<value>          [default: /] The url to be used as context
-      --verbose              Increase the verbosity of the output.
+  -e, --environment=<value>     The environment to apply to the current command.
+  -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                                (example.myshopify.com, https://example.myshopify.com).
+      --no-color                Disable color output.
+      --password=<value>        Password generated from the Theme Access app.
+      --port=<value>            Local port to serve authentication service.
+      --store-password=<value>  The password for storefronts with password protection.
+      --url=<value>             [default: /] The url to be used as context
+      --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool

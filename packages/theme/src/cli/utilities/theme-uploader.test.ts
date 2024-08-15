@@ -69,7 +69,7 @@ describe('theme-uploader', () => {
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/deleteme.liquid', adminSession)
   })
 
-  test('should not generated assets', async () => {
+  test('should not delete generated assets', async () => {
     // Given
     const remote = [
       {key: 'assets/keepme.liquid', checksum: '1'},

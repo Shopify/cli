@@ -1,4 +1,5 @@
 import {graphqlRequestDoc} from './graphql.js'
+import {normalizeStoreFqdn} from '../context/fqdn.js'
 import Bottleneck from 'bottleneck'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -28,7 +29,8 @@ export async function appDevRequest<TResult, TVariables extends Variables>(
   variables?: TVariables,
 ): Promise<TResult> {
   const api = 'App Dev'
-  const url = `https://${shopFqdn}/app_dev/unstable/graphql.json`
+  const normalizedShopFqdn = await normalizeStoreFqdn(shopFqdn)
+  const url = `https://${normalizedShopFqdn}/app_dev/unstable/graphql.json`
   const result = limiter.schedule<TResult>(() =>
     graphqlRequestDoc<TResult, TVariables>({
       query,

@@ -63,7 +63,6 @@ describe('writeAppLogsToFile', () => {
         logs: ['Line 1!', ' Line2!'],
       },
       logType: APP_LOG.log_type,
-      cursor: APP_LOG.cursor,
       status: APP_LOG.status,
       source: APP_LOG.source,
       sourceNamespace: APP_LOG.source_namespace,
@@ -99,9 +98,11 @@ describe('writeAppLogsToFile', () => {
 })
 
 function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload | any): string {
+  const {cursor: _, ...eventWithoutCursor} = event
+
   const data: any = camelcaseKeys(
     {
-      ...event,
+      ...eventWithoutCursor,
       payload,
     },
     {deep: true},

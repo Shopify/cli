@@ -455,7 +455,7 @@ export async function testFlowActionExtension(directory = './my-extension'): Pro
   return extension
 }
 
-function defaultFunctionConfiguration(): FunctionConfigType {
+export function defaultFunctionConfiguration(): FunctionConfigType {
   return {
     name: 'test function extension',
     description: 'description',

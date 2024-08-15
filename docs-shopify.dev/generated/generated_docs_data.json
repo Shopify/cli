@@ -2728,6 +2728,14 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--host",
                 "value": "\"\"",
                 "description": "Expose the server to the local network",
@@ -2788,7 +2796,7 @@
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_VERBOSE"
               }
             ],
-            "value": "export interface hydrogendev {\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER\n   */\n  '--disable-deps-optimizer'?: ''\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   *\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Expose the server to the local network\n   *\n   */\n  '--host'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * [Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface hydrogendev {\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER\n   */\n  '--disable-deps-optimizer'?: ''\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   *\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Expose the server to the local network\n   *\n   */\n  '--host'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * [Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -2892,6 +2900,14 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -2908,7 +2924,7 @@
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
               }
             ],
-            "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+            "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
           }
         }
       }
@@ -2958,7 +2974,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--env-file <value>",
                 "value": "string",
-                "description": "Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.",
+                "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
                 "isOptional": true
               },
               {
@@ -2971,7 +2987,7 @@
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
               }
             ],
-            "value": "export interface hydrogenenvpush {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+            "value": "export interface hydrogenenvpush {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
           }
         }
       }
@@ -3597,6 +3613,14 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--env-file <value>",
+                "value": "string",
+                "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+                "isOptional": true
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--inspector-port <value>",
                 "value": "string",
                 "description": "The port where the inspector is available. Defaults to 9229.",
@@ -3648,7 +3672,7 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface hydrogenpreview {\n  /**\n   * Builds the app before starting the preview server.\n   *\n   */\n  '--build'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project.\n   *\n   */\n  '--watch'?: ''\n}"
+            "value": "export interface hydrogenpreview {\n  /**\n   * Builds the app before starting the preview server.\n   *\n   */\n  '--build'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project.\n   *\n   */\n  '--watch'?: ''\n}"
           }
         }
       }
@@ -4258,6 +4282,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--store-password <value>",
+                "value": "string",
+                "description": "The password for storefronts with password protection.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_PASSWORD"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--url <value>",
                 "value": "string",
                 "description": "The url to be used as context",
@@ -4292,7 +4325,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE"
               }
             ],
-            "value": "export interface themeconsole {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Local port to serve authentication service.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeconsole {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Local port to serve authentication service.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
