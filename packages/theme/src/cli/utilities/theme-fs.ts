@@ -3,8 +3,9 @@ import {ThemeFileSystem, Key, ThemeAsset} from '@shopify/cli-kit/node/themes/typ
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {consoleError, outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import chokidar from 'chokidar'
 
 const DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
@@ -45,24 +46,17 @@ const THEME_PARTITION_REGEX = {
 }
 
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
-  const filesPaths = await glob(THEME_DIRECTORY_PATTERNS, {
-    cwd: root,
-    deep: 3,
-    ignore: DEFAULT_IGNORE_PATTERNS,
-  })
-
-  const assets = await Promise.all(
-    filesPaths.map(async (key) => {
-      return checksum(root, key).then((checksum) => {
-        return {
-          key,
-          checksum,
-        }
-      })
-    }),
+  const checksumValues = await scanThemeFiles(root, THEME_DIRECTORY_PATTERNS)
+  const files = new Map(
+    checksumValues
+      .filter(({key, checksum}) => key && checksum)
+      .map(({key, checksum}) => [key, {key, checksum}] as [string, ThemeAsset]),
   )
-  const files = new Map(assets.map((asset) => [asset.key, asset]))
 
+  return createThemeFileSystem(root, files)
+}
+
+function createThemeFileSystem(root: string, files: Map<string, ThemeAsset>): ThemeFileSystem {
   return {
     root,
     files,
@@ -77,18 +71,58 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
     read: async (assetKey: string) => {
       const fileValue = await readThemeFile(root, assetKey)
       const fileChecksum = await checksum(root, assetKey)
-      files.set(
-        assetKey,
-        buildThemeAsset({
-          key: assetKey,
-          value: typeof fileValue === 'string' ? fileValue : '',
-          checksum: fileChecksum,
-          attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
-        })!,
-      )
+      const themeAsset = buildThemeAsset({
+        key: assetKey,
+        value: typeof fileValue === 'string' ? fileValue : '',
+        checksum: fileChecksum,
+        attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
+      })
+
+      if (themeAsset) {
+        files.set(assetKey, themeAsset)
+      }
+
       return fileValue
     },
   }
+}
+
+async function scanThemeFiles(root: string, directoriesToWatch: string[]): Promise<{[key: string]: string}[]> {
+  outputDebug(`Scanning theme files in ${root}`)
+  const watcher = chokidar.watch(directoriesToWatch, {
+    ignoreInitial: false,
+    persistent: true,
+    awaitWriteFinish: true,
+    cwd: root,
+    ignored: DEFAULT_IGNORE_PATTERNS,
+  })
+  const checksumValues: {[key: string]: string}[] = []
+
+  await new Promise<void>((resolve, reject) => {
+    watcher
+      .on('add', (path) => {
+        outputDebug(`Processing file: ${path}`)
+        checksum(root, path)
+          .then((checksumValue) => {
+            checksumValues.push({key: path, checksum: checksumValue})
+            outputDebug(`Processed file: ${path}`)
+          })
+          .catch((error) => {
+            consoleError(`Error processing file ${path}: ${error}`)
+          })
+      })
+      .on('ready', () => {
+        outputDebug('Finished mounting theme file system')
+        resolve()
+      })
+      .on('error', (error) => {
+        consoleError(`Failed to mount theme file system: ${error}`)
+        reject(error)
+      })
+  })
+
+  await watcher.close()
+  return checksumValues
 }
 
 async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
