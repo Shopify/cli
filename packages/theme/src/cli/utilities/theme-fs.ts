@@ -108,7 +108,7 @@ async function scanThemeFiles(root: string, directoriesToWatch: string[]): Promi
             outputDebug(`Processed file: ${path}`)
           })
           .catch((error) => {
-            consoleError(`Error processing file ${path}: ${error}`)
+            watcher.emit('error', error)
           })
       })
       .on('ready', () => {
