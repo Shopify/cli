@@ -2,7 +2,7 @@ import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {render} from './storefront-renderer.js'
 import {setupTemplateWatcher, injectHotReloadScript, getHotReloadHandler} from './hot-reload/server.js'
-import {getAssetsHandler, replaceLocalAssets} from './assets.js'
+import {getAssetsHandler} from './assets.js'
 import {getProxyHandler, replaceCdnProxy} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {
@@ -92,7 +92,6 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Prom
       let html = await response.text()
       removeResponseHeader(event, 'content-encoding')
 
-      html = replaceLocalAssets(html, ctx)
       html = replaceCdnProxy(html, ctx)
 
       if (ctx.options.liveReload !== 'off') {
