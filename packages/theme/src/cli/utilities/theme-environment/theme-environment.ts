@@ -15,6 +15,7 @@ import {
   getProxyRequestHeaders,
 } from 'h3'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import {createServer} from 'node:http'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
@@ -66,7 +67,23 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Prom
         sectionId: '',
         headers: getProxyRequestHeaders(event),
         replaceTemplates: getInMemoryTemplates(),
+      }).catch(async (error: Error) => {
+        const headline = 'Failed to render storefront.'
+        renderError({headline, body: error.stack ?? error.message})
+        await event.respondWith(
+          new Response(
+            getErrorPage({
+              title: headline,
+              header: headline,
+              message: error.message,
+              code: error.stack?.replace(`${error.message}\n`, '') ?? '',
+            }),
+            {status: 502, headers: {'content-type': 'text/html'}},
+          ),
+        )
       })
+
+      if (!response) return
 
       setResponseStatus(event, response.status, response.statusText)
       setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
@@ -103,4 +120,19 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Prom
       }),
     ),
   )
+}
+
+export function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
+  const html = String.raw
+
+  return html`<html>
+    <head>
+      <title>${options.title ?? 'Unknown error'}</title>
+    </head>
+    <body style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; font-family: Arial">
+      <h2>${options.header}</h2>
+      <p>${options.message}</p>
+      <pre>${options.code}</pre>
+    </body>
+  </html>`
 }
