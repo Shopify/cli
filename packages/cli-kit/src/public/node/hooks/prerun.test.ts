@@ -1,12 +1,18 @@
 import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
 import {packageManagerFromUserAgent, checkForCachedNewVersion} from '../node-package-manager.js'
+import {cacheClear} from '../../../private/node/conf-store.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
-import {describe, expect, test, vi, afterEach} from 'vitest'
+import {describe, expect, test, vi, afterEach, beforeEach} from 'vitest'
 
 vi.mock('../node-package-manager')
 
+beforeEach(() => {
+  cacheClear()
+})
+
 afterEach(() => {
   mockAndCaptureOutput().clear()
+  cacheClear()
 })
 
 describe('warnOnAvailableUpgrade', () => {
@@ -17,7 +23,7 @@ describe('warnOnAvailableUpgrade', () => {
     vi.mocked(packageManagerFromUserAgent).mockReturnValue('yarn')
 
     // When
-    warnOnAvailableUpgrade()
+    await warnOnAvailableUpgrade()
 
     // Then
     expect(outputMock.warn()).toMatchInlineSnapshot(`
@@ -32,7 +38,7 @@ describe('warnOnAvailableUpgrade', () => {
     vi.mocked(packageManagerFromUserAgent).mockReturnValue('pnpm')
 
     // When
-    warnOnAvailableUpgrade()
+    await warnOnAvailableUpgrade()
 
     // Then
     expect(outputMock.warn()).toMatchInlineSnapshot(`
@@ -47,7 +53,7 @@ describe('warnOnAvailableUpgrade', () => {
     vi.mocked(packageManagerFromUserAgent).mockReturnValue('npm')
 
     // When
-    warnOnAvailableUpgrade()
+    await warnOnAvailableUpgrade()
 
     // Then
     expect(outputMock.warn()).toMatchInlineSnapshot(`
@@ -61,7 +67,7 @@ describe('warnOnAvailableUpgrade', () => {
     vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
 
     // When
-    warnOnAvailableUpgrade()
+    await warnOnAvailableUpgrade()
 
     // Then
     expect(outputMock.warn()).toEqual('')

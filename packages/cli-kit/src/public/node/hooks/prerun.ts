@@ -4,6 +4,7 @@ import {startAnalytics} from '../../../private/node/analytics.js'
 import {outputDebug, outputWarn, getOutputUpdateCLIReminder} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
+import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -20,7 +21,7 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
-  warnOnAvailableUpgrade()
+  await warnOnAvailableUpgrade()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
@@ -88,7 +89,7 @@ function findAlias(aliases: string[]) {
 /**
  * Warns the user if there is a new version of the CLI available
  */
-export function warnOnAvailableUpgrade(): void {
+export async function warnOnAvailableUpgrade(): Promise<void> {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
   if (currentVersion.startsWith('0.0.0')) {
@@ -101,9 +102,11 @@ export function warnOnAvailableUpgrade(): void {
   void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
 
   // Warn if we previously found a new version
-  const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
-  if (newerVersion) {
-    const packageManager = packageManagerFromUserAgent()
-    outputWarn(getOutputUpdateCLIReminder(packageManager, newerVersion))
-  }
+  await runAtMinimumInterval('warn-on-available-upgrade', {days: 1}, async () => {
+    const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
+    if (newerVersion) {
+      const packageManager = packageManagerFromUserAgent()
+      outputWarn(getOutputUpdateCLIReminder(packageManager, newerVersion))
+    }
+  })
 }
