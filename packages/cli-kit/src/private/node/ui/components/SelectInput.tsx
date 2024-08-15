@@ -114,7 +114,9 @@ function Item<T>({
 
       <Box key={index} marginLeft={hasAnyGroup ? 3 : 0}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={labelColor}>{showKey ? `(${item.key}) ${label}` : label}</Text>
+        <Text wrap="end" color={labelColor}>
+          {showKey ? `(${item.key}) ${label}` : label}
+        </Text>
       </Box>
     </Box>
   )
