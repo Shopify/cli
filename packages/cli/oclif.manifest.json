@@ -1563,15 +1563,6 @@
           "name": "api-key",
           "type": "option"
         },
-        "checkout-cart-url": {
-          "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
-          "env": "SHOPIFY_FLAG_CHECKOUT_CART_URL",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "checkout-cart-url",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1648,22 +1639,6 @@
           "name": "no-tunnel",
           "type": "boolean"
         },
-        "no-update": {
-          "allowNo": false,
-          "description": "Skips the Partners Dashboard URL update step.",
-          "env": "SHOPIFY_FLAG_NO_UPDATE",
-          "hidden": false,
-          "name": "no-update",
-          "type": "boolean"
-        },
-        "notify": {
-          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
-          "env": "SHOPIFY_FLAG_NOTIFY",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "notify",
-          "type": "option"
-        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
@@ -1682,14 +1657,6 @@
           ],
           "hidden": false,
           "name": "reset",
-          "type": "boolean"
-        },
-        "skip-dependencies-installation": {
-          "allowNo": false,
-          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
-          "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
-          "hidden": false,
-          "name": "skip-dependencies-installation",
           "type": "boolean"
         },
         "source": {
@@ -1720,47 +1687,6 @@
           "hidden": false,
           "multiple": false,
           "name": "store",
-          "type": "option"
-        },
-        "subscription-product-url": {
-          "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
-          "env": "SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "subscription-product-url",
-          "type": "option"
-        },
-        "theme": {
-          "char": "t",
-          "description": "Theme ID or name of the theme app extension host theme.",
-          "env": "SHOPIFY_FLAG_THEME",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "theme",
-          "type": "option"
-        },
-        "theme-app-extension-port": {
-          "description": "Local port of the theme app extension development server.",
-          "env": "SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "theme-app-extension-port",
-          "type": "option"
-        },
-        "tunnel-url": {
-          "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
-          "env": "SHOPIFY_FLAG_TUNNEL_URL",
-          "exclusive": [
-            "no-tunnel",
-            "tunnel"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "tunnel-url",
           "type": "option"
         },
         "verbose": {

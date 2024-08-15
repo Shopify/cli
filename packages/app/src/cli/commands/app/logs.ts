@@ -21,8 +21,22 @@ export default class Logs extends Command {
 
   static description = this.descriptionWithoutMarkdown()
 
-  static flags = {
-    ...Dev.flags,
+  static flags: any = {
+    ...Object.fromEntries(
+      Object.entries(Dev.flags).filter(
+        ([key]) =>
+          ![
+            'theme',
+            'checkout-cart-url',
+            'no-update',
+            'notify',
+            'skip-dependencies-installation',
+            'subscription-product-url',
+            'theme-app-extension-port',
+            'tunnel-url',
+          ].includes(key),
+      ),
+    ),
     source: Flags.string({
       description: 'Filters output to the specified log source.',
       env: 'SHOPIFY_FLAG_SOURCE',
@@ -51,10 +65,10 @@ export default class Logs extends Command {
 
     const sources = flags.source?.split(',')
 
-    await checkFolderIsValidApp(flags.path)
+    await checkFolderIsValidApp(flags.path!)
     const logOptions = {
       apiKey,
-      directory: flags.path,
+      directory: flags.path!,
       storeFqdn: flags.store,
       sources,
       status: flags.status,
