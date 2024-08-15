@@ -54,8 +54,6 @@ export function setupGraphiQLServer({
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
-  const localhostUrl = `http://localhost:${port}`
-
   const app = express()
 
   function failIfUnmatchedKey(str: string, res: express.Response): boolean {
@@ -135,7 +133,7 @@ export function setupGraphiQLServer({
         return res.send(
           await renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
-            url: localhostUrl,
+            url: `${req.protocol}://${req.get('host')}`,
           }),
         )
       }
@@ -157,7 +155,7 @@ export function setupGraphiQLServer({
           storeFqdn,
         }),
         {
-          url: localhostUrl,
+          url: `${req.protocol}://${req.get('host')}`,
           defaultQueries: [{query: defaultQuery}],
           query,
         },
