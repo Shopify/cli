@@ -125,6 +125,9 @@ export function setupGraphiQLServer({
     outputDebug('Handling /graphiql request', stdout)
     if (failIfUnmatchedKey(req.query.key as string, res)) return
 
+    const usesHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
+    const url = `http${usesHttps ? 's' : ''}://${req.get('host')}`
+
     let apiVersions: string[]
     try {
       apiVersions = await fetchApiVersionsWithTokenRefresh()
@@ -133,7 +136,7 @@ export function setupGraphiQLServer({
         return res.send(
           await renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
-            url: `${req.protocol}://${req.get('host')}`,
+            url,
           }),
         )
       }
@@ -155,7 +158,7 @@ export function setupGraphiQLServer({
           storeFqdn,
         }),
         {
-          url: `${req.protocol}://${req.get('host')}`,
+          url,
           defaultQueries: [{query: defaultQuery}],
           query,
         },
