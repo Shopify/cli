@@ -1,7 +1,7 @@
 import {checksum} from './asset-checksum.js'
 import {ThemeFileSystem, Key, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {consoleError, outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
@@ -46,7 +46,8 @@ const THEME_PARTITION_REGEX = {
 }
 
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
-  const checksumValues = await scanThemeFiles(root, THEME_DIRECTORY_PATTERNS)
+  const directoriesToWatch = THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? ''))
+  const checksumValues = await scanThemeFiles(root, directoriesToWatch)
   const files = new Map(
     checksumValues
       .filter(({key, checksum}) => key && checksum)
@@ -93,7 +94,6 @@ async function scanThemeFiles(root: string, directoriesToWatch: string[]): Promi
     ignoreInitial: false,
     persistent: true,
     awaitWriteFinish: true,
-    cwd: root,
     ignored: DEFAULT_IGNORE_PATTERNS,
   })
   const checksumValues: {[key: string]: string}[] = []
@@ -102,10 +102,12 @@ async function scanThemeFiles(root: string, directoriesToWatch: string[]): Promi
     watcher
       .on('add', (path) => {
         outputDebug(`Processing file: ${path}`)
-        checksum(root, path)
+        const relPath = relativePath(root, path)
+
+        checksum(root, relPath)
           .then((checksumValue) => {
-            checksumValues.push({key: path, checksum: checksumValue})
-            outputDebug(`Processed file: ${path}`)
+            checksumValues.push({key: relPath, checksum: checksumValue})
+            outputDebug(`Processed file: ${relPath}`)
           })
           .catch((error) => {
             watcher.emit('error', error)
