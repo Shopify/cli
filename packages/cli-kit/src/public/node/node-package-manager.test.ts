@@ -627,12 +627,29 @@ describe('checkForNewVersion', () => {
 
     // When
     await checkForNewVersion(dependency, currentVersion)
-    vi.setSystemTime(vi.getRealSystemTime() + 1000 * 3600 * 1000 - 10)
+    vi.setSystemTime(vi.getRealSystemTime() + 999 * 3600 * 1000)
     const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
 
     // Then
     expect(result).toBe(newestVersion)
     expect(latestVersion).toHaveBeenCalledTimes(1)
+  })
+
+  test('refreshes results when given a nonzero timeout that has expired', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+
+    // When
+    await checkForNewVersion(dependency, currentVersion)
+    vi.setSystemTime(vi.getRealSystemTime() + 1001 * 3600 * 1000)
+    const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
+
+    // Then
+    expect(result).toBe(newestVersion)
+    expect(latestVersion).toHaveBeenCalledTimes(2)
   })
 
   test('refreshes results when given no timeout', async () => {
