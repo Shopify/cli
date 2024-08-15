@@ -23,13 +23,18 @@ export async function render(session: DevServerSession, context: DevServerRender
     },
   })
 
-  outputDebug(`← ${response.status} (request_id: ${response.headers.get('x-request-id')})`)
+  const requestId = response.headers.get('x-request-id')
+  outputDebug(`← ${response.status} (request_id: ${requestId})`)
 
   if (!response.ok) {
     const isHtmlBody = Boolean(response.headers.get('content-type')?.startsWith('text/html'))
     const body = isHtmlBody ? '' : await response.text().catch(() => '')
 
-    throw new Error(`Request to ${url} failed: ${response.status} ${response.statusText}${body ? `\n${body}` : ''}`)
+    throw new Error(
+      `Request ${requestId ?? ''} to ${url} failed: ${response.status} ${response.statusText}${
+        body ? `\n${body}` : ''
+      }`,
+    )
   }
 
   return response
