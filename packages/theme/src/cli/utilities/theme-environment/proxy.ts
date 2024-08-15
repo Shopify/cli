@@ -1,5 +1,12 @@
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-import {defineEventHandler, clearResponseHeaders, sendProxy, getProxyRequestHeaders, type H3Event} from 'h3'
+import {
+  defineEventHandler,
+  clearResponseHeaders,
+  sendProxy,
+  getProxyRequestHeaders,
+  getRequestWebStream,
+  type H3Event,
+} from 'h3'
 import type {DevServerContext} from './types.js'
 
 export function getProxyHandler(ctx: DevServerContext) {
@@ -45,6 +52,7 @@ const HOP_BY_HOP_HEADERS = [
 function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   const target = `https://${ctx.session.storeFqdn}${event.path}`
   const pathname = event.path.split('?')[0]!
+  const body = getRequestWebStream(event)
 
   const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string | undefined}
   // Required header for CDN requests
@@ -57,6 +65,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
 
   return sendProxy(event, target, {
     headers: proxyRequestHeaders,
+    fetchOptions: {method: event.method, body, duplex: body ? 'half' : undefined},
     async onResponse(event, response) {
       clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
 
