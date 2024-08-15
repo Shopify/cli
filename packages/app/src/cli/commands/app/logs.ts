@@ -3,8 +3,10 @@ import Command from '../../utilities/app-command.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appLogPollingEnabled} from '../../services/app-logs/utils.js'
+import {appFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Logs extends Command {
   static hidden = true
@@ -21,22 +23,17 @@ export default class Logs extends Command {
 
   static description = this.descriptionWithoutMarkdown()
 
-  static flags: any = {
-    ...Object.fromEntries(
-      Object.entries(Dev.flags).filter(
-        ([key]) =>
-          ![
-            'theme',
-            'checkout-cart-url',
-            'no-update',
-            'notify',
-            'skip-dependencies-installation',
-            'subscription-product-url',
-            'theme-app-extension-port',
-            'tunnel-url',
-          ].includes(key),
-      ),
-    ),
+  static flags = {
+    ...globalFlags,
+    ...appFlags,
+    'api-key': Dev.flags['api-key'],
+    'client-id': Dev.flags['client-id'],
+    store: Dev.flags.store,
+    reset: Dev.flags.reset,
+    'no-tunnel': Dev.flags['no-tunnel'],
+    'graphiql-port': Dev.flags['graphiql-port'],
+    'graphiql-key': Dev.flags['graphiql-key'],
+    'dev-preview': Dev.flags['dev-preview'],
     source: Flags.string({
       description: 'Filters output to the specified log source.',
       env: 'SHOPIFY_FLAG_SOURCE',
@@ -65,10 +62,10 @@ export default class Logs extends Command {
 
     const sources = flags.source?.split(',')
 
-    await checkFolderIsValidApp(flags.path!)
+    await checkFolderIsValidApp(flags.path)
     const logOptions = {
       apiKey,
-      directory: flags.path!,
+      directory: flags.path,
       storeFqdn: flags.store,
       sources,
       status: flags.status,
