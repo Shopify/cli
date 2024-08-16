@@ -1,13 +1,7 @@
-import {injectCdnProxy} from './proxy.js'
+import {getProxyStorefrontHeaders, injectCdnProxy} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {
-  defineEventHandler,
-  setResponseHeaders,
-  setResponseStatus,
-  removeResponseHeader,
-  getProxyRequestHeaders,
-} from 'h3'
+import {defineEventHandler, setResponseHeaders, setResponseStatus, removeResponseHeader} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -25,7 +19,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       themeId: String(theme.id),
       cookies: headers.get('cookie') || '',
       sectionId: '',
-      headers: getProxyRequestHeaders(event),
+      headers: getProxyStorefrontHeaders(event),
       replaceTemplates: getInMemoryTemplates(),
     }).catch(async (error: Error) => {
       const headline = 'Failed to render storefront.'
