@@ -10,7 +10,7 @@ import {beforeAll, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 
-vi.mock('./hooks/setup-extension-watcher-for-replay.js')
+vi.mock('./hooks/useFunctionWatcher.js')
 
 interface FunctionRun {
   type: 'functionRun'

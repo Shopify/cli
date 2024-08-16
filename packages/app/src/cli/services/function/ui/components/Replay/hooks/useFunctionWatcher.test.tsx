@@ -15,9 +15,9 @@ import React from 'react'
 
 vi.mock('fs')
 vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('../generate-schema.js')
+vi.mock('../../generate-schema.js')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('../../../../dev/extension/bundler.js')
+vi.mock('../../../../../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
 
 const SELECTED_RUN = {

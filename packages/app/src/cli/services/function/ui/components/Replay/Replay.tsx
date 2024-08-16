@@ -72,12 +72,24 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
   )
 }
 
+function Header({title, backgroundColor}: {title: string; backgroundColor: string}) {
+  const numSpaces = Math.max(Math.round((28 - title.length) / 2), 0)
+  const spaces = ' '.repeat(numSpaces)
+  return (
+    <Text backgroundColor={backgroundColor} color="black">
+      {'\n\n'}
+      {spaces}
+      {title}
+      {spaces}
+      {'\n'}
+    </Text>
+  )
+}
+
 function InputDisplay({input}: {input: string}) {
   return (
     <Box flexDirection="column">
-      <Text color="black" backgroundColor="yellow">
-        {'\n\n            Input            \n'}
-      </Text>
+      <Header title="Input" backgroundColor="yellow"/>
       <Text>{prettyPrintJsonIfPossible(input)}</Text>
     </Box>
   )
@@ -85,10 +97,8 @@ function InputDisplay({input}: {input: string}) {
 
 function LogDisplay({logs}: {logs: string}) {
   return (
-    <Box flexDirection="column" >
-      <Text color="black" backgroundColor="blueBright">
-        {'\n\n            Logs            \n'}
-      </Text>
+    <Box flexDirection="column">
+      <Header title="Logs" backgroundColor="blueBright"/>
       <Text>{logs}</Text>
     </Box>
   )
@@ -97,9 +107,7 @@ function LogDisplay({logs}: {logs: string}) {
 function OutputDisplay({output}: {output: string}) {
   return (
     <Box flexDirection="column">
-      <Text color="black" backgroundColor="greenBright">
-        {'\n\n           Output           \n'}
-      </Text>
+      <Header title="Output" backgroundColor="greenBright"/>
       <Text>{prettyPrintJsonIfPossible(output)}</Text>
     </Box>
   )
@@ -108,9 +116,7 @@ function OutputDisplay({output}: {output: string}) {
 function BenchmarkDisplay({functionRun}: {functionRun: FunctionRunFromRunner}) {
   return (
     <Box flexDirection="column">
-      <Text color="black" backgroundColor="green">
-        {'\n\n     Benchmark Results      \n'}
-      </Text>
+      <Header title="Benchmark Results" backgroundColor="green"/>
       <Text>Name: {functionRun.name}</Text>
       <Text>Linear Memory Usage: {functionRun.memory_usage}KB</Text>
       <Text>Instructions: {functionRun.instructions / 1000}K</Text>
