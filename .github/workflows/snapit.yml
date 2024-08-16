@@ -21,6 +21,11 @@ jobs:
           echo "$GITHUB_CONTEXT"
       - name: Checkout current branch
         uses: actions/checkout@v4
+      - name: Checkout PR branch
+        run: |
+            gh pr checkout ${{ github.event.issue.number }}
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
