@@ -38,6 +38,10 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
   })
 }
 
+function getStoreFqdnForRegEx(ctx: DevServerContext) {
+  return ctx.session.storeFqdn.replaceAll('.', '\\.')
+}
+
 /**
  * Replaces every VanityCDN-like (...myshopify.com/cdn/...) URL to pass through the local server.
  * It also replaces MainCDN-like (cdn.shopify.com/...) URLs to files that are known local assets.
@@ -48,7 +52,7 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
 
   // -- Redirect all usages to the vanity CDN to the local server:
   const vanityCdnPath = '/cdn/'
-  const vanityCdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${vanityCdnPath}`, 'g')
+  const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${vanityCdnPath}`, 'g')
   content = content.replace(vanityCdnRE, vanityCdnPath)
 
   // -- Only redirect usages of the main CDN for known local assets to the local server:
@@ -65,17 +69,14 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
 
 function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
   const newBaseUrl = `http://${ctx.options.host}:${ctx.options.port}`
-  const dataBaseUrlRE = new RegExp(
-    `data-base-url=["']((?:https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')})[^"']*?["']`,
-    'g',
-  )
+  const dataBaseUrlRE = new RegExp(`data-base-url=["']((?:https?:)?//${getStoreFqdnForRegEx(ctx)})[^"']*?["']`, 'g')
 
   return html.replaceAll(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
 }
 
 function patchCookieWithProxy(cookieHeader: string[], ctx: DevServerContext) {
   // Domains are invalid for localhost:
-  const domainRE = new RegExp(`Domain=${ctx.session.storeFqdn.replaceAll('.', '\\.')};\\s*`, 'gi')
+  const domainRE = new RegExp(`Domain=${getStoreFqdnForRegEx(ctx)};\\s*`, 'gi')
   return cookieHeader.map((value) => value.replace(domainRE, '')).join(', ')
 }
 
