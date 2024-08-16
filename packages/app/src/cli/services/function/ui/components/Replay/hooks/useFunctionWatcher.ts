@@ -75,7 +75,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
         stdout: customStdout,
         stderr: customStdout,
         onChange: async () => {
-          setError('')
+          setError(undefined)
           setStatusMessage('Re-running with latest changes...')
           const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
 
