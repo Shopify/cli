@@ -61,6 +61,8 @@ function hotReloadScript() {
     if (!event.data || typeof event.data !== 'string') return
 
     const data = JSON.parse(event.data) as HotReloadEvent
+    logInfo('Event data:', data)
+
     if (data.type === 'open') {
       serverPid ??= data.pid
       if (serverPid !== data.pid) fullPageReload('Reconnected to new server')
@@ -111,7 +113,8 @@ function hotReloadScript() {
       )
 
       for (const element of elements) {
-        element.href = element.href.replace(/v=\d+$/, `v=${Date.now()}`)
+        // The `href` property prepends the host to the pathname. Use attributes instead:
+        element.setAttribute('href', element.getAttribute('href')!.replace(/v=\d+$/, `v=${Date.now()}`))
         logInfo('Updated CSS:', data.key)
       }
     } else if (data.type === 'full') {
