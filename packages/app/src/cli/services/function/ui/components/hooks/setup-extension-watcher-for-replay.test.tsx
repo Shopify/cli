@@ -20,19 +20,6 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../../../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
 
-const defaultConfig = {
-  name: 'MyFunction',
-  type: 'product_discounts',
-  build: {
-    command: 'make build',
-    path: 'dist/index.wasm',
-  },
-  configuration_ui: true,
-  api_version: '2022-07',
-  metafields: [],
-  handle: 'function-handle',
-}
-
 const SELECTED_RUN = {
   shopId: 69665030382,
   apiClientId: 124042444801,
@@ -58,6 +45,10 @@ const SELECTED_RUN = {
   logTimestamp: '2024-08-02T17:45:27.382075Z',
   identifier: '123456',
 } as FunctionRunData
+
+const ABORT_CONTROLLER = new AbortController()
+const APP = testApp()
+const EXTENSION = await testFunctionExtension()
 
 const EXEC_RESPONSE = {
   input: SELECTED_RUN.payload.input,
@@ -90,11 +81,6 @@ describe('setupExtensionWatcherForReplay', () => {
 
   test('runs function once in watch mode without changes', async () => {
     // Given
-    const selectedRun = SELECTED_RUN
-    const abortController = new AbortController()
-    const app = testApp()
-    const extension = await testFunctionExtension({config: defaultConfig})
-
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
       stdout.write(JSON.stringify(EXEC_RESPONSE))
@@ -105,10 +91,10 @@ describe('setupExtensionWatcherForReplay', () => {
     // When
     const hook = renderHook(() =>
       setupExtensionWatcherForReplay({
-        selectedRun,
-        abortController,
-        app,
-        extension,
+        selectedRun: SELECTED_RUN,
+        abortController: ABORT_CONTROLLER,
+        app: APP,
+        extension: EXTENSION,
       }),
     )
     // needed to await the render
@@ -122,11 +108,6 @@ describe('setupExtensionWatcherForReplay', () => {
 
   test('file watcher onChange re-runs function', async () => {
     // Given
-    const selectedRun = SELECTED_RUN
-    const abortController = new AbortController()
-    const app = testApp()
-    const extension = await testFunctionExtension({config: defaultConfig})
-
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFnFirst = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
       stdout.write(JSON.stringify(EXEC_RESPONSE))
@@ -141,10 +122,10 @@ describe('setupExtensionWatcherForReplay', () => {
     // When
     const hook = renderHook(() =>
       setupExtensionWatcherForReplay({
-        selectedRun,
-        abortController,
-        app,
-        extension,
+        selectedRun: SELECTED_RUN,
+        abortController: ABORT_CONTROLLER,
+        app: APP,
+        extension: EXTENSION,
       }),
     )
     // needed to await the render
@@ -164,11 +145,6 @@ describe('setupExtensionWatcherForReplay', () => {
 
   test('renders fatal error in onReloadAndBuildError', async () => {
     // Given
-    const selectedRun = SELECTED_RUN
-    const abortController = new AbortController()
-    const app = testApp()
-    const extension = await testFunctionExtension({config: defaultConfig})
-
     const rfeSpy = vi.spyOn(ui, 'renderFatalError')
     const expectedError = new AbortError('abort!')
 
@@ -182,10 +158,10 @@ describe('setupExtensionWatcherForReplay', () => {
     // When
     renderHook(() =>
       setupExtensionWatcherForReplay({
-        selectedRun,
-        abortController,
-        app,
-        extension,
+        selectedRun: SELECTED_RUN,
+        abortController: ABORT_CONTROLLER,
+        app: APP,
+        extension: EXTENSION,
       }),
     )
 
@@ -202,11 +178,6 @@ describe('setupExtensionWatcherForReplay', () => {
 
   test('outputs non-fatal error in onReloadAndBuildError', async () => {
     // Given
-    const selectedRun = SELECTED_RUN
-    const abortController = new AbortController()
-    const app = testApp()
-    const extension = await testFunctionExtension({config: defaultConfig})
-
     const expectedError = new Error('non-fatal error')
 
     const execSpy = vi.spyOn(system, 'exec')
@@ -219,10 +190,10 @@ describe('setupExtensionWatcherForReplay', () => {
     // When
     renderHook(() =>
       setupExtensionWatcherForReplay({
-        selectedRun,
-        abortController,
-        app,
-        extension,
+        selectedRun: SELECTED_RUN,
+        abortController: ABORT_CONTROLLER,
+        app: APP,
+        extension: EXTENSION,
       }),
     )
 
@@ -241,8 +212,8 @@ describe('setupExtensionWatcherForReplay', () => {
 
     // Given
     const abortController = new AbortController()
-    const abort = vi.spyOn(abortController, 'abort')
-    const extension = await testFunctionExtension({config: defaultConfig})
+    const abortSpy = vi.spyOn(abortController, 'abort')
+    const extension = await testFunctionExtension()
 
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
@@ -262,7 +233,7 @@ describe('setupExtensionWatcherForReplay', () => {
 
     await promise
     // Then
-    expect(abort).toHaveBeenCalledOnce()
+    expect(abortSpy).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstanceReplay.unmount()
@@ -273,8 +244,8 @@ describe('setupExtensionWatcherForReplay', () => {
 
     // Given
     const abortController = new AbortController()
-    const abort = vi.spyOn(abortController, 'abort')
-    const extension = await testFunctionExtension({config: defaultConfig})
+    const abortSpy = vi.spyOn(abortController, 'abort')
+    const extension = await testFunctionExtension()
 
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
@@ -294,7 +265,7 @@ describe('setupExtensionWatcherForReplay', () => {
 
     await promise
     // Then
-    expect(abort).toHaveBeenCalledOnce()
+    expect(abortSpy).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstanceReplay.unmount()

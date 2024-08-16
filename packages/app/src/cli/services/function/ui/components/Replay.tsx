@@ -1,4 +1,4 @@
-import {setupExtensionWatcherForReplay} from './hooks/setup-extension-watcher-for-replay.js'
+import {FunctionRunFromRunner, SystemMessage, setupExtensionWatcherForReplay} from './hooks/setup-extension-watcher-for-replay.js'
 import {FunctionRunData} from '../../replay.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
@@ -16,23 +16,7 @@ export interface ReplayProps {
   extension: ExtensionInstance<FunctionConfigType>
 }
 
-interface FunctionRun {
-  type: 'functionRun'
-  input: string
-  output: string
-  logs: string
-  name: string
-  size: number
-  memory_usage: number
-  instructions: number
-}
-
-interface SystemMessage {
-  type: 'systemMessage'
-  message: string
-}
-
-type ReplayLog = FunctionRun | SystemMessage
+type ReplayLog = FunctionRunFromRunner | SystemMessage
 
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
   const {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error} = setupExtensionWatcherForReplay({
@@ -121,7 +105,7 @@ function OutputDisplay({output}: {output: string}) {
   )
 }
 
-function BenchmarkDisplay({functionRun}: {functionRun: FunctionRun}) {
+function BenchmarkDisplay({functionRun}: {functionRun: FunctionRunFromRunner}) {
   return (
     <Box flexDirection="column">
       <Text color="black" backgroundColor="green">
@@ -135,7 +119,7 @@ function BenchmarkDisplay({functionRun}: {functionRun: FunctionRun}) {
   )
 }
 
-function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRun, FunctionRun]}) {
+function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRunFromRunner, FunctionRunFromRunner]}) {
   const delta = recentFunctionRuns[0].instructions - recentFunctionRuns[1].instructions
   return (
     <Box flexDirection="column">

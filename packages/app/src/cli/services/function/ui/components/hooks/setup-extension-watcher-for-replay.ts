@@ -15,7 +15,7 @@ import {FatalError} from '@shopify/cli-kit/node/error'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
-interface FunctionRun {
+export interface FunctionRunFromRunner {
   type: 'functionRun'
   input: string
   output: string
@@ -26,12 +26,12 @@ interface FunctionRun {
   instructions: number
 }
 
-interface SystemMessage {
+export interface SystemMessage {
   type: 'systemMessage'
   message: string
 }
 
-type ReplayLog = FunctionRun | SystemMessage
+type ReplayLog = FunctionRunFromRunner | SystemMessage
 
 interface WatchFunctionForReplayOptions {
   selectedRun: FunctionRunData
@@ -55,10 +55,10 @@ export function setupExtensionWatcherForReplay({
     size: 0,
     memory_usage: 0,
     instructions: selectedRun.payload.fuelConsumed,
-  } as FunctionRun
+  } as FunctionRunFromRunner
 
   const [logs, setLogs] = useState<ReplayLog[]>([])
-  const [recentFunctionRuns, setRecentFunctionRuns] = useState<[FunctionRun, FunctionRun]>([
+  const [recentFunctionRuns, setRecentFunctionRuns] = useState<[FunctionRunFromRunner, FunctionRunFromRunner]>([
     functionRunFromSelectedRun,
     functionRunFromSelectedRun,
   ])
@@ -171,7 +171,7 @@ async function runFunctionRunnerWithLogInput(
   fun: ExtensionInstance<FunctionConfigType>,
   input: string,
   exportName: string,
-): Promise<FunctionRun> {
+): Promise<FunctionRunFromRunner> {
   let functionRunnerOutput = ''
   const customStdout = new Writable({
     write(chunk, _encoding, next) {
