@@ -2,14 +2,11 @@ import Dev from './dev.js'
 import Command from '../../utilities/app-command.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
-import {appLogPollingEnabled} from '../../services/app-logs/utils.js'
 import {appFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Logs extends Command {
-  static hidden = true
   static summary = 'Stream detailed logs for your Shopify app.'
 
   static descriptionWithMarkdown = `
@@ -51,11 +48,6 @@ export default class Logs extends Command {
   }
 
   public async run(): Promise<void> {
-    if (!appLogPollingEnabled()) {
-      throw new AbortError(
-        'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
-      )
-    }
     const {flags} = await this.parse(Logs)
 
     const apiKey = flags['client-id'] || flags['api-key']
