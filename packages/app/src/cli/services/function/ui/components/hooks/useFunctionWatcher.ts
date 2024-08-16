@@ -40,12 +40,7 @@ interface WatchFunctionForReplayOptions {
   extension: ExtensionInstance<FunctionConfigType>
 }
 
-export function setupExtensionWatcherForReplay({
-  selectedRun,
-  abortController,
-  app,
-  extension,
-}: WatchFunctionForReplayOptions) {
+export function useFunctionWatcher({selectedRun, abortController, app, extension}: WatchFunctionForReplayOptions) {
   const functionRunFromSelectedRun = {
     type: 'functionRun',
     input: selectedRun.payload.input,

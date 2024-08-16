@@ -1,5 +1,5 @@
 import {Replay} from './Replay.js'
-import {setupExtensionWatcherForReplay} from './hooks/setup-extension-watcher-for-replay.js'
+import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
 import {testFunctionExtension, testApp} from '../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
@@ -90,7 +90,7 @@ describe('Replay', () => {
       error: '',
     }
     const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
-    vi.mocked(setupExtensionWatcherForReplay).mockImplementation(mockedsetupExtensionWatcherForReplay)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
 
     const renderInstanceReplay = render(
       <Replay
@@ -118,7 +118,7 @@ describe('Replay', () => {
       error: 'some error',
     }
     const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
-    vi.mocked(setupExtensionWatcherForReplay).mockImplementation(mockedsetupExtensionWatcherForReplay)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
 
     const renderInstanceReplay = render(
       <Replay

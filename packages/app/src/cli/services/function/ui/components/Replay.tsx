@@ -1,4 +1,4 @@
-import {FunctionRunFromRunner, SystemMessage, setupExtensionWatcherForReplay} from './hooks/setup-extension-watcher-for-replay.js'
+import {FunctionRunFromRunner, SystemMessage, useFunctionWatcher} from './hooks/useFunctionWatcher.js'
 import {FunctionRunData} from '../../replay.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
@@ -19,7 +19,7 @@ export interface ReplayProps {
 type ReplayLog = FunctionRunFromRunner | SystemMessage
 
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
-  const {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error} = setupExtensionWatcherForReplay({
+  const {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error} = useFunctionWatcher({
     selectedRun,
     abortController,
     app,

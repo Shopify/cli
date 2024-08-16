@@ -1,4 +1,4 @@
-import {setupExtensionWatcherForReplay} from './setup-extension-watcher-for-replay.js'
+import {useFunctionWatcher} from './useFunctionWatcher.js'
 import {FunctionRunData} from '../../../replay.js'
 import {testApp, testFunctionExtension} from '../../../../../models/app/app.test-data.js'
 import {setupExtensionWatcher} from '../../../../dev/extension/bundler.js'
@@ -90,7 +90,7 @@ describe('setupExtensionWatcherForReplay', () => {
 
     // When
     const hook = renderHook(() =>
-      setupExtensionWatcherForReplay({
+      useFunctionWatcher({
         selectedRun: SELECTED_RUN,
         abortController: ABORT_CONTROLLER,
         app: APP,
@@ -121,7 +121,7 @@ describe('setupExtensionWatcherForReplay', () => {
 
     // When
     const hook = renderHook(() =>
-      setupExtensionWatcherForReplay({
+      useFunctionWatcher({
         selectedRun: SELECTED_RUN,
         abortController: ABORT_CONTROLLER,
         app: APP,
@@ -157,7 +157,7 @@ describe('setupExtensionWatcherForReplay', () => {
 
     // When
     renderHook(() =>
-      setupExtensionWatcherForReplay({
+      useFunctionWatcher({
         selectedRun: SELECTED_RUN,
         abortController: ABORT_CONTROLLER,
         app: APP,
@@ -189,7 +189,7 @@ describe('setupExtensionWatcherForReplay', () => {
 
     // When
     renderHook(() =>
-      setupExtensionWatcherForReplay({
+      useFunctionWatcher({
         selectedRun: SELECTED_RUN,
         abortController: ABORT_CONTROLLER,
         app: APP,
