@@ -9,7 +9,7 @@ export interface FunctionRunFromRunner {
   instructions: number
 }
 
-export interface SystemMessage {
+interface SystemMessage {
   type: 'systemMessage'
   message: string
 }
