@@ -1,7 +1,14 @@
 import {getProxyStorefrontHeaders, injectCdnProxy} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {defineEventHandler, setResponseHeaders, setResponseStatus, removeResponseHeader, sendWebResponse} from 'h3'
+import {
+  defineEventHandler,
+  setResponseHeaders,
+  setResponseStatus,
+  removeResponseHeader,
+  sendWebResponse,
+  type H3Error,
+} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -21,8 +28,9 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
       replaceTemplates: getInMemoryTemplates(),
-    }).catch(async (error: Error) => {
-      const headline = 'Failed to render storefront.'
+    }).catch(async (error: H3Error<{requestId?: string}>) => {
+      const requestId = error.data?.requestId ?? ''
+      const headline = `Failed to render storefront ${requestId}`
       renderError({headline, body: error.stack ?? error.message})
       await sendWebResponse(
         event,
@@ -33,12 +41,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
             message: error.message,
             code: error.stack?.replace(`${error.message}\n`, '') ?? '',
           }),
-          {status: 502, headers: {'content-type': 'text/html'}},
+          {status: error.statusCode, headers: {'content-type': 'text/html'}},
         ),
       )
     })
 
-    if (!response) return
+    if (!response) return null
 
     setResponseStatus(event, response.status, response.statusText)
 
