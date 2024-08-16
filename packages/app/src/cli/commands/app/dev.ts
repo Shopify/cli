@@ -145,7 +145,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
-
+    console.log('TESTING IF SNAPIT WORKS')
     if (!flags['api-key']) {
       if (process.env.SHOPIFY_API_KEY) {
         flags['api-key'] = process.env.SHOPIFY_API_KEY
