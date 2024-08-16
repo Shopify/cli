@@ -164,8 +164,11 @@ export const handleFetchAppLogsError = async (
   return {retryIntervalMs, nextJwtToken}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const toFormattedAppLogJson = (appLog: AppLogData, appLogPayload: AppLogPayload | any): string => {
+export const toFormattedAppLogJson = (
+  appLog: AppLogData,
+  appLogPayload: AppLogPayload | unknown,
+  prettyPrint = true,
+): string => {
   const {cursor: _, ...appLogWithoutCursor} = appLog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toSaveData: any = camelcaseKeys(
@@ -180,7 +183,11 @@ export const toFormattedAppLogJson = (appLog: AppLogData, appLogPayload: AppLogP
     toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
   }
 
-  return JSON.stringify(toSaveData, null, 2)
+  if (prettyPrint) {
+    return JSON.stringify(toSaveData, null, 2)
+  } else {
+    return JSON.stringify(toSaveData)
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
