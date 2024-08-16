@@ -1,4 +1,4 @@
-import {setupExtensionWatcherForReplay} from './extension-watcher.js'
+import {setupExtensionWatcherForReplay} from './setup-extension-watcher-for-replay.js'
 import {FunctionRunData} from '../../../replay.js'
 import {testApp, testFunctionExtension} from '../../../../../models/app/app.test-data.js'
 import {setupExtensionWatcher} from '../../../../dev/extension/bundler.js'
@@ -239,6 +239,35 @@ describe('setupExtensionWatcherForReplay', () => {
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(outputWarn).toHaveBeenCalledWith(`Failed to replay function: ${expectedError.message}`)
   })
+
+  // test('quits when q is pressed', async () => {
+  //   // Given
+
+  //   const selectedRun = SELECTED_RUN
+  //   const abortController = new AbortController()
+  //   const abort = vi.spyOn(abortController, 'abort')
+  //   const app = testApp()
+  //   const extension = await testFunctionExtension({config: defaultConfig})
+
+  //   // When
+  //   const hook = renderHook(() =>
+  //     setupExtensionWatcherForReplay({
+  //       selectedRun,
+  //       abortController,
+  //       app,
+  //       extension,
+  //     }),
+  //   )
+
+  //   const promise = hook.waitUntilExit()
+
+  //   await waitForInputsToBeReady()
+  //   renderInstance.stdin.write('q')
+
+  //   await promise
+  //   // Then
+  //   expect(abort).toHaveBeenCalledOnce()
+  // })
 })
 
 function renderHook<THookResult>(renderHookCallback: () => THookResult) {
