@@ -73,7 +73,6 @@ export function setupExtensionWatcherForReplay({
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
 
   useEffect(() => {
-    // run the selectedRun once
     const initialReplay = async () => {
       setStatusMessage('Replaying log with local function...')
       const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
@@ -120,7 +119,6 @@ export function setupExtensionWatcherForReplay({
         signal: abortController.signal,
       })
     }
-    // Confirm if this is required: a way to clean up watcher?
 
     // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/no-floating-promises
     initialReplay().then(() => {
