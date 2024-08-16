@@ -1,4 +1,5 @@
 import {FunctionRunFromRunner, ReplayLog} from './types.js'
+import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
 import {FunctionRunData} from '../../../replay.js'
 import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
@@ -8,7 +9,6 @@ import figures from '@shopify/cli-kit/node/figures'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React, {FunctionComponent} from 'react'
 import {Box, Text, Static} from '@shopify/cli-kit/node/ink'
-import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 
 export interface ReplayProps {

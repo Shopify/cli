@@ -3,18 +3,17 @@ import {AppInterface} from '../../../../../../models/app/app.js'
 import {FunctionConfigType} from '../../../../../../models/extensions/specifications/function.js'
 import {ExtensionInstance} from '../../../../../../models/extensions/extension-instance.js'
 import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
+import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useRef, useState} from 'react'
 import {useInput, useStdin} from '@shopify/cli-kit/node/ink'
-import {handleCtrlC, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {FatalError} from '@shopify/cli-kit/node/error'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
-import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 
 interface WatchFunctionForReplayOptions {
   selectedRun: FunctionRunData
@@ -87,11 +86,10 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
           setLogs((logs) => [...logs, functionRun])
         },
         onReloadAndBuildError: async (error) => {
-          setError('Error while reloading and building extension')
           if (error instanceof FatalError) {
-            renderFatalError(error)
+            setError(`Fatal error while reloading and building extension: ${error.formattedMessage || error.message}`)
           } else {
-            outputWarn(`Failed to replay function: ${error.message}`)
+            setError(`Error while reloading and building extension: ${error.message}`)
           }
         },
         signal: abortController.signal,

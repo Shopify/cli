@@ -6,19 +6,12 @@ import {Replay} from '../Replay.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
-import {outputWarn} from '@shopify/cli-kit/node/output'
-import * as ui from '@shopify/cli-kit/node/ui'
 import * as system from '@shopify/cli-kit/node/system'
 
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
 
-vi.mock('fs')
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('../../generate-schema.js')
-vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../../../../dev/extension/bundler.js')
-vi.mock('@shopify/cli-kit/node/output')
 
 const SELECTED_RUN = {
   shopId: 69665030382,
@@ -143,10 +136,9 @@ describe('setupExtensionWatcherForReplay', () => {
     expect(execSpy).toHaveBeenCalledTimes(2)
   })
 
-  test('renders fatal error in onReloadAndBuildError', async () => {
+  test('renders error in onReloadAndBuildError', async () => {
     // Given
-    const rfeSpy = vi.spyOn(ui, 'renderFatalError')
-    const expectedError = new AbortError('abort!')
+    const expectedError = new Error('error!')
 
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
@@ -156,7 +148,7 @@ describe('setupExtensionWatcherForReplay', () => {
     execSpy.mockImplementationOnce(mockExecFn)
 
     // When
-    renderHook(() =>
+    const hook = renderHook(() =>
       useFunctionWatcher({
         selectedRun: SELECTED_RUN,
         abortController: ABORT_CONTROLLER,
@@ -173,12 +165,12 @@ describe('setupExtensionWatcherForReplay', () => {
     // Then
     expect(execSpy).toHaveBeenCalledOnce()
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(rfeSpy).toHaveBeenCalledWith(expectedError)
+    expect(hook.lastResult?.error).toEqual('Error while reloading and building extension: error!')
   })
 
-  test('outputs non-fatal error in onReloadAndBuildError', async () => {
+  test('renders fatal error in onReloadAndBuildError', async () => {
     // Given
-    const expectedError = new Error('non-fatal error')
+    const expectedError = new AbortError('abort!', 'test')
 
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
@@ -188,7 +180,7 @@ describe('setupExtensionWatcherForReplay', () => {
     execSpy.mockImplementationOnce(mockExecFn)
 
     // When
-    renderHook(() =>
+    const hook = renderHook(() =>
       useFunctionWatcher({
         selectedRun: SELECTED_RUN,
         abortController: ABORT_CONTROLLER,
@@ -203,8 +195,9 @@ describe('setupExtensionWatcherForReplay', () => {
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
 
     // Then
+    expect(execSpy).toHaveBeenCalledOnce()
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(outputWarn).toHaveBeenCalledWith(`Failed to replay function: ${expectedError.message}`)
+    expect(hook.lastResult?.error).toEqual('Fatal error while reloading and building extension: abort!')
   })
 
   test('quits when q is pressed', async () => {
