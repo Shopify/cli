@@ -6,6 +6,7 @@ import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
+import {pushUpdatesForDevSession} from './dev-session.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -241,6 +242,73 @@ describe('setup-dev-processes', () => {
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,
         },
+      },
+    })
+  })
+
+  test('process list includes dev-session when consistentDev is true', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      directory: '',
+      reset: false,
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      noTunnel: false,
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+    const localApp = testAppWithConfig()
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecret: 'api-secret',
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+    }
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey: 'somekey',
+      consistentDev: true,
+    })
+
+    expect(res.processes[2]).toMatchObject({
+      type: 'dev-session',
+      prefix: 'extensions',
+      function: pushUpdatesForDevSession,
+      options: {
+        app: localApp,
+        apiKey: 'api-key',
+        developerPlatformClient,
+        url: 'https://example.com/proxy',
+        appId: '1234',
+        organizationId: '5678',
+        storeFqdn: 'store.myshopify.io',
       },
     })
   })
