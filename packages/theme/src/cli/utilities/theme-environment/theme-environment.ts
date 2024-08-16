@@ -31,9 +31,9 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
 }
 
 async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Promise<{close: () => Promise<void>}> {
-  const app = createApp()
-
   const {stopWatcher} = await setupTemplateWatcher(ctx)
+
+  const app = createApp()
 
   if (ctx.options.liveReload !== 'off') {
     app.use(getHotReloadHandler(theme, ctx))

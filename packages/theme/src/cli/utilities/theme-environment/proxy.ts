@@ -7,6 +7,8 @@ import {
   getRequestWebStream,
   getRequestIP,
   type H3Event,
+  type H3Error,
+  sendError,
 } from 'h3'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -26,7 +28,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
       return null
     }
 
-    if (!event.headers.get('accept')?.includes('text/html')) {
+    if (event.path.startsWith('/cdn/') || !event.headers.get('accept')?.includes('text/html')) {
       return proxyStorefrontRequest(event, ctx)
     }
   })
@@ -80,22 +82,20 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
 
   return sendProxy(event, target, {
     headers: proxyHeaders,
-    fetchOptions: {method: event.method, body, duplex: body ? 'half' : undefined},
+    fetchOptions: {ignoreResponseError: false, method: event.method, body, duplex: body ? 'half' : undefined},
     cookieDomainRewrite: `http://${ctx.options.host}:${ctx.options.port}`,
-    async onResponse(event, response) {
+    async onResponse(event) {
       clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
-
-      if (!response.ok && response.status >= 500) {
-        renderWarning({
-          headline: `Failed to proxy request to ${pathname}`,
-          body: `${response.status} - ${response.statusText}`,
-        })
-      }
     },
-  }).catch((error) => {
-    renderWarning({
-      headline: `Failed to proxy request to ${pathname}`,
-      body: error.stack ?? error.message,
-    })
+  }).catch(async (error: H3Error) => {
+    if (error.statusCode >= 500) {
+      renderWarning({
+        headline: `Failed to proxy request to ${pathname} - ${error.statusCode} - ${error.statusMessage}`,
+        body: error.stack ?? error.message,
+      })
+    }
+
+    await sendError(event, error)
+    return null
   })
 }

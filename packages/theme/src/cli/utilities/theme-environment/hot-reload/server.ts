@@ -7,6 +7,7 @@ import {
   getProxyRequestHeaders,
   getQuery,
   removeResponseHeader,
+  sendWebResponse,
   setResponseHeaders,
   setResponseStatus,
 } from 'h3'
@@ -130,7 +131,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       }).catch(async (error) => {
         const headline = 'Failed to render section on Hot Reload.'
         renderWarning({headline, body: error.stack ?? error.message})
-        await event.respondWith(new Response('', {status: 502}))
+        await sendWebResponse(event, new Response('', {status: 502}))
       })
 
       if (!response) return
