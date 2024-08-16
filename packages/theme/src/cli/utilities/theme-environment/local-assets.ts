@@ -1,6 +1,6 @@
 import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
-import {defineEventHandler, serveStatic} from 'h3'
+import {defineEventHandler, serveStatic, setResponseHeader} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stat} from 'fs/promises'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -15,6 +15,8 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     const fileKey = assetsFilename && joinPath('assets', assetsFilename)
 
     if (fileKey && ctx.localThemeFileSystem.files.has(fileKey)) {
+      setResponseHeader(event, 'X-Local-Asset', 'true')
+
       return serveStatic(event, {
         getContents: () => {
           // NOTE: Use cached value when localThemeFileSystem watches files
