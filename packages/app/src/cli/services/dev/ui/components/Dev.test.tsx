@@ -339,6 +339,7 @@ describe('Dev', () => {
       "
     `)
     expect(developerPreview.disable).toHaveBeenCalledOnce()
+    expect(testApp.developerPlatformClient.devSessionDelete).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -404,6 +405,7 @@ describe('Dev', () => {
       "
     `)
     expect(developerPreview.disable).toHaveBeenCalledOnce()
+    expect(testApp.developerPlatformClient.devSessionDelete).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
