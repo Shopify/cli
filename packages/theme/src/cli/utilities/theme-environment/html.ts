@@ -1,4 +1,4 @@
-import {getProxyStorefrontHeaders, injectCdnProxy} from './proxy.js'
+import {getProxyStorefrontHeaders, injectCdnProxy, patchHtmlWithProxy} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {
@@ -60,8 +60,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
     let html = await response.text()
     removeResponseHeader(event, 'content-encoding')
 
-    html = patchBaseUrlAttributes(html, ctx)
-    html = injectCdnProxy(html, ctx)
+    html = patchHtmlWithProxy(html, ctx)
 
     if (ctx.options.liveReload !== 'off') {
       html = injectHotReloadScript(html)
@@ -84,14 +83,4 @@ function getErrorPage(options: {title: string; header: string; message: string; 
       <pre>${options.code}</pre>
     </body>
   </html>`
-}
-
-function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
-  const newBaseUrl = `http://${ctx.options.host}:${ctx.options.port}`
-  const dataBaseUrlRE = new RegExp(
-    `data-base-url=["']((?:https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')})[^"']*?["']`,
-    'g',
-  )
-
-  return html.replaceAll(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
 }

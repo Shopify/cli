@@ -1,6 +1,7 @@
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../../theme-fs.js'
+import {patchHtmlWithProxy} from '../proxy.js'
 import {
   createEventStream,
   defineEventHandler,
@@ -142,7 +143,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
       removeResponseHeader(event, 'content-encoding')
 
-      return response.text()
+      return patchHtmlWithProxy(await response.text(), ctx)
     }
   })
 }
