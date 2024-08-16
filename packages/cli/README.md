@@ -8,6 +8,7 @@
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
@@ -15,6 +16,7 @@
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
+* [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
@@ -330,6 +332,34 @@ DESCRIPTION
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
 
+## `shopify app function replay`
+
+Replays a function run from an app log.
+
+```
+USAGE
+  $ shopify app function replay [--client-id <value> | -c <value>] [-j] [-l <value>] [--no-color] [--path <value>]
+    [--verbose] [-w]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -j, --json               Output the function run result as a JSON object.
+  -l, --log=<value>        Specifies a log identifier to replay instead of selecting from a list. The identifier is
+                           provided in the output of `shopify app dev` and is the suffix of the log file name.
+  -w, --[no-]watch         Re-run the function when the source code changes.
+      --client-id=<value>  Application's Client ID
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Replays a function run from an app log.
+
+  Runs the function from your current directory for "testing purposes"
+  (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
+  errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
+```
+
 ## `shopify app function run`
 
 Run a function locally for testing.
@@ -508,6 +538,41 @@ FLAGS
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   Increase the verbosity of the output.
+```
+
+## `shopify app logs`
+
+Stream detailed logs for your Shopify app.
+
+```
+USAGE
+  $ shopify app logs [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--source <value>] [--status success|failure] [-s <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -j, --json               Log the run result as a JSON object.
+  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --source=<value>     Filters output to the specified log source.
+      --status=<option>    Filters output to the specified status (success or failure).
+                           <options: success|failure>
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Stream detailed logs for your Shopify app.
+
+
+  Opens a real-time stream of detailed app logs from the selected app and store.
+  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle.
+  Use the `shopify app logs sources` command to view a list of sources.
+  Use the `--status` argument to filter on status, either `success` or `failure`.
+  ```
+  shopify app logs --status=success --source=extension.discount-function
+  ```
 ```
 
 ## `shopify app logs sources`

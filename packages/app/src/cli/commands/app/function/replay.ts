@@ -2,14 +2,11 @@ import {functionFlags, inFunctionContext} from '../../../services/function/commo
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import {appLogPollingEnabled} from '../../../services/app-logs/utils.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class FunctionReplay extends Command {
-  static hidden = true
   static summary = 'Replays a function run from an app log.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
@@ -47,6 +44,7 @@ export default class FunctionReplay extends Command {
     watch: Flags.boolean({
       char: 'w',
       hidden: false,
+      allowNo: true,
       default: true,
       description: 'Re-run the function when the source code changes.',
       env: 'SHOPIFY_FLAG_WATCH',
@@ -54,12 +52,6 @@ export default class FunctionReplay extends Command {
   }
 
   public async run() {
-    if (!appLogPollingEnabled()) {
-      throw new AbortError(
-        'This command is not released yet. You can experiment with it by setting SHOPIFY_CLI_ENABLE_APP_LOG_POLLING=1 in your env.',
-      )
-    }
-
     const {flags} = await this.parse(FunctionReplay)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()

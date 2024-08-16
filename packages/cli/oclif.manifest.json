@@ -819,7 +819,7 @@
           "type": "boolean"
         },
         "watch": {
-          "allowNo": false,
+          "allowNo": true,
           "char": "w",
           "description": "Re-run the function when the source code changes.",
           "env": "SHOPIFY_FLAG_WATCH",
@@ -829,7 +829,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:function:replay",
@@ -1699,7 +1698,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:logs",
