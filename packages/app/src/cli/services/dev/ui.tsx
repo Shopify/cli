@@ -1,6 +1,5 @@
 import {PartnersURLs} from './urls.js'
 import {Dev, DevProps} from './ui/components/Dev.js'
-import {Replay, ReplayProps} from '../function/ui/components/Replay.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
@@ -93,15 +92,6 @@ export async function renderDev({
   } else {
     await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   }
-}
-
-export async function renderReplay({selectedRun, abortController, app, extension}: ReplayProps) {
-  return render(
-    <Replay selectedRun={selectedRun} abortController={abortController} app={app} extension={extension} />,
-    {
-      exitOnCtrlC: false,
-    },
-  )
 }
 
 async function partnersURL(organizationId: string, appId: string) {
