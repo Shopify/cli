@@ -70,6 +70,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   return sendProxy(event, target, {
     headers: proxyRequestHeaders,
     fetchOptions: {method: event.method, body, duplex: body ? 'half' : undefined},
+    cookieDomainRewrite: `http://${ctx.options.host}:${ctx.options.port}`,
     async onResponse(event, response) {
       clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
 
