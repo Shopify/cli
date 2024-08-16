@@ -14,24 +14,7 @@ import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {FatalError} from '@shopify/cli-kit/node/error'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
-
-export interface FunctionRunFromRunner {
-  type: 'functionRun'
-  input: string
-  output: string
-  logs: string
-  name: string
-  size: number
-  memory_usage: number
-  instructions: number
-}
-
-export interface SystemMessage {
-  type: 'systemMessage'
-  message: string
-}
-
-type ReplayLog = FunctionRunFromRunner | SystemMessage
+import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 
 interface WatchFunctionForReplayOptions {
   selectedRun: FunctionRunData
@@ -122,7 +105,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
     })
   }, [input, runExport, app, extension])
 
-  const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
+  useAbortSignal(abortController.signal, async (err) => {
     if (err) {
       setStatusMessage('Shutting down replay watcher because of an error ...')
     } else {
@@ -159,7 +142,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
     },
     {isActive: Boolean(canUseShortcuts)},
   )
-  return {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error}
+  return {logs, canUseShortcuts, statusMessage, recentFunctionRuns, error}
 }
 
 async function runFunctionRunnerWithLogInput(

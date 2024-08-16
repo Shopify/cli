@@ -1,4 +1,4 @@
-import {FunctionRunFromRunner, SystemMessage, useFunctionWatcher} from './hooks/useFunctionWatcher.js'
+import {FunctionRunFromRunner, ReplayLog} from './types.js'
 import {FunctionRunData} from '../../../replay.js'
 import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
@@ -8,6 +8,8 @@ import figures from '@shopify/cli-kit/node/figures'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React, {FunctionComponent} from 'react'
 import {Box, Text, Static} from '@shopify/cli-kit/node/ink'
+import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
+import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 
 export interface ReplayProps {
   selectedRun: FunctionRunData
@@ -16,10 +18,9 @@ export interface ReplayProps {
   extension: ExtensionInstance<FunctionConfigType>
 }
 
-type ReplayLog = FunctionRunFromRunner | SystemMessage
-
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
-  const {logs, isAborted, canUseShortcuts, statusMessage, recentFunctionRuns, error} = useFunctionWatcher({
+  const {isAborted} = useAbortSignal(abortController.signal)
+  const {logs, canUseShortcuts, statusMessage, recentFunctionRuns, error} = useFunctionWatcher({
     selectedRun,
     abortController,
     app,
@@ -89,7 +90,7 @@ function Header({title, backgroundColor}: {title: string; backgroundColor: strin
 function InputDisplay({input}: {input: string}) {
   return (
     <Box flexDirection="column">
-      <Header title="Input" backgroundColor="yellow"/>
+      <Header title="Input" backgroundColor="yellow" />
       <Text>{prettyPrintJsonIfPossible(input)}</Text>
     </Box>
   )
@@ -98,7 +99,7 @@ function InputDisplay({input}: {input: string}) {
 function LogDisplay({logs}: {logs: string}) {
   return (
     <Box flexDirection="column">
-      <Header title="Logs" backgroundColor="blueBright"/>
+      <Header title="Logs" backgroundColor="blueBright" />
       <Text>{logs}</Text>
     </Box>
   )
@@ -107,7 +108,7 @@ function LogDisplay({logs}: {logs: string}) {
 function OutputDisplay({output}: {output: string}) {
   return (
     <Box flexDirection="column">
-      <Header title="Output" backgroundColor="greenBright"/>
+      <Header title="Output" backgroundColor="greenBright" />
       <Text>{prettyPrintJsonIfPossible(output)}</Text>
     </Box>
   )
@@ -116,7 +117,7 @@ function OutputDisplay({output}: {output: string}) {
 function BenchmarkDisplay({functionRun}: {functionRun: FunctionRunFromRunner}) {
   return (
     <Box flexDirection="column">
-      <Header title="Benchmark Results" backgroundColor="green"/>
+      <Header title="Benchmark Results" backgroundColor="green" />
       <Text>Name: {functionRun.name}</Text>
       <Text>Linear Memory Usage: {functionRun.memory_usage}KB</Text>
       <Text>Instructions: {functionRun.instructions / 1000}K</Text>
@@ -137,8 +138,8 @@ function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRunFro
 }
 
 function ReplayLog({log}: {log: ReplayLog}) {
-  switch(log.type) {
-    case "functionRun":
+  switch (log.type) {
+    case 'functionRun':
       return (
         <Box flexDirection="column">
           <InputDisplay input={log.input} />
@@ -147,10 +148,10 @@ function ReplayLog({log}: {log: ReplayLog}) {
           <BenchmarkDisplay functionRun={log} />
         </Box>
       )
-    case "systemMessage":
+    case 'systemMessage':
       return <Text>{log.message}</Text>
     default:
-      return null;
+      return null
   }
 }
 
