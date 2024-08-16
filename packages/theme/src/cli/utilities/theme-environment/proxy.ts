@@ -40,6 +40,20 @@ export function injectCdnProxy(content: string, ctx: DevServerContext) {
   return content.replaceAll(cdnRE, cdnPath)
 }
 
+function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
+  const newBaseUrl = `http://${ctx.options.host}:${ctx.options.port}`
+  const dataBaseUrlRE = new RegExp(
+    `data-base-url=["']((?:https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')})[^"']*?["']`,
+    'g',
+  )
+
+  return html.replaceAll(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
+}
+
+export function patchHtmlWithProxy(html: string, ctx: DevServerContext) {
+  return injectCdnProxy(patchBaseUrlAttributes(html, ctx), ctx)
+}
+
 // These headers are meaningful only for a single transport-level connection,
 // and must not be retransmitted by proxies or cached.
 // https://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-14#section-7.1.3.1Acc
