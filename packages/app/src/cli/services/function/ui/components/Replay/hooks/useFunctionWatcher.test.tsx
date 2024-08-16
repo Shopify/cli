@@ -63,7 +63,7 @@ const SECOND_EXEC_RESPONSE = {
   instructions: SELECTED_RUN.payload.fuelConsumed,
 }
 
-describe('setupExtensionWatcherForReplay', () => {
+describe('useFunctionWatcher', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })

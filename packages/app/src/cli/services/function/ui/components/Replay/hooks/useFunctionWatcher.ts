@@ -6,7 +6,7 @@ import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useState} from 'react'
 import {useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -45,19 +45,27 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
   const {input, export: runExport} = selectedRun.payload
 
   const {isRawModeSupported: canUseShortcuts} = useStdin()
-  const pollingInterval = useRef<NodeJS.Timeout>()
 
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
 
   useEffect(() => {
-    const initialReplay = async () => {
-      setStatusMessage('Replaying log with local function...')
+    const watchAbortController = new AbortController()
+    abortController.signal.addEventListener('abort', () => {
+      watchAbortController.abort()
+    })
+
+    const runFunction = async () => {
       const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
       setRecentFunctionRuns((recentFunctionRuns) => {
         return [functionRun, recentFunctionRuns[0]]
       })
       setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
       setLogs((logs) => [...logs, functionRun])
+    }
+
+    const initialReplay = async () => {
+      setStatusMessage('Replaying log with local function...')
+      await runFunction()
     }
 
     const startWatchingFunction = async () => {
@@ -76,14 +84,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
         onChange: async () => {
           setError(undefined)
           setStatusMessage('Re-running with latest changes...')
-          const functionRun = await runFunctionRunnerWithLogInput(extension, JSON.stringify(input), runExport)
-
-          setRecentFunctionRuns((recentFunctionRuns) => {
-            return [functionRun, recentFunctionRuns[0]]
-          })
-
-          setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
-          setLogs((logs) => [...logs, functionRun])
+          await runFunction()
         },
         onReloadAndBuildError: async (error) => {
           if (error instanceof FatalError) {
@@ -92,7 +93,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
             setError(`Error while reloading and building extension: ${error.message}`)
           }
         },
-        signal: abortController.signal,
+        signal: watchAbortController.signal,
       })
     }
 
@@ -101,6 +102,10 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       startWatchingFunction()
     })
+
+    return () => {
+      watchAbortController.abort()
+    }
   }, [input, runExport, app, extension])
 
   useAbortSignal(abortController.signal, async (err) => {
@@ -115,7 +120,6 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
         })
       }, 2000)
     }
-    clearInterval(pollingInterval.current)
   })
 
   useInput(
