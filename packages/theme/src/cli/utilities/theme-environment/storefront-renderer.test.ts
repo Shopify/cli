@@ -14,7 +14,7 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
   }
 })
 
-const successResponse = {status: 200, headers: {get: vi.fn()}} as any
+const successResponse = {ok: true, status: 200, headers: {get: vi.fn()}} as any
 const sessionCookies = {
   storefront_digest: '00001111222233334444',
   _shopify_essential: ':00112233445566778899:',

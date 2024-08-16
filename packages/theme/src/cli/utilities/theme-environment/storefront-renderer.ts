@@ -35,13 +35,10 @@ export async function render(session: DevServerSession, context: DevServerRender
   outputDebug(`← ${response.status} (request_id: ${requestId})`)
 
   if (!response.ok) {
-    const isHtmlBody = Boolean(response.headers.get('content-type')?.startsWith('text/html'))
-    const body = isHtmlBody ? undefined : await response.text().catch(() => '')
-
     throw createError({
       status: response.status,
       statusText: response.statusText,
-      data: {requestId, url, body},
+      data: {requestId, url},
       cause: new Error(`Request ${requestId ?? ''} to ${url} failed`),
     })
   }
@@ -63,8 +60,8 @@ async function buildStandardHeaders(session: DevServerSession, context: DevServe
 
   return {
     ...context.headers,
-    authorization: `Bearer ${storefrontToken}`,
-    cookie: cookies,
+    Authorization: `Bearer ${storefrontToken}`,
+    Cookie: cookies,
   }
 }
 
@@ -83,8 +80,8 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: DevSe
   return {
     ...filteredHeaders,
     ...themeAccessHeaders(session),
-    authorization: `Bearer ${storefrontToken}`,
-    cookie: cookies,
+    Authorization: `Bearer ${storefrontToken}`,
+    Cookie: cookies,
   }
 }
 
