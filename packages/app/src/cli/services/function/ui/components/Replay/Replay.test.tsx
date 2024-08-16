@@ -1,5 +1,6 @@
 import {Replay} from './Replay.js'
 import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
+import {FunctionRunFromRunner} from './types.js'
 import {testFunctionExtension, testApp} from '../../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
@@ -8,39 +9,9 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {render} from '@shopify/cli-kit/node/testing/ui'
+import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
 
 vi.mock('./hooks/useFunctionWatcher.js')
-
-interface FunctionRun {
-  type: 'functionRun'
-  input: string
-  output: string
-  logs: string
-  name: string
-  size: number
-  memory_usage: number
-  instructions: number
-}
-
-const defaultConfig = {
-  name: 'MyFunction',
-  type: 'product_discounts',
-  build: {
-    command: 'make build',
-    path: 'dist/index.wasm',
-  },
-  configuration_ui: true,
-  api_version: '2022-07',
-  metafields: [],
-  handle: 'function-handle',
-}
-
-let extension: ExtensionInstance<FunctionConfigType>
-
-beforeAll(async () => {
-  extension = await testFunctionExtension({config: defaultConfig})
-})
 
 const SELECTED_RUN = {
   shopId: 69665030382,
@@ -77,7 +48,13 @@ const FUNCTION_RUN_FROM_SELECTED_RUN = {
   size: 0,
   memory_usage: 0,
   instructions: SELECTED_RUN.payload.fuelConsumed,
-} as FunctionRun
+} as FunctionRunFromRunner
+
+let extension: ExtensionInstance<FunctionConfigType>
+
+beforeAll(async () => {
+  extension = await testFunctionExtension()
+})
 
 describe('Replay', () => {
   test('renders a stream of lines from function-runner output, and shortcuts', async () => {
@@ -131,6 +108,72 @@ describe('Replay', () => {
 
     // Then
     expect(unstyled(renderInstanceReplay.lastFrame()!)).toMatchSnapshot()
+
+    // unmount so that polling is cleared after every test
+    renderInstanceReplay.unmount()
+  })
+
+  test('quits when q is pressed', async () => {
+    const abortController = new AbortController()
+    const abortSpy = vi.spyOn(abortController, 'abort')
+
+    const watcherReturnValue = {
+      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      isAborted: false,
+      canUseShortcuts: true,
+      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
+      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      error: 'some error',
+    }
+    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
+
+    const renderInstanceReplay = render(
+      <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
+    )
+
+    const promise = renderInstanceReplay.waitUntilExit()
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstanceReplay, 100, 'q')
+
+    await promise
+
+    // Then
+    expect(abortSpy).toHaveBeenCalledOnce()
+
+    // unmount so that polling is cleared after every test
+    renderInstanceReplay.unmount()
+  })
+
+  test('quits when ctrl+c is pressed', async () => {
+    // Given
+    const abortController = new AbortController()
+    const abortSpy = vi.spyOn(abortController, 'abort')
+
+    const watcherReturnValue = {
+      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      isAborted: false,
+      canUseShortcuts: true,
+      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
+      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+      error: 'some error',
+    }
+    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
+
+    const renderInstanceReplay = render(
+      <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
+    )
+
+    const promise = renderInstanceReplay.waitUntilExit()
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstanceReplay, 100, '\u0003')
+
+    await promise
+    // Then
+    expect(abortSpy).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstanceReplay.unmount()

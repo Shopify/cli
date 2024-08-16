@@ -2,12 +2,10 @@ import {useFunctionWatcher} from './useFunctionWatcher.js'
 import {FunctionRunData} from '../../../../replay.js'
 import {testApp, testFunctionExtension} from '../../../../../../models/app/app.test-data.js'
 import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
-import {Replay} from '../Replay.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
+import {render} from '@shopify/cli-kit/node/testing/ui'
 import * as system from '@shopify/cli-kit/node/system'
-
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
 
@@ -201,70 +199,6 @@ describe('useFunctionWatcher', () => {
     expect(execSpy).toHaveBeenCalledOnce()
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(hook.lastResult?.error).toEqual('Fatal error while reloading and building extension: abort!')
-  })
-
-  test('quits when q is pressed', async () => {
-    vi.useRealTimers()
-
-    // Given
-    const abortController = new AbortController()
-    const abortSpy = vi.spyOn(abortController, 'abort')
-    const extension = await testFunctionExtension()
-
-    const execSpy = vi.spyOn(system, 'exec')
-    const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(EXEC_RESPONSE))
-      return EXEC_RESPONSE
-    })
-    execSpy.mockImplementationOnce(mockExecFn)
-
-    const renderInstanceReplay = render(
-      <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
-    )
-
-    const promise = renderInstanceReplay.waitUntilExit()
-
-    await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstanceReplay, 100, 'q')
-
-    await promise
-    // Then
-    expect(abortSpy).toHaveBeenCalledOnce()
-
-    // unmount so that polling is cleared after every test
-    renderInstanceReplay.unmount()
-  })
-
-  test('quits when ctrl+c is pressed', async () => {
-    vi.useRealTimers()
-
-    // Given
-    const abortController = new AbortController()
-    const abortSpy = vi.spyOn(abortController, 'abort')
-    const extension = await testFunctionExtension()
-
-    const execSpy = vi.spyOn(system, 'exec')
-    const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(EXEC_RESPONSE))
-      return EXEC_RESPONSE
-    })
-    execSpy.mockImplementationOnce(mockExecFn)
-
-    const renderInstanceReplay = render(
-      <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
-    )
-
-    const promise = renderInstanceReplay.waitUntilExit()
-
-    await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstanceReplay, 100, '\u0003')
-
-    await promise
-    // Then
-    expect(abortSpy).toHaveBeenCalledOnce()
-
-    // unmount so that polling is cleared after every test
-    renderInstanceReplay.unmount()
   })
 })
 

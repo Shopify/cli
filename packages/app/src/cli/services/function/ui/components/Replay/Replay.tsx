@@ -8,8 +8,9 @@ import {prettyPrintJsonIfPossible} from '../../../../app-logs/utils.js'
 import figures from '@shopify/cli-kit/node/figures'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React, {FunctionComponent} from 'react'
-import {Box, Text, Static} from '@shopify/cli-kit/node/ink'
+import {Box, Text, Static, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
+import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 
 export interface ReplayProps {
   selectedRun: FunctionRunData
@@ -20,12 +21,23 @@ export interface ReplayProps {
 
 const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, app, extension}) => {
   const {isAborted} = useAbortSignal(abortController.signal)
-  const {logs, canUseShortcuts, statusMessage, recentFunctionRuns, error} = useFunctionWatcher({
+  const {isRawModeSupported: canUseShortcuts} = useStdin()
+  const {logs, statusMessage, recentFunctionRuns, error} = useFunctionWatcher({
     selectedRun,
     abortController,
     app,
     extension,
   })
+
+  useInput(
+    (input, key) => {
+      handleCtrlC(input, key, () => abortController.abort())
+      if (input === 'q') {
+        abortController.abort()
+      }
+    },
+    {isActive: Boolean(canUseShortcuts)},
+  )
 
   return (
     <>

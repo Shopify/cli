@@ -144,3 +144,75 @@ Size: 0KB
 some error
 "
 `;
+
+exports[`Replay > renders exiting message in the bottom bar when aborting 1`] = `
+"
+
+            Input            
+
+{
+  \\"someInput\\": \\"someInput\\"
+}
+
+
+            Logs            
+
+First Log
+Log the second!,
+1,
+fourth line, length should be above!,
+Fifth line!
+
+
+           Output           
+
+{
+  \\"someOutput\\": \\"someOutput\\"
+}
+
+
+      Benchmark Results      
+
+Name: product-discount
+Linear Memory Usage: 0KB
+Instructions: 532.632K
+Size: 0KB
+
+
+            Input            
+
+{
+  \\"someInput\\": \\"someInput\\"
+}
+
+
+            Logs            
+
+First Log
+Log the second!,
+1,
+fourth line, length should be above!,
+Fifth line!
+
+
+           Output           
+
+{
+  \\"someOutput\\": \\"someOutput\\"
+}
+
+
+      Benchmark Results      
+
+Name: product-discount
+Linear Memory Usage: 0KB
+Instructions: 532.632K
+Size: 0KB
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+› Shutting down replay watcher ...
+› Instruction count delta: 0
+› Press q │ quit
+"
+`;
