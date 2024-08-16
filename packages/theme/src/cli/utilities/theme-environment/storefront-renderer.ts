@@ -5,6 +5,7 @@ import {DevServerSession, DevServerRenderContext} from './types.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {fetch, type Response} from '@shopify/cli-kit/node/http'
+import {createError} from 'h3'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
@@ -21,6 +22,13 @@ export async function render(session: DevServerSession, context: DevServerRender
       ...headers,
       ...defaultHeaders(),
     },
+  }).catch((error: Error) => {
+    throw createError({
+      status: 502,
+      statusText: 'Bad Gateway',
+      data: {url},
+      cause: error,
+    })
   })
 
   const requestId = response.headers.get('x-request-id')
@@ -28,13 +36,14 @@ export async function render(session: DevServerSession, context: DevServerRender
 
   if (!response.ok) {
     const isHtmlBody = Boolean(response.headers.get('content-type')?.startsWith('text/html'))
-    const body = isHtmlBody ? '' : await response.text().catch(() => '')
+    const body = isHtmlBody ? undefined : await response.text().catch(() => '')
 
-    throw new Error(
-      `Request ${requestId ?? ''} to ${url} failed: ${response.status} ${response.statusText}${
-        body ? `\n${body}` : ''
-      }`,
-    )
+    throw createError({
+      status: response.status,
+      statusText: response.statusText,
+      data: {requestId, url, body},
+      cause: new Error(`Request ${requestId ?? ''} to ${url} failed`),
+    })
   }
 
   return response

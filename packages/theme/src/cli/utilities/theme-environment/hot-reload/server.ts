@@ -7,9 +7,10 @@ import {
   getProxyRequestHeaders,
   getQuery,
   removeResponseHeader,
-  sendWebResponse,
+  sendError,
   setResponseHeaders,
   setResponseStatus,
+  type H3Error,
 } from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -128,13 +129,14 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         sectionId,
         headers: getProxyRequestHeaders(event),
         replaceTemplates: {[sectionKey]: sectionTemplate},
-      }).catch(async (error) => {
-        const headline = 'Failed to render section on Hot Reload.'
+      }).catch(async (error: H3Error<{requestId?: string}>) => {
+        const requestId = error.data?.requestId ?? ''
+        const headline = `Failed to render section on Hot Reload ${requestId}`
         renderWarning({headline, body: error.stack ?? error.message})
-        await sendWebResponse(event, new Response('', {status: 502}))
+        await sendError(event, error)
       })
 
-      if (!response) return
+      if (!response) return null
 
       setResponseStatus(event, response.status, response.statusText)
       setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
