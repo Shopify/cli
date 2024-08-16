@@ -48,7 +48,7 @@ const Replay: FunctionComponent<ReplayProps> = ({selectedRun, abortController, a
       <Static items={logs}>
         {(log, index) => {
           return (
-            <Box key={`randomBoxKey${index}`} flexDirection="column">
+            <Box key={`replayOutputScrollerLog${index}`} flexDirection="column">
               <ReplayLog log={log} />
             </Box>
           )
