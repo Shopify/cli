@@ -11,7 +11,7 @@ import {
 } from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
-export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
+export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
@@ -118,7 +118,7 @@ async function request<T>(
       // Retry following the "retry-after" header
       return throttler.delayAwareRetry(response, () => request(method, path, session, params, searchParams))
     case status === 403:
-      return handleForbiddenError(session)
+      return handleForbiddenError(response, session)
     case status === 401:
       throw new AbortError(`[${status}] API request unauthorized error`)
     case status === 422:
@@ -132,9 +132,14 @@ async function request<T>(
   }
 }
 
-function handleForbiddenError(session: AdminSession): never {
+function handleForbiddenError(response: RestResponse, session: AdminSession): never {
   const store = session.storeFqdn
   const adminUrl = storeAdminUrl(session)
+  const error = errorMessage(response)
+
+  if (error.match(/Cannot delete generated asset/) !== null) {
+    throw new AbortError(error)
+  }
 
   throw new AbortError(
     `You are not authorized to edit themes on "${store}".`,
@@ -151,4 +156,14 @@ function handleForbiddenError(session: AdminSession): never {
 
 function errors(response: RestResponse) {
   return JSON.stringify(response.json?.errors)
+}
+
+function errorMessage(response: RestResponse): string {
+  const message = response.json?.message
+
+  if (typeof message === 'string') {
+    return message
+  }
+
+  return ''
 }
