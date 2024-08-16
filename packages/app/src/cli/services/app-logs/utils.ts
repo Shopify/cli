@@ -18,6 +18,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import camelcaseKeys from 'camelcase-keys'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -175,6 +176,7 @@ export const toFormattedAppLogJson = (
     {
       ...appLogWithoutCursor,
       payload: appLogPayload,
+      localTime: formatLocalDate(appLog.log_timestamp),
     },
     {deep: true},
   )

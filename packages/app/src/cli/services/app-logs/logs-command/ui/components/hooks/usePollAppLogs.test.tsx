@@ -26,7 +26,7 @@ const NEW_JWT_TOKEN = 'newJwt'
 const RETURNED_CURSOR = '2024-05-23T19:17:02.321773Z'
 const FUNCTION_ID = 'e57b4d31-2038-49ff-a0a1-1eea532414f7'
 const FUEL_CONSUMED = 512436
-const TIME = '2024-06-18 16:02:04.868'
+const TIME = '2024-06-18 16:02:04'
 
 const LOG_TYPE = 'function_run'
 const STATUS = 'success'
