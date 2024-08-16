@@ -129,9 +129,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    if (this.isFunctionExtension) {
-      return 'index.wasm'
-    }
     return `${this.handle}.js`
   }
 
