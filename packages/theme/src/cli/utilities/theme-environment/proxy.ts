@@ -38,10 +38,29 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
   })
 }
 
-export function injectCdnProxy(content: string, ctx: DevServerContext) {
-  const cdnPath = '/cdn/'
-  const cdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${cdnPath}`, 'g')
-  return content.replaceAll(cdnRE, cdnPath)
+/**
+ * Replaces every VanityCDN-like (...myshopify.com/cdn/...) URL to pass through the local server.
+ * It also replaces MainCDN-like (cdn.shopify.com/...) URLs to files that are known local assets.
+ * Other MainCDN matches are left unmodified.
+ */
+export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
+  let content = originalContent
+
+  // -- Redirect all usages to the vanity CDN to the local server:
+  const vanityCdnPath = '/cdn/'
+  const vanityCdnRE = new RegExp(`(https?:)?//${ctx.session.storeFqdn.replace('.', '\\.')}${vanityCdnPath}`, 'g')
+  content = content.replace(vanityCdnRE, vanityCdnPath)
+
+  // -- Only redirect usages of the main CDN for known local assets to the local server:
+  const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?]+)(?:\?|$))/g
+  const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter((key) => key.startsWith('assets')))
+  content = content.replace(mainCdnRE, (matchedUrl, pathname, matchedAsset) => {
+    const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset as string)
+    // Prefix with vanityCdnPath to later read local assets
+    return isLocalAsset ? `${vanityCdnPath}${pathname}` : matchedUrl
+  })
+
+  return content
 }
 
 function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
