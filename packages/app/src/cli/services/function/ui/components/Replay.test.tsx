@@ -102,53 +102,7 @@ describe('Replay', () => {
     )
 
     // Then
-    expect(unstyled(renderInstanceReplay.lastFrame()!)).toMatchInlineSnapshot(`
-      "Input
-      {
-        \\"someInput\\": \\"someInput\\"
-      }
-      Logs
-      First Log
-      Log the second!,
-      1,
-      fourth line, length should be above!,
-      Fifth line!
-      Output
-      {
-        \\"someOutput\\": \\"someOutput\\"
-      }
-      Benchmark Results
-      Name: product-discount
-      Linear Memory Usage: 0KB
-      Instructions: 532.632K
-      Size: 0KB
-      Input
-      {
-        \\"someInput\\": \\"someInput\\"
-      }
-      Logs
-      First Log
-      Log the second!,
-      1,
-      fourth line, length should be above!,
-      Fifth line!
-      Output
-      {
-        \\"someOutput\\": \\"someOutput\\"
-      }
-      Benchmark Results
-      Name: product-discount
-      Linear Memory Usage: 0KB
-      Instructions: 532.632K
-      Size: 0KB
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Watching for changes to product-discount...
-      › Instruction count delta: 0
-      › Press q │ quit
-      "
-    `)
+    expect(unstyled(renderInstanceReplay.lastFrame()!)).toMatchSnapshot()
 
     // unmount so that polling is cleared after every test
     renderInstanceReplay.unmount()
@@ -176,52 +130,9 @@ describe('Replay', () => {
     )
 
     // Then
-    expect(unstyled(renderInstanceReplay.lastFrame()!)).toMatchInlineSnapshot(`
-    "Input
-    {
-      \\"someInput\\": \\"someInput\\"
-    }
-    Logs
-    First Log
-    Log the second!,
-    1,
-    fourth line, length should be above!,
-    Fifth line!
-    Output
-    {
-      \\"someOutput\\": \\"someOutput\\"
-    }
-    Benchmark Results
-    Name: product-discount
-    Linear Memory Usage: 0KB
-    Instructions: 532.632K
-    Size: 0KB
-    Input
-    {
-      \\"someInput\\": \\"someInput\\"
-    }
-    Logs
-    First Log
-    Log the second!,
-    1,
-    fourth line, length should be above!,
-    Fifth line!
-    Output
-    {
-      \\"someOutput\\": \\"someOutput\\"
-    }
-    Benchmark Results
-    Name: product-discount
-    Linear Memory Usage: 0KB
-    Instructions: 532.632K
-    Size: 0KB
+    expect(unstyled(renderInstanceReplay.lastFrame()!)).toMatchSnapshot()
 
-    ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-    › Watching for changes to product-discount...
-    › Instruction count delta: 0
-    › Press q │ quit
-    some error
-    "`)
+    // unmount so that polling is cleared after every test
+    renderInstanceReplay.unmount()
   })
 })

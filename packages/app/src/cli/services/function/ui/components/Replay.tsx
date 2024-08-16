@@ -92,7 +92,7 @@ function InputDisplay({input}: {input: string}) {
   return (
     <Box flexDirection="column">
       <Text color="black" backgroundColor="yellow">
-        Input
+        {'\n\n            Input            \n'}
       </Text>
       <Text>{prettyPrintJsonIfPossible(input)}</Text>
     </Box>
@@ -102,8 +102,8 @@ function InputDisplay({input}: {input: string}) {
 function LogDisplay({logs}: {logs: string}) {
   return (
     <Box flexDirection="column">
-      <Text color="black" backgroundColor="blue">
-        Logs
+      <Text color="black" backgroundColor="blueBright">
+        {'\n\n            Logs            \n'}
       </Text>
       <Text>{logs}</Text>
     </Box>
@@ -113,8 +113,8 @@ function LogDisplay({logs}: {logs: string}) {
 function OutputDisplay({output}: {output: string}) {
   return (
     <Box flexDirection="column">
-      <Text color="black" backgroundColor="green">
-        Output
+      <Text color="black" backgroundColor="greenBright">
+        {'\n\n           Output           \n'}
       </Text>
       <Text>{prettyPrintJsonIfPossible(output)}</Text>
     </Box>
@@ -124,8 +124,8 @@ function OutputDisplay({output}: {output: string}) {
 function BenchmarkDisplay({functionRun}: {functionRun: FunctionRun}) {
   return (
     <Box flexDirection="column">
-      <Text color="black" backgroundColor="greenBright">
-        Benchmark Results
+      <Text color="black" backgroundColor="green">
+        {'\n\n     Benchmark Results      \n'}
       </Text>
       <Text>Name: {functionRun.name}</Text>
       <Text>Linear Memory Usage: {functionRun.memory_usage}KB</Text>
