@@ -123,6 +123,7 @@ describe('useFunctionWatcher', () => {
     await vi.advanceTimersByTimeAsync(0)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
+    expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
 
     // .mock.calls returns an array of the calls, which each contain the arguments
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onChange()
@@ -170,7 +171,7 @@ describe('useFunctionWatcher', () => {
 
   test('renders fatal error in onReloadAndBuildError', async () => {
     // Given
-    const expectedError = new AbortError('abort!', 'test')
+    const expectedError = new AbortError('abort!')
 
     const execSpy = vi.spyOn(system, 'exec')
     const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {

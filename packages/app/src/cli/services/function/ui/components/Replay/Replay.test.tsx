@@ -50,6 +50,26 @@ const FUNCTION_RUN_FROM_SELECTED_RUN = {
   instructions: SELECTED_RUN.payload.fuelConsumed,
 } as FunctionRunFromRunner
 
+const FUNCTION_RUN_FROM_SELECTED_RUN2 = {
+  type: 'functionRun',
+  input: SELECTED_RUN.payload.input,
+  output: SELECTED_RUN.payload.output,
+  logs: SELECTED_RUN.payload.logs,
+  name: SELECTED_RUN.source,
+  size: 1,
+  memory_usage: 1,
+  instructions: SELECTED_RUN.payload.fuelConsumed + 1,
+} as FunctionRunFromRunner
+
+const WATCHER_RETURN_VALUE = {
+  logs: [FUNCTION_RUN_FROM_SELECTED_RUN2, FUNCTION_RUN_FROM_SELECTED_RUN],
+  isAborted: false,
+  canUseShortcuts: true,
+  statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
+  recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN2, FUNCTION_RUN_FROM_SELECTED_RUN],
+  error: '',
+}
+
 let extension: ExtensionInstance<FunctionConfigType>
 
 beforeAll(async () => {
@@ -58,16 +78,8 @@ beforeAll(async () => {
 
 describe('Replay', () => {
   test('renders a stream of lines from function-runner output, and shortcuts', async () => {
-    const watcherReturnValue = {
-      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      isAborted: false,
-      canUseShortcuts: true,
-      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
-      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      error: '',
-    }
-    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
-    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
+    const mockedUseFunctionWatcher = vi.fn().mockReturnValue(WATCHER_RETURN_VALUE)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedUseFunctionWatcher)
 
     const renderInstanceReplay = render(
       <Replay
@@ -86,16 +98,12 @@ describe('Replay', () => {
   })
 
   test('renders error in the bottom bar when present', async () => {
-    const watcherReturnValue = {
-      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      isAborted: false,
-      canUseShortcuts: true,
-      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
-      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
+    const watcherReturnValueWithError = {
+      ...WATCHER_RETURN_VALUE,
       error: 'some error',
     }
-    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
-    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
+    const mockedUseFunctionWatcher = vi.fn().mockReturnValue(watcherReturnValueWithError)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedUseFunctionWatcher)
 
     const renderInstanceReplay = render(
       <Replay
@@ -117,16 +125,8 @@ describe('Replay', () => {
     const abortController = new AbortController()
     const abortSpy = vi.spyOn(abortController, 'abort')
 
-    const watcherReturnValue = {
-      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      isAborted: false,
-      canUseShortcuts: true,
-      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
-      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      error: 'some error',
-    }
-    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
-    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
+    const mockedUseFunctionWatcher = vi.fn().mockReturnValue(WATCHER_RETURN_VALUE)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedUseFunctionWatcher)
 
     const renderInstanceReplay = render(
       <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
@@ -151,16 +151,8 @@ describe('Replay', () => {
     const abortController = new AbortController()
     const abortSpy = vi.spyOn(abortController, 'abort')
 
-    const watcherReturnValue = {
-      logs: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      isAborted: false,
-      canUseShortcuts: true,
-      statusMessage: `Watching for changes to ${SELECTED_RUN.source}...`,
-      recentFunctionRuns: [FUNCTION_RUN_FROM_SELECTED_RUN, FUNCTION_RUN_FROM_SELECTED_RUN],
-      error: 'some error',
-    }
-    const mockedsetupExtensionWatcherForReplay = vi.fn().mockReturnValue(watcherReturnValue)
-    vi.mocked(useFunctionWatcher).mockImplementation(mockedsetupExtensionWatcherForReplay)
+    const mockedUseFunctionWatcher = vi.fn().mockReturnValue(WATCHER_RETURN_VALUE)
+    vi.mocked(useFunctionWatcher).mockImplementation(mockedUseFunctionWatcher)
 
     const renderInstanceReplay = render(
       <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
