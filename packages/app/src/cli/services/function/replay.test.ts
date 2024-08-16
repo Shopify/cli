@@ -1,10 +1,10 @@
 import {FunctionRunData, replay} from './replay.js'
+import {renderReplay} from './ui.js'
 import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
-import {renderReplay} from './ui.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -21,7 +21,7 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('../dev/ui.js')
+vi.mock('./ui.js')
 
 describe('replay', () => {
   const developerPlatformClient = testDeveloperPlatformClient()

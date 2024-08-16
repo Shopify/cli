@@ -1,4 +1,4 @@
-import {setupExtensionWatcherForReplay} from './hooks/extension-watcher.js'
+import {setupExtensionWatcherForReplay} from './hooks/setup-extension-watcher-for-replay.js'
 import {FunctionRunData} from '../../replay.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'

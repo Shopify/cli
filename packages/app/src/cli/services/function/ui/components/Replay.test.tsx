@@ -1,16 +1,16 @@
 import {Replay} from './Replay.js'
-import {setupExtensionWatcherForReplay} from './hooks/extension-watcher.js'
+import {setupExtensionWatcherForReplay} from './hooks/setup-extension-watcher-for-replay.js'
 import {testFunctionExtension, testApp} from '../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
 import {FunctionRunData} from '../../replay.js'
-import {render} from '@shopify/cli-kit/node/testing/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
+import {render} from '@shopify/cli-kit/node/testing/ui'
 
-vi.mock('./hooks/extension-watcher.js')
+vi.mock('./hooks/setup-extension-watcher-for-replay.js')
 
 interface FunctionRun {
   type: 'functionRun'
