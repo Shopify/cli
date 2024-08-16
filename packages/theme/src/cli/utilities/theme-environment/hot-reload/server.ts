@@ -1,18 +1,8 @@
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../../theme-fs.js'
-import {patchHtmlWithProxy} from '../proxy.js'
-import {
-  createEventStream,
-  defineEventHandler,
-  getProxyRequestHeaders,
-  getQuery,
-  removeResponseHeader,
-  sendError,
-  setResponseHeaders,
-  setResponseStatus,
-  type H3Error,
-} from 'h3'
+import {patchRenderingResponse} from '../proxy.js'
+import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, sendError, type H3Error} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -132,18 +122,15 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         replaceTemplates: {[sectionKey]: sectionTemplate},
       }).catch(async (error: H3Error<{requestId?: string}>) => {
         const requestId = error.data?.requestId ?? ''
+        const cause = error.cause as undefined | Error
         const headline = `Failed to render section on Hot Reload ${requestId}`
-        renderWarning({headline, body: error.stack ?? error.message})
+        renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
         await sendError(event, error)
       })
 
       if (!response) return null
 
-      setResponseStatus(event, response.status, response.statusText)
-      setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
-      removeResponseHeader(event, 'content-encoding')
-
-      return patchHtmlWithProxy(await response.text(), ctx)
+      return patchRenderingResponse(event, response, ctx)
     }
   })
 }
