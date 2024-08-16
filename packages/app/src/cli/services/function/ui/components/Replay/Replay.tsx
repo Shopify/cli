@@ -137,22 +137,21 @@ function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRunFro
 }
 
 function ReplayLog({log}: {log: ReplayLog}) {
-  if (log.type === 'functionRun') {
-    return (
-      <Box flexDirection="column">
-        <InputDisplay input={log.input} />
-        <LogDisplay logs={log.logs} />
-        <OutputDisplay output={log.output} />
-        <BenchmarkDisplay functionRun={log} />
-      </Box>
-    )
+  switch(log.type) {
+    case "functionRun":
+      return (
+        <Box flexDirection="column">
+          <InputDisplay input={log.input} />
+          <LogDisplay logs={log.logs} />
+          <OutputDisplay output={log.output} />
+          <BenchmarkDisplay functionRun={log} />
+        </Box>
+      )
+    case "systemMessage":
+      return <Text>{log.message}</Text>
+    default:
+      return null;
   }
-
-  if (log.type === 'systemMessage') {
-    return <Text>{log.message}</Text>
-  }
-
-  return null
 }
 
 export {Replay}
