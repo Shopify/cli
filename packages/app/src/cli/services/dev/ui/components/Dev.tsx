@@ -4,15 +4,14 @@ import {ExtensionInstance} from '../../../../models/extensions/extension-instanc
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
+import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
+import figures from '@shopify/cli-kit/node/figures'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
-import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
-
-import figures from '@shopify/cli-kit/node/figures'
 import {Writable} from 'stream'
 
 export interface DeveloperPreviewController {

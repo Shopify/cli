@@ -160,7 +160,7 @@ describe('replay', () => {
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
     vi.mocked(renderReplay).mockRejectedValueOnce('failure')
 
-    // Whenn
+    // When
     await expect(async () =>
       replay({
         app: testApp(),
