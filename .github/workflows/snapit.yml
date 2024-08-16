@@ -14,11 +14,6 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-          echo "$GITHUB_CONTEXT"
       - name: Checkout current branch
         uses: actions/checkout@v4
       - name: Checkout PR branch
