@@ -96,7 +96,9 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         })
       })
 
-      return eventStream.send()
+      eventStream.push(JSON.stringify({type: 'open', pid: String(process.pid)})).catch(() => {})
+
+      return eventStream.send().then(() => eventStream.flush())
     } else if (endpoint === '/__hot-reload/render') {
       const queryParams = getQuery(event)
       const sectionId = queryParams['section-id']

@@ -3,6 +3,10 @@
 
 export type HotReloadEvent =
   | {
+      type: 'open'
+      pid: string
+    }
+  | {
       type: 'section'
       key: string
       names: string[]
@@ -41,6 +45,7 @@ function hotReloadScript() {
     window.location.reload()
   }
 
+  let serverPid: string | undefined
   const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
 
   evtSource.onopen = () => logInfo('Connected')
@@ -53,10 +58,13 @@ function hotReloadScript() {
   }
 
   evtSource.onmessage = async (event) => {
-    if (typeof event.data !== 'string') return
+    if (!event.data || typeof event.data !== 'string') return
 
     const data = JSON.parse(event.data) as HotReloadEvent
-    if (data.type === 'section') {
+    if (data.type === 'open') {
+      serverPid ??= data.pid
+      if (serverPid !== data.pid) fullPageReload('Reconnected to new server')
+    } else if (data.type === 'section') {
       const elements = data.names.flatMap((name) =>
         Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
       )
