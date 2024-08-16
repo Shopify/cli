@@ -9,8 +9,12 @@ import {
   type H3Event,
   type H3Error,
   sendError,
+  setResponseHeaders,
+  setResponseHeader,
+  removeResponseHeader,
 } from 'h3'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
 const IGNORED_ENDPOINTS = [
@@ -50,8 +54,29 @@ function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
   return html.replaceAll(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
 }
 
-export function patchHtmlWithProxy(html: string, ctx: DevServerContext) {
-  return injectCdnProxy(patchBaseUrlAttributes(html, ctx), ctx)
+function patchCookieWithProxy(cookieHeader: string[], ctx: DevServerContext) {
+  // Domains are invalid for localhost:
+  const domainRE = new RegExp(`Domain=${ctx.session.storeFqdn.replaceAll('.', '\\.')};\\s*`, 'gi')
+  return cookieHeader.map((value) => value.replace(domainRE, '')).join(', ')
+}
+
+export async function patchRenderingResponse(event: H3Event, response: NodeResponse, ctx: DevServerContext) {
+  setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
+
+  const linkHeader = response.headers.get('Link')
+  if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
+
+  const setCookieHeader = response.headers.raw()['set-cookie']
+  if (setCookieHeader) setResponseHeader(event, 'Set-Cookie', patchCookieWithProxy(setCookieHeader, ctx))
+
+  // We are decoding the payload here, remove the header:
+  let html = await response.text()
+  removeResponseHeader(event, 'content-encoding')
+
+  html = injectCdnProxy(html, ctx)
+  html = patchBaseUrlAttributes(html, ctx)
+
+  return html
 }
 
 // These headers are meaningful only for a single transport-level connection,
@@ -103,9 +128,10 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
     },
   }).catch(async (error: H3Error) => {
     if (error.statusCode >= 500) {
+      const cause = error.cause as undefined | Error
       renderWarning({
         headline: `Failed to proxy request to ${pathname} - ${error.statusCode} - ${error.statusMessage}`,
-        body: error.stack ?? error.message,
+        body: cause?.stack ?? error.stack ?? error.message,
       })
     }
 

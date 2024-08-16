@@ -1,14 +1,7 @@
-import {getProxyStorefrontHeaders, injectCdnProxy, patchHtmlWithProxy} from './proxy.js'
+import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {
-  defineEventHandler,
-  setResponseHeaders,
-  setResponseStatus,
-  removeResponseHeader,
-  sendWebResponse,
-  type H3Error,
-} from 'h3'
+import {defineEventHandler, sendWebResponse, type H3Error} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -48,19 +41,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
     if (!response) return null
 
-    setResponseStatus(event, response.status, response.statusText)
-
-    const LinkHeader = response.headers.get('Link')
-    setResponseHeaders(event, {
-      ...Object.fromEntries(response.headers.entries()),
-      Link: LinkHeader && injectCdnProxy(LinkHeader, ctx),
-    })
-
-    // We are decoding the payload here, remove the header:
-    let html = await response.text()
-    removeResponseHeader(event, 'content-encoding')
-
-    html = patchHtmlWithProxy(html, ctx)
+    let html = await patchRenderingResponse(event, response, ctx)
 
     if (ctx.options.liveReload !== 'off') {
       html = injectHotReloadScript(html)
