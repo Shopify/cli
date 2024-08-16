@@ -5,6 +5,7 @@ import {
   sendProxy,
   getProxyRequestHeaders,
   getRequestWebStream,
+  getRequestIP,
   type H3Event,
 } from 'h3'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -53,22 +54,32 @@ const HOP_BY_HOP_HEADERS = [
   'content-length',
 ]
 
-function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
-  const target = `https://${ctx.session.storeFqdn}${event.path}`
-  const pathname = event.path.split('?')[0]!
-  const body = getRequestWebStream(event)
+export function getProxyStorefrontHeaders(event: H3Event) {
+  const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string}
 
-  const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string | undefined}
-  // Required header for CDN requests
-  proxyRequestHeaders.referer = target
   // H3 already removes most hop-by-hop request headers, but not these:
   // https://github.com/unjs/h3/blob/ac6d83de2abe5411d4eaea8ecf2165ace16a65f3/src/utils/proxy.ts#L25
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
   }
 
+  const ipAddress = getRequestIP(event)
+  if (ipAddress) proxyRequestHeaders['X-Forwarded-For'] = ipAddress
+
+  return proxyRequestHeaders
+}
+
+function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
+  const target = `https://${ctx.session.storeFqdn}${event.path}`
+  const pathname = event.path.split('?')[0]!
+  const body = getRequestWebStream(event)
+
+  const proxyHeaders = getProxyStorefrontHeaders(event)
+  // Required header for CDN requests
+  proxyHeaders.referer = target
+
   return sendProxy(event, target, {
-    headers: proxyRequestHeaders,
+    headers: proxyHeaders,
     fetchOptions: {method: event.method, body, duplex: body ? 'half' : undefined},
     cookieDomainRewrite: `http://${ctx.options.host}:${ctx.options.port}`,
     async onResponse(event, response) {
