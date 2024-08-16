@@ -1,4 +1,4 @@
-import {Replay, ReplayProps} from './ui/components/Replay.js'
+import {Replay, ReplayProps} from './ui/components/Replay/Replay.js'
 import {render} from '@shopify/cli-kit/node/ui'
 import React from 'react'
 

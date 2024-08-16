@@ -1,9 +1,9 @@
 import {FunctionRunFromRunner, SystemMessage, useFunctionWatcher} from './hooks/useFunctionWatcher.js'
-import {FunctionRunData} from '../../replay.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {FunctionConfigType} from '../../../../models/extensions/specifications/function.js'
-import {AppInterface} from '../../../../models/app/app.js'
-import {prettyPrintJsonIfPossible} from '../../../app-logs/utils.js'
+import {FunctionRunData} from '../../../replay.js'
+import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
+import {AppInterface} from '../../../../../models/app/app.js'
+import {prettyPrintJsonIfPossible} from '../../../../app-logs/utils.js'
 import figures from '@shopify/cli-kit/node/figures'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React, {FunctionComponent} from 'react'
@@ -85,7 +85,7 @@ function InputDisplay({input}: {input: string}) {
 
 function LogDisplay({logs}: {logs: string}) {
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" >
       <Text color="black" backgroundColor="blueBright">
         {'\n\n            Logs            \n'}
       </Text>
