@@ -1,19 +1,17 @@
+import {renderReplay} from './ui.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
-import {setupExtensionWatcher} from '../dev/extension/bundler.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {exec} from '@shopify/cli-kit/node/system'
-import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
-import {outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
@@ -64,28 +62,16 @@ export async function replay(options: ReplayOptions) {
       : await getRunFromSelector(functionRunsDir, extension.handle)
 
     const {input, export: runExport} = selectedRun.payload
-    await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
 
     if (watch) {
-      outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-      await setupExtensionWatcher({
-        extension,
+      await renderReplay({
+        selectedRun,
+        abortController,
         app,
-        stdout: process.stdout,
-        stderr: process.stderr,
-        onChange: async () => {
-          await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
-          outputInfo(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-        },
-        onReloadAndBuildError: async (error) => {
-          if (error instanceof FatalError) {
-            renderFatalError(error)
-          } else {
-            outputWarn(`Failed to replay function: ${error.message}`)
-          }
-        },
-        signal: abortController.signal,
+        extension,
       })
+    } else {
+      await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
     }
   } catch (error) {
     abortController.abort()
