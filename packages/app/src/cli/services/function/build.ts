@@ -6,9 +6,9 @@ import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
-import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {findPathUp, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -166,6 +166,8 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   extra: string[] = [],
 ) {
+  const dir = dirname(fun.outputPath)
+  await mkdir(dir)
   const args = ['compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
 
   return exec(javyBinary().path, args, {

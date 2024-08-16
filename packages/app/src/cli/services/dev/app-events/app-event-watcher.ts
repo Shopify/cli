@@ -5,13 +5,13 @@ import {createESBuildContextsForExtensions} from './app-watcher-esbuild.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
+import {ExtensionBuildOptions} from '../../build/extension.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {basename} from '@shopify/cli-kit/node/path'
-import {BuildContext, BuildOptions, BuildResult} from 'esbuild'
-import {tempDirectory} from '@shopify/cli-kit/node/fs'
+import {BuildContext, BuildOptions} from 'esbuild'
 import EventEmitter from 'events'
 
 /**
@@ -89,6 +89,7 @@ interface HandlerInput {
 }
 
 type Handler = (input: HandlerInput) => Promise<AppEvent>
+type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
 
 const handlers: {[key in WatcherEvent['type']]: Handler} = {
   extension_folder_deleted: ExtensionFolderDeletedHandler,
@@ -110,20 +111,15 @@ export class AppEventWatcher extends EventEmitter {
   private buildOutputPath: string
   private esbuildContexts: {[key: string]: BuildContext<BuildOptions>} = {}
 
-  constructor(app: AppInterface, buildOutputPath?: string, appURL?: string, options?: OutputContextOptions) {
+  constructor(app: AppInterface, buildOutputPath: string, appURL?: string, options?: OutputContextOptions) {
     super()
     this.app = app
     this.appURL = appURL
-    this.buildOutputPath = buildOutputPath ?? tempDirectory()
+    this.buildOutputPath = buildOutputPath
     this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
   }
 
   async start() {
-    console.log(`Starting app event watcher, build output path: ${this.buildOutputPath}`)
-
-    // When a ui-extension is deleted, remove the esbuild watcher?
-    // When a ui-extension is created, add the esbuild watcher?
-
     // Start the esbuild bundler for extensions that require it
     await this.createESBuildContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
@@ -143,19 +139,7 @@ export class AppEventWatcher extends EventEmitter {
             return
           }
 
-          const createdEsBuild = appEvent.extensionEvents
-            .filter((extEvent) => extEvent.type === EventType.Created && extEvent.extension.isESBuildExtension)
-            .map((extEvent) => extEvent.extension)
-          await this.createESBuildContexts(createdEsBuild)
-
-          const deletedEsBuild = appEvent.extensionEvents
-            .filter((extEvent) => extEvent.type === EventType.Deleted && extEvent.extension.isESBuildExtension)
-            .map((extEvent) => extEvent.extension)
-          await this.deleteESBuildContexts(deletedEsBuild)
-
-          const updatedEsBuild = appEvent.extensionEvents
-            .filter((extEvent) => extEvent.type === EventType.Updated && extEvent.extension.isESBuildExtension)
-            .map((extEvent) => extEvent.extension)
+          await this.updateESBuildContexts(appEvent)
 
           // Find affected created/updated extensions and build them
           const extensions: ExtensionInstance[] = appEvent.extensionEvents
@@ -164,37 +148,11 @@ export class AppEventWatcher extends EventEmitter {
           await this.buildExtensions(extensions)
 
           this.emit('all', appEvent)
-
-          //
-          createdEsBuild.forEach((ext) => this.emit('esbuild-created', {extension: ext, result: null}))
-          updatedEsBuild.forEach((ext) => this.emit('esbuild-updated', {extension: ext, result: null}))
-          deletedEsBuild.forEach((ext) => this.emit('esbuild-deleted', {extension: ext, result: null}))
         })
         .catch((error) => {
           this.options.stderr.write(`Error handling event: ${error.message}`)
         })
     })
-  }
-
-  async createESBuildContexts(extensions: ExtensionInstance[], app?: AppInterface) {
-    const newContexts = await createESBuildContextsForExtensions({
-      extensions,
-      dotEnvVariables: (app ?? this.app).dotenv?.variables ?? {},
-      url: this.appURL ?? '',
-      outputPath: this.buildOutputPath,
-      ...this.options,
-    })
-    this.esbuildContexts = {...this.esbuildContexts, ...newContexts}
-  }
-
-  async deleteESBuildContexts(extensions: ExtensionInstance[]) {
-    const promises = extensions.map((ext) => {
-      const context = this.esbuildContexts[ext.handle]
-      if (context) {
-        return context.dispose()
-      }
-    })
-    await Promise.all(promises)
   }
 
   onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
@@ -203,48 +161,82 @@ export class AppEventWatcher extends EventEmitter {
     return this
   }
 
-  // Subscribe to changes in the esbuild bundler, only if you need to know when an esbuild extension is built.
-  onESBuildChange(listener: (event: {extension: ExtensionInstance; result: BuildResult<BuildOptions> | null}) => void) {
-    this.addListener('esbuild', listener)
-    return this
+  /**
+   * For each ESBuild extension affected:
+   * - If created, add a new ES context
+   * - If deleted, remove the ES context
+   * @param appEvent - The event that triggered the change
+   */
+  private async updateESBuildContexts(appEvent: AppEvent) {
+    const createdEsBuild = appEvent.extensionEvents
+      .filter((extEvent) => extEvent.type === EventType.Created && extEvent.extension.isESBuildExtension)
+      .map((extEvent) => extEvent.extension)
+    await this.createESBuildContexts(createdEsBuild)
+
+    const deletedEsBuild = appEvent.extensionEvents
+      .filter((extEvent) => extEvent.type === EventType.Deleted && extEvent.extension.isESBuildExtension)
+      .map((extEvent) => extEvent.extension)
+    await this.deleteESBuildContexts(deletedEsBuild)
+  }
+
+  private async createESBuildContexts(extensions: ExtensionInstance[]) {
+    const newContexts = await createESBuildContextsForExtensions({
+      extensions,
+      dotEnvVariables: this.app.dotenv?.variables ?? {},
+      url: this.appURL ?? '',
+      outputPath: this.buildOutputPath,
+      ...this.options,
+    })
+    this.esbuildContexts = {...this.esbuildContexts, ...newContexts}
+  }
+
+  private async deleteESBuildContexts(extensions: ExtensionInstance[]) {
+    const promises = extensions.map((ext) => this.esbuildContexts[ext.handle]?.dispose())
+    await Promise.all(promises)
+  }
+
+  private buildForBundleOptions(): ExtensionBuildOptions {
+    return {
+      app: this.app,
+      stdout: this.options.stdout,
+      stderr: this.options.stderr,
+      useTasks: false,
+      environment: 'development',
+      appURL: this.appURL,
+    }
   }
 
   /**
-   * Builds all given extensions except the ones that are built using esbuild.
-   * esbuild extensions are built using a esbuild watcher process.
+   * Builds all given extensions.
+   * ESBuild extensions will be built using their own ESBuild context, other extensions will be built using the default
+   * buildForBundle method.
    */
   private async buildExtensions(extensions: ExtensionInstance[]): Promise<ExtensionBuildResult[]> {
     const promises = extensions.map(async (ext) => {
-      if (this.esbuildContexts[ext.handle]) {
-        const result = await this.esbuildContexts[ext.handle]?.rebuild()
-        if ((result?.errors?.length ?? 0) > 0) return {status: 'error', error: 'Error', handle: ext.handle}
-        return {status: 'ok', handle: ext.handle}
-      } else {
-        try {
-          await ext.buildForBundle(
-            {
-              app: this.app,
-              stdout: this.options.stdout,
-              stderr: this.options.stderr,
-              useTasks: false,
-              environment: 'development',
-              appURL: this.appURL,
-            },
-            this.buildOutputPath,
-          )
-          return {status: 'ok', handle: ext.handle}
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-          return {status: 'error', error: error.message, handle: ext.handle}
+      try {
+        if (this.esbuildContexts[ext.handle]) {
+          const result = await this.esbuildContexts[ext.handle]?.rebuild()
+          if ((result?.errors?.length ?? 0) > 0) {
+            return {
+              status: 'error',
+              error: result?.errors.map((err) => err.text).join('\n'),
+              handle: ext.handle,
+            } as const
+          }
+          return {status: 'ok', handle: ext.handle} as const
+        } else {
+          await ext.buildForBundle(this.buildForBundleOptions(), this.buildOutputPath)
+          return {status: 'ok', handle: ext.handle} as const
         }
+        // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        return {status: 'error', error: error.message, handle: ext.handle} as const
       }
     })
     const output = await Promise.all(promises)
     return output
   }
 }
-
-type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
 
 /**
  * When an extension folder is deleted:
