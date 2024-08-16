@@ -126,6 +126,7 @@ describe('useFunctionWatcher', () => {
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
 
+    // .mock.calls returns an array of the calls, which each contain the arguments
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onChange()
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
@@ -160,6 +161,7 @@ describe('useFunctionWatcher', () => {
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
+    // .mock.calls returns an array of the calls, which each contain the arguments
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
 
     // Then
@@ -192,6 +194,7 @@ describe('useFunctionWatcher', () => {
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
+    // .mock.calls returns an array of the calls, which each contain the arguments
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
 
     // Then
