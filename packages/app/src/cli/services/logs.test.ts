@@ -1,16 +1,10 @@
 import {logs} from './logs.js'
-import {subscribeToAppLogs} from './app-logs/utils.js'
+import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {ensureDevContext} from './context.js'
 import * as renderLogs from './app-logs/logs-command/ui.js'
 import * as renderJsonLogs from './app-logs/logs-command/render-json-logs.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
-import {
-  buildVersionedAppSchema,
-  testApp,
-  testOrganizationApp,
-  testFunctionExtension,
-  defaultFunctionConfiguration,
-} from '../models/app/app.test-data.js'
+import {buildVersionedAppSchema, testApp, testOrganizationApp} from '../models/app/app.test-data.js'
 import {consoleLog} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, vi, expect} from 'vitest'
@@ -25,7 +19,8 @@ vi.mock('@shopify/cli-kit/node/output')
 describe('logs', () => {
   test('should call json handler when format is json', async () => {
     // Given
-    await setupDevContext()
+    const sources = ['extensions.source']
+    await setupDevContext(sources)
     const spy = vi.spyOn(renderJsonLogs, 'renderJsonLogs')
 
     // When
@@ -35,7 +30,7 @@ describe('logs', () => {
       directory: 'directory',
       apiKey: 'api-key',
       storeFqdn: 'store-fqdn',
-      sources: ['extensions.source'],
+      sources,
       status: 'status',
       configName: 'config-name',
       userProvidedConfigName: 'user-provided-config-name',
@@ -48,7 +43,8 @@ describe('logs', () => {
 
   test('should call text handler when format is text', async () => {
     // Given
-    await setupDevContext()
+    const sources = ['extensions.source']
+    await setupDevContext(sources)
     const spy = vi.spyOn(renderLogs, 'renderLogs')
 
     // When
@@ -58,7 +54,7 @@ describe('logs', () => {
       apiKey: 'api-key',
       directory: 'directory',
       storeFqdn: 'store-fqdn',
-      sources: ['extensions.source'],
+      sources,
       status: 'status',
       configName: 'config-name',
       userProvidedConfigName: 'user-provided-config-name',
@@ -120,7 +116,7 @@ describe('logs', () => {
   })
 })
 
-async function setupDevContext(handles: string[] = ['source']) {
+async function setupDevContext(handles: string[]) {
   const {schema: configSchema} = await buildVersionedAppSchema()
   vi.mocked(loadAppConfiguration).mockResolvedValue({
     directory: '/app',
@@ -133,15 +129,10 @@ async function setupDevContext(handles: string[] = ['source']) {
     remoteFlags: [],
   })
 
-  const app = testApp()
-  app.realExtensions = await Promise.all(
-    handles.map(async (handle) => {
-      return testFunctionExtension({config: {handle, ...defaultFunctionConfiguration()}})
-    }),
-  )
+  vi.mocked(sourcesForApp).mockReturnValue(handles)
 
   vi.mocked(ensureDevContext).mockResolvedValue({
-    localApp: app,
+    localApp: testApp(),
     remoteApp: testOrganizationApp(),
     remoteAppUpdated: false,
     updateURLs: false,

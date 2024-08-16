@@ -11,6 +11,7 @@ import {
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {environmentVariableNames} from '../../constants.js'
+import {AppInterface} from '../../models/app/app.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -163,6 +164,12 @@ export const handleFetchAppLogsError = async (
   }
 
   return {retryIntervalMs, nextJwtToken}
+}
+
+export function sourcesForApp(app: AppInterface): string[] {
+  return app.allExtensions.flatMap((extension) => {
+    return extension.isFunctionExtension ? [`extensions.${extension.configuration.handle}`] : []
+  })
 }
 
 export const toFormattedAppLogJson = (

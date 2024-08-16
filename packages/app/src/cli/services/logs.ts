@@ -1,6 +1,6 @@
 import {DevContextOptions, ensureDevContext} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
-import {subscribeToAppLogs} from './app-logs/utils.js'
+import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
@@ -25,9 +25,7 @@ interface LogsOptions {
 export async function logs(commandOptions: LogsOptions) {
   const logsConfig = await prepareForLogs(commandOptions)
 
-  const validSources = logsConfig.localApp.allExtensions.flatMap((extension) => {
-    return extension.isFunctionExtension ? [`extensions.${extension.configuration.handle}`] : []
-  })
+  const validSources = sourcesForApp(logsConfig.localApp)
 
   if (validSources.length === 0) {
     throw new AbortError(

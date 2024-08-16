@@ -15,6 +15,7 @@
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
+* [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
@@ -507,6 +508,27 @@ FLAGS
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   Increase the verbosity of the output.
+```
+
+## `shopify app logs sources`
+
+Print out a list of sources that may be used with the logs command.
+
+```
+USAGE
+  $ shopify app logs sources [-c <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>  The name of the app configuration.
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the output.
+
+DESCRIPTION
+  Print out a list of sources that may be used with the logs command.
+
+  The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
+  only function extensions are supported as sources.
 ```
 
 ## `shopify app:release --version <version>`
