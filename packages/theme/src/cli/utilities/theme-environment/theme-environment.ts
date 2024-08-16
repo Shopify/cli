@@ -1,7 +1,7 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {setupTemplateWatcher, getHotReloadHandler} from './hot-reload/server.js'
 import {getHtmlHandler} from './html.js'
-import {getAssetsHandler} from './assets.js'
+import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {createApp, toNodeListener} from 'h3'
