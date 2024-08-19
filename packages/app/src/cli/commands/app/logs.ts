@@ -34,6 +34,7 @@ export default class Logs extends Command {
     source: Flags.string({
       description: 'Filters output to the specified log source.',
       env: 'SHOPIFY_FLAG_SOURCE',
+      multiple: true,
     }),
     status: Flags.string({
       description: 'Filters output to the specified status (success or failure).',
@@ -52,7 +53,7 @@ export default class Logs extends Command {
 
     const apiKey = flags['client-id'] || flags['api-key']
 
-    const sources = flags.source?.split(',')
+    const sources = flags.source
 
     await checkFolderIsValidApp(flags.path)
     const logOptions = {

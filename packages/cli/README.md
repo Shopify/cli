@@ -557,7 +557,7 @@ FLAGS
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
       --reset              Reset all your settings.
-      --source=<value>     Filters output to the specified log source.
+      --source=<value>...  Filters output to the specified log source.
       --status=<option>    Filters output to the specified status (success or failure).
                            <options: success|failure>
       --verbose            Increase the verbosity of the output.
