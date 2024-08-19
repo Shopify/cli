@@ -14,8 +14,13 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout default branch
+      - name: Checkout current branch
         uses: actions/checkout@v4
+      - name: Checkout PR branch
+        run: |
+            gh pr checkout ${{ github.event.issue.number }}
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:

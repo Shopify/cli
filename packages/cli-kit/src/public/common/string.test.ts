@@ -1,5 +1,6 @@
 import {
   formatDate,
+  formatLocalDate,
   getRandomName,
   joinWithAnd,
   linesToColumns,
@@ -103,6 +104,19 @@ describe('formatDate', () => {
 
     // Then
     expect(str).toBe('2020-01-01 00:00:00')
+  })
+})
+
+describe('formatLocalDate', () => {
+  test('formats an ISO date string to local date string', () => {
+    // Given
+    const ISODateString = '2020-01-01T00:00:00.000Z'
+
+    // When
+    const str = formatLocalDate(ISODateString)
+
+    // Then
+    expect(str).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)
   })
 })
 
