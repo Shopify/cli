@@ -1,10 +1,12 @@
+/* eslint-disable promise/no-nesting */
 import {checksum} from './asset-checksum.js'
-import {ThemeFileSystem, Key, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {ThemeFileSystem, Key, ThemeAsset, ThemeFSEventName, type ThemeFSEvent} from '@shopify/cli-kit/node/themes/types'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 
 export const THEME_DEFAULT_IGNORE_PATTERNS = [
@@ -46,28 +48,82 @@ const THEME_PARTITION_REGEX = {
 }
 
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
-  const filesPaths = await glob(THEME_DIRECTORY_PATTERNS, {
+  const files = new Map<string, ThemeAsset>()
+  const eventEmitter = new EventEmitter()
+  function emitEvent<T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEvent<T>['payload']) {
+    eventEmitter.emit(eventName, payload)
+  }
+
+  const initialFilesPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
     ignore: THEME_DEFAULT_IGNORE_PATTERNS,
+  }).then((filesPaths) => {
+    return Promise.all(
+      filesPaths.map(async (key) => {
+        files.set(key, {
+          key,
+          checksum: await checksum(root, key),
+        })
+      }),
+    )
   })
 
-  const assets = await Promise.all(
-    filesPaths.map(async (key) => {
-      return checksum(root, key).then((checksum) => {
-        return {
-          key,
-          checksum,
-        }
-      })
-    }),
-  )
+  initialFilesPromise
+    .then(async () => {
+      const getKey = (filePath: string) => relativePath(root, filePath)
+      const handleFileUpdate = (eventName: 'add' | 'change', filePath: string) => {
+        const fileKey = getKey(filePath)
 
-  const files = new Map<string, ThemeAsset>(assets.map((asset) => [asset.key, asset]))
+        const contentPromise = checksum(root, fileKey)
+          .then((checksum) => {
+            files.set(fileKey, {key: fileKey, checksum})
+            return readThemeFile(root, fileKey)
+          })
+          .then((content) => {
+            const file = files.get(fileKey)
+            if (!file) return ''
+            file.value = content!.toString()
+            return file.value
+          })
+          .catch(() => '')
+
+        emitEvent(eventName, {
+          fileKey,
+          contentPromise,
+          syncPromise: Promise.resolve(),
+        })
+      }
+
+      const handleFileDelete = (filePath: string) => {
+        const key = getKey(filePath)
+
+        files.delete(key)
+      }
+
+      const {default: chokidar} = await import('chokidar')
+
+      const directoriesToWatch = new Set(
+        THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+      )
+
+      const watcher = chokidar.watch([...directoriesToWatch], {
+        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        persistent: !process.env.SHOPIFY_UNIT_TEST,
+        ignoreInitial: true,
+      })
+
+      watcher
+        .on('add', handleFileUpdate.bind(null, 'add'))
+        .on('change', handleFileUpdate.bind(null, 'change'))
+        .on('unlink', handleFileDelete)
+    })
+    .catch(() => {})
 
   return {
     root,
     files,
+    ready: () => initialFilesPromise.then(() => {}),
     delete: async (assetKey: string) => {
       await removeThemeFile(root, assetKey)
       files.delete(assetKey)
@@ -99,6 +155,9 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
           return fileReducedStats
         }
       }
+    },
+    addEventListener: (eventName, cb) => {
+      eventEmitter.on(eventName, cb)
     },
   }
 }

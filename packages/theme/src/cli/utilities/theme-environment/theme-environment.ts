@@ -1,5 +1,5 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
-import {setupTemplateWatcher, getHotReloadHandler} from './hot-reload/server.js'
+import {getHotReloadHandler, setupInMemoryTemplateWatcher} from './hot-reload/server.js'
 import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
@@ -10,7 +10,7 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  await ensureThemeEnvironmentSetup(theme, ctx)
+  await Promise.all([ensureThemeEnvironmentSetup(theme, ctx), setupInMemoryTemplateWatcher(ctx)])
   return createDevelopmentServer(theme, ctx)
 }
 
@@ -50,14 +50,11 @@ async function createDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   return {
     dispatch: app.handler.bind(app),
     start: async (): Promise<DevelopmentServerInstance> => {
-      const {stopWatcher} = await setupTemplateWatcher(ctx)
-
       return new Promise((resolve) =>
         server.listen({port: ctx.options.port, host: ctx.options.host}, () =>
           resolve({
             close: async () => {
               await Promise.all([
-                stopWatcher(),
                 new Promise((resolve) => {
                   server.closeAllConnections()
                   server.close(resolve)

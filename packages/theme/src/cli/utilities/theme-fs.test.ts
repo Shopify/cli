@@ -27,6 +27,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
 
       // Then
       expect(themeFileSystem).toEqual({
@@ -43,10 +44,12 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
         root,
+        ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
         stat: expect.any(Function),
+        addEventListener: expect.any(Function),
       })
     })
 
@@ -56,15 +59,18 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
 
       // Then
       expect(themeFileSystem).toEqual({
         files: new Map([]),
         root,
+        ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
         stat: expect.any(Function),
+        addEventListener: expect.any(Function),
       })
     })
 
@@ -74,6 +80,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       await themeFileSystem.delete('assets/base.css')
 
       // Then
@@ -89,6 +96,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
       await themeFileSystem.delete('assets/base.css')
 
@@ -103,6 +111,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       await themeFileSystem.delete('assets/nonexistent.css')
 
       // Then
@@ -118,6 +127,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
 
       await themeFileSystem.write({key: 'assets/new_file.css', checksum: '1010', value: 'content'})
@@ -139,6 +149,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
 
       await themeFileSystem.write({key: 'assets/new_image.gif', checksum: '1010', attachment})
@@ -159,6 +170,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures'
       const key = 'templates/404.json'
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.get(key)).toEqual({
         key: 'templates/404.json',
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
@@ -335,6 +347,7 @@ describe('theme-fs', () => {
       // Given
       const filesToRead = [{key: 'assets/base.css', checksum: '1'}]
       const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+      await themeFileSystem.ready()
 
       // When
       const testFile = themeFileSystem.files.get('assets/base.css')
@@ -364,6 +377,7 @@ describe('theme-fs', () => {
       // Given
       const filesToRead = [{key: 'assets/sparkle.gif', checksum: '2'}]
       const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+      await themeFileSystem.ready()
 
       // When
       const testFile = themeFileSystem.files.get('assets/sparkle.gif')

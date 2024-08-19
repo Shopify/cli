@@ -1,13 +1,11 @@
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
-import {THEME_DEFAULT_IGNORE_PATTERNS, THEME_DIRECTORY_PATTERNS} from '../../theme-fs.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, sendError, type H3Error} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-import {extname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {readFile} from '@shopify/cli-kit/node/fs'
+import {extname} from '@shopify/cli-kit/node/path'
 import EventEmitter from 'node:events'
-import type {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeFSEvent} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
 
 // --- Template Replacers ---
@@ -30,55 +28,56 @@ export function getInMemoryTemplates() {
  * Watchs for file changes and updates in-memory templates, triggering
  * HotReload if needed.
  */
-export async function setupTemplateWatcher(ctx: DevServerContext) {
-  const {default: chokidar} = await import('chokidar')
+export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
+  const handleFileDelete = ({fileKey, syncPromise}: ThemeFSEvent<'unlink'>['payload'], deleteJsonValue = true) => {
+    syncPromise
+      .then(() => {
+        // Delete memory info after syncing with the remote instance because we
+        // don't need to pass replaceTemplates anymore.
+        delete inMemoryTemplates[fileKey]
+        if (deleteJsonValue) delete parsedJsonTemplates[fileKey]
+      })
+      .catch(() => {})
+  }
 
-  const directoriesToWatch = new Set(
-    THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(ctx.directory, pattern.split('/').shift() ?? '')),
-  )
-
-  let initialized = false
-  const getKey = (filePath: string) => relativePath(ctx.directory, filePath)
-  const handleFileUpdate = (filePath: string) => {
-    const key = getKey(filePath)
-    const extension = extname(filePath)
+  const handleFileUpdate = ({fileKey, contentPromise, syncPromise}: ThemeFSEvent<'add'>['payload']) => {
+    const extension = extname(fileKey)
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
-    const isAsset = key.startsWith('assets/')
+    const isAsset = fileKey.startsWith('assets/')
 
     if (needsTemplateUpdate && !isAsset) {
-      const isJson = extension === '.json'
-      // During initialization we only want to process
-      // JSON files to cache their contents early
-      if (initialized || isJson) {
-        readFile(filePath)
-          .then((content) => {
-            if (initialized) inMemoryTemplates[key] = content
-            if (isJson) parsedJsonTemplates[key] = JSON.parse(content)
-            triggerHotReload(key, ctx)
-          })
-          .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
-      }
-    } else if (initialized && isAsset) {
-      triggerHotReload(key, ctx)
+      contentPromise
+        .then((content) => {
+          inMemoryTemplates[fileKey] = content
+          if (extension === '.json') parsedJsonTemplates[fileKey] = JSON.parse(content)
+          triggerHotReload(fileKey, ctx)
+
+          // Delete template from memory after syncing but keep
+          // JSON values to read section names for hot-reloading sections.
+          return handleFileDelete({fileKey, syncPromise}, false)
+        })
+        .catch(() => {})
+    } else if (isAsset) {
+      // No need to wait for anything, just full refresh
+      triggerHotReload(fileKey, ctx)
     }
   }
 
-  const watcher = chokidar
-    .watch([...directoriesToWatch], {
-      ignored: THEME_DEFAULT_IGNORE_PATTERNS,
-      persistent: true,
-      ignoreInitial: false,
-    })
-    .on('ready', () => (initialized = true))
-    .on('add', handleFileUpdate)
-    .on('change', handleFileUpdate)
-    .on('unlink', (filePath) => {
-      const key = getKey(filePath)
-      delete inMemoryTemplates[key]
-      delete parsedJsonTemplates[key]
-    })
+  ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
+  ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
+  ctx.localThemeFileSystem.addEventListener('unlink', handleFileDelete)
 
-  return {stopWatcher: () => watcher.close()}
+  return ctx.localThemeFileSystem.ready().then(() => {
+    const files = [...ctx.localThemeFileSystem.files]
+    return Promise.all(
+      files.map(async ([fileKey, file]) => {
+        if (fileKey.endsWith('.json')) {
+          const content = file.value ?? ((await ctx.localThemeFileSystem.read(fileKey)) as string)
+          if (content) parsedJsonTemplates[fileKey] = JSON.parse(content)
+        }
+      }),
+    )
+  })
 }
 
 // --- SSE Hot Reload ---

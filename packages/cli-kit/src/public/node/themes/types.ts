@@ -5,6 +5,25 @@ import type {Stats} from 'fs'
  */
 export type Key = string
 
+interface ThemeFSEventPayload {
+  fileKey: string
+  syncPromise: Promise<void>
+  contentPromise: Promise<string>
+}
+
+export type ThemeFSEventName = 'add' | 'change' | 'unlink'
+export type ThemeFSEvent<T extends ThemeFSEventName> = T extends 'unlink'
+  ? {type: 'unlink'; payload: Omit<ThemeFSEventPayload, 'contentPromise'>}
+  : {
+      type: 'add' | 'change'
+      payload: ThemeFSEventPayload
+    }
+
+interface AddEventListener {
+  (eventName: 'unlink', cb: (params: ThemeFSEvent<'unlink'>['payload']) => void): void
+  (eventName: 'add' | 'change', cb: (params: ThemeFSEvent<'add'>['payload']) => void): void
+}
+
 /**
  * Represents a theme on the file system.
  */
@@ -18,6 +37,11 @@ export interface ThemeFileSystem {
    * Local theme files.
    */
   files: Map<Key, ThemeAsset>
+
+  /**
+   * Promise that resolves when all the initial files are found.
+   */
+  ready: () => Promise<void>
 
   /**
    * Removes a file from the local disk and updates the themeFileSystem
@@ -49,6 +73,11 @@ export interface ThemeFileSystem {
    * @param assetKey - The key of the file to read
    */
   stat: (assetKey: string) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
+
+  /**
+   * Add callbacks to run after certain events are fired.
+   */
+  addEventListener: AddEventListener
 }
 
 /**

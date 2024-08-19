@@ -4,6 +4,7 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
   return {
     root,
     files,
+    ready: () => Promise.resolve(),
     delete: async (assetKey: string) => {
       files.delete(assetKey)
     },
@@ -16,5 +17,6 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
     stat: async (_assetKey: string) => {
       return {mtime: new Date(), size: 1}
     },
+    addEventListener: () => {},
   }
 }

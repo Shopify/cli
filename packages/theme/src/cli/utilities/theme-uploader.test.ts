@@ -1,8 +1,9 @@
 import {MAX_BATCH_BYTESIZE, MAX_BATCH_FILE_COUNT, MAX_UPLOAD_RETRY_COUNT, uploadTheme} from './theme-uploader.js'
 import {readThemeFilesFromDisk} from './theme-fs.js'
+import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {Result, Checksum, Key, ThemeAsset, ThemeFileSystem, Operation} from '@shopify/cli-kit/node/themes/types'
+import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
@@ -56,10 +57,10 @@ describe('theme-uploader', () => {
       {key: 'assets/keepme.liquid', checksum: '1'},
       {key: 'assets/deleteme.liquid', checksum: '2'},
     ]
-    const local = {
-      root: 'tmp',
-      files: new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
-    } as ThemeFileSystem
+    const local = fakeThemeFileSystem(
+      'tmp',
+      new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
@@ -76,10 +77,10 @@ describe('theme-uploader', () => {
       {key: 'assets/base.css', checksum: '2'},
       {key: 'assets/base.css.liquid', checksum: '3'},
     ]
-    const local = {
-      root: 'tmp',
-      files: new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
-    } as ThemeFileSystem
+    const local = fakeThemeFileSystem(
+      'tmp',
+      new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
@@ -95,10 +96,11 @@ describe('theme-uploader', () => {
       {key: 'assets/keepme.liquid', checksum: '1'},
       {key: 'assets/deleteme.liquid', checksum: '2'},
     ]
-    const local = {
-      root: 'tmp',
-      files: new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
-    } as ThemeFileSystem
+
+    const local = fakeThemeFileSystem(
+      'tmp',
+      new Map([['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}]]),
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remote, local, {...uploadOptions, nodelete: true})
@@ -110,13 +112,13 @@ describe('theme-uploader', () => {
   test("should upload local files that don't exist on the remote theme", async () => {
     // Given
     const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([
-        ['assets/new.liquid', {checksum: '2'}],
-        ['assets/newer.liquid', {checksum: '3'}],
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
+        ['assets/new.liquid', {checksum: '2', key: ''}],
+        ['assets/newer.liquid', {checksum: '3', key: ''}],
       ]),
-    } as ThemeFileSystem
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
@@ -143,13 +145,13 @@ describe('theme-uploader', () => {
       {key: 'assets/matching.liquid', checksum: '1'},
       {key: 'assets/conflicting.liquid', checksum: '2'},
     ]
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([
-        ['assets/matching.liquid', {checksum: '1'}],
-        ['assets/conflicting.liquid', {checksum: '3'}],
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
+        ['assets/matching.liquid', {checksum: '1', key: ''}],
+        ['assets/conflicting.liquid', {checksum: '3', key: ''}],
       ]),
-    } as ThemeFileSystem
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
@@ -178,10 +180,7 @@ describe('theme-uploader', () => {
       {key: 'config/settings_data.json', checksum: '6'},
       {key: 'assets/image.png', checksum: '7'},
     ]
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([]),
-    } as ThemeFileSystem
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
     await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
@@ -205,9 +204,9 @@ describe('theme-uploader', () => {
   test('should separate files by type and upload in correct order', async () => {
     // Given
     const remoteChecksums: Checksum[] = []
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
         ['assets/liquid.liquid', {key: 'assets/liquid.liquid', checksum: '1'}],
         ['templates/index.liquid', {key: 'templates/index.liquid', checksum: '4'}],
         ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2'}],
@@ -217,7 +216,7 @@ describe('theme-uploader', () => {
         ['assets/image.png', {key: 'assets/image.png', checksum: '7'}],
         ['templates/product.context.uk.json', {key: 'templates/product.context.uk.json', checksum: '8'}],
       ]),
-    } as ThemeFileSystem
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
@@ -296,10 +295,7 @@ describe('theme-uploader', () => {
         value: `test_${i}`,
       })
     }
-    const themeFileSystem = {
-      root: 'tmp',
-      files,
-    } as ThemeFileSystem
+    const themeFileSystem = fakeThemeFileSystem('tmp', files)
 
     // When
     await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
@@ -311,13 +307,13 @@ describe('theme-uploader', () => {
   test('should create batches for files when bulk upload request size limit is reached', async () => {
     // Given
     const remoteChecksums: Checksum[] = []
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
         ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2', value: 'settings_data'}],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
       ]),
-    } as ThemeFileSystem
+    )
 
     vi.mocked(fileSize).mockResolvedValue(MAX_BATCH_BYTESIZE)
 
@@ -331,14 +327,14 @@ describe('theme-uploader', () => {
   test('should only read values for theme files that will be uploaded', async () => {
     // Given
     const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([
-        ['assets/new.liquid', {checksum: '2'}],
-        ['assets/newer.liquid', {checksum: '3'}],
-        ['assets/existing.liquid', {checksum: '1'}],
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
+        ['assets/new.liquid', {checksum: '2', key: ''}],
+        ['assets/newer.liquid', {checksum: '3', key: ''}],
+        ['assets/existing.liquid', {checksum: '1', key: ''}],
       ]),
-    } as ThemeFileSystem
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
@@ -355,13 +351,13 @@ describe('theme-uploader', () => {
   test('should retry failed uploads', async () => {
     // Given
     const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
-    const themeFileSystem = {
-      root: 'tmp',
-      files: new Map([
-        ['assets/new.liquid', {checksum: '2'}],
-        ['assets/newer.liquid', {checksum: '3'}],
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
+        ['assets/new.liquid', {checksum: '2', key: ''}],
+        ['assets/newer.liquid', {checksum: '3', key: ''}],
       ]),
-    } as ThemeFileSystem
+    )
 
     vi.mocked(bulkUploadThemeAssets)
       .mockResolvedValueOnce([
@@ -426,13 +422,13 @@ describe('theme-uploader', () => {
       {key: 'assets/keepme.liquid', checksum: '1'},
       {key: 'assets/ignore_delete.liquid', checksum: '2'},
     ]
-    const local = {
-      root: 'tmp',
-      files: new Map([
+    const local = fakeThemeFileSystem(
+      'tmp',
+      new Map([
         ['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '3'}],
         ['assets/ignore_upload.liquid', {key: 'assets/ignore_upload.liquid', checksum: '4'}],
       ]),
-    } as ThemeFileSystem
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remote, local, {
@@ -460,13 +456,13 @@ describe('theme-uploader', () => {
       {key: 'assets/keepme.liquid', checksum: '1'},
       {key: 'assets/deleteme.liquid', checksum: '2'},
     ]
-    const local = {
-      root: 'tmp',
-      files: new Map([
+    const local = fakeThemeFileSystem(
+      'tmp',
+      new Map([
         ['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}],
         ['assets/uploadme.liquid', {key: 'assets/uploadme.liquid', checksum: '3'}],
       ]),
-    } as ThemeFileSystem
+    )
 
     // When
     await uploadTheme(remoteTheme, adminSession, remote, local, {
