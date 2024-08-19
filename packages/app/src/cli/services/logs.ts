@@ -1,10 +1,12 @@
 import {DevContextOptions, ensureDevContext} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
-import {subscribeToAppLogs} from './app-logs/utils.js'
+import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {consoleLog} from '@shopify/cli-kit/node/output'
 
 export type Format = 'json' | 'text'
 
@@ -13,7 +15,7 @@ interface LogsOptions {
   reset: boolean
   apiKey?: string
   storeFqdn?: string
-  source?: string
+  sources?: string[]
   status?: string
   configName?: string
   userProvidedConfigName?: string
@@ -22,6 +24,23 @@ interface LogsOptions {
 
 export async function logs(commandOptions: LogsOptions) {
   const logsConfig = await prepareForLogs(commandOptions)
+
+  const validSources = sourcesForApp(logsConfig.localApp)
+
+  if (validSources.length === 0) {
+    throw new AbortError(
+      `This app has no log sources. Learn more about app logs at https://shopify.dev/docs/api/shopify-cli/app/app-logs`,
+    )
+  }
+
+  if (commandOptions.sources) {
+    const invalidSources = commandOptions.sources.filter((source) => !validSources.includes(source))
+    if (invalidSources.length) {
+      throw new AbortError(
+        `Invalid sources: ${invalidSources.join(', ')}. Valid sources are: ${validSources.join(', ')}`,
+      )
+    }
+  }
 
   const variables = {
     shopIds: [logsConfig.storeId],
@@ -33,7 +52,7 @@ export async function logs(commandOptions: LogsOptions) {
 
   const filters = {
     status: commandOptions.status,
-    source: commandOptions.source,
+    sources: commandOptions.sources,
   }
 
   const pollOptions = {
@@ -42,6 +61,7 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   if (commandOptions.format === 'json') {
+    consoleLog(JSON.stringify({message: 'Waiting for app logs...'}))
     await renderJsonLogs({
       options: {
         variables,
@@ -50,6 +70,7 @@ export async function logs(commandOptions: LogsOptions) {
       pollOptions,
     })
   } else {
+    consoleLog('Waiting for app logs...\n')
     await renderLogs({
       options: {
         variables,

@@ -40,7 +40,7 @@ describe('bundleAndBuildExtensions', () => {
             type: 'web_pixel_extension_external',
             handle: 'test-ui-extension',
             uid: 'test-ui-extension-uid',
-            assets: 'test-ui-extension-uid',
+            assets: 'test-ui-extension',
             target: '',
             config: {},
           },
@@ -48,7 +48,7 @@ describe('bundleAndBuildExtensions', () => {
             type: 'theme_external',
             handle: 'theme-extension-name',
             uid: themeExtension.uid,
-            assets: themeExtension.uid,
+            assets: 'theme-extension-name',
             target: '',
             config: {
               theme_extension: {

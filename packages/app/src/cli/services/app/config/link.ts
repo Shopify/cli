@@ -18,15 +18,15 @@ import {
   appFromId,
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
-import {Flag} from '../../dev/fetch.js'
+import {
+  Flag,
+  DeveloperPlatformClient,
+  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+} from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
-import {
-  DeveloperPlatformClient,
-  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
-} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {AppConfigurationUsedByCli} from '../../../models/extensions/specifications/types/app_config.js'

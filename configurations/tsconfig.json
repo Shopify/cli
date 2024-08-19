@@ -22,6 +22,9 @@
         "@shopify/cli-kit/*": ["../packages/cli-kit/src/public/*"],
         "@shopify/cli-kit/typing/*": ["../packages/cli-kit/src/typing/*"],
       },
+      "types": [
+        "vitest/importMeta"
+      ]
     },
     "exclude": ["**/dist/**"]
 }

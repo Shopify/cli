@@ -58,7 +58,7 @@ module.exports = {
         'jsdoc/require-description': 'error',
         'jsdoc/require-description-complete-sentence': 'error',
         'jsdoc/require-hyphen-before-param-description': 'error',
-        'jsdoc/require-jsdoc': 'error',
+        'jsdoc/require-jsdoc': ['error', {publicOnly: true}],
         'jsdoc/require-param': 'error',
         'jsdoc/require-param-description': 'error',
         'jsdoc/require-param-name': 'error',
@@ -77,6 +77,7 @@ module.exports = {
       },
       settings: {
         jsdoc: {
+          publicFunctionsOnly: true,
           mode: 'typescript',
         },
       },

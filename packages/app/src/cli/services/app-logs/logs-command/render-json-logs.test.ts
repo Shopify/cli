@@ -4,6 +4,7 @@ import {handleFetchAppLogsError} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 vi.mock('./poll-app-logs')
 vi.mock('../utils', async (importOriginal) => {
@@ -26,23 +27,35 @@ describe('renderJsonLogs', () => {
   })
 
   test('should handle success response correctly', async () => {
+    const utcTime = '2024-09-14T05:00:00.000Z'
+    const localTime = formatLocalDate(utcTime)
+
     const mockSuccessResponse = {
       cursor: 'next-cursor',
-      appLogs: [{message: 'Log 1'}, {message: 'Log 2'}],
+      appLogs: [
+        {payload: JSON.stringify({message: 'Log 1'}), log_timestamp: utcTime},
+        {payload: JSON.stringify({message: 'Log 2'}), log_timestamp: utcTime},
+      ],
     }
     const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
 
     await renderJsonLogs({
-      pollOptions: {cursor: 'cursor', filters: {status: undefined, source: undefined}, jwtToken: 'jwtToken'},
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
         variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
     })
 
-    expect(outputInfo).toHaveBeenNthCalledWith(1, JSON.stringify({message: 'Log 1'}))
-    expect(outputInfo).toHaveBeenNthCalledWith(2, JSON.stringify({message: 'Log 2'}))
+    expect(outputInfo).toHaveBeenNthCalledWith(
+      1,
+      JSON.stringify({payload: {message: 'Log 1'}, logTimestamp: utcTime, localTime}),
+    )
+    expect(outputInfo).toHaveBeenNthCalledWith(
+      2,
+      JSON.stringify({payload: {message: 'Log 2'}, logTimestamp: utcTime, localTime}),
+    )
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)
   })
@@ -63,7 +76,7 @@ describe('renderJsonLogs', () => {
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 
     await renderJsonLogs({
-      pollOptions: {cursor: 'cursor', filters: {status: undefined, source: undefined}, jwtToken: 'jwtToken'},
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
         variables: {shopIds: [], apiKey: '', token: ''},
         developerPlatformClient: testDeveloperPlatformClient(),

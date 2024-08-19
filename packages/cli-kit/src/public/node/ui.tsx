@@ -23,6 +23,7 @@ import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {
+  Token,
   tokenItemToString,
   InlineToken,
   LinkToken,
@@ -718,4 +719,4 @@ This usually happens when running a command non-interactively, for example in a 
 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}
+export {Token, Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}

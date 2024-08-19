@@ -35,6 +35,10 @@ export const FindAppQuery = gql`
   }
 `
 
+export interface FindAppQueryVariables {
+  apiKey: string
+}
+
 export interface FindAppQuerySchema {
   app: {
     id: string

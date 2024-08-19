@@ -1,7 +1,5 @@
 import {storeAdminUrl} from './urls.js'
-import * as throttler from '../../../private/node/themes/themes-api/throttler.js'
-import {apiCallLimit, retryAfter} from '../../../private/node/themes/themes-api/headers.js'
-import {retry} from '../../../private/node/themes/themes-api/retry.js'
+import * as throttler from '../api/rest-api-throttler.js'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -13,7 +11,7 @@ import {
 } from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
-export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
+export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
@@ -106,9 +104,8 @@ async function request<T>(
   const response = await throttler.throttle(() => restRequest(method, path, session, params, searchParams))
 
   const status = response.status
-  const callLimit = apiCallLimit(response)
 
-  throttler.updateApiCallLimit(callLimit)
+  throttler.updateApiCallLimitFromResponse(response)
 
   switch (true) {
     case status >= 200 && status <= 399:
@@ -119,9 +116,9 @@ async function request<T>(
       return response
     case status === 429:
       // Retry following the "retry-after" header
-      return retry(() => request(method, path, session, params, searchParams), retryAfter(response))
+      return throttler.delayAwareRetry(response, () => request(method, path, session, params, searchParams))
     case status === 403:
-      return handleForbiddenError(session)
+      return handleForbiddenError(response, session)
     case status === 401:
       throw new AbortError(`[${status}] API request unauthorized error`)
     case status === 422:
@@ -135,9 +132,14 @@ async function request<T>(
   }
 }
 
-function handleForbiddenError(session: AdminSession): never {
+function handleForbiddenError(response: RestResponse, session: AdminSession): never {
   const store = session.storeFqdn
   const adminUrl = storeAdminUrl(session)
+  const error = errorMessage(response)
+
+  if (error.match(/Cannot delete generated asset/) !== null) {
+    throw new AbortError(error)
+  }
 
   throw new AbortError(
     `You are not authorized to edit themes on "${store}".`,
@@ -154,4 +156,14 @@ function handleForbiddenError(session: AdminSession): never {
 
 function errors(response: RestResponse) {
   return JSON.stringify(response.json?.errors)
+}
+
+function errorMessage(response: RestResponse): string {
+  const message = response.json?.message
+
+  if (typeof message === 'string') {
+    return message
+  }
+
+  return ''
 }

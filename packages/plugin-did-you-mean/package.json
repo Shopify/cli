@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-did-you-mean",
-  "version": "3.64.0",
+  "version": "3.65.0",
   "private": true,
   "bugs": {
     "url": "https://github.com/Shopify/cli/issues"
@@ -42,12 +42,11 @@
   },
   "dependencies": {
     "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.64.0",
+    "@shopify/cli-kit": "3.65.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^1.6.0",
-    "vitest": "^1.6.0"
+    "@vitest/coverage-istanbul": "^1.6.0"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

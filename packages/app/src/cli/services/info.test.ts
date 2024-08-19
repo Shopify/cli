@@ -32,7 +32,6 @@ const ORG1 = {
   id: '123',
   flags: {},
   businessName: 'test',
-  website: '',
   apps: {nodes: []},
 }
 

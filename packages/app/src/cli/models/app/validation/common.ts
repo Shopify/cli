@@ -1,14 +1,22 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 
-// adding http or https presence and absence of new lines to url validation
-export const httpsRegex = /^(https:\/\/)/
-export const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
-  const regex = httpsOnly ? httpsRegex : /^(https?:\/\/)/
+export function validateUrl(zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid URL'} = {}) {
   return zodType
-    .url()
-    .refine((value) => Boolean(value.match(regex)), {message})
+    .refine((value) => isValidUrl(value, httpsOnly), {message})
     .refine((value) => !value.includes('\n'), {message})
 }
 
-export const ensurePathStartsWithSlash = (arg: unknown) =>
-  typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg
+function isValidUrl(input: string, httpsOnly: boolean) {
+  try {
+    const url = new URL(input)
+    return httpsOnly ? url.protocol === 'https:' : ['http:', 'https:'].includes(url.protocol)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (TypeError) {
+    // new URL() throws a TypeError if the input is not a valid URL
+    return false
+  }
+}
+
+export function ensurePathStartsWithSlash(arg: unknown) {
+  return typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg
+}

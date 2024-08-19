@@ -48,6 +48,7 @@ export default function config(packagePath: string) {
       snapshotFormat: {
         escapeString: true,
       },
+      includeSource: ['**/src/**/*.{ts,tsx}'],
     },
   })
 }

@@ -1,6 +1,5 @@
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
-import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
 import {themeComponent} from '../utilities/theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchChecksums, publishTheme} from '@shopify/cli-kit/node/themes/api'
@@ -32,9 +31,8 @@ interface JsonOutput {
 }
 
 export async function push(theme: Theme, session: AdminSession, options: PushOptions) {
-  const remoteChecksums = await fetchChecksums(theme.id, session)
+  const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = await mountThemeFileSystem(options.path)
-  const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
 
   const results = await uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
 

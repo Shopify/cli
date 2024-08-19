@@ -70,6 +70,7 @@ export async function renderDev({
   graphiqlUrl,
   graphiqlPort,
   developerPreview,
+  shopFqdn,
 }: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
     return render(
@@ -82,13 +83,14 @@ export async function renderDev({
         graphiqlPort={graphiqlPort}
         developerPreview={developerPreview}
         isEditionWeek={isEditionWeek()}
+        shopFqdn={shopFqdn}
       />,
       {
         exitOnCtrlC: false,
       },
     )
   } else {
-    await renderDevNonInteractive({processes, app, abortController, developerPreview})
+    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   }
 }
 

@@ -22,6 +22,12 @@ esBuild({
   external,
   loader: {'.node': 'copy'},
   splitting: true,
+  // these tree shaking and minify options remove any in-source tests from the bundle
+  treeShaking: true,
+  minifyWhitespace: false,
+  minifySyntax: true,
+  minifyIdentifiers: false,
+
   plugins: [
     ShopifyStacktraceyPlugin,
     copy({
@@ -35,4 +41,7 @@ esBuild({
       ],
     }),
   ],
+  define: {
+    'import.meta.vitest': 'false',
+  },
 })

@@ -819,7 +819,7 @@
           "type": "boolean"
         },
         "watch": {
-          "allowNo": false,
+          "allowNo": true,
           "char": "w",
           "description": "Re-run the function when the source code changes.",
           "env": "SHOPIFY_FLAG_WATCH",
@@ -829,7 +829,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:function:replay",
@@ -1548,8 +1547,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "\n  Opens a real-time stream of detailed log events from the selected app and store.\n  Use the `--source` argument to limit output to a particular function, such as a specific Shopify Function handle.\n  Use the `--status` argument to specify the type of status to retrieve, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension-handle\n  ```\n  ",
-      "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed log events from the selected app and store.\n  Use the `--source` argument to limit output to a particular function, such as a specific Shopify Function handle.\n  Use the `--status` argument to specify the type of status to retrieve, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension-handle\n  ```\n  ",
+      "description": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
+      "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "flags": {
         "api-key": {
           "description": "The API key of your app.",
@@ -1561,15 +1560,6 @@
           "hidden": true,
           "multiple": false,
           "name": "api-key",
-          "type": "option"
-        },
-        "checkout-cart-url": {
-          "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
-          "env": "SHOPIFY_FLAG_CHECKOUT_CART_URL",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "checkout-cart-url",
           "type": "option"
         },
         "client-id": {
@@ -1648,22 +1638,6 @@
           "name": "no-tunnel",
           "type": "boolean"
         },
-        "no-update": {
-          "allowNo": false,
-          "description": "Skips the Partners Dashboard URL update step.",
-          "env": "SHOPIFY_FLAG_NO_UPDATE",
-          "hidden": false,
-          "name": "no-update",
-          "type": "boolean"
-        },
-        "notify": {
-          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
-          "env": "SHOPIFY_FLAG_NOTIFY",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "notify",
-          "type": "option"
-        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
@@ -1682,14 +1656,6 @@
           ],
           "hidden": false,
           "name": "reset",
-          "type": "boolean"
-        },
-        "skip-dependencies-installation": {
-          "allowNo": false,
-          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
-          "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
-          "hidden": false,
-          "name": "skip-dependencies-installation",
           "type": "boolean"
         },
         "source": {
@@ -1722,45 +1688,59 @@
           "name": "store",
           "type": "option"
         },
-        "subscription-product-url": {
-          "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
-          "env": "SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL",
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:logs",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Stream detailed logs for your Shopify app."
+    },
+    "app:logs:sources": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
+      "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
-          "name": "subscription-product-url",
+          "name": "config",
           "type": "option"
         },
-        "theme": {
-          "char": "t",
-          "description": "Theme ID or name of the theme app extension host theme.",
-          "env": "SHOPIFY_FLAG_THEME",
-          "hasDynamicHelp": false,
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "multiple": false,
-          "name": "theme",
-          "type": "option"
+          "name": "no-color",
+          "type": "boolean"
         },
-        "theme-app-extension-port": {
-          "description": "Local port of the theme app extension development server.",
-          "env": "SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT",
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
-          "name": "theme-app-extension-port",
-          "type": "option"
-        },
-        "tunnel-url": {
-          "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
-          "env": "SHOPIFY_FLAG_TUNNEL_URL",
-          "exclusive": [
-            "no-tunnel",
-            "tunnel"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "tunnel-url",
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "verbose": {
@@ -1773,15 +1753,14 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
-      "id": "app:logs",
+      "id": "app:logs:sources",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Stream detailed logs for your Shopify app."
+      "summary": "Print out a list of sources that may be used with the logs command."
     },
     "app:release": {
       "aliases": [
@@ -2714,6 +2693,14 @@
           "required": false,
           "type": "option"
         },
+        "diff": {
+          "allowNo": false,
+          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
+          "hidden": true,
+          "name": "diff",
+          "required": false,
+          "type": "boolean"
+        },
         "force-sfapi-version": {
           "description": "Force generating Storefront API types for a specific version instead of using the one provided in Hydrogen. A token can also be provided with this format: `<version>:<token>`.",
           "hasDynamicHelp": false,
@@ -3153,6 +3140,15 @@
           "name": "env-branch",
           "type": "option"
         },
+        "env-file": {
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "env-file",
+          "required": false,
+          "type": "option"
+        },
         "host": {
           "allowNo": false,
           "description": "Expose the server to the local network",
@@ -3282,6 +3278,15 @@
           "name": "env-branch",
           "type": "option"
         },
+        "env-file": {
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "env-file",
+          "required": false,
+          "type": "option"
+        },
         "force": {
           "allowNo": false,
           "char": "f",
@@ -3328,10 +3333,12 @@
           "type": "option"
         },
         "env-file": {
-          "description": "Path to an environment file to override existing environment variables for the selected environment. Defaults to the '.env' located in your project path `--path`.",
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "env-file",
+          "required": false,
           "type": "option"
         },
         "path": {
@@ -3855,6 +3862,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "env-branch",
+          "type": "option"
+        },
+        "env-file": {
+          "default": ".env",
+          "description": "Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "env-file",
+          "required": false,
           "type": "option"
         },
         "inspector-port": {
@@ -4759,6 +4775,14 @@
       "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "flags": {
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `theme console` implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -4785,7 +4809,6 @@
           "type": "option"
         },
         "port": {
-          "default": "9293",
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
@@ -4800,6 +4823,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "url": {
@@ -6536,5 +6567,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.64.0"
+  "version": "3.65.0"
 }

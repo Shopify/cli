@@ -58,6 +58,11 @@ import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-ses
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
+export enum ClientName {
+  AppManagement = 'app-management',
+  Partners = 'partners',
+}
+
 export type Paginateable<T> = T & {
   hasMorePages: boolean
 }
@@ -183,6 +188,20 @@ type WithUserErrors<T> = T & {
 export type AssetUrlSchema = WithUserErrors<{
   assetUrl: string
 }>
+
+export enum Flag {
+  DeclarativeWebhooks,
+}
+
+const FlagMap: {[key: string]: Flag} = {
+  '5b25141b': Flag.DeclarativeWebhooks,
+}
+
+export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
+  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
+  return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
+}
 
 export interface DeveloperPlatformClient {
   clientName: string

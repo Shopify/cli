@@ -14,6 +14,7 @@ import {
 import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
 import {useState, useEffect} from 'react'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 interface UsePollAppLogsOptions {
   initialJwt: string
@@ -52,7 +53,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
         }
         retryIntervalMs = result.retryIntervalMs
       } else {
-        setErrors([])
+        setErrors((errors) => (errors.length ? [] : errors))
       }
 
       const {cursor: nextCursor, appLogs} = response as SuccessResponse
@@ -68,7 +69,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
               appLog = parseFunctionRunPayload(log.payload)
               description = `export "${appLog.export}" executed in ${(appLog.fuelConsumed / ONE_MILLION).toFixed(
                 4,
-              )} M instructions`
+              )}M instructions`
               break
             case LOG_TYPE_RESPONSE_FROM_CACHE:
               appLog = parseNetworkAccessResponseFromCachePayload(log.payload)
@@ -92,7 +93,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
             status: log.status === 'success' ? 'Success' : 'Failure',
             source: log.source,
             description,
-            logTimestamp: log.log_timestamp,
+            logTimestamp: formatLocalDate(log.log_timestamp),
           }
 
           setAppLogOutputs((prev) => [...prev, {appLog, prefix}])

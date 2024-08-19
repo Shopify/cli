@@ -19,7 +19,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {Flag} from '../../services/dev/fetch.js'
+import {Flag} from '../../utilities/developer-platform-client.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -183,6 +183,29 @@ automatically_update_urls_on_dev = true
 
     // When/Then
     await expect(loadTestingApp()).rejects.toThrow()
+  })
+
+  test('throws an error when the application_url is invalid', async () => {
+    // Given
+    const appConfiguration = `
+name = "for-testing"
+client_id = "1234567890"
+application_url = "wrong"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+
+[build]
+automatically_update_urls_on_dev = true
+        `
+    await writeConfig(appConfiguration)
+
+    // When/Then
+    await expect(loadTestingApp()).rejects.toThrow(/\[application_url\]: Invalid URL/)
   })
 
   test('loads the app when the configuration is valid and has no blocks', async () => {

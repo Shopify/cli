@@ -169,7 +169,7 @@ export interface PollOptions {
 
 export interface PollFilters {
   status: string | undefined
-  source: string | undefined
+  sources: string[] | undefined
 }
 export interface AppLogPrefix {
   status: string

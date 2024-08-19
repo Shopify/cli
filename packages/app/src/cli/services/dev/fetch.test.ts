@@ -1,12 +1,9 @@
-import {fetchAllDevStores, fetchOrgAndApps, fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
+import {fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
-import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
-import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   testPartnersServiceSession,
   testPartnersUserSession,
-  testOrganizationApp,
   testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -14,7 +11,6 @@ import {PartnersClient} from '../../utilities/developer-platform-client/partners
 import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 const ORG1: Organization = {
@@ -27,13 +23,6 @@ const ORG2: Organization = {
   businessName: 'org2',
   source: OrganizationSource.Partners,
 }
-const APP1 = testOrganizationApp({apiKey: 'key1'})
-const APP2 = testOrganizationApp({
-  id: '2',
-  title: 'app2',
-  apiKey: 'key2',
-  apiSecretKeys: [{secret: 'secret2'}],
-})
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -42,25 +31,12 @@ const STORE1: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
-const FETCH_ORG_RESPONSE_VALUE = {
-  organizations: {
-    nodes: [
-      {
-        id: ORG1.id,
-        businessName: ORG1.businessName,
-        apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
-        stores: {nodes: [STORE1]},
-      },
-    ],
-  },
-}
 const FETCH_STORE_RESPONSE_VALUE: FindStoreByDomainSchema = {
   organizations: {
     nodes: [
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        website: 'https://example.com',
         stores: {nodes: [STORE1]},
       },
     ],
@@ -131,48 +107,6 @@ describe('fetchOrganizations', async () => {
     // Then
     await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
     expect(partnersClient.organizations).toHaveBeenCalled()
-  })
-})
-
-describe('fetchApp', async () => {
-  test('returns fetched apps', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
-
-    // When
-    const got = await fetchOrgAndApps(ORG1.id, testPartnersUserSession)
-
-    // Then
-    expect(got).toEqual({organization: ORG1, apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}}, stores: []})
-    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
-  })
-
-  test('throws if there are no organizations', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
-
-    // When
-    const got = () => fetchOrgAndApps(ORG1.id, testPartnersUserSession)
-
-    // Then
-    await expect(got).rejects.toThrowError(new NoOrgError(testPartnersUserSession.accountInfo))
-    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
-  })
-})
-
-describe('fetchAllDevStores', async () => {
-  test('returns fetched stores', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
-
-    // When
-    const got = await fetchAllDevStores(ORG1.id, 'token')
-
-    // Then
-    expect(got).toEqual([STORE1])
-    expect(partnersRequest).toHaveBeenCalledWith(AllDevStoresByOrganizationQuery, 'token', {
-      id: ORG1.id,
-    })
   })
 })
 

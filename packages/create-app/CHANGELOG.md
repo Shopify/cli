@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 3.65.0
+
+### Patch Changes
+
+- 00d80ea3d1: Clear cache on app init
+
 ## 3.64.0
 
 ## 3.63.0
