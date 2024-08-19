@@ -1,0 +1,146 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Replay > renders a stream of lines from function-runner output, and shortcuts 1`] = `
+"
+
+            Input            
+
+{
+  \\"someInput\\": \\"someInput\\"
+}
+
+
+            Logs            
+
+First Log
+Log the second!,
+1,
+fourth line, length should be above!,
+Fifth line!
+
+
+           Output           
+
+{
+  \\"someOutput\\": \\"someOutput\\"
+}
+
+
+      Benchmark Results      
+
+Name: product-discount
+Linear Memory Usage: 1KB
+Instructions: 532.633K
+Size: 1KB
+
+
+            Input            
+
+{
+  \\"someInput\\": \\"someInput\\"
+}
+
+
+            Logs            
+
+First Log
+Log the second!,
+1,
+fourth line, length should be above!,
+Fifth line!
+
+
+           Output           
+
+{
+  \\"someOutput\\": \\"someOutput\\"
+}
+
+
+      Benchmark Results      
+
+Name: product-discount
+Linear Memory Usage: 0KB
+Instructions: 532.632K
+Size: 0KB
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+› Watching for changes to product-discount...
+› Instruction count delta: 1
+› Press q │ quit
+"
+`;
+
+exports[`Replay > renders error in the bottom bar when present 1`] = `
+"
+
+            Input            
+
+{
+  \\"someInput\\": \\"someInput\\"
+}
+
+
+            Logs            
+
+First Log
+Log the second!,
+1,
+fourth line, length should be above!,
+Fifth line!
+
+
+           Output           
+
+{
+  \\"someOutput\\": \\"someOutput\\"
+}
+
+
+      Benchmark Results      
+
+Name: product-discount
+Linear Memory Usage: 1KB
+Instructions: 532.633K
+Size: 1KB
+
+
+            Input            
+
+{
+  \\"someInput\\": \\"someInput\\"
+}
+
+
+            Logs            
+
+First Log
+Log the second!,
+1,
+fourth line, length should be above!,
+Fifth line!
+
+
+           Output           
+
+{
+  \\"someOutput\\": \\"someOutput\\"
+}
+
+
+      Benchmark Results      
+
+Name: product-discount
+Linear Memory Usage: 0KB
+Instructions: 532.632K
+Size: 0KB
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+› Watching for changes to product-discount...
+› Instruction count delta: 1
+› Press q │ quit
+some error
+"
+`;

@@ -349,6 +349,27 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * Given a date in UTC ISO String format, return a formatted string in local time like "2021-01-01 12:00:00".
+ *
+ * @param dateString - UTC ISO Date String.
+ * @returns The transformed string in local system time.
+ */
+export function formatLocalDate(dateString: string): string {
+  const dateObj = new Date(dateString)
+  const localDate = new Date(
+    Date.UTC(
+      dateObj.getFullYear(),
+      dateObj.getMonth(),
+      dateObj.getDate(),
+      dateObj.getHours(),
+      dateObj.getMinutes(),
+      dateObj.getSeconds(),
+    ),
+  )
+  return formatDate(localDate)
+}
+
+/**
  * Given a list of items, it returns a string with the items joined by commas and the last item joined by "and".
  * All items are wrapped in double quotes.
  * For example: ["a", "b", "c"] returns "a", "b" and "c".

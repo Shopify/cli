@@ -15,9 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+        uses: actions/checkout@v4
+      - name: Checkout PR branch
+        run: |
+            gh pr checkout ${{ github.event.issue.number }}
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
