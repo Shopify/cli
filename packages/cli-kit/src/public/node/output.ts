@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './context/local.js'
-import {PackageManager} from './node-package-manager.js'
+import {PackageManager, cliInstallCommand} from './node-package-manager.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
@@ -462,16 +462,12 @@ export function shouldDisplayColors(_process = process): boolean {
 /**
  * Generates a message to remind the user to update the CLI.
  *
- * @param packageManager - The package manager that is being used.
  * @param version - The version to update to.
  * @returns The message to remind the user to update the CLI.
  */
-export function getOutputUpdateCLIReminder(packageManager: PackageManager | undefined, version: string): string {
-  const versionMessage = `💡 Version ${version} available!`
-  if (!packageManager || packageManager === 'unknown') return versionMessage
-
-  const updateCommand = outputToken.packagejsonScript(packageManager, 'shopify upgrade')
-  return outputContent`${versionMessage} Run ${updateCommand}`.value
+export function getOutputUpdateCLIReminder(version: string): string {
+  return outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(cliInstallCommand())}`
+    .value
 }
 
 /**

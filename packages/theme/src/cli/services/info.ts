@@ -94,6 +94,6 @@ async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {
   const dependency = '@shopify/cli'
   const newestVersion = await checkForNewVersion(dependency, config.cliVersion)
   if (!newestVersion) return config.cliVersion
-  const upgradeMessage = getOutputUpdateCLIReminder(undefined, newestVersion)
+  const upgradeMessage = getOutputUpdateCLIReminder(newestVersion)
   return [config.cliVersion, upgradeMessage].join(' ').trim()
 }

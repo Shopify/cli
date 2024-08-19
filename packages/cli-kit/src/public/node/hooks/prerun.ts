@@ -1,5 +1,5 @@
 import {CLI_KIT_VERSION} from '../../common/version.js'
-import {checkForNewVersion, packageManagerFromUserAgent, checkForCachedNewVersion} from '../node-package-manager.js'
+import {checkForNewVersion, checkForCachedNewVersion} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
 import {outputDebug, outputWarn, getOutputUpdateCLIReminder} from '../../../public/node/output.js'
 import Command from '../../../public/node/base-command.js'
@@ -105,8 +105,7 @@ export async function warnOnAvailableUpgrade(): Promise<void> {
   await runAtMinimumInterval('warn-on-available-upgrade', {days: 1}, async () => {
     const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
     if (newerVersion) {
-      const packageManager = packageManagerFromUserAgent()
-      outputWarn(getOutputUpdateCLIReminder(packageManager, newerVersion))
+      outputWarn(getOutputUpdateCLIReminder(newerVersion))
     }
   })
 }
