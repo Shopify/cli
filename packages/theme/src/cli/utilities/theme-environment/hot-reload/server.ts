@@ -14,28 +14,16 @@ interface TemplateWithSections {
   sections?: {[key: string]: {type: string}}
 }
 
-const eventEmitter = new EventEmitter()
 const inMemoryTemplates = {} as {[key: string]: string}
 const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
-
-function emitHotReloadEvent(event: HotReloadEvent) {
-  eventEmitter.emit('hot-reload', event)
-}
 
 export function getInMemoryTemplates() {
   return {...inMemoryTemplates}
 }
 
-function setInMemoryTemplate(key: string, content: string) {
-  inMemoryTemplates[key] = content
-  if (key.endsWith('.json')) {
-    parsedJsonTemplates[key] = JSON.parse(content)
-  }
-}
-
-function deleteInMemoryTemplate(key: string) {
-  delete inMemoryTemplates[key]
-  delete parsedJsonTemplates[key]
+const eventEmitter = new EventEmitter()
+function emitHotReloadEvent(event: HotReloadEvent) {
+  eventEmitter.emit('hot-reload', event)
 }
 
 export async function setupTemplateWatcher(ctx: DevServerContext) {
@@ -54,12 +42,14 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
     const isAsset = key.startsWith('assets/')
 
     if (needsTemplateUpdate && !isAsset) {
+      const isJson = extension === '.json'
       // During initialization we only want to process
       // JSON files to cache their contents early
-      if (initialized || extension === '.json') {
+      if (initialized || isJson) {
         readFile(filePath)
           .then((content) => {
-            setInMemoryTemplate(key, content)
+            if (initialized) inMemoryTemplates[key] = content
+            if (isJson) parsedJsonTemplates[key] = JSON.parse(content)
             triggerHotReload(key, ctx)
           })
           .catch((error) => renderWarning({headline: `Failed to read file ${filePath}: ${error.message}`}))
@@ -78,7 +68,11 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
     .on('ready', () => (initialized = true))
     .on('add', handleFileUpdate)
     .on('change', handleFileUpdate)
-    .on('unlink', (filePath) => deleteInMemoryTemplate(getKey(filePath)))
+    .on('unlink', (filePath) => {
+      const key = getKey(filePath)
+      delete inMemoryTemplates[key]
+      delete parsedJsonTemplates[key]
+    })
 
   return {stopWatcher: () => watcher.close()}
 }
