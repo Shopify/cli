@@ -1,0 +1,21 @@
+name: github-context-test
+
+on:
+  issue_comment:
+    types:
+      - created
+
+env:
+  PNPM_VERSION: '8.15.7'
+
+jobs:
+  snapit:
+    name: Snapit
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
