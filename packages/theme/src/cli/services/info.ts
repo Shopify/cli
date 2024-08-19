@@ -8,7 +8,8 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
-import {OutputMessage, formatSection, getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/output'
+import {OutputMessage, formatSection} from '@shopify/cli-kit/node/output'
+import {getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/upgrade'
 
 interface ThemeInfo {
   theme: {

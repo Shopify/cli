@@ -1,4 +1,4 @@
-import {cliInstallCommand} from '@shopify/cli-kit/node/output'
+import {cliInstallCommand} from '@shopify/cli-kit/node/upgrade'
 import Command from '@shopify/cli-kit/node/base-command'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
