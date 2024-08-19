@@ -40,7 +40,7 @@ describe('dev', () => {
       // Given
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockResolvedValue(localThemeFileSystem)
-      vi.mocked(setupDevServer).mockResolvedValue({close: async () => {}})
+      vi.mocked(setupDevServer).mockResolvedValue({dispatch: () => {}, start: async () => ({close: async () => {}})})
       const devOptions = {...options, 'dev-preview': true, 'theme-editor-sync': true}
 
       // When

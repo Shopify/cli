@@ -48,6 +48,7 @@ async function createDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const server = createServer(toNodeListener(app))
 
   return {
+    dispatch: app.handler.bind(app),
     start: async (): Promise<DevelopmentServerInstance> => {
       const {stopWatcher} = await setupTemplateWatcher(ctx)
 
