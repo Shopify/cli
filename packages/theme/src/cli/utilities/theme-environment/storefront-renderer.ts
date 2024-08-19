@@ -60,8 +60,8 @@ async function buildStandardHeaders(session: DevServerSession, context: DevServe
 
   return {
     ...context.headers,
-    Authorization: `Bearer ${storefrontToken}`,
-    Cookie: cookies,
+    authorization: `Bearer ${storefrontToken}`,
+    cookie: cookies,
   }
 }
 
@@ -80,8 +80,8 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: DevSe
   return {
     ...filteredHeaders,
     ...themeAccessHeaders(session),
-    Authorization: `Bearer ${storefrontToken}`,
-    Cookie: cookies,
+    authorization: `Bearer ${storefrontToken}`,
+    cookie: cookies,
   }
 }
 
