@@ -53,5 +53,15 @@ describe('dev proxy', () => {
                 </html>"
       `)
     })
+
+    test('proxies urls in Link header', () => {
+      const linkHeader =
+        `<https://cdn.shopify.com>; rel="preconnect", <https://cdn.shopify.com>; rel="preconnect"; crossorigin,` +
+        `<https://my-store.myshopify.com/cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as="style"; rel="preload"`
+
+      expect(injectCdnProxy(linkHeader, ctx)).toMatchInlineSnapshot(
+        `"<https://cdn.shopify.com>; rel=\\"preconnect\\", <https://cdn.shopify.com>; rel=\\"preconnect\\"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as=\\"style\\"; rel=\\"preload\\""`,
+      )
+    })
   })
 })
