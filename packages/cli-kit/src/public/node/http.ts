@@ -6,9 +6,9 @@ import {sanitizeURL} from '../../private/node/api/urls.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
 import {simpleRequestWithDebugLog} from '../../private/node/api.js'
 import FormData from 'form-data'
-import nodeFetch, {RequestInfo, RequestInit} from 'node-fetch'
+import nodeFetch, {RequestInfo, RequestInit, Response} from 'node-fetch'
 
-export {FetchError, Request} from 'node-fetch'
+export {FetchError, Request, Response} from 'node-fetch'
 
 /**
  * Create a new FormData object.
@@ -18,8 +18,6 @@ export {FetchError, Request} from 'node-fetch'
 export function formData(): FormData {
   return new FormData()
 }
-
-export type Response = Awaited<ReturnType<typeof nodeFetch>>
 
 /**
  * An interface that abstracts way node-fetch. When Node has built-in
