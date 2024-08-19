@@ -49,7 +49,7 @@ describe('startDevServer', () => {
     },
   } as ThemeFileSystem
   const defaultServerContext: DevServerContext = {
-    session: {storefrontToken: '', token: '', storeFqdn: '', expiresAt: new Date()},
+    session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
     remoteChecksums: [],
     localThemeFileSystem,
     directory: 'tmp',
@@ -134,6 +134,7 @@ describe('startDevServer', () => {
     const context = {...defaultServerContext}
     const {dispatch} = await setupDevServer(developmentTheme, context)
     const html = String.raw
+    const decoder = new TextDecoder()
 
     const createH3Event = (options: {url: string; headers?: {[key: string]: string}}) => {
       const req = new IncomingMessage(new Socket())
@@ -150,6 +151,12 @@ describe('startDevServer', () => {
       const event = createH3Event({url, headers})
       const {res} = event.node
       let body: string | undefined
+      const resWrite = res.write.bind(res)
+      res.write = (chunk) => {
+        body ??= ''
+        body += decoder.decode(chunk)
+        return resWrite(chunk)
+      }
       const resEnd = res.end.bind(res)
       res.end = (content) => {
         body ??= content
@@ -203,6 +210,51 @@ describe('startDevServer', () => {
       expect(res.getHeader('content-type')).toEqual('text/html')
       expect(res.getHeader('link')).toMatch('</cdn/path/to/assets/file1.css>')
       expect(body).toMatch('link href="/cdn/path/to/assets/file1.css"')
+    })
+
+    test('proxies other requests to SFR', async () => {
+      const fetchStub = vi.fn(
+        () =>
+          new Response('mocked', {
+            headers: {'proxy-authorization': 'true', 'content-type': 'application/javascript'},
+          }),
+      )
+
+      vi.stubGlobal('fetch', fetchStub)
+
+      // --- Unknown endpoint:
+      const eventPromise = dispatchEvent('/path/to/something-else.js')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const expectedTarget1 = `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js`
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        expectedTarget1,
+        expect.objectContaining({
+          method: 'GET',
+          headers: {referer: expectedTarget1},
+        }),
+      )
+
+      const {res, body} = await eventPromise
+      expect(body).toEqual('mocked')
+      // Clears headers:
+      expect(res.getHeader('proxy-authorization')).toBeFalsy()
+      expect(res.getHeader('content-type')).toEqual('application/javascript')
+
+      // --- Unknown assets:
+      fetchStub.mockClear()
+      await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
+      const expectedTarget2 = `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css`
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        expectedTarget2,
+        expect.objectContaining({
+          method: 'GET',
+          headers: {referer: expectedTarget2},
+        }),
+      )
     })
   })
 })
