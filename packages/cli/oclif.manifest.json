@@ -1662,7 +1662,7 @@
           "description": "Filters output to the specified log source.",
           "env": "SHOPIFY_FLAG_SOURCE",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "source",
           "type": "option"
         },
