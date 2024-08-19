@@ -96,9 +96,13 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       }
 
       const handleFileDelete = (filePath: string) => {
-        const key = getKey(filePath)
+        const fileKey = getKey(filePath)
+        files.delete(fileKey)
 
-        files.delete(key)
+        emitEvent('unlink', {
+          fileKey,
+          syncPromise: Promise.resolve(),
+        })
       }
 
       const {default: chokidar} = await import('chokidar')
