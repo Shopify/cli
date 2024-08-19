@@ -65,6 +65,8 @@ function hotReloadScript() {
 
     if (data.type === 'open') {
       serverPid ??= data.pid
+      // If the server PID is different it means that the process has been restarted.
+      // Trigger a full-refresh to get all the latest changes.
       if (serverPid !== data.pid) fullPageReload('Reconnected to new server')
     } else if (data.type === 'section') {
       const elements = data.names.flatMap((name) =>

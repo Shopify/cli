@@ -25,6 +25,10 @@ const IGNORED_ENDPOINTS = [
   '/wpm',
 ]
 
+/**
+ * Forwards non-HTML requests to the remote SFR instance,
+ * or mocks the result for certain endpoints.
+ */
 export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (IGNORED_ENDPOINTS.some((endpoint) => event.path.startsWith(endpoint))) {
@@ -71,23 +75,29 @@ function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
   const newBaseUrl = `http://${ctx.options.host}:${ctx.options.port}`
   const dataBaseUrlRE = new RegExp(`data-base-url=["']((?:https?:)?//${getStoreFqdnForRegEx(ctx)})[^"']*?["']`, 'g')
 
-  return html.replaceAll(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
+  return html.replace(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
 }
 
-function patchCookieWithProxy(cookieHeader: string[], ctx: DevServerContext) {
+function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
   // Domains are invalid for localhost:
   const domainRE = new RegExp(`Domain=${getStoreFqdnForRegEx(ctx)};\\s*`, 'gi')
   return cookieHeader.map((value) => value.replace(domainRE, '')).join(', ')
 }
 
+/**
+ * Patches the result of an SFR HTML response to include the local proxies
+ * and fix domain inconsistencies between remote instance and local dev.
+ */
 export async function patchRenderingResponse(event: H3Event, response: NodeResponse, ctx: DevServerContext) {
   setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
 
+  // Link header preloads resources from global CDN, proxy it:
   const linkHeader = response.headers.get('Link')
   if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
 
+  // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader = response.headers.raw()['set-cookie']
-  if (setCookieHeader) setResponseHeader(event, 'Set-Cookie', patchCookieWithProxy(setCookieHeader, ctx))
+  if (setCookieHeader) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
 
   // We are decoding the payload here, remove the header:
   let html = await response.text()
@@ -115,10 +125,13 @@ const HOP_BY_HOP_HEADERS = [
   'content-length',
 ]
 
+/**
+ * Filters headers to forward to SFR.
+ */
 export function getProxyStorefrontHeaders(event: H3Event) {
   const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string}
 
-  // H3 already removes most hop-by-hop request headers, but not these:
+  // H3 already removes most hop-by-hop request headers:
   // https://github.com/unjs/h3/blob/ac6d83de2abe5411d4eaea8ecf2165ace16a65f3/src/utils/proxy.ts#L25
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
@@ -156,6 +169,8 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
     }
 
     await sendError(event, error)
+
+    // Ensure other middlewares are not called:
     return null
   })
 }

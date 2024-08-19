@@ -6,6 +6,9 @@ import {stat} from 'fs/promises'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
+/**
+ * Handles requests for assets to the proxied Shopify CDN, serving local files.
+ */
 export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') return
@@ -15,6 +18,7 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     const fileKey = assetsFilename && joinPath('assets', assetsFilename)
 
     if (fileKey && ctx.localThemeFileSystem.files.has(fileKey)) {
+      // Add header for debugging that the files come from the local assets
       setResponseHeader(event, 'X-Local-Asset', 'true')
 
       return serveStatic(event, {

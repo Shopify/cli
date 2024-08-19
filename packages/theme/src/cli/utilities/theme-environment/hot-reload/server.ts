@@ -10,6 +10,8 @@ import EventEmitter from 'node:events'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
 
+// --- Template Replacers ---
+
 interface TemplateWithSections {
   sections?: {[key: string]: {type: string}}
 }
@@ -17,15 +19,17 @@ interface TemplateWithSections {
 const inMemoryTemplates = {} as {[key: string]: string}
 const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
 
+/**
+ * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
+ */
 export function getInMemoryTemplates() {
   return {...inMemoryTemplates}
 }
 
-const eventEmitter = new EventEmitter()
-function emitHotReloadEvent(event: HotReloadEvent) {
-  eventEmitter.emit('hot-reload', event)
-}
-
+/**
+ * Watchs for file changes and updates in-memory templates, triggering
+ * HotReload if needed.
+ */
 export async function setupTemplateWatcher(ctx: DevServerContext) {
   const {default: chokidar} = await import('chokidar')
 
@@ -77,6 +81,16 @@ export async function setupTemplateWatcher(ctx: DevServerContext) {
   return {stopWatcher: () => watcher.close()}
 }
 
+// --- SSE Hot Reload ---
+
+const eventEmitter = new EventEmitter()
+function emitHotReloadEvent(event: HotReloadEvent) {
+  eventEmitter.emit('hot-reload', event)
+}
+
+/**
+ * Adds endpoints to handle HotReload subscriptions and related events.
+ */
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     const endpoint = event.path.split('?')[0]
@@ -164,6 +178,10 @@ function hotReloadSections(key: string) {
   emitHotReloadEvent({type: 'section', key, names: sectionsToUpdate})
 }
 
+/**
+ * Injects a `<script>` tag in the HTML Head containing
+ * inlined code for HotReload.
+ */
 export function injectHotReloadScript(html: string) {
   return html.replace(/<\/head>/, `${getClientScripts()}</head>`)
 }
