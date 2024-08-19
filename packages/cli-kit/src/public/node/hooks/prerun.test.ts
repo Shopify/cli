@@ -21,7 +21,7 @@ describe('warnOnAvailableUpgrade', () => {
     const outputMock = mockAndCaptureOutput()
     vi.mocked(checkForCachedNewVersion).mockReturnValue('3.0.10')
     vi.mocked(packageManagerFromUserAgent).mockReturnValue('npm')
-    const installReminder = "💡 Version 3.0.10 available! Run \`npm install @shopify/cli@latest\`"
+    const installReminder = '💡 Version 3.0.10 available! Run `npm install @shopify/cli@latest`'
 
     // When
     await warnOnAvailableUpgrade()

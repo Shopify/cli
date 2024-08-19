@@ -5,6 +5,7 @@ import {outputContent, outputToken} from './output.js'
 /**
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
+ *
  * @returns A string with the command to run.
  */
 export function cliInstallCommand(): string {
