@@ -4,7 +4,6 @@ import {captureOutput, exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
@@ -706,21 +705,4 @@ export async function writePackageJSON(directory: string, packageJSON: PackageJs
   outputDebug(outputContent`JSON-encoding and writing content to package.json at ${outputToken.path(directory)}...`)
   const packagePath = joinPath(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
-}
-
-/**
- * Utility function for generating an install command for the user to run
- * to install an updated version of Shopify CLI.
- * @returns A string with the command to run.
- */
-export function cliInstallCommand(): string {
-  const isGlobal = currentProcessIsGlobal()
-  let packageManager = packageManagerFromUserAgent() ?? inferPackageManagerForGlobalCLI()
-  if (packageManager === 'unknown') packageManager = 'npm'
-
-  if (packageManager === 'yarn') {
-    return `yarn ${isGlobal ? 'global ' : ''}add @shopify/cli@latest`
-  } else {
-    return `${packageManager} i ${isGlobal ? '-g ' : ''}@shopify/cli@latest`
-  }
 }
