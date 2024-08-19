@@ -110,18 +110,26 @@ export class AppEventWatcher extends EventEmitter {
   private buildOutputPath: string
   private esbuildManager: ESBuildContextManager
 
-  constructor(app: AppInterface, buildOutputPath: string, appURL?: string, options?: OutputContextOptions) {
+  constructor(
+    app: AppInterface,
+    buildOutputPath: string,
+    appURL?: string,
+    options?: OutputContextOptions,
+    contextManager?: ESBuildContextManager,
+  ) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath
     this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-    this.esbuildManager = new ESBuildContextManager({
-      outputPath: this.buildOutputPath,
-      dotEnvVariables: this.app.dotenv?.variables ?? {},
-      url: this.appURL ?? '',
-      ...this.options,
-    })
+    this.esbuildManager =
+      contextManager ??
+      new ESBuildContextManager({
+        outputPath: this.buildOutputPath,
+        dotEnvVariables: this.app.dotenv?.variables ?? {},
+        url: this.appURL ?? '',
+        ...this.options,
+      })
   }
 
   async start() {
@@ -192,6 +200,10 @@ export class AppEventWatcher extends EventEmitter {
     return output
   }
 
+  /**
+   * Build a single non-esbuild extension using the default buildForBundle method.
+   * @param extension - The extension to build
+   */
   private async buildExtension(extension: ExtensionInstance): Promise<void> {
     const buildOptions: ExtensionBuildOptions = {
       app: this.app,

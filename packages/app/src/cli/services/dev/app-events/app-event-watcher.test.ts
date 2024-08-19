@@ -1,6 +1,5 @@
 import {AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
-import {createESBuildContextsForExtensions} from './app-watcher-esbuild.js'
 import {
   testApp,
   testAppAccessConfigExtension,
@@ -228,19 +227,13 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       await inTemporaryDirectory(async (tmpDir) => {
         vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
         vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
-        vi.mocked(createESBuildContextsForExtensions).mockImplementation(async (options) => {
-          const acc: {[key: string]: any} = {}
-          options.extensions.forEach((ext) => {
-            acc[ext.handle] = {rebuild: vi.fn(), dispose: vi.fn()}
-          })
-          return acc
-        })
 
         // When
         const app = testApp({
           allExtensions: initialExtensions,
           configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
         })
+
         const watcher = new AppEventWatcher(app, tmpDir, 'url', outputOptions)
         const emitSpy = vi.spyOn(watcher, 'emit')
         await watcher.start()
@@ -269,11 +262,3 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
     },
   )
 })
-
-async function waitForEvent(watcher: AppEventWatcher) {
-  return new Promise((resolve) => {
-    watcher.onEvent((event) => {
-      resolve(event)
-    })
-  })
-}

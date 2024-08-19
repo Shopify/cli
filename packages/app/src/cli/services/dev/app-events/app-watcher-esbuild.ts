@@ -5,23 +5,27 @@ import {BuildContext, BuildOptions, context as esContext} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
-interface DevAppWatcherOptions {
+export interface DevAppWatcherOptions {
   dotEnvVariables: {[key: string]: string}
   url: string
   outputPath: string
-  stderr: Writable
-  stdout: Writable
-  signal: AbortSignal
+  stderr?: Writable
+  stdout?: Writable
+  signal?: AbortSignal
 }
 
+/**
+ * Class to manage the ESBuild contexts for the app watcher.
+ * Has a list of all active contexts and methods to create, update and delete them.
+ */
 export class ESBuildContextManager {
-  contexts: {[key: string]: BuildContext<BuildOptions>} = {}
+  contexts: {[key: string]: BuildContext<BuildOptions>}
   outputPath: string
   dotEnvVariables: {[key: string]: string}
   url: string
-  stderr: Writable
-  stdout: Writable
-  signal: AbortSignal
+  stderr?: Writable
+  stdout?: Writable
+  signal?: AbortSignal
 
   constructor(options: DevAppWatcherOptions) {
     this.dotEnvVariables = options.dotEnvVariables
@@ -30,6 +34,12 @@ export class ESBuildContextManager {
     this.stderr = options.stderr
     this.stdout = options.stdout
     this.signal = options.signal
+    this.contexts = {}
+
+    options.signal?.addEventListener('abort', async () => {
+      const allDispose = Object.values(this.contexts).map((context) => context.dispose())
+      await Promise.all(allDispose)
+    })
   }
 
   async createContexts(extensions: ExtensionInstance[]) {
@@ -47,9 +57,8 @@ export class ESBuildContextManager {
           resolveDir: extension.directory,
           loader: 'tsx',
         },
-        stderr: this.stderr,
-        stdout: this.stdout,
-        watchSignal: this.signal,
+        stderr: this.stderr ?? process.stderr,
+        stdout: this.stdout ?? process.stdout,
         sourceMaps: true,
       })
 
