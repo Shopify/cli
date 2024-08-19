@@ -1,0 +1,38 @@
+name: snapit-v2
+
+on:
+  issue_comment:
+    types:
+      - created
+
+env:
+  PNPM_VERSION: '8.15.7'
+
+jobs:
+  snapit:
+    name: Snapit
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
+    runs-on: ubuntu-latest
+    steps:
+      # WARNING: DO NOT RUN ANY CUSTOM LOCAL SCRIPT BEFORE RUNNING THE SNAPIT ACTION
+      # This action can be executed by 3rd party users and it should not be able to run arbitrary code from a PR.
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # pin@v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+      - name: Force snapshot changeset
+        run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
+      - name: Create snapshot version
+        uses: Shopify/snapit@0c0d2dd62c9b0c94b7d03e1f54e72f18548e7752 # pin to a specific commit
+        with:
+          global_install: 'true'
+          github_comment_included_packages: '@shopify/cli'
+          custom_message_suffix: "\n> After installing, validate the version by running just `shopify` in your terminal\n> If the versions don't match, you might have multiple global instances installed.\n> Use `which shopify` to find out which one you are running and uninstall it."
+          build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
