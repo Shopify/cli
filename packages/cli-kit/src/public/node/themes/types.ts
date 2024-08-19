@@ -1,3 +1,5 @@
+import type {Stats} from 'fs'
+
 /**
  * {@link Key} represents the unique identifier of a file in a theme.
  */
@@ -39,6 +41,14 @@ export interface ThemeFileSystem {
    * @param assetKey - The key of the file to read
    */
   read: (assetKey: string) => Promise<string | Buffer | undefined>
+
+  /**
+   * Gets the stats of a file from the local disk and updates the themeFileSystem
+   * Returns undefined if the file does not exist
+   *
+   * @param assetKey - The key of the file to read
+   */
+  stat: (assetKey: string) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
 }
 
 /**

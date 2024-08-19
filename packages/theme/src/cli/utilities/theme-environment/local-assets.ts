@@ -2,7 +2,6 @@ import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, serveStatic, setResponseHeader} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {stat} from 'fs/promises'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -30,14 +29,11 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
           return ctx.localThemeFileSystem.read(fileKey).then((content) => injectCdnProxy(content as string, ctx))
         },
         getMeta: async () => {
-          const stats = await stat(joinPath(ctx.directory, fileKey)).catch(() => {})
+          const stats = await ctx.localThemeFileSystem.stat(fileKey).catch(() => {})
 
-          if (stats?.isFile()) {
-            return {
-              size: stats.size,
-              mtime: stats.mtimeMs,
-              type: lookupMimeType(fileKey),
-            }
+          return {
+            ...stats,
+            type: lookupMimeType(fileKey),
           }
         },
       })

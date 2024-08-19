@@ -5,6 +5,7 @@ import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {stat} from 'fs/promises'
 
 export const THEME_DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
@@ -61,7 +62,8 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       })
     }),
   )
-  const files = new Map(assets.map((asset) => [asset.key, asset]))
+
+  const files = new Map<string, ThemeAsset>(assets.map((asset) => [asset.key, asset]))
 
   return {
     root,
@@ -87,6 +89,16 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
         })!,
       )
       return fileValue
+    },
+    stat: async (assetKey: string) => {
+      if (files.has(assetKey)) {
+        const absolutePath = joinPath(root, assetKey)
+        const stats = await stat(absolutePath)
+        if (stats.isFile()) {
+          const fileReducedStats = {size: stats.size, mtime: stats.mtime}
+          return fileReducedStats
+        }
+      }
     },
   }
 }

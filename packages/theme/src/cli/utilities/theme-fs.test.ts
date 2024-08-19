@@ -46,6 +46,7 @@ describe('theme-fs', () => {
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
+        stat: expect.any(Function),
       })
     })
 
@@ -63,6 +64,7 @@ describe('theme-fs', () => {
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
+        stat: expect.any(Function),
       })
     })
 
