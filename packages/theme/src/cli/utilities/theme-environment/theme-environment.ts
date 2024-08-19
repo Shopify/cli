@@ -11,7 +11,7 @@ import type {DevServerContext} from './types.js'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
   await ensureThemeEnvironmentSetup(theme, ctx)
-  return startDevelopmentServer(theme, ctx)
+  return createDevelopmentServer(theme, ctx)
 }
 
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
@@ -30,9 +30,11 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
   })
 }
 
-async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Promise<{close: () => Promise<void>}> {
-  const {stopWatcher} = await setupTemplateWatcher(ctx)
+interface DevelopmentServerInstance {
+  close: () => Promise<void>
+}
 
+async function createDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
   if (ctx.options.liveReload !== 'off') {
@@ -45,19 +47,25 @@ async function startDevelopmentServer(theme: Theme, ctx: DevServerContext): Prom
 
   const server = createServer(toNodeListener(app))
 
-  return new Promise((resolve) =>
-    server.listen({port: ctx.options.port, host: ctx.options.host}, () =>
-      resolve({
-        close: async () => {
-          await Promise.all([
-            stopWatcher(),
-            new Promise((resolve) => {
-              server.closeAllConnections()
-              server.close(resolve)
-            }),
-          ])
-        },
-      }),
-    ),
-  )
+  return {
+    start: async (): Promise<DevelopmentServerInstance> => {
+      const {stopWatcher} = await setupTemplateWatcher(ctx)
+
+      return new Promise((resolve) =>
+        server.listen({port: ctx.options.port, host: ctx.options.host}, () =>
+          resolve({
+            close: async () => {
+              await Promise.all([
+                stopWatcher(),
+                new Promise((resolve) => {
+                  server.closeAllConnections()
+                  server.close(resolve)
+                }),
+              ])
+            },
+          }),
+        ),
+      )
+    },
+  }
 }

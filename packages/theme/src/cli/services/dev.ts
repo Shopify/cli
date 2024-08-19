@@ -91,7 +91,8 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  await setupDevServer(options.theme, ctx)
+  const server = await setupDevServer(options.theme, ctx)
+  await server.start()
 
   renderLinks(options.store, String(options.theme.id), host, port)
   if (options.open) {
