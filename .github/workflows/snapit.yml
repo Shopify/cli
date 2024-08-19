@@ -14,7 +14,7 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
     steps:
-      # WARNING: DO NOT RUN ANY CUSTOM SCRIPT BEFORE RUNNING THE SNAPIT ACTION
+      # WARNING: DO NOT RUN ANY CUSTOM LOCAL SCRIPT BEFORE RUNNING THE SNAPIT ACTION
       # This action can be executed by 3rd party users and it should not be able to run arbitrary code.
       - name: Checkout current branch
         uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
           run_install: false
       - name: Force snapshot changeset
         run: |
-          echo "---\\n'@shopify/cli': patch\\n---" > .changeset/force-snapshot-build.md
+          echo "---\n'@shopify/cli': patch\n---" > .changeset/force-snapshot-build.md
       - name: Create snapshot version
         uses: Shopify/snapit@0c0d2dd62c9b0c94b7d03e1f54e72f18548e7752 # pin to a specific commit
         with:
