@@ -13,5 +13,8 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
     read: async (assetKey: string) => {
       return files.get(assetKey)?.value || files.get(assetKey)?.attachment
     },
+    stat: async (_assetKey: string) => {
+      return {mtime: new Date(), size: 1}
+    },
   }
 }

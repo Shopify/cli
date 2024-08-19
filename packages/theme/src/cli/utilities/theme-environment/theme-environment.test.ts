@@ -3,10 +3,10 @@ import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
 import {uploadTheme} from '../theme-uploader.js'
+import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
@@ -38,16 +38,7 @@ describe('startDevServer', () => {
     ],
   ])
 
-  const localThemeFileSystem = {
-    root: 'tmp',
-    files: localFiles,
-    async read(assetKey) {
-      return localFiles.get(assetKey)?.value
-    },
-    async stat(_assetKey) {
-      return {mtime: new Date(), size: 1}
-    },
-  } as ThemeFileSystem
+  const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
   const defaultServerContext: DevServerContext = {
     session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
     remoteChecksums: [],
