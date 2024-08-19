@@ -35,4 +35,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.TEST_NPM_TOKEN }}
+          TEST_NPM_TOKEN: ${{ secrets.TEST_NPM_TOKEN }}
 
