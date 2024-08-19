@@ -46,7 +46,7 @@ const THEME_PARTITION_REGEX = {
 }
 
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
-  const directoriesToWatch = THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? ''))
+  const directoriesToWatch = THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern))
   const checksumValues = await scanThemeFiles(root, directoriesToWatch)
   const files = new Map(
     checksumValues
