@@ -1,5 +1,5 @@
 import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
-import {checkForCachedNewVersion} from '../node-package-manager.js'
+import {checkForCachedNewVersion, packageManagerFromUserAgent} from '../node-package-manager.js'
 import {cacheClear} from '../../../private/node/conf-store.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
 import {describe, expect, test, vi, afterEach, beforeEach} from 'vitest'
@@ -20,7 +20,8 @@ describe('warnOnAvailableUpgrade', () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     vi.mocked(checkForCachedNewVersion).mockReturnValue('3.0.10')
-    const installReminder = "💡 Version 3.0.10 available! Run \`npm i @shopify/cli@latest\`"
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('npm')
+    const installReminder = "💡 Version 3.0.10 available! Run \`npm install @shopify/cli@latest\`"
 
     // When
     await warnOnAvailableUpgrade()

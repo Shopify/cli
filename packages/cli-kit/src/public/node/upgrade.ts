@@ -9,13 +9,19 @@ import {outputContent, outputToken} from './output.js'
  */
 export function cliInstallCommand(): string {
   const isGlobal = currentProcessIsGlobal()
-  let packageManager = packageManagerFromUserAgent() ?? inferPackageManagerForGlobalCLI()
+  let packageManager = packageManagerFromUserAgent()
+  // packageManagerFromUserAgent() will return 'unknown' if it can't determine the package manager
+  if (packageManager === 'unknown') {
+    packageManager = inferPackageManagerForGlobalCLI()
+  }
+  // inferPackageManagerForGlobalCLI() will also return 'unknown' if it can't determine the package manager
   if (packageManager === 'unknown') packageManager = 'npm'
 
   if (packageManager === 'yarn') {
-    return `yarn ${isGlobal ? 'global ' : ''}add @shopify/cli@latest`
+    return `${packageManager} ${isGlobal ? 'global ' : ''}add @shopify/cli@latest`
   } else {
-    return `${packageManager} i ${isGlobal ? '-g ' : ''}@shopify/cli@latest`
+    const verb = packageManager === 'pnpm' ? 'add' : 'install'
+    return `${packageManager} ${verb} ${isGlobal ? '-g ' : ''}@shopify/cli@latest`
   }
 }
 
