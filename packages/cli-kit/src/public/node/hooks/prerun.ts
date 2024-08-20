@@ -1,7 +1,11 @@
+import {CLI_KIT_VERSION} from '../../common/version.js'
+import {checkForNewVersion, checkForCachedNewVersion} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
-import {outputDebug} from '../../../public/node/output.js'
+import {outputDebug, outputWarn} from '../../../public/node/output.js'
+import {getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
+import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -18,6 +22,7 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
+  await warnOnAvailableUpgrade()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
 }
@@ -80,4 +85,28 @@ function findAlias(aliases: string[]) {
   if (existingAlias) {
     return existingAlias.replace(/:/g, ' ')
   }
+}
+
+/**
+ * Warns the user if there is a new version of the CLI available
+ */
+export async function warnOnAvailableUpgrade(): Promise<void> {
+  const cliDependency = '@shopify/cli'
+  const currentVersion = CLI_KIT_VERSION
+  if (currentVersion.startsWith('0.0.0')) {
+    // This is a nightly/snapshot/experimental version, so we don't want to check for updates
+    return
+  }
+
+  // Check in the background, once daily
+  // eslint-disable-next-line no-void
+  void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
+
+  // Warn if we previously found a new version
+  await runAtMinimumInterval('warn-on-available-upgrade', {days: 1}, async () => {
+    const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
+    if (newerVersion) {
+      outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    }
+  })
 }

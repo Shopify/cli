@@ -17,12 +17,14 @@ import {
   DependencyVersion,
   PackageJsonNotFoundError,
   UnknownPackageManagerError,
+  checkForCachedNewVersion,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
+import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {vi, describe, test, expect} from 'vitest'
+import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
 vi.mock('../../version.js')
 vi.mock('./system.js')
@@ -523,7 +525,58 @@ describe('addNPMDependenciesIfNeeded', () => {
   })
 })
 
+describe('checkForCachedNewVersion', () => {
+  beforeEach(() => cacheClear())
+
+  test('returnes undefined when there is no cached value', () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const dependency = 'dependency'
+
+    // When
+    const result = checkForCachedNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBeUndefined()
+  })
+
+  test('returnes undefined when the cached value is lower than or equal to the current version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.2'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    await checkForNewVersion(dependency, currentVersion)
+
+    // When
+    const result = checkForCachedNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toBe(undefined)
+  })
+
+  test('returnes a version string when the cached value is greater than the current version', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    await checkForNewVersion(dependency, currentVersion)
+
+    // When
+    const result = checkForCachedNewVersion(dependency, currentVersion)
+
+    // Then
+    expect(result).toEqual(newestVersion)
+  })
+})
+
 describe('checkForNewVersion', () => {
+  beforeEach(() => cacheClear())
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   test('returns undefined when last version is lower or equals than current version', async () => {
     // Given
     const currentVersion = '2.2.2'
@@ -574,11 +627,29 @@ describe('checkForNewVersion', () => {
 
     // When
     await checkForNewVersion(dependency, currentVersion)
+    vi.setSystemTime(vi.getRealSystemTime() + 999 * 3600 * 1000)
     const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
 
     // Then
     expect(result).toBe(newestVersion)
     expect(latestVersion).toHaveBeenCalledTimes(1)
+  })
+
+  test('refreshes results when given a nonzero timeout that has expired', async () => {
+    // Given
+    const currentVersion = '2.2.2'
+    const newestVersion = '2.2.3'
+    const dependency = 'dependency'
+    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+
+    // When
+    await checkForNewVersion(dependency, currentVersion)
+    vi.setSystemTime(vi.getRealSystemTime() + 1001 * 3600 * 1000)
+    const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
+
+    // Then
+    expect(result).toBe(newestVersion)
+    expect(latestVersion).toHaveBeenCalledTimes(2)
   })
 
   test('refreshes results when given no timeout', async () => {

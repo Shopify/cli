@@ -460,21 +460,6 @@ export function shouldDisplayColors(_process = process): boolean {
 }
 
 /**
- * Generates a message to remind the user to update the CLI.
- *
- * @param packageManager - The package manager that is being used.
- * @param version - The version to update to.
- * @returns The message to remind the user to update the CLI.
- */
-export function getOutputUpdateCLIReminder(packageManager: PackageManager | undefined, version: string): string {
-  const versionMessage = `💡 Version ${version} available!`
-  if (!packageManager || packageManager === 'unknown') return versionMessage
-
-  const updateCommand = outputToken.packagejsonScript(packageManager, 'shopify upgrade')
-  return outputContent`${versionMessage} Run ${updateCommand}`.value
-}
-
-/**
  * Parse title and body to be a single formatted string.
  *
  * @param title - The title of the message. Will be formatted as a heading.

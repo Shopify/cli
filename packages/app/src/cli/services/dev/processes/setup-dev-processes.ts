@@ -12,7 +12,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -206,7 +206,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
     processes.map(async (process) => {
       const rules: {[key: string]: string} = {}
 
-      if (process.type === 'web') {
+      if (process.type === 'web' && process.options.roles.includes(WebType.Frontend)) {
         const targetPort = process.options.portFromConfig || process.options.port
         rules.default = `http://localhost:${targetPort}`
         const hmrServer = process.options.hmrServerOptions
