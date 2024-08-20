@@ -40,12 +40,21 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       .catch(() => {})
   }
 
-  const handleFileUpdate = ({fileKey, contentPromise}: ThemeFSEvent<'add'>['payload']) => {
+  const handleFileUpdate = ({fileKey, contentPromise, syncPromise}: ThemeFSEvent<'add'>['payload']) => {
     const extension = extname(fileKey)
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = fileKey.startsWith('assets/')
 
-    if (needsTemplateUpdate && !isAsset) {
+    if (isAsset) {
+      if (needsTemplateUpdate) {
+        // If the asset is a .css.liquid or similar, we wait until it's been synced:
+        syncPromise.then(() => triggerHotReload(fileKey, ctx)).catch(() => {})
+      } else {
+        // Otherwise, just full refresh directly:
+        triggerHotReload(fileKey, ctx)
+      }
+    } else if (needsTemplateUpdate) {
+      // Update in-memory templates for hot reloading:
       contentPromise
         .then((content) => {
           inMemoryTemplates[fileKey] = content
@@ -57,9 +66,6 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
           // return handleFileDelete({fileKey, syncPromise}, false)
         })
         .catch(() => {})
-    } else if (isAsset) {
-      // No need to wait for anything, just full refresh
-      triggerHotReload(fileKey, ctx)
     }
   }
 
@@ -67,9 +73,13 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('unlink', handleFileDelete)
 
+  // Once the initial files are loaded, read all the JSON files so that
+  // we gather the existing section names early. This way, when a section
+  // is reloaded, we can quickly find what to update in the DOM without
+  // spending time reading files.
   return ctx.localThemeFileSystem.ready().then(() => {
     const files = [...ctx.localThemeFileSystem.files]
-    return Promise.all(
+    return Promise.allSettled(
       files.map(async ([fileKey, file]) => {
         if (fileKey.endsWith('.json')) {
           const content = file.value ?? ((await ctx.localThemeFileSystem.read(fileKey)) as string)
