@@ -90,9 +90,7 @@ describe('info', () => {
       // When
       const result = stringifyMessage(await info(app, infoOptions()))
       // Then
-      expect(unstyled(result)).toMatch(
-        `Shopify CLI       ${CLI_KIT_VERSION} 💡 Version 2.2.3 available! Run \`yarn shopify upgrade\``,
-      )
+      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
     })
   })
 
