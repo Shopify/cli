@@ -10,7 +10,7 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  await Promise.all([ensureThemeEnvironmentSetup(theme, ctx), setupInMemoryTemplateWatcher(ctx)])
+  await Promise.all([ensureThemeEnvironmentSetup(theme, ctx), setupInMemoryTemplateWatcher(theme, ctx)])
   return createDevelopmentServer(theme, ctx)
 }
 

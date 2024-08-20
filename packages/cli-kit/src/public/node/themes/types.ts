@@ -1,3 +1,4 @@
+import {AdminSession} from '../session.js'
 import type {Stats} from 'fs'
 
 /**
@@ -82,6 +83,15 @@ export interface ThemeFileSystem {
   addEventListener: {
     <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
   }
+
+  /**
+   * Starts a file watcher for the theme directory.
+   *
+   * @param themeId - The ID of the theme being watched.
+   * @param adminSession - The admin session for API communication.
+   * @returns A Promise that resolves to an FSWatcher instance.
+   */
+  startWatcher: (themeId: string, adminSession: AdminSession) => Promise<void>
 }
 
 /**
