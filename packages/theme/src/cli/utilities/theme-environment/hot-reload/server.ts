@@ -10,13 +10,21 @@ import type {DevServerContext} from '../types.js'
 
 // --- Template Replacers ---
 
-interface TemplateWithSections {
-  sections?: {[key: string]: {type: string}}
-}
-
-// const inMemoryTemplates = {} as {[key: string]: string}
+/** Store which files are currently only updated in-memory, not in remote */
 const inMemoryTemplateFiles = new Set<string>()
-const parsedJsonTemplates = new Map<string, TemplateWithSections>()
+/** Store existing section names and types read from JSON files in the project */
+const sectionNamesByFile = new Map<string, [string, string][]>()
+
+function saveSectionsFromJson(fileKey: string, content: string) {
+  const {sections = {}} = (JSON.parse(content) || {}) as {
+    sections?: {[key: string]: {type: string}}
+  }
+
+  sectionNamesByFile.set(
+    fileKey,
+    Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
+  )
+}
 
 /**
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
@@ -53,7 +61,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       // Update in-memory templates for hot reloading:
       onContent((content) => {
         inMemoryTemplateFiles.add(fileKey)
-        if (extension === '.json') parsedJsonTemplates.set(fileKey, JSON.parse(content))
+        if (extension === '.json') saveSectionsFromJson(fileKey, content)
         triggerHotReload(fileKey, ctx)
 
         // Delete template from memory after syncing but keep
@@ -71,7 +79,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       // Delete memory info after syncing with the remote instance because we
       // don't need to pass replaceTemplates anymore.
       inMemoryTemplateFiles.delete(fileKey)
-      parsedJsonTemplates.delete(fileKey)
+      sectionNamesByFile.delete(fileKey)
     })
   })
 
@@ -85,7 +93,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       files.map(async ([fileKey, file]) => {
         if (fileKey.endsWith('.json')) {
           const content = file.value ?? ((await ctx.localThemeFileSystem.read(fileKey)) as string)
-          if (content) parsedJsonTemplates.set(fileKey, JSON.parse(content))
+          if (content) saveSectionsFromJson(fileKey, content)
         }
       }),
     )
@@ -182,16 +190,16 @@ function hotReloadSections(key: string) {
   const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
   if (!sectionId) return
 
-  const sectionsToUpdate: string[] = []
-  for (const [, {sections}] of parsedJsonTemplates) {
-    for (const [name, {type}] of Object.entries(sections || {})) {
+  const sectionsToUpdate = new Set<string>()
+  for (const [_fileKey, sections] of sectionNamesByFile) {
+    for (const [type, name] of sections) {
       if (type === sectionId) {
-        sectionsToUpdate.push(name)
+        sectionsToUpdate.add(name)
       }
     }
   }
 
-  emitHotReloadEvent({type: 'section', key, names: sectionsToUpdate})
+  emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
 }
 
 /**
