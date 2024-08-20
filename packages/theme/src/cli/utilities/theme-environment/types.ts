@@ -127,11 +127,6 @@ export interface DevServerRenderContext {
   query: [string, string][]
 
   /**
-   * Cookies to be used during rendering.
-   */
-  cookies: string
-
-  /**
    * Optional identifier for rendering only a specific section.
    */
   sectionId?: string
