@@ -101,7 +101,7 @@ function emitHotReloadEvent(event: HotReloadEvent) {
  * Adds endpoints to handle HotReload subscriptions and related events.
  */
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
-  return defineEventHandler(async (event) => {
+  return defineEventHandler((event) => {
     const endpoint = event.path.split('?')[0]
 
     if (endpoint === '/__hot-reload/subscribe') {
@@ -113,7 +113,9 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         })
       })
 
-      eventStream.push(JSON.stringify({type: 'open', pid: String(process.pid)})).catch(() => {})
+      eventStream
+        .push(JSON.stringify({type: 'open', pid: String(process.pid)} satisfies HotReloadEvent))
+        .catch(() => {})
 
       return eventStream.send().then(() => eventStream.flush())
     } else if (endpoint === '/__hot-reload/render') {
@@ -131,7 +133,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         return
       }
 
-      const response = await render(ctx.session, {
+      return render(ctx.session, {
         path: '/',
         query: [],
         themeId: String(theme.id),
@@ -139,17 +141,18 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         sectionId,
         headers: getProxyRequestHeaders(event),
         replaceTemplates: {[sectionKey]: sectionTemplate},
-      }).catch(async (error: H3Error<{requestId?: string}>) => {
-        const requestId = error.data?.requestId ?? ''
-        const cause = error.cause as undefined | Error
-        const headline = `Failed to render section on Hot Reload ${requestId}`
-        renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
-        await sendError(event, error)
       })
+        .then((response) => patchRenderingResponse(event, response, ctx))
+        .catch(async (error: H3Error<{requestId?: string}>) => {
+          const requestId = error.data?.requestId ?? ''
+          let headline = `Failed to render section on Hot Reload.`
+          if (requestId) headline += ` Request ID: ${requestId}`
 
-      if (!response) return null
-
-      return patchRenderingResponse(event, response, ctx)
+          const cause = error.cause as undefined | Error
+          renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
+          await sendError(event, error)
+          return null
+        })
     }
   })
 }

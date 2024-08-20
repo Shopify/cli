@@ -1,19 +1,19 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {defineEventHandler, sendWebResponse, type H3Error} from 'h3'
+import {defineEventHandler, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
-  return defineEventHandler(async (event) => {
+  return defineEventHandler((event) => {
     const {path: urlPath, method, headers} = event
 
     // eslint-disable-next-line no-console
     console.log(`${method} ${urlPath}`)
 
-    const response = await render(ctx.session, {
+    return render(ctx.session, {
       path: urlPath,
       query: [],
       themeId: String(theme.id),
@@ -21,33 +21,32 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
       replaceTemplates: getInMemoryTemplates(),
-    }).catch(async (error: H3Error<{requestId?: string}>) => {
-      const requestId = error.data?.requestId ?? ''
-      const headline = `Failed to render storefront ${requestId}`
-      renderError({headline, body: error.stack ?? error.message})
-      await sendWebResponse(
-        event,
-        new Response(
-          getErrorPage({
-            title: headline,
-            header: headline,
-            message: error.message,
-            code: error.stack?.replace(`${error.message}\n`, '') ?? '',
-          }),
-          {status: error.statusCode, headers: {'content-type': 'text/html'}},
-        ),
-      )
     })
+      .then(async (response) => {
+        let html = await patchRenderingResponse(event, response, ctx)
 
-    if (!response) return null
+        if (ctx.options.liveReload !== 'off') {
+          html = injectHotReloadScript(html)
+        }
 
-    let html = await patchRenderingResponse(event, response, ctx)
+        return html
+      })
+      .catch(async (error: H3Error<{requestId?: string}>) => {
+        const requestId = error.data?.requestId ?? ''
+        let headline = `Failed to render storefront.`
+        if (requestId) headline += ` Request ID: ${requestId}`
+        renderError({headline, body: error.stack ?? error.message})
 
-    if (ctx.options.liveReload !== 'off') {
-      html = injectHotReloadScript(html)
-    }
+        setResponseStatus(event, error.statusCode ?? 502, error.statusMessage)
+        setResponseHeader(event, 'Content-Type', 'text/html')
 
-    return html
+        return getErrorPage({
+          title: headline,
+          header: headline,
+          message: error.message,
+          code: error.stack?.replace(`${error.message}\n`, '') ?? '',
+        })
+      })
   })
 }
 
