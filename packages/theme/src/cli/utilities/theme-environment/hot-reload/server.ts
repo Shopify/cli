@@ -14,14 +14,21 @@ interface TemplateWithSections {
   sections?: {[key: string]: {type: string}}
 }
 
-const inMemoryTemplates = {} as {[key: string]: string}
-const parsedJsonTemplates = {} as {[key: string]: TemplateWithSections}
+// const inMemoryTemplates = {} as {[key: string]: string}
+const inMemoryTemplateFiles = new Set<string>()
+const parsedJsonTemplates = new Map<string, TemplateWithSections>()
 
 /**
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
  */
-export function getInMemoryTemplates() {
-  return {...inMemoryTemplates}
+export function getInMemoryTemplates(ctx: DevServerContext) {
+  const inMemoryTemplates: {[key: string]: string} = {}
+  for (const fileKey of inMemoryTemplateFiles) {
+    const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
+    if (content) inMemoryTemplates[fileKey] = content
+  }
+
+  return inMemoryTemplates
 }
 
 /**
@@ -45,14 +52,14 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     } else if (needsTemplateUpdate) {
       // Update in-memory templates for hot reloading:
       onContent((content) => {
-        inMemoryTemplates[fileKey] = content
-        if (extension === '.json') parsedJsonTemplates[fileKey] = JSON.parse(content)
+        inMemoryTemplateFiles.add(fileKey)
+        if (extension === '.json') parsedJsonTemplates.set(fileKey, JSON.parse(content))
         triggerHotReload(fileKey, ctx)
 
         // Delete template from memory after syncing but keep
         // JSON values to read section names for hot-reloading sections.
         // -- Uncomment this when onSync is properly implemented
-        // onSync(() => delete inMemoryTemplates[fileKey])
+        // onSync(() => inMemoryTemplatesFiles.delete(fileKey))
       })
     }
   }
@@ -63,8 +70,8 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     onSync(() => {
       // Delete memory info after syncing with the remote instance because we
       // don't need to pass replaceTemplates anymore.
-      delete inMemoryTemplates[fileKey]
-      delete parsedJsonTemplates[fileKey]
+      inMemoryTemplateFiles.delete(fileKey)
+      parsedJsonTemplates.delete(fileKey)
     })
   })
 
@@ -78,7 +85,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       files.map(async ([fileKey, file]) => {
         if (fileKey.endsWith('.json')) {
           const content = file.value ?? ((await ctx.localThemeFileSystem.read(fileKey)) as string)
-          if (content) parsedJsonTemplates[fileKey] = JSON.parse(content)
+          if (content) parsedJsonTemplates.set(fileKey, JSON.parse(content))
         }
       }),
     )
@@ -122,7 +129,9 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         return
       }
 
-      const sectionTemplate = inMemoryTemplates[sectionKey]
+      const sectionTemplate =
+        inMemoryTemplateFiles.has(sectionKey) && ctx.localThemeFileSystem.files.get(sectionKey)?.value
+
       if (!sectionTemplate) {
         renderWarning({headline: 'No template found for HotReload event.', body: `Template ${sectionKey} not found.`})
         return
@@ -174,7 +183,7 @@ function hotReloadSections(key: string) {
   if (!sectionId) return
 
   const sectionsToUpdate: string[] = []
-  for (const {sections} of Object.values(parsedJsonTemplates)) {
+  for (const [, {sections}] of parsedJsonTemplates) {
     for (const [name, {type}] of Object.entries(sections || {})) {
       if (type === sectionId) {
         sectionsToUpdate.push(name)

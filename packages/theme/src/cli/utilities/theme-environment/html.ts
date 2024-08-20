@@ -20,7 +20,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       cookies: headers.get('cookie') || '',
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
-      replaceTemplates: getInMemoryTemplates(),
+      replaceTemplates: getInMemoryTemplates(ctx),
     })
       .then(async (response) => {
         let html = await patchRenderingResponse(event, response, ctx)
