@@ -145,6 +145,25 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         return
       }
 
+      const replaceTemplates = {[sectionKey]: sectionTemplate}
+
+      // If a JSON file changed locally and updated the ID of a section,
+      // there's a chance the cloud won't know how to render a modified section ID.
+      // Therefore, we gather all the locally updated JSON files that reference
+      // the updated section ID and include them in replaceTemplates:
+      for (const fileKey of inMemoryTemplateFiles) {
+        if (fileKey.endsWith('.json')) {
+          for (const [_type, name] of sectionNamesByFile.get(fileKey) || []) {
+            // Section ID is something like `template_12345__<section-name>`:
+            if (sectionId.endsWith(`__${name}`)) {
+              const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
+              if (content) replaceTemplates[fileKey] = content
+              continue
+            }
+          }
+        }
+      }
+
       return render(ctx.session, {
         path: '/',
         query: [],
@@ -152,7 +171,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         cookies: event.headers.get('cookie') || '',
         sectionId,
         headers: getProxyRequestHeaders(event),
-        replaceTemplates: {[sectionKey]: sectionTemplate},
+        replaceTemplates,
       })
         .then((response) => patchRenderingResponse(event, response, ctx))
         .catch(async (error: H3Error<{requestId?: string}>) => {
