@@ -4,6 +4,7 @@ import {patchRenderingResponse} from '../proxy.js'
 import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, sendError, type H3Error} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname} from '@shopify/cli-kit/node/path'
+import {parseJSON} from '@shopify/theme-check-node'
 import EventEmitter from 'node:events'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
@@ -16,9 +17,10 @@ const inMemoryTemplateFiles = new Set<string>()
 const sectionNamesByFile = new Map<string, [string, string][]>()
 
 function saveSectionsFromJson(fileKey: string, content: string) {
-  const {sections = {}} = (JSON.parse(content) || {}) as {
-    sections?: {[key: string]: {type: string}}
-  }
+  const maybeJson = parseJSON(content, null)
+  if (!maybeJson) return
+
+  const sections: {[key: string]: {type: string}} = maybeJson?.sections
 
   sectionNamesByFile.set(
     fileKey,
