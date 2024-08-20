@@ -7,13 +7,13 @@ export type Key = string
 
 interface ThemeFSEventPayload {
   fileKey: Key
-  syncPromise: Promise<void>
-  contentPromise: Promise<string>
+  onContent: (fn: (content: string) => void) => void
+  onSync: (fn: () => void) => void
 }
 
 export type ThemeFSEventName = 'add' | 'change' | 'unlink'
 export type ThemeFSEvent<T extends ThemeFSEventName> = T extends 'unlink'
-  ? {type: 'unlink'; payload: Omit<ThemeFSEventPayload, 'contentPromise'>}
+  ? {type: 'unlink'; payload: Omit<ThemeFSEventPayload, 'onContent'>}
   : {
       type: 'add' | 'change'
       payload: ThemeFSEventPayload

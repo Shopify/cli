@@ -29,18 +29,7 @@ export function getInMemoryTemplates() {
  * HotReload if needed.
  */
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
-  const handleFileDelete = ({fileKey, syncPromise}: ThemeFSEvent<'unlink'>['payload'], deleteJsonValue = true) => {
-    syncPromise
-      .then(() => {
-        // Delete memory info after syncing with the remote instance because we
-        // don't need to pass replaceTemplates anymore.
-        delete inMemoryTemplates[fileKey]
-        if (deleteJsonValue) delete parsedJsonTemplates[fileKey]
-      })
-      .catch(() => {})
-  }
-
-  const handleFileUpdate = ({fileKey, contentPromise, syncPromise}: ThemeFSEvent<'add'>['payload']) => {
+  const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEvent<'add'>['payload']) => {
     const extension = extname(fileKey)
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = fileKey.startsWith('assets/')
@@ -48,30 +37,36 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     if (isAsset) {
       if (needsTemplateUpdate) {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        syncPromise.then(() => triggerHotReload(fileKey, ctx)).catch(() => {})
+        onSync(() => triggerHotReload(fileKey, ctx))
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)
       }
     } else if (needsTemplateUpdate) {
       // Update in-memory templates for hot reloading:
-      contentPromise
-        .then((content) => {
-          inMemoryTemplates[fileKey] = content
-          if (extension === '.json') parsedJsonTemplates[fileKey] = JSON.parse(content)
-          triggerHotReload(fileKey, ctx)
+      onContent((content) => {
+        inMemoryTemplates[fileKey] = content
+        if (extension === '.json') parsedJsonTemplates[fileKey] = JSON.parse(content)
+        triggerHotReload(fileKey, ctx)
 
-          // Delete template from memory after syncing but keep
-          // JSON values to read section names for hot-reloading sections.
-          // return handleFileDelete({fileKey, syncPromise}, false)
-        })
-        .catch(() => {})
+        // Delete template from memory after syncing but keep
+        // JSON values to read section names for hot-reloading sections.
+        // -- Uncomment this when onSync is properly implemented
+        // onSync(() => delete inMemoryTemplates[fileKey])
+      })
     }
   }
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', handleFileDelete)
+  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
+    onSync(() => {
+      // Delete memory info after syncing with the remote instance because we
+      // don't need to pass replaceTemplates anymore.
+      delete inMemoryTemplates[fileKey]
+      delete parsedJsonTemplates[fileKey]
+    })
+  })
 
   // Once the initial files are loaded, read all the JSON files so that
   // we gather the existing section names early. This way, when a section

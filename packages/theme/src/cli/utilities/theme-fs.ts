@@ -86,12 +86,17 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
             file.value = content!.toString()
             return file.value
           })
-          .catch(() => '')
+
+        const syncPromise = contentPromise.then(() => {})
 
         emitEvent(eventName, {
           fileKey,
-          contentPromise,
-          syncPromise: Promise.resolve(),
+          onContent: (fn) => {
+            contentPromise.then(fn).catch(() => {})
+          },
+          onSync: (fn) => {
+            syncPromise.then(fn).catch(() => {})
+          },
         })
       }
 
@@ -99,9 +104,13 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
         const fileKey = getKey(filePath)
         files.delete(fileKey)
 
+        const syncPromise = Promise.resolve()
+
         emitEvent('unlink', {
           fileKey,
-          syncPromise: Promise.resolve(),
+          onSync: (fn) => {
+            syncPromise.then(fn).catch(() => {})
+          },
         })
       }
 
@@ -128,21 +137,21 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
     root,
     files,
     ready: () => initialFilesPromise.then(() => {}),
-    delete: async (assetKey: string) => {
-      await removeThemeFile(root, assetKey)
-      files.delete(assetKey)
+    delete: async (fileKey: string) => {
+      await removeThemeFile(root, fileKey)
+      files.delete(fileKey)
     },
     write: async (asset: ThemeAsset) => {
       await writeThemeFile(root, asset)
       files.set(asset.key, asset)
     },
-    read: async (assetKey: string) => {
-      const fileValue = await readThemeFile(root, assetKey)
-      const fileChecksum = await checksum(root, assetKey)
+    read: async (fileKey: string) => {
+      const fileValue = await readThemeFile(root, fileKey)
+      const fileChecksum = await checksum(root, fileKey)
       files.set(
-        assetKey,
+        fileKey,
         buildThemeAsset({
-          key: assetKey,
+          key: fileKey,
           value: typeof fileValue === 'string' ? fileValue : '',
           checksum: fileChecksum,
           attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
@@ -150,9 +159,9 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       )
       return fileValue
     },
-    stat: async (assetKey: string) => {
-      if (files.has(assetKey)) {
-        const absolutePath = joinPath(root, assetKey)
+    stat: async (fileKey: string) => {
+      if (files.has(fileKey)) {
+        const absolutePath = joinPath(root, fileKey)
         const stats = await stat(absolutePath)
         if (stats.isFile()) {
           const fileReducedStats = {size: stats.size, mtime: stats.mtime}
