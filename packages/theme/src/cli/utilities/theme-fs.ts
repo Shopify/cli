@@ -1,5 +1,5 @@
 /* eslint-disable promise/no-nesting */
-import {checksum} from './asset-checksum.js'
+import {calculateChecksum} from './asset-checksum.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -56,43 +56,41 @@ const THEME_PARTITION_REGEX = {
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
   const files = new Map<string, ThemeAsset>()
   const eventEmitter = new EventEmitter()
-  function emitEvent<T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) {
+  const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
+  }
+
+  const read = async (fileKey: string) => {
+    const fileContent = await readThemeFile(root, fileKey)
+    const fileChecksum = await calculateChecksum(fileKey, fileContent)
+
+    files.set(
+      fileKey,
+      buildThemeAsset({
+        key: fileKey,
+        checksum: fileChecksum,
+        value: typeof fileContent === 'string' ? fileContent : '',
+        attachment: Buffer.isBuffer(fileContent) ? fileContent.toString('base64') : '',
+      }),
+    )
+
+    return fileContent
   }
 
   const initialFilesPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
     ignore: THEME_DEFAULT_IGNORE_PATTERNS,
-  }).then((filesPaths) => {
-    return Promise.all(
-      filesPaths.map(async (key) => {
-        files.set(key, {
-          key,
-          checksum: await checksum(root, key),
-        })
-      }),
-    )
   })
-
-  initialFilesPromise
+    .then((filesPaths) => Promise.all(filesPaths.map(read)))
     .then(async () => {
       const getKey = (filePath: string) => relativePath(root, filePath)
       const handleFileUpdate = (eventName: 'add' | 'change', filePath: string) => {
         const fileKey = getKey(filePath)
 
-        const contentPromise = checksum(root, fileKey)
-          .then((checksum) => {
-            files.set(fileKey, {key: fileKey, checksum})
-            return readThemeFile(root, fileKey)
-          })
-          .then((content) => {
-            const file = files.get(fileKey)
-            if (!file) return ''
-            file.value = content!.toString()
-            return file.value
-          })
+        const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
 
+        // Note: here goes the code for syncing the file state with the API
         const syncPromise = contentPromise.then(() => {})
 
         emitEvent(eventName, {
@@ -110,6 +108,7 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
         const fileKey = getKey(filePath)
         files.delete(fileKey)
 
+        // Note: here goes the code for syncing the file state with the API
         const syncPromise = Promise.resolve()
 
         emitEvent('unlink', {
@@ -151,20 +150,7 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       await writeThemeFile(root, asset)
       files.set(asset.key, asset)
     },
-    read: async (fileKey: string) => {
-      const fileValue = await readThemeFile(root, fileKey)
-      const fileChecksum = await checksum(root, fileKey)
-      files.set(
-        fileKey,
-        buildThemeAsset({
-          key: fileKey,
-          value: typeof fileValue === 'string' ? fileValue : '',
-          checksum: fileChecksum,
-          attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
-        })!,
-      )
-      return fileValue
-    },
+    read,
     stat: async (fileKey: string) => {
       if (files.has(fileKey)) {
         const absolutePath = joinPath(root, fileKey)

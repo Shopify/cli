@@ -9,8 +9,8 @@ import {
   readThemeFilesFromDisk,
 } from './theme-fs.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
+import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
@@ -171,12 +171,16 @@ describe('theme-fs', () => {
       const key = 'templates/404.json'
       const themeFileSystem = await mountThemeFileSystem(root)
       await themeFileSystem.ready()
-      expect(themeFileSystem.files.get(key)).toEqual({
+      const file = themeFileSystem.files.get(key)
+      expect(file).toEqual({
         key: 'templates/404.json',
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+        value: expect.any(String),
+        attachment: '',
       })
 
       // When
+      delete file?.value
       const content = await themeFileSystem.read(key)
 
       // Then
@@ -352,6 +356,8 @@ describe('theme-fs', () => {
       // When
       const testFile = themeFileSystem.files.get('assets/base.css')
       expect(testFile).toBeDefined()
+      expect(testFile?.value).toBeDefined()
+      delete testFile?.value
       expect(testFile?.value).toBeUndefined()
       await readThemeFilesFromDisk(filesToRead, themeFileSystem)
 
@@ -382,12 +388,14 @@ describe('theme-fs', () => {
       // When
       const testFile = themeFileSystem.files.get('assets/sparkle.gif')
       expect(testFile).toBeDefined()
+      expect(testFile?.attachment).toBeDefined()
+      delete testFile?.attachment
       expect(testFile?.attachment).toBeUndefined()
       await readThemeFilesFromDisk(filesToRead, themeFileSystem)
 
       // Then
       expect(testFile?.attachment).toBeDefined()
-      expect(testFile?.value).toBeUndefined()
+      expect(testFile?.value).toBeFalsy()
     })
   })
 
@@ -434,7 +442,7 @@ describe('theme-fs', () => {
     })
   })
 
-  function fsEntry({key, checksum}: Checksum): [string, Checksum] {
-    return [key, {key, checksum}]
+  function fsEntry({key, checksum}: Checksum): [string, ThemeAsset] {
+    return [key, {key, checksum, value: expect.any(String), attachment: expect.any(String)}]
   }
 })
