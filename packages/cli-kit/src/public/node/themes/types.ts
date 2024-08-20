@@ -5,24 +5,26 @@ import type {Stats} from 'fs'
  */
 export type Key = string
 
-interface ThemeFSEventPayload {
+export type ThemeFSEventName = 'add' | 'change' | 'unlink'
+
+interface ThemeFSEventCommonPayload {
   fileKey: Key
-  onContent: (fn: (content: string) => void) => void
   onSync: (fn: () => void) => void
 }
 
-export type ThemeFSEventName = 'add' | 'change' | 'unlink'
-export type ThemeFSEvent<T extends ThemeFSEventName> = T extends 'unlink'
-  ? {type: 'unlink'; payload: Omit<ThemeFSEventPayload, 'onContent'>}
-  : {
+type ThemeFSEvent =
+  | {
+      type: 'unlink'
+      payload: ThemeFSEventCommonPayload
+    }
+  | {
       type: 'add' | 'change'
-      payload: ThemeFSEventPayload
+      payload: ThemeFSEventCommonPayload & {
+        onContent: (fn: (content: string) => void) => void
+      }
     }
 
-interface AddEventListener {
-  (eventName: 'unlink', cb: (params: ThemeFSEvent<'unlink'>['payload']) => void): void
-  (eventName: 'add' | 'change', cb: (params: ThemeFSEvent<'add'>['payload']) => void): void
-}
+export type ThemeFSEventPayload<T extends ThemeFSEventName = 'add'> = (ThemeFSEvent & {type: T})['payload']
 
 /**
  * Represents a theme on the file system.
@@ -77,7 +79,9 @@ export interface ThemeFileSystem {
   /**
    * Add callbacks to run after certain events are fired.
    */
-  addEventListener: AddEventListener
+  addEventListener: {
+    <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
+  }
 }
 
 /**

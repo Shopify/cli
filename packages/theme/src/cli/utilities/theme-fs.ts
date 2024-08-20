@@ -1,6 +1,5 @@
 /* eslint-disable promise/no-nesting */
 import {checksum} from './asset-checksum.js'
-import {ThemeFileSystem, Key, ThemeAsset, ThemeFSEventName, type ThemeFSEvent} from '@shopify/cli-kit/node/themes/types'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -8,6 +7,13 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
+import type {
+  ThemeFileSystem,
+  Key,
+  ThemeAsset,
+  ThemeFSEventName,
+  ThemeFSEventPayload,
+} from '@shopify/cli-kit/node/themes/types'
 
 const THEME_DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
@@ -50,7 +56,7 @@ const THEME_PARTITION_REGEX = {
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
   const files = new Map<string, ThemeAsset>()
   const eventEmitter = new EventEmitter()
-  function emitEvent<T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEvent<T>['payload']) {
+  function emitEvent<T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) {
     eventEmitter.emit(eventName, payload)
   }
 

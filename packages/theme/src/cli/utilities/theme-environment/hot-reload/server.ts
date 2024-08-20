@@ -5,7 +5,7 @@ import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery,
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname} from '@shopify/cli-kit/node/path'
 import EventEmitter from 'node:events'
-import type {Theme, ThemeFSEvent} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
 
 // --- Template Replacers ---
@@ -44,7 +44,7 @@ export function getInMemoryTemplates(ctx: DevServerContext) {
  * HotReload if needed.
  */
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
-  const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEvent<'add'>['payload']) => {
+  const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = fileKey.startsWith('assets/')
