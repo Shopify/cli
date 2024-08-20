@@ -1,6 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
+import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {themeExtensionArgs} from '../theme-extension-args.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'

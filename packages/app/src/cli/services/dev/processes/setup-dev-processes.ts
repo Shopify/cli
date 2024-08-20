@@ -11,7 +11,7 @@ import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -19,7 +19,6 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {appLogPollingEnabled} from '../../app-logs/utils.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -86,8 +85,7 @@ export async function setupDevProcesses({
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
-  const shouldPerformAppLogPolling =
-    appLogPollingEnabled() && localApp.allExtensions.some((extension) => extension.isFunctionExtension)
+  const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -194,7 +192,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
     processes.map(async (process) => {
       const rules: {[key: string]: string} = {}
 
-      if (process.type === 'web') {
+      if (process.type === 'web' && process.options.roles.includes(WebType.Frontend)) {
         const targetPort = process.options.portFromConfig || process.options.port
         rules.default = `http://localhost:${targetPort}`
         const hmrServer = process.options.hmrServerOptions

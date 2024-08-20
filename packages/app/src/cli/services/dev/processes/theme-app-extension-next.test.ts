@@ -1,7 +1,7 @@
 import {setupPreviewThemeAppExtensionsProcess, findOrCreateHostTheme} from './theme-app-extension-next.js'
-import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -10,7 +10,7 @@ import {vi, describe, test, expect, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('../../../utilities/host-theme-manager')
+vi.mock('../../../utilities/extensions/theme/host-theme-manager')
 vi.mock('@shopify/cli-kit/node/output')
 
 describe('setupPreviewThemeAppExtensionsProcess', () => {

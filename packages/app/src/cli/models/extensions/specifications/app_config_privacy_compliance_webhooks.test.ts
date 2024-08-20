@@ -34,6 +34,7 @@ describe('privacy_compliance_webhooks', () => {
       // Given
       const object = {
         webhooks: {
+          api_version: '2024-07',
           subscriptions: [
             {
               compliance_topics: ['customers/redact', 'customers/data_request'],
@@ -53,6 +54,7 @@ describe('privacy_compliance_webhooks', () => {
 
       // Then
       expect(result).toMatchObject({
+        api_version: '2024-07',
         customers_redact_url: 'https://example.com/customers_webhooks',
         customers_data_request_url: 'https://example.com/customers_webhooks',
         shop_redact_url: 'https://example.com/shop_webhooks',

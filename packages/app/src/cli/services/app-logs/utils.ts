@@ -10,14 +10,13 @@ import {
 } from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
-import {environmentVariableNames} from '../../constants.js'
+import {AppInterface} from '../../models/app/app.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import camelcaseKeys from 'camelcase-keys'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -30,11 +29,6 @@ export const LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND = 'function_network_access
 export const LOG_TYPE_REQUEST_EXECUTION = 'function_network_access.request_execution'
 export const REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON = 'no_cached_response'
 export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cached_response_about_to_expire'
-
-export function appLogPollingEnabled() {
-  const env = getEnvironmentVariables()
-  return isTruthy(env[environmentVariableNames.enableAppLogPolling])
-}
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)
@@ -164,6 +158,12 @@ export const handleFetchAppLogsError = async (
   return {retryIntervalMs, nextJwtToken}
 }
 
+export function sourcesForApp(app: AppInterface): string[] {
+  return app.allExtensions.flatMap((extension) => {
+    return extension.isFunctionExtension ? [`extensions.${extension.configuration.handle}`] : []
+  })
+}
+
 export const toFormattedAppLogJson = (
   appLog: AppLogData,
   appLogPayload: AppLogPayload | unknown,
@@ -175,6 +175,7 @@ export const toFormattedAppLogJson = (
     {
       ...appLogWithoutCursor,
       payload: appLogPayload,
+      localTime: formatLocalDate(appLog.log_timestamp),
     },
     {deep: true},
   )

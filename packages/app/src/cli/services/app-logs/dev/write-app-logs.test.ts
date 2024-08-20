@@ -4,6 +4,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog} from '@shopify/cli-kit/node/logs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import camelcaseKeys from 'camelcase-keys'
+import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 vi.mock('@shopify/cli-kit/node/logs')
 
@@ -67,6 +68,7 @@ describe('writeAppLogsToFile', () => {
       source: APP_LOG.source,
       sourceNamespace: APP_LOG.source_namespace,
       logTimestamp: APP_LOG.log_timestamp,
+      localTime: formatLocalDate(APP_LOG.log_timestamp),
     }
     const expectedLogData = JSON.stringify(expectedSaveData, null, 2)
 
@@ -104,6 +106,7 @@ function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload |
     {
       ...eventWithoutCursor,
       payload,
+      localTime: formatLocalDate(APP_LOG.log_timestamp),
     },
     {deep: true},
   )

@@ -59,10 +59,38 @@ describe('filterThemes', () => {
     expect(filtered[0]!.name).toBe('theme (7)')
   })
 
-  test('filters by theme (partial name with different case)', async () => {
+  test('filters by theme (partial name matching the middle of the name)', async () => {
     // Given
     const filter = new Filter({
-      theme: 'eMe (7',
+      theme: '*eMe (7*',
+    })
+
+    // When
+    const filtered = filterThemes(store, themes, filter)
+
+    // Then
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]!.name).toBe('theme (7)')
+  })
+
+  test('filters by theme (partial name matching the beginning of the name)', async () => {
+    // Given
+    const filter = new Filter({
+      theme: 'theme (7*',
+    })
+
+    // When
+    const filtered = filterThemes(store, themes, filter)
+
+    // Then
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]!.name).toBe('theme (7)')
+  })
+
+  test('filters by theme (partial name matching the end of the name)', async () => {
+    // Given
+    const filter = new Filter({
+      theme: '*me (7)',
     })
 
     // When
