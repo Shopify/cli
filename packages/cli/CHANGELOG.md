@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.66.0
+
+### Minor Changes
+
+- 05cbe63566: Display daily upgrade reminder when a new version is available
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+
 ## 3.65.0
 
 ### Minor Changes

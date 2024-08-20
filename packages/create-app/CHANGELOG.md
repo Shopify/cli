@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 3.66.0
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+
 ## 3.65.0
 
 ### Patch Changes
