@@ -18,5 +18,6 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
       return {mtime: new Date(), size: 1}
     },
     addEventListener: () => {},
+    startWatcher: async () => {},
   }
 }

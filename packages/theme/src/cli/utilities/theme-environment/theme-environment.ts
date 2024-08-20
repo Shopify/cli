@@ -13,7 +13,7 @@ import type {DevServerContext} from './types.js'
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
   const [{renderThemeSyncProgress}] = await Promise.all([
     ensureThemeEnvironmentSetup(theme, ctx),
-    setupInMemoryTemplateWatcher(ctx),
+    setupInMemoryTemplateWatcher(theme, ctx),
   ])
 
   return {
