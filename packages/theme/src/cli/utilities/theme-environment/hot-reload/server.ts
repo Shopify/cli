@@ -68,8 +68,7 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
 
         // Delete template from memory after syncing but keep
         // JSON values to read section names for hot-reloading sections.
-        // -- Uncomment this when onSync is properly implemented
-        // onSync(() => inMemoryTemplatesFiles.delete(fileKey))
+        onSync(() => inMemoryTemplateFiles.delete(fileKey))
       })
     }
   }
