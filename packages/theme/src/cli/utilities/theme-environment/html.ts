@@ -23,7 +23,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       replaceTemplates: getInMemoryTemplates(ctx),
     })
       .then(async (response) => {
-        let html = await patchRenderingResponse(event, response, ctx)
+        let html = await patchRenderingResponse(ctx, event, response)
 
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)

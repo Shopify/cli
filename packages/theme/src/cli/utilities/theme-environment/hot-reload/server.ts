@@ -173,7 +173,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         headers: getProxyRequestHeaders(event),
         replaceTemplates,
       })
-        .then((response) => patchRenderingResponse(event, response, ctx))
+        .then((response) => patchRenderingResponse(ctx, event, response))
         .catch(async (error: H3Error<{requestId?: string}>) => {
           const requestId = error.data?.requestId ?? ''
           let headline = `Failed to render section on Hot Reload.`

@@ -88,16 +88,9 @@ function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
  * Patches the result of an SFR HTML response to include the local proxies
  * and fix domain inconsistencies between remote instance and local dev.
  */
-export async function patchRenderingResponse(event: H3Event, response: NodeResponse, ctx: DevServerContext) {
+export async function patchRenderingResponse(ctx: DevServerContext, event: H3Event, response: NodeResponse) {
   setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
-
-  // Link header preloads resources from global CDN, proxy it:
-  const linkHeader = response.headers.get('Link')
-  if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
-
-  // Cookies are set for the vanity domain, fix it for localhost:
-  const setCookieHeader = response.headers.raw()['set-cookie']
-  if (setCookieHeader) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+  patchProxiedResponseHeaders(ctx, event, response)
 
   // We are decoding the payload here, remove the header:
   let html = await response.text()
@@ -125,6 +118,20 @@ const HOP_BY_HOP_HEADERS = [
   'content-length',
 ]
 
+function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
+  // Safari adds upgrade-insecure-requests to CSP and it needs to be removed:
+  clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
+
+  // Link header preloads resources from global CDN, proxy it:
+  const linkHeader = response.headers.get('Link')
+  if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
+
+  // Cookies are set for the vanity domain, fix it for localhost:
+  const setCookieHeader =
+    'raw' in response.headers ? response.headers.raw()['set-cookie'] : response.headers.getSetCookie()
+  if (setCookieHeader) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+}
+
 /**
  * Filters headers to forward to SFR.
  */
@@ -136,6 +143,11 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
   }
+
+  // Safari adds this by default. Remove it to prevent upgrading to HTTPS in localhost.
+  // This header is however ignored by SFR and it always returns a CSP including it,
+  // so we must also remove it from the response CSP.
+  delete proxyRequestHeaders['upgrade-insecure-requests']
 
   const ipAddress = getRequestIP(event)
   if (ipAddress) proxyRequestHeaders['X-Forwarded-For'] = ipAddress
@@ -156,9 +168,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
     headers: proxyHeaders,
     fetchOptions: {ignoreResponseError: false, method: event.method, body, duplex: body ? 'half' : undefined},
     cookieDomainRewrite: `http://${ctx.options.host}:${ctx.options.port}`,
-    async onResponse(event) {
-      clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
-    },
+    onResponse: patchProxiedResponseHeaders.bind(null, ctx),
   }).catch(async (error: H3Error) => {
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
       const cause = error.cause as undefined | Error

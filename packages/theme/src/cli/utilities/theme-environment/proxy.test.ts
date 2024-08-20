@@ -121,7 +121,7 @@ describe('dev proxy', () => {
         },
       )
 
-      await expect(patchRenderingResponse(event, renderingResponse, ctx)).resolves.toMatchInlineSnapshot(`
+      await expect(patchRenderingResponse(ctx, event, renderingResponse)).resolves.toMatchInlineSnapshot(`
         "<html>
                   <head>
                     <script src=\\"/cdn/path/to/assets/file1\\"></script>
