@@ -40,7 +40,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       .catch(() => {})
   }
 
-  const handleFileUpdate = ({fileKey, contentPromise, syncPromise}: ThemeFSEvent<'add'>['payload']) => {
+  const handleFileUpdate = ({fileKey, contentPromise}: ThemeFSEvent<'add'>['payload']) => {
     const extension = extname(fileKey)
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = fileKey.startsWith('assets/')
@@ -54,7 +54,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
           // Delete template from memory after syncing but keep
           // JSON values to read section names for hot-reloading sections.
-          return handleFileDelete({fileKey, syncPromise}, false)
+          // return handleFileDelete({fileKey, syncPromise}, false)
         })
         .catch(() => {})
     } else if (isAsset) {
