@@ -2,9 +2,10 @@ import {calculateChecksum} from './asset-checksum.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {consoleLog, outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 import type {
@@ -96,10 +97,15 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
     const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
 
-    // Note: here goes the code for syncing the file state with the API
-    const syncPromise = contentPromise.then(() => {
-      consoleLog(themeId)
-      consoleLog(JSON.stringify(adminSession))
+    const syncPromise = contentPromise.then(async (content) => {
+      const results = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+      results.forEach((result) => {
+        if (result.success) {
+          outputSyncResult('update', fileKey)
+        } else if (result.errors?.asset) {
+          throw createAssetUploadError(filePath, result.errors.asset)
+        }
+      })
     })
 
     emitEvent(eventName, {
@@ -117,10 +123,13 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     const fileKey = getKey(filePath)
     files.delete(fileKey)
 
-    // Note: here goes the code for syncing the file state with the API
-    const syncPromise = Promise.resolve().then(() => {
-      consoleLog(themeId)
-      consoleLog(JSON.stringify(adminSession))
+    const syncPromise = Promise.resolve().then(async () => {
+      const success = await deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      if (success) {
+        outputSyncResult('delete', fileKey)
+      } else {
+        throw new Error(`Failed to delete file ${filePath}`)
+      }
     })
 
     emitEvent('unlink', {
@@ -315,4 +324,19 @@ function dirPath(filePath: string) {
   const fileNameIndex = filePath.lastIndexOf(fileName)
 
   return filePath.substring(0, fileNameIndex)
+}
+
+function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
+  outputInfo(
+    outputContent`• ${new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })} Synced ${outputToken.raw('»')} ${outputToken.gray(`${action} ${fileKey}`)}`,
+  )
+}
+
+function createAssetUploadError(filePath: string, errors: string[]): Error {
+  return new Error(`Failed to upload file ${filePath}:\n${errors.map((error) => `- ${error}`).join('\n')}`)
 }
