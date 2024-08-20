@@ -132,7 +132,7 @@ export async function launchWebProcess(
     SHOPIFY_API_SECRET: apiSecret,
     HOST: hostname,
     SCOPES: scopes,
-    NODE_ENV: `development`,
+    NODE_ENV: process.env.NODE_ENV || `development`,
     ...(shopCustomDomain && {
       SHOP_CUSTOM_DOMAIN: shopCustomDomain,
     }),
