@@ -5,7 +5,6 @@ import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
-import {ReadStream} from 'tty'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -131,17 +130,13 @@ export async function sleep(seconds: number): Promise<void> {
 }
 
 /**
- * In case an standard input stream is passed check if it supports raw mode. Otherwise default standard input stream
- * will be used.
+ * Check if the standard input and output streams supports raw mode.
  *
- * @param stdin - The standard input stream to check.
- * @param env - Environmemnt variables.
- * @returns True in the selected input stream support raw mode.
+ * @returns True if the standard input and output streams support raw mode.
  */
-export function terminalSupportsRawMode(stdin?: ReadStream, env = process.env): boolean {
-  if (isTruthy(env.CI)) {
+export function terminalSupportsRawMode(): boolean {
+  if (isTruthy(process.env.CI)) {
     return false
   }
-  if (stdin) return Boolean(stdin.isTTY)
-  return process.stdin.isTTY
+  return Boolean(process.stdin.isTTY && process.stdout.isTTY)
 }

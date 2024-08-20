@@ -72,7 +72,7 @@ export async function renderDev({
   developerPreview,
   shopFqdn,
 }: DevProps) {
-  if (terminalSupportsRawMode(process.stdin)) {
+  if (terminalSupportsRawMode()) {
     return render(
       <Dev
         processes={processes}
