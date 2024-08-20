@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.2.1
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+
 ## 5.2.0
 
 ### Minor Changes

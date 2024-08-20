@@ -1,5 +1,27 @@
 # @shopify/app
 
+## 3.66.0
+
+### Minor Changes
+
+- 0ba29e06dd: Add required_scopes to the app_access module
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+- dd4b730962: Small UI fix when using an invalid shop
+- 3b1ec3dcfa: Disable app linking prompt on deploy when API key is provided
+- 8e071fa939: Avoid duplicated error messages for invalid URLs in the TOML
+- de35ac212c: Fix: Only proxy frontend web service, do not direct requests to any other web service
+- 8fa8542e16: Fix Javy and function-runner downloads on Windows
+- Updated dependencies [05cbe63566]
+- Updated dependencies [40a7b1229a]
+- Updated dependencies [dd4b730962]
+- Updated dependencies [93bfa6419d]
+  - @shopify/cli-kit@3.66.0
+  - @shopify/plugin-cloudflare@3.66.0
+  - @shopify/create-app@3.66.0
+
 ## 3.65.0
 
 ### Minor Changes
