@@ -13,7 +13,7 @@ function filterByRole(store: string, themes: Theme[], filter: Filter) {
     return
   }
 
-  const error = `The ${store} store doesn't have a theme with the "${role}" role`
+  const error = `No themes on the store ${store} match the role "${role}"`
 
   return filterArray(themes, (theme) => {
     return theme.role === role
@@ -24,7 +24,7 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
   const identifiers = filter.themeIdentifiers
 
   return identifiers.flatMap((identifier) => {
-    const error = `The ${store} store doesn't have a theme with the "${identifier}" ID or name`
+    const error = `No themes on the store ${store} match the ID or name "${identifier}"`
 
     return filterArray(themes, (theme) => {
       if (`${theme.id}` === identifier) {
