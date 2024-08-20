@@ -50,6 +50,7 @@ describe('theme-fs', () => {
         read: expect.any(Function),
         stat: expect.any(Function),
         addEventListener: expect.any(Function),
+        startWatcher: expect.any(Function),
       })
     })
 
@@ -71,6 +72,7 @@ describe('theme-fs', () => {
         read: expect.any(Function),
         stat: expect.any(Function),
         addEventListener: expect.any(Function),
+        startWatcher: expect.any(Function),
       })
     })
 
