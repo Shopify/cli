@@ -167,7 +167,6 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   return sendProxy(event, target, {
     headers: proxyHeaders,
     fetchOptions: {ignoreResponseError: false, method: event.method, body, duplex: body ? 'half' : undefined},
-    cookieDomainRewrite: `http://${ctx.options.host}:${ctx.options.port}`,
     onResponse: patchProxiedResponseHeaders.bind(null, ctx),
   }).catch(async (error: H3Error) => {
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
