@@ -364,7 +364,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     return result.organizations.nodes[0]!.stores.nodes
   }
 
-  async appExtensionRegistrations({apiKey}: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations(
+    {apiKey}: MinimalAppIdentifiers,
+    _activeAppVersion?: ActiveAppVersion,
+  ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
   }
