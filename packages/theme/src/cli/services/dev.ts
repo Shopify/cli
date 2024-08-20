@@ -2,6 +2,8 @@ import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/th
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {DevServerContext, DevServerSession, LiveReload} from '../utilities/theme-environment/types.js'
+import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
+import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -25,6 +27,7 @@ export interface DevOptions {
   directory: string
   store: string
   password?: string
+  storePassword?: string
   open: boolean
   theme: Theme
   host?: string
@@ -49,6 +52,10 @@ export async function dev(options: DevOptions) {
     return
   }
 
+  const storefrontPassword = (await isStorefrontPasswordProtected(options.adminSession.storeFqdn))
+    ? await ensureValidPassword(options.storePassword, options.adminSession.storeFqdn)
+    : undefined
+
   if (options.flagsToPass.includes('--poll')) {
     renderWarning({
       body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
@@ -62,6 +69,7 @@ export async function dev(options: DevOptions) {
   const session: DevServerSession = {
     ...options.adminSession,
     storefrontToken: options.storefrontToken,
+    storefrontPassword,
     expiresAt: new Date(),
   }
 

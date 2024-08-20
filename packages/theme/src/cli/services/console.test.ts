@@ -3,12 +3,12 @@ import {
   isStorefrontPasswordCorrect,
   isStorefrontPasswordProtected,
 } from '../utilities/theme-environment/storefront-session.js'
-import {ensureValidPassword} from '../utilities/repl/storefront-password-prompt.js'
+import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
+vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
-vi.mock('../utilities/repl/storefront-password-prompt.js')
 vi.mock('../utilities/repl/repl-theme-manager.js', () => {
   const REPLThemeManager = vi.fn()
   REPLThemeManager.prototype.findOrCreate = () => ({

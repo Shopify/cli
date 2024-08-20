@@ -5151,6 +5151,14 @@
           "name": "store",
           "type": "option"
         },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
+          "type": "option"
+        },
         "theme": {
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
@@ -6302,6 +6310,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "theme": {

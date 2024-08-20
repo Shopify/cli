@@ -1,5 +1,5 @@
 import {ensureValidPassword} from './storefront-password-prompt.js'
-import {isStorefrontPasswordProtected, isStorefrontPasswordCorrect} from '../theme-environment/storefront-session.js'
+import {isStorefrontPasswordProtected, isStorefrontPasswordCorrect} from './storefront-session.js'
 import {getStorefrontPassword, removeStorefrontPassword, setStorefrontPassword} from '../../services/local-storage.js'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, beforeEach, vi, test, expect} from 'vitest'

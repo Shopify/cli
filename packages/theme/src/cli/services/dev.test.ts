@@ -2,6 +2,8 @@ import {showDeprecationWarnings, refreshTokens, dev, DevOptions} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
+import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
+import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -11,6 +13,8 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
+vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/theme-environment.js')
 vi.mock('../utilities/theme-fs.js')
 
@@ -38,10 +42,13 @@ describe('dev', () => {
   describe('Dev-Preview Implementation', async () => {
     test('calls startDevServer with the correct arguments when the `dev-preview` option is provided', async () => {
       // Given
+      vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
+      vi.mocked(ensureValidPassword).mockResolvedValue('valid-password')
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockResolvedValue(localThemeFileSystem)
       vi.mocked(setupDevServer).mockResolvedValue({dispatch: () => {}, start: async () => ({close: async () => {}})})
-      const devOptions = {...options, 'dev-preview': true, 'theme-editor-sync': true}
+
+      const devOptions = {...options, storePassword: 'wrong-password', 'dev-preview': true, 'theme-editor-sync': true}
 
       // When
       await dev(devOptions)
@@ -50,6 +57,7 @@ describe('dev', () => {
       expect(setupDevServer).toHaveBeenCalledWith(options.theme, {
         session: {
           ...adminSession,
+          storefrontPassword: 'valid-password',
           storefrontToken: 'my-storefront-token',
           expiresAt: expect.any(Date),
         },

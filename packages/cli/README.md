@@ -1678,7 +1678,7 @@ Uploads the current theme as a development theme to the connected store, then pr
 USAGE
   $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
     [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--poll] [--port
-    <value>] [-s <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+    <value>] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1732,6 +1732,9 @@ FLAGS
 
   --port=<value>
       Local port to serve theme preview from.
+
+  --store-password=<value>
+      The password for storefronts with password protection.
 
   --theme-editor-sync
       Synchronize Theme Editor updates in the local theme files.
