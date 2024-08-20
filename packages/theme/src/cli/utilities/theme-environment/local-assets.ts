@@ -22,9 +22,8 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
 
       return serveStatic(event, {
         getContents: () => {
-          // NOTE: Use cached value when localThemeFileSystem watches files
-          // const cachedValue = ctx.localThemeFileSystem.files.get(fileKey)?.value
-          // if (cachedValue) return replaceCdnProxy(cachedValue, ctx)
+          const cachedValue = ctx.localThemeFileSystem.files.get(fileKey)?.value
+          if (cachedValue) return injectCdnProxy(cachedValue, ctx)
 
           return ctx.localThemeFileSystem.read(fileKey).then((content) => injectCdnProxy(content as string, ctx))
         },

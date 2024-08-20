@@ -94,8 +94,8 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     return Promise.allSettled(
       files.map(async ([fileKey, file]) => {
         if (fileKey.endsWith('.json')) {
-          const content = file.value ?? ((await ctx.localThemeFileSystem.read(fileKey)) as string)
-          if (content) saveSectionsFromJson(fileKey, content)
+          const content = file.value ?? (await ctx.localThemeFileSystem.read(fileKey))
+          if (content && typeof content === 'string') saveSectionsFromJson(fileKey, content)
         }
       }),
     )
