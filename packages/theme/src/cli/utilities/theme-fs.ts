@@ -9,7 +9,7 @@ import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 
-export const THEME_DEFAULT_IGNORE_PATTERNS = [
+const THEME_DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
   '**/.vscode',
   '**/.hg',
@@ -27,7 +27,7 @@ export const THEME_DEFAULT_IGNORE_PATTERNS = [
   '.prettierrc.json',
 ]
 
-export const THEME_DIRECTORY_PATTERNS = [
+const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',
   'config/**/*.json',
   'layout/**/*.liquid',

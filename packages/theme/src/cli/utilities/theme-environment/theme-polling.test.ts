@@ -125,9 +125,9 @@ describe('pollRemoteJsonChanges', async () => {
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
-    localThemeFileSystem.read = async (assetKey: string) => {
-      files.set(assetKey, {checksum: '3', key: assetKey})
-      return files.get(assetKey)?.value || files.get(assetKey)?.attachment
+    localThemeFileSystem.read = async (fileKey: string) => {
+      files.set(fileKey, {checksum: '3', key: fileKey})
+      return files.get(fileKey)?.value || files.get(fileKey)?.attachment
     }
 
     // When

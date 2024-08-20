@@ -6,7 +6,7 @@ import type {Stats} from 'fs'
 export type Key = string
 
 interface ThemeFSEventPayload {
-  fileKey: string
+  fileKey: Key
   syncPromise: Promise<void>
   contentPromise: Promise<string>
 }
@@ -46,9 +46,9 @@ export interface ThemeFileSystem {
   /**
    * Removes a file from the local disk and updates the themeFileSystem
    *
-   * @param assetKey - The key of the file to remove
+   * @param fileKey - The key of the file to remove
    */
-  delete: (assetKey: string) => Promise<void>
+  delete: (fileKey: Key) => Promise<void>
 
   /**
    * Writes a file to the local disk and updates the themeFileSystem
@@ -62,17 +62,17 @@ export interface ThemeFileSystem {
    * Returns a ThemeAsset representing the file that was read
    * Returns undefined if the file does not exist
    *
-   * @param assetKey - The key of the file to read
+   * @param fileKey - The key of the file to read
    */
-  read: (assetKey: string) => Promise<string | Buffer | undefined>
+  read: (fileKey: Key) => Promise<string | Buffer | undefined>
 
   /**
    * Gets the stats of a file from the local disk and updates the themeFileSystem
    * Returns undefined if the file does not exist
    *
-   * @param assetKey - The key of the file to read
+   * @param fileKey - The key of the file to read
    */
-  stat: (assetKey: string) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
+  stat: (fileKey: Key) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
 
   /**
    * Add callbacks to run after certain events are fired.
