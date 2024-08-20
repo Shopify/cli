@@ -160,7 +160,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
     },
   }).catch(async (error: H3Error) => {
-    if (error.statusCode >= 500) {
+    if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
       const cause = error.cause as undefined | Error
       renderWarning({
         headline: `Failed to proxy request to ${pathname} - ${error.statusCode} - ${error.statusMessage}`,
