@@ -29,7 +29,10 @@ export default class DemoWatcher extends Command {
       mode: 'report',
     })
 
-    const watcher = new AppEventWatcher(app, tempDirectory())
+    const dir = tempDirectory()
+    outputInfo(`Created temporary directory: ${dir}`)
+
+    const watcher = new AppEventWatcher(app, dir)
     await watcher.start()
     outputInfo(`Watching for changes in ${app.name}...`)
 
