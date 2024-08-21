@@ -88,6 +88,12 @@ export interface themedev {
   '-s, --store <value>'?: string
 
   /**
+   * The password for storefronts with password protection.
+   * @environment SHOPIFY_FLAG_STORE_PASSWORD
+   */
+  '--store-password <value>'?: string
+
+  /**
    * Theme ID or name of the remote theme.
    * @environment SHOPIFY_FLAG_THEME_ID
    */

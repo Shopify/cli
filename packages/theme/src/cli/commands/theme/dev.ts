@@ -113,6 +113,10 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_OPEN',
       default: false,
     }),
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
+    }),
     'dev-preview': Flags.boolean({
       hidden: true,
       description: 'Enables the developer preview for the upcoming `theme dev` implementation.',
@@ -173,6 +177,7 @@ You can run this command only in a directory that matches the [default Shopify t
       directory: flags.path,
       store,
       password: flags.password,
+      storePassword: flags['store-password'],
       theme,
       host: flags.host,
       port: flags.port,
