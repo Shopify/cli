@@ -2235,6 +2235,29 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
+  test('throws an error when access.admin.api_version is invalid', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    api_version = false
+    `
+    await writeConfig(config)
+
+    // When
+    await expect(loadTestingApp()).rejects.toThrow()
+  })
+
   test('loads the app when access.admin.embedded_app_direct_api_access = true', async () => {
     // Given
     const config = `
