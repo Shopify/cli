@@ -37,6 +37,11 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
       return null
     }
 
+    if (event.path.startsWith('/search/suggest')) {
+      // Skip to use HTML rendering for this endpoint
+      return
+    }
+
     if (event.path.startsWith('/cdn/') || !event.headers.get('accept')?.includes('text/html')) {
       return proxyStorefrontRequest(event, ctx)
     }
