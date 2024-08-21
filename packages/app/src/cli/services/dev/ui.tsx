@@ -8,7 +8,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 
@@ -72,7 +72,7 @@ export async function renderDev({
   developerPreview,
   shopFqdn,
 }: DevProps) {
-  if (terminalSupportsRawMode()) {
+  if (terminalSupportsPrompting()) {
     return render(
       <Dev
         processes={processes}

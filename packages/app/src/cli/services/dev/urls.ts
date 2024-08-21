@@ -17,7 +17,7 @@ import {isValidURL} from '@shopify/cli-kit/common/url'
 import {appHost, appPort, fetchSpinPort, isSpin, spinFqdn, spinVariables} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
-import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -252,7 +252,7 @@ interface ShouldOrPromptUpdateURLsOptions {
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
   if (options.localApp && options.localApp.configuration.client_id !== options.apiKey) return true
-  if (options.newApp || !terminalSupportsRawMode()) return true
+  if (options.newApp || !terminalSupportsPrompting()) return true
   let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
 
   if (options.cachedUpdateURLs === undefined) {

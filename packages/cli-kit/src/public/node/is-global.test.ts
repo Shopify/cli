@@ -4,7 +4,7 @@ import {
   installGlobalCLIPrompt,
   isGlobalCLIInstalled,
 } from './is-global.js'
-import {captureOutput, terminalSupportsRawMode} from './system.js'
+import {captureOutput, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import * as execa from 'execa'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -135,7 +135,7 @@ describe('installGlobalCLIPrompt', () => {
     // Given
     // Global CLI is already installed
     vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app dev'))
-    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
 
     // When
     const got = await installGlobalCLIPrompt()
@@ -151,7 +151,7 @@ describe('installGlobalCLIPrompt', () => {
     vi.mocked(captureOutput).mockImplementationOnce(() => {
       throw new Error('')
     })
-    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('yes'))
 
     // When
@@ -167,7 +167,7 @@ describe('installGlobalCLIPrompt', () => {
     vi.mocked(captureOutput).mockImplementationOnce(() => {
       throw new Error('')
     })
-    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('no'))
 
     // When

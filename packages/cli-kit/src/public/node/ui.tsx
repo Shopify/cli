@@ -12,7 +12,7 @@ import {
   outputWhereAppropriate,
 } from './output.js'
 import {isUnitTest} from './context/local.js'
-import {terminalSupportsRawMode} from './system.js'
+import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
@@ -693,7 +693,7 @@ interface IsTTYOptions {
 }
 
 export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
-  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode())
+  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsPrompting())
 }
 
 interface ThrowInNonTTYOptions {

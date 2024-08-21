@@ -130,11 +130,11 @@ export async function sleep(seconds: number): Promise<void> {
 }
 
 /**
- * Check if the standard input and output streams supports raw mode.
+ * Check if the standard input and output streams support prompting.
  *
- * @returns True if the standard input and output streams support raw mode.
+ * @returns True if the standard input and output streams support prompting.
  */
-export function terminalSupportsRawMode(): boolean {
+export function terminalSupportsPrompting(): boolean {
   if (isTruthy(process.env.CI)) {
     return false
   }
