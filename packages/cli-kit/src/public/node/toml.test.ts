@@ -27,4 +27,13 @@ describe('decodeToml', () => {
     const result = decodeToml(input)
     expect(result).toStrictEqual({access: {admin: {direct_api_mode: 'online'}}})
   })
+
+  test('returns {access: {admin: {api_version}}} when input is [access.admin.api_version] = "2024-07"', () => {
+    const input = `
+    [access]
+    admin = {api_version = "2024-07"}
+    `
+    const result = decodeToml(input)
+    expect(result).toStrictEqual({access: {admin: {api_version: '2024-07'}}})
+  })
 })
