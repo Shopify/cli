@@ -134,9 +134,11 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       return eventStream.send().then(() => eventStream.flush())
     } else if (endpoint === '/__hot-reload/render') {
-      const queryParams = getQuery(event)
-      const sectionId = queryParams['section-id']
-      const sectionKey = queryParams['section-template-name']
+      const {
+        'section-id': sectionId,
+        'section-template-name': sectionKey,
+        ...queryParams
+      }: {[key: string]: string} = getQuery(event)
 
       if (typeof sectionId !== 'string' || typeof sectionKey !== 'string') {
         return
@@ -168,7 +170,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       return render(ctx.session, {
         path: '/',
-        query: [],
+        query: [...Object.entries(queryParams), ['section_id', sectionId]],
         themeId: String(theme.id),
         sectionId,
         headers: getProxyRequestHeaders(event),
