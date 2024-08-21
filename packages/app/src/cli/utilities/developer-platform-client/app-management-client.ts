@@ -848,12 +848,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    if (result.devSessionCreate?.userErrors?.length) {
+      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+    }
+    return result
   }
 
   async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    if (result.devSessionUpdate?.userErrors?.length) {
+      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
+    }
+    return result
   }
 
   async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
