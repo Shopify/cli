@@ -9,6 +9,7 @@ overrides:
   vite: 5.3.1
   '@oclif/core': 3.26.5
   whatwg-url: 14.0.0
+  supports-hyperlinks: 3.1.0
   '@shopify/cli-hydrogen>@shopify/cli-kit': link:./packages/cli-kit
   '@shopify/cli-hydrogen>@shopify/plugin-cloudflare': link:./packages/plugin-cloudflare
 
@@ -5309,7 +5310,7 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       supports-color: 8.1.1
-      supports-hyperlinks: 2.3.0
+      supports-hyperlinks: 3.1.0
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -14871,20 +14872,12 @@ packages:
     dependencies:
       has-flag: 4.0.0
 
-  /supports-hyperlinks@2.3.0:
-    resolution: {integrity: sha512-RpsAZlpWcDwOPQA22aCH4J0t7L8JmAvsCxfOSEwm7cQs3LshN36QaTkwd70DnBOXDWGssw2eUoc8CaRWT0XunA==}
-    engines: {node: '>=8'}
-    dependencies:
-      has-flag: 4.0.0
-      supports-color: 7.2.0
-
   /supports-hyperlinks@3.1.0:
     resolution: {integrity: sha512-2rn0BZ+/f7puLOHZm1HOJfwBggfaHXUpPUSSG/SWM4TWp5KCfmNYwnC3hruy2rZlMnmWZ+QAGpZfchu3f3695A==}
     engines: {node: '>=14.18'}
     dependencies:
       has-flag: 4.0.0
       supports-color: 7.2.0
-    dev: false
 
   /supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
@@ -14963,7 +14956,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       ansi-escapes: 5.0.0
-      supports-hyperlinks: 2.3.0
+      supports-hyperlinks: 3.1.0
     dev: false
 
   /test-exclude@6.0.0:
