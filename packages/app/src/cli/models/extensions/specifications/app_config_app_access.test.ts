@@ -8,7 +8,7 @@ describe('app_config_app_access', () => {
       // Given
       const object = {
         access: {
-          admin: {direct_api_mode: 'online'},
+          admin: {direct_api_mode: 'online', api_version: '2024-07'},
         },
         access_scopes: {
           scopes: 'read_products,write_products',
@@ -28,7 +28,7 @@ describe('app_config_app_access', () => {
       // Then
       expect(result).toMatchObject({
         access: {
-          admin: {direct_api_mode: 'online'},
+          admin: {direct_api_mode: 'online', api_version: '2024-07'},
         },
         scopes: 'read_products,write_products',
         optional_scopes: ['read_customers'],
@@ -44,7 +44,7 @@ describe('app_config_app_access', () => {
       // Given
       const object = {
         access: {
-          admin: {direct_api_mode: 'offline'},
+          admin: {direct_api_mode: 'offline', api_version: '2024-07'},
         },
         scopes: 'read_products,write_products',
         optional_scopes: ['read_customers'],
@@ -60,7 +60,7 @@ describe('app_config_app_access', () => {
       // Then
       expect(result).toMatchObject({
         access: {
-          admin: {direct_api_mode: 'offline'},
+          admin: {direct_api_mode: 'offline', api_version: '2024-07'},
         },
         access_scopes: {
           scopes: 'read_products,write_products',
