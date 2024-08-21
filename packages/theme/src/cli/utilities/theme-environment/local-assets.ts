@@ -17,6 +17,13 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     const fileKey = assetsFilename && joinPath('assets', assetsFilename)
 
     if (fileKey && ctx.localThemeFileSystem.files.has(fileKey)) {
+      const mimeType = lookupMimeType(fileKey)
+      if (mimeType.startsWith('image/') && event.path.includes('&')) {
+        // This is likely a request for an image with filters (e.g. crop),
+        // which we don't support locally. Bypass and get it from the CDN.
+        return
+      }
+
       // Add header for debugging that the files come from the local assets
       setResponseHeader(event, 'X-Local-Asset', 'true')
 
@@ -31,11 +38,7 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
         },
         getMeta: async () => {
           const stats = await ctx.localThemeFileSystem.stat(fileKey).catch(() => {})
-
-          return {
-            ...stats,
-            type: lookupMimeType(fileKey),
-          }
+          return {...stats, type: mimeType}
         },
       })
     }

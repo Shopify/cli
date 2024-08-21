@@ -13,6 +13,7 @@ import {
   setResponseHeader,
   removeResponseHeader,
 } from 'h3'
+import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
@@ -64,8 +65,11 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter((key) => key.startsWith('assets')))
   content = content.replace(mainCdnRE, (matchedUrl, pathname, matchedAsset) => {
     const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset as string)
+    if (!isLocalAsset) return matchedUrl
+    // Do not proxy images, they may require filters or other CDN features
+    if (lookupMimeType(matchedAsset).startsWith('image/')) return matchedUrl
     // Prefix with vanityCdnPath to later read local assets
-    return isLocalAsset ? `${vanityCdnPath}${pathname}` : matchedUrl
+    return `${vanityCdnPath}${pathname}`
   })
 
   return content
