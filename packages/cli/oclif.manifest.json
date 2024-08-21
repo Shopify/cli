@@ -1683,8 +1683,7 @@
           "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
+          "multiple": true,
           "name": "store",
           "type": "option"
         },

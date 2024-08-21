@@ -14,7 +14,7 @@ interface LogsOptions {
   directory: string
   reset: boolean
   apiKey?: string
-  storeFqdn?: string
+  storeFqdns?: string[] | undefined
   sources?: string[]
   status?: string
   configName?: string
@@ -43,7 +43,7 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   const variables = {
-    shopIds: [logsConfig.storeId],
+    shopIds: logsConfig.storeIds,
     apiKey: logsConfig.apiKey,
     token: '',
   }
@@ -82,7 +82,8 @@ export async function logs(commandOptions: LogsOptions) {
 }
 
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{
-  storeId: string
+  storeIds: string[]
+  storeNameById: Map<string, string>
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   localApp: AppInterface
@@ -91,17 +92,34 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
     ...commandOptions,
     userProvidedConfigName: commandOptions.configName,
   })
-  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
-  const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
-  const {storeId, remoteApp, localApp} = await ensureDevContext(devContextOptions)
+  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  const primaryStoreFqdn = commandOptions.storeFqdns?.[0]
+  const devContextOptions: DevContextOptions = {
+    ...commandOptions,
+    storeFqdn: primaryStoreFqdn,
+    developerPlatformClient,
+  }
+  const {storeId, storeFqdn, remoteApp, localApp} = await ensureDevContext(devContextOptions)
 
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const storeNameById = new Map<string, string>()
+  storeNameById.set(storeId, storeFqdn)
+  if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
+    await Promise.all(
+      commandOptions.storeFqdns?.slice(1).map((storeFqdn) => {
+        return storeFromFqdn(storeFqdn, remoteApp.organizationId, developerPlatformClient).then((store) => {
+          storeNameById.set(store.shopId, storeFqdn)
+        })
+      }),
+    )
+  }
+  const storeIds = Array.from(storeNameById.keys())
 
   const apiKey = remoteApp.apiKey
 
   return {
-    storeId,
-    developerPlatformClient,
+    storeIds,
+    storeNameById,
+    developerPlatformClient: remoteApp.developerPlatformClient ?? developerPlatformClient,
     apiKey,
     localApp,
   }
