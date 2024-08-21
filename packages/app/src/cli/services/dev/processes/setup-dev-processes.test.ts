@@ -125,7 +125,6 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
-      useDevSession: false,
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
@@ -247,7 +246,7 @@ describe('setup-dev-processes', () => {
   })
 
   test('process list includes dev-session when useDevSession is true', async () => {
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: true})
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
@@ -294,7 +293,6 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey: 'somekey',
-      useDevSession: true,
     })
 
     expect(res.processes[2]).toMatchObject({
@@ -390,7 +388,6 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
-      useDevSession: false,
     })
 
     expect(res.processes[6]).toMatchObject({
@@ -485,7 +482,6 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
-      useDevSession: false,
     })
 
     res.processes.forEach((process) => {
@@ -579,7 +575,6 @@ describe('setup-dev-processes', () => {
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
-      useDevSession: false,
     })
 
     expect(res.processes[3]).toMatchObject({

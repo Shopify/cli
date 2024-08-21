@@ -1202,7 +1202,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
-    supportsDevSessions: false,
+    supportsDevSessions: stubs.supportsDevSessions ?? false,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
