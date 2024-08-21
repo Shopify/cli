@@ -157,6 +157,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
+  public supportsDevSessions = true
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 

@@ -214,6 +214,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public webUiName = 'Partner Dashboard'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
+  public supportsDevSessions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
