@@ -1,4 +1,4 @@
-import {DevContextOptions, ensureDevContext} from './context.js'
+import {DevContextOptions, ensureDevContext, storeFromFqdn} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
@@ -62,6 +62,7 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   if (commandOptions.format === 'json') {
+    consoleLog(JSON.stringify({subscribedToStores: commandOptions.storeFqdns}))
     consoleLog(JSON.stringify({message: 'Waiting for app logs...'}))
     await renderJsonLogs({
       options: {
@@ -69,6 +70,7 @@ export async function logs(commandOptions: LogsOptions) {
         developerPlatformClient: logsConfig.developerPlatformClient,
       },
       pollOptions,
+      storeNameById: logsConfig.storeNameById,
     })
   } else {
     if (multipleStores) {
