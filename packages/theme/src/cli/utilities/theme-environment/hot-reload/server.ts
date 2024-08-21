@@ -68,8 +68,10 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
         // Delete template from memory after syncing but keep
         // JSON values to read section names for hot-reloading sections.
-        // -- Uncomment this when onSync is properly implemented
-        // onSync(() => inMemoryTemplatesFiles.delete(fileKey))
+        if (process.env.SHOPIFY_UNIT_TEST) {
+          // -- Note: Run this also code in prod when onSync is properly implemented
+          onSync(() => inMemoryTemplateFiles.delete(fileKey))
+        }
       })
     }
   }
@@ -139,15 +141,12 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         return
       }
 
+      const replaceTemplates: {[key: string]: string} = {}
+
       const sectionTemplate =
         inMemoryTemplateFiles.has(sectionKey) && ctx.localThemeFileSystem.files.get(sectionKey)?.value
 
-      if (!sectionTemplate) {
-        renderWarning({headline: 'No template found for HotReload event.', body: `Template ${sectionKey} not found.`})
-        return
-      }
-
-      const replaceTemplates = {[sectionKey]: sectionTemplate}
+      if (sectionTemplate) replaceTemplates[sectionKey] = sectionTemplate
 
       // If a JSON file changed locally and updated the ID of a section,
       // there's a chance the cloud won't know how to render a modified section ID.
@@ -219,7 +218,9 @@ function hotReloadSections(key: string) {
     }
   }
 
-  emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+  if (sectionsToUpdate.size > 0) {
+    emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+  }
 }
 
 /**
