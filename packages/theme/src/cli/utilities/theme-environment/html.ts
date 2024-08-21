@@ -66,7 +66,7 @@ function getErrorPage(options: {title: string; header: string; message: string; 
       <title>${options.title ?? 'Unknown error'}</title>
     </head>
     <body
-      id="full-page-error"
+      id="full-error-page"
       style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; font-family: Arial"
     >
       <h2>${options.header}</h2>
