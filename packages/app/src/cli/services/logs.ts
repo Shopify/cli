@@ -14,7 +14,7 @@ interface LogsOptions {
   directory: string
   reset: boolean
   apiKey?: string
-  storeFqdns?: string[] | undefined
+  storeFqdns?: string[]
   sources?: string[]
   status?: string
   configName?: string
