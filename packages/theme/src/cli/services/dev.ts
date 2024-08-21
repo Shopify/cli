@@ -10,7 +10,6 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {openURL} from '@shopify/cli-kit/node/system'
@@ -64,8 +63,7 @@ export async function dev(options: DevOptions) {
 
   outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
-  const remoteChecksums = await fetchChecksums(options.theme.id, options.adminSession)
-  const localThemeFileSystem = await mountThemeFileSystem(options.directory)
+  const localThemeFileSystem = mountThemeFileSystem(options.directory)
   const session: DevServerSession = {
     ...options.adminSession,
     storefrontToken: options.storefrontToken,
@@ -84,7 +82,6 @@ export async function dev(options: DevOptions) {
 
   const ctx: DevServerContext = {
     session,
-    remoteChecksums,
     localThemeFileSystem,
     directory: options.directory,
     options: {

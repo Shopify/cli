@@ -213,7 +213,6 @@ function createTestContext(options?: {files?: [string, string][]}) {
 
   const ctx: DevServerContext = {
     session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
-    remoteChecksums: [],
     localThemeFileSystem,
     directory: 'tmp',
     options: {

@@ -12,6 +12,7 @@ import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
+vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
 vi.mock('./remote-theme-watcher.js')
 vi.mock('../theme-uploader.js')
 vi.mock('./storefront-renderer.js')
@@ -41,7 +42,6 @@ describe('startDevServer', () => {
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
   const defaultServerContext: DevServerContext = {
     session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
-    remoteChecksums: [],
     localThemeFileSystem,
     directory: 'tmp',
     options: {
@@ -66,17 +66,11 @@ describe('startDevServer', () => {
     await setupDevServer(developmentTheme, context)
 
     // Then
-    expect(uploadTheme).toHaveBeenCalledWith(
-      developmentTheme,
-      context.session,
-      context.remoteChecksums,
-      context.localThemeFileSystem,
-      {
-        ignore: ['assets/*.json'],
-        nodelete: true,
-        only: ['templates/*.liquid'],
-      },
-    )
+    expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
+      ignore: ['assets/*.json'],
+      nodelete: true,
+      only: ['templates/*.liquid'],
+    })
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
@@ -96,7 +90,7 @@ describe('startDevServer', () => {
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
       developmentTheme,
       context.session,
-      context.remoteChecksums,
+      [],
       context.localThemeFileSystem,
       {
         ignore: ['assets/*.json'],

@@ -53,7 +53,7 @@ const THEME_PARTITION_REGEX = {
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
+export function mountThemeFileSystem(root: string): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
   const eventEmitter = new EventEmitter()
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {

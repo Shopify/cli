@@ -1,5 +1,5 @@
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -41,11 +41,6 @@ export interface DevServerContext {
    * Authentication session for development server operations.
    */
   session: DevServerSession
-
-  /**
-   * Checksums of remote assets.
-   */
-  remoteChecksums: Checksum[]
 
   /**
    * File system tracking local theme assets.
