@@ -42,12 +42,18 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         setResponseHeader(event, 'Content-Type', 'text/html')
 
         const [title, ...rest] = headline.split('\n') as [string, ...string[]]
-        return getErrorPage({
+        let errorPageHtml = getErrorPage({
           title,
           header: title,
           message: [...rest, error.message].join('<br>'),
           code: error.stack?.replace(`${error.message}\n`, '') ?? '',
         })
+
+        if (ctx.options.liveReload !== 'off') {
+          errorPageHtml = injectHotReloadScript(errorPageHtml)
+        }
+
+        return errorPageHtml
       })
   })
 }
@@ -59,7 +65,10 @@ function getErrorPage(options: {title: string; header: string; message: string; 
     <head>
       <title>${options.title ?? 'Unknown error'}</title>
     </head>
-    <body style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; font-family: Arial">
+    <body
+      id="full-page-error"
+      style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; font-family: Arial"
+    >
       <h2>${options.header}</h2>
       <p>${options.message}</p>
       <pre>${options.code}</pre>
