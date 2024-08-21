@@ -9,7 +9,7 @@ import {mkdir, readFileSync, rmdir, tempDirectory, writeFile} from '@shopify/cli
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
-import {formData} from '@shopify/cli-kit/node/http'
+import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {Writable} from 'stream'
