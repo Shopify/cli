@@ -10,13 +10,15 @@ import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {describe, expect, test, vi} from 'vitest'
+import {afterAll, beforeAll, describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/api/graphql')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -53,6 +55,14 @@ function moduleFromExtension(extension: ExtensionInstance): AppModule {
     },
   }
 }
+
+beforeAll(() => {
+  vi.stubEnv('SHOPIFY_CLI_COMMAND_RUN_ID', 'app-management-client-test')
+})
+
+afterAll(() => {
+  vi.unstubAllEnvs()
+})
 
 describe('diffAppModules', () => {
   test('extracts the added, removed and updated modules between two releases', () => {
@@ -186,5 +196,21 @@ describe('versionDeepLink', () => {
 
     // Then
     expect(got).toEqual('https://dev.shopify.com/dashboard/1/apps/2/versions/3')
+  })
+})
+
+describe('specifications', () => {
+  test('caches the result', async () => {
+    // Given
+    vi.mocked(graphqlRequest).mockResolvedValue({specifications: []})
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+
+    // When
+    await client.specifications(testOrganizationApp())
+    await client.specifications(testOrganizationApp())
+
+    // Then
+    expect(graphqlRequest).toHaveBeenCalledOnce()
   })
 })

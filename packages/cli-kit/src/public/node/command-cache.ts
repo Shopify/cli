@@ -1,6 +1,7 @@
 import {isUnitTest} from './context/local.js'
 import {LocalStorage} from './local-storage.js'
 import {outputDebug} from './output.js'
+import {tmpdir} from 'os'
 
 interface CommandLocalStorage {
   [key: string]: {[key: string]: unknown}
@@ -20,7 +21,13 @@ export interface CommandCacheOptions {
 let _commandLocalStorageInstance: LocalStorage<CommandLocalStorage> | undefined
 
 function commandLocalStorage(cwd: string | undefined = undefined): LocalStorage<CommandLocalStorage> {
-  if (!_commandLocalStorageInstance || isUnitTest()) {
+  if (isUnitTest()) {
+    return new LocalStorage<CommandLocalStorage>({
+      projectName: 'shopify-cli-command-cache',
+      cwd: cwd || tmpdir(),
+    })
+  }
+  if (!_commandLocalStorageInstance) {
     _commandLocalStorageInstance = new LocalStorage<CommandLocalStorage>({
       projectName: 'shopify-cli-command-cache',
       cwd,
