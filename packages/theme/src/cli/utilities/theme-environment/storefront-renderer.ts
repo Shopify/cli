@@ -39,7 +39,6 @@ export async function render(session: DevServerSession, context: DevServerRender
       status: response.status,
       statusText: response.statusText,
       data: {requestId, url},
-      cause: new Error(`Request ${requestId ?? ''} to ${url} failed`),
     })
   }
 

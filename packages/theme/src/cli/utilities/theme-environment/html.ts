@@ -30,19 +30,22 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         return html
       })
-      .catch(async (error: H3Error<{requestId?: string}>) => {
-        const requestId = error.data?.requestId ?? ''
-        let headline = `Failed to render storefront.`
-        if (requestId) headline += ` Request ID: ${requestId}`
-        renderError({headline, body: error.stack ?? error.message})
+      .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
+        let headline = `Failed to render storefront with status ${error.statusCode} (${error.statusMessage}).`
+        if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
+        if (error.data?.url) headline += `\nURL: ${error.data.url}`
+
+        const cause = error.cause as undefined | Error
+        renderError({headline, body: cause?.stack ?? error.stack ?? error.message})
 
         setResponseStatus(event, error.statusCode ?? 502, error.statusMessage)
         setResponseHeader(event, 'Content-Type', 'text/html')
 
+        const [title, ...rest] = headline.split('\n') as [string, ...string[]]
         return getErrorPage({
-          title: headline,
-          header: headline,
-          message: error.message,
+          title,
+          header: title,
+          message: [...rest, error.message].join('<br>'),
           code: error.stack?.replace(`${error.message}\n`, '') ?? '',
         })
       })

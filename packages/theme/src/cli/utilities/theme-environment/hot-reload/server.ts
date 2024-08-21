@@ -174,13 +174,14 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         replaceTemplates,
       })
         .then((response) => patchRenderingResponse(ctx, event, response))
-        .catch(async (error: H3Error<{requestId?: string}>) => {
-          const requestId = error.data?.requestId ?? ''
-          let headline = `Failed to render section on Hot Reload.`
-          if (requestId) headline += ` Request ID: ${requestId}`
+        .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
+          let headline = `Failed to render section on Hot Reload with status ${error.statusCode} (${error.statusMessage}).`
+          if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
+          if (error.data?.url) headline += `\nURL: ${error.data.url}`
 
           const cause = error.cause as undefined | Error
           renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
+
           await sendError(event, error)
           return null
         })
