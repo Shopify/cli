@@ -69,7 +69,7 @@ export interface DevOptions {
 
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
-  if (!config.useDevSession) await actionsBeforeSettingUpDevProcesses(config)
+  await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
@@ -164,7 +164,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 }
 
-async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConfig) {
+async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp, useDevSession}: DevConfig) {
+  if (useDevSession) return
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
