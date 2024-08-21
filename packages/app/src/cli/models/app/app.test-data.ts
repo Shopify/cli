@@ -277,7 +277,7 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
     ? ({} as unknown as BaseConfigType)
     : ({
         access: {
-          admin: {direct_api_mode: 'online'},
+          admin: {direct_api_mode: 'online', api_version: '2024-07'},
         },
         access_scopes: {
           scopes: 'read_products,write_products',
