@@ -208,6 +208,7 @@ export interface DeveloperPlatformClient {
   webUiName: string
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
+  supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>

@@ -54,7 +54,10 @@ const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
     }
     return {
       ...webhookConfig,
-      uri: appUrl && webhookConfig.uri.startsWith('/') ? `${appUrl}${webhookConfig.uri}` : webhookConfig.uri,
+      uri:
+        appUrl && webhookConfig.uri.startsWith('/')
+          ? `${removeTrailingSlash(appUrl)}${webhookConfig.uri}`
+          : webhookConfig.uri,
     }
   },
   reverse: transformToWebhookSubscriptionConfig,
