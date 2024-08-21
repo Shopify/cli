@@ -75,6 +75,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
         extensionsToConfirm.extensionsToCreate,
         extensionsToConfirm.dashboardOnlyExtensions,
         options.app.specifications ?? [],
+        options.activeAppVersion,
       )) ?? extensionIdentifiersBreakdown
   }
   return {
@@ -328,23 +329,19 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   specs: ExtensionSpecification[],
+  activeAppVersion?: ActiveAppVersion,
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
-  if (!activeAppVersion) return
+  const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
+  if (!version) return
 
-  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
-    activeAppVersion,
-    localRegistration,
-    toCreate,
-    specs,
-  )
+  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(version, localRegistration, toCreate, specs)
 
   const dashboardOnlyFinal = dashboardOnly.filter(
     (dashboardOnly) =>
       !Object.values(localRegistration).includes(dashboardOnly.uuid) &&
       !toCreate.map((source) => source.localIdentifier).includes(dashboardOnly.uuid),
   )
-  const dashboardIdentifiersBreakdown = loadDashboardIdentifiersBreakdown(dashboardOnlyFinal, activeAppVersion)
+  const dashboardIdentifiersBreakdown = loadDashboardIdentifiersBreakdown(dashboardOnlyFinal, version)
 
   return {
     onlyRemote: [...extensionIdentifiersBreakdown.onlyRemote, ...dashboardIdentifiersBreakdown.onlyRemote],
