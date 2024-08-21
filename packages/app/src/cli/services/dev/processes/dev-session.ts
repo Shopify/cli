@@ -35,6 +35,8 @@ export interface DevSessionProcess extends BaseProcess<DevSessionOptions> {
   type: 'dev-session'
 }
 
+let bundleControllers: AbortController[] = []
+
 export async function setupDevSessionProcess({
   app,
   apiKey,
@@ -83,6 +85,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   await bundleExtensionsAndUpload(processOptions, false)
 
   appWatcher.onEvent(async (event) => {
+    // Cancel any ongoing bundle and upload process
+    bundleControllers.forEach((controller) => controller.abort())
+    // Remove aborted controllers from array:
+    bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
+
     const promises = event.extensionEvents.map(async (eve) => {
       switch (eve.type) {
         case EventType.Created:
@@ -112,12 +119,17 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
     const networkStartTime = startHRTime()
     await performActionWithRetryAfterRecovery(async () => {
-      await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
+      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
+      const endTime = endHRTimeInMs(event.startTime)
+      const endNetworkTime = endHRTimeInMs(networkStartTime)
+      if (result) {
+        processOptions.stdout.write(`✅ Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
+      } else {
+        processOptions.stdout.write(
+          `❌ Session update aborted (new change detected) [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`,
+        )
+      }
     }, refreshToken)
-
-    const endTime = endHRTimeInMs(event.startTime)
-    const endNetworkTime = endHRTimeInMs(networkStartTime)
-    processOptions.stdout.write(`Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
   })
 
   // Start watching for changes in the app
@@ -151,6 +163,12 @@ async function initialBuild(options: DevSessionProcessOptions) {
  * @param updating - Whether the dev session is being updated or created
  */
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, updating: boolean) {
+  // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
+  // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
+  const currentBundleController = new AbortController()
+  bundleControllers.push(currentBundleController)
+
+  if (currentBundleController.signal.aborted) return false
   outputDebug('Bundling and uploading extensions', options.stdout)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
 
@@ -160,12 +178,14 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 
   // Create zip file with everything
+  if (currentBundleController.signal.aborted) return false
   await zip({
     inputDirectory: options.bundlePath,
     outputZipPath: bundleZipPath,
   })
 
   // Get a signed URL to upload the zip file
+  if (currentBundleController.signal.aborted) return false
   const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
     apiKey: options.appId,
     organizationId: options.organizationId,
@@ -173,6 +193,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   })
 
   // Upload the zip file
+  if (currentBundleController.signal.aborted) return false
   const form = formData()
   const buffer = readFileSync(bundleZipPath)
   form.append('my_upload', buffer)
@@ -185,21 +206,17 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
   // Create or update the dev session
-  let errors: {message: string}[] | undefined
+  if (currentBundleController.signal.aborted) return false
   try {
     if (updating) {
-      const result = await options.developerPlatformClient.devSessionUpdate(payload)
-      errors = result.devSessionUpdate?.userErrors
+      await options.developerPlatformClient.devSessionUpdate(payload)
     } else {
-      const result = await options.developerPlatformClient.devSessionCreate(payload)
-      errors = result.devSessionCreate?.userErrors
-    }
-    if (errors && errors.length > 0) {
-      throw new Error(JSON.stringify(errors, null, 2))
+      await options.developerPlatformClient.devSessionCreate(payload)
     }
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     options.stderr.write('❌ Dev Session Error')
     options.stderr.write(error.message)
   }
+  return true
 }
