@@ -533,9 +533,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     throw new Error('Unsupported operation')
   }
 
-  async devSessionDelete(_input: unknown): Promise<never> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async devSessionDelete(_input: unknown): Promise<any> {
     // Dev Sessions are not supported in partners client.
-    throw new Error('Unsupported operation')
+    return Promise.resolve()
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
