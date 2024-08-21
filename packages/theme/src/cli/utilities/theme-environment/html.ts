@@ -24,6 +24,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       .then(async (response) => {
         let html = await patchRenderingResponse(ctx, event, response)
 
+        html = prettifySyntaxErrors(html)
+
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)
         }
@@ -56,6 +58,24 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return errorPageHtml
       })
   })
+}
+
+function prettifySyntaxErrors(html: string) {
+  return html.replace(/Liquid syntax error [^\n]+\n/, getErrorSection)
+}
+
+function getErrorSection(error: string) {
+  const html = String.raw
+  const color = 'orangered'
+
+  return html`
+    <div
+      id="section-error"
+      style="border: solid thick ${color}; background: color(from ${color} srgb r g b / 0.2); padding: 20px;"
+    >
+      <pre>${error}</pre>
+    </div>
+  `
 }
 
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
