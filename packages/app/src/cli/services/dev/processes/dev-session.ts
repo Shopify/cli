@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
@@ -59,10 +58,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  // Force the download of the javy binary in advance to avoid later problems,
-  // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
   const {developerPlatformClient, app} = options
-  await installJavy(app)
 
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
