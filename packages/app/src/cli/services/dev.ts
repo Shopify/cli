@@ -73,7 +73,7 @@ export interface DevOptions {
 
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
-  if (!config.consistentDev) await actionsBeforeSettingUpDevProcesses(config)
+  if (!config.useDevSession) await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
@@ -164,7 +164,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
-    consistentDev: developerPlatformClient.clientName === ClientName.AppManagement,
+    useDevSession: developerPlatformClient.clientName === ClientName.AppManagement,
   }
 }
 
@@ -316,7 +316,7 @@ async function launchDevProcesses({
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    canEnablePreviewMode: config.consistentDev
+    canEnablePreviewMode: config.useDevSession
       ? false
       : await canEnablePreviewMode({
           localApp: config.localApp,
@@ -338,7 +338,7 @@ async function launchDevProcesses({
     graphiqlPort: config.graphiqlPort,
     app,
     abortController,
-    developerPreview: developerPreviewController(apiKey, developerPlatformClient, config.consistentDev),
+    developerPreview: developerPreviewController(apiKey, developerPlatformClient, config.useDevSession),
     shopFqdn: config.storeFqdn,
   })
 }
@@ -346,9 +346,9 @@ async function launchDevProcesses({
 export function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
-  consistentDev: boolean,
+  useDevSession: boolean,
 ): DeveloperPreviewController {
-  if (consistentDev) {
+  if (useDevSession) {
     return {
       fetchMode: () => Promise.resolve(false),
       enable: () => Promise.resolve(),
