@@ -5,7 +5,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {mkdir, readFileSync, rmdir, tempDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, mkdir, readFileSync, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -66,19 +66,14 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     return developerPlatformClient.refreshToken()
   }
 
-  // Create a temporary directory in the system
-  const dir = tempDirectory()
-
-  // Uncomment this to open the temp directory automatically for debugging
-  // await exec(`open`, [dir])
-  const bundlePath = joinPath(dir, 'bundle')
+  const bundlePath = joinPath(app.directory, '.shopify', 'bundle')
+  if (fileExistsSync(bundlePath)) await rmdir(bundlePath, {force: true})
   await mkdir(bundlePath)
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath}
   const appWatcher = new AppEventWatcher(app, processOptions)
 
   outputWarn('-----> Using DEV SESSIONS <-----')
-  outputDebug(`Using temp dir: ${dir}`, stdout)
   processOptions.stdout.write('Preparing dev session...')
 
   await initialBuild(processOptions)
