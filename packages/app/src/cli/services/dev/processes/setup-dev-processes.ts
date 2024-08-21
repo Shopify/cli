@@ -19,9 +19,11 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {tempDirectory} from '@shopify/cli-kit/node/fs'
 
 interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -87,6 +89,10 @@ export async function setupDevProcesses({
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
+  const tempDir = tempDirectory()
+  const appWatcher = new AppEventWatcher(localApp, tempDir, network.proxyUrl)
+  await appWatcher.start()
+
   const processes = [
     ...(await setupWebProcesses({
       webs: localApp.webs,
@@ -121,6 +127,7 @@ export async function setupDevProcesses({
       grantedScopes: remoteApp.grantedScopes,
       appId: remoteApp.id,
       appDirectory: localApp.directory,
+      appWatcher,
     }),
     await setupDraftableExtensionsProcess({
       localApp,
@@ -128,6 +135,7 @@ export async function setupDevProcesses({
       apiKey,
       developerPlatformClient,
       proxyUrl: network.proxyUrl,
+      appWatcher,
     }),
     commandOptions.devPreview
       ? await setupPreviewThemeAppExtensionsProcessNext({

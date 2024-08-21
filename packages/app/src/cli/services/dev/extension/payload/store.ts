@@ -153,6 +153,25 @@ export class ExtensionsPayloadStore extends EventEmitter {
     this.emitUpdate([extension.devUUID])
   }
 
+  async removeExtension(extension: ExtensionInstance) {
+    const payloadExtensions = this.rawPayload.extensions
+    const index = payloadExtensions.findIndex((extensionPayload) => extensionPayload.uuid === extension.devUUID)
+
+    if (index === -1) {
+      outputDebug(
+        outputContent`Could not removeExtension() for extension with uuid: ${extension.devUUID}`,
+        this.options.stderr,
+      )
+      return
+    }
+
+    payloadExtensions.splice(index, 1)
+
+    this.rawPayload.extensions = payloadExtensions
+
+    this.emitUpdate([extension.devUUID])
+  }
+
   private emitUpdate(extensionIds: string[]) {
     this.emit(ExtensionsPayloadStoreEvent.Update, extensionIds)
   }

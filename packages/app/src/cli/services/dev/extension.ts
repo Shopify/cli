@@ -1,7 +1,7 @@
 import {setupWebsocketConnection} from './extension/websocket.js'
-import {setupBundlerAndFileWatcher} from './extension/bundler.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
+import {AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -101,6 +101,8 @@ export interface ExtensionDevOptions {
    * This is exposed in the JSON payload for clients connecting to the Dev Server
    */
   manifestVersion: string
+
+  appWatcher: AppEventWatcher
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
@@ -117,11 +119,24 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
-  const fileWatcher = await setupBundlerAndFileWatcher({devOptions: options, payloadStore})
+  // const fileWatcher = await setupBundlerAndFileWatcher({devOptions: options, payloadStore})
+
+  options.appWatcher.onEvent(async (event) => {
+    const events = event.extensionEvents.filter((extEvent) => extEvent.extension.isESBuildExtension)
+    const promises = events.map(async (extEvent) => {
+      if (extEvent.type === EventType.Deleted) {
+        return payloadStore.removeExtension(extEvent.extension)
+      } else {
+        return payloadStore.updateExtension(extEvent.extension, options, {status: 'success'})
+      }
+    })
+
+    await Promise.all(promises)
+  })
 
   options.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
-    fileWatcher.close()
+    // fileWatcher.close()
     websocketConnection.close()
     httpServer.close()
   })
