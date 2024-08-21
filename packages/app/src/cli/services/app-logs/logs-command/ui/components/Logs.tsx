@@ -18,6 +18,7 @@ import {Box, Text} from '@shopify/cli-kit/node/ink'
 interface LogsProps {
   resubscribeCallback: () => Promise<string>
   pollOptions: PollOptions
+  storeNameById: Map<string, string>
 }
 
 const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason): string => {
@@ -31,8 +32,8 @@ const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason):
   }
 }
 
-const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, resubscribeCallback}) => {
-  const {appLogOutputs, errors} = usePollAppLogs({filters, initialJwt: jwtToken, resubscribeCallback})
+const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, resubscribeCallback, storeNameById}) => {
+  const {appLogOutputs, errors} = usePollAppLogs({filters, initialJwt: jwtToken, resubscribeCallback, storeNameById})
 
   return (
     <>
@@ -52,6 +53,7 @@ const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, r
             <Box flexDirection="row" gap={1}>
               <Text>
                 <Text color="green">{prefix.logTimestamp} </Text>
+                <Text color="blueBright">{`${prefix.storeName.split('.')[0]}`} </Text>
                 <Text color="blueBright">{`${prefix.source}`} </Text>
                 <Text color={prefix.status === 'Success' ? 'green' : 'red'}>{prefix.status} </Text>
                 <Text>{prefix.description}</Text>

@@ -24,6 +24,7 @@ interface LogsOptions {
 
 export async function logs(commandOptions: LogsOptions) {
   const logsConfig = await prepareForLogs(commandOptions)
+  const multipleStores = commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1
 
   const validSources = sourcesForApp(logsConfig.localApp)
 
@@ -70,6 +71,9 @@ export async function logs(commandOptions: LogsOptions) {
       pollOptions,
     })
   } else {
+    if (multipleStores) {
+      consoleLog(`Subscribing to additional stores: ${commandOptions.storeFqdns?.slice(1).join(', ')}\n`)
+    }
     consoleLog('Waiting for app logs...\n')
     await renderLogs({
       options: {
@@ -77,6 +81,7 @@ export async function logs(commandOptions: LogsOptions) {
         developerPlatformClient: logsConfig.developerPlatformClient,
       },
       pollOptions,
+      storeNameById: logsConfig.storeNameById,
     })
   }
 }
