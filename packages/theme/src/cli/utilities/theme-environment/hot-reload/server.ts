@@ -170,7 +170,6 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         path: '/',
         query: [],
         themeId: String(theme.id),
-        cookies: event.headers.get('cookie') || '',
         sectionId,
         headers: getProxyRequestHeaders(event),
         replaceTemplates,

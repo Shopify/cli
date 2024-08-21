@@ -8,7 +8,7 @@ import type {DevServerContext} from './types.js'
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
-    const {path: urlPath, method, headers} = event
+    const {path: urlPath, method} = event
 
     // eslint-disable-next-line no-console
     console.log(`${method} ${urlPath}`)
@@ -17,7 +17,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       path: urlPath,
       query: [],
       themeId: String(theme.id),
-      cookies: headers.get('cookie') || '',
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
       replaceTemplates: getInMemoryTemplates(ctx),

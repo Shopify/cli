@@ -32,8 +32,12 @@ const context = {
   path: '/products/1',
   themeId: '123',
   query: [],
-  cookies: 'theme_cookie=abc;',
-  headers: {'Content-Length': '100', 'X-Special-Header': '200'},
+  headers: {
+    'Content-Length': '100',
+    'X-Special-Header': '200',
+    cookie: 'theme_cookie=abc;',
+    Cookie: 'theme_cookie=def;',
+  },
   replaceTemplates: {},
   sectionId: '',
 }

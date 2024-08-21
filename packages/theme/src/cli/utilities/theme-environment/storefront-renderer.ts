@@ -58,11 +58,11 @@ async function buildStandardHeaders(session: DevServerSession, context: DevServe
   const cookies = await buildCookies(session, context)
   const storefrontToken = await ensureAuthenticatedStorefront([])
 
-  return {
+  return cleanHeader({
     ...context.headers,
     Authorization: `Bearer ${storefrontToken}`,
     Cookie: cookies,
-  }
+  })
 }
 
 async function buildThemeAccessHeaders(session: DevServerSession, context: DevServerRenderContext) {
@@ -77,21 +77,21 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: DevSe
     }
   }
 
-  return {
+  return cleanHeader({
     ...filteredHeaders,
     ...themeAccessHeaders(session),
     Authorization: `Bearer ${storefrontToken}`,
     Cookie: cookies,
-  }
+  })
 }
 
-async function buildCookies(session: DevServerSession, {themeId, cookies: cookieString}: DevServerRenderContext) {
-  const cookies = parseCookies(cookieString)
+async function buildCookies(session: DevServerSession, ctx: DevServerRenderContext) {
+  const cookies = parseCookies(ctx.headers.cookie ?? ctx.headers.Cookie ?? '')
   const baseUrl = buildBaseStorefrontUrl(session)
   const headers = isThemeAccessSession(session) ? themeAccessHeaders(session) : {}
   const storefrontPassword = session.storefrontPassword
 
-  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, headers)
+  const sessionCookies = await getStorefrontSessionCookies(baseUrl, ctx.themeId, storefrontPassword, headers)
 
   return serializeCookies({
     ...cookies,
@@ -135,4 +135,11 @@ function themeAccessHeaders(session: DevServerSession) {
     'X-Shopify-Shop': session.storeFqdn,
     'X-Shopify-Access-Token': session.token,
   }
+}
+
+function cleanHeader(headers: {[key: string]: string}): {[key: string]: string} {
+  // Force the use of the 'Cookie' key if consumers also provide the 'cookie' key
+  delete headers.cookie
+  delete headers.authorization
+  return headers
 }

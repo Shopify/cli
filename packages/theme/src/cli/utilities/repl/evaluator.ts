@@ -108,7 +108,6 @@ async function makeRequest(config: EvaluationConfig): Promise<Response> {
     path: config.url,
     query: [],
     themeId: config.themeId,
-    cookies: '',
     sectionId: 'announcement-bar',
     headers: {},
     replaceTemplates: {
