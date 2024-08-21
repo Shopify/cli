@@ -162,6 +162,7 @@ export async function setupDevProcesses({
             shopIds: [storeId],
             apiKey,
           },
+          storeName: storeFqdn,
         })
       : undefined,
   ].filter(stripUndefineds)

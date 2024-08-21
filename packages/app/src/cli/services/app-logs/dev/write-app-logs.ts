@@ -15,12 +15,14 @@ export const writeAppLogsToFile = async ({
   appLogPayload,
   apiKey,
   stdout,
+  storeName,
 }: {
   appLog: AppLogData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   appLogPayload: AppLogPayload | any
   apiKey: string
   stdout: Writable
+  storeName: string
 }): Promise<AppLogFile> => {
   const identifier = randomUUID().substring(0, 6)
 
@@ -30,7 +32,7 @@ export const writeAppLogsToFile = async ({
   const fullOutputPath = joinPath(getLogsDir(), path)
 
   try {
-    await writeLog(path, toFormattedAppLogJson(appLog, appLogPayload))
+    await writeLog(path, toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName}))
     return {
       fullOutputPath,
       identifier,
