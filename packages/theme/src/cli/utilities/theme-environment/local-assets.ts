@@ -23,9 +23,11 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
       return serveStatic(event, {
         getContents: () => {
           const cachedValue = ctx.localThemeFileSystem.files.get(fileKey)?.value
-          if (cachedValue) return injectCdnProxy(cachedValue, ctx)
+          if (cachedValue && typeof cachedValue === 'string') return injectCdnProxy(cachedValue, ctx)
 
-          return ctx.localThemeFileSystem.read(fileKey).then((content) => injectCdnProxy(content as string, ctx))
+          return ctx.localThemeFileSystem
+            .read(fileKey)
+            .then((content) => (typeof content === 'string' ? injectCdnProxy(content, ctx) : content))
         },
         getMeta: async () => {
           const stats = await ctx.localThemeFileSystem.stat(fileKey).catch(() => {})
