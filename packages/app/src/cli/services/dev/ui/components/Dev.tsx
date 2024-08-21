@@ -30,6 +30,7 @@ export interface DevProps {
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
+    id: string
     apiKey: string
     developerPlatformClient: DeveloperPlatformClient
     extensions: ExtensionInstance[]
@@ -57,8 +58,10 @@ const Dev: FunctionComponent<DevProps> = ({
   pollingTime = 5000,
   developerPreview,
   isEditionWeek,
+  shopFqdn,
 }) => {
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
+
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
@@ -80,6 +83,7 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
+    await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     await developerPreview.disable()
   })
 

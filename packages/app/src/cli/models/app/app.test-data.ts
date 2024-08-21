@@ -1202,6 +1202,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
+    supportsDevSessions: stubs.supportsDevSessions ?? false,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -1258,7 +1259,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName'
+          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName' | 'supportsDevSessions'
         >
       ] = vi.fn().mockImplementation(value)
     }

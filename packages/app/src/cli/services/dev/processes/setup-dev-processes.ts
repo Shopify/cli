@@ -9,6 +9,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
@@ -36,6 +37,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | DevSessionProcess
   | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
@@ -82,7 +84,7 @@ export async function setupDevProcesses({
 }> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
-  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
@@ -122,13 +124,23 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    await setupDraftableExtensionsProcess({
-      localApp,
-      remoteApp,
-      apiKey,
-      developerPlatformClient,
-      proxyUrl: network.proxyUrl,
-    }),
+    developerPlatformClient.supportsDevSessions
+      ? await setupDevSessionProcess({
+          app: localApp,
+          apiKey,
+          developerPlatformClient,
+          url: network.proxyUrl,
+          appId: remoteApp.id,
+          organizationId: remoteApp.organizationId,
+          storeFqdn,
+        })
+      : await setupDraftableExtensionsProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          developerPlatformClient,
+          proxyUrl: network.proxyUrl,
+        }),
     commandOptions.devPreview
       ? await setupPreviewThemeAppExtensionsProcessNext({
           allExtensions: localApp.allExtensions,
