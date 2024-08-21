@@ -18,6 +18,7 @@ import {
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
+import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -175,7 +176,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   if (baselineConfig?.webhooks?.subscriptions?.length) {
     baselineConfig.webhooks.subscriptions = baselineConfig.webhooks.subscriptions.map((subscription) => {
       if (subscription.uri.startsWith('/')) {
-        subscription.uri = `${baselineConfig.application_url}${subscription.uri}`
+        subscription.uri = `${removeTrailingSlash(baselineConfig.application_url)}${subscription.uri}`
       }
       return subscription
     })
