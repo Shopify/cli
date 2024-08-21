@@ -160,12 +160,11 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
-    useDevSession: developerPlatformClient.supportsDevSessions,
   }
 }
 
-async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp, useDevSession}: DevConfig) {
-  if (useDevSession) return
+async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp, developerPlatformClient}: DevConfig) {
+  if (developerPlatformClient.supportsDevSessions) return
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
@@ -313,7 +312,7 @@ async function launchDevProcesses({
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    canEnablePreviewMode: config.useDevSession
+    canEnablePreviewMode: developerPlatformClient.supportsDevSessions
       ? false
       : await canEnablePreviewMode({
           localApp: config.localApp,
@@ -335,7 +334,7 @@ async function launchDevProcesses({
     graphiqlPort: config.graphiqlPort,
     app,
     abortController,
-    developerPreview: developerPreviewController(apiKey, developerPlatformClient, config.useDevSession),
+    developerPreview: developerPreviewController(apiKey, developerPlatformClient),
     shopFqdn: config.storeFqdn,
   })
 }
@@ -343,9 +342,8 @@ async function launchDevProcesses({
 export function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
-  useDevSession: boolean,
 ): DeveloperPreviewController {
-  if (useDevSession) {
+  if (developerPlatformClient.supportsDevSessions) {
     return {
       fetchMode: () => Promise.resolve(false),
       enable: () => Promise.resolve(),

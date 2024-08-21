@@ -64,7 +64,6 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
-  useDevSession: boolean
 }
 
 export async function setupDevProcesses({
@@ -78,7 +77,6 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
-  useDevSession,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -126,7 +124,7 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    useDevSession
+    developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
           app: localApp,
           apiKey,
