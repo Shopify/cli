@@ -60,8 +60,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid syntax error [^\n]+\n/, getErrorSection)
+export function prettifySyntaxErrors(html: string) {
+  return html.replace(/Liquid(?: syntax)? error \([^\n]+\n/, getErrorSection)
 }
 
 function getErrorSection(error: string) {
