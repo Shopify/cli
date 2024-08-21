@@ -63,7 +63,8 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    await renderProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
@@ -83,7 +84,8 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    await renderProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
@@ -103,7 +105,11 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, {...uploadOptions, nodelete: true})
+    const {renderProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
+      ...uploadOptions,
+      nodelete: true,
+    })
+    await renderProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
@@ -121,7 +127,14 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
@@ -154,7 +167,14 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
@@ -183,7 +203,14 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(deleteThemeAsset).toHaveBeenCalledTimes(7)
@@ -219,7 +246,14 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(5)
@@ -298,7 +332,14 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', files)
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
@@ -318,7 +359,14 @@ describe('theme-uploader', () => {
     vi.mocked(fileSize).mockResolvedValue(MAX_BATCH_BYTESIZE)
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
@@ -337,7 +385,14 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
     // Then
     expect(readThemeFilesFromDisk).toHaveBeenCalledWith(
       [
@@ -387,7 +442,14 @@ describe('theme-uploader', () => {
       ])
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(MAX_UPLOAD_RETRY_COUNT + 1)
@@ -431,10 +493,11 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, {
+    const {renderProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
       ...uploadOptions,
       ignore: ['assets/ignore_delete.liquid', 'assets/ignore_upload.liquid'],
     })
+    await renderProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
@@ -465,10 +528,11 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, {
+    const {renderProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
       ...uploadOptions,
       only: ['assets/keepme.liquid', 'assets/deleteme.liquid', 'assets/uploadme.liquid'],
     })
+    await renderProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()

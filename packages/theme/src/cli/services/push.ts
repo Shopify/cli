@@ -34,13 +34,15 @@ export async function push(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = await mountThemeFileSystem(options.path)
 
-  const results = await uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+  const {uploadResults, renderProgress} = await uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+
+  await renderProgress()
 
   if (options.publish) {
     await publishTheme(theme.id, session)
   }
 
-  await handlePushOutput(results, theme, session, options)
+  await handlePushOutput(uploadResults, theme, session, options)
 }
 
 function hasUploadErrors(results: Map<string, Result>): boolean {

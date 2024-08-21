@@ -15,7 +15,7 @@ describe('push', () => {
   const adminSession = {token: '', storeFqdn: ''}
 
   beforeEach(() => {
-    vi.mocked(uploadTheme).mockResolvedValue(new Map())
+    vi.mocked(uploadTheme).mockResolvedValue({uploadResults: new Map(), renderProgress: () => Promise.resolve()})
   })
 
   test('should call publishTheme if publish flag is provided', async () => {

@@ -11,8 +11,15 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  await Promise.all([ensureThemeEnvironmentSetup(theme, ctx), setupInMemoryTemplateWatcher(ctx)])
-  return createDevelopmentServer(theme, ctx)
+  const [{renderProgress}] = await Promise.all([
+    ensureThemeEnvironmentSetup(theme, ctx),
+    setupInMemoryTemplateWatcher(ctx),
+  ])
+
+  return {
+    renderProgress,
+    server: createDevelopmentServer(theme, ctx),
+  }
 }
 
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
@@ -26,7 +33,8 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
     })
   }
 
-  await uploadTheme(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
+  console.log('WATTTT', uploadTheme())
+  return uploadTheme(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
     nodelete: ctx.options.noDelete,
     ignore: ctx.options.ignore,
     only: ctx.options.only,
@@ -37,7 +45,7 @@ interface DevelopmentServerInstance {
   close: () => Promise<void>
 }
 
-async function createDevelopmentServer(theme: Theme, ctx: DevServerContext) {
+function createDevelopmentServer(theme: Theme, ctx: DevServerContext) {
   const app = createApp()
 
   if (ctx.options.liveReload !== 'off') {

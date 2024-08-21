@@ -51,9 +51,10 @@ export async function dev(options: DevOptions) {
     return
   }
 
-  const storefrontPassword = (await isStorefrontPasswordProtected(options.adminSession.storeFqdn))
-    ? await ensureValidPassword(options.storePassword, options.adminSession.storeFqdn)
-    : undefined
+  const storefrontPasswordPromise = isStorefrontPasswordProtected(options.adminSession.storeFqdn).then(
+    (needsPassword) =>
+      needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
+  )
 
   if (options.flagsToPass.includes('--poll')) {
     renderWarning({
@@ -67,7 +68,6 @@ export async function dev(options: DevOptions) {
   const session: DevServerSession = {
     ...options.adminSession,
     storefrontToken: options.storefrontToken,
-    storefrontPassword,
     expiresAt: new Date(),
   }
 
@@ -96,7 +96,12 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  const server = await setupDevServer(options.theme, ctx)
+  const {server, renderProgress} = await setupDevServer(options.theme, ctx)
+
+  const storefrontPassword = await storefrontPasswordPromise
+  session.storefrontPassword = storefrontPassword
+
+  await renderProgress()
   await server.start()
 
   renderLinks(options.store, String(options.theme.id), host, port)

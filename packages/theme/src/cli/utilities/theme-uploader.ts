@@ -35,12 +35,15 @@ export async function uploadTheme(
   const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
-  // The task execution mechanism processes tasks sequentially in the order they are added.
-  await renderTasksToStdErr(deleteTasks)
-  await renderTasksToStdErr(uploadTasks)
-
-  reportFailedUploads(uploadResults)
-  return uploadResults
+  return {
+    uploadResults,
+    renderProgress: async () => {
+      // The task execution mechanism processes tasks sequentially in the order they are added.
+      await renderTasksToStdErr(deleteTasks)
+      await renderTasksToStdErr(uploadTasks)
+      reportFailedUploads(uploadResults)
+    },
+  }
 }
 
 async function buildDeleteTasks(

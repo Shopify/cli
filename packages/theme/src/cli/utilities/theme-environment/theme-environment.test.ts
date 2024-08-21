@@ -1,11 +1,11 @@
-import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
+import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {createEvent} from 'h3'
@@ -14,8 +14,22 @@ import {Socket} from 'node:net'
 
 vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
 vi.mock('./remote-theme-watcher.js')
-vi.mock('../theme-uploader.js')
 vi.mock('./storefront-renderer.js')
+
+// Vitest is resetting this mock between tests due to a global config `mockReset: true`.
+// For some reason we need to re-mock it here and in beforeEach:
+vi.mock('../theme-uploader.js', async () => {
+  return {
+    uploadTheme: vi.fn(() => {
+      return Promise.resolve({uploadResults: new Map(), renderProgress: () => Promise.resolve()})
+    }),
+  }
+})
+beforeEach(() => {
+  vi.mocked(uploadTheme).mockImplementation(() => {
+    return Promise.resolve({uploadResults: new Map(), renderProgress: () => Promise.resolve()})
+  })
+})
 
 describe('startDevServer', () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
@@ -117,7 +131,10 @@ describe('startDevServer', () => {
 
   describe('request handling', async () => {
     const context = {...defaultServerContext}
-    const {dispatch} = await setupDevServer(developmentTheme, context)
+    const {
+      server: {dispatch},
+    } = await setupDevServer(developmentTheme, context)
+
     const html = String.raw
     const decoder = new TextDecoder()
 
