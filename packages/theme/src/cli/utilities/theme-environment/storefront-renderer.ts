@@ -138,8 +138,7 @@ function themeAccessHeaders(session: DevServerSession) {
 }
 
 function cleanHeader(headers: {[key: string]: string}): {[key: string]: string} {
-  // Avoid ambiguity in case the headers object contains the
-  // 'Cookie' and 'cookie' keys.
+  // Force the use of the 'Cookie' key if consumers also provide the 'cookie' key
   delete headers.cookie
   delete headers.authorization
   return headers
