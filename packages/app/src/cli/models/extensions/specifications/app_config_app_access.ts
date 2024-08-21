@@ -10,6 +10,8 @@ const AppAccessSchema = zod.object({
         .object({
           direct_api_mode: zod.union([zod.literal('online'), zod.literal('offline')]).optional(),
           embedded_app_direct_api_access: zod.boolean().optional(),
+          // TODO: validate that api_version is in 'YYYY-MM' format
+          api_version: zod.string().optional(),
         })
         .optional(),
     })
