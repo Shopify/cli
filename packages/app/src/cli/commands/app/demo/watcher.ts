@@ -8,7 +8,6 @@ import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
-import {tempDirectory} from '@shopify/cli-kit/node/fs'
 
 export default class DemoWatcher extends Command {
   static summary = 'Watch and prints out changes to an app.'
@@ -29,10 +28,7 @@ export default class DemoWatcher extends Command {
       mode: 'report',
     })
 
-    const dir = tempDirectory()
-    outputInfo(`Created temporary directory: ${dir}`)
-
-    const watcher = new AppEventWatcher(app, dir)
+    const watcher = new AppEventWatcher(app)
     await watcher.start()
     outputInfo(`Watching for changes in ${app.name}...`)
 

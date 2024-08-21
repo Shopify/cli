@@ -10,7 +10,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {fileExistsSync, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'events'
 
 /**
@@ -104,23 +105,23 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
  * App event watcher will emit events when changes are detected in the file system.
  */
 export class AppEventWatcher extends EventEmitter {
+  buildOutputPath: string
   private app: AppInterface
   private options: OutputContextOptions
   private appURL?: string
-  private buildOutputPath: string
   private esbuildManager: ESBuildContextManager
 
   constructor(
     app: AppInterface,
-    buildOutputPath: string,
     appURL?: string,
     options?: OutputContextOptions,
+    buildOutputPath?: string,
     contextManager?: ESBuildContextManager,
   ) {
     super()
     this.app = app
     this.appURL = appURL
-    this.buildOutputPath = buildOutputPath
+    this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'bundle')
     this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
     this.esbuildManager =
       contextManager ??
@@ -133,6 +134,10 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   async start() {
+    // If there is a previous build folder, delete it
+    if (fileExistsSync(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
+    await mkdir(this.buildOutputPath)
+
     // Start the esbuild bundler for extensions that require it
     await this.esbuildManager.createContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
@@ -160,12 +165,23 @@ export class AppEventWatcher extends EventEmitter {
 
           await this.buildExtensions(extensions)
 
+          const deletedExtensions = appEvent.extensionEvents.filter((extEvent) => extEvent.type === EventType.Deleted)
+          await this.deleteExtensionsBuildOutput(deletedExtensions.map((extEvent) => extEvent.extension))
+
           this.emit('all', appEvent)
         })
         .catch((error) => {
           this.options.stderr.write(`Error handling event: ${error.message}`)
         })
     })
+  }
+
+  async deleteExtensionsBuildOutput(extensions: ExtensionInstance[]) {
+    const promises = extensions.map(async (ext) => {
+      const outputPath = joinPath(this.buildOutputPath, ext.getOutputFolderId())
+      return rmdir(outputPath, {force: true})
+    })
+    await Promise.all(promises)
   }
 
   onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
