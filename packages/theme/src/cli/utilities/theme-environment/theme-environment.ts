@@ -33,7 +33,6 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
     })
   }
 
-  console.log('WATTTT', uploadTheme())
   return uploadTheme(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
     nodelete: ctx.options.noDelete,
     ignore: ctx.options.ignore,
