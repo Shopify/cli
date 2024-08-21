@@ -60,6 +60,10 @@ function hotReloadScript() {
   evtSource.onmessage = async (event) => {
     if (!event.data || typeof event.data !== 'string') return
 
+    if (document.body.id === 'full-error-page') {
+      return fullPageReload('Error page update')
+    }
+
     const data = JSON.parse(event.data) as HotReloadEvent
     logInfo('Event data:', data)
 
@@ -108,6 +112,15 @@ function hotReloadScript() {
         })
 
         logInfo(`Updated sections for "${data.key}":`, data.names)
+      } else {
+        // No sections found, this might be due to a syntax error in the section file.
+        // In this case, the rendered page does not include the section ID in the DOM,
+        // only a syntax error message as a text node. Check the outerText of the document,
+        // which is the shortest string that contains text nodes:
+        const documentText = document.documentElement.outerText
+        if (documentText.includes('Liquid syntax error')) {
+          fullPageReload(data.key, new Error('Syntax error in document'))
+        }
       }
     } else if (data.type === 'css') {
       const elements: HTMLLinkElement[] = Array.from(
