@@ -46,8 +46,10 @@ const THEME_DIRECTORY_PATTERNS = [
 ]
 
 const THEME_PARTITION_REGEX = {
+  sectionLiquidRegex: /^sections\/.+\.liquid$/,
   liquidRegex: /\.liquid$/,
   configRegex: /^config\/(settings_schema|settings_data)\.json$/,
+  templateJsonRegex: /^templates\/.+\.json$/,
   jsonRegex: /^(?!config\/).*\.json$/,
   contextualizedJsonRegex: /\.context\.[^.]+\.json$/i,
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
@@ -215,8 +217,10 @@ export function isJson(path: string) {
 }
 
 export function partitionThemeFiles(files: ThemeAsset[]) {
-  const liquidFiles: ThemeAsset[] = []
-  const jsonFiles: ThemeAsset[] = []
+  const sectionLiquidFiles: ThemeAsset[] = []
+  const otherLiquidFiles: ThemeAsset[] = []
+  const templateJsonFiles: ThemeAsset[] = []
+  const otherJsonFiles: ThemeAsset[] = []
   const contextualizedJsonFiles: ThemeAsset[] = []
   const configFiles: ThemeAsset[] = []
   const staticAssetFiles: ThemeAsset[] = []
@@ -224,21 +228,35 @@ export function partitionThemeFiles(files: ThemeAsset[]) {
   files.forEach((file) => {
     const fileKey = file.key
     if (THEME_PARTITION_REGEX.liquidRegex.test(fileKey)) {
-      liquidFiles.push(file)
+      if (THEME_PARTITION_REGEX.sectionLiquidRegex.test(fileKey)) {
+        sectionLiquidFiles.push(file)
+      } else {
+        otherLiquidFiles.push(file)
+      }
     } else if (THEME_PARTITION_REGEX.configRegex.test(fileKey)) {
       configFiles.push(file)
     } else if (THEME_PARTITION_REGEX.jsonRegex.test(fileKey)) {
       if (THEME_PARTITION_REGEX.contextualizedJsonRegex.test(fileKey)) {
         contextualizedJsonFiles.push(file)
+      } else if (THEME_PARTITION_REGEX.templateJsonRegex.test(fileKey)) {
+        templateJsonFiles.push(file)
       } else {
-        jsonFiles.push(file)
+        otherJsonFiles.push(file)
       }
     } else if (THEME_PARTITION_REGEX.staticAssetRegex.test(fileKey)) {
       staticAssetFiles.push(file)
     }
   })
 
-  return {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles}
+  return {
+    sectionLiquidFiles,
+    otherLiquidFiles,
+    templateJsonFiles,
+    contextualizedJsonFiles,
+    otherJsonFiles,
+    configFiles,
+    staticAssetFiles,
+  }
 }
 
 export async function readThemeFilesFromDisk(filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) {

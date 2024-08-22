@@ -83,8 +83,16 @@ async function getRemoteFilesToBeDeleted(
 
 // Contextual Json Files -> Json Files -> Liquid Files -> Config Files -> Static Asset Files
 function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
-  const {contextualizedJsonFiles, jsonFiles, liquidFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
-  return [...contextualizedJsonFiles, ...jsonFiles, ...liquidFiles, ...configFiles, ...staticAssetFiles]
+  const fileSets = partitionThemeFiles(files)
+  return [
+    ...fileSets.contextualizedJsonFiles,
+    ...fileSets.templateJsonFiles,
+    ...fileSets.otherJsonFiles,
+    ...fileSets.sectionLiquidFiles,
+    ...fileSets.otherLiquidFiles,
+    ...fileSets.configFiles,
+    ...fileSets.staticAssetFiles,
+  ]
 }
 
 async function buildUploadTasks(
@@ -153,8 +161,16 @@ async function createUploadTasks(
 
 // We use this 2d array to batch files of the same type together while maintaining the order between file types
 function orderFilesToBeUploaded(files: Checksum[]): Checksum[][] {
-  const {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
-  return [liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles]
+  const fileSets = partitionThemeFiles(files)
+  return [
+    fileSets.otherLiquidFiles,
+    fileSets.sectionLiquidFiles,
+    fileSets.otherJsonFiles,
+    fileSets.templateJsonFiles,
+    fileSets.contextualizedJsonFiles,
+    fileSets.configFiles,
+    fileSets.staticAssetFiles,
+  ]
 }
 
 async function createUploadTaskForFileType(

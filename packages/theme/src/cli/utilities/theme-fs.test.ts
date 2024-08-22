@@ -307,20 +307,19 @@ describe('theme-fs', () => {
         {key: 'templates/404.context.uk.json', checksum: '11'},
       ]
       // When
-      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
+        partitionThemeFiles(files)
 
       // Then
-      expect(liquidFiles).toEqual([
+      expect(sectionLiquidFiles).toEqual([{key: 'sections/announcement-bar.liquid', checksum: '10'}])
+      expect(otherLiquidFiles).toEqual([
         {key: 'assets/base.css.liquid', checksum: '2'},
         {key: 'layout/password.liquid', checksum: '4'},
         {key: 'layout/theme.liquid', checksum: '5'},
-        {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
       ])
-      expect(jsonFiles).toEqual([
-        {key: 'locales/en.default.json', checksum: '6'},
-        {key: 'templates/404.json', checksum: '7'},
-      ])
+      expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
+      expect(otherJsonFiles).toEqual([{key: 'locales/en.default.json', checksum: '6'}])
       expect(configFiles).toEqual([
         {key: 'config/settings_schema.json', checksum: '8'},
         {key: 'config/settings_data.json', checksum: '9'},
@@ -336,11 +335,14 @@ describe('theme-fs', () => {
       const files: Checksum[] = []
 
       // When
-      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
+        partitionThemeFiles(files)
 
       // Then
-      expect(liquidFiles).toEqual([])
-      expect(jsonFiles).toEqual([])
+      expect(sectionLiquidFiles).toEqual([])
+      expect(otherLiquidFiles).toEqual([])
+      expect(templateJsonFiles).toEqual([])
+      expect(otherJsonFiles).toEqual([])
       expect(configFiles).toEqual([])
       expect(staticAssetFiles).toEqual([])
     })
