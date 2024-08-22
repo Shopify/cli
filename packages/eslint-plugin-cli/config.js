@@ -122,6 +122,7 @@ module.exports = {
     '@shopify/cli/prompt-message-format': 'warn',
     '@shopify/cli/banner-headline-format': 'warn',
     '@shopify/cli/required-fields-when-loading-app': 'error',
+    '@shopify/cli/no-inline-graphql': 'error',
     'no-restricted-syntax': [
       'error',
       {
