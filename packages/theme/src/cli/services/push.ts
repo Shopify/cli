@@ -34,9 +34,15 @@ export async function push(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = await mountThemeFileSystem(options.path)
 
-  const {uploadResults, renderProgress} = await uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
+    theme,
+    session,
+    themeChecksums,
+    themeFileSystem,
+    options,
+  )
 
-  await renderProgress()
+  await renderThemeSyncProgress()
 
   if (options.publish) {
     await publishTheme(theme.id, session)

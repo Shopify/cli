@@ -47,7 +47,7 @@ describe('dev', () => {
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
       vi.mocked(setupDevServer).mockResolvedValue({
-        renderProgress: () => Promise.resolve(),
+        renderThemeSyncProgress: () => Promise.resolve(),
         server: {dispatch: () => {}, start: async () => ({close: async () => {}})},
       })
 

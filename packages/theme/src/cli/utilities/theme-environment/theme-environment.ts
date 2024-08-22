@@ -11,13 +11,13 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  const [{renderProgress}] = await Promise.all([
+  const [{renderThemeSyncProgress}] = await Promise.all([
     ensureThemeEnvironmentSetup(theme, ctx),
     setupInMemoryTemplateWatcher(ctx),
   ])
 
   return {
-    renderProgress,
+    renderThemeSyncProgress,
     server: createDevelopmentServer(theme, ctx),
   }
 }

@@ -96,12 +96,12 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  const {server, renderProgress} = await setupDevServer(options.theme, ctx)
+  const {server, renderThemeSyncProgress} = await setupDevServer(options.theme, ctx)
 
   const storefrontPassword = await storefrontPasswordPromise
   session.storefrontPassword = storefrontPassword
 
-  await renderProgress()
+  await renderThemeSyncProgress()
   await server.start()
 
   renderLinks(options.store, String(options.theme.id), host, port)

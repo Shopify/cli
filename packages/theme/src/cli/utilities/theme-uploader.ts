@@ -37,7 +37,7 @@ export async function uploadTheme(
 
   return {
     uploadResults,
-    renderProgress: async () => {
+    renderThemeSyncProgress: async () => {
       // The task execution mechanism processes tasks sequentially in the order they are added.
       await renderTasksToStdErr(deleteTasks)
       await renderTasksToStdErr(uploadTasks)

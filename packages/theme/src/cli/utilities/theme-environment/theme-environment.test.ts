@@ -21,13 +21,13 @@ vi.mock('./storefront-renderer.js')
 vi.mock('../theme-uploader.js', async () => {
   return {
     uploadTheme: vi.fn(() => {
-      return Promise.resolve({uploadResults: new Map(), renderProgress: () => Promise.resolve()})
+      return Promise.resolve({uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()})
     }),
   }
 })
 beforeEach(() => {
   vi.mocked(uploadTheme).mockImplementation(() => {
-    return Promise.resolve({uploadResults: new Map(), renderProgress: () => Promise.resolve()})
+    return Promise.resolve({uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()})
   })
 })
 
