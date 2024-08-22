@@ -4,7 +4,7 @@ import {patchRenderingResponse} from '../proxy.js'
 import {prettifySyntaxErrors} from '../html.js'
 import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, sendError, type H3Error} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-import {extname} from '@shopify/cli-kit/node/path'
+import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import EventEmitter from 'node:events'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
@@ -31,12 +31,39 @@ function saveSectionsFromJson(fileKey: string, content: string) {
 
 /**
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
+ * If a route is passed, it will filter out the templates that are not related to the route.
  */
-export function getInMemoryTemplates(ctx: DevServerContext) {
+export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
+  const jsonTemplateRE = /^templates\/.+\.json$/
+  const jsonTemplateKeys: string[] = []
+  const filterTemplate = currentRoute
+    ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
+    : ''
+  let hasRouteTemplate = false
   const inMemoryTemplates: {[key: string]: string} = {}
+
   for (const fileKey of inMemoryTemplateFiles) {
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-    if (content) inMemoryTemplates[fileKey] = content
+    if (content) {
+      inMemoryTemplates[fileKey] = content
+
+      if (jsonTemplateRE.test(fileKey)) {
+        jsonTemplateKeys.push(fileKey)
+        if (fileKey === filterTemplate) {
+          hasRouteTemplate = true
+        }
+      }
+    }
+  }
+
+  // Filter out unused JSON templates for the current route. If we're not
+  // sure about the current route's template, we send all (modified) JSON templates.
+  if (hasRouteTemplate) {
+    for (const fileKey of jsonTemplateKeys) {
+      if (fileKey !== filterTemplate) {
+        delete inMemoryTemplates[fileKey]
+      }
+    }
   }
 
   return inMemoryTemplates

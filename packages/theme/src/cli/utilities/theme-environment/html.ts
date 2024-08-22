@@ -19,7 +19,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       themeId: String(theme.id),
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
-      replaceTemplates: getInMemoryTemplates(ctx),
+      replaceTemplates: getInMemoryTemplates(ctx, browserPathname),
     })
       .then(async (response) => {
         let html = await patchRenderingResponse(ctx, event, response)
