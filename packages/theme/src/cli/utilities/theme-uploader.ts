@@ -32,41 +32,96 @@ export async function uploadTheme(
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults: Map<string, Result> = new Map()
   await themeFileSystem.ready()
-  const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
+  const {deleteProgress, deletePromise} = await buildDeleteJob(
+    remoteChecksums,
+    themeFileSystem,
+    options,
+    theme,
+    session,
+  )
+
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
   return {
     uploadResults,
     renderThemeSyncProgress: async () => {
       // The task execution mechanism processes tasks sequentially in the order they are added.
-      await renderTasksToStdErr(deleteTasks)
+
+      const getProgress = (params: {current: number; total: number}) =>
+        `[${Math.round((params.current / params.total) * 100)}%]`
+
+      await renderTasksToStdErr(
+        createIntervalTask({
+          promise: deletePromise,
+          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
+          timeout: 1000,
+        }),
+      )
+
       await renderTasksToStdErr(uploadTasks)
+
       reportFailedUploads(uploadResults)
     },
   }
 }
 
-async function buildDeleteTasks(
+function createIntervalTask({
+  promise,
+  titleGetter,
+  timeout,
+}: {
+  promise: Promise<unknown>
+  titleGetter: () => string
+  timeout: number
+}) {
+  const tasks: Parameters<typeof renderTasksToStdErr>[0] = []
+
+  const addNextCheck = () => {
+    tasks.push({
+      title: titleGetter(),
+      task: async () => {
+        const result = await Promise.race([
+          promise,
+          new Promise((resolve) => setTimeout(() => resolve('timeout'), timeout)),
+        ])
+
+        if (result === 'timeout') {
+          addNextCheck()
+        }
+      },
+    })
+  }
+
+  addNextCheck()
+  return tasks
+}
+
+async function buildDeleteJob(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions,
   theme: Theme,
   session: AdminSession,
-): Promise<Task<unknown>[]> {
+): Promise<{deleteProgress: {current: number; total: number}; deletePromise: Promise<void>}> {
   if (options.nodelete) {
-    return []
+    return {deleteProgress: {current: 0, total: 0}, deletePromise: Promise.resolve()}
   }
 
-  const filteredChecksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
-  const remoteFilesToBeDeleted = await getRemoteFilesToBeDeleted(filteredChecksums, themeFileSystem, options)
+  const remoteFilesToBeDeleted = await getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem, options)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
-  return orderedFiles.map((file) => ({
-    title: `Cleaning your remote theme (removing ${file.key})`,
-    task: async () => {
-      await deleteThemeAsset(theme.id, file.key, session)
-    },
-  }))
+  const deleteProgress = {current: 0, total: orderedFiles.length, fileKeys: orderedFiles.map((file) => file.key)}
+  const deletePromise = Promise.all(
+    orderedFiles.map((file) =>
+      deleteThemeAsset(theme.id, file.key, session).then(() => {
+        deleteProgress.current++
+      }),
+    ),
+  ).then(() => {
+    deleteProgress.current = deleteProgress.total
+  })
+
+  return {deleteProgress, deletePromise}
 }
 
 async function getRemoteFilesToBeDeleted(
@@ -74,9 +129,8 @@ async function getRemoteFilesToBeDeleted(
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions,
 ): Promise<Checksum[]> {
-  const localKeys = new Set(themeFileSystem.files.keys())
   const filteredChecksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
-  const filesToBeDeleted = filteredChecksums.filter((checksum) => !localKeys.has(checksum.key))
+  const filesToBeDeleted = filteredChecksums.filter((checksum) => !themeFileSystem.files.has(checksum.key))
   outputDebug(`Files to be deleted:\n${filesToBeDeleted.map((file) => `-${file.key}`).join('\n')}`)
   return filesToBeDeleted
 }

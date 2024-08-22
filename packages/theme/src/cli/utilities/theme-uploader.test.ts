@@ -18,6 +18,8 @@ vi.mock('./theme-fs.js', async (realImport) => {
 })
 
 beforeEach(() => {
+  vi.mocked(deleteThemeAsset).mockImplementation(() => Promise.resolve(true))
+
   vi.mocked(bulkUploadThemeAssets).mockImplementation(
     async (
       _id: number,
