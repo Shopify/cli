@@ -120,12 +120,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const fileKey = getKey(filePath)
     if (isFileIgnored(fileKey)) return
 
-    const lastChecksum = files.get(fileKey)?.checksum
+    const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(() => {
       const file = files.get(fileKey)!
 
-      if (file.checksum === lastChecksum) {
+      if (file.checksum === previousChecksum) {
         // Do not sync if the file has not changed
         return ''
       }
