@@ -34,35 +34,20 @@ function saveSectionsFromJson(fileKey: string, content: string) {
  * If a route is passed, it will filter out the templates that are not related to the route.
  */
 export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
+  const inMemoryTemplates: {[key: string]: string} = {}
   const jsonTemplateRE = /^templates\/.+\.json$/
-  const jsonTemplateKeys: string[] = []
   const filterTemplate = currentRoute
     ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
-  let hasRouteTemplate = false
-  const inMemoryTemplates: {[key: string]: string} = {}
+  const hasRouteTemplate = Boolean(currentRoute) && inMemoryTemplateFiles.has(filterTemplate)
 
   for (const fileKey of inMemoryTemplateFiles) {
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-    if (content) {
+    if (!content) continue
+    // Filter out unused JSON templates for the current route. If we're not
+    // sure about the current route's template, we send all (modified) JSON templates.
+    if (!hasRouteTemplate || !jsonTemplateRE.test(fileKey) || fileKey === filterTemplate) {
       inMemoryTemplates[fileKey] = content
-
-      if (jsonTemplateRE.test(fileKey)) {
-        jsonTemplateKeys.push(fileKey)
-        if (fileKey === filterTemplate) {
-          hasRouteTemplate = true
-        }
-      }
-    }
-  }
-
-  // Filter out unused JSON templates for the current route. If we're not
-  // sure about the current route's template, we send all (modified) JSON templates.
-  if (hasRouteTemplate) {
-    for (const fileKey of jsonTemplateKeys) {
-      if (fileKey !== filterTemplate) {
-        delete inMemoryTemplates[fileKey]
-      }
     }
   }
 
