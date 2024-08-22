@@ -1,21 +1,21 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {defineEventHandler, getQuery, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {defineEventHandler, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
-    const {path: urlPath, method} = event
+    outputInfo(`${event.method} ${event.path}`)
 
-    // eslint-disable-next-line no-console
-    console.log(`${method} ${urlPath}`)
+    const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
     return render(ctx.session, {
-      path: urlPath.split('?')[0]!,
-      query: Object.entries(getQuery(event)),
+      path: browserPathname,
+      query: [...new URLSearchParams(browserSearch)],
       themeId: String(theme.id),
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
