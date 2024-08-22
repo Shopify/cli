@@ -5,7 +5,7 @@ import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {Task} from '@shopify/cli-kit/node/ui'
+import {renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
@@ -34,14 +34,6 @@ export async function uploadTheme(
   const uploadResults: Map<string, Result> = new Map()
   await themeFileSystem.ready()
 
-  const {progress: deleteProgress, promise: deletePromise} = await buildDeleteJob(
-    remoteChecksums,
-    themeFileSystem,
-    options,
-    theme,
-    session,
-  )
-
   const {progress: uploadProgress, promise: uploadPromise} = await buildUploadJob(
     remoteChecksums,
     themeFileSystem,
@@ -50,6 +42,8 @@ export async function uploadTheme(
     session,
     uploadResults,
   )
+
+  const {promise: deletePromise} = await buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session)
 
   return {
     uploadResults,
@@ -61,19 +55,17 @@ export async function uploadTheme(
 
       await renderTasksToStdErr(
         createIntervalTask({
-          promise: deletePromise,
-          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-          timeout: 1000,
-        }),
-      )
-
-      await renderTasksToStdErr(
-        createIntervalTask({
           promise: uploadPromise,
           titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
           timeout: 1000,
         }),
       )
+
+      deletePromise
+        .then(() => {})
+        .catch(() => {
+          renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+        })
 
       reportFailedUploads(uploadResults)
     },
