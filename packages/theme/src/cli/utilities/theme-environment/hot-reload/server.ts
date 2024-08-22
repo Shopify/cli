@@ -117,6 +117,7 @@ function emitHotReloadEvent(event: HotReloadEvent) {
  */
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
+    const renderEndpoint = '/__hot-reload/render'
     const endpoint = event.path.split('?')[0]
 
     if (endpoint === '/__hot-reload/subscribe') {
@@ -133,7 +134,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         .catch(() => {})
 
       return eventStream.send().then(() => eventStream.flush())
-    } else if (endpoint === '/__hot-reload/render') {
+    } else if (endpoint?.startsWith(renderEndpoint)) {
       const {
         'section-id': sectionId,
         'section-template-name': sectionKey,
@@ -168,8 +169,10 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         }
       }
 
+      const path = event.path.slice(renderEndpoint.length, event.path.indexOf('?')) || '/'
+
       return render(ctx.session, {
-        path: '/',
+        path,
         query: [...Object.entries(queryParams), ['section_id', sectionId]],
         themeId: String(theme.id),
         sectionId,

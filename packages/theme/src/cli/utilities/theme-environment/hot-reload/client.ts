@@ -85,8 +85,9 @@ function hotReloadScript() {
         await Promise.all(
           elements.map(async (element) => {
             const sectionId = element.id.replace(/^shopify-section-/, '')
+            const path = window.location.pathname
             const response = await fetch(
-              `/__hot-reload/render?section-id=${encodeURIComponent(
+              `/__hot-reload/render${path}?section-id=${encodeURIComponent(
                 sectionId,
               )}&section-template-name=${encodeURIComponent(data.key)}`,
               {signal: controller.signal},
