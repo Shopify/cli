@@ -88,7 +88,9 @@ function hotReloadScript() {
             const response = await fetch(
               `/__hot-reload/render?section-id=${encodeURIComponent(
                 sectionId,
-              )}&section-template-name=${encodeURIComponent(data.key)}`,
+              )}&section-template-name=${encodeURIComponent(data.key)}&pathname=${encodeURIComponent(
+                window.location.pathname,
+              )}&search=${encodeURIComponent(window.location.search)}`,
               {signal: controller.signal},
             )
 

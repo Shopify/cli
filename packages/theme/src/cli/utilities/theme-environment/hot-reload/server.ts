@@ -4,7 +4,7 @@ import {patchRenderingResponse} from '../proxy.js'
 import {prettifySyntaxErrors} from '../html.js'
 import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, sendError, type H3Error} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-import {extname} from '@shopify/cli-kit/node/path'
+import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import EventEmitter from 'node:events'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
@@ -31,12 +31,24 @@ function saveSectionsFromJson(fileKey: string, content: string) {
 
 /**
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
+ * If a route is passed, it will filter out the templates that are not related to the route.
  */
-export function getInMemoryTemplates(ctx: DevServerContext) {
+export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
   const inMemoryTemplates: {[key: string]: string} = {}
+  const jsonTemplateRE = /^templates\/.+\.json$/
+  const filterTemplate = currentRoute
+    ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
+    : ''
+  const hasRouteTemplate = Boolean(currentRoute) && inMemoryTemplateFiles.has(filterTemplate)
+
   for (const fileKey of inMemoryTemplateFiles) {
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-    if (content) inMemoryTemplates[fileKey] = content
+    if (!content) continue
+    // Filter out unused JSON templates for the current route. If we're not
+    // sure about the current route's template, we send all (modified) JSON templates.
+    if (!hasRouteTemplate || !jsonTemplateRE.test(fileKey) || fileKey === filterTemplate) {
+      inMemoryTemplates[fileKey] = content
+    }
   }
 
   return inMemoryTemplates
@@ -135,9 +147,10 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       return eventStream.send().then(() => eventStream.flush())
     } else if (endpoint === '/__hot-reload/render') {
       const {
+        search: browserSearch,
+        pathname: browserPathname,
         'section-id': sectionId,
         'section-template-name': sectionKey,
-        ...queryParams
       }: {[key: string]: string} = getQuery(event)
 
       if (typeof sectionId !== 'string' || typeof sectionKey !== 'string') {
@@ -169,8 +182,8 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       }
 
       return render(ctx.session, {
-        path: '/',
-        query: [...Object.entries(queryParams), ['section_id', sectionId]],
+        path: browserPathname ?? '/',
+        query: [...new URLSearchParams(browserSearch).entries()],
         themeId: String(theme.id),
         sectionId,
         headers: getProxyRequestHeaders(event),

@@ -147,7 +147,28 @@ describe('hot-reload server', () => {
     expect(jsSyncSpy).not.toHaveBeenCalled()
     expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${jsFileKey}"}`)
 
-    // Promise resolves when connection is stopped:
+    // -- Filters templates by route:
+    const indexJson = 'templates/index.json'
+    const searchJson = 'templates/search.json'
+    const jsonContent = '{}'
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+    await Promise.all([
+      triggerFileEvent('add', indexJson, jsonContent),
+      triggerFileEvent('add', searchJson, jsonContent),
+    ])
+    // All templates:
+    expect(getInMemoryTemplates(ctx)).toEqual({[indexJson]: jsonContent, [searchJson]: jsonContent})
+    expect(getInMemoryTemplates(ctx, '/unknown')).toEqual({[indexJson]: jsonContent, [searchJson]: jsonContent})
+    // Only index:
+    expect(getInMemoryTemplates(ctx, '/')).toEqual({[indexJson]: jsonContent})
+    expect(getInMemoryTemplates(ctx, '/index.html')).toEqual({[indexJson]: jsonContent})
+    // Only search:
+    expect(getInMemoryTemplates(ctx, '/search')).toEqual({[searchJson]: jsonContent})
+    // Removed from memory after syncing:
+    await nextTick()
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+
+    // -- Promise resolves when connection is stopped:
     subscribeEvent.node.req.destroy()
     await expect(streamPromise).resolves.not.toThrow()
   })

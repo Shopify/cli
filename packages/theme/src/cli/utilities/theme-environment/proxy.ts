@@ -14,10 +14,12 @@ import {
   removeResponseHeader,
 } from 'h3'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
+import {extname} from '@shopify/cli-kit/node/path'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
+const VANITY_CDN_PREFIX = '/cdn/'
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
@@ -37,15 +39,31 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
       return null
     }
 
-    if (event.path.startsWith('/search/suggest')) {
-      // Skip to use HTML rendering for this endpoint
-      return
-    }
-
-    if (event.path.startsWith('/cdn/') || !event.headers.get('accept')?.includes('text/html')) {
+    if (canProxyRequest(event)) {
       return proxyStorefrontRequest(event, ctx)
     }
   })
+}
+
+/**
+ * Check if a request should be proxied to the remote SFR instance.
+ * Cases:
+ * - /cdn/... -- Proxy
+ * - /.../file.js -- Proxy
+ * - /.../index.html -- No Proxy
+ * - /payments/config | accepts: application/json -- Proxy
+ * - /search/suggest | accepts: * / * -- No proxy
+ */
+function canProxyRequest(event: H3Event) {
+  if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
+
+  const [pathname] = event.path.split('?') as [string]
+  const extension = extname(pathname)
+  const acceptsType = event.headers.get('accept') ?? '*/*'
+
+  if (extension === '.html' || acceptsType.includes('text/html')) return false
+
+  return Boolean(extension) || acceptsType !== '*/*'
 }
 
 function getStoreFqdnForRegEx(ctx: DevServerContext) {
@@ -61,9 +79,8 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   let content = originalContent
 
   // -- Redirect all usages to the vanity CDN to the local server:
-  const vanityCdnPath = '/cdn/'
-  const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${vanityCdnPath}`, 'g')
-  content = content.replace(vanityCdnRE, vanityCdnPath)
+  const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${VANITY_CDN_PREFIX}`, 'g')
+  content = content.replace(vanityCdnRE, VANITY_CDN_PREFIX)
 
   // -- Only redirect usages of the main CDN for known local assets to the local server:
   const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?">]+)(?:\?|"|>|$))/g
@@ -74,7 +91,7 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
     // Do not proxy images, they may require filters or other CDN features
     if (lookupMimeType(matchedAsset).startsWith('image/')) return matchedUrl
     // Prefix with vanityCdnPath to later read local assets
-    return `${vanityCdnPath}${pathname}`
+    return `${VANITY_CDN_PREFIX}${pathname}`
   })
 
   return content
@@ -138,7 +155,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
   // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader =
     'raw' in response.headers ? response.headers.raw()['set-cookie'] : response.headers.getSetCookie()
-  if (setCookieHeader) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+  if (setCookieHeader?.length) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
 }
 
 /**

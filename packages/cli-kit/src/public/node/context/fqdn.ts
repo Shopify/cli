@@ -1,4 +1,4 @@
-import {isSpinEnvironment, spinFqdn} from './spin.js'
+import {spinFqdn} from './spin.js'
 import {AbortError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 
@@ -115,8 +115,17 @@ export async function identityFqdn(): Promise<string> {
  */
 export async function normalizeStoreFqdn(store: string): Promise<string> {
   const storeFqdn = store.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  const addDomain = async (storeFqdn: string) =>
-    isSpinEnvironment() ? `${storeFqdn}.shopify.${await spinFqdn()}` : `${storeFqdn}.myshopify.com`
-  const containDomain = (storeFqdn: string) => storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev')
+  const addDomain = async (storeFqdn: string) => {
+    switch (serviceEnvironment()) {
+      case 'local':
+        return `${storeFqdn}.myshopify.io`
+      case 'spin':
+        return `${storeFqdn}.shopify.${await spinFqdn()}`
+      default:
+        return `${storeFqdn}.myshopify.com`
+    }
+  }
+  const containDomain = (storeFqdn: string) =>
+    storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev') || storeFqdn.includes('shopify.io')
   return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }
