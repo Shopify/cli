@@ -1,4 +1,4 @@
-import {partitionThemeFiles, readThemeFilesFromDisk} from './theme-fs.js'
+import {partitionThemeFiles} from './theme-fs.js'
 import {applyIgnoreFilters} from './asset-ignore.js'
 import {renderTasksToStdErr} from './theme-ui.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'

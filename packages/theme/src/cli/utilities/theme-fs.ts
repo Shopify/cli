@@ -259,30 +259,6 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   }
 }
 
-export async function readThemeFilesFromDisk(filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) {
-  outputDebug(`Reading theme files from disk: ${filesToRead.map((file) => file.key).join(', ')}`)
-  await Promise.all(
-    filesToRead.map(async (file) => {
-      const fileKey = file.key
-      const themeAsset = themeFileSystem.files.get(fileKey)
-      if (themeAsset === undefined) {
-        outputDebug(`File ${fileKey} can't be was not found under directory starting with: ${themeFileSystem.root}`)
-        return
-      }
-
-      outputDebug(`Reading theme file: ${fileKey}`)
-      const fileData = await readThemeFile(themeFileSystem.root, fileKey)
-      if (Buffer.isBuffer(fileData)) {
-        themeAsset.attachment = fileData.toString('base64')
-      } else {
-        themeAsset.value = fileData
-      }
-      themeFileSystem.files.set(fileKey, themeAsset)
-    }),
-  )
-  outputDebug('All theme files were read from disk')
-}
-
 export function isTextFile(path: string) {
   setMimeTypes({
     liquid: 'application/liquid',

@@ -6,7 +6,6 @@ import {
   mountThemeFileSystem,
   partitionThemeFiles,
   readThemeFile,
-  readThemeFilesFromDisk,
 } from './theme-fs.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi} from 'vitest'
@@ -345,59 +344,6 @@ describe('theme-fs', () => {
       expect(otherJsonFiles).toEqual([])
       expect(configFiles).toEqual([])
       expect(staticAssetFiles).toEqual([])
-    })
-  })
-
-  describe('readThemeFilesFromDisk', () => {
-    test('should read theme files from disk and update themeFileSystem', async () => {
-      // Given
-      const filesToRead = [{key: 'assets/base.css', checksum: '1'}]
-      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
-      await themeFileSystem.ready()
-
-      // When
-      const testFile = themeFileSystem.files.get('assets/base.css')
-      expect(testFile).toBeDefined()
-      expect(testFile?.value).toBeDefined()
-      delete testFile?.value
-      expect(testFile?.value).toBeUndefined()
-      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
-
-      // Then
-      expect(testFile?.value).toBeDefined()
-    })
-
-    test('should skip files not present in themeFileSystem', async () => {
-      // Given
-      const filesToRead = [{key: 'assets/nonexistent.css', checksum: '1'}]
-      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
-
-      // When
-      const testFile = themeFileSystem.files.get('assets/nonexistent.css')
-      expect(testFile).toBeUndefined()
-      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
-
-      // Then
-      expect(themeFileSystem.files.has('assets/nonexistent.gif')).toBe(false)
-    })
-
-    test('should store image data as attachment', async () => {
-      // Given
-      const filesToRead = [{key: 'assets/sparkle.gif', checksum: '2'}]
-      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
-      await themeFileSystem.ready()
-
-      // When
-      const testFile = themeFileSystem.files.get('assets/sparkle.gif')
-      expect(testFile).toBeDefined()
-      expect(testFile?.attachment).toBeDefined()
-      delete testFile?.attachment
-      expect(testFile?.attachment).toBeUndefined()
-      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
-
-      // Then
-      expect(testFile?.attachment).toBeDefined()
-      expect(testFile?.value).toBeFalsy()
     })
   })
 

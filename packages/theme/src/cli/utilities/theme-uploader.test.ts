@@ -1,21 +1,11 @@
 import {MAX_BATCH_BYTESIZE, MAX_BATCH_FILE_COUNT, MAX_UPLOAD_RETRY_COUNT, uploadTheme} from './theme-uploader.js'
-import {readThemeFilesFromDisk} from './theme-fs.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {fileSize} from '@shopify/cli-kit/node/fs'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/fs')
-
-vi.mock('./theme-fs.js', async (realImport) => {
-  const realModule = await realImport<typeof import('./theme-fs.js')>()
-  const mockModule = {readThemeFilesFromDisk: vi.fn()}
-
-  return {...realModule, ...mockModule}
-})
 
 beforeEach(() => {
   vi.mocked(deleteThemeAsset).mockImplementation(() => Promise.resolve(true))
@@ -371,12 +361,13 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem(
       'tmp',
       new Map([
-        ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2', value: 'settings_data'}],
+        [
+          'config/settings_data.json',
+          {key: 'config/settings_data.json', checksum: '2', value: 'w'.repeat(MAX_BATCH_BYTESIZE)},
+        ],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
       ]),
     )
-
-    vi.mocked(fileSize).mockResolvedValue(MAX_BATCH_BYTESIZE)
 
     // When
     const {renderThemeSyncProgress} = await uploadTheme(
@@ -390,37 +381,6 @@ describe('theme-uploader', () => {
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
-  })
-
-  test('should only read values for theme files that will be uploaded', async () => {
-    // Given
-    const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
-    const themeFileSystem = fakeThemeFileSystem(
-      'tmp',
-      new Map([
-        ['assets/new.liquid', {checksum: '2', key: ''}],
-        ['assets/newer.liquid', {checksum: '3', key: ''}],
-        ['assets/existing.liquid', {checksum: '1', key: ''}],
-      ]),
-    )
-
-    // When
-    const {renderThemeSyncProgress} = await uploadTheme(
-      remoteTheme,
-      adminSession,
-      remoteChecksums,
-      themeFileSystem,
-      uploadOptions,
-    )
-    await renderThemeSyncProgress()
-    // Then
-    expect(readThemeFilesFromDisk).toHaveBeenCalledWith(
-      [
-        {checksum: '2', key: 'assets/new.liquid'},
-        {checksum: '3', key: 'assets/newer.liquid'},
-      ],
-      themeFileSystem,
-    )
   })
 
   test('should retry failed uploads', async () => {
