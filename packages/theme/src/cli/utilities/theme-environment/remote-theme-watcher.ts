@@ -1,6 +1,5 @@
 import {pollThemeEditorChanges} from './theme-polling.js'
 import {reconcileJsonFiles} from './theme-reconciliation.js'
-import {mountThemeFileSystem} from '../theme-fs.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
@@ -31,9 +30,7 @@ export async function reconcileAndPollThemeEditorChanges(
   }
 
   const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
-
-  const themeFileSystem = mountThemeFileSystem(localThemeFileSystem.root, {filters: options})
-  pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, themeFileSystem, options)
+  pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, localThemeFileSystem, options)
 
   return updatedRemoteChecksums
 }

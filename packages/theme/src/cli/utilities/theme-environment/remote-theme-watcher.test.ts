@@ -2,7 +2,6 @@ import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {pollThemeEditorChanges} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
-import {mountThemeFileSystem} from '../theme-fs.js'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -23,11 +22,9 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
     const files = new Map<string, ThemeAsset>([])
     const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
     const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
-    const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
 
     vi.mocked(reconcileJsonFiles).mockResolvedValue(undefined)
     vi.mocked(fetchChecksums).mockResolvedValue([{checksum: '2', key: 'templates/asset.json'}])
-    vi.mocked(mountThemeFileSystem).mockReturnValue(newFileSystem)
 
     // When
     await reconcileAndPollThemeEditorChanges(
@@ -47,7 +44,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       developmentTheme,
       adminSession,
       [{checksum: '2', key: 'templates/asset.json'}],
-      newFileSystem,
+      defaultThemeFileSystem,
       {
         noDelete: false,
         ignore: [],
