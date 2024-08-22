@@ -33,7 +33,8 @@ export async function uploadTheme(
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults: Map<string, Result> = new Map()
   await themeFileSystem.ready()
-  const {deleteProgress, deletePromise} = await buildDeleteJob(
+
+  const {progress: deleteProgress, promise: deletePromise} = await buildDeleteJob(
     remoteChecksums,
     themeFileSystem,
     options,
@@ -41,7 +42,14 @@ export async function uploadTheme(
     session,
   )
 
-  const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
+  const {progress: uploadProgress, promise: uploadPromise} = await buildUploadJob(
+    remoteChecksums,
+    themeFileSystem,
+    options,
+    theme,
+    session,
+    uploadResults,
+  )
 
   return {
     uploadResults,
@@ -59,7 +67,13 @@ export async function uploadTheme(
         }),
       )
 
-      await renderTasksToStdErr(uploadTasks)
+      await renderTasksToStdErr(
+        createIntervalTask({
+          promise: uploadPromise,
+          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
+          timeout: 1000,
+        }),
+      )
 
       reportFailedUploads(uploadResults)
     },
@@ -75,7 +89,7 @@ function createIntervalTask({
   titleGetter: () => string
   timeout: number
 }) {
-  const tasks: Parameters<typeof renderTasksToStdErr>[0] = []
+  const tasks: Task[] = []
 
   const addNextCheck = () => {
     tasks.push({
@@ -103,26 +117,26 @@ async function buildDeleteJob(
   options: UploadOptions,
   theme: Theme,
   session: AdminSession,
-): Promise<{deleteProgress: {current: number; total: number}; deletePromise: Promise<void>}> {
+): Promise<SyncJob> {
   if (options.nodelete) {
-    return {deleteProgress: {current: 0, total: 0}, deletePromise: Promise.resolve()}
+    return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
   }
 
   const remoteFilesToBeDeleted = await getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem, options)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
-  const deleteProgress = {current: 0, total: orderedFiles.length, fileKeys: orderedFiles.map((file) => file.key)}
-  const deletePromise = Promise.all(
+  const progress = {current: 0, total: orderedFiles.length}
+  const promise = Promise.all(
     orderedFiles.map((file) =>
       deleteThemeAsset(theme.id, file.key, session).then(() => {
-        deleteProgress.current++
+        progress.current++
       }),
     ),
   ).then(() => {
-    deleteProgress.current = deleteProgress.total
+    progress.current = progress.total
   })
 
-  return {deleteProgress, deletePromise}
+  return {progress, promise}
 }
 
 async function getRemoteFilesToBeDeleted(
@@ -150,30 +164,48 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
   ]
 }
 
-async function buildUploadTasks(
+interface SyncJob {
+  progress: {current: number; total: number}
+  promise: Promise<void>
+}
+
+async function buildUploadJob(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions,
   theme: Theme,
   session: AdminSession,
   uploadResults: Map<string, Result>,
-): Promise<Task[]> {
+): Promise<SyncJob> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
-  await readThemeFilesFromDisk(filesToUpload, themeFileSystem)
-  return createUploadTasks(filesToUpload, themeFileSystem, session, theme, uploadResults)
+  const orderedFiles = orderFilesToBeUploaded(filesToUpload)
+
+  const progress = {current: 0, total: filesToUpload.length}
+  const promise = Promise.all(
+    orderedFiles.flatMap((fileType) => {
+      if (fileType.length === 0) return []
+
+      return createBatches(fileType).map((batch) => {
+        return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+          progress.current += batch.length
+        })
+      })
+    }),
+  ).then(() => {
+    progress.current = progress.total
+  })
+
+  return {progress, promise}
 }
 
 async function selectUploadableFiles(
   themeFileSystem: ThemeFileSystem,
   remoteChecksums: Checksum[],
   options: UploadOptions,
-): Promise<Checksum[]> {
+): Promise<ChecksumWithSize[]> {
   const localChecksums = calculateLocalChecksums(themeFileSystem)
   const filteredLocalChecksums = await applyIgnoreFilters(localChecksums, themeFileSystem, options)
-  const remoteChecksumsMap = new Map<string, Checksum>()
-  remoteChecksums.forEach((remote) => {
-    remoteChecksumsMap.set(remote.key, remote)
-  })
+  const remoteChecksumsMap = new Map(remoteChecksums.map((remote) => [remote.key, remote]))
 
   const filesToUpload = filteredLocalChecksums.filter((local) => {
     const remote = remoteChecksumsMap.get(local.key)
@@ -183,39 +215,8 @@ async function selectUploadableFiles(
   return filesToUpload
 }
 
-async function createUploadTasks(
-  filesToUpload: Checksum[],
-  themeFileSystem: ThemeFileSystem,
-  session: AdminSession,
-  theme: Theme,
-  uploadResults: Map<string, Result>,
-): Promise<Task[]> {
-  const orderedFiles = orderFilesToBeUploaded(filesToUpload)
-
-  let currentFileCount = 0
-  const totalFileCount = filesToUpload.length
-  const uploadTasks = [] as Task[]
-
-  for (const fileType of orderedFiles) {
-    // eslint-disable-next-line no-await-in-loop
-    const {tasks: newTasks, updatedFileCount} = await createUploadTaskForFileType(
-      fileType,
-      themeFileSystem,
-      session,
-      uploadResults,
-      theme.id,
-      totalFileCount,
-      currentFileCount,
-    )
-    currentFileCount = updatedFileCount
-    uploadTasks.push(...newTasks)
-  }
-
-  return uploadTasks
-}
-
 // We use this 2d array to batch files of the same type together while maintaining the order between file types
-function orderFilesToBeUploaded(files: Checksum[]): Checksum[][] {
+function orderFilesToBeUploaded(files: ChecksumWithSize[]): ChecksumWithSize[][] {
   const fileSets = partitionThemeFiles(files)
   return [
     fileSets.otherLiquidFiles,
@@ -226,55 +227,6 @@ function orderFilesToBeUploaded(files: Checksum[]): Checksum[][] {
     fileSets.configFiles,
     fileSets.staticAssetFiles,
   ]
-}
-
-async function createUploadTaskForFileType(
-  checksums: Checksum[],
-  themeFileSystem: ThemeFileSystem,
-  session: AdminSession,
-  uploadResults: Map<string, Result>,
-  themeId: number,
-  totalFileCount: number,
-  currentFileCount: number,
-): Promise<{tasks: Task[]; updatedFileCount: number}> {
-  if (checksums.length === 0) {
-    return {tasks: [], updatedFileCount: currentFileCount}
-  }
-
-  const batches = await createBatches(checksums, themeFileSystem.root)
-  return createBatchedUploadTasks(
-    batches,
-    themeFileSystem,
-    session,
-    uploadResults,
-    themeId,
-    totalFileCount,
-    currentFileCount,
-  )
-}
-
-function createBatchedUploadTasks(
-  batches: FileBatch[],
-  themeFileSystem: ThemeFileSystem,
-  session: AdminSession,
-  uploadResults: Map<string, Result>,
-  themeId: number,
-  totalFileCount: number,
-  currentFileCount: number,
-): {tasks: Task[]; updatedFileCount: number} {
-  let runningFileCount = currentFileCount
-  const tasks = batches.map((batch) => {
-    runningFileCount += batch.length
-    const progress = Math.round((runningFileCount / totalFileCount) * 100)
-    return {
-      title: `Uploading files to remote theme [${progress}%]`,
-      task: async () => uploadBatch(batch, themeFileSystem, session, themeId, uploadResults),
-    }
-  })
-  return {
-    tasks,
-    updatedFileCount: runningFileCount,
-  }
 }
 
 function createBatches<T extends {size: number}>(files: T[]): T[][] {
