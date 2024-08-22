@@ -4,14 +4,19 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
   return {
     root,
     files,
-    delete: async (assetKey: string) => {
-      files.delete(assetKey)
+    ready: () => Promise.resolve(),
+    delete: async (fileKey: string) => {
+      files.delete(fileKey)
     },
     write: async (asset: ThemeAsset) => {
       files.set(asset.key, asset)
     },
-    read: async (assetKey: string) => {
-      return files.get(assetKey)?.value || files.get(assetKey)?.attachment
+    read: async (fileKey: string) => {
+      return files.get(fileKey)?.value || files.get(fileKey)?.attachment
     },
+    stat: async (_fileKey: string) => {
+      return {mtime: new Date(), size: 1}
+    },
+    addEventListener: () => {},
   }
 }

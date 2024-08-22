@@ -1,12 +1,21 @@
-import {checksum} from './asset-checksum.js'
-import {ThemeFileSystem, Key, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+/* eslint-disable promise/no-nesting */
+import {calculateChecksum} from './asset-checksum.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import EventEmitter from 'node:events'
+import {stat} from 'fs/promises'
+import type {
+  ThemeFileSystem,
+  Key,
+  ThemeAsset,
+  ThemeFSEventName,
+  ThemeFSEventPayload,
+} from '@shopify/cli-kit/node/themes/types'
 
-const DEFAULT_IGNORE_PATTERNS = [
+const THEME_DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
   '**/.vscode',
   '**/.hg',
@@ -45,48 +54,115 @@ const THEME_PARTITION_REGEX = {
 }
 
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
-  const filesPaths = await glob(THEME_DIRECTORY_PATTERNS, {
+  const files = new Map<string, ThemeAsset>()
+  const eventEmitter = new EventEmitter()
+  const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
+    eventEmitter.emit(eventName, payload)
+  }
+
+  const read = async (fileKey: string) => {
+    const fileContent = await readThemeFile(root, fileKey)
+    const fileChecksum = await calculateChecksum(fileKey, fileContent)
+
+    files.set(
+      fileKey,
+      buildThemeAsset({
+        key: fileKey,
+        checksum: fileChecksum,
+        value: typeof fileContent === 'string' ? fileContent : '',
+        attachment: Buffer.isBuffer(fileContent) ? fileContent.toString('base64') : '',
+      }),
+    )
+
+    return fileContent
+  }
+
+  const initialFilesPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
-    ignore: DEFAULT_IGNORE_PATTERNS,
+    ignore: THEME_DEFAULT_IGNORE_PATTERNS,
   })
+    .then((filesPaths) => Promise.all(filesPaths.map(read)))
+    .then(async () => {
+      const getKey = (filePath: string) => relativePath(root, filePath)
+      const handleFileUpdate = (eventName: 'add' | 'change', filePath: string) => {
+        const fileKey = getKey(filePath)
 
-  const assets = await Promise.all(
-    filesPaths.map(async (key) => {
-      return checksum(root, key).then((checksum) => {
-        return {
-          key,
-          checksum,
-        }
+        const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
+
+        // Note: here goes the code for syncing the file state with the API
+        const syncPromise = contentPromise.then(() => {})
+
+        emitEvent(eventName, {
+          fileKey,
+          onContent: (fn) => {
+            contentPromise.then(fn).catch(() => {})
+          },
+          onSync: (fn) => {
+            syncPromise.then(fn).catch(() => {})
+          },
+        })
+      }
+
+      const handleFileDelete = (filePath: string) => {
+        const fileKey = getKey(filePath)
+        files.delete(fileKey)
+
+        // Note: here goes the code for syncing the file state with the API
+        const syncPromise = Promise.resolve()
+
+        emitEvent('unlink', {
+          fileKey,
+          onSync: (fn) => {
+            syncPromise.then(fn).catch(() => {})
+          },
+        })
+      }
+
+      const {default: chokidar} = await import('chokidar')
+
+      const directoriesToWatch = new Set(
+        THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+      )
+
+      const watcher = chokidar.watch([...directoriesToWatch], {
+        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        persistent: !process.env.SHOPIFY_UNIT_TEST,
+        ignoreInitial: true,
       })
-    }),
-  )
-  const files = new Map(assets.map((asset) => [asset.key, asset]))
+
+      watcher
+        .on('add', handleFileUpdate.bind(null, 'add'))
+        .on('change', handleFileUpdate.bind(null, 'change'))
+        .on('unlink', handleFileDelete)
+    })
+    .catch(() => {})
 
   return {
     root,
     files,
-    delete: async (assetKey: string) => {
-      await removeThemeFile(root, assetKey)
-      files.delete(assetKey)
+    ready: () => initialFilesPromise.then(() => {}),
+    delete: async (fileKey: string) => {
+      await removeThemeFile(root, fileKey)
+      files.delete(fileKey)
     },
     write: async (asset: ThemeAsset) => {
       await writeThemeFile(root, asset)
       files.set(asset.key, asset)
     },
-    read: async (assetKey: string) => {
-      const fileValue = await readThemeFile(root, assetKey)
-      const fileChecksum = await checksum(root, assetKey)
-      files.set(
-        assetKey,
-        buildThemeAsset({
-          key: assetKey,
-          value: typeof fileValue === 'string' ? fileValue : '',
-          checksum: fileChecksum,
-          attachment: Buffer.isBuffer(fileValue) ? fileValue.toString('base64') : '',
-        })!,
-      )
-      return fileValue
+    read,
+    stat: async (fileKey: string) => {
+      if (files.has(fileKey)) {
+        const absolutePath = joinPath(root, fileKey)
+        const stats = await stat(absolutePath)
+        if (stats.isFile()) {
+          const fileReducedStats = {size: stats.size, mtime: stats.mtime}
+          return fileReducedStats
+        }
+      }
+    },
+    addEventListener: (eventName, cb) => {
+      eventEmitter.on(eventName, cb)
     },
   }
 }

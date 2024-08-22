@@ -1,17 +1,17 @@
-import {isThemeAsset, isJson, readThemeFile, isTextFile} from './theme-fs.js'
+import {isThemeAsset, isJson, isTextFile} from './theme-fs.js'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {fileHash} from '@shopify/cli-kit/node/crypto'
 
-export async function checksum(root: string, path: string) {
-  let content = await readThemeFile(root, path)
+export async function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
+  let content = fileContent
 
   if (!content) return ''
 
   if (Buffer.isBuffer(content)) return md5(content)
 
-  if (isTextFile(path)) content = content.replace(/\r\n/g, '\n')
+  if (isTextFile(fileKey)) content = content.replace(/\r\n/g, '\n')
 
-  if (isJson(path)) {
+  if (isJson(fileKey)) {
     content = normalizeJson(content)
 
     /**
@@ -22,7 +22,7 @@ export async function checksum(root: string, path: string) {
      * approach here (note that already escaped forward slashes are not
      * re-escaped).
      */
-    if (!isThemeAsset(path)) {
+    if (!isThemeAsset(fileKey)) {
       content = content.replace(/(?<!\\)\//g, '\\/')
     }
   }

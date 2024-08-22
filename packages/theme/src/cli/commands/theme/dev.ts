@@ -8,6 +8,7 @@ import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -112,6 +113,10 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_OPEN',
       default: false,
     }),
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
+    }),
     'dev-preview': Flags.boolean({
       hidden: true,
       description: 'Enables the developer preview for the upcoming `theme dev` implementation.',
@@ -172,10 +177,11 @@ You can run this command only in a directory that matches the [default Shopify t
       directory: flags.path,
       store,
       password: flags.password,
+      storePassword: flags['store-password'],
       theme,
       host: flags.host,
       port: flags.port,
-      'live-reload': flags['live-reload'],
+      'live-reload': flags['live-reload'] as LiveReload,
       force: flags.force,
       open: flags.open,
       flagsToPass,

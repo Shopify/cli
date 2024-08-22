@@ -14,7 +14,7 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
   }
 })
 
-const successResponse = {status: 200, headers: {get: vi.fn()}} as any
+const successResponse = {ok: true, status: 200, headers: {get: vi.fn()}} as any
 const sessionCookies = {
   storefront_digest: '00001111222233334444',
   _shopify_essential: ':00112233445566778899:',
@@ -32,8 +32,12 @@ const context = {
   path: '/products/1',
   themeId: '123',
   query: [],
-  cookies: 'theme_cookie=abc;',
-  headers: {'Content-Length': '100', 'X-Special-Header': '200'},
+  headers: {
+    'Content-Length': '100',
+    'X-Special-Header': '200',
+    cookie: 'theme_cookie=abc;',
+    Cookie: 'theme_cookie=def;',
+  },
   replaceTemplates: {},
   sectionId: '',
 }

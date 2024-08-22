@@ -29,6 +29,11 @@ export interface DevServerSession extends AdminSession {
 }
 
 /**
+ * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
+ */
+export type LiveReload = 'hot-reload' | 'full-page' | 'off'
+
+/**
  * Maintains the state of local and remote assets in theme development server.
  */
 export interface DevServerContext {
@@ -46,6 +51,11 @@ export interface DevServerContext {
    * File system tracking local theme assets.
    */
   localThemeFileSystem: ThemeFileSystem
+
+  /**
+   * Path to the local theme directory.
+   */
+  directory: string
 
   /**
    * Additional options for the development server.
@@ -85,7 +95,7 @@ export interface DevServerContext {
     /**
      * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
      */
-    liveReload: string
+    liveReload: LiveReload
 
     /**
      * Automatically open the theme preview in the default browser.
@@ -115,11 +125,6 @@ export interface DevServerRenderContext {
    * Query parameters to be used during rendering.
    */
   query: [string, string][]
-
-  /**
-   * Cookies to be used during rendering.
-   */
-  cookies: string
 
   /**
    * Optional identifier for rendering only a specific section.
