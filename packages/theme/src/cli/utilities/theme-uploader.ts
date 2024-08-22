@@ -5,7 +5,6 @@ import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {fileSize} from '@shopify/cli-kit/node/fs'
 import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
@@ -14,7 +13,9 @@ interface UploadOptions {
   ignore?: string[]
   only?: string[]
 }
-type FileBatch = Checksum[]
+
+type ChecksumWithSize = Checksum & {size: number}
+type FileBatch = ChecksumWithSize[]
 
 // Limits for Bulk Requests
 export const MAX_BATCH_FILE_COUNT = 10
@@ -276,14 +277,12 @@ function createBatchedUploadTasks(
   }
 }
 
-async function createBatches(files: Checksum[], path: string): Promise<FileBatch[]> {
-  const fileSizes = await Promise.all(files.map((file) => fileSize(`${path}/${file.key}`)))
-  const batches = []
-
-  let currentBatch: Checksum[] = []
+function createBatches<T extends {size: number}>(files: T[]): T[][] {
+  const batches: T[][] = []
+  let currentBatch: T[] = []
   let currentBatchSize = 0
 
-  files.forEach((file, index) => {
+  for (const file of files) {
     const hasEnoughItems = currentBatch.length >= MAX_BATCH_FILE_COUNT
     const hasEnoughByteSize = currentBatchSize >= MAX_BATCH_BYTESIZE
 
@@ -294,8 +293,8 @@ async function createBatches(files: Checksum[], path: string): Promise<FileBatch
     }
 
     currentBatch.push(file)
-    currentBatchSize += fileSizes[index] ?? 0
-  })
+    currentBatchSize += file.size ?? 0
+  }
 
   if (currentBatch.length > 0) {
     batches.push(currentBatch)
@@ -304,13 +303,14 @@ async function createBatches(files: Checksum[], path: string): Promise<FileBatch
   return batches
 }
 
-function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): Checksum[] {
-  const checksums: Checksum[] = []
+function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): ChecksumWithSize[] {
+  const checksums: ChecksumWithSize[] = []
 
-  localThemeFileSystem.files.forEach((value, key) => {
+  localThemeFileSystem.files.forEach((file, key) => {
     checksums.push({
       key,
-      checksum: value.checksum,
+      checksum: file.checksum,
+      size: (file.value || file.attachment)?.length ?? 0,
     })
   })
 

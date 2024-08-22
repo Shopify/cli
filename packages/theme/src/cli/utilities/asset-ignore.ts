@@ -1,12 +1,12 @@
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
 
-export async function applyIgnoreFilters(
-  themeChecksums: Checksum[],
+export async function applyIgnoreFilters<T extends {key: string}>(
+  themeChecksums: T[],
   themeFileSystem: ThemeFileSystem,
   options: {ignore?: string[]; only?: string[]} = {},
 ) {
@@ -24,7 +24,7 @@ export async function applyIgnoreFilters(
 }
 
 function filterBy(patterns: string[], type: string, invertMatch = false) {
-  return ({key}: Checksum) => {
+  return ({key}: {key: string}) => {
     if (patterns.length === 0) return true
 
     const match = patterns.some((pattern) => matchGlob(key, pattern) || regexMatch(key, pattern))

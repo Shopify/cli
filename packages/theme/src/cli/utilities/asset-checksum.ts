@@ -2,7 +2,7 @@ import {isThemeAsset, isJson, isTextFile} from './theme-fs.js'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {fileHash} from '@shopify/cli-kit/node/crypto'
 
-export async function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
+export function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
   let content = fileContent
 
   if (!content) return ''

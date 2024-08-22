@@ -64,7 +64,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
   const read = async (fileKey: string) => {
     const fileContent = await readThemeFile(root, fileKey)
-    const fileChecksum = await calculateChecksum(fileKey, fileContent)
+    const fileChecksum = calculateChecksum(fileKey, fileContent)
 
     files.set(
       fileKey,
@@ -216,14 +216,14 @@ export function isJson(path: string) {
   return lookupMimeType(path) === 'application/json'
 }
 
-export function partitionThemeFiles(files: ThemeAsset[]) {
-  const sectionLiquidFiles: ThemeAsset[] = []
-  const otherLiquidFiles: ThemeAsset[] = []
-  const templateJsonFiles: ThemeAsset[] = []
-  const otherJsonFiles: ThemeAsset[] = []
-  const contextualizedJsonFiles: ThemeAsset[] = []
-  const configFiles: ThemeAsset[] = []
-  const staticAssetFiles: ThemeAsset[] = []
+export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
+  const sectionLiquidFiles: T[] = []
+  const otherLiquidFiles: T[] = []
+  const templateJsonFiles: T[] = []
+  const otherJsonFiles: T[] = []
+  const contextualizedJsonFiles: T[] = []
+  const configFiles: T[] = []
+  const staticAssetFiles: T[] = []
 
   files.forEach((file) => {
     const fileKey = file.key
