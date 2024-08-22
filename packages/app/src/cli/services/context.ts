@@ -299,7 +299,7 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
   return app
 }
 
-const storeFromFqdn = async (
+export const storeFromFqdn = async (
   storeFqdn: string,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,

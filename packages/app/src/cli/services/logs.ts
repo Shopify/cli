@@ -1,4 +1,4 @@
-import {DevContextOptions, ensureDevContext} from './context.js'
+import {DevContextOptions, ensureDevContext, storeFromFqdn} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
@@ -14,7 +14,7 @@ interface LogsOptions {
   directory: string
   reset: boolean
   apiKey?: string
-  storeFqdn?: string
+  storeFqdns?: string[]
   sources?: string[]
   status?: string
   configName?: string
@@ -24,6 +24,7 @@ interface LogsOptions {
 
 export async function logs(commandOptions: LogsOptions) {
   const logsConfig = await prepareForLogs(commandOptions)
+  const multipleStores = commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1
 
   const validSources = sourcesForApp(logsConfig.localApp)
 
@@ -43,7 +44,7 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   const variables = {
-    shopIds: [logsConfig.storeId],
+    shopIds: logsConfig.storeIds,
     apiKey: logsConfig.apiKey,
     token: '',
   }
@@ -61,6 +62,7 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   if (commandOptions.format === 'json') {
+    consoleLog(JSON.stringify({subscribedToStores: commandOptions.storeFqdns}))
     consoleLog(JSON.stringify({message: 'Waiting for app logs...'}))
     await renderJsonLogs({
       options: {
@@ -68,8 +70,12 @@ export async function logs(commandOptions: LogsOptions) {
         developerPlatformClient: logsConfig.developerPlatformClient,
       },
       pollOptions,
+      storeNameById: logsConfig.storeNameById,
     })
   } else {
+    if (multipleStores) {
+      consoleLog(`Subscribing to additional stores: ${commandOptions.storeFqdns?.slice(1).join(', ')}\n`)
+    }
     consoleLog('Waiting for app logs...\n')
     await renderLogs({
       options: {
@@ -77,12 +83,14 @@ export async function logs(commandOptions: LogsOptions) {
         developerPlatformClient: logsConfig.developerPlatformClient,
       },
       pollOptions,
+      storeNameById: logsConfig.storeNameById,
     })
   }
 }
 
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{
-  storeId: string
+  storeIds: string[]
+  storeNameById: Map<string, string>
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   localApp: AppInterface
@@ -91,17 +99,34 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
     ...commandOptions,
     userProvidedConfigName: commandOptions.configName,
   })
-  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
-  const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
-  const {storeId, remoteApp, localApp} = await ensureDevContext(devContextOptions)
+  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  const primaryStoreFqdn = commandOptions.storeFqdns?.[0]
+  const devContextOptions: DevContextOptions = {
+    ...commandOptions,
+    storeFqdn: primaryStoreFqdn,
+    developerPlatformClient,
+  }
+  const {storeId, storeFqdn, remoteApp, localApp} = await ensureDevContext(devContextOptions)
 
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const storeNameById = new Map<string, string>()
+  storeNameById.set(storeId, storeFqdn)
+  if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
+    await Promise.all(
+      commandOptions.storeFqdns?.slice(1).map((storeFqdn) => {
+        return storeFromFqdn(storeFqdn, remoteApp.organizationId, developerPlatformClient).then((store) => {
+          storeNameById.set(store.shopId, storeFqdn)
+        })
+      }),
+    )
+  }
+  const storeIds = Array.from(storeNameById.keys())
 
   const apiKey = remoteApp.apiKey
 
   return {
-    storeId,
-    developerPlatformClient,
+    storeIds,
+    storeNameById,
+    developerPlatformClient: remoteApp.developerPlatformClient ?? developerPlatformClient,
     apiKey,
     localApp,
   }

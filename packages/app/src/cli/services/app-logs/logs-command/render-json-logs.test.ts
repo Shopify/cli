@@ -33,31 +33,70 @@ describe('renderJsonLogs', () => {
     const mockSuccessResponse = {
       cursor: 'next-cursor',
       appLogs: [
-        {payload: JSON.stringify({message: 'Log 1'}), log_timestamp: utcTime},
-        {payload: JSON.stringify({message: 'Log 2'}), log_timestamp: utcTime},
+        {shop_id: '1', payload: JSON.stringify({message: 'Log 1'}), log_timestamp: utcTime},
+        {shop_id: '1', payload: JSON.stringify({message: 'Log 2'}), log_timestamp: utcTime},
       ],
     }
     const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
 
+    const storeNameById = new Map<string, string>()
+    storeNameById.set('1', 'storeName')
     await renderJsonLogs({
       pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
         variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
+      storeNameById,
     })
 
     expect(outputInfo).toHaveBeenNthCalledWith(
       1,
-      JSON.stringify({payload: {message: 'Log 1'}, logTimestamp: utcTime, localTime}),
+      JSON.stringify({
+        shopId: '1',
+        payload: {message: 'Log 1'},
+        logTimestamp: utcTime,
+        localTime,
+        storeName: 'storeName',
+      }),
     )
     expect(outputInfo).toHaveBeenNthCalledWith(
       2,
-      JSON.stringify({payload: {message: 'Log 2'}, logTimestamp: utcTime, localTime}),
+      JSON.stringify({
+        shopId: '1',
+        payload: {message: 'Log 2'},
+        logTimestamp: utcTime,
+        localTime,
+        storeName: 'storeName',
+      }),
     )
     expect(pollAppLogs).toHaveBeenCalled()
     expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('should ignore logs with unknown store id', async () => {
+    const utcTime = '2024-09-14T05:00:00.000Z'
+
+    const mockSuccessResponse = {
+      cursor: 'next-cursor',
+      appLogs: [{shop_id: '80809', payload: JSON.stringify({message: 'Log 2'}), log_timestamp: utcTime}],
+    }
+    const pollAppLogsMock = vi.fn().mockResolvedValue(mockSuccessResponse)
+    vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
+
+    const storeNameById = new Map<string, string>()
+    storeNameById.set('1', 'storeName')
+    await renderJsonLogs({
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
+      options: {
+        variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
+        developerPlatformClient: testDeveloperPlatformClient(),
+      },
+      storeNameById,
+    })
+
+    expect(outputInfo).not.toHaveBeenCalled()
   })
 
   test('should handle error response and retry as expected', async () => {
@@ -75,12 +114,15 @@ describe('renderJsonLogs', () => {
     })
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 
+    const storeNameById = new Map<string, string>()
+    storeNameById.set('1', 'storeName')
     await renderJsonLogs({
       pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
         variables: {shopIds: [], apiKey: '', token: ''},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
+      storeNameById,
     })
 
     expect(outputInfo).toHaveBeenCalledWith(

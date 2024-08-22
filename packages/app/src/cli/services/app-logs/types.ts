@@ -174,6 +174,7 @@ export interface PollFilters {
 export interface AppLogPrefix {
   status: string
   source: string
+  storeName: string
   description: string
   logTimestamp: string
 }

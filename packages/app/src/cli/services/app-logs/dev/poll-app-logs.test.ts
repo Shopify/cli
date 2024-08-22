@@ -248,6 +248,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
     await vi.advanceTimersToNextTimerAsync()
 
@@ -274,6 +275,7 @@ describe('pollAppLogs', () => {
       appLogPayload: appLogPayloadZero,
       apiKey: API_KEY,
       stdout,
+      storeName: 'storeName',
     })
 
     const appLogPayloadOne = new FunctionRunLog(
@@ -284,12 +286,14 @@ describe('pollAppLogs', () => {
       appLogPayload: appLogPayloadOne,
       apiKey: API_KEY,
       stdout,
+      storeName: 'storeName',
     })
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[2],
       appLogPayload: JSON.parse(RESPONSE_DATA.app_logs[2]!.payload),
       apiKey: API_KEY,
       stdout,
+      storeName: 'storeName',
     })
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
@@ -361,6 +365,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
@@ -380,6 +385,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
@@ -402,6 +408,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     // Then
@@ -439,6 +446,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     // When/Then

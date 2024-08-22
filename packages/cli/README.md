@@ -552,7 +552,7 @@ USAGE
 FLAGS
   -c, --config=<value>     The name of the app configuration.
   -j, --json               Log the run result as a JSON object.
-  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+  -s, --store=<value>...   Store URL. Must be an existing development or Shopify Plus sandbox store.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.

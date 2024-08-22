@@ -12,9 +12,11 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 export async function renderJsonLogs({
   pollOptions: {cursor, filters, jwtToken},
   options: {variables, developerPlatformClient},
+  storeNameById,
 }: {
   pollOptions: PollOptions
   options: SubscribeOptions
+  storeNameById: Map<string, string>
 }): Promise<void> {
   const response = await pollAppLogs({cursor, filters, jwtToken})
   let retryIntervalMs = POLLING_INTERVAL_MS
@@ -46,7 +48,19 @@ export async function renderJsonLogs({
 
   if (appLogs) {
     appLogs.forEach((log) => {
-      outputInfo(toFormattedAppLogJson(log, parseAppLogPayload(log.payload, log.log_type), false))
+      const storeName = storeNameById.get(log.shop_id?.toString())
+      if (storeName === undefined) {
+        return
+      }
+
+      outputInfo(
+        toFormattedAppLogJson({
+          appLog: log,
+          appLogPayload: parseAppLogPayload(log.payload, log.log_type),
+          storeName,
+          prettyPrint: false,
+        }),
+      )
     })
   }
 
@@ -58,6 +72,7 @@ export async function renderJsonLogs({
         cursor: nextCursor || cursor,
         filters,
       },
+      storeNameById,
     }).catch((error) => {
       throw error
     })

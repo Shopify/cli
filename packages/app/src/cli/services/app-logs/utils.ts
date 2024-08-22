@@ -164,11 +164,17 @@ export function sourcesForApp(app: AppInterface): string[] {
   })
 }
 
-export const toFormattedAppLogJson = (
-  appLog: AppLogData,
-  appLogPayload: AppLogPayload | unknown,
+export const toFormattedAppLogJson = ({
+  appLog,
+  appLogPayload,
+  storeName,
   prettyPrint = true,
-): string => {
+}: {
+  appLog: AppLogData
+  appLogPayload: AppLogPayload | unknown
+  prettyPrint: boolean
+  storeName: string
+}): string => {
   const {cursor: _, ...appLogWithoutCursor} = appLog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toSaveData: any = camelcaseKeys(
@@ -176,6 +182,7 @@ export const toFormattedAppLogJson = (
       ...appLogWithoutCursor,
       payload: appLogPayload,
       localTime: formatLocalDate(appLog.log_timestamp),
+      storeName,
     },
     {deep: true},
   )
