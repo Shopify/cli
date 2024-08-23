@@ -19,12 +19,16 @@ function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null)
   if (!maybeJson) return
 
-  const sections: {[key: string]: {type: string}} = maybeJson?.sections
+  const sections: undefined | {[key: string]: {type: string}} = maybeJson?.sections
 
-  sectionNamesByFile.set(
-    fileKey,
-    Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
-  )
+  if (sections) {
+    sectionNamesByFile.set(
+      fileKey,
+      Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
+    )
+  } else {
+    sectionNamesByFile.delete(fileKey)
+  }
 }
 
 /**
