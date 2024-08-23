@@ -151,15 +151,14 @@ import {
   FindOrganizationQueryVariables,
 } from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
+import {
+  FunctionUploadUrlGenerate,
+  FunctionUploadUrlGenerateMutation,
+} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {
-  FunctionUploadUrlGenerateMutation,
-  FunctionUploadUrlGenerateResponse,
-  partnersRequest,
-  partnersRequestDoc,
-} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -404,8 +403,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
-    return this.request(FunctionUploadUrlGenerateMutation)
+  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
+    return this.requestDoc(FunctionUploadUrlGenerate)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
