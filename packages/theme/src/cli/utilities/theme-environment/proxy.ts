@@ -12,6 +12,7 @@ import {
   setResponseHeaders,
   setResponseHeader,
   removeResponseHeader,
+  setResponseStatus,
 } from 'h3'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {extname} from '@shopify/cli-kit/node/path'
@@ -115,6 +116,7 @@ function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
  * and fix domain inconsistencies between remote instance and local dev.
  */
 export async function patchRenderingResponse(ctx: DevServerContext, event: H3Event, response: NodeResponse) {
+  setResponseStatus(event, response.status, response.statusText)
   setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
   patchProxiedResponseHeaders(ctx, event, response)
 

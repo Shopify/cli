@@ -34,14 +34,6 @@ export async function render(session: DevServerSession, context: DevServerRender
   const requestId = response.headers.get('x-request-id')
   outputDebug(`← ${response.status} (request_id: ${requestId})`)
 
-  if (!response.ok) {
-    throw createError({
-      status: response.status,
-      statusText: response.statusText,
-      data: {requestId, url},
-    })
-  }
-
   return response
 }
 
