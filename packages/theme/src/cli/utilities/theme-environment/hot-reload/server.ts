@@ -2,7 +2,15 @@ import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {prettifySyntaxErrors} from '../html.js'
-import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, sendError, type H3Error} from 'h3'
+import {
+  createError,
+  createEventStream,
+  defineEventHandler,
+  getProxyRequestHeaders,
+  getQuery,
+  sendError,
+  type H3Error,
+} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
@@ -190,6 +198,14 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         replaceTemplates,
       })
         .then(async (response) => {
+          if (!response.ok) {
+            throw createError({
+              status: response.status,
+              statusText: response.statusText,
+              data: {requestId: response.headers.get('x-request-id'), url: response.url},
+            })
+          }
+
           const html = await patchRenderingResponse(ctx, event, response)
           return prettifySyntaxErrors(html)
         })
