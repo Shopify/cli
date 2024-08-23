@@ -7,6 +7,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
 import camelcaseKeys from 'camelcase-keys'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -257,6 +258,7 @@ describe('pollAppLogs', () => {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${JWT_TOKEN}`,
+        'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
       },
     })
 
@@ -264,6 +266,7 @@ describe('pollAppLogs', () => {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${JWT_TOKEN}`,
+        'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
       },
     })
 

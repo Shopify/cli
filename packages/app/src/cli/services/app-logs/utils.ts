@@ -17,6 +17,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -118,11 +119,14 @@ export const fetchAppLogs = async (
   },
 ): Promise<Response> => {
   const url = await generateFetchAppLogUrl(cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
   return fetch(url, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${jwtToken}`,
-    },
+    headers,
   })
 }
 
