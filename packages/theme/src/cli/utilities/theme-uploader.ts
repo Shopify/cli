@@ -43,7 +43,9 @@ export async function uploadTheme(
     uploadResults,
   )
 
-  const deleteJob = uploadPromise.then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
+  const deleteJobPromise = uploadPromise.then(() =>
+    buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
+  )
 
   return {
     uploadResults,
@@ -61,15 +63,17 @@ export async function uploadTheme(
         }),
       )
 
-      const {progress: deleteProgress, promise: deletePromise} = await deleteJob
+      // Report after blocking AND deferrable uploads are done
+      uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
 
       if (deferDelete) {
-        deletePromise
-          .then(() => {})
+        deleteJobPromise
+          .then((job) => job.promise)
           .catch(() => {
             renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
           })
       } else {
+        const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
         await renderTasksToStdErr(
           createIntervalTask({
             promise: deletePromise,
@@ -78,8 +82,6 @@ export async function uploadTheme(
           }),
         )
       }
-
-      reportFailedUploads(uploadResults)
     },
   }
 }
