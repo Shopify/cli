@@ -230,8 +230,9 @@ export function deploymentErrorsToCustomSections(
 function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors'], flags: {version?: string} = {}) {
   if (errors.length > 0) {
     if (
-      errors.filter((error) => error.field.includes('version_tag') && error.message === 'has already been taken')
-        .length > 0 &&
+      errors.filter(
+        (error) => error.field && error.field.includes('version_tag') && error.message === 'has already been taken',
+      ).length > 0 &&
       flags.version
     ) {
       return [
