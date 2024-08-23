@@ -49,7 +49,7 @@ const THEME_PARTITION_REGEX = {
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
   liquidRegex: /\.liquid$/,
   configRegex: /^config\/(settings_schema|settings_data)\.json$/,
-  templateJsonRegex: /^templates\/.+\.json$/,
+  templateJsonRegex: /^(templates|sections)\/.+\.json$/,
   jsonRegex: /^(?!config\/).*\.json$/,
   contextualizedJsonRegex: /\.context\.[^.]+\.json$/i,
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
