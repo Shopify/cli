@@ -57,6 +57,7 @@ const THEME_PARTITION_REGEX = {
 
 export function mountThemeFileSystem(root: string): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
+  const unsyncedFileKeys = new Set<string>()
   const eventEmitter = new EventEmitter()
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
@@ -65,6 +66,10 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
   const read = async (fileKey: string) => {
     const fileContent = await readThemeFile(root, fileKey)
     const fileChecksum = calculateChecksum(fileKey, fileContent)
+
+    if (files.get(fileKey)?.checksum !== fileChecksum) {
+      unsyncedFileKeys.add(fileKey)
+    }
 
     files.set(
       fileKey,
@@ -92,8 +97,13 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
         const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
 
-        // Note: here goes the code for syncing the file state with the API
-        const syncPromise = contentPromise.then(() => {})
+        const syncPromise = contentPromise
+          .then(() => {
+            // Note: here goes the code for syncing the file state with the API
+          })
+          .then(() => {
+            unsyncedFileKeys.delete(fileKey)
+          })
 
         emitEvent(eventName, {
           fileKey,
@@ -108,6 +118,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
       const handleFileDelete = (filePath: string) => {
         const fileKey = getKey(filePath)
+        unsyncedFileKeys.delete(fileKey)
         files.delete(fileKey)
 
         // Note: here goes the code for syncing the file state with the API
@@ -143,6 +154,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
   return {
     root,
     files,
+    unsyncedFileKeys,
     ready: () => initialFilesPromise.then(() => {}),
     delete: async (fileKey: string) => {
       await removeThemeFile(root, fileKey)

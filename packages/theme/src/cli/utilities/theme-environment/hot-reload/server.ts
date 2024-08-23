@@ -12,8 +12,6 @@ import type {DevServerContext} from '../types.js'
 
 // --- Template Replacers ---
 
-/** Store which files are currently only updated in-memory, not in remote */
-const inMemoryTemplateFiles = new Set<string>()
 /** Store existing section names and types read from JSON files in the project */
 const sectionNamesByFile = new Map<string, [string, string][]>()
 
@@ -34,6 +32,7 @@ function saveSectionsFromJson(fileKey: string, content: string) {
  * If a route is passed, it will filter out the templates that are not related to the route.
  */
 export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
+  const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
   const inMemoryTemplates: {[key: string]: string} = {}
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
@@ -75,29 +74,16 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     } else if (needsTemplateUpdate) {
       // Update in-memory templates for hot reloading:
       onContent((content) => {
-        inMemoryTemplateFiles.add(fileKey)
         if (extension === '.json') saveSectionsFromJson(fileKey, content)
         triggerHotReload(fileKey, ctx)
-
-        // Delete template from memory after syncing but keep
-        // JSON values to read section names for hot-reloading sections.
-        if (process.env.SHOPIFY_UNIT_TEST) {
-          // -- Note: Run this also code in prod when onSync is properly implemented
-          onSync(() => inMemoryTemplateFiles.delete(fileKey))
-        }
       })
     }
   }
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
-    onSync(() => {
-      // Delete memory info after syncing with the remote instance because we
-      // don't need to pass replaceTemplates anymore.
-      inMemoryTemplateFiles.delete(fileKey)
-      sectionNamesByFile.delete(fileKey)
-    })
+  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
+    sectionNamesByFile.delete(fileKey)
   })
 
   // Once the initial files are loaded, read all the JSON files so that
@@ -159,6 +145,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       const replaceTemplates: {[key: string]: string} = {}
 
+      const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
       const sectionTemplate =
         inMemoryTemplateFiles.has(sectionKey) && ctx.localThemeFileSystem.files.get(sectionKey)?.value
 

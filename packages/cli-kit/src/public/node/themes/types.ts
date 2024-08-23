@@ -41,6 +41,11 @@ export interface ThemeFileSystem {
   files: Map<Key, ThemeAsset>
 
   /**
+   * File keys that have been modified in memory and are not uploaded yet.
+   */
+  unsyncedFileKeys: Set<Key>
+
+  /**
    * Promise that resolves when all the initial files are found.
    */
   ready: () => Promise<void>
