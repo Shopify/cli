@@ -34,20 +34,19 @@ export async function uploadTheme(
   const uploadResults: Map<string, Result> = new Map()
   await themeFileSystem.ready()
 
-  const {progress: uploadProgress, promise: uploadPromise} = await buildUploadJob(
-    remoteChecksums,
-    themeFileSystem,
-    options,
-    theme,
-    session,
-    uploadResults,
-  )
+  const {
+    progress: uploadProgress,
+    promise: uploadPromise,
+    deferrablePromise: deferrableUploadPromise,
+  } = await buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
   const deleteJob = uploadPromise.then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
 
   return {
     uploadResults,
-    renderThemeSyncProgress: async ({deferDelete} = {deferDelete: false}) => {
+    renderThemeSyncProgress: async (
+      {deferDelete, deferPartialUpload} = {deferDelete: false, deferPartialUpload: false},
+    ) => {
       // The task execution mechanism processes tasks sequentially in the order they are added.
 
       const getProgress = (params: {current: number; total: number}) =>
@@ -55,7 +54,7 @@ export async function uploadTheme(
 
       await renderTasksToStdErr(
         createIntervalTask({
-          promise: uploadPromise,
+          promise: deferPartialUpload ? uploadPromise : deferrableUploadPromise,
           titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
           timeout: 1000,
         }),
@@ -180,26 +179,29 @@ async function buildUploadJob(
   theme: Theme,
   session: AdminSession,
   uploadResults: Map<string, Result>,
-): Promise<SyncJob> {
+): Promise<SyncJob & {deferrablePromise: Promise<void>}> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
-  const orderedFiles = orderFilesToBeUploaded(filesToUpload)
+  const {blockingFiles, deferrableFiles} = orderFilesToBeUploaded(filesToUpload)
 
   const progress = {current: 0, total: filesToUpload.length}
-  const promise = Promise.all(
-    orderedFiles.flatMap((fileType) => {
-      if (fileType.length === 0) return []
+  const createUploadPromise = (orderedFiles: ChecksumWithSize[][]) => {
+    return Promise.all(
+      orderedFiles.flatMap((fileType) => {
+        if (fileType.length === 0) return []
 
-      return createBatches(fileType).map((batch) => {
-        return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
-          progress.current += batch.length
+        return createBatches(fileType).map((batch) => {
+          return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+            progress.current += batch.length
+          })
         })
-      })
-    }),
-  ).then(() => {
-    progress.current = progress.total
-  })
+      }),
+    ).then(() => {})
+  }
 
-  return {progress, promise}
+  const blockingPromise = createUploadPromise(blockingFiles)
+  const deferrablePromise = blockingPromise.then(() => createUploadPromise(deferrableFiles))
+
+  return {progress, promise: blockingPromise, deferrablePromise}
 }
 
 async function selectUploadableFiles(
@@ -220,17 +222,21 @@ async function selectUploadableFiles(
 }
 
 // We use this 2d array to batch files of the same type together while maintaining the order between file types
-function orderFilesToBeUploaded(files: ChecksumWithSize[]): ChecksumWithSize[][] {
+function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
+  blockingFiles: ChecksumWithSize[][]
+  deferrableFiles: ChecksumWithSize[][]
+} {
   const fileSets = partitionThemeFiles(files)
-  return [
-    fileSets.otherLiquidFiles,
-    fileSets.sectionLiquidFiles,
-    fileSets.otherJsonFiles,
-    fileSets.templateJsonFiles,
-    fileSets.contextualizedJsonFiles,
-    fileSets.configFiles,
-    fileSets.staticAssetFiles,
-  ]
+  return {
+    blockingFiles: [
+      fileSets.otherLiquidFiles,
+      fileSets.otherJsonFiles,
+      fileSets.contextualizedJsonFiles,
+      fileSets.configFiles,
+      fileSets.staticAssetFiles,
+    ],
+    deferrableFiles: [fileSets.sectionLiquidFiles, fileSets.templateJsonFiles],
+  }
 }
 
 function createBatches<T extends {size: number}>(files: T[]): T[][] {
