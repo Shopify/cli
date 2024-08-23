@@ -158,6 +158,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
   return [
     ...fileSets.contextualizedJsonFiles,
     ...fileSets.templateJsonFiles,
+    ...fileSets.sectionJsonFiles,
     ...fileSets.otherJsonFiles,
     ...fileSets.sectionLiquidFiles,
     ...fileSets.otherLiquidFiles,
@@ -240,7 +241,22 @@ async function selectUploadableFiles(
   return filesToUpload
 }
 
-// We use this 2d array to batch files of the same type together while maintaining the order between file types
+/**
+ * We use this 2d array to batch files of the same type together
+ * while maintaining the order between file types. The files with
+ * dependencies we have are:
+ * - Liquid sections need to be uploaded first
+ * - JSON sections need to be uploaded afterward so they can reference Liquid sections
+ * - JSON templates should be the next ones so they can reference sections
+ * - Contextualized templates should be uploaded after as they are variations of templates
+ * - Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
+ *
+ * The files with no dependencies we have are:
+ * - The other Liquid files (for example, snippets)
+ * - The other JSON files (for example, locales)
+ * - The static assets
+ *
+ */
 function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
   blockingFiles: ChecksumWithSize[][]
   deferrableFiles: ChecksumWithSize[][]
@@ -248,13 +264,21 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
   const fileSets = partitionThemeFiles(files)
   return {
     blockingFiles: [
-      fileSets.otherLiquidFiles,
+      // Non-dependent big files. Send them first.
       fileSets.otherJsonFiles,
+      fileSets.otherLiquidFiles,
+    ],
+    deferrableFiles: [
+      // Dependent files, in order:
+      fileSets.sectionLiquidFiles,
+      fileSets.sectionJsonFiles,
+      fileSets.templateJsonFiles,
       fileSets.contextualizedJsonFiles,
       fileSets.configFiles,
+
+      // Last, these can be served locally:
       fileSets.staticAssetFiles,
     ],
-    deferrableFiles: [fileSets.sectionLiquidFiles, fileSets.templateJsonFiles],
   }
 }
 

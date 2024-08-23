@@ -49,7 +49,8 @@ const THEME_PARTITION_REGEX = {
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
   liquidRegex: /\.liquid$/,
   configRegex: /^config\/(settings_schema|settings_data)\.json$/,
-  templateJsonRegex: /^(templates|sections)\/.+\.json$/,
+  sectionJsonRegex: /^sections\/.+\.json$/,
+  templateJsonRegex: /^templates\/.+\.json$/,
   jsonRegex: /^(?!config\/).*\.json$/,
   contextualizedJsonRegex: /\.context\.[^.]+\.json$/i,
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
@@ -229,6 +230,7 @@ export function isJson(path: string) {
 export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   const sectionLiquidFiles: T[] = []
   const otherLiquidFiles: T[] = []
+  const sectionJsonFiles: T[] = []
   const templateJsonFiles: T[] = []
   const otherJsonFiles: T[] = []
   const contextualizedJsonFiles: T[] = []
@@ -248,6 +250,8 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
     } else if (THEME_PARTITION_REGEX.jsonRegex.test(fileKey)) {
       if (THEME_PARTITION_REGEX.contextualizedJsonRegex.test(fileKey)) {
         contextualizedJsonFiles.push(file)
+      } else if (THEME_PARTITION_REGEX.sectionJsonRegex.test(fileKey)) {
+        sectionJsonFiles.push(file)
       } else if (THEME_PARTITION_REGEX.templateJsonRegex.test(fileKey)) {
         templateJsonFiles.push(file)
       } else {
@@ -261,6 +265,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   return {
     sectionLiquidFiles,
     otherLiquidFiles,
+    sectionJsonFiles,
     templateJsonFiles,
     contextualizedJsonFiles,
     otherJsonFiles,
