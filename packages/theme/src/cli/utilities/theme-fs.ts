@@ -2,7 +2,7 @@ import {calculateChecksum} from './asset-checksum.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {consoleLog, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -99,6 +99,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
     const syncPromise = contentPromise.then(async (content) => {
       const results = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+      consoleLog('>>> syncPromise :: upload finished')
       results.forEach((result) => {
         if (result.success) {
           outputSyncResult('update', fileKey)
@@ -125,6 +126,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
     const syncPromise = Promise.resolve().then(async () => {
       const success = await deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      consoleLog('>>> syncPromise :: delete finished')
       if (success) {
         outputSyncResult('delete', fileKey)
       } else {

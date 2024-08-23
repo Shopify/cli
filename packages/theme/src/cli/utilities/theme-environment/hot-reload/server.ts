@@ -6,6 +6,7 @@ import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery,
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
+import {consoleLog} from '@shopify/cli-kit/node/output'
 import EventEmitter from 'node:events'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
@@ -86,7 +87,12 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
     }
   }
 
-  ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
+  ctx.localThemeFileSystem.addEventListener('add', ({fileKey, onSync}) => {
+    onSync(() => {
+      consoleLog('full reloading on create')
+      emitHotReloadEvent({type: 'full', key: fileKey})
+    })
+  })
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
     onSync(() => {
@@ -94,6 +100,9 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
       // don't need to pass replaceTemplates anymore.
       inMemoryTemplateFiles.delete(fileKey)
       sectionNamesByFile.delete(fileKey)
+
+      consoleLog('full reloading on delete')
+      emitHotReloadEvent({type: 'full', key: fileKey})
     })
   })
 
@@ -207,6 +216,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 }
 
 function triggerHotReload(key: string, ctx: DevServerContext) {
+  consoleLog('>>> triggerHotReload called')
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
     return emitHotReloadEvent({type: 'full', key})
