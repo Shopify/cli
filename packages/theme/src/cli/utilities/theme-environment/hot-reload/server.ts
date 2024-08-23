@@ -86,6 +86,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
         if (extension === '.json') saveSectionsFromJson(fileKey, content)
         triggerHotReload(fileKey, ctx)
       })
+    } else {
+      // Unknown files outside of assets. Wait for sync and reload:
+      onSync(() => triggerHotReload(fileKey, ctx))
     }
   }
 
