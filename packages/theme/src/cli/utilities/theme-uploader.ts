@@ -180,8 +180,12 @@ async function buildUploadJobs(
   uploadResults: Map<string, Result>,
 ): Promise<{blocking: SyncJob; deferrable: SyncJob}> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
-  const {blockingFiles, deferrableFiles} = orderFilesToBeUploaded(filesToUpload)
 
+  // Adjust unsyncedFileKeys to reflect only the files that are about to be uploaded
+  themeFileSystem.unsyncedFileKeys.clear()
+  filesToUpload.forEach((file) => themeFileSystem.unsyncedFileKeys.add(file.key))
+
+  const {blockingFiles, deferrableFiles} = orderFilesToBeUploaded(filesToUpload)
   const deferrableFilesLength = deferrableFiles.reduce((acc, curr) => acc + curr.length, 0)
 
   const blockingProgress = {current: 0, total: filesToUpload.length - deferrableFilesLength}
@@ -196,14 +200,22 @@ async function buildUploadJobs(
           return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
             blockingProgress.current += batch.length
             deferrableProgress.current += batch.length
+            batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
           })
         })
       }),
-    ).then(() => {})
+    )
   }
 
-  const blockingPromise = createUploadPromise(blockingFiles)
-  const deferrablePromise = blockingPromise.then(() => createUploadPromise(deferrableFiles))
+  const blockingPromise = createUploadPromise(blockingFiles).then(() => {
+    blockingProgress.current = blockingProgress.total
+  })
+
+  const deferrablePromise = blockingPromise
+    .then(() => createUploadPromise(deferrableFiles))
+    .then(() => {
+      deferrableProgress.current = deferrableProgress.total
+    })
 
   return {
     blocking: {promise: blockingPromise, progress: blockingProgress},

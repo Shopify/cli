@@ -67,10 +67,6 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     const fileContent = await readThemeFile(root, fileKey)
     const fileChecksum = calculateChecksum(fileKey, fileContent)
 
-    if (files.get(fileKey)?.checksum !== fileChecksum) {
-      unsyncedFileKeys.add(fileKey)
-    }
-
     files.set(
       fileKey,
       buildThemeAsset({
@@ -94,8 +90,17 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
       const getKey = (filePath: string) => relativePath(root, filePath)
       const handleFileUpdate = (eventName: 'add' | 'change', filePath: string) => {
         const fileKey = getKey(filePath)
+        const lastChecksum = files.get(fileKey)?.checksum
 
-        const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
+        const contentPromise = read(fileKey).then(() => {
+          const file = files.get(fileKey)!
+
+          if (file.checksum !== lastChecksum) {
+            unsyncedFileKeys.add(fileKey)
+          }
+
+          return file.value || file.attachment || ''
+        })
 
         const syncPromise = contentPromise
           .then(() => {
