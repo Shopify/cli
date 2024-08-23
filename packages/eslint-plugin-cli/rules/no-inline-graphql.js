@@ -2,6 +2,7 @@
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
+const debug = require('debug')('eslint-plugin-cli:no-inline-graphql')
 
 /**
  * Check if using a gql`` template literal
@@ -35,6 +36,10 @@ function checkKnownFailuresIfShouldFail(context) {
   const relativePath = path.relative(path.resolve(__dirname, '../../../../../../..'), filePath)
   const fileHash = hashFileSync(filePath)
   const shouldFail = !knownFailures[relativePath] || knownFailures[relativePath] !== fileHash
+
+  if (shouldFail) {
+    debug(`Reporting inline GraphQL tag fail for - '${relativePath}': '${fileHash}',`)
+  }
 
   return shouldFail
 }
@@ -188,4 +193,6 @@ const knownFailures = {
     '431b569c1bcc2756ad3a16a0678525a3fdd5b9c7776b6f314bb8628ea2be537a',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/user-info.ts':
     '8b7f642bb215b93f53a9eb90803a8f9ca8617a75dda8d51c21a06a7574722063',
+  'packages/cli-kit/src/private/node/session.ts': '9081e73c91cb5d7cab7b45571ff2ff479ae71cf43672e8f13bda9a2541ff13c3',
+  'packages/cli-kit/src/public/node/api/admin.ts': '2186080241b4ab29de8bd2f1176e077a1e71234baffb0802a15b0b82f887c9d1',
 }
