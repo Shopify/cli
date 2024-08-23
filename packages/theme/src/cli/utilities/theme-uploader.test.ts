@@ -249,7 +249,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(7)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(6)
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       1,
       remoteTheme.id,
@@ -269,24 +269,13 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
-          key: 'sections/header-group.json',
-        },
-      ],
-      adminSession,
-    )
-
-    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      3,
-      remoteTheme.id,
-      [
-        {
           key: 'templates/product.context.uk.json',
         },
       ],
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      4,
+      3,
       remoteTheme.id,
       [
         {
@@ -299,7 +288,7 @@ describe('theme-uploader', () => {
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      5,
+      4,
       remoteTheme.id,
       [
         {
@@ -311,7 +300,7 @@ describe('theme-uploader', () => {
 
     // Deferrable assets at the end:
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      6,
+      5,
       remoteTheme.id,
       [
         {
@@ -321,9 +310,12 @@ describe('theme-uploader', () => {
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      7,
+      6,
       remoteTheme.id,
       [
+        {
+          key: 'sections/header-group.json',
+        },
         {
           key: 'templates/product.json',
         },
