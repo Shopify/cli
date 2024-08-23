@@ -31,22 +31,28 @@ function saveSectionsFromJson(fileKey: string, content: string) {
   }
 }
 
+function needsTemplateUpdate(fileKey: string) {
+  return !fileKey.startsWith('assets/') && ['.liquid', '.json'].includes(extname(fileKey))
+}
+
 /**
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
  * If a route is passed, it will filter out the templates that are not related to the route.
  */
 export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
-  const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
   const inMemoryTemplates: {[key: string]: string} = {}
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
     ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
-  const hasRouteTemplate = Boolean(currentRoute) && inMemoryTemplateFiles.has(filterTemplate)
+  const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
 
-  for (const fileKey of inMemoryTemplateFiles) {
+  for (const fileKey of ctx.localThemeFileSystem.unsyncedFileKeys) {
+    if (!needsTemplateUpdate(fileKey)) continue
+
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
     if (!content) continue
+
     // Filter out unused JSON templates for the current route. If we're not
     // sure about the current route's template, we send all (modified) JSON templates.
     if (!hasRouteTemplate || !jsonTemplateRE.test(fileKey) || fileKey === filterTemplate) {
@@ -64,18 +70,17 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
-    const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = fileKey.startsWith('assets/')
 
     if (isAsset) {
-      if (needsTemplateUpdate) {
+      if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
         onSync(() => triggerHotReload(fileKey, ctx))
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)
       }
-    } else if (needsTemplateUpdate) {
+    } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
       onContent((content) => {
         if (extension === '.json') saveSectionsFromJson(fileKey, content)

@@ -120,16 +120,9 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
         const fileKey = getKey(filePath)
         unsyncedFileKeys.delete(fileKey)
         files.delete(fileKey)
+        emitEvent('unlink', {fileKey})
 
         // Note: here goes the code for syncing the file state with the API
-        const syncPromise = Promise.resolve()
-
-        emitEvent('unlink', {
-          fileKey,
-          onSync: (fn) => {
-            syncPromise.then(fn).catch(() => {})
-          },
-        })
       }
 
       const {default: chokidar} = await import('chokidar')

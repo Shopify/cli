@@ -4,6 +4,7 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
   return {
     root,
     files,
+    unsyncedFileKeys: new Set(),
     ready: () => Promise.resolve(),
     delete: async (fileKey: string) => {
       files.delete(fileKey)

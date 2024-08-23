@@ -30,11 +30,13 @@ describe('hot-reload server', () => {
     await nextTick()
 
     // -- Initial state:
-    expect(getInMemoryTemplates(ctx)).toEqual({})
     expect(addEventListenerSpy).toHaveBeenCalled()
     expect(addEventListenerSpy).toHaveBeenCalledWith('add', expect.any(Function))
     expect(addEventListenerSpy).toHaveBeenCalledWith('change', expect.any(Function))
     expect(addEventListenerSpy).toHaveBeenCalledWith('unlink', expect.any(Function))
+    // Wait for syncing to finish:
+    await nextTick()
+    expect(getInMemoryTemplates(ctx)).toEqual({})
 
     // -- Subscribes to HotReload events:
     expect(hotReloadEvents).toHaveLength(1)
@@ -109,9 +111,7 @@ describe('hot-reload server', () => {
 
     // -- Unlinks the JSON file properly with all its side effects:
     const hotReloadEventsLengthBeforeUnlink = hotReloadEvents.length
-    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', assetJsonKey)
-    // Waits for syncing to finish:
-    expect(unlinkSyncSpy).toHaveBeenCalled()
+    await triggerFileEvent('unlink', assetJsonKey)
     // Does not emit HotReload events:
     expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
     // Removes the JSON file from memory:
@@ -198,14 +198,24 @@ function createH3Event(url: string) {
 }
 
 function createTestContext(options?: {files?: [string, string][]}) {
-  const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
-  const upsertFile = (key: string, value: string) => localThemeFileSystem.files.set(key, {checksum: '1', key, value})
-  options?.files?.forEach(([key, value]) => upsertFile(key, value))
-
   /** Waits for an event stream to be flushed, or for the last `onSync` callback to be triggered */
   const nextTick = () => new Promise((resolve) => setTimeout(resolve))
 
+  const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
+  const upsertFile = (key: string, value: string) => {
+    localThemeFileSystem.files.set(key, {checksum: '1', key, value})
+    localThemeFileSystem.unsyncedFileKeys.add(key)
+    // Sync the file after 2 ticks to simulate async operations:
+    nextTick()
+      .then(nextTick)
+      .then(() => localThemeFileSystem.unsyncedFileKeys.delete(key))
+      .catch(() => {})
+  }
+
+  options?.files?.forEach(([key, value]) => upsertFile(key, value))
+
   const addEventListenerSpy = vi.spyOn(localThemeFileSystem, 'addEventListener')
+
   /** Updates the fake file system and triggers events */
   const triggerFileEvent = async <T extends ThemeFSEventName>(event: T, fileKey: string, content = 'default-value') => {
     const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
@@ -225,11 +235,13 @@ function createTestContext(options?: {files?: [string, string][]}) {
       upsertFile(fileKey, content)
     }
 
-    handler(isUnlink ? {fileKey, onSync: syncSpy} : {fileKey, onContent: contentSpy, onSync: syncSpy})
-    // Waits for the event to be processed:
+    handler(isUnlink ? {fileKey} : {fileKey, onContent: contentSpy, onSync: syncSpy})
+
+    // Waits for the event to be processed. Since we are using a tick here,
+    // the previous async operations need to be deferred by at least 2 ticks.
     await nextTick()
 
-    return isUnlink ? {syncSpy} : {contentSpy, syncSpy}
+    return isUnlink ? {} : {contentSpy, syncSpy}
   }
 
   const ctx: DevServerContext = {
