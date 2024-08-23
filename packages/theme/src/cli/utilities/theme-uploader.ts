@@ -43,11 +43,11 @@ export async function uploadTheme(
     uploadResults,
   )
 
-  const {promise: deletePromise} = await buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session)
+  const deleteJob = uploadPromise.then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
 
   return {
     uploadResults,
-    renderThemeSyncProgress: async () => {
+    renderThemeSyncProgress: async ({deferDelete} = {deferDelete: false}) => {
       // The task execution mechanism processes tasks sequentially in the order they are added.
 
       const getProgress = (params: {current: number; total: number}) =>
@@ -61,11 +61,23 @@ export async function uploadTheme(
         }),
       )
 
-      deletePromise
-        .then(() => {})
-        .catch(() => {
-          renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-        })
+      const {progress: deleteProgress, promise: deletePromise} = await deleteJob
+
+      if (deferDelete) {
+        deletePromise
+          .then(() => {})
+          .catch(() => {
+            renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+          })
+      } else {
+        await renderTasksToStdErr(
+          createIntervalTask({
+            promise: deletePromise,
+            titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
+            timeout: 1000,
+          }),
+        )
+      }
 
       reportFailedUploads(uploadResults)
     },

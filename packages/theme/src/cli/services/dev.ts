@@ -101,7 +101,7 @@ export async function dev(options: DevOptions) {
   const storefrontPassword = await storefrontPasswordPromise
   session.storefrontPassword = storefrontPassword
 
-  await renderThemeSyncProgress()
+  await renderThemeSyncProgress({deferDelete: true})
   await server.start()
 
   renderLinks(options.store, String(options.theme.id), host, port)
