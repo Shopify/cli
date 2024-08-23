@@ -34,10 +34,6 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../api/graphql/extension_migrate_flow_extension.js'
-import {
-  MigrateMarketingActivityExtensionSchema,
-  MigrateMarketingActivityExtensionVariables,
-} from '../api/graphql/extension_migrate_marketing_activity_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../models/app/template.js'
@@ -249,9 +245,6 @@ export interface DeveloperPlatformClient {
   apiVersions: () => Promise<PublicApiVersionsSchema>
   topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
   migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
-  migrateMarketingActivityExtension: (
-    input: MigrateMarketingActivityExtensionVariables,
-  ) => Promise<MigrateMarketingActivityExtensionSchema>
   migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   currentAccountInfo: () => Promise<CurrentAccountInfoSchema>

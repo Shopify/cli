@@ -91,10 +91,6 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
-import {
-  MigrateMarketingActivityExtensionSchema,
-  MigrateMarketingActivityExtensionVariables,
-} from '../../api/graphql/extension_migrate_marketing_activity_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
@@ -819,12 +815,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
     throw new BugError('Not implemented: migrateFlowExtension')
-  }
-
-  async migrateMarketingActivityExtension(
-    _input: MigrateMarketingActivityExtensionVariables,
-  ): Promise<MigrateMarketingActivityExtensionSchema> {
-    throw new BugError('Not implemented: migrateMarketingActivityExtension')
   }
 
   async migrateAppModule(_input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {
