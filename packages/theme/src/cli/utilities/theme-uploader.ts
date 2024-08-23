@@ -34,13 +34,11 @@ export async function uploadTheme(
   const uploadResults: Map<string, Result> = new Map()
   await themeFileSystem.ready()
 
-  const {
-    progress: uploadProgress,
-    promise: uploadPromise,
-    deferrablePromise: deferrableUploadPromise,
-  } = await buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
+  const uploadJobs = await buildUploadJobs(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 
-  const deleteJob = uploadPromise.then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
+  const deleteJob = uploadJobs.deferrable.promise.then(() =>
+    buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
+  )
 
   return {
     uploadResults,
@@ -52,10 +50,11 @@ export async function uploadTheme(
       const getProgress = (params: {current: number; total: number}) =>
         `[${Math.round((params.current / params.total) * 100)}%]`
 
+      const uploadJob = deferPartialUpload ? uploadJobs.blocking : uploadJobs.deferrable
       await renderTasksToStdErr(
         createIntervalTask({
-          promise: deferPartialUpload ? uploadPromise : deferrableUploadPromise,
-          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
+          promise: uploadJob.promise,
+          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadJob.progress)}`,
           timeout: 1000,
         }),
       )
@@ -172,18 +171,22 @@ interface SyncJob {
   promise: Promise<void>
 }
 
-async function buildUploadJob(
+async function buildUploadJobs(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions,
   theme: Theme,
   session: AdminSession,
   uploadResults: Map<string, Result>,
-): Promise<SyncJob & {deferrablePromise: Promise<void>}> {
+): Promise<{blocking: SyncJob; deferrable: SyncJob}> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
   const {blockingFiles, deferrableFiles} = orderFilesToBeUploaded(filesToUpload)
 
-  const progress = {current: 0, total: filesToUpload.length}
+  const deferrableFilesLength = deferrableFiles.reduce((acc, curr) => acc + curr.length, 0)
+
+  const blockingProgress = {current: 0, total: filesToUpload.length - deferrableFilesLength}
+  const deferrableProgress = {current: 0, total: filesToUpload.length}
+
   const createUploadPromise = (orderedFiles: ChecksumWithSize[][]) => {
     return Promise.all(
       orderedFiles.flatMap((fileType) => {
@@ -191,7 +194,8 @@ async function buildUploadJob(
 
         return createBatches(fileType).map((batch) => {
           return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
-            progress.current += batch.length
+            blockingProgress.current += batch.length
+            deferrableProgress.current += batch.length
           })
         })
       }),
@@ -201,7 +205,10 @@ async function buildUploadJob(
   const blockingPromise = createUploadPromise(blockingFiles)
   const deferrablePromise = blockingPromise.then(() => createUploadPromise(deferrableFiles))
 
-  return {progress, promise: blockingPromise, deferrablePromise}
+  return {
+    blocking: {promise: blockingPromise, progress: blockingProgress},
+    deferrable: {promise: deferrablePromise, progress: deferrableProgress},
+  }
 }
 
 async function selectUploadableFiles(
