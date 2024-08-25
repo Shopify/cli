@@ -114,6 +114,34 @@ module ShopifyCLI
           assert_equal("Not found", response.body)
         end
 
+        def test_replace_local_svgs_in_reponse_body
+          theme = stub("Theme", static_asset_paths: [
+            "assets/icons.svg",
+          ])
+
+          original_html = <<~HTML
+            <html>
+            <body>
+            <svg><use href="//my-test-shop.myshopify.com/assets/icons.svg?v=11111#icon-arrow"></use></svg>
+            <svg><use href="http://my-test-shop.myshopify.com/assets/icons.svg?v=11111#icon-arrow"></use></svg>
+            <svg><use href="https://my-test-shop.myshopify.com/assets/icons.svg?v=11111#icon-arrow"></use></svg>
+            </body>
+            </html>
+          HTML
+
+          expected_html = <<~HTML
+            <html>
+            <body>
+            <svg><use href="/assets/icons.svg?v=11111#icon-arrow"></use></svg>
+            <svg><use href="/assets/icons.svg?v=11111#icon-arrow"></use></svg>
+            <svg><use href="/assets/icons.svg?v=11111#icon-arrow"></use></svg>
+            </body>
+            </html>
+          HTML
+
+          assert_equal(expected_html, serve(original_html, theme_mock: theme).body)
+        end
+
         def test_replace_shop_assets_urls_in_reponse_body
           theme = stub("Theme", static_asset_paths: [
             "assets/component-list-menu.css",

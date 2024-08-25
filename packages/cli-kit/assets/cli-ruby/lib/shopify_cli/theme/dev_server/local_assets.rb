@@ -4,7 +4,7 @@ module ShopifyCLI
   module Theme
     class DevServer
       class LocalAssets
-        SUPPORTED_EXTENSIONS = [:js, :css].join("|")
+        SUPPORTED_EXTENSIONS = [:js, :css, :svg].join("|")
         CDN_REGEX = %r{(//cdn)\.shopify\.com/s/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
         VANITY_CDN_REGEX = %r{(/cdn)/shop/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
 
