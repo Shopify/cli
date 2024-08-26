@@ -67,6 +67,8 @@ export function uploadTheme(
         }),
       )
 
+      uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
+
       if (!options?.deferPartialWork) {
         const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
         await renderTasksToStdErr(
