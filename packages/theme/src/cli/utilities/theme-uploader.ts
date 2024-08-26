@@ -49,7 +49,7 @@ export async function uploadTheme(
 
   return {
     uploadResults,
-    renderThemeSyncProgress: async ({deferDelete} = {deferDelete: false}) => {
+    renderThemeSyncProgress: async (options?: {deferDelete: boolean}) => {
       // The task execution mechanism processes tasks sequentially in the order they are added.
 
       const getProgress = (params: {current: number; total: number}) =>
@@ -66,7 +66,7 @@ export async function uploadTheme(
       // Report after blocking AND deferrable uploads are done
       uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
 
-      if (deferDelete) {
+      if (options?.deferDelete) {
         deleteJobPromise
           .then((job) => job.promise)
           .catch(() => {
@@ -90,13 +90,13 @@ function createIntervalTask({
   promise,
   titleGetter,
   timeout,
+  tasks = [],
 }: {
   promise: Promise<unknown>
   titleGetter: () => string
   timeout: number
+  tasks?: Task[]
 }) {
-  const tasks: Task[] = []
-
   const addNextCheck = () => {
     tasks.push({
       title: titleGetter(),
