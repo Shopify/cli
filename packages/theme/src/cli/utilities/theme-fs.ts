@@ -96,8 +96,15 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
 
     const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
 
-    const syncPromise = contentPromise.then(async (content) => {
-      const results = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+    // contentPromise resolves to file.value and does not include file.attachment
+    const syncPromise = contentPromise.then(async (_content) => {
+      const file = files.get(fileKey)!
+
+      const results = await bulkUploadThemeAssets(
+        Number(themeId),
+        [{key: fileKey, value: file.value || file.attachment}],
+        adminSession,
+      )
       results.forEach((result) => {
         if (result.success) {
           outputSyncResult('update', fileKey)
