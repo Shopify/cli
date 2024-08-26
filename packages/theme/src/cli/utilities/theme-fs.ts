@@ -112,7 +112,7 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
           const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
 
           renderError({
-            headline: 'Failed to upload file.',
+            headline: 'Failed to sync file to remote theme.',
             body: errorMessage,
           })
           throw new Error()
