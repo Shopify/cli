@@ -40,26 +40,25 @@ export function uploadTheme(
     .ready()
     .then(() => buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults))
 
-  const blockingWorkPromise = uploadJobPromise
+  const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
     .then(() => reportFailedUploads(uploadResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
 
-  const deleteJobPromise = blockingWorkPromise.then(() =>
-    buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
-  )
-
-  const deferrableWorkPromise = deleteJobPromise
-    .then((result) => result.promise)
-    .catch(() => {
-      renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-    })
-
-  const workPromise = options?.deferPartialWork ? blockingWorkPromise : deferrableWorkPromise
+  const workPromise = options?.deferPartialWork
+    ? Promise.resolve()
+    : deleteJobPromise
+        .then((result) => result.promise)
+        .catch(() => {
+          renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+        })
 
   return {
     uploadResults,
-    workPromise: workPromise.then(() => {}),
+    workPromise,
     renderThemeSyncProgress: async () => {
+      if (options?.deferPartialWork) return
+
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
       await renderTasksToStdErr(
         createIntervalTask({
@@ -69,16 +68,14 @@ export function uploadTheme(
         }),
       )
 
-      if (!options?.deferPartialWork) {
-        const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
-        await renderTasksToStdErr(
-          createIntervalTask({
-            promise: deletePromise,
-            titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-            timeout: 1000,
-          }),
-        )
-      }
+      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+      await renderTasksToStdErr(
+        createIntervalTask({
+          promise: deletePromise,
+          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
+          timeout: 1000,
+        }),
+      )
     },
   }
 }
@@ -182,6 +179,11 @@ async function buildUploadJob(
   uploadResults: Map<string, Result>,
 ): Promise<SyncJob> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
+
+  // Adjust unsyncedFileKeys to reflect only the files that are about to be uploaded
+  themeFileSystem.unsyncedFileKeys.clear()
+  filesToUpload.forEach((file) => themeFileSystem.unsyncedFileKeys.add(file.key))
+
   const {independentFiles, dependentFiles} = orderFilesToBeUploaded(filesToUpload)
 
   const progress = {current: 0, total: filesToUpload.length}
@@ -192,18 +194,20 @@ async function buildUploadJob(
       createBatches(fileType).map((batch) =>
         uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
           progress.current += batch.length
+          batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
         }),
       ),
     ).then(() => {})
   }
 
-  const independentFilesUploadPromise = uploadFileBatches(independentFiles.flat())
+  // Fire off the dependent files first, then the independent files:
   const dependentFilesUploadPromise = dependentFiles.reduce(
     (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
     Promise.resolve(),
   )
+  const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
-  const promise = Promise.all([independentFilesUploadPromise, dependentFilesUploadPromise]).then(() => {
+  const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
     progress.current += progress.total
   })
 
