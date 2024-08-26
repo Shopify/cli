@@ -160,6 +160,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
   return [
     ...fileSets.contextualizedJsonFiles,
     ...fileSets.templateJsonFiles,
+    ...fileSets.sectionJsonFiles,
     ...fileSets.otherJsonFiles,
     ...fileSets.sectionLiquidFiles,
     ...fileSets.otherLiquidFiles,
@@ -182,21 +183,29 @@ async function buildUploadJob(
   uploadResults: Map<string, Result>,
 ): Promise<SyncJob> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
-  const orderedFiles = orderFilesToBeUploaded(filesToUpload)
+  const {independentFiles, dependentFiles} = orderFilesToBeUploaded(filesToUpload)
 
   const progress = {current: 0, total: filesToUpload.length}
-  const promise = Promise.all(
-    orderedFiles.flatMap((fileType) => {
-      if (fileType.length === 0) return []
 
-      return createBatches(fileType).map((batch) => {
-        return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+  const uploadFileBatches = (fileType: ChecksumWithSize[]) => {
+    if (fileType.length === 0) return Promise.resolve()
+    return Promise.all(
+      createBatches(fileType).map((batch) =>
+        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
           progress.current += batch.length
-        })
-      })
-    }),
-  ).then(() => {
-    progress.current = progress.total
+        }),
+      ),
+    ).then(() => {})
+  }
+
+  const independentFilesUploadPromise = uploadFileBatches(independentFiles.flat())
+  const dependentFilesUploadPromise = dependentFiles.reduce(
+    (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
+    Promise.resolve(),
+  )
+
+  const promise = Promise.all([independentFilesUploadPromise, dependentFilesUploadPromise]).then(() => {
+    progress.current += progress.total
   })
 
   return {progress, promise}
@@ -219,18 +228,37 @@ async function selectUploadableFiles(
   return filesToUpload
 }
 
-// We use this 2d array to batch files of the same type together while maintaining the order between file types
-function orderFilesToBeUploaded(files: ChecksumWithSize[]): ChecksumWithSize[][] {
+/**
+ * We use this 2d array to batch files of the same type together
+ * while maintaining the order between file types. The files with
+ * dependencies we have are:
+ * 1. Liquid sections need to be uploaded first
+ * 2. JSON sections need to be uploaded afterward so they can reference Liquid sections
+ * 3. JSON templates should be the next ones so they can reference sections
+ * 4. Contextualized templates should be uploaded after as they are variations of templates
+ * 5. Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
+ *
+ * The files with no dependencies we have are:
+ * - The other Liquid files (for example, snippets)
+ * - The other JSON files (for example, locales)
+ * - The static assets
+ *
+ */
+function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
+  independentFiles: ChecksumWithSize[][]
+  dependentFiles: ChecksumWithSize[][]
+} {
   const fileSets = partitionThemeFiles(files)
-  return [
-    fileSets.otherLiquidFiles,
-    fileSets.sectionLiquidFiles,
-    fileSets.otherJsonFiles,
-    fileSets.templateJsonFiles,
-    fileSets.contextualizedJsonFiles,
-    fileSets.configFiles,
-    fileSets.staticAssetFiles,
-  ]
+  return {
+    independentFiles: [fileSets.otherJsonFiles, fileSets.otherLiquidFiles, fileSets.staticAssetFiles],
+    dependentFiles: [
+      fileSets.sectionLiquidFiles,
+      fileSets.sectionJsonFiles,
+      fileSets.templateJsonFiles,
+      fileSets.contextualizedJsonFiles,
+      fileSets.configFiles,
+    ],
+  }
 }
 
 function createBatches<T extends {size: number}>(files: T[]): T[][] {
