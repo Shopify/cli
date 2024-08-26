@@ -1,7 +1,7 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {applyIgnoreFilters} from './asset-ignore.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
+import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -12,6 +12,7 @@ interface UploadOptions {
   nodelete?: boolean
   ignore?: string[]
   only?: string[]
+  deferPartialWork?: boolean
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -23,7 +24,7 @@ export const MAX_BATCH_FILE_COUNT = 10
 export const MAX_BATCH_BYTESIZE = 102400
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
-export async function uploadTheme(
+export function uploadTheme(
   theme: Theme,
   session: AdminSession,
   checksums: Checksum[],
@@ -32,29 +33,32 @@ export async function uploadTheme(
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults: Map<string, Result> = new Map()
-  await themeFileSystem.ready()
+  const getProgress = (params: {current: number; total: number}) =>
+    `[${Math.round((params.current / params.total) * 100)}%]`
 
-  const {progress: uploadProgress, promise: uploadPromise} = await buildUploadJob(
-    remoteChecksums,
-    themeFileSystem,
-    options,
-    theme,
-    session,
-    uploadResults,
-  )
+  const uploadJobPromise = themeFileSystem
+    .ready()
+    .then(() => buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults))
 
-  const deleteJobPromise = uploadPromise.then(() =>
+  const blockingWorkPromise = uploadJobPromise.then((result) => result.promise)
+
+  const deleteJobPromise = blockingWorkPromise.then(() =>
     buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
   )
 
+  const deferrableWorkPromise = deleteJobPromise
+    .then((result) => result.promise)
+    .catch(() => {
+      renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+    })
+
+  const workPromise = options?.deferPartialWork ? blockingWorkPromise : deferrableWorkPromise
+
   return {
     uploadResults,
-    renderThemeSyncProgress: async (options?: {deferDelete: boolean}) => {
-      // The task execution mechanism processes tasks sequentially in the order they are added.
-
-      const getProgress = (params: {current: number; total: number}) =>
-        `[${Math.round((params.current / params.total) * 100)}%]`
-
+    workPromise: workPromise.then(() => {}),
+    renderThemeSyncProgress: async () => {
+      const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
       await renderTasksToStdErr(
         createIntervalTask({
           promise: uploadPromise,
@@ -63,16 +67,7 @@ export async function uploadTheme(
         }),
       )
 
-      // Report after blocking AND deferrable uploads are done
-      uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
-
-      if (options?.deferDelete) {
-        deleteJobPromise
-          .then((job) => job.promise)
-          .catch(() => {
-            renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-          })
-      } else {
+      if (!options?.deferPartialWork) {
         const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
         await renderTasksToStdErr(
           createIntervalTask({
@@ -90,13 +85,13 @@ function createIntervalTask({
   promise,
   titleGetter,
   timeout,
-  tasks = [],
 }: {
   promise: Promise<unknown>
   titleGetter: () => string
   timeout: number
-  tasks?: Task[]
 }) {
+  const tasks: Task[] = []
+
   const addNextCheck = () => {
     tasks.push({
       title: titleGetter(),
