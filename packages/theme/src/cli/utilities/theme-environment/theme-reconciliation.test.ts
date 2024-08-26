@@ -61,7 +61,6 @@ describe('reconcileThemeFiles', () => {
       expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, 'templates/template.json', adminSession)
     })
 
-    // should respect the `ignore` option
     test('should not reconcile files that match the `ignore` option', async () => {
       // Given
       const themeFileSystem = fakeThemeFileSystem('tmp', files, {filters: {ignore: ['templates/*']}})
@@ -191,5 +190,19 @@ describe('reconcileThemeFiles', () => {
       // Then
       expect(fetchThemeAsset).not.toHaveBeenCalled()
     })
+  })
+
+  test('should wait for the theme file system to be ready prior to reconciliation', async () => {
+    // Given
+    const themeFileSystem = {
+      ...fakeThemeFileSystem('tmp', files),
+      ready: vi.fn().mockResolvedValue(undefined),
+    }
+
+    // When
+    await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
+
+    // Then
+    expect(themeFileSystem.ready).toHaveBeenCalled()
   })
 })
