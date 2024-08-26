@@ -1,8 +1,8 @@
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderError, renderText} from '@shopify/cli-kit/node/ui'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
@@ -91,7 +91,14 @@ async function syncChangedAssets(
       const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
       if (asset) {
         await localFileSystem.write(asset)
-        renderText({text: `Synced: get '${asset.key}' from remote theme`})
+        outputInfo(
+          outputContent`• ${new Date().toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })} Synced ${outputToken.raw('»')} ${outputToken.gray(`get ${asset.key} from remote theme`)}`,
+        )
       }
     }),
   )
@@ -106,7 +113,14 @@ function deleteRemovedAssets(
     return Promise.all(
       assetsDeletedFromRemote.map((file) =>
         localFileSystem.delete(file.key).then(() => {
-          renderText({text: `Synced: remove '${file.key}' from local theme`})
+          outputInfo(
+            outputContent`• ${new Date().toLocaleTimeString('en-US', {
+              hour12: false,
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })} Synced ${outputToken.raw('»')} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+          )
         }),
       ),
     )
