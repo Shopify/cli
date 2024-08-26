@@ -704,6 +704,9 @@ importers:
         specifier: 2.3.2
         version: 2.3.2
     devDependencies:
+      '@shopify/app':
+        specifier: 3.66.0
+        version: link:../app
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3

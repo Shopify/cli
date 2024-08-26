@@ -1,10 +1,11 @@
-import {graphqlRequest, GraphQLVariables} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc, GraphQLVariables} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
 import {fetch} from '../http.js'
-import {ClientError, gql} from 'graphql-request'
+import {ClientError, gql, Variables} from 'graphql-request'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 /**
  * Executes a GraphQL query against the Admin API.
@@ -20,6 +21,27 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
   const version = 'unstable'
   const url = adminUrl(session.storeFqdn, version)
   return graphqlRequest({query, api, url, token: session.token, variables})
+}
+
+/**
+ * Executes a GraphQL query against the Admin API. Uses typed documents.
+ *
+ * @param query - GraphQL query to execute.
+ * @param session - Shopify admin session including token and Store FQDN.
+ * @param variables - GraphQL variables to pass to the query.
+ * @returns The response of the query of generic type <TResult>.
+ */
+export async function adminRequestDoc<TResult, TVariables extends Variables>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  session: AdminSession,
+  variables?: TVariables,
+): Promise<TResult> {
+  const opts = {
+    url: adminUrl(session.storeFqdn, 'unstable'),
+    api: 'Admin',
+  }
+  const result = graphqlRequestDoc<TResult, TVariables>({...opts, query, variables})
+  return result
 }
 
 /**

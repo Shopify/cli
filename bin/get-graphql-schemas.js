@@ -27,6 +27,11 @@ const schemas = [
     repo: 'shopify',
     pathToFile: 'db/graphql/app_dev_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'db/graphql/admin_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/admin/admin_schema.graphql',
   }
 ]
 
@@ -70,6 +75,9 @@ async function fetchFileForSchema(schema, octokit) {
   try {
     // Fetch the file content from the repository
     const {data} = await octokit.repos.getContent({
+      mediaType: {
+        format: "raw",
+      },
       owner: OWNER,
       repo: schema.repo,
       path: schema.pathToFile,
@@ -77,7 +85,7 @@ async function fetchFileForSchema(schema, octokit) {
     })
 
     // Decode the base64 content
-    const content = Buffer.from(data.content, 'base64').toString('utf-8')
+    const content = Buffer.from(data).toString('utf-8')
 
     // Define the local path where the file will be saved
     const localFilePath = schema.localPath

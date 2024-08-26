@@ -15,40 +15,13 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
   return buildTheme(response.json.theme)
 }
 
-interface ThemesResult {
-  themes: {
-    nodes: Theme[]
-    pageInfo: {
-      hasNextPage: boolean
-      endCursor: string
-    }
-  }
-}
-
+/*
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   let cursor = null
   const themes: Theme[] = []
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response: ThemesResult = await adminRequest(
-      gql`
-      query {
-        themes(first: 50, after: ${cursor}) {
-          nodes {
-            id
-            name
-            role
-            prefix
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
-      }
-    `,
-      session,
-    )
+    const response = await adminRequest(GetThemes, session, {cursor: })
     response.themes.nodes.forEach((theme: Theme) => {
       theme.role = theme.role.toLowerCase()
       // Strip off gid://shopify/Theme/ from the id
@@ -67,6 +40,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
     }
   }
 }
+*/
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('POST', '/themes', session, {theme: {...params}})

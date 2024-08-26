@@ -3,7 +3,12 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/theme/src",
   "projectType": "library",
-  "tags": ["scope:feature"],
+  "implicitDependencies": [
+    "app"
+  ],
+  "tags": [
+    "scope:feature"
+  ],
   "targets": {
     "clean": {
       "executor": "nx:run-commands",
@@ -14,8 +19,13 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "outputs": [
+        "{workspaceRoot}/dist"
+      ],
+      "inputs": [
+        "{projectRoot}/src/**/*",
+        "{projectRoot}/package.json"
+      ],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
         "cwd": "packages/theme"
@@ -23,8 +33,13 @@
     },
     "dev": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "outputs": [
+        "{workspaceRoot}/dist"
+      ],
+      "inputs": [
+        "{projectRoot}/src/**/*",
+        "{projectRoot}/package.json"
+      ],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json --watch",
         "cwd": "packages/theme"
@@ -46,7 +61,9 @@
     },
     "test": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "options": {
         "command": "pnpm vitest run",
         "cwd": "packages/theme"
@@ -54,7 +71,9 @@
     },
     "test:watch": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "options": {
         "command": "pnpm vitest watch",
         "cwd": "packages/theme"

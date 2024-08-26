@@ -56,3 +56,5 @@ export const commands = {
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
 export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata
+
+export {GetThemes, GetThemesQueryVariables} from './api/graphql/admin/generated/get_themes.js'
