@@ -21,13 +21,17 @@ vi.mock('./storefront-renderer.js')
 vi.mock('../theme-uploader.js', async () => {
   return {
     uploadTheme: vi.fn(() => {
-      return Promise.resolve({uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()})
+      return {
+        workPromise: Promise.resolve(),
+        uploadResults: new Map(),
+        renderThemeSyncProgress: () => Promise.resolve(),
+      }
     }),
   }
 })
 beforeEach(() => {
   vi.mocked(uploadTheme).mockImplementation(() => {
-    return Promise.resolve({uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()})
+    return {workPromise: Promise.resolve(), uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()}
   })
 })
 
@@ -77,13 +81,14 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       ignore: ['assets/*.json'],
       nodelete: true,
       only: ['templates/*.liquid'],
+      deferPartialWork: true,
     })
   })
 
@@ -98,7 +103,7 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
@@ -119,21 +124,20 @@ describe('startDevServer', () => {
     const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       ignore: ['assets/*.json'],
       nodelete: true,
       only: ['templates/*.liquid'],
+      deferPartialWork: true,
     })
   })
 
   describe('request handling', async () => {
     const context = {...defaultServerContext}
-    const {
-      server: {dispatch},
-    } = await setupDevServer(developmentTheme, context)
+    const server = setupDevServer(developmentTheme, context)
 
     const html = String.raw
     const decoder = new TextDecoder()
@@ -165,7 +169,7 @@ describe('startDevServer', () => {
         return resEnd(content)
       }
 
-      await dispatch(event)
+      await server.dispatchEvent(event)
       return {res, status: res.statusCode, body}
     }
 

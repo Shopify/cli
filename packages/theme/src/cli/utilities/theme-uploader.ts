@@ -1,7 +1,7 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {applyIgnoreFilters} from './asset-ignore.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
+import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -12,6 +12,7 @@ interface UploadOptions {
   nodelete?: boolean
   ignore?: string[]
   only?: string[]
+  deferPartialWork?: boolean
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -23,7 +24,7 @@ export const MAX_BATCH_FILE_COUNT = 10
 export const MAX_BATCH_BYTESIZE = 102400
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
-export async function uploadTheme(
+export function uploadTheme(
   theme: Theme,
   session: AdminSession,
   checksums: Checksum[],
@@ -32,43 +33,43 @@ export async function uploadTheme(
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults: Map<string, Result> = new Map()
-  await themeFileSystem.ready()
+  const getProgress = (params: {current: number; total: number}) =>
+    `[${Math.round((params.current / params.total) * 100)}%]`
 
-  const uploadJobs = await buildUploadJobs(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
+  const uploadJobPromise = themeFileSystem
+    .ready()
+    .then(() => buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults))
 
-  const deleteJobPromise = uploadJobs.deferrable.promise.then(() =>
+  const blockingWorkPromise = uploadJobPromise.then((result) => result.promise)
+
+  const deleteJobPromise = blockingWorkPromise.then(() =>
     buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
   )
 
+  const deferrableWorkPromise = deleteJobPromise
+    .then((result) => result.promise)
+    .catch(() => {
+      renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+    })
+
+  const workPromise = options?.deferPartialWork ? blockingWorkPromise : deferrableWorkPromise
+
   return {
     uploadResults,
-    renderThemeSyncProgress: async (
-      {deferDelete, deferPartialUpload} = {deferDelete: false, deferPartialUpload: false},
-    ) => {
-      // The task execution mechanism processes tasks sequentially in the order they are added.
-
-      const getProgress = (params: {current: number; total: number}) =>
-        `[${Math.round((params.current / params.total) * 100)}%]`
-
-      const uploadJob = deferPartialUpload ? uploadJobs.blocking : uploadJobs.deferrable
+    workPromise: workPromise.then(() => {}),
+    renderThemeSyncProgress: async () => {
+      const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
       await renderTasksToStdErr(
         createIntervalTask({
-          promise: uploadJob.promise,
-          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadJob.progress)}`,
+          promise: uploadPromise,
+          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
           timeout: 1000,
         }),
       )
 
-      // Report after blocking AND deferrable uploads are done
-      uploadJobs.deferrable.promise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
+      uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
 
-      if (deferDelete) {
-        deleteJobPromise
-          .then((job) => job.promise)
-          .catch(() => {
-            renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-          })
-      } else {
+      if (!options?.deferPartialWork) {
         const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
         await renderTasksToStdErr(
           createIntervalTask({
@@ -172,56 +173,41 @@ interface SyncJob {
   promise: Promise<void>
 }
 
-async function buildUploadJobs(
+async function buildUploadJob(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions,
   theme: Theme,
   session: AdminSession,
   uploadResults: Map<string, Result>,
-): Promise<{blocking: SyncJob; deferrable: SyncJob}> {
+): Promise<SyncJob> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
+  const {independentFiles, dependentFiles} = orderFilesToBeUploaded(filesToUpload)
 
-  // Adjust unsyncedFileKeys to reflect only the files that are about to be uploaded
-  themeFileSystem.unsyncedFileKeys.clear()
-  filesToUpload.forEach((file) => themeFileSystem.unsyncedFileKeys.add(file.key))
+  const progress = {current: 0, total: filesToUpload.length}
 
-  const {blockingFiles, deferrableFiles} = orderFilesToBeUploaded(filesToUpload)
-  const deferrableFilesLength = deferrableFiles.reduce((acc, curr) => acc + curr.length, 0)
-
-  const blockingProgress = {current: 0, total: filesToUpload.length - deferrableFilesLength}
-  const deferrableProgress = {current: 0, total: filesToUpload.length}
-
-  const createUploadPromise = (orderedFiles: ChecksumWithSize[][]) => {
+  const uploadFileBatches = (fileType: ChecksumWithSize[]) => {
+    if (fileType.length === 0) return Promise.resolve()
     return Promise.all(
-      orderedFiles.flatMap((fileType) => {
-        if (fileType.length === 0) return []
-
-        return createBatches(fileType).map((batch) => {
-          return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
-            blockingProgress.current += batch.length
-            deferrableProgress.current += batch.length
-            batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
-          })
-        })
-      }),
-    )
+      createBatches(fileType).map((batch) =>
+        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+          progress.current += batch.length
+        }),
+      ),
+    ).then(() => {})
   }
 
-  const blockingPromise = createUploadPromise(blockingFiles).then(() => {
-    blockingProgress.current = blockingProgress.total
+  const independentFilesUploadPromise = uploadFileBatches(independentFiles.flat())
+  const dependentFilesUploadPromise = dependentFiles.reduce(
+    (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
+    Promise.resolve(),
+  )
+
+  const promise = Promise.all([independentFilesUploadPromise, dependentFilesUploadPromise]).then(() => {
+    progress.current += progress.total
   })
 
-  const deferrablePromise = blockingPromise
-    .then(() => createUploadPromise(deferrableFiles))
-    .then(() => {
-      deferrableProgress.current = deferrableProgress.total
-    })
-
-  return {
-    blocking: {promise: blockingPromise, progress: blockingProgress},
-    deferrable: {promise: deferrablePromise, progress: deferrableProgress},
-  }
+  return {progress, promise}
 }
 
 async function selectUploadableFiles(
@@ -245,11 +231,11 @@ async function selectUploadableFiles(
  * We use this 2d array to batch files of the same type together
  * while maintaining the order between file types. The files with
  * dependencies we have are:
- * - Liquid sections need to be uploaded first
- * - JSON sections need to be uploaded afterward so they can reference Liquid sections
- * - JSON templates should be the next ones so they can reference sections
- * - Contextualized templates should be uploaded after as they are variations of templates
- * - Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
+ * 1. Liquid sections need to be uploaded first
+ * 2. JSON sections need to be uploaded afterward so they can reference Liquid sections
+ * 3. JSON templates should be the next ones so they can reference sections
+ * 4. Contextualized templates should be uploaded after as they are variations of templates
+ * 5. Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
  *
  * The files with no dependencies we have are:
  * - The other Liquid files (for example, snippets)
@@ -258,26 +244,18 @@ async function selectUploadableFiles(
  *
  */
 function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
-  blockingFiles: ChecksumWithSize[][]
-  deferrableFiles: ChecksumWithSize[][]
+  independentFiles: ChecksumWithSize[][]
+  dependentFiles: ChecksumWithSize[][]
 } {
   const fileSets = partitionThemeFiles(files)
   return {
-    blockingFiles: [
-      // Non-dependent big files. Send them first.
-      fileSets.otherJsonFiles,
-      fileSets.otherLiquidFiles,
-    ],
-    deferrableFiles: [
-      // Dependent files, in order:
+    independentFiles: [fileSets.otherJsonFiles, fileSets.otherLiquidFiles, fileSets.staticAssetFiles],
+    dependentFiles: [
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,
       fileSets.templateJsonFiles,
       fileSets.contextualizedJsonFiles,
       fileSets.configFiles,
-
-      // Last, these can be served locally:
-      fileSets.staticAssetFiles,
     ],
   }
 }

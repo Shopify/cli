@@ -46,9 +46,11 @@ describe('dev', () => {
       vi.mocked(ensureValidPassword).mockResolvedValue('valid-password')
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
-      vi.mocked(setupDevServer).mockResolvedValue({
-        renderThemeSyncProgress: () => Promise.resolve(),
-        server: {dispatch: () => {}, start: async () => ({close: async () => {}})},
+      vi.mocked(setupDevServer).mockReturnValue({
+        workPromise: Promise.resolve(),
+        renderDevSetupProgress: () => Promise.resolve(),
+        dispatchEvent: () => {},
+        serverStart: async () => ({close: async () => {}}),
       })
 
       const devOptions = {...options, storePassword: 'wrong-password', 'dev-preview': true, 'theme-editor-sync': true}

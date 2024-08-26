@@ -16,6 +16,7 @@ describe('push', () => {
 
   beforeEach(() => {
     vi.mocked(uploadTheme).mockResolvedValue({
+      workPromise: Promise.resolve(),
       uploadResults: new Map(),
       renderThemeSyncProgress: () => Promise.resolve(),
     })

@@ -249,7 +249,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(7)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(6)
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       1,
       remoteTheme.id,
@@ -259,6 +259,9 @@ describe('theme-uploader', () => {
         },
         {
           key: 'templates/index.liquid',
+        },
+        {
+          key: 'assets/image.png',
         },
       ],
       adminSession,
@@ -313,16 +316,6 @@ describe('theme-uploader', () => {
         },
         {
           key: 'config/settings_schema.json',
-        },
-      ],
-      adminSession,
-    )
-    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      7,
-      remoteTheme.id,
-      [
-        {
-          key: 'assets/image.png',
         },
       ],
       adminSession,
