@@ -6,6 +6,7 @@ import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 import type {
@@ -101,7 +102,13 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
         if (result.success) {
           outputSyncResult('update', fileKey)
         } else if (result.errors?.asset) {
-          throw createAssetUploadError(filePath, result.errors.asset)
+          const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+
+          renderError({
+            headline: 'Failed to upload file.',
+            body: errorMessage,
+          })
+          throw new Error()
         }
       })
     })
@@ -341,8 +348,4 @@ function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
       second: '2-digit',
     })} Synced ${outputToken.raw('»')} ${outputToken.gray(`${action} ${fileKey}`)}`,
   )
-}
-
-function createAssetUploadError(filePath: string, errors: string[]): Error {
-  return new Error(`Failed to upload file ${filePath}:\n${errors.map((error) => `- ${error}`).join('\n')}`)
 }
