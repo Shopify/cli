@@ -61,7 +61,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 }
 
 export function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid(?: syntax)? error \([^\n]+\n/, getErrorSection)
+  return html.replace(/Liquid(?: syntax)? error \([^\n]+(?:\n|<)/g, getErrorSection)
 }
 
 function getErrorSection(error: string) {
