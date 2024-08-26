@@ -40,7 +40,9 @@ export function uploadTheme(
     .ready()
     .then(() => buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults))
 
-  const blockingWorkPromise = uploadJobPromise.then((result) => result.promise)
+  const blockingWorkPromise = uploadJobPromise
+    .then((result) => result.promise)
+    .then(() => reportFailedUploads(uploadResults))
 
   const deleteJobPromise = blockingWorkPromise.then(() =>
     buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
@@ -66,8 +68,6 @@ export function uploadTheme(
           timeout: 1000,
         }),
       )
-
-      uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
 
       if (!options?.deferPartialWork) {
         const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
