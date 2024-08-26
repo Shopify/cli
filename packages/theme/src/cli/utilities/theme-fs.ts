@@ -1,10 +1,12 @@
-/* eslint-disable promise/no-nesting */
 import {calculateChecksum} from './asset-checksum.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 import type {
@@ -81,62 +83,78 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
     cwd: root,
     deep: 3,
     ignore: THEME_DEFAULT_IGNORE_PATTERNS,
-  })
-    .then((filesPaths) => Promise.all(filesPaths.map(read)))
-    .then(async () => {
-      const getKey = (filePath: string) => relativePath(root, filePath)
-      const handleFileUpdate = (eventName: 'add' | 'change', filePath: string) => {
-        const fileKey = getKey(filePath)
+  }).then((filesPaths) => Promise.all(filesPaths.map(read)))
 
-        const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
+  const getKey = (filePath: string) => relativePath(root, filePath)
+  const handleFileUpdate = (
+    eventName: 'add' | 'change',
+    themeId: string,
+    adminSession: AdminSession,
+    filePath: string,
+  ) => {
+    const fileKey = getKey(filePath)
 
-        // Note: here goes the code for syncing the file state with the API
-        const syncPromise = contentPromise.then(() => {})
+    const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
 
-        emitEvent(eventName, {
-          fileKey,
-          onContent: (fn) => {
-            contentPromise.then(fn).catch(() => {})
-          },
-          onSync: (fn) => {
-            syncPromise.then(fn).catch(() => {})
-          },
-        })
-      }
+    // contentPromise resolves to file.value and does not include file.attachment
+    const syncPromise = contentPromise.then(async (_content) => {
+      const file = files.get(fileKey)!
 
-      const handleFileDelete = (filePath: string) => {
-        const fileKey = getKey(filePath)
-        files.delete(fileKey)
-
-        // Note: here goes the code for syncing the file state with the API
-        const syncPromise = Promise.resolve()
-
-        emitEvent('unlink', {
-          fileKey,
-          onSync: (fn) => {
-            syncPromise.then(fn).catch(() => {})
-          },
-        })
-      }
-
-      const {default: chokidar} = await import('chokidar')
-
-      const directoriesToWatch = new Set(
-        THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+      const results = await bulkUploadThemeAssets(
+        Number(themeId),
+        [{key: fileKey, value: file.value || file.attachment}],
+        adminSession,
       )
+      results.forEach((result) => {
+        if (result.success) {
+          outputSyncResult('update', fileKey)
+        } else if (result.errors?.asset) {
+          const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
 
-      const watcher = chokidar.watch([...directoriesToWatch], {
-        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
-        persistent: !process.env.SHOPIFY_UNIT_TEST,
-        ignoreInitial: true,
+          renderError({
+            headline: 'Failed to sync file to remote theme.',
+            body: errorMessage,
+          })
+          throw new Error()
+        }
       })
-
-      watcher
-        .on('add', handleFileUpdate.bind(null, 'add'))
-        .on('change', handleFileUpdate.bind(null, 'change'))
-        .on('unlink', handleFileDelete)
     })
-    .catch(() => {})
+
+    emitEvent(eventName, {
+      fileKey,
+      onContent: (fn) => {
+        contentPromise.then(fn).catch(() => {})
+      },
+      onSync: (fn) => {
+        syncPromise.then(fn).catch(() => {})
+      },
+    })
+  }
+
+  const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
+    const fileKey = getKey(filePath)
+    files.delete(fileKey)
+
+    const syncPromise = Promise.resolve().then(async () => {
+      const success = await deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      if (success) {
+        outputSyncResult('delete', fileKey)
+      } else {
+        throw new Error(`Failed to delete file ${filePath}`)
+      }
+    })
+
+    emitEvent('unlink', {
+      fileKey,
+      onSync: (fn) => {
+        syncPromise.then(fn).catch(() => {})
+      },
+    })
+  }
+
+  const directoriesToWatch = new Set(
+    THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+  )
 
   return {
     root,
@@ -163,6 +181,20 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
     },
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
+    },
+    startWatcher: async (themeId: string, adminSession: AdminSession) => {
+      const {default: chokidar} = await import('chokidar')
+
+      const watcher = chokidar.watch([...directoriesToWatch], {
+        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        persistent: !process.env.SHOPIFY_UNIT_TEST,
+        ignoreInitial: true,
+      })
+
+      watcher
+        .on('add', handleFileUpdate.bind(null, 'add', themeId, adminSession))
+        .on('change', handleFileUpdate.bind(null, 'change', themeId, adminSession))
+        .on('unlink', handleFileDelete.bind(null, themeId, adminSession))
     },
   }
 }
@@ -312,4 +344,15 @@ function dirPath(filePath: string) {
   const fileNameIndex = filePath.lastIndexOf(fileName)
 
   return filePath.substring(0, fileNameIndex)
+}
+
+function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
+  outputInfo(
+    outputContent`• ${new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })} Synced ${outputToken.raw('»')} ${outputToken.gray(`${action} ${fileKey}`)}`,
+  )
 }
