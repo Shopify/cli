@@ -1,3 +1,4 @@
+import {timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -92,12 +93,9 @@ async function syncChangedAssets(
       if (asset) {
         await localFileSystem.write(asset)
         outputInfo(
-          outputContent`• ${new Date().toLocaleTimeString('en-US', {
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })} Synced ${outputToken.raw('»')} ${outputToken.gray(`get ${asset.key} from remote theme`)}`,
+          outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
+            `fetch ${asset.key} from remote theme`,
+          )}`,
         )
       }
     }),
@@ -114,12 +112,9 @@ function deleteRemovedAssets(
       assetsDeletedFromRemote.map((file) =>
         localFileSystem.delete(file.key).then(() => {
           outputInfo(
-            outputContent`• ${new Date().toLocaleTimeString('en-US', {
-              hour12: false,
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })} Synced ${outputToken.raw('»')} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+            outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
+              `remove ${file.key} from local theme`,
+            )}`,
           )
         }),
       ),
