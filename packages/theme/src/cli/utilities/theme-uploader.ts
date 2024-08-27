@@ -36,9 +36,11 @@ export function uploadTheme(
   const getProgress = (params: {current: number; total: number}) =>
     `[${Math.round((params.current / params.total) * 100)}%]`
 
-  const uploadJobPromise = themeFileSystem
-    .ready()
-    .then(() => buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults))
+  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
+
+  const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
+    buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults),
+  )
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
@@ -46,7 +48,7 @@ export function uploadTheme(
     .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
 
   const workPromise = options?.deferPartialWork
-    ? Promise.resolve()
+    ? themeCreationPromise
     : deleteJobPromise
         .then((result) => result.promise)
         .catch(() => {
@@ -163,6 +165,25 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.configFiles,
     ...fileSets.staticAssetFiles,
   ]
+}
+
+export const MINIMUM_THEME_ASSETS = [
+  {key: 'config/settings_schema.json', value: '[]'},
+  {key: 'layout/password.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+  {key: 'layout/theme.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+] as const
+/**
+ * If there's no theme in the remote, we need to create it first so that
+ * requests for _shopify_essential can work. We upload the minimum assets
+ * here to make it faster.
+ */
+async function ensureThemeCreation(theme: Theme, session: AdminSession, remoteChecksums: Checksum[]) {
+  const remoteAssetKeys = new Set(remoteChecksums.map((checksum) => checksum.key))
+  const missingAssets = MINIMUM_THEME_ASSETS.filter(({key}) => !remoteAssetKeys.has(key))
+
+  if (missingAssets.length > 0) {
+    await bulkUploadThemeAssets(theme.id, missingAssets, session)
+  }
 }
 
 interface SyncJob {
