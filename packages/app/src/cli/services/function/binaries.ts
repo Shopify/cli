@@ -100,7 +100,7 @@ export async function installBinary(bin: DownloadableBinary) {
   const url = bin.downloadUrl(process.platform, process.arch)
   outputDebug(`Downloading ${bin.name} ${bin.version} from ${url} to ${bin.path}`)
   await mkdir(dirname(bin.path))
-  const resp = await fetch(url)
+  const resp = await fetchWithRetry(url, 3)
   if (resp.status !== 200) {
     throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
   }
@@ -113,4 +113,26 @@ export async function installBinary(bin: DownloadableBinary) {
   const outputStream = createFileWriteStream(bin.path)
   await bin.processResponse(responseStream, outputStream)
   await chmod(bin.path, 0o775)
+}
+
+async function fetchWithRetry(url: string, retries: number) {
+  const controller = new AbortController()
+  // Picking 5000 ms as the timeout because Javy is around 13 megabytes, so it
+  // will take around 4 seconds to download on a 25 Mbit connection, and also
+  // be able to retry twice in the 13 seconds we have for a test to complete
+  // before timing out.
+  const id = setTimeout(() => controller.abort(), 5000)
+
+  try {
+    const response = await fetch(url, {signal: controller.signal})
+    clearTimeout(id)
+    return response
+  } catch (error) {
+    clearTimeout(id)
+    if (retries > 0) {
+      return fetchWithRetry(url, retries - 1)
+    } else {
+      throw error
+    }
+  }
 }
