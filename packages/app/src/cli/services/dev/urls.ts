@@ -105,7 +105,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   if (options.noTunnel) {
     frontendPort = await getAvailableTCPPort()
-    frontendUrl = 'http://localhost'
+    frontendUrl = 'https://localhost'
     usingLocalhost = true
   } else if (options.tunnelClient) {
     const url = await pollTunnelURL(options.tunnelClient)

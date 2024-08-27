@@ -40,11 +40,12 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {keypress, renderConfirmationPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import * as devcert from 'devcert'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -293,6 +294,25 @@ async function setupNetworkingOptions(
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
   await validateCustomPorts(webs, graphiqlPort)
+
+  if (frontEndOptions.noTunnel) {
+    const res = await renderConfirmationPrompt({
+      message: 'Uninstall devcert?',
+      confirmationMessage: 'Yes, uninstall devcert - you will be prompted for your system password',
+      cancellationMessage: 'No, keep devcert as-is',
+    })
+    if (res) {
+      devcert.uninstall()
+    }
+
+    if (!devcert.hasCertificateFor('localhost')) {
+      outputWarn(
+        '🔐 We need to install a dev certificate for localhost. You will be prompted for your system password. Press any key to continue.',
+      )
+      await keypress()
+    }
+    await devcert.certificateFor('localhost')
+  }
 
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
