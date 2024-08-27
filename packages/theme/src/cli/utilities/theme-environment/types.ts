@@ -112,6 +112,11 @@ export interface DevServerRenderContext {
   path: string
 
   /**
+   * HTTP method to be used during the rendering.
+   */
+  method: 'GET' | 'HEAD' | 'PATCH' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE'
+
+  /**
    * Theme identifier for rendering.
    */
   themeId: string

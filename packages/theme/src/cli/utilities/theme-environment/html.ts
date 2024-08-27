@@ -14,6 +14,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
     return render(ctx.session, {
+      method: event.method,
       path: browserPathname,
       query: [...new URLSearchParams(browserSearch)],
       themeId: String(theme.id),

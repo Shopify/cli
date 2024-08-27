@@ -105,6 +105,7 @@ function printSyntaxError(snippet: string, error: string) {
 async function makeRequest(config: EvaluationConfig): Promise<Response> {
   const requestBody = buildRequestBody(config)
   const response = await render(config.themeSession, {
+    method: 'GET',
     path: config.url,
     query: [],
     themeId: config.themeId,

@@ -12,7 +12,7 @@ export async function render(session: DevServerSession, context: DevServerRender
 
   outputDebug(`→ Rendering ${url} (with ${Object.keys(context.replaceTemplates)})...`)
 
-  const bodyParams = storefrontReplaceTemplatesParams(context.replaceTemplates)
+  const bodyParams = storefrontReplaceTemplatesParams(context)
   const headers = await buildHeaders(session, context)
 
   const response = await fetch(url, {
