@@ -259,5 +259,6 @@ function initializeBugsnag() {
     appVersion: CLI_KIT_VERSION,
     autoTrackSessions: false,
     autoDetectErrors: false,
+    enabledReleaseStages: ['production'],
   })
 }
