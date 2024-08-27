@@ -250,8 +250,20 @@ describe('theme-uploader', () => {
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(6)
+    // Dependent assets start first
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       1,
+      remoteTheme.id,
+      [
+        {
+          key: 'sections/header.liquid',
+        },
+      ],
+      adminSession,
+    )
+    // Independent assets start right before dependent assets start
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      2,
       remoteTheme.id,
       [
         {
@@ -266,17 +278,7 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
-    // Deferrable assets at the end:
-    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      2,
-      remoteTheme.id,
-      [
-        {
-          key: 'sections/header.liquid',
-        },
-      ],
-      adminSession,
-    )
+    // Dependent assets continue after the first batch of dependent assets ends
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       3,
       remoteTheme.id,
