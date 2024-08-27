@@ -200,11 +200,11 @@ async function buildUploadJob(
     ).then(() => {})
   }
 
-  // Fire off the dependent files first, then the independent files:
   const dependentFilesUploadPromise = dependentFiles.reduce(
     (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
     Promise.resolve(),
   )
+  // Wait for dependent files upload to be started before starting this one:
   const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
   const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
@@ -253,7 +253,10 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
 } {
   const fileSets = partitionThemeFiles(files)
   return {
-    independentFiles: [fileSets.otherJsonFiles, fileSets.otherLiquidFiles, fileSets.staticAssetFiles],
+    // Most JSON files here are locales. Since we filter locales out in `replaceTemplates`,
+    // and assets can be served locally, we can give priority to the unique Liquid files:
+    independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
+    // Follow order of dependencies:
     dependentFiles: [
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,

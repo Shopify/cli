@@ -157,7 +157,6 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
 
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
-
   if (locationHeader) setResponseHeader(event, 'Location', locationHeader.replace(/^https?:\/\/[^/]+/, ''))
 
   // Cookies are set for the vanity domain, fix it for localhost:
