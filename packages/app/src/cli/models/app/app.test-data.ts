@@ -10,11 +10,11 @@ import {
   getAppVersionedSchema,
 } from './app.js'
 import {ExtensionTemplate} from './template.js'
+import {Organization, OrganizationStore, MinimalAppIdentifiers, OrganizationApp} from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
@@ -165,7 +165,6 @@ function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
-    website: 'https://www.example.com',
   }
 }
 
@@ -557,6 +556,17 @@ export async function testPaymentsAppExtension(
     specification,
   })
   return extension
+}
+
+export function testOrganizationStore({shopId, shopDomain}: {shopId?: string; shopDomain?: string}): OrganizationStore {
+  return {
+    shopId: shopId ?? '1',
+    link: 'link1',
+    shopDomain: shopDomain ?? 'domain1',
+    shopName: 'store1',
+    transferDisabled: false,
+    convertableToPartnerTest: false,
+  }
 }
 
 const testRemoteSpecifications: RemoteSpecification[] = [
@@ -1203,6 +1213,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
+    supportsDevSessions: stubs.supportsDevSessions ?? false,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -1259,7 +1270,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName'
+          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName' | 'supportsDevSessions'
         >
       ] = vi.fn().mockImplementation(value)
     }

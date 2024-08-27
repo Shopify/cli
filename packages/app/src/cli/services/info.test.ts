@@ -32,7 +32,6 @@ const ORG1 = {
   id: '123',
   flags: {},
   businessName: 'test',
-  website: '',
   apps: {nodes: []},
 }
 
@@ -91,9 +90,7 @@ describe('info', () => {
       // When
       const result = stringifyMessage(await info(app, infoOptions()))
       // Then
-      expect(unstyled(result)).toMatch(
-        `Shopify CLI       ${CLI_KIT_VERSION} 💡 Version 2.2.3 available! Run \`yarn shopify upgrade\``,
-      )
+      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
     })
   })
 

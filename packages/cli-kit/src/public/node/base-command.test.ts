@@ -5,7 +5,7 @@ import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {terminalSupportsRawMode} from './system.js'
+import {terminalSupportsPrompting} from './system.js'
 import {unstyled} from './output.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
@@ -13,7 +13,7 @@ import {Flags} from '@oclif/core'
 vi.mock('./system.js')
 
 beforeEach(() => {
-  vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   vi.unstubAllEnvs()
 })
 
@@ -287,7 +287,7 @@ describe('applying environments', async () => {
 
   runTestInTmpDir('does not throw in TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
     // Given
-    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
 
     // When
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
@@ -298,7 +298,7 @@ describe('applying environments', async () => {
 
   runTestInTmpDir('throws in non-TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
     // Given
-    vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
 
     // When
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])

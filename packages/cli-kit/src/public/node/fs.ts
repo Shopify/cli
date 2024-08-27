@@ -13,7 +13,7 @@ import {
   // @ts-ignore
 } from 'fs-extra/esm'
 
-import {temporaryDirectoryTask} from 'tempy'
+import {temporaryDirectory, temporaryDirectoryTask} from 'tempy'
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
 import {minimatch} from 'minimatch'
@@ -67,6 +67,14 @@ export function stripUpPath(path: string, strip: number): string {
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
   return temporaryDirectoryTask(callback)
+}
+
+/**
+ * Return a temporary directory
+ * @returns - The path to the temporary directory.
+ */
+export function tempDirectory(): string {
+  return temporaryDirectory()
 }
 
 /**

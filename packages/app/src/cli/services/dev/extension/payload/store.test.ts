@@ -22,7 +22,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
       extensions: [{}, {}, {}],
-      storeFqdn: 'mock-store-fqdn.shopify.com',
+      storeFqdn: 'mock-store-fqdn.myshopify.com',
       manifestVersion: '3',
     } as unknown as ExtensionsPayloadStoreOptions
 
@@ -34,9 +34,9 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       app: {
         title: 'mock-app-name',
         apiKey: 'mock-api-key',
-        url: 'https://mock-store-fqdn.shopify.com/admin/oauth/redirect_from_cli?client_id=mock-api-key',
+        url: 'https://mock-store-fqdn.myshopify.com/admin/oauth/redirect_from_cli?client_id=mock-api-key',
         mobileUrl:
-          'https://mock-store-fqdn.shopify.com/admin/apps/mock-api-key?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWluL2FwcHMvbW9jay1hcGkta2V5',
+          'https://mock-store-fqdn.myshopify.com/admin/apps/mock-api-key?shop=mock-store-fqdn.myshopify.com&host=bW9jay1zdG9yZS1mcWRuLm15c2hvcGlmeS5jb20vYWRtaW4vYXBwcy9tb2NrLWFwaS1rZXk',
       },
       version: '3',
       root: {
@@ -48,7 +48,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       devConsole: {
         url: 'https://mock-url.com/extensions/dev-console',
       },
-      store: 'mock-store-fqdn.shopify.com',
+      store: 'mock-store-fqdn.myshopify.com',
       extensions: [{mock: 'extension-payload'}, {mock: 'extension-payload'}, {mock: 'extension-payload'}],
     })
   })

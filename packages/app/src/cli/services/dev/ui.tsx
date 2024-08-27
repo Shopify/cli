@@ -8,7 +8,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 
@@ -70,8 +70,9 @@ export async function renderDev({
   graphiqlUrl,
   graphiqlPort,
   developerPreview,
+  shopFqdn,
 }: DevProps) {
-  if (terminalSupportsRawMode(process.stdin)) {
+  if (terminalSupportsPrompting()) {
     return render(
       <Dev
         processes={processes}
@@ -82,13 +83,14 @@ export async function renderDev({
         graphiqlPort={graphiqlPort}
         developerPreview={developerPreview}
         isEditionWeek={isEditionWeek()}
+        shopFqdn={shopFqdn}
       />,
       {
         exitOnCtrlC: false,
       },
     )
   } else {
-    await renderDevNonInteractive({processes, app, abortController, developerPreview})
+    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   }
 }
 

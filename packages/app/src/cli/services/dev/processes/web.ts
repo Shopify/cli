@@ -23,6 +23,7 @@ interface LaunchWebOptions {
   shopCustomDomain?: string
   hmrServerOptions?: {port: number; httpPaths: string[]}
   portFromConfig?: number
+  roles: WebType[]
 }
 
 export interface WebProcess extends BaseProcess<LaunchWebOptions> {
@@ -81,6 +82,7 @@ export async function setupWebProcesses({
         scopes,
         shopCustomDomain,
         hmrServerOptions,
+        roles: web.configuration.roles,
       },
     }
     return process

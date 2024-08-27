@@ -1,7 +1,9 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerContext, DevServerSession} from '../utilities/theme-environment/types.js'
+import {DevServerContext, DevServerSession, LiveReload} from '../utilities/theme-environment/types.js'
+import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
+import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -9,6 +11,9 @@ import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {openURL} from '@shopify/cli-kit/node/system'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -22,6 +27,7 @@ export interface DevOptions {
   directory: string
   store: string
   password?: string
+  storePassword?: string
   open: boolean
   theme: Theme
   host?: string
@@ -30,7 +36,7 @@ export interface DevOptions {
   flagsToPass: string[]
   'dev-preview': boolean
   'theme-editor-sync': boolean
-  'live-reload': string
+  'live-reload': LiveReload
   noDelete: boolean
   ignore: string[]
   only: string[]
@@ -46,6 +52,10 @@ export async function dev(options: DevOptions) {
     return
   }
 
+  const storefrontPassword = (await isStorefrontPasswordProtected(options.adminSession.storeFqdn))
+    ? await ensureValidPassword(options.storePassword, options.adminSession.storeFqdn)
+    : undefined
+
   if (options.flagsToPass.includes('--poll')) {
     renderWarning({
       body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
@@ -59,16 +69,24 @@ export async function dev(options: DevOptions) {
   const session: DevServerSession = {
     ...options.adminSession,
     storefrontToken: options.storefrontToken,
+    storefrontPassword,
     expiresAt: new Date(),
   }
 
   const host = options.host || DEFAULT_HOST
-  const port = options.port || DEFAULT_PORT
+  if (options.port && !(await checkPortAvailability(Number(options.port)))) {
+    throw new AbortError(
+      `Port ${options.port} is not available. Try a different port or remove the --port flag to use an available port.`,
+    )
+  }
+
+  const port = options.port || String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
   const ctx: DevServerContext = {
     session,
     remoteChecksums,
     localThemeFileSystem,
+    directory: options.directory,
     options: {
       themeEditorSync: options['theme-editor-sync'],
       host,
@@ -81,9 +99,15 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  await setupDevServer(options.theme, ctx, () => {
-    renderLinks(options.store, options.theme.id.toString(), host, port)
-  })
+  const server = await setupDevServer(options.theme, ctx)
+  await server.start()
+
+  renderLinks(options.store, String(options.theme.id), host, port)
+  if (options.open) {
+    openURL(`http://${host}:${port}`).catch((error: Error) => {
+      renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
+    })
+  }
 }
 
 async function legacyDev(options: DevOptions) {

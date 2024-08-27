@@ -9,8 +9,8 @@ import {
   readThemeFilesFromDisk,
 } from './theme-fs.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
+import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
@@ -27,6 +27,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
 
       // Then
       expect(themeFileSystem).toEqual({
@@ -43,9 +44,13 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
         root,
+        ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
+        stat: expect.any(Function),
+        addEventListener: expect.any(Function),
+        startWatcher: expect.any(Function),
       })
     })
 
@@ -55,14 +60,19 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
 
       // Then
       expect(themeFileSystem).toEqual({
         files: new Map([]),
         root,
+        ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
+        stat: expect.any(Function),
+        addEventListener: expect.any(Function),
+        startWatcher: expect.any(Function),
       })
     })
 
@@ -72,6 +82,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       await themeFileSystem.delete('assets/base.css')
 
       // Then
@@ -87,6 +98,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
       await themeFileSystem.delete('assets/base.css')
 
@@ -101,6 +113,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       await themeFileSystem.delete('assets/nonexistent.css')
 
       // Then
@@ -116,6 +129,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
 
       await themeFileSystem.write({key: 'assets/new_file.css', checksum: '1010', value: 'content'})
@@ -137,6 +151,7 @@ describe('theme-fs', () => {
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
 
       await themeFileSystem.write({key: 'assets/new_image.gif', checksum: '1010', attachment})
@@ -157,12 +172,17 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures'
       const key = 'templates/404.json'
       const themeFileSystem = await mountThemeFileSystem(root)
-      expect(themeFileSystem.files.get(key)).toEqual({
+      await themeFileSystem.ready()
+      const file = themeFileSystem.files.get(key)
+      expect(file).toEqual({
         key: 'templates/404.json',
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+        value: expect.any(String),
+        attachment: '',
       })
 
       // When
+      delete file?.value
       const content = await themeFileSystem.read(key)
 
       // Then
@@ -333,10 +353,13 @@ describe('theme-fs', () => {
       // Given
       const filesToRead = [{key: 'assets/base.css', checksum: '1'}]
       const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+      await themeFileSystem.ready()
 
       // When
       const testFile = themeFileSystem.files.get('assets/base.css')
       expect(testFile).toBeDefined()
+      expect(testFile?.value).toBeDefined()
+      delete testFile?.value
       expect(testFile?.value).toBeUndefined()
       await readThemeFilesFromDisk(filesToRead, themeFileSystem)
 
@@ -362,16 +385,19 @@ describe('theme-fs', () => {
       // Given
       const filesToRead = [{key: 'assets/sparkle.gif', checksum: '2'}]
       const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
+      await themeFileSystem.ready()
 
       // When
       const testFile = themeFileSystem.files.get('assets/sparkle.gif')
       expect(testFile).toBeDefined()
+      expect(testFile?.attachment).toBeDefined()
+      delete testFile?.attachment
       expect(testFile?.attachment).toBeUndefined()
       await readThemeFilesFromDisk(filesToRead, themeFileSystem)
 
       // Then
       expect(testFile?.attachment).toBeDefined()
-      expect(testFile?.value).toBeUndefined()
+      expect(testFile?.value).toBeFalsy()
     })
   })
 
@@ -418,7 +444,7 @@ describe('theme-fs', () => {
     })
   })
 
-  function fsEntry({key, checksum}: Checksum): [string, Checksum] {
-    return [key, {key, checksum}]
+  function fsEntry({key, checksum}: Checksum): [string, ThemeAsset] {
+    return [key, {key, checksum, value: expect.any(String), attachment: expect.any(String)}]
   }
 })

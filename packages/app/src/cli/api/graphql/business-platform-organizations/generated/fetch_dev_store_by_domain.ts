@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/ban-types */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -14,17 +14,16 @@ export type FetchDevStoreByDomainQuery = {
     properties?: {
       edges: {
         node:
-          | {__typename: 'BillingAccount'; id: string; externalId?: string | null}
-          | {__typename: 'Property'; id: string; externalId?: string | null}
           | {
               __typename: 'Shop'
+              id: string
+              externalId?: string | null
               name: string
               storeType?: Types.Store | null
               primaryDomain?: string | null
               shortName?: string | null
-              id: string
-              externalId?: string | null
             }
+          | {}
       }[]
     } | null
   } | null
@@ -109,23 +108,23 @@ export const FetchDevStoreByDomain = {
                               selectionSet: {
                                 kind: 'SelectionSet',
                                 selections: [
-                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: 'id'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: 'externalId'}},
                                   {
                                     kind: 'InlineFragment',
                                     typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'Shop'}},
                                     selectionSet: {
                                       kind: 'SelectionSet',
                                       selections: [
+                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: 'externalId'}},
                                         {kind: 'Field', name: {kind: 'Name', value: 'name'}},
                                         {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
                                         {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
                                         {kind: 'Field', name: {kind: 'Name', value: 'shortName'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                       ],
                                     },
                                   },
+                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                 ],
                               },
                             },

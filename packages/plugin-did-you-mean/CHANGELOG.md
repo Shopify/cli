@@ -1,5 +1,21 @@
 # @shopify/plugin-did-you-mean
 
+## 3.66.0
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+- Updated dependencies [05cbe63566]
+- Updated dependencies [40a7b1229a]
+- Updated dependencies [dd4b730962]
+  - @shopify/cli-kit@3.66.0
+
+## 3.65.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.65.0
+
 ## 3.64.0
 
 ### Patch Changes

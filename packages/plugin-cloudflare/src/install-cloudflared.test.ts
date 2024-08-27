@@ -36,7 +36,7 @@ describe('install-cloudflare', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  test('install works when system is mac', async () => {
+  test('install works when system is mac and x64', async () => {
     // Given
     const env = {}
 
@@ -46,7 +46,22 @@ describe('install-cloudflare', () => {
     // Then
     // expect(global.fetch).not.toHaveBeenCalled()
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.6.1/cloudflared-darwin-amd64.tgz',
+      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-amd64.tgz',
+      expect.anything(),
+    )
+  })
+
+  test('install works when system is mac and arm64', async () => {
+    // Given
+    const env = {}
+
+    // When
+    await install(env, 'darwin', 'arm64')
+
+    // Then
+    // expect(global.fetch).not.toHaveBeenCalled()
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-arm64.tgz',
       expect.anything(),
     )
   })
@@ -61,7 +76,7 @@ describe('install-cloudflare', () => {
     // Then
     // expect(global.fetch).not.toHaveBeenCalled()
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.6.1/cloudflared-linux-amd64',
+      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-linux-amd64',
       expect.anything(),
     )
   })
@@ -75,7 +90,7 @@ describe('install-cloudflare', () => {
 
     // Then
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://github.com/cloudflare/cloudflared/releases/download/2024.6.1/cloudflared-windows-amd64.exe',
+      'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-windows-amd64.exe',
       expect.anything(),
     )
   })

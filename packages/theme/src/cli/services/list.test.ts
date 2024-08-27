@@ -54,7 +54,7 @@ describe('list', () => {
       {id: 5, name: 'Theme 5', role: 'development'},
     ] as Theme[])
 
-    await list(session, {role: 'live', name: 'eMe 3', json: false})
+    await list(session, {role: 'live', name: '*eMe 3*', json: false})
 
     expect(renderTable).toBeCalledWith({
       rows: [{id: '#3', name: 'Theme 3', role: '[live]'}],

@@ -124,19 +124,10 @@ describe('pollRemoteJsonChanges', async () => {
     vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
-    const localThemeFileSystem: ThemeFileSystem = {
-      root: 'tmp',
-      files,
-      delete: async (assetKey: string) => {
-        files.delete(assetKey)
-      },
-      write: async (asset: ThemeAsset) => {
-        files.set(asset.key, asset)
-      },
-      read: async (assetKey: string) => {
-        files.set(assetKey, {checksum: '3', key: assetKey})
-        return files.get(assetKey)?.value || files.get(assetKey)?.attachment
-      },
+    const localThemeFileSystem = fakeThemeFileSystem('tmp', files)
+    localThemeFileSystem.read = async (fileKey: string) => {
+      files.set(fileKey, {checksum: '3', key: fileKey})
+      return files.get(fileKey)?.value || files.get(fileKey)?.attachment
     }
 
     // When

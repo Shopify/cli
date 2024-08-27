@@ -1,13 +1,17 @@
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
-import {DevServerContext} from './types.js'
+import {getHotReloadHandler, setupInMemoryTemplateWatcher} from './hot-reload/server.js'
+import {getHtmlHandler} from './html.js'
+import {getAssetsHandler} from './local-assets.js'
+import {getProxyHandler} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {createApp, toNodeListener} from 'h3'
+import {createServer} from 'node:http'
+import type {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {DevServerContext} from './types.js'
 
-export async function setupDevServer(theme: Theme, ctx: DevServerContext, onReady: () => void) {
-  await ensureThemeEnvironmentSetup(theme, ctx)
-  await startDevelopmentServer(theme, ctx)
-
-  onReady()
+export async function setupDevServer(theme: Theme, ctx: DevServerContext) {
+  await Promise.all([ensureThemeEnvironmentSetup(theme, ctx), setupInMemoryTemplateWatcher(theme, ctx)])
+  return createDevelopmentServer(theme, ctx)
 }
 
 async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
@@ -26,4 +30,40 @@ async function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) 
   })
 }
 
-async function startDevelopmentServer(_theme: Theme, _ctx: DevServerContext) {}
+interface DevelopmentServerInstance {
+  close: () => Promise<void>
+}
+
+async function createDevelopmentServer(theme: Theme, ctx: DevServerContext) {
+  const app = createApp()
+
+  if (ctx.options.liveReload !== 'off') {
+    app.use(getHotReloadHandler(theme, ctx))
+  }
+
+  app.use(getAssetsHandler(theme, ctx))
+  app.use(getProxyHandler(theme, ctx))
+  app.use(getHtmlHandler(theme, ctx))
+
+  const server = createServer(toNodeListener(app))
+
+  return {
+    dispatch: app.handler.bind(app),
+    start: async (): Promise<DevelopmentServerInstance> => {
+      return new Promise((resolve) =>
+        server.listen({port: ctx.options.port, host: ctx.options.host}, () =>
+          resolve({
+            close: async () => {
+              await Promise.all([
+                new Promise((resolve) => {
+                  server.closeAllConnections()
+                  server.close(resolve)
+                }),
+              ])
+            },
+          }),
+        ),
+      )
+    },
+  }
+}

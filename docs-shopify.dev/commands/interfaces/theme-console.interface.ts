@@ -25,10 +25,16 @@ export interface themeconsole {
   '--port <value>'?: string
 
   /**
-   * Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>'?: string
+
+  /**
+   * The password for storefronts with password protection.
+   * @environment SHOPIFY_FLAG_STORE_PASSWORD
+   */
+  '--store-password <value>'?: string
 
   /**
    * The url to be used as context

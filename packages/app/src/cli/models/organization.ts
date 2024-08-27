@@ -1,6 +1,5 @@
 import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
-import {Flag} from '../services/dev/fetch.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {Flag, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
 export enum OrganizationSource {
   Partners = 'Partners',
@@ -10,7 +9,6 @@ export enum OrganizationSource {
 export interface Organization {
   id: string
   businessName: string
-  website?: string
   source?: OrganizationSource
 }
 

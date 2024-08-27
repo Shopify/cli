@@ -63,7 +63,8 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
       prefix: {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
-        description: `export "run" executed in 0.5124 M instructions`,
+        description: `export "run" executed in 0.5124M instructions`,
+        storeName: 'my-store',
         status: STATUS === 'success' ? 'Success' : 'Failure',
         source: SOURCE,
       },
@@ -79,6 +80,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
         description: 'network access response from cache',
+        storeName: 'my-store',
         status: 'Success',
         source: SOURCE,
       },
@@ -97,6 +99,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
         logTimestamp: TIME,
         description: 'network access request executed in 80 ms',
         status: 'Success',
+        storeName: 'my-store',
         source: SOURCE,
       },
     },
@@ -113,6 +116,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
         description: 'network access request executed',
+        storeName: 'my-store',
         status: 'Failure',
         source: SOURCE,
       },
@@ -126,6 +130,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
         description: 'network access request executing in background',
+        storeName: 'my-store',
         status: 'Success',
         source: SOURCE,
       },
@@ -139,6 +144,7 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
         functionId: FUNCTION_ID,
         logTimestamp: TIME,
         description: 'network access request executing in background',
+        storeName: 'my-store',
         status: 'Success',
         source: SOURCE,
       },
@@ -152,7 +158,10 @@ const USE_POLL_APP_LOGS_ERRORS_RETURN_VALUE = {
   appLogOutputs: [],
 }
 
-const EMPTY_FILTERS = {status: undefined, source: undefined}
+const STORE_NAME_BY_ID = new Map()
+STORE_NAME_BY_ID.set('1', 'my-store')
+
+const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 describe('Logs', () => {
   test('renders prefix and applogs', async () => {
@@ -164,6 +173,7 @@ describe('Logs', () => {
       <Logs
         pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
         resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
+        storeNameById={new Map()}
       />,
     )
 
@@ -171,96 +181,97 @@ describe('Logs', () => {
     const lastFrame = renderInstance.lastFrame()
 
     expect(unstyled(lastFrame!)).toMatchInlineSnapshot(`
-    "2024-06-18 16:02:04.868 my-function Success export \\"run\\" executed in 0.5124 M instructions
-    test logs
-    Input (10 bytes):
-    {
-      \\"test\\": \\"input\\"
-    }
-    Output (10 bytes):
-    {
-      \\"test\\": \\"output\\"
-    }
-    2024-06-18 16:02:04.868 my-function Success network access response from cache
-    Cache write time: 2023-05-12T15:17:01.000Z
-    Cache TTL: 300 s
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    HTTP response:
-    {
-      \\"status\\": 200,
-      \\"body\\": \\"Success\\",
-      \\"headers\\": {
-        \\"header1\\": \\"value1\\"
-      }
-    }
-    2024-06-18 16:02:04.868 my-function Success network access request executed in 80 ms
-    Attempt: 1
-    Connect time: 40 ms
-    Write read time: 40 ms
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    HTTP response:
-    {
-      \\"status\\": 200,
-      \\"body\\": \\"Success\\",
-      \\"headers\\": {
-        \\"header1\\": \\"value1\\"
-      }
-    }
-    2024-06-18 16:02:04.868 my-function Failure network access request executed
-    Attempt: 1
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    Error: Timeout Error
-    2024-06-18 16:02:04.868 my-function Success network access request executing in background
-    Reason: No cached response available
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }
-    2024-06-18 16:02:04.868 my-function Success network access request executing in background
-    Reason: Cache is about to expire
-    HTTP request:
-    {
-      \\"url\\": \\"https://api.example.com/hello\\",
-      \\"method\\": \\"GET\\",
-      \\"headers\\": {},
-      \\"body\\": null,
-      \\"policy\\": {
-        \\"read_timeout_ms\\": 500
-      }
-    }"
+    "2024-06-18 16:02:04.868 my-store my-function Success export \\"run\\" executed in 0.5124M instructions
+        test logs
+        Input (10 bytes):
+        {
+          \\"test\\": \\"input\\"
+        }
+
+        Output (10 bytes):
+        {
+          \\"test\\": \\"output\\"
+        }
+    2024-06-18 16:02:04.868 my-store my-function Success network access response from cache
+        Cache write time: 2023-05-12T15:17:01.000Z
+        Cache TTL: 300 s
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+        HTTP response:
+        {
+          \\"status\\": 200,
+          \\"body\\": \\"Success\\",
+          \\"headers\\": {
+            \\"header1\\": \\"value1\\"
+          }
+        }
+    2024-06-18 16:02:04.868 my-store my-function Success network access request executed in 80 ms
+        Attempt: 1
+        Connect time: 40 ms
+        Write read time: 40 ms
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+        HTTP response:
+        {
+          \\"status\\": 200,
+          \\"body\\": \\"Success\\",
+          \\"headers\\": {
+            \\"header1\\": \\"value1\\"
+          }
+        }
+    2024-06-18 16:02:04.868 my-store my-function Failure network access request executed
+        Attempt: 1
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+        Error: Timeout Error
+    2024-06-18 16:02:04.868 my-store my-function Success network access request executing in background
+        Reason: No cached response available
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }
+    2024-06-18 16:02:04.868 my-store my-function Success network access request executing in background
+        Reason: Cache is about to expire
+        HTTP request:
+        {
+          \\"url\\": \\"https://api.example.com/hello\\",
+          \\"method\\": \\"GET\\",
+          \\"headers\\": {},
+          \\"body\\": null,
+          \\"policy\\": {
+            \\"read_timeout_ms\\": 500
+          }
+        }"
     `)
 
     renderInstance.unmount()
@@ -276,6 +287,7 @@ describe('Logs', () => {
       <Logs
         pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
         resubscribeCallback={mockedResubscribeCallback}
+        storeNameById={new Map()}
       />,
     )
 

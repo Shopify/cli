@@ -55,6 +55,12 @@ export interface hydrogendev {
   '--env-branch <value>'?: string
 
   /**
+   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.
+   *
+   */
+  '--env-file <value>'?: string
+
+  /**
    * Expose the server to the local network
    *
    */

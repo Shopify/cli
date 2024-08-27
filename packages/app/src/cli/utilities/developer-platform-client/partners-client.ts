@@ -12,9 +12,10 @@ import {
   DeveloperPlatformClient,
   Paginateable,
   DevSessionOptions,
+  filterDisabledFlags,
+  ClientName,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -143,15 +144,21 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {FindAppQuery, FindAppQuerySchema, FindAppQueryVariables} from '../../api/graphql/find_app.js'
+import {
+  FindOrganizationQuery,
+  FindOrganizationQuerySchema,
+  FindOrganizationQueryVariables,
+} from '../../api/graphql/find_org.js'
+import {NoOrgError} from '../../services/dev/fetch.js'
+import {
+  FunctionUploadUrlGenerate,
+  FunctionUploadUrlGenerateMutation,
+} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {
-  FunctionUploadUrlGenerateMutation,
-  FunctionUploadUrlGenerateResponse,
-  partnersRequest,
-  partnersRequestDoc,
-} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -188,11 +195,25 @@ function getAppVars(
   }
 }
 
+interface OrganizationAppsResponse {
+  pageInfo: {
+    hasNextPage: boolean
+  }
+  nodes: MinimalOrganizationApp[]
+}
+
+interface OrgAndAppsResponse {
+  organization: Organization
+  apps: OrganizationAppsResponse
+  stores: OrganizationStore[]
+}
+
 export class PartnersClient implements DeveloperPlatformClient {
-  public clientName = 'partners'
+  public clientName = ClientName.Partners
   public webUiName = 'Partner Dashboard'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
+  public supportsDevSessions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -244,9 +265,17 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const app = await fetchAppDetailsFromApiKey(apiKey, await this.token())
-    if (app) app.developerPlatformClient = this
-    return app
+    const variables: FindAppQueryVariables = {apiKey}
+    const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
+    const app = res.app
+    if (app) {
+      const flags = filterDisabledFlags(app.disabledFlags)
+      return {
+        ...app,
+        flags,
+        developerPlatformClient: this,
+      }
+    }
   }
 
   async organizations(): Promise<Organization[]> {
@@ -275,7 +304,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
-    const result = await fetchOrgAndApps(orgId, await this.session())
+    const result = await this.fetchOrgAndApps(orgId)
     return {
       organization: result.organization,
       apps: result.apps.nodes,
@@ -284,7 +313,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appsForOrg(organizationId: string, term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
-    const result = await fetchOrgAndApps(organizationId, await this.session(), term)
+    const result = await this.fetchOrgAndApps(organizationId, term)
     return {
       apps: result.apps.nodes,
       hasMorePages: result.apps.pageInfo.hasNextPage,
@@ -374,8 +403,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
-    return this.request(FunctionUploadUrlGenerateMutation)
+  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
+    return this.requestDoc(FunctionUploadUrlGenerate)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -503,8 +532,23 @@ export class PartnersClient implements DeveloperPlatformClient {
     throw new Error('Unsupported operation')
   }
 
-  async devSessionDelete(_input: unknown): Promise<never> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async devSessionDelete(_input: unknown): Promise<any> {
     // Dev Sessions are not supported in partners client.
-    throw new Error('Unsupported operation')
+    return Promise.resolve()
+  }
+
+  private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
+    const params: FindOrganizationQueryVariables = {id: orgId}
+    if (title) params.title = title
+    const result: FindOrganizationQuerySchema = await this.request(FindOrganizationQuery, params)
+    const org = result.organizations.nodes[0]
+    if (!org) {
+      const partnersSession = await this.session()
+      throw new NoOrgError(partnersSession.accountInfo, orgId)
+    }
+    const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
+    const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
+    return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
   }
 }

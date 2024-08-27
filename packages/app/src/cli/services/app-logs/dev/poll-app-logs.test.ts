@@ -1,10 +1,13 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
+import {FunctionRunLog} from '../types.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
+import camelcaseKeys from 'camelcase-keys'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -246,6 +249,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
     await vi.advanceTimersToNextTimerAsync()
 
@@ -254,6 +258,7 @@ describe('pollAppLogs', () => {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${JWT_TOKEN}`,
+        'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
       },
     })
 
@@ -261,23 +266,37 @@ describe('pollAppLogs', () => {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${JWT_TOKEN}`,
+        'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
       },
     })
 
+    const appLogPayloadZero = new FunctionRunLog(
+      camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[0]!.payload), {deep: true}),
+    )
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[0],
+      appLogPayload: appLogPayloadZero,
       apiKey: API_KEY,
       stdout,
+      storeName: 'storeName',
     })
+
+    const appLogPayloadOne = new FunctionRunLog(
+      camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[1]!.payload), {deep: true}),
+    )
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[1],
+      appLogPayload: appLogPayloadOne,
       apiKey: API_KEY,
       stdout,
+      storeName: 'storeName',
     })
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[2],
+      appLogPayload: JSON.parse(RESPONSE_DATA.app_logs[2]!.payload),
       apiKey: API_KEY,
       stdout,
+      storeName: 'storeName',
     })
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
@@ -339,7 +358,7 @@ describe('pollAppLogs', () => {
 
   test('calls resubscribe callback if a 401 is received', async () => {
     // Given
-    const response = new Response('errorMessage', {status: 401})
+    const response = new Response(JSON.stringify({errors: ['Unauthorized']}), {status: 401})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
@@ -349,6 +368,7 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
@@ -357,7 +377,9 @@ describe('pollAppLogs', () => {
   test('displays throttle message, waits, and retries if status is 429', async () => {
     // Given
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
-    const mockedFetch = vi.fn().mockResolvedValueOnce(new Response('error for 429', {status: 429}))
+    const mockedFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({errors: ['error for 429']}), {status: 429}))
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
     // When/Then
@@ -366,10 +388,10 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
-    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 60 seconds.')
     expect(vi.getTimerCount()).toEqual(1)
   })
 
@@ -379,7 +401,7 @@ describe('pollAppLogs', () => {
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
 
     // An unexpected error response
-    const response = new Response('errorMessage', {status: 422})
+    const response = new Response(JSON.stringify({errors: ['errorMessage']}), {status: 500})
     const mockedFetch = vi.fn().mockResolvedValueOnce(response)
     vi.mocked(fetch).mockImplementation(mockedFetch)
 
@@ -389,12 +411,51 @@ describe('pollAppLogs', () => {
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
     })
 
     // Then
     expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
-    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
-    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Unhandled bad response: ${response.status}`))
     expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('displays error message, waits, and retries if response contained bad JSON', async () => {
+    // Given
+    const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+
+    const badFunctionLogPayload = 'invalid json'
+    const responseDataWithBadJson = {
+      app_logs: [
+        {
+          shop_id: 1,
+          api_client_id: 1830457,
+          payload: badFunctionLogPayload,
+          log_type: FUNCTION_RUN,
+          cursor: '2024-05-23T19:17:02.321773Z',
+          status: 'success',
+          source: SOURCE,
+          source_namespace: 'extensions',
+          log_timestamp: '2024-05-23T19:17:00.240053Z',
+        },
+      ],
+    }
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(responseDataWithBadJson))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    // When
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
+    })
+
+    // When/Then
+    await expect(writeAppLogsToFile).not.toHaveBeenCalled
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('JSON'))
   })
 })

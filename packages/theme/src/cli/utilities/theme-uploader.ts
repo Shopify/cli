@@ -1,6 +1,7 @@
 import {partitionThemeFiles, readThemeFilesFromDisk} from './theme-fs.js'
 import {applyIgnoreFilters} from './asset-ignore.js'
 import {renderTasksToStdErr} from './theme-ui.js'
+import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -24,11 +25,13 @@ export const MAX_UPLOAD_RETRY_COUNT = 2
 export async function uploadTheme(
   theme: Theme,
   session: AdminSession,
-  remoteChecksums: Checksum[],
+  checksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions = {},
 ) {
+  const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults: Map<string, Result> = new Map()
+  await themeFileSystem.ready()
   const deleteTasks = await buildDeleteTasks(remoteChecksums, themeFileSystem, options, theme, session)
   const uploadTasks = await buildUploadTasks(remoteChecksums, themeFileSystem, options, theme, session, uploadResults)
 

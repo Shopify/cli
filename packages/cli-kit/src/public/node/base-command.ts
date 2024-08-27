@@ -5,7 +5,7 @@ import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {renderInfo, renderWarning} from './ui.js'
 import {outputContent, outputInfo, outputToken} from './output.js'
-import {terminalSupportsRawMode} from './system.js'
+import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {showNotificationsIfNeeded} from './notifications-system.js'
@@ -109,7 +109,7 @@ abstract class BaseCommand extends Command {
   }
 
   protected failMissingNonTTYFlags(flags: FlagOutput, requiredFlags: string[]): void {
-    if (terminalSupportsRawMode()) return
+    if (terminalSupportsPrompting()) return
 
     requiredFlags.forEach((name: string) => {
       if (!(name in flags)) {

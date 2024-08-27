@@ -9,9 +9,10 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -19,7 +20,6 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {appLogPollingEnabled} from '../../app-logs/utils.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -37,6 +37,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | DevSessionProcess
   | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
@@ -83,11 +84,10 @@ export async function setupDevProcesses({
 }> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
-  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
-  const shouldPerformAppLogPolling =
-    appLogPollingEnabled() && localApp.allExtensions.some((extension) => extension.isFunctionExtension)
+  const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -124,13 +124,23 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    await setupDraftableExtensionsProcess({
-      localApp,
-      remoteApp,
-      apiKey,
-      developerPlatformClient,
-      proxyUrl: network.proxyUrl,
-    }),
+    developerPlatformClient.supportsDevSessions
+      ? await setupDevSessionProcess({
+          app: localApp,
+          apiKey,
+          developerPlatformClient,
+          url: network.proxyUrl,
+          appId: remoteApp.id,
+          organizationId: remoteApp.organizationId,
+          storeFqdn,
+        })
+      : await setupDraftableExtensionsProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          developerPlatformClient,
+          proxyUrl: network.proxyUrl,
+        }),
     commandOptions.devPreview
       ? await setupPreviewThemeAppExtensionsProcessNext({
           allExtensions: localApp.allExtensions,
@@ -164,6 +174,7 @@ export async function setupDevProcesses({
             shopIds: [storeId],
             apiKey,
           },
+          storeName: storeFqdn,
         })
       : undefined,
   ].filter(stripUndefineds)
@@ -194,7 +205,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
     processes.map(async (process) => {
       const rules: {[key: string]: string} = {}
 
-      if (process.type === 'web') {
+      if (process.type === 'web' && process.options.roles.includes(WebType.Frontend)) {
         const targetPort = process.options.portFromConfig || process.options.port
         rules.default = `http://localhost:${targetPort}`
         const hmrServer = process.options.hmrServerOptions

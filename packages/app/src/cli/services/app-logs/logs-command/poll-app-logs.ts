@@ -1,4 +1,4 @@
-import {PollOptions, AppLogData, PollResponse} from '../types.js'
+import {PollOptions, AppLogData, PollResponse, PollFilters} from '../types.js'
 import {fetchAppLogs} from '../utils.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -32,13 +32,14 @@ export const pollAppLogs = async ({jwtToken, cursor, filters}: PollOptions): Pro
   }
 }
 
-function filterLogs(appLogs: AppLogData[], filters: {status: string | undefined; source: string | undefined}) {
+function filterLogs(appLogs: AppLogData[], filters: PollFilters) {
   let filterLogs: AppLogData[] = appLogs
 
-  if (filters.status !== undefined || filters.source !== undefined) {
+  if (filters.status !== undefined || filters.sources !== undefined) {
     filterLogs = filterLogs.filter((log) => {
       const statusMatch = filters.status === undefined ? true : log.status === filters.status
-      const sourceMatch = filters.source === undefined ? true : log.source === filters.source
+      const sourceMatch =
+        filters.sources === undefined ? true : filters.sources.includes(`${log.source_namespace}.${log.source}`)
       return statusMatch && sourceMatch
     })
   }

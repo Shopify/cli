@@ -1,17 +1,16 @@
 import {FunctionRunData, replay} from './replay.js'
+import {renderReplay} from './ui.js'
 import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
-import {setupExtensionWatcher} from '../dev/extension/bundler.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputWarn, outputInfo} from '@shopify/cli-kit/node/output'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {readdirSync} from 'fs'
 
 vi.mock('fs')
@@ -22,6 +21,7 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('./ui.js')
 
 describe('replay', () => {
   const developerPlatformClient = testDeveloperPlatformClient()
@@ -131,13 +131,34 @@ describe('replay', () => {
     }).rejects.toThrow()
   })
 
+  test('delegates to renderReplay when watch is true', async () => {
+    // Given
+    const file = createFunctionRunFile({handle: extension.handle})
+    mockFileOperations([file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+
+    vi.mocked(renderReplay)
+
+    // When
+    await replay({
+      app: testApp(),
+      extension,
+      stdout: false,
+      path: 'test-path',
+      json: true,
+      watch: true,
+    })
+
+    expect(renderReplay).toHaveBeenCalledOnce()
+  })
+
   test('aborts on error', async () => {
     // Given
     const file = createFunctionRunFile({handle: extension.handle})
     mockFileOperations([file])
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
-    vi.mocked(setupExtensionWatcher).mockRejectedValueOnce('failure')
+    vi.mocked(renderReplay).mockRejectedValueOnce('failure')
 
     // When
     await expect(async () =>
@@ -150,7 +171,8 @@ describe('replay', () => {
         watch: true,
       }),
     ).rejects.toThrow()
-    const abortSignal = vi.mocked(setupExtensionWatcher).mock.calls[0]![0].signal
+
+    const abortSignal = vi.mocked(renderReplay).mock.calls[0]![0].abortController.signal
 
     // Then
     expect(abortSignal.aborted).toBeTruthy()
@@ -201,101 +223,6 @@ describe('replay', () => {
     ).rejects.toThrow()
   })
 
-  test('runs function once in watch mode without changes', async () => {
-    // Given
-    const file = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file])
-
-    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
-
-    // When
-    await replay({
-      app: testApp(),
-      extension,
-      stdout: false,
-      path: 'test-path',
-      json: true,
-      watch: true,
-    })
-
-    // Then
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(exec).toHaveBeenCalledOnce()
-    expectExecToBeCalledWithInput(file.run.payload.input)
-    expect(outputInfo).toHaveBeenCalledWith(`Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-  })
-
-  test('file watcher onChange re-runs function', async () => {
-    // Given
-    const file = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file])
-    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
-
-    // When
-    await replay({
-      app: testApp(),
-      extension,
-      stdout: false,
-      path: 'test-path',
-      json: true,
-      watch: true,
-    })
-    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onChange()
-
-    // Then
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expectExecToBeCalledWithInput(file.run.payload.input)
-    expect(exec).toHaveBeenCalledTimes(2)
-    expect(outputInfo).toHaveBeenNthCalledWith(1, `Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-    expect(outputInfo).toHaveBeenNthCalledWith(2, `Watching for changes to ${extension.handle}... (Ctrl+C to exit)`)
-  })
-
-  test('renders fatal error in onReloadAndBuildError', async () => {
-    // Given
-    const expectedError = new AbortError('abort!')
-    const file = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file])
-    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
-
-    // When
-    await replay({
-      app: testApp(),
-      extension,
-      stdout: false,
-      path: 'test-path',
-      json: true,
-      watch: true,
-    })
-    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
-
-    // Then
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(renderFatalError).toHaveBeenCalledWith(expectedError)
-  })
-
-  test('outputs non-fatal error in onReloadAndBuildError', async () => {
-    // Given
-    const expectedError = new Error('non-fatal error')
-    const file = createFunctionRunFile({handle: extension.handle})
-    mockFileOperations([file])
-    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
-
-    // When
-    await replay({
-      app: testApp(),
-      extension,
-      stdout: false,
-      path: 'test-path',
-      json: true,
-      watch: true,
-    })
-    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
-
-    // Then
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(outputWarn).toHaveBeenCalledWith(`Failed to replay function: ${expectedError.message}`)
-  })
-
   test('ignores runs with no input and keeps reading chunks until past the threshold', async () => {
     // Given
     const filesWithInput = new Array(99).fill(undefined).map((_) => createFunctionRunFile({handle: extension.handle}))
@@ -306,7 +233,7 @@ describe('replay', () => {
 
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(filesWithInput[0]!.run)
 
-    // // When
+    // When
     await replay({
       app: testApp(),
       extension,
@@ -335,23 +262,23 @@ function createFunctionRunFile(options: FunctionRunFileOptions) {
   const path = `20240522_150641_827Z_extensions_${handle}_${identifier}.json`
   const run: FunctionRunData = {
     identifier,
-    shop_id: 1,
-    api_client_id: 1,
-    log_type: 'function_run',
+    shopId: 1,
+    apiClientId: 1,
+    logType: 'function_run',
     source: handle,
-    source_namespace: 'extensions',
-    log_timestamp: '2024-06-12T20:38:18.796Z',
+    sourceNamespace: 'extensions',
+    logTimestamp: '2024-06-12T20:38:18.796Z',
     cursor: '2024-06-12T20:38:18.796Z',
     status: 'success',
     payload: {
       input: {identifier},
       export: 'run',
-      fuel_consumed: 1,
-      function_id: 'function-id',
-      input_bytes: 1,
+      fuelConsumed: 1,
+      functionId: 'function-id',
+      inputBytes: 1,
       logs: '',
       output: '',
-      output_bytes: 1,
+      outputBytes: 1,
       ...partialPayload,
     },
   }

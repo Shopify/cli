@@ -12,7 +12,7 @@ import {Writable} from 'stream'
 interface BundleOptions {
   app: AppInterface
   bundlePath?: string
-  identifiers: Identifiers
+  identifiers?: Identifiers
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions, systemEnvironment = process.env) {
@@ -39,8 +39,8 @@ export async function bundleAndBuildExtensions(options: BundleOptions, systemEnv
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await extension.buildForBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
-              options.identifiers,
               bundleDirectory,
+              options.identifiers,
             )
           },
         }

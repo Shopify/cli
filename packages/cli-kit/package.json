@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.64.0",
+  "version": "3.66.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -176,8 +176,7 @@
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.25.7",
-    "typescript": "5.2.2",
-    "vitest": "^1.6.0"
+    "typescript": "5.2.2"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

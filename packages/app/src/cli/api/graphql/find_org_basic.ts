@@ -6,7 +6,6 @@ export const FindOrganizationBasicQuery = gql`
       nodes {
         id
         businessName
-        website
       }
     }
   }
@@ -17,7 +16,6 @@ export interface FindOrganizationBasicQuerySchema {
     nodes: {
       id: string
       businessName: string
-      website: string
     }[]
   }
 }

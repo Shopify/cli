@@ -32,11 +32,16 @@ export const ExtensionsArraySchema = zod.object({
   extensions: zod.array(zod.any()).optional(),
 })
 
+const TargetCapabilitiesSchema = zod.object({
+  allow_direct_linking: zod.boolean().optional(),
+})
+
 const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
+  capabilities: TargetCapabilitiesSchema.optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
@@ -49,6 +54,7 @@ export const FieldSchema = zod.object({
   name: zod.string().optional(),
   description: zod.string().optional(),
   required: zod.boolean().optional(),
+  default_value: zod.any().optional(),
   type: zod.string(),
   validations: zod.array(zod.any()).optional(),
 })

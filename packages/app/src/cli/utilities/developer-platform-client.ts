@@ -55,8 +55,13 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
+import {FunctionUploadUrlGenerateMutation} from '../api/graphql/partners/generated/function-upload-url-generate.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+
+export enum ClientName {
+  AppManagement = 'app-management',
+  Partners = 'partners',
+}
 
 export type Paginateable<T> = T & {
   hasMorePages: boolean
@@ -184,11 +189,26 @@ export type AssetUrlSchema = WithUserErrors<{
   assetUrl: string
 }>
 
+export enum Flag {
+  DeclarativeWebhooks,
+}
+
+const FlagMap: {[key: string]: Flag} = {
+  '5b25141b': Flag.DeclarativeWebhooks,
+}
+
+export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
+  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
+  return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
+}
+
 export interface DeveloperPlatformClient {
   clientName: string
   webUiName: string
   supportsAtomicDeployments: boolean
   requiresOrganization: boolean
+  supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
@@ -207,7 +227,7 @@ export interface DeveloperPlatformClient {
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
-  functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
+  functionUploadUrl: () => Promise<FunctionUploadUrlGenerateMutation>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>

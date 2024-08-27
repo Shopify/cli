@@ -12,7 +12,7 @@ import {
   outputWhereAppropriate,
 } from './output.js'
 import {isUnitTest} from './context/local.js'
-import {terminalSupportsRawMode} from './system.js'
+import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
@@ -23,6 +23,7 @@ import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {
+  Token,
   tokenItemToString,
   InlineToken,
   LinkToken,
@@ -692,7 +693,7 @@ interface IsTTYOptions {
 }
 
 export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
-  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode())
+  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsPrompting())
 }
 
 interface ThrowInNonTTYOptions {
@@ -709,7 +710,7 @@ function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDeb
 
 ${outputContent`${outputToken.cyan(promptText)}`.value}
 
-This usually happens when running a command non-interactively, for example in a CI environment, or when piping input from another process.`
+This usually happens when running a command non-interactively, for example in a CI environment, or when piping to or from another process.`
   throw new AbortError(
     errorMessage,
     'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
@@ -718,4 +719,4 @@ This usually happens when running a command non-interactively, for example in a 
 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}
+export {Token, Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}

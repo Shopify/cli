@@ -1,7 +1,31 @@
+import {AdminSession} from '../session.js'
+import type {Stats} from 'fs'
+
 /**
  * {@link Key} represents the unique identifier of a file in a theme.
  */
 export type Key = string
+
+export type ThemeFSEventName = 'add' | 'change' | 'unlink'
+
+interface ThemeFSEventCommonPayload {
+  fileKey: Key
+  onSync: (fn: () => void) => void
+}
+
+type ThemeFSEvent =
+  | {
+      type: 'unlink'
+      payload: ThemeFSEventCommonPayload
+    }
+  | {
+      type: 'add' | 'change'
+      payload: ThemeFSEventCommonPayload & {
+        onContent: (fn: (content: string) => void) => void
+      }
+    }
+
+export type ThemeFSEventPayload<T extends ThemeFSEventName = 'add'> = (ThemeFSEvent & {type: T})['payload']
 
 /**
  * Represents a theme on the file system.
@@ -18,11 +42,16 @@ export interface ThemeFileSystem {
   files: Map<Key, ThemeAsset>
 
   /**
+   * Promise that resolves when all the initial files are found.
+   */
+  ready: () => Promise<void>
+
+  /**
    * Removes a file from the local disk and updates the themeFileSystem
    *
-   * @param assetKey - The key of the file to remove
+   * @param fileKey - The key of the file to remove
    */
-  delete: (assetKey: string) => Promise<void>
+  delete: (fileKey: Key) => Promise<void>
 
   /**
    * Writes a file to the local disk and updates the themeFileSystem
@@ -36,9 +65,33 @@ export interface ThemeFileSystem {
    * Returns a ThemeAsset representing the file that was read
    * Returns undefined if the file does not exist
    *
-   * @param assetKey - The key of the file to read
+   * @param fileKey - The key of the file to read
    */
-  read: (assetKey: string) => Promise<string | Buffer | undefined>
+  read: (fileKey: Key) => Promise<string | Buffer | undefined>
+
+  /**
+   * Gets the stats of a file from the local disk and updates the themeFileSystem
+   * Returns undefined if the file does not exist
+   *
+   * @param fileKey - The key of the file to read
+   */
+  stat: (fileKey: Key) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
+
+  /**
+   * Add callbacks to run after certain events are fired.
+   */
+  addEventListener: {
+    <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
+  }
+
+  /**
+   * Starts a file watcher for the theme directory.
+   *
+   * @param themeId - The ID of the theme being watched.
+   * @param adminSession - The admin session for API communication.
+   * @returns A Promise that resolves to an FSWatcher instance.
+   */
+  startWatcher: (themeId: string, adminSession: AdminSession) => Promise<void>
 }
 
 /**
@@ -69,6 +122,11 @@ export interface Theme {
    * The remote role of the theme.
    */
   role: string
+
+  /**
+   * A public URL where Shopify can access the theme code.
+   */
+  src?: string
 }
 
 /**

@@ -27,6 +27,7 @@ const testApp = {
   canEnablePreviewMode: true,
   developmentStorePreviewEnabled: false,
   apiKey: '123',
+  id: '123',
   developerPlatformClient,
   extensions: [],
 }
@@ -86,6 +87,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -166,6 +168,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
       {stdin: new Stdin({isTTY: false})},
     )
@@ -203,6 +206,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -229,6 +233,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -257,6 +262,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -300,6 +306,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -332,6 +339,7 @@ describe('Dev', () => {
       "
     `)
     expect(developerPreview.disable).toHaveBeenCalledOnce()
+    expect(testApp.developerPlatformClient.devSessionDelete).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -364,6 +372,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -396,6 +405,7 @@ describe('Dev', () => {
       "
     `)
     expect(developerPreview.disable).toHaveBeenCalledOnce()
+    expect(testApp.developerPlatformClient.devSessionDelete).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -422,6 +432,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -474,6 +485,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -518,6 +530,7 @@ describe('Dev', () => {
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -588,6 +601,7 @@ describe('Dev', () => {
         }}
         pollingTime={200}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -642,6 +656,7 @@ describe('Dev', () => {
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -682,6 +697,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -745,6 +761,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -795,6 +812,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -834,6 +852,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -873,6 +892,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 
@@ -910,6 +930,7 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
       />,
     )
 

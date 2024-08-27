@@ -38,6 +38,11 @@ import {
   AppVersionByIdQueryVariables,
   AppModule as AppModuleReturnType,
 } from './app-management-client/graphql/app-version-by-id.js'
+import {
+  OrganizationBetaFlagsQuerySchema,
+  OrganizationBetaFlagsQueryVariables,
+  organizationBetaFlagsQuery,
+} from './app-management-client/graphql/organization_beta_flags.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -47,6 +52,8 @@ import {
   AssetUrlSchema,
   AppVersionIdentifiers,
   DevSessionOptions,
+  filterDisabledFlags,
+  ClientName,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -57,7 +64,6 @@ import {
   OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
-import {filterDisabledFlags} from '../../services/dev/fetch.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   ExtensionRegistration,
@@ -109,30 +115,49 @@ import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.j
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
+import {
+  FetchDevStoreByDomain,
+  FetchDevStoreByDomainQueryVariables,
+} from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
+import {
+  ListAppDevStores,
+  ListAppDevStoresQuery,
+} from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
+import {FunctionUploadUrlGenerateMutation} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
-import {businessPlatformRequest, businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
+  businessPlatformRequest,
+  businessPlatformRequestDoc,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+import {outputWarn} from '@shopify/cli-kit/node/output'
+import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
 
+type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
+type Properties = NonNullable<OrgType['properties']>
+type ShopEdge = NonNullable<Properties['edges'][number]>
+type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
-  public clientName = 'app-management'
+  public clientName = ClientName.AppManagement
   public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
+  public supportsDevSessions = true
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -360,8 +385,23 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async devStoresForOrg(_orgId: string): Promise<OrganizationStore[]> {
-    return []
+  // we are returning OrganizationStore type here because we want to keep types consistent btwn
+  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
+  // from the Partners OrganizationStore schema, we will return this type for now
+  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+    const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
+      ListAppDevStores,
+      await this.businessPlatformToken(),
+      orgId,
+    )
+    const organization = storesResult.organization
+
+    if (!organization) {
+      throw new AbortError(`No organization found`)
+    }
+
+    const shopArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
   async appExtensionRegistrations(
@@ -464,11 +504,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
           id: parseInt(versionInfo.id, 10),
           uuid: versionInfo.id,
           versionTag: versionInfo.metadata.versionTag,
-          location: [
-            await this.appDeepLink({organizationId, id: appId}),
-            'versions',
-            numberFromGid(versionInfo.id),
-          ].join('/'),
+          location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join(
+            '/',
+          ),
           message: '',
           appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
             return {
@@ -557,7 +595,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
+  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
     throw new BugError('Not implemented: functionUploadUrl')
   }
 
@@ -628,7 +666,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           // Need to deal with ID properly as it's expected to be a number... how do we use it?
           id: parseInt(version.id, 10),
           versionTag: version.metadata.versionTag,
-          location: [await this.appDeepLink({organizationId, id: appId}), `versions/${version.id}`].join('/'),
+          location: await versionDeepLink(organizationId, appId, version.id),
           appModuleVersions: version.appModules.map((mod) => {
             return {
               uuid: mod.uuid,
@@ -679,7 +717,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
           message: releaseResult.appReleaseCreate.release.version.metadata.message,
           location: [
-            await this.appDeepLink({organizationId, id: appId}),
+            await appDeepLink({organizationId, id: appId}),
             'versions',
             numberFromGid(releaseResult.appReleaseCreate.release.version.id),
           ].join('/'),
@@ -694,8 +732,40 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(_orgId: string, _shopDomain: string): Promise<FindStoreByDomainSchema> {
-    throw new BugError('Not implemented: storeByDomain')
+  // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
+  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
+  // from the Partners FindByStoreDomainSchema, we will return this type for now
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
+    const storesResult = await businessPlatformOrganizationsRequestDoc(
+      FetchDevStoreByDomain,
+      await this.businessPlatformToken(),
+      orgId,
+      queryVariables,
+    )
+
+    const organization = storesResult.organization
+
+    if (!organization) {
+      throw new AbortError(`No organization found`)
+    }
+
+    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
+
+    return {
+      organizations: {
+        nodes: [
+          {
+            id: organization.id,
+            businessName: organization.name,
+            stores: {
+              nodes: storesArray,
+            },
+          },
+        ],
+      },
+    }
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -719,11 +789,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    throw new BugError('Not implemented: sendSampleWebhook')
+    outputWarn('⚠️ sendSampleWebhook is not implemented')
+    return {
+      sendSampleWebhook: {
+        samplePayload: '',
+        headers: '{}',
+        success: true,
+        userErrors: [],
+      },
+    }
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    throw new BugError('Not implemented: apiVersions')
+    outputWarn('⚠️ apiVersions is not implemented')
+    return {publicApiVersions: ['unstable']}
   }
 
   async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
@@ -739,7 +818,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    throw new BugError('Not implemented: updateURLs')
+    outputWarn('⚠️ updateURLs is not implemented')
+    return {appUpdate: {userErrors: []}}
   }
 
   async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
@@ -763,17 +843,25 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appDeepLink({id, organizationId}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
-    return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+    return appDeepLink({id, organizationId})
   }
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    if (result.devSessionCreate?.userErrors?.length) {
+      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+    }
+    return result
   }
 
   async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    if (result.devSessionUpdate?.userErrors?.length) {
+      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
+    }
+    return result
   }
 
   async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
@@ -801,15 +889,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   private async organizationBetaFlags(
-    _organizationId: string,
+    organizationId: string,
     allBetaFlags: string[],
-  ): Promise<{[key: string]: boolean}> {
-    // For now, stub everything as false
-    const stub: {[flag: string]: boolean} = {}
+  ): Promise<{[flag: (typeof allBetaFlags)[number]]: boolean}> {
+    const variables: OrganizationBetaFlagsQueryVariables = {organizationId: encodedGidFromId(organizationId)}
+    const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>(
+      organizationBetaFlagsQuery(allBetaFlags),
+      await this.businessPlatformToken(),
+      organizationId,
+      variables,
+    )
+    const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
-      stub[flag] = false
+      result[flag] = Boolean(flagsResult.organization[`flag_${flag}`])
     })
-    return stub
+    return result
   }
 }
 
@@ -862,7 +956,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
 // just the integer portion of that ID. These functions convert between the two.
 
 // 1234 => gid://organization/Organization/1234 => base64
-function encodedGidFromId(id: string): string {
+export function encodedGidFromId(id: string): string {
   const gid = `gid://organization/Organization/${id}`
   return Buffer.from(gid).toString('base64')
 }
@@ -876,6 +970,18 @@ function idFromEncodedGid(gid: string): string {
 // gid://organization/Organization/1234 => 1234
 function numberFromGid(gid: string): number {
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
+}
+
+async function appDeepLink({
+  id,
+  organizationId,
+}: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
+  return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+}
+
+export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
+  const appLink = await appDeepLink({organizationId, id: appId})
+  return `${appLink}/versions/${numberFromGid(versionId)}`
 }
 
 interface DiffAppModulesInput {
@@ -916,4 +1022,18 @@ export async function allowedTemplates(
 
 function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
+}
+
+function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]): OrganizationStore[] {
+  return storesArray.map((store: ShopNode) => {
+    const {externalId, primaryDomain, name} = store
+    return {
+      shopId: externalId,
+      link: primaryDomain,
+      shopDomain: primaryDomain,
+      shopName: name,
+      transferDisabled: true,
+      convertableToPartnerTest: true,
+    } as OrganizationStore
+  })
 }

@@ -17,7 +17,6 @@ afterEach(() => {
 const ORG1: Organization = {
   id: 'org-id',
   businessName: 'name of org 1',
-  website: '',
 }
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
