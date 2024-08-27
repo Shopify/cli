@@ -47,13 +47,20 @@ function needsTemplateUpdate(fileKey: string) {
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
  * If a route is passed, it will filter out the templates that are not related to the route.
  */
-export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
+export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string, locale?: string) {
   const inMemoryTemplates: {[key: string]: string} = {}
+
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
     ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
   const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
+
+  const localeRE = /^locales\/.+\.json$/
+  const hasLocale =
+    Boolean(locale) &&
+    (ctx.localThemeFileSystem.files.has(`locales/${locale}.json`) ||
+      ctx.localThemeFileSystem.files.has(`locales/${locale}.default.json`))
 
   for (const fileKey of ctx.localThemeFileSystem.unsyncedFileKeys) {
     if (!needsTemplateUpdate(fileKey)) continue
@@ -61,11 +68,19 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
     if (!content) continue
 
-    // Filter out unused JSON templates for the current route. If we're not
-    // sure about the current route's template, we send all (modified) JSON templates.
-    if (!hasRouteTemplate || !jsonTemplateRE.test(fileKey) || fileKey === filterTemplate) {
-      inMemoryTemplates[fileKey] = content
+    if (hasRouteTemplate && jsonTemplateRE.test(fileKey)) {
+      // Filter out unused JSON templates for the current route. If we're not
+      // sure about the current route's template, we send all (modified) JSON templates.
+      if (fileKey !== filterTemplate) continue
+    } else if (localeRE.test(fileKey)) {
+      // Filter out unused locales for the sent cookie. If can't find the
+      // current locale file, we send the default locale (and its schema file).
+      if (hasLocale) {
+        if (!fileKey.startsWith(`locales/${locale}.`)) continue
+      } else if (!fileKey.includes('.default.')) continue
     }
+
+    inMemoryTemplates[fileKey] = content
   }
 
   return inMemoryTemplates

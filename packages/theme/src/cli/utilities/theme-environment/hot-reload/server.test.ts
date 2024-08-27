@@ -168,6 +168,31 @@ describe('hot-reload server', () => {
     await nextTick()
     expect(getInMemoryTemplates(ctx)).toEqual({})
 
+    // -- Filters templates by locale:
+    const enLocale = 'locales/en.default.json'
+    const enSchemaLocale = 'locales/en.default.schema.json'
+    const esLocale = 'locales/es.json'
+    const esSchemaLocale = 'locales/es.schema.json'
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+    await Promise.all([
+      triggerFileEvent('add', enLocale, jsonContent),
+      triggerFileEvent('add', enSchemaLocale, jsonContent),
+      triggerFileEvent('add', esLocale, jsonContent),
+      triggerFileEvent('add', esSchemaLocale, jsonContent),
+    ])
+    // Unknown locale, uses default:
+    expect(getInMemoryTemplates(ctx)).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
+    expect(getInMemoryTemplates(ctx, undefined, 'unknown')).toEqual({
+      [enLocale]: jsonContent,
+      [enSchemaLocale]: jsonContent,
+    })
+    // Known locale with schemas:
+    expect(getInMemoryTemplates(ctx, undefined, 'en')).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
+    expect(getInMemoryTemplates(ctx, undefined, 'es')).toEqual({[esLocale]: jsonContent, [esSchemaLocale]: jsonContent})
+    // Removed from memory after syncing:
+    await nextTick()
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+
     // -- Promise resolves when connection is stopped:
     subscribeEvent.node.req.destroy()
     await expect(streamPromise).resolves.not.toThrow()
