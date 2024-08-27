@@ -33,7 +33,7 @@ const IGNORED_ENDPOINTS = [
  * Forwards non-HTML requests to the remote SFR instance,
  * or mocks the result for certain endpoints.
  */
-export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
+export function getProxyHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (IGNORED_ENDPOINTS.some((endpoint) => event.path.startsWith(endpoint))) {
       // Mock successful status 204 response
@@ -41,7 +41,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
     }
 
     if (canProxyRequest(event)) {
-      return proxyStorefrontRequest(event, ctx)
+      return proxyStorefrontRequest(event, theme, ctx)
     }
   })
 }
@@ -109,7 +109,7 @@ function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
 function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
   // Domains are invalid for localhost:
   const domainRE = new RegExp(`Domain=${getStoreFqdnForRegEx(ctx)};\\s*`, 'gi')
-  return cookieHeader.map((value) => value.replace(domainRE, '')).join(', ')
+  return cookieHeader.map((value) => value.replace(domainRE, ''))
 }
 
 /**
@@ -188,14 +188,16 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   return proxyRequestHeaders
 }
 
-function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
-  const target = `https://${ctx.session.storeFqdn}${event.path}`
-  const pathname = event.path.split('?')[0]!
-  const body = getRequestWebStream(event)
+function proxyStorefrontRequest(event: H3Event, theme: Theme, ctx: DevServerContext) {
+  const url = new URL(event.path, `https://${ctx.session.storeFqdn}`)
+  url.searchParams.set('preview_theme_id', String(theme.id))
+  const target = url.toString()
 
   const proxyHeaders = getProxyStorefrontHeaders(event)
   // Required header for CDN requests
   proxyHeaders.referer = target
+
+  const body = getRequestWebStream(event)
 
   return sendProxy(event, target, {
     headers: proxyHeaders,
@@ -209,6 +211,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
     },
     onResponse: patchProxiedResponseHeaders.bind(null, ctx),
   }).catch(async (error: H3Error) => {
+    const pathname = event.path.split('?')[0]!
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
       const cause = error.cause as undefined | Error
       renderWarning({
