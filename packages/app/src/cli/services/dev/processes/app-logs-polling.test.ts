@@ -27,6 +27,7 @@ describe('app-logs-polling', () => {
       const result = await setupAppLogsPollingProcess({
         developerPlatformClient,
         subscription: {shopIds: SHOP_IDS, apiKey: API_KEY},
+        storeName: 'storeName',
       })
 
       // Then
@@ -80,6 +81,7 @@ describe('app-logs-polling', () => {
         {
           developerPlatformClient,
           appLogsSubscribeVariables,
+          storeName: 'storeName',
         },
       )
 
@@ -106,6 +108,7 @@ describe('app-logs-polling', () => {
         {
           developerPlatformClient,
           appLogsSubscribeVariables,
+          storeName: 'storeName',
         },
       )
 

@@ -1,10 +1,12 @@
-/* eslint-disable promise/no-nesting */
 import {calculateChecksum} from './asset-checksum.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 import type {
@@ -85,70 +87,91 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     cwd: root,
     deep: 3,
     ignore: THEME_DEFAULT_IGNORE_PATTERNS,
-  })
-    .then((filesPaths) => Promise.all(filesPaths.map(read)))
-    .then(async () => {
-      const getKey = (filePath: string) => relativePath(root, filePath)
-      const handleFileUpdate = (eventName: 'add' | 'change', filePath: string) => {
-        const fileKey = getKey(filePath)
-        const lastChecksum = files.get(fileKey)?.checksum
+  }).then((filesPaths) => Promise.all(filesPaths.map(read)))
 
-        const contentPromise = read(fileKey).then(() => {
-          const file = files.get(fileKey)!
+  const getKey = (filePath: string) => relativePath(root, filePath)
+  const handleFileUpdate = (
+    eventName: 'add' | 'change',
+    themeId: string,
+    adminSession: AdminSession,
+    filePath: string,
+  ) => {
+    const fileKey = getKey(filePath)
+    const lastChecksum = files.get(fileKey)?.checksum
 
-          if (file.checksum !== lastChecksum) {
-            unsyncedFileKeys.add(fileKey)
-          }
+    const contentPromise = read(fileKey).then(() => {
+      const file = files.get(fileKey)!
 
-          return file.value || file.attachment || ''
-        })
-
-        const syncPromise = contentPromise
-          .then(() => {
-            // Note: here goes the code for syncing the file state with the API
-          })
-          .then(() => {
-            unsyncedFileKeys.delete(fileKey)
-          })
-
-        emitEvent(eventName, {
-          fileKey,
-          onContent: (fn) => {
-            contentPromise.then(fn).catch(() => {})
-          },
-          onSync: (fn) => {
-            syncPromise.then(fn).catch(() => {})
-          },
-        })
+      if (file.checksum === lastChecksum) {
+        // Do not sync if the file has not changed
+        return ''
       }
 
-      const handleFileDelete = (filePath: string) => {
-        const fileKey = getKey(filePath)
-        unsyncedFileKeys.delete(fileKey)
-        files.delete(fileKey)
-        emitEvent('unlink', {fileKey})
+      unsyncedFileKeys.add(fileKey)
 
-        // Note: here goes the code for syncing the file state with the API
-      }
-
-      const {default: chokidar} = await import('chokidar')
-
-      const directoriesToWatch = new Set(
-        THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
-      )
-
-      const watcher = chokidar.watch([...directoriesToWatch], {
-        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
-        persistent: !process.env.SHOPIFY_UNIT_TEST,
-        ignoreInitial: true,
-      })
-
-      watcher
-        .on('add', handleFileUpdate.bind(null, 'add'))
-        .on('change', handleFileUpdate.bind(null, 'change'))
-        .on('unlink', handleFileDelete)
+      return file.value || file.attachment || ''
     })
-    .catch(() => {})
+
+    const syncPromise = contentPromise.then(async (content) => {
+      if (!content) return false
+
+      const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+
+      if (result?.success) {
+        unsyncedFileKeys.delete(fileKey)
+        outputSyncResult('update', fileKey)
+      } else if (result?.errors?.asset) {
+        const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+
+        renderError({
+          headline: 'Failed to sync file to remote theme.',
+          body: errorMessage,
+        })
+
+        return false
+      }
+
+      return true
+    })
+
+    emitEvent(eventName, {
+      fileKey,
+      onContent: (fn) => {
+        contentPromise
+          .then((content) => {
+            if (content) fn(content)
+          })
+          .catch(() => {})
+      },
+      onSync: (fn) => {
+        syncPromise
+          .then((didSync) => {
+            if (didSync) fn()
+          })
+          .catch(() => {})
+      },
+    })
+  }
+
+  const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
+    const fileKey = getKey(filePath)
+    unsyncedFileKeys.delete(fileKey)
+    files.delete(fileKey)
+    emitEvent('unlink', {fileKey})
+
+    deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      .then((success) => {
+        if (!success) throw new Error('Unknown issue.')
+        outputSyncResult('delete', fileKey)
+      })
+      .catch((error) => {
+        renderWarning({headline: `Failed to delete file "${fileKey}".`, body: error.message})
+      })
+  }
+
+  const directoriesToWatch = new Set(
+    THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+  )
 
   return {
     root,
@@ -176,6 +199,20 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     },
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
+    },
+    startWatcher: async (themeId: string, adminSession: AdminSession) => {
+      const {default: chokidar} = await import('chokidar')
+
+      const watcher = chokidar.watch([...directoriesToWatch], {
+        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        persistent: !process.env.SHOPIFY_UNIT_TEST,
+        ignoreInitial: true,
+      })
+
+      watcher
+        .on('add', handleFileUpdate.bind(null, 'add', themeId, adminSession))
+        .on('change', handleFileUpdate.bind(null, 'change', themeId, adminSession))
+        .on('unlink', handleFileDelete.bind(null, themeId, adminSession))
     },
   }
 }
@@ -321,4 +358,15 @@ function dirPath(filePath: string) {
   const fileNameIndex = filePath.lastIndexOf(fileName)
 
   return filePath.substring(0, fileNameIndex)
+}
+
+function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
+  outputInfo(
+    outputContent`• ${new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })} Synced ${outputToken.raw('»')} ${outputToken.gray(`${action} ${fileKey}`)}`,
+  )
 }

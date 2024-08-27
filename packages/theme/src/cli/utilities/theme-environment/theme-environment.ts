@@ -12,7 +12,7 @@ import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  const watcherPromise = setupInMemoryTemplateWatcher(ctx)
+  const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx)
   const server = createDevelopmentServer(theme, ctx)
   const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() => {})

@@ -2,7 +2,7 @@ import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc} fr
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
-import {Variables, gql} from 'graphql-request'
+import {Variables} from 'graphql-request'
 import Bottleneck from 'bottleneck'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
@@ -75,43 +75,6 @@ export async function partnersRequestDoc<TResult, TVariables extends Variables>(
 
   return result
 }
-
-export interface FunctionUploadUrlGenerateResponse {
-  functionUploadUrlGenerate: {
-    generatedUrlDetails: {
-      url: string
-      moduleId: string
-      headers: {[key: string]: string}
-      maxBytes: number
-      maxSize: string
-    }
-  }
-}
-
-/**
- * Request a URL from partners to which we will upload our function.
- *
- * @param token - Partners token.
- * @returns The response of the query.
- */
-export async function getFunctionUploadUrl(token: string): Promise<FunctionUploadUrlGenerateResponse> {
-  const res: FunctionUploadUrlGenerateResponse = await partnersRequest(FunctionUploadUrlGenerateMutation, token)
-  return res
-}
-
-export const FunctionUploadUrlGenerateMutation = gql`
-  mutation functionUploadUrlGenerateMutation {
-    functionUploadUrlGenerate {
-      generatedUrlDetails {
-        url
-        moduleId
-        headers
-        maxBytes
-        maxSize
-      }
-    }
-  }
-`
 
 interface Deprecation {
   supportedUntilDate?: string
