@@ -56,6 +56,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
  * - /search/suggest | accepts: * / * -- No proxy
  */
 function canProxyRequest(event: H3Event) {
+  if (event.method !== 'GET') return true
   if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
 
   const [pathname] = event.path.split('?') as [string]
@@ -154,6 +155,11 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
   const linkHeader = response.headers.get('Link')
   if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
 
+  // Location header might contain the store domain, proxy it:
+  const locationHeader = response.headers.get('Location')
+
+  if (locationHeader) setResponseHeader(event, 'Location', locationHeader.replace(/^https?:\/\/[^/]+/, ''))
+
   // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader =
     'raw' in response.headers ? response.headers.raw()['set-cookie'] : response.headers.getSetCookie()
@@ -194,7 +200,14 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
 
   return sendProxy(event, target, {
     headers: proxyHeaders,
-    fetchOptions: {ignoreResponseError: false, method: event.method, body, duplex: body ? 'half' : undefined},
+    fetchOptions: {
+      ignoreResponseError: false,
+      method: event.method,
+      body,
+      duplex: body ? 'half' : undefined,
+      // Important to return 3xx responses to the client
+      redirect: 'manual',
+    },
     onResponse: patchProxiedResponseHeaders.bind(null, ctx),
   }).catch(async (error: H3Error) => {
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
