@@ -66,7 +66,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  * Watchs for file changes and updates in-memory templates, triggering
  * HotReload if needed.
  */
-export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
+export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
     const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
@@ -89,10 +89,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
         // Delete template from memory after syncing but keep
         // JSON values to read section names for hot-reloading sections.
-        if (process.env.SHOPIFY_UNIT_TEST) {
-          // -- Note: Run this also code in prod when onSync is properly implemented
-          onSync(() => inMemoryTemplateFiles.delete(fileKey))
-        }
+        onSync(() => inMemoryTemplateFiles.delete(fileKey))
       })
     }
   }
@@ -112,7 +109,8 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   // we gather the existing section names early. This way, when a section
   // is reloaded, we can quickly find what to update in the DOM without
   // spending time reading files.
-  return ctx.localThemeFileSystem.ready().then(() => {
+  return ctx.localThemeFileSystem.ready().then(async () => {
+    await ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session)
     const files = [...ctx.localThemeFileSystem.files]
     return Promise.allSettled(
       files.map(async ([fileKey, file]) => {

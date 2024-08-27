@@ -5,8 +5,8 @@ import {testDeveloperPlatformClient, testFunctionExtension} from '../../models/a
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {FunctionUploadUrlGenerateMutation} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -120,7 +120,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+      const uploadURLResponse: FunctionUploadUrlGenerateMutation = {
         functionUploadUrlGenerate: {
           generatedUrlDetails: {
             headers: {},
@@ -151,7 +151,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+      const uploadURLResponse: FunctionUploadUrlGenerateMutation = {
         functionUploadUrlGenerate: {
           generatedUrlDetails: {
             headers: {},
@@ -194,7 +194,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+      const uploadURLResponse: FunctionUploadUrlGenerateMutation = {
         functionUploadUrlGenerate: {
           generatedUrlDetails: {
             headers: {},
@@ -237,7 +237,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+      const uploadURLResponse: FunctionUploadUrlGenerateMutation = {
         functionUploadUrlGenerate: {
           generatedUrlDetails: {
             headers: {},
@@ -278,7 +278,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+      const uploadURLResponse: FunctionUploadUrlGenerateMutation = {
         functionUploadUrlGenerate: {
           generatedUrlDetails: {
             headers: {},

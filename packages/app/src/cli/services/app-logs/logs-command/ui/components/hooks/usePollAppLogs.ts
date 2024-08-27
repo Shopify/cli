@@ -20,9 +20,10 @@ interface UsePollAppLogsOptions {
   initialJwt: string
   filters: PollFilters
   resubscribeCallback: () => Promise<string>
+  storeNameById: Map<string, string>
 }
 
-export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePollAppLogsOptions) {
+export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeNameById}: UsePollAppLogsOptions) {
   const [errors, setErrors] = useState<string[]>([])
   const [appLogOutputs, setAppLogOutputs] = useState<AppLogOutput[]>([])
 
@@ -64,6 +65,11 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
           let description
           let executionTime
 
+          const storeName = storeNameById.get(log.shop_id.toString())
+          if (storeName === undefined) {
+            continue
+          }
+
           switch (log.log_type) {
             case LOG_TYPE_FUNCTION_RUN:
               appLog = parseFunctionRunPayload(log.payload)
@@ -92,6 +98,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback}: UsePo
           const prefix = {
             status: log.status === 'success' ? 'Success' : 'Failure',
             source: log.source,
+            storeName,
             description,
             logTimestamp: formatLocalDate(log.log_timestamp),
           }

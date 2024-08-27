@@ -10,11 +10,11 @@ import {
   getAppVersionedSchema,
 } from './app.js'
 import {ExtensionTemplate} from './template.js'
+import {Organization, OrganizationStore, MinimalAppIdentifiers, OrganizationApp} from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
@@ -556,6 +556,17 @@ export async function testPaymentsAppExtension(
     specification,
   })
   return extension
+}
+
+export function testOrganizationStore({shopId, shopDomain}: {shopId?: string; shopDomain?: string}): OrganizationStore {
+  return {
+    shopId: shopId ?? '1',
+    link: 'link1',
+    shopDomain: shopDomain ?? 'domain1',
+    shopName: 'store1',
+    transferDisabled: false,
+    convertableToPartnerTest: false,
+  }
 }
 
 const testRemoteSpecifications: RemoteSpecification[] = [

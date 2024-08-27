@@ -34,6 +34,7 @@ const NEW_APP_LOG: AppLogData = {
 
 const FUNCTION_RUN_PAYLOAD = new FunctionRunLog(camelcaseKeys(JSON.parse(APP_LOG.payload)))
 const API_KEY = 'apiKey'
+const STORE_NAME = 'storeName'
 
 describe('writeAppLogsToFile', () => {
   let stdout: any
@@ -54,6 +55,7 @@ describe('writeAppLogsToFile', () => {
       appLogPayload: FUNCTION_RUN_PAYLOAD,
       apiKey: API_KEY,
       stdout,
+      storeName: STORE_NAME,
     })
 
     // Then
@@ -69,6 +71,7 @@ describe('writeAppLogsToFile', () => {
       sourceNamespace: APP_LOG.source_namespace,
       logTimestamp: APP_LOG.log_timestamp,
       localTime: formatLocalDate(APP_LOG.log_timestamp),
+      storeName: STORE_NAME,
     }
     const expectedLogData = JSON.stringify(expectedSaveData, null, 2)
 
@@ -88,6 +91,7 @@ describe('writeAppLogsToFile', () => {
       appLogPayload: JSON.parse(NEW_APP_LOG.payload),
       apiKey: API_KEY,
       stdout,
+      storeName: STORE_NAME,
     })
 
     // Then
@@ -107,6 +111,7 @@ function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload |
       ...eventWithoutCursor,
       payload,
       localTime: formatLocalDate(APP_LOG.log_timestamp),
+      storeName: STORE_NAME,
     },
     {deep: true},
   )

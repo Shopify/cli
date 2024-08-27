@@ -55,7 +55,7 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
+import {FunctionUploadUrlGenerateMutation} from '../api/graphql/partners/generated/function-upload-url-generate.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export enum ClientName {
@@ -227,7 +227,7 @@ export interface DeveloperPlatformClient {
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
-  functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
+  functionUploadUrl: () => Promise<FunctionUploadUrlGenerateMutation>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>

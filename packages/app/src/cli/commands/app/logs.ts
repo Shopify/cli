@@ -4,6 +4,7 @@ import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Logs extends Command {
@@ -25,7 +26,13 @@ export default class Logs extends Command {
     ...appFlags,
     'api-key': Dev.flags['api-key'],
     'client-id': Dev.flags['client-id'],
-    store: Dev.flags.store,
+    store: Flags.string({
+      char: 's',
+      description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
+      env: 'SHOPIFY_FLAG_STORE',
+      multiple: true,
+      parse: async (input) => normalizeStoreFqdn(input),
+    }),
     reset: Dev.flags.reset,
     'no-tunnel': Dev.flags['no-tunnel'],
     'graphiql-port': Dev.flags['graphiql-port'],
@@ -59,7 +66,7 @@ export default class Logs extends Command {
     const logOptions = {
       apiKey,
       directory: flags.path,
-      storeFqdn: flags.store,
+      storeFqdns: flags.store,
       sources,
       status: flags.status,
       configName: flags.config,

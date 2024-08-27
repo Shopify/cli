@@ -12,6 +12,14 @@ import type {Theme, ThemeFSEventName} from '@shopify/cli-kit/node/themes/types'
 vi.mock('../storefront-renderer.js')
 
 describe('hot-reload server', () => {
+  const mockTheme: Theme = {
+    id: 123,
+    name: 'my-theme',
+    createdAtRuntime: false,
+    processing: false,
+    role: 'main',
+  }
+
   test('emits hot-reload events with proper data', async () => {
     const testSectionType = 'my-test'
     const testSectionFileKey = `sections/${testSectionType}.liquid`
@@ -23,7 +31,7 @@ describe('hot-reload server', () => {
       files: [[assetJsonKey, JSON.stringify(assetJsonValue)]],
     })
 
-    await setupInMemoryTemplateWatcher(ctx)
+    await setupInMemoryTemplateWatcher(mockTheme, ctx)
     const {event: subscribeEvent, data: hotReloadEvents} = createH3Event('/__hot-reload/subscribe')
     const streamPromise = hotReloadHandler(subscribeEvent)
     // Next tick to flush the connection:
