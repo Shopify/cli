@@ -1,20 +1,39 @@
-import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
+import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
+vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
 vi.mock('./remote-theme-watcher.js')
-vi.mock('../theme-uploader.js')
 vi.mock('./storefront-renderer.js')
+
+// Vitest is resetting this mock between tests due to a global config `mockReset: true`.
+// For some reason we need to re-mock it here and in beforeEach:
+vi.mock('../theme-uploader.js', async () => {
+  return {
+    uploadTheme: vi.fn(() => {
+      return {
+        workPromise: Promise.resolve(),
+        uploadResults: new Map(),
+        renderThemeSyncProgress: () => Promise.resolve(),
+      }
+    }),
+  }
+})
+beforeEach(() => {
+  vi.mocked(uploadTheme).mockImplementation(() => {
+    return {workPromise: Promise.resolve(), uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()}
+  })
+})
 
 describe('startDevServer', () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
@@ -41,7 +60,6 @@ describe('startDevServer', () => {
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
   const defaultServerContext: DevServerContext = {
     session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
-    remoteChecksums: [],
     localThemeFileSystem,
     directory: 'tmp',
     options: {
@@ -63,20 +81,15 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
-    expect(uploadTheme).toHaveBeenCalledWith(
-      developmentTheme,
-      context.session,
-      context.remoteChecksums,
-      context.localThemeFileSystem,
-      {
-        ignore: ['assets/*.json'],
-        nodelete: true,
-        only: ['templates/*.liquid'],
-      },
-    )
+    expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
+      ignore: ['assets/*.json'],
+      nodelete: true,
+      only: ['templates/*.liquid'],
+      deferPartialWork: true,
+    })
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
@@ -90,13 +103,13 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
       developmentTheme,
       context.session,
-      context.remoteChecksums,
+      [],
       context.localThemeFileSystem,
       {
         ignore: ['assets/*.json'],
@@ -111,19 +124,21 @@ describe('startDevServer', () => {
     const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       ignore: ['assets/*.json'],
       nodelete: true,
       only: ['templates/*.liquid'],
+      deferPartialWork: true,
     })
   })
 
   describe('request handling', async () => {
     const context = {...defaultServerContext}
-    const {dispatch} = await setupDevServer(developmentTheme, context)
+    const server = setupDevServer(developmentTheme, context)
+
     const html = String.raw
     const decoder = new TextDecoder()
 
@@ -154,7 +169,7 @@ describe('startDevServer', () => {
         return resEnd(content)
       }
 
-      await dispatch(event)
+      await server.dispatchEvent(event)
       return {res, status: res.statusCode, body}
     }
 

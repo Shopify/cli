@@ -1,5 +1,4 @@
 import {PollingOptions, pollRemoteJsonChanges} from './theme-polling.js'
-import {readThemeFilesFromDisk} from '../theme-fs.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -148,11 +147,6 @@ describe('pollRemoteJsonChanges', async () => {
     const spy = vi.spyOn(defaultThemeFileSystem, 'delete')
 
     vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
-    vi.mocked(readThemeFilesFromDisk).mockImplementation(
-      async (_filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) => {
-        themeFileSystem.files.set('templates/asset.json', {checksum: '3', key: 'templates/asset.json'})
-      },
-    )
 
     // When
     await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, defaultOptions)

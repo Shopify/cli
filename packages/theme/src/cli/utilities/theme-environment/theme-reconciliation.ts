@@ -166,12 +166,6 @@ async function performFileReconciliation(
   })
   const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
 
-  if (downloadRemoteFiles.length > 0 || deleteRemoteFiles.length > 0) {
-    renderInfo({
-      body: 'Starting file synchronization. This may take a while if there are many or large files to download...',
-    })
-  }
-
   await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
 }
 

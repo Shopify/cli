@@ -1,23 +1,15 @@
 import {MAX_BATCH_BYTESIZE, MAX_BATCH_FILE_COUNT, MAX_UPLOAD_RETRY_COUNT, uploadTheme} from './theme-uploader.js'
-import {readThemeFilesFromDisk} from './theme-fs.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {fileSize} from '@shopify/cli-kit/node/fs'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/fs')
-
-vi.mock('./theme-fs.js', async (realImport) => {
-  const realModule = await realImport<typeof import('./theme-fs.js')>()
-  const mockModule = {readThemeFilesFromDisk: vi.fn()}
-
-  return {...realModule, ...mockModule}
-})
 
 beforeEach(() => {
+  vi.mocked(deleteThemeAsset).mockImplementation(() => Promise.resolve(true))
+
   vi.mocked(bulkUploadThemeAssets).mockImplementation(
     async (
       _id: number,
@@ -63,7 +55,8 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    await renderThemeSyncProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
@@ -83,7 +76,8 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    await renderThemeSyncProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
@@ -103,7 +97,11 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, {...uploadOptions, nodelete: true})
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
+      ...uploadOptions,
+      nodelete: true,
+    })
+    await renderThemeSyncProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
@@ -121,7 +119,14 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
@@ -154,7 +159,14 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
@@ -183,7 +195,14 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
     expect(deleteThemeAsset).toHaveBeenCalledTimes(7)
@@ -209,6 +228,7 @@ describe('theme-uploader', () => {
       new Map([
         ['assets/liquid.liquid', {key: 'assets/liquid.liquid', checksum: '1'}],
         ['templates/index.liquid', {key: 'templates/index.liquid', checksum: '4'}],
+        ['sections/header.liquid', {key: 'sections/header.liquid', checksum: '9'}],
         ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2'}],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3'}],
         ['sections/header-group.json', {key: 'sections/header-group.json', checksum: '5'}],
@@ -219,10 +239,17 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(5)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(6)
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       1,
       remoteTheme.id,
@@ -233,6 +260,9 @@ describe('theme-uploader', () => {
         {
           key: 'templates/index.liquid',
         },
+        {
+          key: 'assets/image.png',
+        },
       ],
       adminSession,
     )
@@ -241,10 +271,7 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
-          key: 'sections/header-group.json',
-        },
-        {
-          key: 'templates/product.json',
+          key: 'sections/header.liquid',
         },
       ],
       adminSession,
@@ -254,7 +281,7 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
-          key: 'templates/product.context.uk.json',
+          key: 'sections/header-group.json',
         },
       ],
       adminSession,
@@ -264,10 +291,7 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
-          key: 'config/settings_data.json',
-        },
-        {
-          key: 'config/settings_schema.json',
+          key: 'templates/product.json',
         },
       ],
       adminSession,
@@ -277,7 +301,20 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
-          key: 'assets/image.png',
+          key: 'templates/product.context.uk.json',
+        },
+      ],
+      adminSession,
+    )
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      6,
+      remoteTheme.id,
+      [
+        {
+          key: 'config/settings_data.json',
+        },
+        {
+          key: 'config/settings_schema.json',
         },
       ],
       adminSession,
@@ -298,7 +335,14 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', files)
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
@@ -310,42 +354,26 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem(
       'tmp',
       new Map([
-        ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2', value: 'settings_data'}],
+        [
+          'config/settings_data.json',
+          {key: 'config/settings_data.json', checksum: '2', value: 'w'.repeat(MAX_BATCH_BYTESIZE)},
+        ],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
       ]),
     )
 
-    vi.mocked(fileSize).mockResolvedValue(MAX_BATCH_BYTESIZE)
-
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
-  })
-
-  test('should only read values for theme files that will be uploaded', async () => {
-    // Given
-    const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
-    const themeFileSystem = fakeThemeFileSystem(
-      'tmp',
-      new Map([
-        ['assets/new.liquid', {checksum: '2', key: ''}],
-        ['assets/newer.liquid', {checksum: '3', key: ''}],
-        ['assets/existing.liquid', {checksum: '1', key: ''}],
-      ]),
-    )
-
-    // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
-    // Then
-    expect(readThemeFilesFromDisk).toHaveBeenCalledWith(
-      [
-        {checksum: '2', key: 'assets/new.liquid'},
-        {checksum: '3', key: 'assets/newer.liquid'},
-      ],
-      themeFileSystem,
-    )
   })
 
   test('should retry failed uploads', async () => {
@@ -387,7 +415,14 @@ describe('theme-uploader', () => {
       ])
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(MAX_UPLOAD_RETRY_COUNT + 1)
@@ -431,10 +466,11 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, {
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
       ...uploadOptions,
       ignore: ['assets/ignore_delete.liquid', 'assets/ignore_upload.liquid'],
     })
+    await renderThemeSyncProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
@@ -465,10 +501,11 @@ describe('theme-uploader', () => {
     )
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remote, local, {
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
       ...uploadOptions,
       only: ['assets/keepme.liquid', 'assets/deleteme.liquid', 'assets/uploadme.liquid'],
     })
+    await renderThemeSyncProgress()
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()

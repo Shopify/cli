@@ -27,7 +27,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
 
     vi.mocked(reconcileJsonFiles).mockResolvedValue(undefined)
     vi.mocked(fetchChecksums).mockResolvedValue([{checksum: '2', key: 'templates/asset.json'}])
-    vi.mocked(mountThemeFileSystem).mockResolvedValue(newFileSystem)
+    vi.mocked(mountThemeFileSystem).mockReturnValue(newFileSystem)
 
     // When
     await reconcileAndPollThemeEditorChanges(
