@@ -94,7 +94,7 @@ async function syncChangedAssets(
         await localFileSystem.write(asset)
         outputInfo(
           outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
-            `fetch ${asset.key} from remote theme`,
+            `download ${asset.key} from remote theme`,
           )}`,
         )
       }
@@ -102,22 +102,24 @@ async function syncChangedAssets(
   )
 }
 
-function deleteRemovedAssets(
+export async function deleteRemovedAssets(
   localFileSystem: ThemeFileSystem,
   assetsDeletedFromRemote: Checksum[],
   options: {noDelete: boolean},
 ) {
   if (!options.noDelete) {
     return Promise.all(
-      assetsDeletedFromRemote.map((file) =>
-        localFileSystem.delete(file.key).then(() => {
-          outputInfo(
-            outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
-              `remove ${file.key} from local theme`,
-            )}`,
-          )
-        }),
-      ),
+      assetsDeletedFromRemote.map((file) => {
+        if (localFileSystem.files.get(file.key)) {
+          return localFileSystem.delete(file.key).then(() => {
+            outputInfo(
+              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                '»',
+              )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+            )
+          })
+        }
+      }),
     )
   }
 }

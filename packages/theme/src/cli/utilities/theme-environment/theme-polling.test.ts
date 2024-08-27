@@ -1,4 +1,4 @@
-import {PollingOptions, pollRemoteJsonChanges} from './theme-polling.js'
+import {PollingOptions, pollRemoteJsonChanges, deleteRemovedAssets} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -223,6 +223,30 @@ describe('pollRemoteJsonChanges', async () => {
         key: 'templates/asset2.json',
         value: 'content',
       })
+    })
+  })
+
+  describe('deleteRemovedAssets', () => {
+    test('does not call delete when assets deleted from remote has already been deleted locally', async () => {
+      // Given
+      const deleteSpy = vi.fn()
+      const files = new Map<string, ThemeAsset>([
+        ['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}],
+      ])
+      const localFileSystem = {
+        ...fakeThemeFileSystem('tmp', files),
+        delete: deleteSpy,
+      }
+
+      // When
+      await deleteRemovedAssets(
+        localFileSystem,
+        [{checksum: '1', key: 'templates/already-deleted.json'}],
+        defaultOptions,
+      )
+
+      // Then
+      expect(deleteSpy).not.toHaveBeenCalled()
     })
   })
 })
