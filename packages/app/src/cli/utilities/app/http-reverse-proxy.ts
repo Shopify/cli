@@ -2,8 +2,10 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import Server from 'http-proxy'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import * as devcert from 'devcert'
 import {Writable} from 'stream'
 import * as http from 'http'
+import * as https from 'https'
 
 interface ReverseHTTPProxyTarget {
   /** The prefix to include in the logs
@@ -90,7 +92,9 @@ export async function getProxyingWebServer(rules: {[key: string]: string}, abort
   // to block the loading of the ESM module graph.
   const {default: httpProxy} = await import('http-proxy')
   const proxy = httpProxy.createProxy()
-  const server = http.createServer(getProxyServerRequestListener(rules, proxy))
+
+  const ssl = await devcert.certificateFor('localhost')
+  const server = https.createServer(ssl, getProxyServerRequestListener(rules, proxy))
 
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', getProxyServerWebsocketUpgradeListener(rules, proxy))
