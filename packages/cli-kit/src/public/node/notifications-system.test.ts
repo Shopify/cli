@@ -1,6 +1,6 @@
 import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
-import {getCache, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
@@ -272,7 +272,7 @@ describe('notifications-system filter notifications', () => {
     const current = new Date('2020-01-15T00:00:00.000Z')
     const yesterday = new Date('2020-01-14T08:00:00.000Z')
     vi.setSystemTime(current)
-    vi.mocked(getCache).mockReturnValue({value: yesterday.getTime().toString(), timestamp: 0})
+    vi.mocked(cacheRetrieve).mockReturnValue({value: yesterday.getTime().toString(), timestamp: 0})
 
     // When
     const result = filterNotifications([showAlways], 'version')
@@ -285,8 +285,8 @@ describe('notifications-system filter notifications', () => {
     // Given
     const current = new Date('2020-01-15T00:00:00.000Z')
     vi.setSystemTime(current)
-    vi.mocked(getCache).mockReturnValueOnce(undefined)
-    vi.mocked(getCache).mockReturnValueOnce({value: current.getTime().toString(), timestamp: 0})
+    vi.mocked(cacheRetrieve).mockReturnValueOnce(undefined)
+    vi.mocked(cacheRetrieve).mockReturnValueOnce({value: current.getTime().toString(), timestamp: 0})
 
     // When/Then
     const result = filterNotifications([showOnce], 'version')
@@ -300,8 +300,8 @@ describe('notifications-system filter notifications', () => {
     const current = new Date('2020-01-15T08:00:00.000Z')
     const yesterday = new Date('2020-01-14T00:00:00.000Z')
     vi.setSystemTime(current)
-    vi.mocked(getCache).mockReturnValueOnce({value: yesterday.getTime().toString(), timestamp: 0})
-    vi.mocked(getCache).mockReturnValueOnce({value: current.getTime().toString(), timestamp: 0})
+    vi.mocked(cacheRetrieve).mockReturnValueOnce({value: yesterday.getTime().toString(), timestamp: 0})
+    vi.mocked(cacheRetrieve).mockReturnValueOnce({value: current.getTime().toString(), timestamp: 0})
 
     // When/Then
     const result = filterNotifications([showOnceADay], 'version')
@@ -316,8 +316,8 @@ describe('notifications-system filter notifications', () => {
     const yesterday = new Date('2020-01-14T08:00:00.000Z')
     const lastWeek = new Date('2020-01-03T00:00:00.000Z')
     vi.setSystemTime(current)
-    vi.mocked(getCache).mockReturnValueOnce({value: lastWeek.getTime().toString(), timestamp: 0})
-    vi.mocked(getCache).mockReturnValueOnce({value: yesterday.getTime().toString(), timestamp: 0})
+    vi.mocked(cacheRetrieve).mockReturnValueOnce({value: lastWeek.getTime().toString(), timestamp: 0})
+    vi.mocked(cacheRetrieve).mockReturnValueOnce({value: yesterday.getTime().toString(), timestamp: 0})
 
     // When/Then
     const result = filterNotifications([showOnceAWeek], 'version')

@@ -5,7 +5,13 @@ import {fileExists, readFile} from './fs.js'
 import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {NotificationsKey, cacheRetrieveOrRepopulate, getCache, setCache} from '../../private/node/conf-store.js'
+import {
+  NotificationKey,
+  NotificationsKey,
+  cacheRetrieve,
+  cacheRetrieveOrRepopulate,
+  cacheStore,
+} from '../../private/node/conf-store.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/main/notifications.json'
@@ -83,7 +89,7 @@ async function renderNotifications(notifications: Notification[]) {
         renderError(content)
       }
     }
-    setCache(`notification-${notification.id}`, new Date().getTime().toString())
+    cacheStore(`notification-${notification.id}`, new Date().getTime().toString())
   })
 }
 
@@ -195,7 +201,8 @@ function filterBySurface(notification: Notification, commandId: string, surfaces
  */
 function filterByFrequency(notification: Notification): boolean {
   if (!notification.frequency) return true
-  const lastShown = getCache(`notification-${notification.id}`)?.value as unknown as string
+  const cacheKey: NotificationKey = `notification-${notification.id}`
+  const lastShown = cacheRetrieve(cacheKey)?.value as unknown as string
   if (!lastShown) return true
 
   switch (notification.frequency) {
