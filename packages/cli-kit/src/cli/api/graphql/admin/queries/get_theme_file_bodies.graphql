@@ -2,18 +2,19 @@ query getThemeFileBodies($id: ID!, $after: String, $filenames: [String!]) {
   theme(id: $id) {
     files(first: 250, after: $after, filenames: $filenames) {
       nodes {
-        filename
-        statusCode
-        file {
-          size
-          checksumMd5
-          body {
-            __typename
-            ... on ThemeFileBodyText { content }
-            ... on ThemeFileBodyBase64 { contentBase64 }
-            ... on ThemeFileBodyUrl { url }
-          }
+      filename
+        size
+        checksumMd5
+        body {
+          __typename
+          ... on OnlineStoreThemeFileBodyText { content }
+          ... on OnlineStoreThemeFileBodyBase64 { contentBase64 }
+          ... on OnlineStoreThemeFileBodyUrl { url }
         }
+      }
+      userErrors {
+        filename
+        code
       }
       pageInfo {
         hasNextPage

@@ -4,6 +4,7 @@ query getThemes($after: String) {
       id
       name
       role
+      # processing
     }
     pageInfo {
       hasNextPage

@@ -1,22 +1,22 @@
 import {storeAdminUrl} from './urls.js'
+import {buildBulkUploadResults, buildTheme, buildThemeAsset} from './factories.js'
+import {Result, Checksum, Key, Theme, ThemeAsset} from './types.js'
 import * as throttler from '../api/rest-api-throttler.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
-import {adminRequestDoc, restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {buildBulkUploadResults, buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 
-import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {adminRequestDoc, restRequest, RestResponse} from '../api/admin.js'
+import {AdminSession} from '../session.js'
+import {AbortError} from '../error.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const vars = {id: `gid://shopify/Theme/${id}`}
-  const response = await adminRequestDoc(GetTheme, session, vars)
+  const vars = {id: `gid://shopify/OnlineStoreTheme/${id}`}
+  const response = await adminRequestDoc(GetTheme, session, vars, 'unstable')
 
   const theme = response.theme
   if (theme) {
@@ -30,23 +30,26 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   const themes: Theme[] = []
+  let after: string | null = null
 
   while (true) {
-    const vars: {after: string | null} = {after: null}
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(GetThemes, session, vars)
+    const response = await adminRequestDoc(GetThemes, session, {after}, 'unstable')
 
-    if (!response?.themes?.pageInfo || !response?.themes?.nodes) {
-      // Raise error?
-      return themes
+    if (!response || !response.themes || !response.themes.nodes || !response.themes.pageInfo) {
+      throw new Error('Invalid response from GetThemes query')
     }
 
     const {nodes, pageInfo} = response.themes
+
     nodes.forEach((theme) => {
-      // Strip off gid://shopify/Theme/ from the id
-      // We should probably leave this as a gid for subsequent requests?
+      const id = theme.id.split('/').pop()
+      if (!id) {
+        throw new Error('Invalid theme ID format')
+      }
+
       const t = buildTheme({
-        id: parseInt((theme.id as unknown as string).split('/').pop() as string, 10),
+        id: parseInt(id, 10),
         name: theme.name,
         role: theme.role.toLowerCase(),
       })
@@ -55,11 +58,12 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
         themes.push(t)
       }
     })
-    if (pageInfo.hasNextPage) {
-      vars.after = pageInfo.endCursor as string
-    } else {
+
+    if (!pageInfo.hasNextPage) {
       break
     }
+
+    after = pageInfo.endCursor as string
   }
 
   return themes
@@ -85,50 +89,65 @@ export async function fetchThemeAsset(id: number, key: Key, session: AdminSessio
   return buildThemeAsset(response.json.asset)
 }
 
-export async function fetchThemeAssets(
-  id: number,
-  filenames: Key[],
-  session: AdminSession,
-): Promise<ThemeAsset[] | undefined> {
+export async function fetchThemeAssets(id: number, filenames: Key[], session: AdminSession): Promise<ThemeAsset[]> {
   const assets: ThemeAsset[] = []
-  const vars: {id: string; filenames: string[]; after: string | null} = {
-    id: `gid://shopify/Theme/${id}`,
-    filenames,
-    after: null,
-  }
+  let after: string | null = null
+
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(GetThemeFileBodies, session, vars)
-    if (!response.theme?.files?.nodes) {
-      // Raise error?
+    const response = await adminRequestDoc(
+      GetThemeFileBodies,
+      session,
+      {
+        id: `gid://shopify/OnlineStoreTheme/${id}`,
+        filenames,
+        after,
+      },
+      'unstable',
+    )
+
+    if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
       return assets
     }
+
     const {nodes, pageInfo} = response.theme.files
-    nodes.forEach((file) => {
-      if (file.file) {
-        let content = ''
-        switch (file.file.body.__typename) {
-          case 'ThemeFileBodyUrl':
-            throw new Error('URL content not supported yet')
-          case 'ThemeFileBodyText':
-            content = file.file.body.content
-            break
-          case 'ThemeFileBodyBase64':
-            content = Buffer.from(file.file.body.contentBase64, 'base64').toString()
-            break
-        }
-        assets.push({
-          key: file.filename,
-          checksum: file.file.checksumMd5 as string,
-          value: content,
-        })
-      }
-    })
-    if (pageInfo.hasNextPage) {
-      vars.after = pageInfo.endCursor as string
-    } else {
+
+    assets.push(
+      // eslint-disable-next-line no-await-in-loop
+      ...(await Promise.all(
+        nodes.map(async (file) => {
+          let content = ''
+          switch (file.body.__typename) {
+            case 'OnlineStoreThemeFileBodyText':
+              content = file.body.content
+              break
+            case 'OnlineStoreThemeFileBodyBase64':
+              content = Buffer.from(file.body.contentBase64, 'base64').toString()
+              break
+            case 'OnlineStoreThemeFileBodyUrl':
+              try {
+                const response = await fetch(file.body.url as string)
+                content = await response.text()
+              } catch (error) {
+                // Raise error if we can't download the file
+                throw new Error(`Error downloading content from URL: ${file.body.url}`)
+              }
+              break
+          }
+          return {
+            key: file.filename,
+            checksum: file.checksumMd5 as string,
+            value: content,
+          }
+        }),
+      )),
+    )
+
+    if (!pageInfo.hasNextPage) {
       return assets
     }
+
+    after = pageInfo.endCursor as string
   }
 }
 
@@ -153,33 +172,37 @@ export async function bulkUploadThemeAssets(
 
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
   const checksums: Checksum[] = []
-
-  const vars: {id: string; after: string | null} = {id: `gid://shopify/Theme/${id}`, after: null}
+  let after: string | null = null
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(GetThemeFileChecksums, session, vars)
+    const response = await adminRequestDoc(
+      GetThemeFileChecksums,
+      session,
+      {id: `gid://shopify/OnlineStoreTheme/${id}`, after},
+      'unstable',
+    )
 
-    if (!response.theme || !response.theme.files) {
-      // Raise error?
+    if (!response?.theme?.files?.nodes || !response?.theme?.files?.pageInfo) {
       return checksums
     }
 
     const {nodes, pageInfo} = response.theme.files
 
-    if (!nodes || !pageInfo) {
-      // Raise error?
+    checksums.push(
+      ...nodes
+        .filter((file) => file.checksumMd5 != null)
+        .map((file) => ({
+          key: file.filename,
+          checksum: file.checksumMd5 as string,
+        })),
+    )
+
+    if (!pageInfo.hasNextPage) {
       return checksums
     }
 
-    nodes.forEach((file) => {
-      checksums.push({key: file.filename, checksum: file.file?.checksumMd5 as string})
-    })
-    if (pageInfo.hasNextPage) {
-      vars.after = pageInfo.endCursor as string
-    } else {
-      return checksums
-    }
+    after = pageInfo.endCursor as string
   }
 }
 

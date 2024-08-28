@@ -11,11 +11,8 @@ export type GetThemeFileChecksumsQueryVariables = Types.Exact<{
 export type GetThemeFileChecksumsQuery = {
   theme?: {
     files?: {
-      nodes: {
-        filename: string
-        statusCode: Types.ThemeFileResultType
-        file?: {size: number; checksumMd5?: string | null} | null
-      }[]
+      nodes: {filename: string; size: unknown; checksumMd5?: string | null}[]
+      userErrors: {filename: string; code: Types.OnlineStoreThemeFileResultType}[]
       pageInfo: {hasNextPage: boolean; endCursor?: string | null}
     } | null
   } | null
@@ -77,19 +74,20 @@ export const GetThemeFileChecksums = {
                           kind: 'SelectionSet',
                           selections: [
                             {kind: 'Field', name: {kind: 'Name', value: 'filename'}},
-                            {kind: 'Field', name: {kind: 'Name', value: 'statusCode'}},
-                            {
-                              kind: 'Field',
-                              name: {kind: 'Name', value: 'file'},
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {kind: 'Field', name: {kind: 'Name', value: 'size'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: 'checksumMd5'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                ],
-                              },
-                            },
+                            {kind: 'Field', name: {kind: 'Name', value: 'size'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'checksumMd5'}},
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'userErrors'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'filename'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'code'}},
                             {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                           ],
                         },

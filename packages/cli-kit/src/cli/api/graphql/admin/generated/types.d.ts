@@ -119,7 +119,7 @@ export type Scalars = {
 }
 
 /** Type of a theme file operation result. */
-export type ThemeFileResultType =
+export type OnlineStoreThemeFileResultType =
   /** Operation was malformed or invalid. */
   | 'BAD_REQUEST'
   /** Operation faced a conflict with the current state of the file. */

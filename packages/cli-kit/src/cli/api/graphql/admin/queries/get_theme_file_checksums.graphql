@@ -3,11 +3,12 @@ query getThemeFileChecksums($id: ID!, $after: String) {
     files(first: 250, after: $after) {
       nodes {
         filename
-        statusCode
-        file {
-          size
-          checksumMd5
-        }
+        size
+        checksumMd5
+      }
+      userErrors {
+        filename
+        code
       }
       pageInfo {
         hasNextPage

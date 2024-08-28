@@ -14,16 +14,14 @@ export type GetThemeFileBodiesQuery = {
     files?: {
       nodes: {
         filename: string
-        statusCode: Types.ThemeFileResultType
-        file?: {
-          size: number
-          checksumMd5?: string | null
-          body:
-            | {__typename: 'ThemeFileBodyBase64'; contentBase64: string}
-            | {__typename: 'ThemeFileBodyText'; content: string}
-            | {__typename: 'ThemeFileBodyUrl'; url: unknown}
-        } | null
+        size: unknown
+        checksumMd5?: string | null
+        body:
+          | {__typename: 'OnlineStoreThemeFileBodyBase64'; contentBase64: string}
+          | {__typename: 'OnlineStoreThemeFileBodyText'; content: string}
+          | {__typename: 'OnlineStoreThemeFileBodyUrl'; url: unknown}
       }[]
+      userErrors: {filename: string; code: Types.OnlineStoreThemeFileResultType}[]
       pageInfo: {hasNextPage: boolean; endCursor?: string | null}
     } | null
   } | null
@@ -98,71 +96,72 @@ export const GetThemeFileBodies = {
                           kind: 'SelectionSet',
                           selections: [
                             {kind: 'Field', name: {kind: 'Name', value: 'filename'}},
-                            {kind: 'Field', name: {kind: 'Name', value: 'statusCode'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'size'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'checksumMd5'}},
                             {
                               kind: 'Field',
-                              name: {kind: 'Name', value: 'file'},
+                              name: {kind: 'Name', value: 'body'},
                               selectionSet: {
                                 kind: 'SelectionSet',
                                 selections: [
-                                  {kind: 'Field', name: {kind: 'Name', value: 'size'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: 'checksumMd5'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                   {
-                                    kind: 'Field',
-                                    name: {kind: 'Name', value: 'body'},
+                                    kind: 'InlineFragment',
+                                    typeCondition: {
+                                      kind: 'NamedType',
+                                      name: {kind: 'Name', value: 'OnlineStoreThemeFileBodyText'},
+                                    },
                                     selectionSet: {
                                       kind: 'SelectionSet',
                                       selections: [
+                                        {kind: 'Field', name: {kind: 'Name', value: 'content'}},
                                         {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                        {
-                                          kind: 'InlineFragment',
-                                          typeCondition: {
-                                            kind: 'NamedType',
-                                            name: {kind: 'Name', value: 'ThemeFileBodyText'},
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {kind: 'Field', name: {kind: 'Name', value: 'content'}},
-                                              {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                            ],
-                                          },
-                                        },
-                                        {
-                                          kind: 'InlineFragment',
-                                          typeCondition: {
-                                            kind: 'NamedType',
-                                            name: {kind: 'Name', value: 'ThemeFileBodyBase64'},
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {kind: 'Field', name: {kind: 'Name', value: 'contentBase64'}},
-                                              {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                            ],
-                                          },
-                                        },
-                                        {
-                                          kind: 'InlineFragment',
-                                          typeCondition: {
-                                            kind: 'NamedType',
-                                            name: {kind: 'Name', value: 'ThemeFileBodyUrl'},
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {kind: 'Field', name: {kind: 'Name', value: 'url'}},
-                                              {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                            ],
-                                          },
-                                        },
                                       ],
                                     },
                                   },
-                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                  {
+                                    kind: 'InlineFragment',
+                                    typeCondition: {
+                                      kind: 'NamedType',
+                                      name: {kind: 'Name', value: 'OnlineStoreThemeFileBodyBase64'},
+                                    },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {kind: 'Field', name: {kind: 'Name', value: 'contentBase64'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                      ],
+                                    },
+                                  },
+                                  {
+                                    kind: 'InlineFragment',
+                                    typeCondition: {
+                                      kind: 'NamedType',
+                                      name: {kind: 'Name', value: 'OnlineStoreThemeFileBodyUrl'},
+                                    },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {kind: 'Field', name: {kind: 'Name', value: 'url'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                      ],
+                                    },
+                                  },
                                 ],
                               },
                             },
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'userErrors'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'filename'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'code'}},
                             {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                           ],
                         },
