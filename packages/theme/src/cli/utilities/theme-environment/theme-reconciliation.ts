@@ -25,7 +25,10 @@ export async function reconcileJsonFiles(
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
   options: ReconciliationOptions,
-) {
+): Promise<{
+  readyForReconciliationPromise: Promise<void>
+  reconciliationFinishedPromise: Promise<void>
+}> {
   outputDebug('Initiating theme asset reconciliation process')
 
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
@@ -39,10 +42,13 @@ export async function reconcileJsonFiles(
     filesWithConflictingChecksums.length === 0
   ) {
     outputDebug('Local and remote checksums match - no need to reconcile theme assets')
-    return localThemeFileSystem
+    return {
+      readyForReconciliationPromise: Promise.resolve(),
+      reconciliationFinishedPromise: Promise.resolve(),
+    }
   }
 
-  const partitionedFiles = await partitionFilesByReconciliationStrategy(
+  const readyForReconciliationPromise = partitionFilesByReconciliationStrategy(
     {
       filesOnlyPresentLocally,
       filesOnlyPresentOnRemote,
@@ -51,7 +57,14 @@ export async function reconcileJsonFiles(
     options,
   )
 
-  await performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles)
+  const reconciliationFinishedPromise = readyForReconciliationPromise.then((partitionedFiles) =>
+    performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles),
+  )
+
+  return {
+    readyForReconciliationPromise: readyForReconciliationPromise.then(() => {}),
+    reconciliationFinishedPromise,
+  }
 }
 
 function identifyFilesToReconcile(

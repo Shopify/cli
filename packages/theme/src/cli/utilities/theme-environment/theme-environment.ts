@@ -4,6 +4,7 @@ import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
+import {renderTasksToStdErr} from '../theme-ui.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {createServer} from 'node:http'
@@ -27,30 +28,70 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
 
-  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
-    ctx.options.themeEditorSync
-      ? reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
-          noDelete: ctx.options.noDelete,
-          ignore: ctx.options.ignore,
-          only: ctx.options.only,
-        })
-      : remoteChecksums,
+  const editorSyncPromise = remoteChecksumsPromise.then((remoteChecksums) =>
+    handleThemeEditorSync(theme, ctx, remoteChecksums),
   )
 
-  const uploadPromise = reconcilePromise.then(async (remoteChecksums: Checksum[]) =>
-    uploadTheme(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
-      nodelete: ctx.options.noDelete,
-      deferPartialWork: true,
-    }),
+  const themeSetupPromise = editorSyncPromise.then(
+    ({updatedRemoteChecksums, reconciliationFinishedPromise, readyForReconciliationPromise}) => {
+      const uploadPromise = reconciliationFinishedPromise.then(() =>
+        uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
+          nodelete: ctx.options.noDelete,
+          ignore: ctx.options.ignore,
+          only: ctx.options.only,
+          deferPartialWork: true,
+        }),
+      )
+
+      return {uploadPromise, reconciliationFinishedPromise, readyForReconciliationPromise}
+    },
   )
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise),
+    workPromise: themeSetupPromise.then(async ({uploadPromise}) => (await uploadPromise).workPromise),
     renderProgress: async () => {
-      const {renderThemeSyncProgress} = await uploadPromise
+      if (ctx.options.themeEditorSync) {
+        await themeSetupPromise.then(({readyForReconciliationPromise}) => readyForReconciliationPromise)
+        await renderTasksToStdErr([
+          {
+            title: 'Performing file synchronization. This may take a while...',
+            task: async () => {
+              await themeSetupPromise.then(async ({reconciliationFinishedPromise}) => {
+                await reconciliationFinishedPromise
+              })
+            },
+          },
+        ])
+      }
+
+      const {renderThemeSyncProgress} = await themeSetupPromise.then(({uploadPromise}) => uploadPromise)
 
       await renderThemeSyncProgress()
     },
+  }
+}
+
+function handleThemeEditorSync(
+  theme: Theme,
+  ctx: DevServerContext,
+  remoteChecksums: Checksum[],
+): Promise<{
+  updatedRemoteChecksums: Checksum[]
+  reconciliationFinishedPromise: Promise<void>
+  readyForReconciliationPromise: Promise<void>
+}> {
+  if (ctx.options.themeEditorSync) {
+    return reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
+      noDelete: ctx.options.noDelete,
+      ignore: ctx.options.ignore,
+      only: ctx.options.only,
+    })
+  } else {
+    return Promise.resolve({
+      updatedRemoteChecksums: remoteChecksums,
+      reconciliationFinishedPromise: Promise.resolve(),
+      readyForReconciliationPromise: Promise.resolve(),
+    })
   }
 }
 

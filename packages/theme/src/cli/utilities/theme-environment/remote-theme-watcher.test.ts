@@ -23,7 +23,10 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
     const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
     const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
 
-    vi.mocked(reconcileJsonFiles).mockResolvedValue(undefined)
+    vi.mocked(reconcileJsonFiles).mockResolvedValue({
+      reconciliationFinishedPromise: Promise.resolve(),
+      readyForReconciliationPromise: Promise.resolve(),
+    })
     vi.mocked(fetchChecksums).mockResolvedValue([{checksum: '2', key: 'templates/asset.json'}])
 
     // When

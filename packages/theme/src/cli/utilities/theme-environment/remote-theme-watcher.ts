@@ -22,16 +22,24 @@ export async function reconcileAndPollThemeEditorChanges(
     ignore: string[]
     only: string[]
   },
-) {
+): Promise<{
+  updatedRemoteChecksums: Checksum[]
+  reconciliationFinishedPromise: Promise<void>
+  readyForReconciliationPromise: Promise<void>
+}> {
   outputDebug('Initiating theme asset reconciliation process')
   await localThemeFileSystem.ready()
 
-  if (remoteChecksums.length !== 0) {
-    await reconcileJsonFiles(targetTheme, session, remoteChecksums, localThemeFileSystem, options)
-  }
+  const {reconciliationFinishedPromise, readyForReconciliationPromise} = await reconcileJsonFiles(
+    targetTheme,
+    session,
+    remoteChecksums,
+    localThemeFileSystem,
+    options,
+  )
 
   const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
   pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, localThemeFileSystem, options)
 
-  return updatedRemoteChecksums
+  return {updatedRemoteChecksums, reconciliationFinishedPromise, readyForReconciliationPromise}
 }
