@@ -20,9 +20,6 @@ export function fakeThemeFileSystem(
     read: async (fileKey: string) => {
       return files.get(fileKey)?.value || files.get(fileKey)?.attachment
     },
-    stat: async (_fileKey: string) => {
-      return {mtime: new Date(), size: 1}
-    },
     addEventListener: () => {},
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, options?.filters),
     startWatcher: async () => {},

@@ -14,37 +14,31 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
 
     // Matches asset filenames in an HTTP Request URL path
     const assetsFilename = event.path.match(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/)?.[1]
-    const fileKey = assetsFilename && joinPath('assets', assetsFilename)
+    const file = assetsFilename ? ctx.localThemeFileSystem.files.get(joinPath('assets', assetsFilename)) : undefined
+    if (!file) return
 
-    if (fileKey && ctx.localThemeFileSystem.files.has(fileKey)) {
-      const mimeType = lookupMimeType(fileKey)
-      if (
-        mimeType.startsWith('image/') &&
-        event.path.includes('&') &&
-        !ctx.localThemeFileSystem.unsyncedFileKeys.has(fileKey)
-      ) {
-        // This is likely a request for an image with filters (e.g. crop),
-        // which we don't support locally. Bypass and get it from the CDN.
-        return
-      }
+    const mimeType = lookupMimeType(file.key)
 
-      // Add header for debugging that the files come from the local assets
-      setResponseHeader(event, 'X-Local-Asset', 'true')
-
-      return serveStatic(event, {
-        getContents: () => {
-          const cachedValue = ctx.localThemeFileSystem.files.get(fileKey)?.value
-          if (cachedValue && typeof cachedValue === 'string') return injectCdnProxy(cachedValue, ctx)
-
-          return ctx.localThemeFileSystem
-            .read(fileKey)
-            .then((content) => (typeof content === 'string' ? injectCdnProxy(content, ctx) : content))
-        },
-        getMeta: async () => {
-          const stats = await ctx.localThemeFileSystem.stat(fileKey).catch(() => {})
-          return {...stats, type: mimeType}
-        },
-      })
+    if (
+      mimeType.startsWith('image/') &&
+      event.path.includes('&') &&
+      !ctx.localThemeFileSystem.unsyncedFileKeys.has(file.key)
+    ) {
+      // This is likely a request for an image with filters (e.g. crop),
+      // which we don't support locally. Bypass and get it from the CDN.
+      return
     }
+
+    // Add header for debugging that the files come from the local assets
+    setResponseHeader(event, 'X-Local-Asset', 'true')
+
+    const fileContent = file.value ? injectCdnProxy(file.value, ctx) : Buffer.from(file.attachment ?? '', 'base64')
+
+    return serveStatic(event, {
+      getContents: () => fileContent,
+      // Note: stats.size is the length of the base64 string for attachments,
+      // not the real length of the file. Use the Buffer length instead:
+      getMeta: () => ({type: mimeType, size: fileContent.length, mtime: file.stats?.mtime}),
+    })
   })
 }

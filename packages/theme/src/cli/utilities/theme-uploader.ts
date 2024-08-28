@@ -311,7 +311,7 @@ function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): Checksu
     checksums.push({
       key,
       checksum: file.checksum,
-      size: (file.value || file.attachment)?.length ?? 0,
+      size: file.stats?.size ?? 0,
     })
   })
 

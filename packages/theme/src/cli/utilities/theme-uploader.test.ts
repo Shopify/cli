@@ -422,7 +422,12 @@ describe('theme-uploader', () => {
       new Map([
         [
           'config/settings_data.json',
-          {key: 'config/settings_data.json', checksum: '2', value: 'w'.repeat(MAX_BATCH_BYTESIZE)},
+          {
+            key: 'config/settings_data.json',
+            checksum: '2',
+            value: 'some_settings_data',
+            stats: {size: MAX_BATCH_BYTESIZE, mtime: 0},
+          },
         ],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
       ]),

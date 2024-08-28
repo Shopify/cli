@@ -60,7 +60,6 @@ describe('theme-fs', () => {
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
-        stat: expect.any(Function),
         applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
@@ -84,7 +83,6 @@ describe('theme-fs', () => {
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
-        stat: expect.any(Function),
         applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
@@ -194,6 +192,7 @@ describe('theme-fs', () => {
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
         value: expect.any(String),
         attachment: '',
+        stats: {size: expect.any(Number), mtime: expect.any(Number)},
       })
 
       // When
@@ -206,6 +205,7 @@ describe('theme-fs', () => {
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
         value: content,
         attachment: '',
+        stats: {size: content?.length, mtime: expect.any(Number)},
       })
     })
   })
@@ -430,6 +430,15 @@ describe('theme-fs', () => {
   })
 
   function fsEntry({key, checksum}: Checksum): [string, ThemeAsset] {
-    return [key, {key, checksum, value: expect.any(String), attachment: expect.any(String)}]
+    return [
+      key,
+      {
+        key,
+        checksum,
+        value: expect.any(String),
+        attachment: expect.any(String),
+        stats: {size: expect.any(Number), mtime: expect.any(Number)},
+      },
+    ]
   }
 })

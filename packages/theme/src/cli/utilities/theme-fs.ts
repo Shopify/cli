@@ -13,7 +13,6 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
-import {stat} from 'fs/promises'
 import type {
   ThemeFileSystem,
   ThemeFileSystemOptions,
@@ -213,16 +212,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       files.set(asset.key, asset)
     },
     read,
-    stat: async (fileKey: string) => {
-      if (files.has(fileKey)) {
-        const absolutePath = joinPath(root, fileKey)
-        const stats = await stat(absolutePath)
-        if (stats.isFile()) {
-          const fileReducedStats = {size: stats.size, mtime: stats.mtime}
-          return fileReducedStats
-        }
-      }
-    },
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
