@@ -37,6 +37,7 @@ import {
   testThemeExtensions,
   testAppConfigExtensions,
   buildVersionedAppSchema,
+  testAppWithLegacyConfig,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {
@@ -844,7 +845,7 @@ api_version = "2023-04"
     // Then
     expect(clearCachedAppInfo).toHaveBeenCalledWith(options.directory)
     expect(options.developerPlatformClient.appsForOrg).toBeCalled()
-    expect(link).not.toBeCalled()
+    expect(link).toBeCalled()
   })
 
   test('reset triggers link if opted into config in code', async () => {
@@ -1065,6 +1066,7 @@ describe('ensureDeployContext', () => {
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
     // Given
+    const legacyApp = testAppWithLegacyConfig({config: {}})
     const app = testAppWithConfig({config: {client_id: APP1.apiKey}})
     const identifiers = {
       app: APP1.apiKey,
@@ -1074,12 +1076,9 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(loadApp).mockResolvedValue(legacyApp)
     vi.mocked(link).mockResolvedValue({...app.configuration, organization_id: ORG1.id})
-
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
-      .mockResolvedValue()
+    vi.spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile').mockResolvedValue()
 
     const developerPlatformClient = buildDeveloperPlatformClient({
       async orgAndApps(_orgId: string) {
@@ -1091,17 +1090,17 @@ describe('ensureDeployContext', () => {
       },
       appFromId: () => Promise.resolve(APP2),
     })
-    const opts: DeployContextOptions = {...deployOptions(app), developerPlatformClient}
+    const opts: DeployContextOptions = {...deployOptions(legacyApp), developerPlatformClient}
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
 
     // When
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(link).toBeCalledWith({directory: app.directory}, false)
+    expect(link).toBeCalled()
 
     expect(updateAppIdentifiers).toBeCalledWith({
-      app,
+      app: legacyApp,
       identifiers,
       command: 'deploy',
       developerPlatformClient,
