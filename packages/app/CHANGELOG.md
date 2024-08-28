@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.66.1
+
+### Patch Changes
+
+- 5adfab26df: Do not link on deploy when there is a current config
+  - @shopify/create-app@3.66.1
+  - @shopify/cli-kit@3.66.1
+  - @shopify/plugin-cloudflare@3.66.1
+
 ## 3.66.0
 
 ### Minor Changes
