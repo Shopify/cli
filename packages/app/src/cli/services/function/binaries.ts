@@ -1,6 +1,7 @@
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {chmod, createFileWriteStream, fileExists, mkdir} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {PipelineSource} from 'stream'
 import stream from 'node:stream/promises'
 import fs from 'node:fs'
@@ -100,39 +101,36 @@ export async function installBinary(bin: DownloadableBinary) {
   const url = bin.downloadUrl(process.platform, process.arch)
   outputDebug(`Downloading ${bin.name} ${bin.version} from ${url} to ${bin.path}`)
   await mkdir(dirname(bin.path))
-  const resp = await fetchWithRetry(url, 3)
-  if (resp.status !== 200) {
-    throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
-  }
+  await performActionWithRetryAfterRecovery(
+    async () => {
+      const controller = new AbortController()
+      // Picking 5000 ms as the timeout because Javy is around 13 megabytes, so it
+      // will take around 4 seconds to download on a 25 Mbit connection, and also
+      // be able to retry twice in the 13 seconds we have for a test to complete
+      // before timing out.
+      // The timeout continues to apply as the response is processed in case the
+      // server hangs while downloading the binary.
+      const id = setTimeout(() => controller.abort(), 5000)
+      try {
+        const resp = await fetch(url, {signal: controller.signal})
+        if (resp.status !== 200) {
+          throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
+        }
 
-  const responseStream = resp.body
-  if (responseStream === null) {
-    throw new Error(`Downloading ${bin.name} failed with empty response body`)
-  }
+        const responseStream = resp.body
+        if (responseStream === null) {
+          throw new Error(`Downloading ${bin.name} failed with empty response body`)
+        }
 
-  const outputStream = createFileWriteStream(bin.path)
-  await bin.processResponse(responseStream, outputStream)
+        // Truncates any existing content in `bin.path` on retry.
+        const outputStream = createFileWriteStream(bin.path)
+        await bin.processResponse(responseStream, outputStream)
+      } finally {
+        clearTimeout(id)
+      }
+    },
+    async () => {},
+    2,
+  )
   await chmod(bin.path, 0o775)
-}
-
-async function fetchWithRetry(url: string, retries: number) {
-  const controller = new AbortController()
-  // Picking 5000 ms as the timeout because Javy is around 13 megabytes, so it
-  // will take around 4 seconds to download on a 25 Mbit connection, and also
-  // be able to retry twice in the 13 seconds we have for a test to complete
-  // before timing out.
-  const id = setTimeout(() => controller.abort(), 5000)
-
-  try {
-    const response = await fetch(url, {signal: controller.signal})
-    clearTimeout(id)
-    return response
-  } catch (error) {
-    clearTimeout(id)
-    if (retries > 0) {
-      return fetchWithRetry(url, retries - 1)
-    } else {
-      throw error
-    }
-  }
 }

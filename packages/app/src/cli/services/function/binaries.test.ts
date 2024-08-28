@@ -107,7 +107,9 @@ describe('javy', () => {
     })
   })
 
-  test('Javy installs and runs', async () => {
+  // This shouldn't take 20 seconds to run but sometimes the network hangs and
+  // retries need to happen.
+  test('Javy installs and runs', {timeout: 20000}, async () => {
     await installBinary(javy)
     await exec(javy.path, ['--help'])
   })
@@ -215,7 +217,9 @@ describe('functionRunner', () => {
     })
   })
 
-  test('function-runner installs and runs', async () => {
+  // This shouldn't take 20 seconds to run but sometimes the network hangs and
+  // retries need to happen.
+  test('function-runner installs and runs', {timeout: 20000}, async () => {
     await installBinary(functionRunner)
     await exec(functionRunner.path, ['--help'])
   })
