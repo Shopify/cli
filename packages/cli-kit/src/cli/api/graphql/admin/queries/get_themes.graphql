@@ -1,0 +1,13 @@
+query getThemes($after: String) {
+  themes(first: 50, after: $after) {
+    nodes {
+      id
+      name
+      role
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

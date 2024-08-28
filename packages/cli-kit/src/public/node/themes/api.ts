@@ -1,6 +1,8 @@
 import {storeAdminUrl} from './urls.js'
 import * as throttler from '../api/rest-api-throttler.js'
-import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
+import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
+import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {adminRequestDoc, restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -9,21 +11,59 @@ import {
   buildTheme,
   buildThemeAsset,
 } from '@shopify/cli-kit/node/themes/factories'
+
 import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,name,role,processing'})
-  return buildTheme(response.json.theme)
+  const vars = {id: `gid://shopify/Theme/${id}`}
+  const response = await adminRequestDoc(GetTheme, session, vars)
+
+  const theme = response.theme
+  if (theme) {
+    return buildTheme({
+      id: parseInt((theme.id as unknown as string).split('/').pop() as string, 10),
+      name: theme.name,
+      role: theme.role.toLowerCase(),
+    })
+  }
 }
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
-  const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
-  const themes = response.json?.themes
-  if (themes?.length > 0) return themes.map(buildTheme)
-  return []
+  let cursor = null
+
+  const themes: Theme[] = []
+
+  while (true) {
+    let vars = {}
+    if (cursor) {
+      vars = {after: cursor}
+    }
+    // eslint-disable-next-line no-await-in-loop
+    const response = await adminRequestDoc(GetThemes, session, vars)
+    response.themes?.nodes.forEach((theme) => {
+      // Strip off gid://shopify/Theme/ from the id
+      // We should probably leave this as a gid for subsequent requests?
+      const t = buildTheme({
+        id: parseInt((theme.id as unknown as string).split('/').pop() as string, 10),
+        name: theme.name,
+        role: theme.role.toLowerCase(),
+      })
+
+      if (t !== undefined) {
+        themes.push(t)
+      }
+    })
+    if (response.themes?.pageInfo.hasNextPage) {
+      cursor = `"${response.themes.pageInfo.endCursor}"`
+    } else {
+      break
+    }
+  }
+
+  return themes
 }
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
