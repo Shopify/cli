@@ -423,7 +423,7 @@ export interface DeployContextOptions {
  * That means we have a valid session, organization and app.
  *
  * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
- * If there is no API key (or is invalid), show prompts to select an org and app.
+ * If there is no app (or is invalid), show prompts to select an org and app.
  * Finally, the info is updated in the env file.
  *
  * @param options - Current dev context options
@@ -433,8 +433,8 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const {reset, force, noRelease} = options
   let developerPlatformClient = options.developerPlatformClient
-  // do the link here
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, !options.apiKey)
+  const enableLinkingPrompt = !options.apiKey && !isCurrentAppSchema(options.app.configuration)
+  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, enableLinkingPrompt)
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -815,11 +815,11 @@ async function linkIfNecessary(
   if (reset) clearCachedAppInfo(directory)
 
   const firstTimeSetup = previousCachedInfo === undefined
-  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
   const usingConfigWithNoTomls: boolean =
     previousCachedInfo?.configFile !== undefined && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+  const unlinked = firstTimeSetup || usingConfigWithNoTomls
+  const performAppLink = reset || (enableLinkingPrompt && unlinked)
 
-  const performAppLink = enableLinkingPrompt && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)
   if (performAppLink) {
     return link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
   }
