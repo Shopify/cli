@@ -561,19 +561,17 @@ describe('theme-uploader', () => {
       {key: 'assets/keepme.liquid', checksum: '1'},
       {key: 'assets/deleteme.liquid', checksum: '2'},
     ]
-    const local = fakeThemeFileSystem(
+    const localTheme = fakeThemeFileSystem(
       'tmp',
       new Map([
         ['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}],
         ['assets/uploadme.liquid', {key: 'assets/uploadme.liquid', checksum: '3'}],
       ]),
+      {filters: {only: ['assets/keepme.liquid', 'assets/deleteme.liquid', 'assets/uploadme.liquid']}},
     )
 
     // When
-    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
-      ...uploadOptions,
-      only: ['assets/keepme.liquid', 'assets/deleteme.liquid', 'assets/uploadme.liquid'],
-    })
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, localTheme, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then

@@ -41,8 +41,6 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   const uploadPromise = reconcilePromise.then(async (remoteChecksums: Checksum[]) =>
     uploadTheme(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
       nodelete: ctx.options.noDelete,
-      ignore: ctx.options.ignore,
-      only: ctx.options.only,
       deferPartialWork: true,
     }),
   )

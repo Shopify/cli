@@ -46,7 +46,7 @@ describe('asset-ignore', () => {
       await expect(getPatternsFromShopifyIgnore('tmp')).resolves.toEqual([])
     })
 
-    test.only('returns an empty array when the .shopifyignore file does not exist', async () => {
+    test('returns an empty array when the .shopifyignore file does not exist', async () => {
       vi.mocked(fileExists).mockResolvedValue(true)
       vi.mocked(readFileFn).mockResolvedValue(`
         # assets/basic.css
