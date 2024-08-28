@@ -55,4 +55,36 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       },
     )
   })
+
+  test('should not call reconcileJsonFiles when remote theme contains no files', async () => {
+    // Given
+    const files = new Map<string, ThemeAsset>([])
+    const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
+    const emptyRemoteChecksums: [] = []
+    const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
+
+    vi.mocked(fetchChecksums).mockResolvedValue([])
+    vi.mocked(mountThemeFileSystem).mockReturnValue(newFileSystem)
+
+    // When
+    await reconcileAndPollThemeEditorChanges(
+      developmentTheme,
+      adminSession,
+      emptyRemoteChecksums,
+      defaultThemeFileSystem,
+      {
+        noDelete: false,
+        ignore: [],
+        only: [],
+      },
+    )
+
+    // Then
+    expect(reconcileJsonFiles).not.toHaveBeenCalled()
+    expect(pollThemeEditorChanges).toHaveBeenCalledWith(developmentTheme, adminSession, [], newFileSystem, {
+      noDelete: false,
+      ignore: [],
+      only: [],
+    })
+  })
 })
