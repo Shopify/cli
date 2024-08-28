@@ -61,7 +61,6 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
     const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
 
     vi.mocked(fetchChecksums).mockResolvedValue([])
-    vi.mocked(mountThemeFileSystem).mockReturnValue(newFileSystem)
 
     // When
     await reconcileAndPollThemeEditorChanges(
@@ -83,5 +82,44 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       ignore: [],
       only: [],
     })
+  })
+
+  test('should wait for the local theme file system to be ready before reconciling', async () => {
+    // Given
+    const files = new Map<string, ThemeAsset>([])
+    const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
+    const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const options = {
+      noDelete: false,
+      ignore: [],
+      only: [],
+    }
+
+    const readySpy = vi.spyOn(defaultThemeFileSystem, 'ready').mockImplementation(async () => {
+      options.noDelete = true
+      return Promise.resolve()
+    })
+
+    // When
+    await reconcileAndPollThemeEditorChanges(
+      developmentTheme,
+      adminSession,
+      initialRemoteChecksums,
+      defaultThemeFileSystem,
+      options,
+    )
+
+    // Then
+    expect(reconcileJsonFiles).toHaveBeenCalledWith(
+      developmentTheme,
+      adminSession,
+      initialRemoteChecksums,
+      defaultThemeFileSystem,
+      {
+        ...options,
+        noDelete: true,
+      },
+    )
+    readySpy.mockRestore()
   })
 })

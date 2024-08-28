@@ -191,18 +191,4 @@ describe('reconcileThemeFiles', () => {
       expect(fetchThemeAsset).not.toHaveBeenCalled()
     })
   })
-
-  test('should wait for the theme file system to be ready prior to reconciliation', async () => {
-    // Given
-    const themeFileSystem = {
-      ...fakeThemeFileSystem('tmp', files),
-      ready: vi.fn().mockResolvedValue(undefined),
-    }
-
-    // When
-    await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
-
-    // Then
-    expect(themeFileSystem.ready).toHaveBeenCalled()
-  })
 })

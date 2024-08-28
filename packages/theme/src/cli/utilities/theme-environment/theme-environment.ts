@@ -29,13 +29,11 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
 
   const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
     ctx.options.themeEditorSync
-      ? ctx.localThemeFileSystem.ready().then(() =>
-          reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
-            noDelete: ctx.options.noDelete,
-            ignore: ctx.options.ignore,
-            only: ctx.options.only,
-          }),
-        )
+      ? reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
+          noDelete: ctx.options.noDelete,
+          ignore: ctx.options.ignore,
+          only: ctx.options.only,
+        })
       : remoteChecksums,
   )
 
