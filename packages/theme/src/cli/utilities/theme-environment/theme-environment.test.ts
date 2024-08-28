@@ -35,25 +35,6 @@ beforeEach(() => {
   })
 })
 
-// Vitest is resetting this mock between tests due to a global config `mockReset: true`.
-// For some reason we need to re-mock it here and in beforeEach:
-vi.mock('../theme-uploader.js', async () => {
-  return {
-    uploadTheme: vi.fn(() => {
-      return {
-        workPromise: Promise.resolve(),
-        uploadResults: new Map(),
-        renderThemeSyncProgress: () => Promise.resolve(),
-      }
-    }),
-  }
-})
-beforeEach(() => {
-  vi.mocked(uploadTheme).mockImplementation(() => {
-    return {workPromise: Promise.resolve(), uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()}
-  })
-})
-
 describe('setupDevServer', () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const localFiles = new Map([
