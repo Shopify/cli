@@ -4,7 +4,6 @@ import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
-import {renderTasksToStdErr} from '../theme-ui.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {createServer} from 'node:http'
@@ -50,17 +49,6 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   return {
     workPromise: uploadPromise.then((result) => result.workPromise),
     renderProgress: async () => {
-      if (ctx.options.themeEditorSync) {
-        await renderTasksToStdErr([
-          {
-            title: 'Performing file synchronization. This may take a while...',
-            task: async () => {
-              await reconcilePromise
-            },
-          },
-        ])
-      }
-
       const {renderThemeSyncProgress} = await uploadPromise
 
       await renderThemeSyncProgress()
