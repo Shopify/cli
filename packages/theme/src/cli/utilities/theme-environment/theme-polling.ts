@@ -144,5 +144,7 @@ async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, as
 
 function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem) {
   const filteredFiles = localThemeFileSystem.applyIgnoreFilters(files)
-  return filteredFiles.filter((file) => file.key.endsWith('.json'))
+  return filteredFiles
+    .filter((file) => file.key.endsWith('.json'))
+    .filter((file) => !localThemeFileSystem.unsyncedFileKeys.has(file.key))
 }

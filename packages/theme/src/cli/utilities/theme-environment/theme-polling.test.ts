@@ -224,6 +224,40 @@ describe('pollRemoteJsonChanges', async () => {
         value: 'content',
       })
     })
+
+    test('does not pull assets that are marked for upload but have not been uploaded yet', async () => {
+      // Given
+      const remoteChecksums = [
+        {checksum: '1', key: 'templates/asset1.json'},
+        {checksum: '2', key: 'templates/asset2.json'},
+        {checksum: '3', key: 'templates/asset3.json'},
+      ]
+      const updatedRemoteChecksums = [
+        {checksum: '4', key: 'templates/asset1.json'},
+        {checksum: '5', key: 'templates/asset2.json'},
+        {checksum: '6', key: 'templates/asset3.json'},
+      ]
+      vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
+      vi.mocked(fetchThemeAsset).mockImplementation(async (_, key) => ({
+        checksum: '2',
+        key,
+        value: 'content',
+      }))
+
+      const themeFileSystem = {
+        ...defaultThemeFileSystem,
+        unsyncedFileKeys: new Set(['templates/asset2.json']),
+      }
+
+      // When
+      await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
+
+      // Then
+      expect(fetchThemeAsset).toHaveBeenCalledTimes(2)
+      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset1.json', adminSession)
+      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset3.json', adminSession)
+      expect(fetchThemeAsset).not.toHaveBeenCalledWith(1, 'templates/asset2.json', adminSession)
+    })
   })
 
   describe('deleteRemovedAssets', () => {
