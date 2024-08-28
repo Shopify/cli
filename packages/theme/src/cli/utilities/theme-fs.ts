@@ -205,12 +205,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     unsyncedFileKeys,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
-      await removeThemeFile(root, fileKey)
       files.delete(fileKey)
+      await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
-      await writeThemeFile(root, asset)
       files.set(asset.key, asset)
+      await writeThemeFile(root, asset)
     },
     read,
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
