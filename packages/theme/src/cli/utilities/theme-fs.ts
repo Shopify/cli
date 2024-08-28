@@ -1,4 +1,9 @@
 import {calculateChecksum} from './asset-checksum.js'
+import {
+  applyIgnoreFilters,
+  raiseWarningForNonExplicitGlobPatterns,
+  getPatternsFromShopifyIgnore,
+} from './asset-ignore.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -11,6 +16,7 @@ import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 import type {
   ThemeFileSystem,
+  ThemeFileSystemOptions,
   Key,
   ThemeAsset,
   ThemeFSEventName,
@@ -58,9 +64,14 @@ const THEME_PARTITION_REGEX = {
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-export function mountThemeFileSystem(root: string): ThemeFileSystem {
+export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
   const unsyncedFileKeys = new Set<string>()
+  const filterPatterns = {
+    ignoreFromFile: [] as string[],
+    ignore: options?.filters?.ignore ?? [],
+    only: options?.filters?.only ?? [],
+  }
   const eventEmitter = new EventEmitter()
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
@@ -83,11 +94,20 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     return fileContent
   }
 
-  const initialFilesPromise = glob(THEME_DIRECTORY_PATTERNS, {
+  const themeSetupPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
     ignore: THEME_DEFAULT_IGNORE_PATTERNS,
-  }).then((filesPaths) => Promise.all(filesPaths.map(read)))
+  })
+    .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
+    .then(([ignoredPatterns]) => {
+      filterPatterns.ignoreFromFile.push(...ignoredPatterns)
+      raiseWarningForNonExplicitGlobPatterns([
+        ...filterPatterns.ignoreFromFile,
+        ...filterPatterns.ignore,
+        ...filterPatterns.only,
+      ])
+    })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
   const handleFileUpdate = (
@@ -177,7 +197,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     root,
     files,
     unsyncedFileKeys,
-    ready: () => initialFilesPromise.then(() => {}),
+    ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
       await removeThemeFile(root, fileKey)
       files.delete(fileKey)
@@ -197,6 +217,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
         }
       }
     },
+    applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },

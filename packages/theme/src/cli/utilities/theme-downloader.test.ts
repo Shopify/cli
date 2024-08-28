@@ -56,7 +56,7 @@ describe('theme-downloader', () => {
       const files = new Map<string, ThemeAsset>([
         ['release/alreadyexists', {checksum: '2', value: 'content', key: 'release/alreadyexists'}],
       ])
-      const fileSystem = fakeThemeFileSystem(root, files)
+      const fileSystem = fakeThemeFileSystem(root, files, {filters: downloadOptions})
       const remote = [
         fileToDownload,
         {key: 'release/alreadyexists', checksum: '2'},

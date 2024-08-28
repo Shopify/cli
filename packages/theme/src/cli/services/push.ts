@@ -32,7 +32,7 @@ interface JsonOutput {
 
 export async function push(theme: Theme, session: AdminSession, options: PushOptions) {
   const themeChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = mountThemeFileSystem(options.path)
+  const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
   const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
     theme,

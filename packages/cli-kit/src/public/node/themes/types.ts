@@ -24,6 +24,10 @@ type ThemeFSEvent =
 
 export type ThemeFSEventPayload<T extends ThemeFSEventName = 'add'> = (ThemeFSEvent & {type: T})['payload']
 
+export interface ThemeFileSystemOptions {
+  filters?: {ignore?: string[]; only?: string[]}
+}
+
 /**
  * Represents a theme on the file system.
  */
@@ -42,6 +46,11 @@ export interface ThemeFileSystem {
    * File keys that have been modified in memory and are not uploaded yet.
    */
   unsyncedFileKeys: Set<Key>
+
+  /**
+   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
+   */
+  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
 
   /**
    * Promise that resolves when all the initial files are found.

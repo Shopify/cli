@@ -1,5 +1,4 @@
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
-import {applyIgnoreFilters} from '../asset-ignore.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAsset, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -27,8 +26,10 @@ export async function reconcileJsonFiles(
   localThemeFileSystem: ThemeFileSystem,
   options: ReconciliationOptions,
 ) {
-  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} =
-    await identifyFilesToReconcile(remoteChecksums, localThemeFileSystem, options)
+  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
+    remoteChecksums,
+    localThemeFileSystem,
+  )
 
   if (
     filesOnlyPresentLocally.length === 0 &&
@@ -51,15 +52,14 @@ export async function reconcileJsonFiles(
   await performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles)
 }
 
-async function identifyFilesToReconcile(
+function identifyFilesToReconcile(
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
-  options: ReconciliationOptions,
-): Promise<{
+): {
   filesOnlyPresentOnRemote: Checksum[]
   filesOnlyPresentLocally: Checksum[]
   filesWithConflictingChecksums: Checksum[]
-}> {
+} {
   const remoteChecksumKeys = new Set<string>()
   const filesOnlyPresentOnRemote: Checksum[] = []
   const filesWithConflictingChecksums: Checksum[] = []
@@ -79,31 +79,15 @@ async function identifyFilesToReconcile(
     (asset: ThemeAsset) => !remoteChecksumKeys.has(asset.key),
   )
 
-  const filterOptions = {
-    only: options.only,
-    ignore: options.ignore,
-  }
-
-  const [filteredFilesOnlyPresentOnRemote, filteredFilesOnlyPresentLocally, filteredFilesWithConflictingChecksums] =
-    await Promise.all([
-      applyFileFilters(filesOnlyPresentOnRemote, localThemeFileSystem, filterOptions),
-      applyFileFilters(filesOnlyPresentLocally, localThemeFileSystem, filterOptions),
-      applyFileFilters(filesWithConflictingChecksums, localThemeFileSystem, filterOptions),
-    ])
-
   return {
-    filesOnlyPresentOnRemote: filteredFilesOnlyPresentOnRemote,
-    filesOnlyPresentLocally: filteredFilesOnlyPresentLocally,
-    filesWithConflictingChecksums: filteredFilesWithConflictingChecksums,
+    filesOnlyPresentOnRemote: applyFileFilters(filesOnlyPresentOnRemote, localThemeFileSystem),
+    filesOnlyPresentLocally: applyFileFilters(filesOnlyPresentLocally, localThemeFileSystem),
+    filesWithConflictingChecksums: applyFileFilters(filesWithConflictingChecksums, localThemeFileSystem),
   }
 }
 
-async function applyFileFilters(
-  files: Checksum[],
-  localThemeFileSystem: ThemeFileSystem,
-  options: {only: string[]; ignore: string[]},
-) {
-  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
+function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem) {
+  const filteredFiles = localThemeFileSystem.applyIgnoreFilters(files)
   return filteredFiles.filter((file) => file.key.endsWith('.json'))
 }
 

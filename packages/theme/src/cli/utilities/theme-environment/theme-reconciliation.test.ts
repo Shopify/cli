@@ -64,6 +64,7 @@ describe('reconcileThemeFiles', () => {
     // should respect the `ignore` option
     test('should not reconcile files that match the `ignore` option', async () => {
       // Given
+      const themeFileSystem = fakeThemeFileSystem('tmp', files, {filters: {ignore: ['templates/*']}})
       vi.mocked(renderSelectPrompt).mockResolvedValue(REMOTE_STRATEGY)
       const remoteChecksums = [
         {checksum: '1', key: 'templates/template.json', value: 'content'},
@@ -73,9 +74,8 @@ describe('reconcileThemeFiles', () => {
       ]
 
       // When
-      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, defaultThemeFileSystem, {
+      await reconcileJsonFiles(developmentTheme, adminSession, remoteChecksums, themeFileSystem, {
         ...defaultOptions,
-        ignore: ['templates/*'],
       })
 
       // Then

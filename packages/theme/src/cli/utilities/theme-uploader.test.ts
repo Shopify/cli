@@ -530,13 +530,15 @@ describe('theme-uploader', () => {
         ['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '3'}],
         ['assets/ignore_upload.liquid', {key: 'assets/ignore_upload.liquid', checksum: '4'}],
       ]),
+      {
+        filters: {
+          ignore: ['assets/ignore_delete.liquid', 'assets/ignore_upload.liquid'],
+        },
+      },
     )
 
     // When
-    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
-      ...uploadOptions,
-      ignore: ['assets/ignore_delete.liquid', 'assets/ignore_upload.liquid'],
-    })
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then

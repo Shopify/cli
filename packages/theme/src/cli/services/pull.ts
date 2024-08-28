@@ -35,7 +35,7 @@ export async function pull(theme: Theme, session: AdminSession, options: PullOpt
   }
 
   const remoteChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = await mountThemeFileSystem(path)
+  const themeFileSystem = mountThemeFileSystem(path, {filters: options})
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
 
   const store = session.storeFqdn

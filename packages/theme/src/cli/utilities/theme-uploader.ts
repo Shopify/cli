@@ -1,5 +1,4 @@
 import {partitionThemeFiles} from './theme-fs.js'
-import {applyIgnoreFilters} from './asset-ignore.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -10,8 +9,6 @@ import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-k
 
 interface UploadOptions {
   nodelete?: boolean
-  ignore?: string[]
-  only?: string[]
   deferPartialWork?: boolean
 }
 
@@ -39,13 +36,13 @@ export function uploadTheme(
   const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
 
   const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
-    buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults),
+    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, uploadResults),
   )
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
     .then(() => reportFailedUploads(uploadResults))
-    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options))
 
   const workPromise = options?.deferPartialWork
     ? themeCreationPromise
@@ -113,18 +110,18 @@ function createIntervalTask({
   return tasks
 }
 
-async function buildDeleteJob(
+function buildDeleteJob(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
-  options: UploadOptions,
   theme: Theme,
   session: AdminSession,
-): Promise<SyncJob> {
+  options: Pick<UploadOptions, 'nodelete'>,
+): SyncJob {
   if (options.nodelete) {
     return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
   }
 
-  const remoteFilesToBeDeleted = await getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem, options)
+  const remoteFilesToBeDeleted = getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
   const progress = {current: 0, total: orderedFiles.length}
@@ -141,12 +138,8 @@ async function buildDeleteJob(
   return {progress, promise}
 }
 
-async function getRemoteFilesToBeDeleted(
-  remoteChecksums: Checksum[],
-  themeFileSystem: ThemeFileSystem,
-  options: UploadOptions,
-): Promise<Checksum[]> {
-  const filteredChecksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
+function getRemoteFilesToBeDeleted(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem): Checksum[] {
+  const filteredChecksums = themeFileSystem.applyIgnoreFilters(remoteChecksums)
   const filesToBeDeleted = filteredChecksums.filter((checksum) => !themeFileSystem.files.has(checksum.key))
   outputDebug(`Files to be deleted:\n${filesToBeDeleted.map((file) => `-${file.key}`).join('\n')}`)
   return filesToBeDeleted
@@ -191,15 +184,14 @@ interface SyncJob {
   promise: Promise<void>
 }
 
-async function buildUploadJob(
+function buildUploadJob(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
-  options: UploadOptions,
   theme: Theme,
   session: AdminSession,
   uploadResults: Map<string, Result>,
-): Promise<SyncJob> {
-  const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
+): SyncJob {
+  const filesToUpload = selectUploadableFiles(themeFileSystem, remoteChecksums)
 
   // Adjust unsyncedFileKeys to reflect only the files that are about to be uploaded
   themeFileSystem.unsyncedFileKeys.clear()
@@ -235,20 +227,18 @@ async function buildUploadJob(
   return {progress, promise}
 }
 
-async function selectUploadableFiles(
-  themeFileSystem: ThemeFileSystem,
-  remoteChecksums: Checksum[],
-  options: UploadOptions,
-): Promise<ChecksumWithSize[]> {
+function selectUploadableFiles(themeFileSystem: ThemeFileSystem, remoteChecksums: Checksum[]): ChecksumWithSize[] {
   const localChecksums = calculateLocalChecksums(themeFileSystem)
-  const filteredLocalChecksums = await applyIgnoreFilters(localChecksums, themeFileSystem, options)
+  const filteredLocalChecksums = themeFileSystem.applyIgnoreFilters(localChecksums)
   const remoteChecksumsMap = new Map(remoteChecksums.map((remote) => [remote.key, remote]))
 
   const filesToUpload = filteredLocalChecksums.filter((local) => {
     const remote = remoteChecksumsMap.get(local.key)
     return !remote || remote.checksum !== local.checksum
   })
+
   outputDebug(`Files to be uploaded:\n${filesToUpload.map((file) => `-${file.key}`).join('\n')}`)
+
   return filesToUpload
 }
 
