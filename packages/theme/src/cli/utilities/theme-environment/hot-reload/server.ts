@@ -241,7 +241,6 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
 function triggerHotReload(key: string, ctx: DevServerContext) {
   if (ctx.options.liveReload === 'off') return
-  if (ctx.localThemeFileSystem.applyIgnoreFilters([{key}]).length === 0) return
   if (ctx.options.liveReload === 'full-page') {
     return emitHotReloadEvent({type: 'full', key})
   }

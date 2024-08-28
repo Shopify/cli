@@ -110,6 +110,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
+  const isFileIgnored = (fileKey: string) => applyIgnoreFilters([{key: fileKey}], filterPatterns).length === 0
+
   const handleFileUpdate = (
     eventName: 'add' | 'change',
     themeId: string,
@@ -117,6 +119,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     filePath: string,
   ) => {
     const fileKey = getKey(filePath)
+    if (isFileIgnored(fileKey)) return
+
     const lastChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(() => {
@@ -175,6 +179,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
   const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
     const fileKey = getKey(filePath)
+    if (isFileIgnored(fileKey)) return
+
     unsyncedFileKeys.delete(fileKey)
     files.delete(fileKey)
     emitEvent('unlink', {fileKey})
