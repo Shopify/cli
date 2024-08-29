@@ -63,7 +63,6 @@ describe('theme-fs', () => {
         applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
-        unsyncedFileKeys: expect.any(Set),
       })
     })
 
@@ -87,7 +86,6 @@ describe('theme-fs', () => {
         applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
-        unsyncedFileKeys: expect.any(Set),
       })
     })
 
