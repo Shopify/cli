@@ -132,7 +132,7 @@ describe('bundleExtension', () => {
 })
 
 describe('runJavy', () => {
-  test('runs javy to compile JS into Wasm', async () => {
+  test('runs javy to compile JS into Wasm', {timeout: 20000}, async () => {
     // Given
     const ourFunction = await testFunctionExtension()
 

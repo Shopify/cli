@@ -166,9 +166,12 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   extra: string[] = [],
 ) {
+  const javy = javyBinary()
+  await installBinary(javy)
+
   const args = ['compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
 
-  return exec(javyBinary().path, args, {
+  return exec(javy.path, args, {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
