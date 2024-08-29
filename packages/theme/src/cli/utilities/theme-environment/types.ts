@@ -1,5 +1,5 @@
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -46,6 +46,11 @@ export interface DevServerContext {
    * File system tracking local theme assets.
    */
   localThemeFileSystem: ThemeFileSystem
+
+  /**
+   * File system tracking local theme extension assets.
+   */
+  localThemeExtensionFileSystem: ThemeExtensionFileSystem
 
   /**
    * Path to the local theme directory.
@@ -132,12 +137,22 @@ export interface DevServerRenderContext {
   sectionId?: string
 
   /**
+   * Optional identifier for rendering only a specific app block.
+   */
+  appBlockId?: string
+
+  /**
    * Headers to be used in the rendering request.
    */
   headers: {[key: string]: string}
 
   /**
-   * Custom content to be replaced during rendering.
+   * Custom content to be replaced in the theme during rendering.
    */
   replaceTemplates: {[key: string]: string}
+
+  /**
+   * Custom content to be replaced during rendering.
+   */
+  replaceExtensionTemplates?: {[key: string]: string}
 }

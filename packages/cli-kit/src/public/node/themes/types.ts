@@ -30,14 +30,14 @@ export interface ThemeFileSystemOptions {
 /**
  * Represents a theme on the file system.
  */
-export interface ThemeFileSystem {
+export interface VirtualFileSystem {
   /**
    * The root path of the theme.
    */
   root: string
 
   /**
-   * Local theme files.
+   * Local files.
    */
   files: Map<Key, ThemeAsset>
 
@@ -57,21 +57,21 @@ export interface ThemeFileSystem {
   ready: () => Promise<void>
 
   /**
-   * Removes a file from the local disk and updates the themeFileSystem
+   * Removes a file from the local disk and updates the file system
    *
    * @param fileKey - The key of the file to remove
    */
   delete: (fileKey: Key) => Promise<void>
 
   /**
-   * Writes a file to the local disk and updates the themeFileSystem
+   * Writes a file to the local disk and updates the file system
    *
    * @param asset - The ThemeAsset representing the file to write
    */
   write: (asset: ThemeAsset) => Promise<void>
 
   /**
-   * Reads a file from the local disk and updates the themeFileSystem
+   * Reads a file from the local disk and updates the file system
    * Returns a ThemeAsset representing the file that was read
    * Returns undefined if the file does not exist
    *
@@ -80,12 +80,25 @@ export interface ThemeFileSystem {
   read: (fileKey: Key) => Promise<string | Buffer | undefined>
 
   /**
+   * Gets the stats of a file from the local disk and updates the file system
+   * Returns undefined if the file does not exist
+   *
+   * @param fileKey - The key of the file to read
+   */
+  stat: (fileKey: Key) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
+
+  /**
    * Add callbacks to run after certain events are fired.
    */
   addEventListener: {
     <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
   }
+}
 
+/**
+ * Represents a theme on the file system.
+ */
+export interface ThemeFileSystem extends VirtualFileSystem {
   /**
    * Starts a file watcher for the theme directory.
    *
@@ -94,6 +107,16 @@ export interface ThemeFileSystem {
    * @returns A Promise that resolves to an FSWatcher instance.
    */
   startWatcher: (themeId: string, adminSession: AdminSession) => Promise<void>
+}
+
+/**
+ * Represents a theme on the file system.
+ */
+export interface ThemeExtensionFileSystem extends VirtualFileSystem {
+  /**
+   * Starts a file watcher for the theme extension directory.
+   */
+  startWatcher: () => Promise<void>
 }
 
 /**
@@ -147,7 +170,7 @@ export interface Checksum {
 }
 
 /**
- * Represents a file in a theme.
+ * Represents a theme or theme extension asset.
  */
 export interface ThemeAsset extends Checksum {
   /**
