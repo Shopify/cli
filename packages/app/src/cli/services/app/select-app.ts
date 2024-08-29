@@ -5,6 +5,7 @@ import {
   AppModuleVersion,
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
+  ActiveAppVersion,
 } from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
@@ -46,10 +47,11 @@ export async function fetchAppRemoteConfiguration(
   developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
   flags: Flag[],
+  activeAppVersion?: ActiveAppVersion,
 ) {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
+  const appVersion = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
   const appModuleVersionsConfig =
-    activeAppVersion?.appModuleVersions.filter(
+    appVersion?.appModuleVersions.filter(
       (module) => extensionTypeStrategy(specifications, module.specification?.identifier) !== 'uuid',
     ) || []
 

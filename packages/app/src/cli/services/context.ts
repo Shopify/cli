@@ -435,6 +435,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   let developerPlatformClient = options.developerPlatformClient
   const enableLinkingPrompt = !options.apiKey && !isCurrentAppSchema(options.app.configuration)
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, enableLinkingPrompt)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -459,6 +460,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     developerPlatformClient,
     envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
     remoteApp,
+    activeAppVersion,
   })
 
   // eslint-disable-next-line no-param-reassign
