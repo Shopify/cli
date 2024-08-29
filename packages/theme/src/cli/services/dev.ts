@@ -4,6 +4,7 @@ import {setupDevServer} from '../utilities/theme-environment/theme-environment.j
 import {DevServerContext, DevServerSession, LiveReload} from '../utilities/theme-environment/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
+import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -62,6 +63,7 @@ export async function dev(options: DevOptions) {
     })
   }
 
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {filters: options})
 
   const session: DevServerSession = {
@@ -82,6 +84,7 @@ export async function dev(options: DevOptions) {
   const ctx: DevServerContext = {
     session,
     localThemeFileSystem,
+    localThemeExtensionFileSystem,
     directory: options.directory,
     options: {
       themeEditorSync: options['theme-editor-sync'],

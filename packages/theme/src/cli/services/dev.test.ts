@@ -4,6 +4,7 @@ import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
+import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -37,6 +38,8 @@ describe('dev', () => {
     ignore: [],
     only: [],
   }
+
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
 
   describe('Dev-Preview Implementation', async () => {
@@ -67,6 +70,7 @@ describe('dev', () => {
           expiresAt: expect.any(Date),
         },
         localThemeFileSystem,
+        localThemeExtensionFileSystem,
         directory: 'my-directory',
         options: {
           themeEditorSync: true,
