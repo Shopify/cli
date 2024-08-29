@@ -1,23 +1,24 @@
-import {BaseProcess, DevProcessFunction} from './types.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {BaseProcess} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AppInterface} from '../../../models/app/app.js'
+import {OrganizationApp} from '../../../models/organization.js'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {initializeDevelopmentExtensionServer, ensureValidPassword, isStorefrontPasswordProtected} from '@shopify/theme'
+import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ThemeAppExtensionServerOptions {
-  adminSession: AdminSession
   developerPlatformClient: DeveloperPlatformClient
-  themeId?: string
-  themeExtensionPort?: number
 }
 
 interface HostThemeSetupOptions {
-  allExtensions: ExtensionInstance[]
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>
+  localApp: AppInterface
   storeFqdn: string
   theme?: string
   themeExtensionPort?: number
@@ -31,41 +32,84 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<ThemeAppEx
 export async function setupPreviewThemeAppExtensionsProcess(
   options: HostThemeSetupOptions,
 ): Promise<PreviewThemeAppExtensionsProcess | undefined> {
-  outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-
-  const {allExtensions, storeFqdn, theme, themeExtensionPort, developerPlatformClient} = options
-
+  const {remoteApp, localApp} = options
+  const allExtensions = localApp.allExtensions
   const themeExtensions = allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length === 0) {
     return
   }
 
-  const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+  const themeExtension = themeExtensions[0]!
+  const themeExtensionDirectory = themeExtension.directory
+  const themeExtensionPort = options.themeExtensionPort ?? 9293
 
-  const themeId = await findOrCreateHostTheme(adminSession, theme)
+  const [adminSession, storefrontToken, appUrl] = await Promise.all([
+    ensureAuthenticatedAdmin(options.storeFqdn),
+    ensureAuthenticatedStorefront([]),
+    buildAppUrl(remoteApp),
+  ])
+
+  const storeFqdn = adminSession.storeFqdn
+  const storefrontPassword = (await isStorefrontPasswordProtected(storeFqdn))
+    ? await ensureValidPassword('', storeFqdn)
+    : undefined
+
+  const theme = await findOrCreateHostTheme(adminSession, options.theme)
+  const themeId = theme.id.toString()
 
   renderInfo({
-    headline: {info: 'Setup your theme app extension in the host theme:'},
-    link: {
-      label: `https://${adminSession.storeFqdn}/admin/themes/${themeId}/editor`,
-      url: `https://${adminSession.storeFqdn}/admin/themes/${themeId}/editor`,
-    },
+    headline: 'The theme app extension development server is ready.',
+    orderedNextSteps: true,
+    nextSteps: [
+      [
+        {
+          link: {
+            label: 'Install your app in your development store',
+            url: appUrl,
+          },
+        },
+      ],
+      [
+        {
+          link: {
+            label: 'Setup your theme app extension in the host theme',
+            url: `https://${storeFqdn}/admin/themes/${themeId}/editor`,
+          },
+        },
+      ],
+      [
+        'Preview your theme app extension at',
+        {
+          link: {
+            label: `http://127.0.0.1:${themeExtensionPort}`,
+            url: `http://127.0.0.1:${themeExtensionPort}`,
+          },
+        },
+      ],
+    ],
   })
 
   return {
     type: 'theme-app-extensions',
     prefix: 'theme-extensions',
-    function: runThemeAppExtensionsServerNext,
+    function: async () => {
+      const server = await initializeDevelopmentExtensionServer(theme, {
+        adminSession,
+        storefrontToken,
+        storefrontPassword,
+        themeExtensionDirectory,
+        themeExtensionPort,
+      })
+
+      await server.start()
+    },
     options: {
-      adminSession,
-      developerPlatformClient,
-      themeId,
-      themeExtensionPort,
+      developerPlatformClient: options.developerPlatformClient,
     },
   }
 }
 
-export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: string): Promise<string> {
+export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: string): Promise<Theme> {
   let hostTheme: Theme | undefined
   if (theme) {
     outputDebug(`Fetching theme with provided id ${theme}`)
@@ -88,16 +132,11 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
     throw new AbortError(`Could not find or create a host theme for theme app extensions`)
   }
 
-  return hostTheme.id.toString()
-}
-const runThemeAppExtensionsServerNext: DevProcessFunction<ThemeAppExtensionServerOptions> = async (
-  {stdout: _stdout, stderr: _stderr, abortSignal: _abortSignal},
-  _PreviewThemeAppExtensionsOptions,
-) => {
-  await initializeFSWatcher()
-  await startThemeAppExtensionDevelopmentServer()
+  return hostTheme
 }
 
-async function initializeFSWatcher() {}
+async function buildAppUrl(remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>) {
+  const fqdn = await partnersFqdn()
 
-async function startThemeAppExtensionDevelopmentServer() {}
+  return `https://${fqdn}/${remoteApp.organizationId}/apps/${remoteApp.id}/test`
+}
