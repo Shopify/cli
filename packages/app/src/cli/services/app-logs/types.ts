@@ -171,7 +171,8 @@ export interface PollFilters {
   status: string | undefined
   sources: string[] | undefined
 }
-export interface AppLogPrefix {
+
+interface AppLogPrefix {
   status: string
   source: string
   storeName: string
