@@ -34,7 +34,7 @@ describe('theme-fs', () => {
   describe('mountThemeFileSystem', async () => {
     test('mounts the local theme file system when the directory is valid', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
@@ -91,7 +91,7 @@ describe('theme-fs', () => {
 
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
@@ -107,7 +107,7 @@ describe('theme-fs', () => {
   describe('themeFileSystem.delete', () => {
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
@@ -122,7 +122,7 @@ describe('theme-fs', () => {
 
     test('does nothing when the theme file does not exist on local disk', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
@@ -159,7 +159,7 @@ describe('theme-fs', () => {
   describe('themeFileSystem.write', () => {
     test('"write" creates a file on the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const themeFileSystem = await mountThemeFileSystem(root)
@@ -179,7 +179,7 @@ describe('theme-fs', () => {
 
     test('"write" creates an image file on the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const attachment = '0x123!'
       const buffer = Buffer.from(attachment, 'base64')
 
@@ -225,7 +225,7 @@ describe('theme-fs', () => {
   describe('themeFileSystem.read', async () => {
     test('"read" returns returns the content from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/404.json'
       const themeFileSystem = await mountThemeFileSystem(root)
       await themeFileSystem.ready()
@@ -276,7 +276,7 @@ describe('theme-fs', () => {
   describe('readThemeFile', () => {
     test('reads theme file when it exists', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/404.json'
 
       // When
@@ -297,7 +297,7 @@ describe('theme-fs', () => {
 
     test(`returns undefined when theme file doesn't exist`, async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/invalid.json'
 
       // When
@@ -309,7 +309,7 @@ describe('theme-fs', () => {
 
     test('returns Buffer for image files', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'assets/sparkle.gif'
 
       // When
@@ -450,7 +450,7 @@ describe('theme-fs', () => {
   describe('hasRequiredThemeDirectories', () => {
     test(`returns true when directory has all required theme directories`, async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const result = await hasRequiredThemeDirectories(root)
