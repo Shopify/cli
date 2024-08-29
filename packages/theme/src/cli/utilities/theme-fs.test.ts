@@ -7,8 +7,13 @@ import {
   partitionThemeFiles,
   readThemeFile,
 } from './theme-fs.js'
+import {
+  getPatternsFromShopifyIgnore,
+  applyIgnoreFilters,
+  raiseWarningForNonExplicitGlobPatterns,
+} from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {test, describe, expect, vi} from 'vitest'
+import {test, describe, expect, vi, beforeEach} from 'vitest'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
@@ -16,6 +21,13 @@ vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   const mockModule = {removeFile: vi.fn(), writeFile: vi.fn()}
 
   return {...realModule, ...mockModule}
+})
+
+vi.mock('./asset-ignore.js')
+beforeEach(async () => {
+  vi.mocked(getPatternsFromShopifyIgnore).mockResolvedValue([])
+  const realModule = await vi.importActual<typeof import('./asset-ignore.js')>('./asset-ignore.js')
+  vi.mocked(applyIgnoreFilters).mockImplementation(realModule.applyIgnoreFilters)
 })
 
 describe('theme-fs', () => {
@@ -48,7 +60,7 @@ describe('theme-fs', () => {
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
-        stat: expect.any(Function),
+        applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
       })
@@ -71,7 +83,7 @@ describe('theme-fs', () => {
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
-        stat: expect.any(Function),
+        applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
       })
@@ -180,6 +192,7 @@ describe('theme-fs', () => {
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
         value: expect.any(String),
         attachment: '',
+        stats: {size: expect.any(Number), mtime: expect.any(Number)},
       })
 
       // When
@@ -192,6 +205,27 @@ describe('theme-fs', () => {
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
         value: content,
         attachment: '',
+        stats: {size: content?.length, mtime: expect.any(Number)},
+      })
+    })
+  })
+
+  describe('themeFileSystem.applyIgnoreFilters', async () => {
+    test('applies ignore filters to the theme files', async () => {
+      const root = 'src/cli/utilities/fixtures'
+      const files = [{key: 'assets/file.css'}, {key: 'assets/file.json'}]
+      const options = {filters: {ignore: ['assets/*.css']}}
+
+      const themeFileSystem = mountThemeFileSystem(root, options)
+      await themeFileSystem.ready()
+
+      expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
+      expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
+      expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
+      expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
+        ignore: options.filters.ignore,
+        only: [],
+        ignoreFromFile: [],
       })
     })
   })
@@ -395,6 +429,15 @@ describe('theme-fs', () => {
   })
 
   function fsEntry({key, checksum}: Checksum): [string, ThemeAsset] {
-    return [key, {key, checksum, value: expect.any(String), attachment: expect.any(String)}]
+    return [
+      key,
+      {
+        key,
+        checksum,
+        value: expect.any(String),
+        attachment: expect.any(String),
+        stats: {size: expect.any(Number), mtime: expect.any(Number)},
+      },
+    ]
   }
 })

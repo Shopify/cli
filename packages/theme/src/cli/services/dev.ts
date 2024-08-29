@@ -64,7 +64,8 @@ export async function dev(options: DevOptions) {
 
   outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
-  const localThemeFileSystem = mountThemeFileSystem(options.directory)
+  const localThemeFileSystem = mountThemeFileSystem(options.directory, {filters: options})
+
   const session: DevServerSession = {
     ...options.adminSession,
     storefrontToken: options.storefrontToken,

@@ -1,4 +1,9 @@
 import {calculateChecksum} from './asset-checksum.js'
+import {
+  applyIgnoreFilters,
+  raiseWarningForNonExplicitGlobPatterns,
+  getPatternsFromShopifyIgnore,
+} from './asset-ignore.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -8,9 +13,9 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
-import {stat} from 'fs/promises'
 import type {
   ThemeFileSystem,
+  ThemeFileSystemOptions,
   Key,
   ThemeAsset,
   ThemeFSEventName,
@@ -58,9 +63,14 @@ const THEME_PARTITION_REGEX = {
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-export function mountThemeFileSystem(root: string): ThemeFileSystem {
+export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
   const unsyncedFileKeys = new Set<string>()
+  const filterPatterns = {
+    ignoreFromFile: [] as string[],
+    ignore: options?.filters?.ignore ?? [],
+    only: options?.filters?.only ?? [],
+  }
   const eventEmitter = new EventEmitter()
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
@@ -83,13 +93,24 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     return fileContent
   }
 
-  const initialFilesPromise = glob(THEME_DIRECTORY_PATTERNS, {
+  const themeSetupPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
     ignore: THEME_DEFAULT_IGNORE_PATTERNS,
-  }).then((filesPaths) => Promise.all(filesPaths.map(read)))
+  })
+    .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
+    .then(([ignoredPatterns]) => {
+      filterPatterns.ignoreFromFile.push(...ignoredPatterns)
+      raiseWarningForNonExplicitGlobPatterns([
+        ...filterPatterns.ignoreFromFile,
+        ...filterPatterns.ignore,
+        ...filterPatterns.only,
+      ])
+    })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
+  const isFileIgnored = (fileKey: string) => applyIgnoreFilters([{key: fileKey}], filterPatterns).length === 0
+
   const handleFileUpdate = (
     eventName: 'add' | 'change',
     themeId: string,
@@ -97,6 +118,8 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     filePath: string,
   ) => {
     const fileKey = getKey(filePath)
+    if (isFileIgnored(fileKey)) return
+
     const lastChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(() => {
@@ -155,6 +178,8 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
 
   const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
     const fileKey = getKey(filePath)
+    if (isFileIgnored(fileKey)) return
+
     unsyncedFileKeys.delete(fileKey)
     files.delete(fileKey)
     emitEvent('unlink', {fileKey})
@@ -177,7 +202,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     root,
     files,
     unsyncedFileKeys,
-    ready: () => initialFilesPromise.then(() => {}),
+    ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
       await removeThemeFile(root, fileKey)
       files.delete(fileKey)
@@ -187,16 +212,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
       files.set(asset.key, asset)
     },
     read,
-    stat: async (fileKey: string) => {
-      if (files.has(fileKey)) {
-        const absolutePath = joinPath(root, fileKey)
-        const stats = await stat(absolutePath)
-        if (stats.isFile()) {
-          const fileReducedStats = {size: stats.size, mtime: stats.mtime}
-          return fileReducedStats
-        }
-      }
-    },
+    applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },

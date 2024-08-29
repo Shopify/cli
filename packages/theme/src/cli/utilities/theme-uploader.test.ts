@@ -422,7 +422,12 @@ describe('theme-uploader', () => {
       new Map([
         [
           'config/settings_data.json',
-          {key: 'config/settings_data.json', checksum: '2', value: 'w'.repeat(MAX_BATCH_BYTESIZE)},
+          {
+            key: 'config/settings_data.json',
+            checksum: '2',
+            value: 'some_settings_data',
+            stats: {size: MAX_BATCH_BYTESIZE, mtime: 0},
+          },
         ],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
       ]),
@@ -530,13 +535,15 @@ describe('theme-uploader', () => {
         ['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '3'}],
         ['assets/ignore_upload.liquid', {key: 'assets/ignore_upload.liquid', checksum: '4'}],
       ]),
+      {
+        filters: {
+          ignore: ['assets/ignore_delete.liquid', 'assets/ignore_upload.liquid'],
+        },
+      },
     )
 
     // When
-    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
-      ...uploadOptions,
-      ignore: ['assets/ignore_delete.liquid', 'assets/ignore_upload.liquid'],
-    })
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then
@@ -559,19 +566,17 @@ describe('theme-uploader', () => {
       {key: 'assets/keepme.liquid', checksum: '1'},
       {key: 'assets/deleteme.liquid', checksum: '2'},
     ]
-    const local = fakeThemeFileSystem(
+    const localTheme = fakeThemeFileSystem(
       'tmp',
       new Map([
         ['assets/keepme.liquid', {key: 'assets/keepme.liquid', checksum: '1'}],
         ['assets/uploadme.liquid', {key: 'assets/uploadme.liquid', checksum: '3'}],
       ]),
+      {filters: {only: ['assets/keepme.liquid', 'assets/deleteme.liquid', 'assets/uploadme.liquid']}},
     )
 
     // When
-    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
-      ...uploadOptions,
-      only: ['assets/keepme.liquid', 'assets/deleteme.liquid', 'assets/uploadme.liquid'],
-    })
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, localTheme, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then

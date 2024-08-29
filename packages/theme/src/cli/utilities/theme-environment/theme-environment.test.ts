@@ -85,20 +85,23 @@ describe('startDevServer', () => {
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
-      ignore: ['assets/*.json'],
       nodelete: true,
-      only: ['templates/*.liquid'],
       deferPartialWork: true,
     })
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
     // Given
+    const filters = {
+      ignore: ['assets/*.json'],
+      only: ['templates/*.liquid'],
+    }
     const context: DevServerContext = {
       ...defaultServerContext,
       options: {
         ...defaultServerContext.options,
         themeEditorSync: true,
+        ...filters,
       },
     }
 
@@ -111,26 +114,23 @@ describe('startDevServer', () => {
       context.session,
       [],
       context.localThemeFileSystem,
-      {
-        ignore: ['assets/*.json'],
-        noDelete: true,
-        only: ['templates/*.liquid'],
-      },
+      {noDelete: true, ...filters},
     )
   })
 
   test('should skip deletion of remote files if noDelete flag is passed', async () => {
     // Given
-    const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
+    const context = {
+      ...defaultServerContext,
+      options: {...defaultServerContext.options, noDelete: true},
+    }
 
     // When
     await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
-      ignore: ['assets/*.json'],
       nodelete: true,
-      only: ['templates/*.liquid'],
       deferPartialWork: true,
     })
   })

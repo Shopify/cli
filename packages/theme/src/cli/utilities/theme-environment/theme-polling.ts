@@ -1,4 +1,3 @@
-import {applyIgnoreFilters} from '../asset-ignore.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -10,8 +9,6 @@ class PollingError extends Error {}
 
 export interface PollingOptions {
   noDelete: boolean
-  only: string[]
-  ignore: string[]
 }
 
 export function pollThemeEditorChanges(
@@ -45,9 +42,9 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
 ): Promise<Checksum[]> {
-  const previousChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
+  const previousChecksums = applyFileFilters(remoteChecksums, localFileSystem)
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
-    applyFileFilters(checksums, localFileSystem, options),
+    applyFileFilters(checksums, localFileSystem),
   )
 
   const changedAssets = getAssetsChangedOnRemote(previousChecksums, latestChecksums)
@@ -134,7 +131,7 @@ async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, as
   }
 }
 
-async function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem, options: PollingOptions) {
-  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
+function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem) {
+  const filteredFiles = localThemeFileSystem.applyIgnoreFilters(files)
   return filteredFiles.filter((file) => file.key.endsWith('.json'))
 }

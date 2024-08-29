@@ -29,7 +29,7 @@ export async function reconcileAndPollThemeEditorChanges(
 
   const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
 
-  const themeFileSystem = mountThemeFileSystem(localThemeFileSystem.root)
+  const themeFileSystem = mountThemeFileSystem(localThemeFileSystem.root, {filters: options})
   pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, themeFileSystem, options)
 
   return updatedRemoteChecksums

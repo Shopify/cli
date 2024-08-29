@@ -1,5 +1,4 @@
 import {AdminSession} from '../session.js'
-import type {Stats} from 'fs'
 
 /**
  * {@link Key} represents the unique identifier of a file in a theme.
@@ -24,6 +23,10 @@ type ThemeFSEvent =
 
 export type ThemeFSEventPayload<T extends ThemeFSEventName = 'add'> = (ThemeFSEvent & {type: T})['payload']
 
+export interface ThemeFileSystemOptions {
+  filters?: {ignore?: string[]; only?: string[]}
+}
+
 /**
  * Represents a theme on the file system.
  */
@@ -42,6 +45,11 @@ export interface ThemeFileSystem {
    * File keys that have been modified in memory and are not uploaded yet.
    */
   unsyncedFileKeys: Set<Key>
+
+  /**
+   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
+   */
+  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
 
   /**
    * Promise that resolves when all the initial files are found.
@@ -70,14 +78,6 @@ export interface ThemeFileSystem {
    * @param fileKey - The key of the file to read
    */
   read: (fileKey: Key) => Promise<string | Buffer | undefined>
-
-  /**
-   * Gets the stats of a file from the local disk and updates the themeFileSystem
-   * Returns undefined if the file does not exist
-   *
-   * @param fileKey - The key of the file to read
-   */
-  stat: (fileKey: Key) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
 
   /**
    * Add callbacks to run after certain events are fired.
@@ -159,6 +159,11 @@ export interface ThemeAsset extends Checksum {
    * The text content of the asset, such as the HTML and Liquid markup of a template file.
    */
   value?: string
+
+  /**
+   * File stats at time of last modification. For attachments, this is the size of the base64 string.
+   */
+  stats?: {mtime: number; size: number}
 }
 
 /**
@@ -190,7 +195,7 @@ export interface Result {
   /* *
    * The asset that was uploaded as part of the upload operation for this file.
    */
-  asset?: ThemeAsset
+  asset?: Omit<ThemeAsset, 'stats'>
 }
 
 export enum Operation {
