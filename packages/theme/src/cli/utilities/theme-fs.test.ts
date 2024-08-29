@@ -222,7 +222,6 @@ describe('theme-fs', () => {
       expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
       expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
       expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
-      // themeFileSystem.applyIgnoreFilters(files)
       expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
         ignore: options.filters.ignore,
         only: [],

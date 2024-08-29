@@ -70,17 +70,15 @@ interface DevelopmentServerInstance {
   close: () => Promise<void>
 }
 
-function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork?: Promise<void>) {
+function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
   const app = createApp()
 
-  if (initialWork) {
-    app.use(
-      defineLazyEventHandler(async () => {
-        await initialWork
-        return defineEventHandler(() => {})
-      }),
-    )
-  }
+  app.use(
+    defineLazyEventHandler(async () => {
+      await initialWork
+      return defineEventHandler(() => {})
+    }),
+  )
 
   if (ctx.options.liveReload !== 'off') {
     app.use(getHotReloadHandler(theme, ctx))
