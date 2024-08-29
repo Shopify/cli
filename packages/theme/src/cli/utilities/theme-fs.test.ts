@@ -30,6 +30,7 @@ describe('theme-fs', () => {
 
       // Then
       expect(themeFileSystem).toEqual({
+        root,
         files: new Map([
           fsEntry({checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'}),
           fsEntry({checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'}),
@@ -42,7 +43,7 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'}),
           fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
-        root,
+        unsyncedFileKeys: new Set(),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
@@ -63,8 +64,9 @@ describe('theme-fs', () => {
 
       // Then
       expect(themeFileSystem).toEqual({
-        files: new Map([]),
         root,
+        files: new Map(),
+        unsyncedFileKeys: new Set(),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),

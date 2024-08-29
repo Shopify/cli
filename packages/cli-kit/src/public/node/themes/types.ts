@@ -8,20 +8,17 @@ export type Key = string
 
 export type ThemeFSEventName = 'add' | 'change' | 'unlink'
 
-interface ThemeFSEventCommonPayload {
-  fileKey: Key
-  onSync: (fn: () => void) => void
-}
-
 type ThemeFSEvent =
   | {
       type: 'unlink'
-      payload: ThemeFSEventCommonPayload
+      payload: {fileKey: Key}
     }
   | {
       type: 'add' | 'change'
-      payload: ThemeFSEventCommonPayload & {
+      payload: {
+        fileKey: Key
         onContent: (fn: (content: string) => void) => void
+        onSync: (fn: () => void) => void
       }
     }
 
@@ -40,6 +37,11 @@ export interface ThemeFileSystem {
    * Local theme files.
    */
   files: Map<Key, ThemeAsset>
+
+  /**
+   * File keys that have been modified in memory and are not uploaded yet.
+   */
+  unsyncedFileKeys: Set<Key>
 
   /**
    * Promise that resolves when all the initial files are found.

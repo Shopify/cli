@@ -20,8 +20,6 @@ import type {DevServerContext} from '../types.js'
 
 // --- Template Replacers ---
 
-/** Store which files are currently only updated in-memory, not in remote */
-const inMemoryTemplateFiles = new Set<string>()
 /** Store existing section names and types read from JSON files in the project */
 const sectionNamesByFile = new Map<string, [string, string][]>()
 
@@ -29,34 +27,60 @@ function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null)
   if (!maybeJson) return
 
-  const sections: {[key: string]: {type: string}} = maybeJson?.sections
+  const sections: undefined | {[key: string]: {type: string}} = maybeJson?.sections
 
-  sectionNamesByFile.set(
-    fileKey,
-    Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
-  )
+  if (sections) {
+    sectionNamesByFile.set(
+      fileKey,
+      Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
+    )
+  } else {
+    sectionNamesByFile.delete(fileKey)
+  }
+}
+
+function needsTemplateUpdate(fileKey: string) {
+  return !fileKey.startsWith('assets/') && ['.liquid', '.json'].includes(extname(fileKey))
 }
 
 /**
  * Gets all the modified files recorded in memory for `replaceTemplates` in the API.
  * If a route is passed, it will filter out the templates that are not related to the route.
  */
-export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string) {
+export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string, locale?: string) {
   const inMemoryTemplates: {[key: string]: string} = {}
+
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
     ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
-  const hasRouteTemplate = Boolean(currentRoute) && inMemoryTemplateFiles.has(filterTemplate)
+  const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
 
-  for (const fileKey of inMemoryTemplateFiles) {
+  const localeRE = /^locales\/.+\.json$/
+  const hasLocale =
+    Boolean(locale) &&
+    (ctx.localThemeFileSystem.files.has(`locales/${locale}.json`) ||
+      ctx.localThemeFileSystem.files.has(`locales/${locale}.default.json`))
+
+  for (const fileKey of ctx.localThemeFileSystem.unsyncedFileKeys) {
+    if (!needsTemplateUpdate(fileKey)) continue
+
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
     if (!content) continue
-    // Filter out unused JSON templates for the current route. If we're not
-    // sure about the current route's template, we send all (modified) JSON templates.
-    if (!hasRouteTemplate || !jsonTemplateRE.test(fileKey) || fileKey === filterTemplate) {
-      inMemoryTemplates[fileKey] = content
+
+    if (hasRouteTemplate && jsonTemplateRE.test(fileKey)) {
+      // Filter out unused JSON templates for the current route. If we're not
+      // sure about the current route's template, we send all (modified) JSON templates.
+      if (fileKey !== filterTemplate) continue
+    } else if (localeRE.test(fileKey)) {
+      // Filter out unused locales for the sent cookie. If can't find the
+      // current locale file, we send the default locale (and its schema file).
+      if (hasLocale) {
+        if (!fileKey.startsWith(`locales/${locale}.`)) continue
+      } else if (!fileKey.includes('.default.')) continue
     }
+
+    inMemoryTemplates[fileKey] = content
   }
 
   return inMemoryTemplates
@@ -69,40 +93,32 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
-    const needsTemplateUpdate = ['.liquid', '.json'].includes(extension)
     const isAsset = fileKey.startsWith('assets/')
 
     if (isAsset) {
-      if (needsTemplateUpdate) {
+      if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
         onSync(() => triggerHotReload(fileKey, ctx))
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)
       }
-    } else if (needsTemplateUpdate) {
+    } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
       onContent((content) => {
-        inMemoryTemplateFiles.add(fileKey)
         if (extension === '.json') saveSectionsFromJson(fileKey, content)
         triggerHotReload(fileKey, ctx)
-
-        // Delete template from memory after syncing but keep
-        // JSON values to read section names for hot-reloading sections.
-        onSync(() => inMemoryTemplateFiles.delete(fileKey))
       })
+    } else {
+      // Unknown files outside of assets. Wait for sync and reload:
+      onSync(() => triggerHotReload(fileKey, ctx))
     }
   }
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
-    onSync(() => {
-      // Delete memory info after syncing with the remote instance because we
-      // don't need to pass replaceTemplates anymore.
-      inMemoryTemplateFiles.delete(fileKey)
-      sectionNamesByFile.delete(fileKey)
-    })
+  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
+    sectionNamesByFile.delete(fileKey)
   })
 
   // Once the initial files are loaded, read all the JSON files so that
@@ -165,6 +181,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       const replaceTemplates: {[key: string]: string} = {}
 
+      const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
       const sectionTemplate =
         inMemoryTemplateFiles.has(sectionKey) && ctx.localThemeFileSystem.files.get(sectionKey)?.value
 

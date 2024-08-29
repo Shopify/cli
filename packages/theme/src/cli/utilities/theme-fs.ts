@@ -6,7 +6,7 @@ import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import {stat} from 'fs/promises'
 import type {
@@ -60,6 +60,7 @@ const THEME_PARTITION_REGEX = {
 
 export function mountThemeFileSystem(root: string): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
+  const unsyncedFileKeys = new Set<string>()
   const eventEmitter = new EventEmitter()
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
@@ -96,63 +97,76 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
     filePath: string,
   ) => {
     const fileKey = getKey(filePath)
+    const lastChecksum = files.get(fileKey)?.checksum
 
-    const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
-
-    // contentPromise resolves to file.value and does not include file.attachment
-    const syncPromise = contentPromise.then(async (_content) => {
+    const contentPromise = read(fileKey).then(() => {
       const file = files.get(fileKey)!
 
-      const results = await bulkUploadThemeAssets(
-        Number(themeId),
-        [{key: fileKey, value: file.value || file.attachment}],
-        adminSession,
-      )
-      results.forEach((result) => {
-        if (result.success) {
-          outputSyncResult('update', fileKey)
-        } else if (result.errors?.asset) {
-          const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+      if (file.checksum === lastChecksum) {
+        // Do not sync if the file has not changed
+        return ''
+      }
 
-          renderError({
-            headline: 'Failed to sync file to remote theme.',
-            body: errorMessage,
-          })
-          throw new Error()
-        }
-      })
+      unsyncedFileKeys.add(fileKey)
+
+      return file.value || file.attachment || ''
+    })
+
+    const syncPromise = contentPromise.then(async (content) => {
+      if (!content) return false
+
+      const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+
+      if (result?.success) {
+        unsyncedFileKeys.delete(fileKey)
+        outputSyncResult('update', fileKey)
+      } else if (result?.errors?.asset) {
+        const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+
+        renderError({
+          headline: 'Failed to sync file to remote theme.',
+          body: errorMessage,
+        })
+
+        return false
+      }
+
+      return true
     })
 
     emitEvent(eventName, {
       fileKey,
       onContent: (fn) => {
-        contentPromise.then(fn).catch(() => {})
+        contentPromise
+          .then((content) => {
+            if (content) fn(content)
+          })
+          .catch(() => {})
       },
       onSync: (fn) => {
-        syncPromise.then(fn).catch(() => {})
+        syncPromise
+          .then((didSync) => {
+            if (didSync) fn()
+          })
+          .catch(() => {})
       },
     })
   }
 
   const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
     const fileKey = getKey(filePath)
+    unsyncedFileKeys.delete(fileKey)
     files.delete(fileKey)
+    emitEvent('unlink', {fileKey})
 
-    const syncPromise = Promise.resolve().then(async () => {
-      const success = await deleteThemeAsset(Number(themeId), fileKey, adminSession)
-      if (success) {
+    deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      .then((success) => {
+        if (!success) throw new Error('Unknown issue.')
         outputSyncResult('delete', fileKey)
-      } else {
-        throw new Error(`Failed to delete file ${filePath}`)
-      }
-    })
-
-    emitEvent('unlink', {
-      fileKey,
-      onSync: (fn) => {
-        syncPromise.then(fn).catch(() => {})
-      },
-    })
+      })
+      .catch((error) => {
+        renderWarning({headline: `Failed to delete file "${fileKey}".`, body: error.message})
+      })
   }
 
   const directoriesToWatch = new Set(
@@ -162,6 +176,7 @@ export function mountThemeFileSystem(root: string): ThemeFileSystem {
   return {
     root,
     files,
+    unsyncedFileKeys,
     ready: () => initialFilesPromise.then(() => {}),
     delete: async (fileKey: string) => {
       await removeThemeFile(root, fileKey)

@@ -18,7 +18,11 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
 
     if (fileKey && ctx.localThemeFileSystem.files.has(fileKey)) {
       const mimeType = lookupMimeType(fileKey)
-      if (mimeType.startsWith('image/') && event.path.includes('&')) {
+      if (
+        mimeType.startsWith('image/') &&
+        event.path.includes('&') &&
+        !ctx.localThemeFileSystem.unsyncedFileKeys.has(fileKey)
+      ) {
         // This is likely a request for an image with filters (e.g. crop),
         // which we don't support locally. Bypass and get it from the CDN.
         return

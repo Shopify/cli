@@ -36,28 +36,31 @@ export function uploadTheme(
   const getProgress = (params: {current: number; total: number}) =>
     `[${Math.round((params.current / params.total) * 100)}%]`
 
-  const uploadJobPromise = themeFileSystem
-    .ready()
-    .then(() => buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults))
+  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
 
-  const blockingWorkPromise = uploadJobPromise.then((result) => result.promise)
-
-  const deleteJobPromise = blockingWorkPromise.then(() =>
-    buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session),
+  const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
+    buildUploadJob(remoteChecksums, themeFileSystem, options, theme, session, uploadResults),
   )
 
-  const deferrableWorkPromise = deleteJobPromise
+  const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
-    .catch(() => {
-      renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-    })
+    .then(() => reportFailedUploads(uploadResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, options, theme, session))
 
-  const workPromise = options?.deferPartialWork ? blockingWorkPromise : deferrableWorkPromise
+  const workPromise = options?.deferPartialWork
+    ? themeCreationPromise
+    : deleteJobPromise
+        .then((result) => result.promise)
+        .catch(() => {
+          renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+        })
 
   return {
     uploadResults,
-    workPromise: workPromise.then(() => {}),
+    workPromise,
     renderThemeSyncProgress: async () => {
+      if (options?.deferPartialWork) return
+
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
       await renderTasksToStdErr(
         createIntervalTask({
@@ -67,18 +70,14 @@ export function uploadTheme(
         }),
       )
 
-      uploadPromise.then(() => reportFailedUploads(uploadResults)).catch(() => {})
-
-      if (!options?.deferPartialWork) {
-        const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
-        await renderTasksToStdErr(
-          createIntervalTask({
-            promise: deletePromise,
-            titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-            timeout: 1000,
-          }),
-        )
-      }
+      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+      await renderTasksToStdErr(
+        createIntervalTask({
+          promise: deletePromise,
+          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
+          timeout: 1000,
+        }),
+      )
     },
   }
 }
@@ -168,6 +167,25 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
   ]
 }
 
+export const MINIMUM_THEME_ASSETS = [
+  {key: 'config/settings_schema.json', value: '[]'},
+  {key: 'layout/password.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+  {key: 'layout/theme.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+] as const
+/**
+ * If there's no theme in the remote, we need to create it first so that
+ * requests for _shopify_essential can work. We upload the minimum assets
+ * here to make it faster.
+ */
+async function ensureThemeCreation(theme: Theme, session: AdminSession, remoteChecksums: Checksum[]) {
+  const remoteAssetKeys = new Set(remoteChecksums.map((checksum) => checksum.key))
+  const missingAssets = MINIMUM_THEME_ASSETS.filter(({key}) => !remoteAssetKeys.has(key))
+
+  if (missingAssets.length > 0) {
+    await bulkUploadThemeAssets(theme.id, missingAssets, session)
+  }
+}
+
 interface SyncJob {
   progress: {current: number; total: number}
   promise: Promise<void>
@@ -182,6 +200,11 @@ async function buildUploadJob(
   uploadResults: Map<string, Result>,
 ): Promise<SyncJob> {
   const filesToUpload = await selectUploadableFiles(themeFileSystem, remoteChecksums, options)
+
+  // Adjust unsyncedFileKeys to reflect only the files that are about to be uploaded
+  themeFileSystem.unsyncedFileKeys.clear()
+  filesToUpload.forEach((file) => themeFileSystem.unsyncedFileKeys.add(file.key))
+
   const {independentFiles, dependentFiles} = orderFilesToBeUploaded(filesToUpload)
 
   const progress = {current: 0, total: filesToUpload.length}
@@ -192,18 +215,20 @@ async function buildUploadJob(
       createBatches(fileType).map((batch) =>
         uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
           progress.current += batch.length
+          batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
         }),
       ),
     ).then(() => {})
   }
 
-  const independentFilesUploadPromise = uploadFileBatches(independentFiles.flat())
   const dependentFilesUploadPromise = dependentFiles.reduce(
     (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
     Promise.resolve(),
   )
+  // Wait for dependent files upload to be started before starting this one:
+  const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
-  const promise = Promise.all([independentFilesUploadPromise, dependentFilesUploadPromise]).then(() => {
+  const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
     progress.current += progress.total
   })
 
@@ -249,7 +274,10 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
 } {
   const fileSets = partitionThemeFiles(files)
   return {
-    independentFiles: [fileSets.otherJsonFiles, fileSets.otherLiquidFiles, fileSets.staticAssetFiles],
+    // Most JSON files here are locales. Since we filter locales out in `replaceTemplates`,
+    // and assets can be served locally, we can give priority to the unique Liquid files:
+    independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
+    // Follow order of dependencies:
     dependentFiles: [
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,

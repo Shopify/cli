@@ -1,4 +1,10 @@
-import {MAX_BATCH_BYTESIZE, MAX_BATCH_FILE_COUNT, MAX_UPLOAD_RETRY_COUNT, uploadTheme} from './theme-uploader.js'
+import {
+  MAX_BATCH_BYTESIZE,
+  MAX_BATCH_FILE_COUNT,
+  MAX_UPLOAD_RETRY_COUNT,
+  MINIMUM_THEME_ASSETS,
+  uploadTheme,
+} from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
@@ -107,6 +113,61 @@ describe('theme-uploader', () => {
     expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
   })
 
+  test("should upload a minimum set of files if a theme doesn't exist yet", async () => {
+    const [firstFile, ...rest] = MINIMUM_THEME_ASSETS
+    const remoteChecksums = [{key: firstFile.key, checksum: '1'}]
+
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
+
+    // When
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(1)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledWith(remoteTheme.id, rest, adminSession)
+  })
+
+  test('should skip theme creation if files already exist in remote', async () => {
+    const remoteChecksums = MINIMUM_THEME_ASSETS.map((item) => ({key: item.key, checksum: '1'}))
+
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
+
+    // When
+    const {renderThemeSyncProgress} = await uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(bulkUploadThemeAssets).not.toHaveBeenCalled()
+  })
+
+  test("should upload a minimum set of files if a them doesn't exist yet", async () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
+
+    // When
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, [], themeFileSystem, uploadOptions)
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(1)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledWith(remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
+  })
+
   test("should upload local files that don't exist on the remote theme", async () => {
     // Given
     const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
@@ -129,7 +190,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,
       [
@@ -169,7 +230,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,
       [
@@ -249,9 +310,23 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(6)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(7)
+    // Mininum theme files start first
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(1, remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
+    // Dependent assets start second
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      1,
+      2,
+      remoteTheme.id,
+      [
+        {
+          key: 'sections/header.liquid',
+        },
+      ],
+      adminSession,
+    )
+    // Independent assets start right before dependent assets start
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      3,
       remoteTheme.id,
       [
         {
@@ -266,18 +341,9 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+    // Dependent assets continue after the first batch of dependent assets ends
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      2,
-      remoteTheme.id,
-      [
-        {
-          key: 'sections/header.liquid',
-        },
-      ],
-      adminSession,
-    )
-    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      3,
+      4,
       remoteTheme.id,
       [
         {
@@ -287,7 +353,7 @@ describe('theme-uploader', () => {
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      4,
+      5,
       remoteTheme.id,
       [
         {
@@ -297,7 +363,7 @@ describe('theme-uploader', () => {
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      5,
+      6,
       remoteTheme.id,
       [
         {
@@ -307,7 +373,7 @@ describe('theme-uploader', () => {
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      6,
+      7,
       remoteTheme.id,
       [
         {
@@ -345,7 +411,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(3)
   })
 
   test('should create batches for files when bulk upload request size limit is reached', async () => {
@@ -373,7 +439,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(3)
   })
 
   test('should retry failed uploads', async () => {
@@ -425,9 +491,10 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(MAX_UPLOAD_RETRY_COUNT + 1)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(MAX_UPLOAD_RETRY_COUNT + 2)
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(1, remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      1,
+      2,
       remoteTheme.id,
       [
         {
@@ -440,7 +507,7 @@ describe('theme-uploader', () => {
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      2,
+      3,
       remoteTheme.id,
       [
         {
@@ -474,7 +541,7 @@ describe('theme-uploader', () => {
 
     // Then
     expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
-    expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,
       [
@@ -510,7 +577,7 @@ describe('theme-uploader', () => {
     // Then
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
     expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/deleteme.liquid', adminSession)
-    expect(bulkUploadThemeAssets).toHaveBeenCalledOnce()
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,
       [
