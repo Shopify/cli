@@ -4,6 +4,7 @@ import {render} from './storefront-renderer.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
+import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
@@ -58,9 +59,11 @@ describe('setupDevServer', () => {
   ])
 
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const defaultServerContext: DevServerContext = {
     session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
     localThemeFileSystem,
+    localThemeExtensionFileSystem,
     directory: 'tmp',
     options: {
       ignore: ['assets/*.json'],
