@@ -46,7 +46,7 @@ const NETWORK_ACCESS_HTTP_RESPONSE = {
 }
 
 const USE_POLL_APP_LOGS_RETURN_VALUE = {
-  appLogOutputs: [
+  appLogResults: [
     {
       appLog: new FunctionRunLog({
         export: 'run',
@@ -150,12 +150,14 @@ const USE_POLL_APP_LOGS_RETURN_VALUE = {
       },
     },
   ],
-  errors: [],
 }
 
 const USE_POLL_APP_LOGS_ERRORS_RETURN_VALUE = {
-  errors: ['Test Error'],
-  appLogOutputs: [],
+  appLogResults: [
+    {
+      error: 'Test Error',
+    },
+  ],
 }
 
 const STORE_NAME_BY_ID = new Map()
@@ -180,7 +182,7 @@ describe('Logs', () => {
     // Then
     const lastFrame = renderInstance.lastFrame()
 
-    expect(unstyled(lastFrame!)).toMatchInlineSnapshot(`
+    expect(unstyled(lastFrame!)).toMatchSnapshot(`
     "2024-06-18 16:02:04.868 my-store my-function Success export \\"run\\" executed in 0.5124M instructions
         test logs
         Input (10 bytes):
@@ -291,7 +293,7 @@ describe('Logs', () => {
       />,
     )
 
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`"Test Error"`)
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`"Test Error\n"`)
     renderInstance.unmount()
   })
 })
