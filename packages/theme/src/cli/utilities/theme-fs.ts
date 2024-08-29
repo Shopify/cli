@@ -23,7 +23,7 @@ import type {
   ThemeFSEventPayload,
 } from '@shopify/cli-kit/node/themes/types'
 
-const THEME_DEFAULT_IGNORE_PATTERNS = [
+export const DEFAULT_IGNORE_PATTERNS = [
   '**/.git',
   '**/.vscode',
   '**/.hg',
@@ -97,7 +97,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const themeSetupPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
-    ignore: THEME_DEFAULT_IGNORE_PATTERNS,
+    ignore: DEFAULT_IGNORE_PATTERNS,
   })
     .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
     .then(([ignoredPatterns]) => {
@@ -221,7 +221,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       const {default: chokidar} = await import('chokidar')
 
       const watcher = chokidar.watch([...directoriesToWatch], {
-        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        ignored: DEFAULT_IGNORE_PATTERNS,
         persistent: !process.env.SHOPIFY_UNIT_TEST,
         ignoreInitial: true,
       })

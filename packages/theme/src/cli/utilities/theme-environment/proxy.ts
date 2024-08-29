@@ -14,13 +14,14 @@ import {
   removeResponseHeader,
   setResponseStatus,
 } from 'h3'
-import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {extname} from '@shopify/cli-kit/node/path'
+import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
 const VANITY_CDN_PREFIX = '/cdn/'
+const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
@@ -48,16 +49,23 @@ export function getProxyHandler(theme: Theme, ctx: DevServerContext) {
 
 /**
  * Check if a request should be proxied to the remote SFR instance.
+ *
  * Cases:
- * - /cdn/... -- Proxy
- * - /.../file.js -- Proxy
- * - /.../index.html -- No Proxy
- * - /payments/config | accepts: application/json -- Proxy
- * - /search/suggest | accepts: * / * -- No proxy
+ *
+ * | Path              | Accept header      | Action   |
+ * |-------------------|--------------------|----------|
+ * | /cdn/...          |                    | Proxy    |
+ * | /ext/cdn/...      |                    | Proxy    |
+ * | /.../file.js      |                    | Proxy    |
+ * | /payments/config  | application/json   | Proxy    |
+ * | /search/suggest   | * / *              | No proxy |
+ * | /.../index.html   |                    | No Proxy |
+ *
  */
 function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
   if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
+  if (event.path.startsWith(EXTENSION_CDN_PREFIX)) return true
 
   const [pathname] = event.path.split('?') as [string]
   const extension = extname(pathname)
@@ -84,16 +92,27 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${VANITY_CDN_PREFIX}`, 'g')
   content = content.replace(vanityCdnRE, VANITY_CDN_PREFIX)
 
-  // -- Only redirect usages of the main CDN for known local assets to the local server:
+  // -- Only redirect usages of the main CDN for known local theme and theme extension assets to the local server:
   const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?">]+)(?:\?|"|>|$))/g
-  const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter((key) => key.startsWith('assets')))
+  const filterAssets = (key: string) => key.startsWith('assets')
+  const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter(filterAssets))
+  const existingExtAssets = new Set([...ctx.localThemeExtensionFileSystem.files.keys()].filter(filterAssets))
+
   content = content.replace(mainCdnRE, (matchedUrl, pathname, matchedAsset) => {
-    const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset as string)
-    if (!isLocalAsset) return matchedUrl
+    const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset)
+    const isLocalExtAsset = matchedAsset && existingExtAssets.has(matchedAsset) && pathname.startsWith('extensions/')
+    const isImage = lookupMimeType(matchedAsset).startsWith('image/')
+
     // Do not proxy images, they may require filters or other CDN features
-    if (lookupMimeType(matchedAsset).startsWith('image/')) return matchedUrl
-    // Prefix with vanityCdnPath to later read local assets
-    return `${VANITY_CDN_PREFIX}${pathname}`
+    if (isImage) return matchedUrl
+
+    // Proxy theme extension assets
+    if (isLocalExtAsset) return `${EXTENSION_CDN_PREFIX}${pathname}`
+
+    // Proxy theme assets
+    if (isLocalAsset) return `${VANITY_CDN_PREFIX}${pathname}`
+
+    return matchedUrl
   })
 
   return content
@@ -189,7 +208,9 @@ export function getProxyStorefrontHeaders(event: H3Event) {
 }
 
 function proxyStorefrontRequest(event: H3Event, theme: Theme, ctx: DevServerContext) {
-  const url = new URL(event.path, `https://${ctx.session.storeFqdn}`)
+  const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
+  const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
+  const url = new URL(path, `https://${host}`)
   url.searchParams.set('preview_theme_id', String(theme.id))
   const target = url.toString()
 

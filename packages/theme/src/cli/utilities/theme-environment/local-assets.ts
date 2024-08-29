@@ -1,6 +1,6 @@
 import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
-import {defineEventHandler, serveStatic, setResponseHeader} from 'h3'
+import {defineEventHandler, EventHandlerRequest, H3Event, serveStatic, setResponseHeader} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -13,17 +13,14 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     if (event.method !== 'GET') return
 
     // Matches asset filenames in an HTTP Request URL path
-    const assetsFilename = event.path.match(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/)?.[1]
-    const file = assetsFilename ? ctx.localThemeFileSystem.files.get(joinPath('assets', assetsFilename)) : undefined
-    if (!file) return
 
+    const fileAndFileSystem = getFileAndFileSystem(event, ctx)
+    if (!fileAndFileSystem) return
+
+    const {file, fileSystem} = fileAndFileSystem
     const mimeType = lookupMimeType(file.key)
 
-    if (
-      mimeType.startsWith('image/') &&
-      event.path.includes('&') &&
-      !ctx.localThemeFileSystem.unsyncedFileKeys.has(file.key)
-    ) {
+    if (mimeType.startsWith('image/') && event.path.includes('&') && !fileSystem.unsyncedFileKeys.has(file.key)) {
       // This is likely a request for an image with filters (e.g. crop),
       // which we don't support locally. Bypass and get it from the CDN.
       return
@@ -41,4 +38,32 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
       getMeta: () => ({type: mimeType, size: fileContent.length, mtime: file.stats?.mtime}),
     })
   })
+}
+
+function getFileAndFileSystem(event: H3Event<EventHandlerRequest>, ctx: DevServerContext) {
+  // Matches theme asset filenames in an HTTP Request URL path
+  let assetsFilename = event.path.match(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/)?.[1]
+  let fileKey = assetsFilename && joinPath('assets', assetsFilename)
+  let fileSystem = ctx.localThemeFileSystem
+
+  if (fileKey && fileSystem.files.has(fileKey)) {
+    return {
+      file: fileSystem.files.get(fileKey)!,
+      fileSystem,
+    }
+  }
+
+  // Matches theme extension asset filenames in an HTTP Request URL path
+  assetsFilename = event.path.match(/^\/ext\/cdn\/extensions\/.*?\/.*?\/assets\/([^?]+)(\?|$)/)?.[1]
+  fileKey = assetsFilename && joinPath('assets', assetsFilename)
+  fileSystem = ctx.localThemeExtensionFileSystem
+
+  if (fileKey && fileSystem.files.has(fileKey)) {
+    return {
+      file: fileSystem.files.get(fileKey)!,
+      fileSystem,
+    }
+  }
+
+  return null
 }

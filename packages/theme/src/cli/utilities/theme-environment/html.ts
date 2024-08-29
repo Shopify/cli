@@ -1,6 +1,7 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
+import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -20,6 +21,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       themeId: String(theme.id),
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
+      replaceExtensionTemplates: getExtensionInMemoryTemplates(ctx),
       replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {

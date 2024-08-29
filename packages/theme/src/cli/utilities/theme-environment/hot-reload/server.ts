@@ -2,6 +2,7 @@ import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {prettifySyntaxErrors} from '../html.js'
+import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {
   createError,
   createEventStream,
@@ -142,7 +143,7 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
 // --- SSE Hot Reload ---
 
 const eventEmitter = new EventEmitter()
-function emitHotReloadEvent(event: HotReloadEvent) {
+export function emitHotReloadEvent(event: HotReloadEvent) {
   eventEmitter.emit('hot-reload', event)
 }
 
@@ -168,14 +169,20 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       return eventStream.send().then(() => eventStream.flush())
     } else if (endpoint === '/__hot-reload/render') {
+      const defaultQueryParams = {
+        'app-block-id': '',
+        'section-id': '',
+        'section-template-name': '',
+      }
       const {
         search: browserSearch,
         pathname: browserPathname,
+        'app-block-id': appBlockId,
         'section-id': sectionId,
         'section-template-name': sectionKey,
-      }: {[key: string]: string} = getQuery(event)
+      }: {[key: string]: string} = {...defaultQueryParams, ...getQuery(event)}
 
-      if (typeof sectionId !== 'string' || typeof sectionKey !== 'string') {
+      if (sectionId === '' && appBlockId === '') {
         return
       }
 
@@ -210,8 +217,10 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         query: [...new URLSearchParams(browserSearch).entries()],
         themeId: String(theme.id),
         sectionId,
-        headers: getProxyRequestHeaders(event),
+        appBlockId,
         replaceTemplates,
+        headers: getProxyRequestHeaders(event),
+        replaceExtensionTemplates: getExtensionInMemoryTemplates(ctx),
       })
         .then(async (response) => {
           if (!response.ok) {
