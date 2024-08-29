@@ -2,18 +2,17 @@ import {usePollAppLogs} from './hooks/usePollAppLogs.js'
 import {
   PollOptions,
   FunctionRunLog,
-  AppLogPrefix,
-  AppLogPayload,
   NetworkAccessResponseFromCacheLog,
   NetworkAccessRequestExecutionInBackgroundLog,
   BackgroundExecutionReason,
   NetworkAccessRequestExecutedLog,
+  AppLogResult,
 } from '../../../types.js'
 import {prettyPrintJsonIfPossible} from '../../../utils.js'
 
 import React, {FunctionComponent} from 'react'
 
-import {Box, Text} from '@shopify/cli-kit/node/ink'
+import {Static, Box, Text} from '@shopify/cli-kit/node/ink'
 
 interface LogsProps {
   resubscribeCallback: () => Promise<string>
@@ -33,21 +32,23 @@ const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason):
 }
 
 const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, resubscribeCallback, storeNameById}) => {
-  const {appLogOutputs, errors} = usePollAppLogs({filters, initialJwt: jwtToken, resubscribeCallback, storeNameById})
+  const {appLogResults} = usePollAppLogs({filters, initialJwt: jwtToken, resubscribeCallback, storeNameById})
 
   return (
-    <>
-      {appLogOutputs.map(
-        (
-          {
-            appLog,
-            prefix,
-          }: {
-            appLog: AppLogPayload
-            prefix: AppLogPrefix
-          },
-          index: number,
-        ) => (
+    <Static items={appLogResults}>
+      {(appLogResult: AppLogResult, index: number) => {
+        if ('error' in appLogResult) {
+          return (
+            <Box flexDirection="column">
+              <Box key={index}>
+                <Text color="red">{appLogResult.error}</Text>
+              </Box>
+            </Box>
+          )
+        }
+
+        const {prefix, appLog} = appLogResult
+        return (
           <Box flexDirection="column" key={index}>
             {/* update: use invocationId after https://github.com/Shopify/shopify-functions/issues/235 */}
             <Box flexDirection="row" gap={1}>
@@ -114,19 +115,9 @@ const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, r
               )}
             </Box>
           </Box>
-        ),
-      )}
-
-      {errors.length > 0 && (
-        <Box flexDirection="column">
-          {errors.map((error, index) => (
-            <Box key={index}>
-              <Text color="red">{error}</Text>
-            </Box>
-          ))}
-        </Box>
-      )}
-    </>
+        )
+      }}
+    </Static>
   )
 }
 

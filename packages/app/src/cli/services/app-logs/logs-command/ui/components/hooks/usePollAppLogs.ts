@@ -11,7 +11,7 @@ import {
   parseNetworkAccessRequestExecutedPayload,
   handleFetchAppLogsError,
 } from '../../../../utils.js'
-import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
+import {ErrorResponse, SuccessResponse, PollFilters, AppLogPayload, AppLogResult} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
 import {useState, useEffect} from 'react'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
@@ -24,8 +24,7 @@ interface UsePollAppLogsOptions {
 }
 
 export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeNameById}: UsePollAppLogsOptions) {
-  const [errors, setErrors] = useState<string[]>([])
-  const [appLogOutputs, setAppLogOutputs] = useState<AppLogOutput[]>([])
+  const [appLogResults, setAppLogResults] = useState<AppLogResult[]>([])
 
   useEffect(() => {
     const poll = async ({jwtToken, cursor, filters}: {jwtToken: string; cursor?: string; filters: PollFilters}) => {
@@ -39,10 +38,18 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeN
         const result = await handleFetchAppLogsError({
           response: errorResponse,
           onThrottle: (retryIntervalMs) => {
-            setErrors(['Request throttled while polling app logs.', `Retrying in ${retryIntervalMs / 1000}s`])
+            setAppLogResults((prev) => [
+              ...prev,
+              {error: 'Request throttled while polling app logs.'},
+              {error: `Retrying in ${retryIntervalMs / 1000}s`},
+            ])
           },
           onUnknownError: (retryIntervalMs) => {
-            setErrors(['Error while polling app logs', `Retrying in ${retryIntervalMs / 1000}s`])
+            setAppLogResults((prev) => [
+              ...prev,
+              {error: 'Error while polling app logs'},
+              {error: `Retrying in ${retryIntervalMs / 1000}s`},
+            ])
           },
           onResubscribe: () => {
             return resubscribeCallback()
@@ -53,8 +60,6 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeN
           nextJwtToken = result.nextJwtToken
         }
         retryIntervalMs = result.retryIntervalMs
-      } else {
-        setErrors((errors) => (errors.length ? [] : errors))
       }
 
       const {cursor: nextCursor, appLogs} = response as SuccessResponse
@@ -103,7 +108,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeN
             logTimestamp: formatLocalDate(log.log_timestamp),
           }
 
-          setAppLogOutputs((prev) => [...prev, {appLog, prefix}])
+          setAppLogResults((prev) => [...prev, {appLog, prefix}])
         }
       }
 
@@ -119,5 +124,5 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeN
     })
   }, [])
 
-  return {appLogOutputs, errors}
+  return {appLogResults}
 }

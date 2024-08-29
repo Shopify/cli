@@ -183,3 +183,9 @@ export interface AppLogOutput {
   prefix: AppLogPrefix
   appLog: AppLogPayload
 }
+
+export interface AppLogError {
+  error: string
+}
+
+export type AppLogResult = AppLogOutput | AppLogError

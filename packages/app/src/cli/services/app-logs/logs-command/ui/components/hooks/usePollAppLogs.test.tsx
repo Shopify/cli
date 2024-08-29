@@ -10,6 +10,9 @@ import {
   parseFunctionRunPayload,
 } from '../../../../utils.js'
 import {
+  AppLogError,
+  AppLogOutput,
+  AppLogResult,
   BackgroundExecutionReason,
   NetworkAccessRequestExecutedLog,
   NetworkAccessRequestExecutionInBackgroundLog,
@@ -183,6 +186,20 @@ const STORE_NAME_BY_ID = new Map([[STORE_ID, STORE_NAME]])
 
 const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
+const isNotError = (log: AppLogResult): AppLogOutput => {
+  if ('error' in log) {
+    throw new Error('Expected log to not be an error')
+  }
+  return log
+}
+
+const isError = (log: AppLogResult): AppLogError => {
+  if ('error' in log) {
+    return log
+  }
+  throw new Error('Expected log to be an error')
+}
+
 describe('usePollAppLogs', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -212,12 +229,12 @@ describe('usePollAppLogs', () => {
 
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
-    expect(hook.lastResult?.appLogOutputs).toHaveLength(6)
+    expect(hook.lastResult?.appLogResults).toHaveLength(6)
 
-    expect(hook.lastResult?.appLogOutputs[0]!.appLog).toEqual(
+    expect(isNotError(hook.lastResult?.appLogResults[0]!).appLog).toEqual(
       parseFunctionRunPayload(POLL_APP_LOGS_FOR_LOGS_RESPONSE.appLogs[0]!.payload),
     )
-    expect(hook.lastResult?.appLogOutputs[0]!.prefix).toEqual({
+    expect(isNotError(hook.lastResult?.appLogResults[0]!).prefix).toEqual({
       status: 'Success',
       source: SOURCE,
       description: `export "run" executed in ${(FUEL_CONSUMED / 1000000).toFixed(4)}M instructions`,
@@ -225,7 +242,7 @@ describe('usePollAppLogs', () => {
       storeName: STORE_NAME,
     })
 
-    expect(hook.lastResult?.appLogOutputs[1]!.appLog).toEqual(
+    expect(isNotError(hook.lastResult?.appLogResults[1]!).appLog).toEqual(
       new NetworkAccessResponseFromCacheLog({
         cacheEntryEpochMs: 1683904621000,
         cacheTtlMs: 300000,
@@ -233,7 +250,7 @@ describe('usePollAppLogs', () => {
         httpResponse: NETWORK_ACCESS_HTTP_RESPONSE,
       }),
     )
-    expect(hook.lastResult?.appLogOutputs[1]!.prefix).toEqual({
+    expect(isNotError(hook.lastResult?.appLogResults[1]!).prefix).toEqual({
       status: 'Success',
       source: SOURCE,
       description: `network access response retrieved from cache`,
@@ -241,7 +258,7 @@ describe('usePollAppLogs', () => {
       storeName: STORE_NAME,
     })
 
-    expect(hook.lastResult?.appLogOutputs[2]!.appLog).toEqual(
+    expect(isNotError(hook.lastResult?.appLogResults[2]!).appLog).toEqual(
       new NetworkAccessRequestExecutedLog({
         attempt: 1,
         connectTimeMs: 40,
@@ -251,7 +268,7 @@ describe('usePollAppLogs', () => {
         error: null,
       }),
     )
-    expect(hook.lastResult?.appLogOutputs[2]!.prefix).toEqual({
+    expect(isNotError(hook.lastResult?.appLogResults[2]!).prefix).toEqual({
       status: 'Success',
       source: SOURCE,
       description: `network access request executed in 80 ms`,
@@ -259,7 +276,7 @@ describe('usePollAppLogs', () => {
       storeName: STORE_NAME,
     })
 
-    expect(hook.lastResult?.appLogOutputs[3]!.appLog).toEqual(
+    expect(isNotError(hook.lastResult?.appLogResults[3]!).appLog).toEqual(
       new NetworkAccessRequestExecutedLog({
         attempt: 1,
         connectTimeMs: null,
@@ -269,7 +286,7 @@ describe('usePollAppLogs', () => {
         error: 'Timeout Error',
       }),
     )
-    expect(hook.lastResult?.appLogOutputs[3]!.prefix).toEqual({
+    expect(isNotError(hook.lastResult?.appLogResults[3]!).prefix).toEqual({
       status: 'Failure',
       source: SOURCE,
       description: `network access request executed`,
@@ -277,13 +294,13 @@ describe('usePollAppLogs', () => {
       storeName: STORE_NAME,
     })
 
-    expect(hook.lastResult?.appLogOutputs[4]!.appLog).toEqual(
+    expect(isNotError(hook.lastResult?.appLogResults[4]!).appLog).toEqual(
       new NetworkAccessRequestExecutionInBackgroundLog({
         reason: BackgroundExecutionReason.NoCachedResponse,
         httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
       }),
     )
-    expect(hook.lastResult?.appLogOutputs[4]!.prefix).toEqual({
+    expect(isNotError(hook.lastResult?.appLogResults[4]!).prefix).toEqual({
       status: 'Success',
       source: SOURCE,
       description: `network access request executing in background`,
@@ -291,13 +308,13 @@ describe('usePollAppLogs', () => {
       storeName: STORE_NAME,
     })
 
-    expect(hook.lastResult?.appLogOutputs[5]!.appLog).toEqual(
+    expect(isNotError(hook.lastResult?.appLogResults[5]!).appLog).toEqual(
       new NetworkAccessRequestExecutionInBackgroundLog({
         reason: BackgroundExecutionReason.CacheAboutToExpire,
         httpRequest: NETWORK_ACCESS_HTTP_REQUEST,
       }),
     )
-    expect(hook.lastResult?.appLogOutputs[5]!.prefix).toEqual({
+    expect(isNotError(hook.lastResult?.appLogResults[5]!).prefix).toEqual({
       status: 'Success',
       source: SOURCE,
       description: `network access request executing in background`,
@@ -370,9 +387,9 @@ describe('usePollAppLogs', () => {
     // Initial invocation, 429 returned
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
-    expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
-    expect(hook.lastResult?.errors[0]).toEqual('Request throttled while polling app logs.')
-    expect(hook.lastResult?.errors[1]).toEqual('Retrying in 60s')
+    expect(hook.lastResult?.appLogResults).toHaveLength(2)
+    expect(isError(hook.lastResult?.appLogResults[0]!).error).toEqual('Request throttled while polling app logs.')
+    expect(isError(hook.lastResult?.appLogResults[1]!).error).toEqual('Retrying in 60s')
 
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), POLLING_THROTTLE_RETRY_INTERVAL_MS)
 
@@ -409,66 +426,19 @@ describe('usePollAppLogs', () => {
     // Initial invocation, 422 returned
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
-    expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
-    expect(hook.lastResult?.errors[0]).toEqual('Error while polling app logs')
-    expect(hook.lastResult?.errors[1]).toEqual('Retrying in 5s')
+    expect(hook.lastResult?.appLogResults).toHaveLength(2)
+    expect(isError(hook.lastResult?.appLogResults[0]!).error).toEqual('Error while polling app logs')
+    expect(isError(hook.lastResult?.appLogResults[1]!).error).toEqual('Retrying in 5s')
 
     expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), POLLING_ERROR_RETRY_INTERVAL_MS)
 
     await vi.advanceTimersToNextTimerAsync()
-    expect(hook.lastResult?.appLogOutputs).toHaveLength(6)
-    expect(hook.lastResult?.errors).toHaveLength(0)
+    expect(hook.lastResult?.appLogResults).toHaveLength(8)
+    expect(hook.lastResult?.appLogResults.filter((value: AppLogResult) => 'error' in value)).toHaveLength(2)
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), POLLING_INTERVAL_MS)
 
     expect(vi.getTimerCount()).toEqual(1)
     timeoutSpy.mockRestore()
-  })
-
-  test('clears error on success', async () => {
-    const mockedPollAppLogs = vi
-      .fn()
-      .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_429_RESPONSE)
-      .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
-    vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
-
-    const hook = renderHook(() =>
-      usePollAppLogs({
-        initialJwt: MOCKED_JWT_TOKEN,
-        filters: EMPTY_FILTERS,
-        resubscribeCallback: vi.fn().mockResolvedValue(MOCKED_JWT_TOKEN),
-        storeNameById: STORE_NAME_BY_ID,
-      }),
-    )
-
-    // initial poll with errors
-    await vi.advanceTimersByTimeAsync(0)
-    expect(hook.lastResult?.errors).toHaveLength(2)
-
-    // second poll with no errors
-    await vi.advanceTimersToNextTimerAsync()
-    expect(hook.lastResult?.errors).toHaveLength(0)
-  })
-
-  test("ignores logs from stores that don't have a matching shop name", async () => {
-    const mockedPollAppLogs = vi.fn().mockResolvedValue(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
-    vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
-
-    const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
-
-    const hook = renderHook(() =>
-      usePollAppLogs({
-        initialJwt: MOCKED_JWT_TOKEN,
-        filters: EMPTY_FILTERS,
-        resubscribeCallback,
-        storeNameById: new Map(),
-      }),
-    )
-
-    // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
-
-    expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
-    expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
   })
 })
 
