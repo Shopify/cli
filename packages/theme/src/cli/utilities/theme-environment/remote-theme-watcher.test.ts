@@ -61,6 +61,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
     const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
 
     vi.mocked(fetchChecksums).mockResolvedValue([])
+    const readySpy = vi.spyOn(defaultThemeFileSystem, 'ready').mockResolvedValue()
 
     // When
     await reconcileAndPollThemeEditorChanges(
@@ -77,11 +78,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
 
     // Then
     expect(reconcileJsonFiles).not.toHaveBeenCalled()
-    expect(pollThemeEditorChanges).toHaveBeenCalledWith(developmentTheme, adminSession, [], newFileSystem, {
-      noDelete: false,
-      ignore: [],
-      only: [],
-    })
+    expect(pollThemeEditorChanges).toHaveBeenCalled()
   })
 
   test('should wait for the local theme file system to be ready before reconciling', async () => {

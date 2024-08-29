@@ -245,7 +245,7 @@ describe('pollRemoteJsonChanges', async () => {
       }))
 
       const themeFileSystem = {
-        ...defaultThemeFileSystem,
+        ...fakeThemeFileSystem('tmp', new Map()),
         unsyncedFileKeys: new Set(['templates/asset2.json']),
       }
 
