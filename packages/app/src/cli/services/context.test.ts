@@ -445,6 +445,8 @@ describe('ensureDevContext', async () => {
         remoteAppUpdated: true,
         updateURLs: true,
         localApp: app,
+        organization: 'org1',
+        configFile: 'shopify.app.toml',
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -509,6 +511,8 @@ dev_store_url = "domain1"
         storeId: STORE1.shopId,
         remoteAppUpdated: true,
         updateURLs: true,
+        organization: 'org1',
+        configFile: 'shopify.app.toml',
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -663,7 +667,7 @@ api_version = "2023-04"
           },
           ' to your command to reset your app configuration.',
         ],
-        headline: 'Using shopify.app.toml:',
+        headline: 'Using shopify.app.toml for default values:',
       })
     })
   })
@@ -684,6 +688,7 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
+      organization: 'org1',
     })
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
@@ -720,6 +725,8 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
+      organization: 'org1',
+      configFile: 'shopify.app.toml',
     })
   })
 
@@ -744,6 +751,7 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: false,
       updateURLs: undefined,
+      organization: 'org1',
     })
     expect(fetchOrganizations).not.toHaveBeenCalled()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
@@ -777,6 +785,27 @@ api_version = "2023-04"
     expect(options.developerPlatformClient.orgAndApps).not.toBeCalled()
   })
 
+  test('suppresses info box when customLogInfoBox flag is passed', async () => {
+    // Given
+    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    const options = devOptions({
+      customInfoBox: true,
+      storeFqdn: 'domain1',
+      storeFqdns: ['domain1', 'domain2'],
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP1),
+        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE),
+      }),
+    })
+    await ensureDevContext(options)
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+
   test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
@@ -802,6 +831,7 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
+      organization: 'org1',
     })
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
@@ -1273,7 +1303,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1320,7 +1350,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1372,7 +1402,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1424,7 +1454,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1470,7 +1500,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1514,7 +1544,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })

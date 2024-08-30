@@ -56,6 +56,7 @@ export interface DevContextOptions {
   storeFqdn?: string
   reset: boolean
   developerPlatformClient: DeveloperPlatformClient
+  customInfoBox?: boolean
 }
 
 interface DevContextOutput {
@@ -65,6 +66,8 @@ interface DevContextOutput {
   storeId: string
   updateURLs: boolean | undefined
   localApp: AppInterface
+  organization?: string
+  configFile?: string
 }
 
 export interface GenerateContextOptions {
@@ -251,14 +254,16 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     })
   }
 
-  showReusedDevValues({
-    selectedApp,
-    selectedStore,
-    cachedInfo,
-    organization,
-  })
+  if (!options.customInfoBox) {
+    showReusedDevValues({
+      selectedApp,
+      selectedStore,
+      cachedInfo,
+      organization,
+    })
+  }
 
-  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo, organization.businessName)
   await logMetadataForLoadedContext({
     organizationId: result.remoteApp.organizationId,
     apiKey: result.remoteApp.apiKey,
@@ -266,7 +271,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   return result
 }
 
-const resetHelpMessage: Token[] = [
+export const resetHelpMessage: Token[] = [
   'You can pass ',
   {command: '--reset'},
   ' to your command to reset your app configuration.',
@@ -319,6 +324,7 @@ function buildOutput(
   store: OrganizationStore,
   localApp: AppInterface,
   cachedInfo?: CachedAppInfo,
+  organization?: string,
 ): DevContextOutput {
   return {
     remoteApp: {
@@ -330,6 +336,8 @@ function buildOutput(
     storeId: store.shopId,
     updateURLs: cachedInfo?.updateURLs,
     localApp,
+    organization,
+    configFile: cachedInfo?.configFile,
   }
 }
 
@@ -876,6 +884,28 @@ interface CurrentlyUsedConfigInfoOptions {
   resetMessage?: Token[]
 }
 
+export function formInfoBoxBody(
+  appName: string,
+  org?: string,
+  devStores?: string[],
+  resetMessage?: Token[],
+  updateURLs?: string,
+  includeConfigOnDeploy?: boolean,
+): TokenItem {
+  const items = [`App:             ${appName}`]
+  if (org) items.unshift(`Org:             ${org}`)
+  if (devStores && devStores.length > 0) {
+    devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
+  }
+  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
+  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
+
+  let body: TokenItem = [{list: {items}}]
+  if (resetMessage) body = [...body, '\n', ...resetMessage]
+
+  return body
+}
+
 export function renderCurrentlyUsedConfigInfo({
   org,
   appName,
@@ -886,20 +916,13 @@ export function renderCurrentlyUsedConfigInfo({
   resetMessage,
   includeConfigOnDeploy,
 }: CurrentlyUsedConfigInfoOptions): void {
-  const items = [`App:             ${appName}`]
+  const devStores = []
+  if (devStore) devStores.push(devStore)
 
-  if (org) items.unshift(`Org:             ${org}`)
-  if (devStore) items.push(`Dev store:       ${devStore}`)
-  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
-  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
-
-  let body: TokenItem = [{list: {items}}]
-  if (resetMessage) body = [...body, '\n', ...resetMessage]
-
+  const body = formInfoBoxBody(appName, org, devStores, resetMessage, updateURLs, includeConfigOnDeploy)
   const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
-
   renderInfo({
-    headline: configFile ? `Using ${fileName}:` : 'Using these settings:',
+    headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
     body,
   })
 }
