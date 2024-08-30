@@ -12,8 +12,8 @@ import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
-  const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx)
+  const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx, envSetup.reconcileWorkPromise)
   const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() => {})
   const server = createDevelopmentServer(theme, ctx, workPromise)
 
@@ -41,7 +41,8 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   })
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise),
+    workPromise: uploadPromise.then(({workPromise}) => workPromise),
+    reconcileWorkPromise: reconcilePromise.then(({workPromise}) => workPromise),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise
