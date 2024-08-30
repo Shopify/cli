@@ -8,6 +8,7 @@ import {render} from '@shopify/cli-kit/node/testing/ui'
 import * as system from '@shopify/cli-kit/node/system'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
+import * as binaries from '../../../../binaries.js'
 
 vi.mock('../../../../../dev/extension/bundler.js')
 
@@ -64,6 +65,7 @@ const SECOND_EXEC_RESPONSE = {
 describe('useFunctionWatcher', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    vi.spyOn(binaries, 'installBinary').mockResolvedValue()
   })
 
   afterEach(() => {

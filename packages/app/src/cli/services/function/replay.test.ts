@@ -1,5 +1,6 @@
 import {FunctionRunData, replay} from './replay.js'
 import {renderReplay} from './ui.js'
+import * as binaries from './binaries.js'
 import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -47,6 +48,7 @@ describe('replay', () => {
 
   beforeEach(() => {
     vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValue({apiKey, developerPlatformClient})
+    vi.spyOn(binaries, 'installBinary').mockResolvedValue()
   })
 
   test('runs selected function', async () => {
@@ -288,17 +290,8 @@ function createFunctionRunFile(options: FunctionRunFileOptions) {
 
 function expectExecToBeCalledWithInput(input: any) {
   expect(exec).toHaveBeenCalledWith(
-    'npm',
-    [
-      'exec',
-      '--',
-      'function-runner',
-      '-f',
-      '/tmp/project/extensions/my-function/dist/index.wasm',
-      '--json',
-      '--export',
-      'run',
-    ],
+    binaries.functionRunnerBinary().path,
+    ['-f', '/tmp/project/extensions/my-function/dist/index.wasm', '--json', '--export', 'run'],
     {
       cwd: '/tmp/project/extensions/my-function',
       stdout: 'inherit',

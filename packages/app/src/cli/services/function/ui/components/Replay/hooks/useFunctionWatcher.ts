@@ -4,6 +4,7 @@ import {FunctionConfigType} from '../../../../../../models/extensions/specificat
 import {ExtensionInstance} from '../../../../../../models/extensions/extension-instance.js'
 import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
+import {functionRunnerBinary, installBinary} from '../../../../binaries.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useState} from 'react'
@@ -129,7 +130,9 @@ async function runFunctionRunnerWithLogInput(
     },
   })
 
-  await exec('npm', ['exec', '--', 'function-runner', '--json', '-f', fun.outputPath, '--export', exportName], {
+  const functionRunner = functionRunnerBinary()
+  await installBinary(functionRunner)
+  await exec(functionRunner.path, ['--json', '-f', fun.outputPath, '--export', exportName], {
     cwd: fun.directory,
     input,
     stdout: customStdout,

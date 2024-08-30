@@ -1,4 +1,5 @@
 import {renderReplay} from './ui.js'
+import {functionRunnerBinary, installBinary} from './binaries.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -87,16 +88,14 @@ async function runFunctionRunnerWithLogInput(
 ) {
   const outputAsJson = options.json ? ['--json'] : []
 
-  return exec(
-    'npm',
-    ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...['--export', exportName]],
-    {
-      cwd: fun.directory,
-      input,
-      stdout: 'inherit',
-      stderr: 'inherit',
-    },
-  )
+  const functionRunner = functionRunnerBinary()
+  await installBinary(functionRunner)
+  return exec(functionRunner.path, ['-f', fun.outputPath, ...outputAsJson, ...['--export', exportName]], {
+    cwd: fun.directory,
+    input,
+    stdout: 'inherit',
+    stderr: 'inherit',
+  })
 }
 
 async function getRunFromIdentifier(
