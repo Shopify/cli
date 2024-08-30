@@ -19,6 +19,10 @@ interface ReconciliationOptions {
   ignore: string[]
 }
 
+const noWorkPromise = {
+  workPromise: Promise.resolve(),
+}
+
 export async function reconcileJsonFiles(
   targetTheme: Theme,
   session: AdminSession,
@@ -26,15 +30,16 @@ export async function reconcileJsonFiles(
   localThemeFileSystem: ThemeFileSystem,
   options: ReconciliationOptions,
 ): Promise<{
-  readyForReconciliationPromise: Promise<void>
-  reconciliationFinishedPromise: Promise<void>
+  workPromise: Promise<void>
 }> {
+  if (remoteChecksums.length === 0) {
+    return noWorkPromise
+  }
+
   outputDebug('Initiating theme asset reconciliation process')
 
-  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
-    remoteChecksums,
-    localThemeFileSystem,
-  )
+  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} =
+    await identifyFilesToReconcile(remoteChecksums, localThemeFileSystem)
 
   if (
     filesOnlyPresentLocally.length === 0 &&
@@ -42,13 +47,10 @@ export async function reconcileJsonFiles(
     filesWithConflictingChecksums.length === 0
   ) {
     outputDebug('Local and remote checksums match - no need to reconcile theme assets')
-    return {
-      readyForReconciliationPromise: Promise.resolve(),
-      reconciliationFinishedPromise: Promise.resolve(),
-    }
+    return noWorkPromise
   }
 
-  const readyForReconciliationPromise = partitionFilesByReconciliationStrategy(
+  const partitionedFiles = await partitionFilesByReconciliationStrategy(
     {
       filesOnlyPresentLocally,
       filesOnlyPresentOnRemote,
@@ -57,14 +59,14 @@ export async function reconcileJsonFiles(
     options,
   )
 
-  const reconciliationFinishedPromise = readyForReconciliationPromise.then((partitionedFiles) =>
-    performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles),
+  const fileReconciliationPromise = performFileReconciliation(
+    targetTheme,
+    session,
+    localThemeFileSystem,
+    partitionedFiles,
   )
 
-  return {
-    readyForReconciliationPromise: readyForReconciliationPromise.then(() => {}),
-    reconciliationFinishedPromise,
-  }
+  return {workPromise: fileReconciliationPromise}
 }
 
 function identifyFilesToReconcile(
