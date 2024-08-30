@@ -2,15 +2,16 @@ import {useFunctionWatcher} from './useFunctionWatcher.js'
 import {FunctionRunData} from '../../../../replay.js'
 import {testApp, testFunctionExtension} from '../../../../../../models/app/app.test-data.js'
 import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
+import {runFunction} from '../../../../runner.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {render} from '@shopify/cli-kit/node/testing/ui'
-import * as system from '@shopify/cli-kit/node/system'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
-import * as binaries from '../../../../binaries.js'
+import {Writable} from 'stream'
 
 vi.mock('../../../../../dev/extension/bundler.js')
+vi.mock('../../../../runner.js')
 
 const SELECTED_RUN = {
   shopId: 69665030382,
@@ -65,7 +66,6 @@ const SECOND_EXEC_RESPONSE = {
 describe('useFunctionWatcher', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    vi.spyOn(binaries, 'installBinary').mockResolvedValue()
   })
 
   afterEach(() => {
@@ -74,12 +74,7 @@ describe('useFunctionWatcher', () => {
 
   test('runs function once in watch mode without changes', async () => {
     // Given
-    const execSpy = vi.spyOn(system, 'exec')
-    const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(EXEC_RESPONSE))
-      return EXEC_RESPONSE
-    })
-    execSpy.mockImplementationOnce(mockExecFn)
+    vi.mocked(runFunction).mockImplementation(runFunctionMockImplementation(EXEC_RESPONSE))
 
     // When
     const hook = renderHook(() =>
@@ -95,22 +90,15 @@ describe('useFunctionWatcher', () => {
 
     // Then
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(execSpy).toHaveBeenCalledOnce()
+    expect(runFunction).toHaveBeenCalledOnce()
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
   })
 
   test('file watcher onChange re-runs function', async () => {
     // Given
-    const execSpy = vi.spyOn(system, 'exec')
-    const mockExecFnFirst = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(EXEC_RESPONSE))
-      return EXEC_RESPONSE
-    })
-    const mockExecFnSecond = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(SECOND_EXEC_RESPONSE))
-      return SECOND_EXEC_RESPONSE
-    })
-    execSpy.mockImplementationOnce(mockExecFnFirst).mockImplementationOnce(mockExecFnSecond)
+    vi.mocked(runFunction)
+      .mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
+      .mockImplementationOnce(runFunctionMockImplementation(SECOND_EXEC_RESPONSE))
 
     // When
     const hook = renderHook(() =>
@@ -135,19 +123,13 @@ describe('useFunctionWatcher', () => {
 
     // Then
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(execSpy).toHaveBeenCalledTimes(2)
+    expect(runFunction).toHaveBeenCalledTimes(2)
   })
 
   test('renders error in onReloadAndBuildError', async () => {
     // Given
     const expectedError = new Error('error!')
-
-    const execSpy = vi.spyOn(system, 'exec')
-    const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(EXEC_RESPONSE))
-      return EXEC_RESPONSE
-    })
-    execSpy.mockImplementationOnce(mockExecFn)
+    vi.mocked(runFunction).mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
 
     // When
     const hook = renderHook(() =>
@@ -166,7 +148,7 @@ describe('useFunctionWatcher', () => {
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
 
     // Then
-    expect(execSpy).toHaveBeenCalledOnce()
+    expect(runFunction).toHaveBeenCalledOnce()
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(hook.lastResult?.error).toEqual('Error while reloading and building extension: error!')
   })
@@ -174,13 +156,7 @@ describe('useFunctionWatcher', () => {
   test('renders fatal error in onReloadAndBuildError', async () => {
     // Given
     const expectedError = new AbortError('abort!')
-
-    const execSpy = vi.spyOn(system, 'exec')
-    const mockExecFn = vi.fn().mockImplementation((_a, _b, {_cwd, _input, stdout, _stderr}) => {
-      stdout.write(JSON.stringify(EXEC_RESPONSE))
-      return EXEC_RESPONSE
-    })
-    execSpy.mockImplementationOnce(mockExecFn)
+    vi.mocked(runFunction).mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
 
     // When
     const hook = renderHook(() =>
@@ -199,7 +175,7 @@ describe('useFunctionWatcher', () => {
     await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
 
     // Then
-    expect(execSpy).toHaveBeenCalledOnce()
+    expect(runFunction).toHaveBeenCalledOnce()
     expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(hook.lastResult?.error).toEqual('Fatal error while reloading and building extension: abort!')
   })
@@ -222,4 +198,12 @@ function renderHook<THookResult>(renderHookCallback: () => THookResult) {
   render(<MockComponent />)
 
   return result
+}
+
+function runFunctionMockImplementation(output: unknown): typeof runFunction {
+  return async (options) => {
+    if (options.stdout instanceof Writable) {
+      options.stdout.write(JSON.stringify(output))
+    }
+  }
 }

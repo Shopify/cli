@@ -1,5 +1,5 @@
-import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy, ExportJavyBuilder, jsExports} from './build.js'
-import {javyBinary, functionRunnerBinary} from './binaries.js'
+import {buildGraphqlTypes, bundleExtension, runJavy, ExportJavyBuilder, jsExports} from './build.js'
+import {javyBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -149,92 +149,6 @@ describe('runJavy', () => {
         stderr: 'inherit',
         stdout: 'inherit',
         signal,
-      },
-    )
-  })
-})
-
-describe('runFunctionRunner', () => {
-  test('calls function runner to execute function locally', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-
-    // When
-    const got = runFunctionRunner(ourFunction, {json: false})
-
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      functionRunnerBinary().path,
-      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm')],
-      {
-        cwd: ourFunction.directory,
-        stderr: 'inherit',
-        stdin: 'inherit',
-        stdout: 'inherit',
-      },
-    )
-  })
-
-  test('calls function runner to execute function locally and return json', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-
-    // When
-    const got = runFunctionRunner(ourFunction, {json: true})
-
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      functionRunnerBinary().path,
-      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--json'],
-      {
-        cwd: ourFunction.directory,
-        stderr: 'inherit',
-        stdin: 'inherit',
-        stdout: 'inherit',
-      },
-    )
-  })
-
-  test('it supports receiving an input on the command line', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-
-    // When
-    const got = runFunctionRunner(ourFunction, {input: 'input.json', json: false})
-
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      functionRunnerBinary().path,
-      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--input', 'input.json'],
-      {
-        cwd: ourFunction.directory,
-        stderr: 'inherit',
-        stdin: 'inherit',
-        stdout: 'inherit',
-      },
-    )
-  })
-
-  test('calls function runner to execute function locally with wasm export name', async () => {
-    // Given
-    const ourFunction = await testFunctionExtension()
-
-    // When
-    const got = runFunctionRunner(ourFunction, {json: false, export: 'foo'})
-
-    // Then
-    await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(
-      functionRunnerBinary().path,
-      ['-f', joinPath(ourFunction.directory, 'dist/index.wasm'), '--export', 'foo'],
-      {
-        cwd: ourFunction.directory,
-        stderr: 'inherit',
-        stdin: 'inherit',
-        stdout: 'inherit',
       },
     )
   })
