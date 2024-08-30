@@ -4,7 +4,6 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export const LOCAL_STRATEGY = 'local'
 export const REMOTE_STRATEGY = 'remote'
