@@ -4,10 +4,12 @@ import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {uploadTheme} from '../theme-uploader.js'
+import {renderTasksToStdErr} from '../theme-ui.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {consoleWarn} from '@shopify/cli-kit/node/output'
 import {createServer} from 'node:http'
-import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
+import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
@@ -25,6 +27,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 }
 
 function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
+  consoleWarn('entering ensureThemeEnvironmentSetup')
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
 
   const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
@@ -34,19 +37,34 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
           ignore: ctx.options.ignore,
           only: ctx.options.only,
         })
-      : remoteChecksums,
+      : {
+          updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),
+          userInputPromise: Promise.resolve(),
+          workPromise: Promise.resolve(),
+        },
   )
 
-  const uploadPromise = reconcilePromise.then(async (remoteChecksums: Checksum[]) =>
-    uploadTheme(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
+  const uploadPromise = reconcilePromise.then(async ({updatedRemoteChecksumsPromise}) => {
+    const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+    return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
       nodelete: ctx.options.noDelete,
       deferPartialWork: true,
-    }),
-  )
+    })
+  })
 
   return {
     workPromise: uploadPromise.then((result) => result.workPromise),
     renderProgress: async () => {
+      const {userInputPromise, workPromise} = await reconcilePromise
+      await userInputPromise
+      await renderTasksToStdErr([
+        {
+          title: 'Performing file synchronization. This may take a while...',
+          task: async () => {
+            await workPromise
+          },
+        },
+      ])
       const {renderThemeSyncProgress} = await uploadPromise
 
       await renderThemeSyncProgress()
