@@ -7,7 +7,7 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -61,8 +61,6 @@ export async function dev(options: DevOptions) {
       body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
     })
   }
-
-  outputInfo('This feature is currently in development and is not ready for use or testing yet.')
 
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {filters: options})
 
