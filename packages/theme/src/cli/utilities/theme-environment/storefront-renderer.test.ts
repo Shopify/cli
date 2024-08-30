@@ -1,5 +1,6 @@
 import {render} from './storefront-renderer.js'
 import {getStorefrontSessionCookies} from './storefront-session.js'
+import {DevServerRenderContext} from './types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
@@ -28,7 +29,8 @@ const session = {
   expiresAt: new Date(),
 }
 
-const context = {
+const context: DevServerRenderContext = {
+  method: 'GET',
   path: '/products/1',
   themeId: '123',
   query: [],
