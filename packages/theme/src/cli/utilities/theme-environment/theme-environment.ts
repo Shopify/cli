@@ -39,7 +39,6 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
         })
       : {
           updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),
-          userInputPromise: Promise.resolve(),
           workPromise: Promise.resolve(),
         },
   )
@@ -55,8 +54,7 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   return {
     workPromise: uploadPromise.then((result) => result.workPromise),
     renderProgress: async () => {
-      const {userInputPromise, workPromise} = await reconcilePromise
-      await userInputPromise
+      const {workPromise} = await reconcilePromise
       await renderTasksToStdErr([
         {
           title: 'Performing file synchronization. This may take a while...',

@@ -31,7 +31,6 @@ export async function reconcileJsonFiles(
   session: AdminSession,
   options: ReconciliationOptions,
 ): Promise<{
-  userInputPromise: Promise<void>
   workPromise: Promise<void>
 }> {
   if (remoteChecksums.length === 0) {
@@ -54,7 +53,7 @@ export async function reconcileJsonFiles(
     return noWorkPromise
   }
 
-  const partitionedFilesPromise = partitionFilesByReconciliationStrategy(
+  const partitionedFiles = await partitionFilesByReconciliationStrategy(
     {
       filesOnlyPresentLocally,
       filesOnlyPresentOnRemote,
@@ -63,11 +62,14 @@ export async function reconcileJsonFiles(
     options,
   )
 
-  const fileReconciliationPromise = partitionedFilesPromise.then((partitionedFiles) =>
-    performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles),
+  const fileReconciliationPromise = performFileReconciliation(
+    targetTheme,
+    session,
+    localThemeFileSystem,
+    partitionedFiles,
   )
 
-  return {userInputPromise: partitionedFilesPromise.then(() => {}), workPromise: fileReconciliationPromise}
+  return {workPromise: fileReconciliationPromise}
 }
 
 function identifyFilesToReconcile(
