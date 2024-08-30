@@ -166,3 +166,6 @@ testing.mjs
 
 # NX
 .nx
+
+# Jetbrains IDEs
+.idea/
