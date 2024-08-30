@@ -61,7 +61,6 @@ describe('reconcileThemeFiles', () => {
       expect(fetchThemeAsset).toHaveBeenCalledWith(developmentTheme.id, 'templates/template.json', adminSession)
     })
 
-    // should respect the `ignore` option
     test('should not reconcile files that match the `ignore` option', async () => {
       // Given
       const themeFileSystem = fakeThemeFileSystem('tmp', files, {filters: {ignore: ['templates/*']}})

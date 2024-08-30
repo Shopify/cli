@@ -26,6 +26,8 @@ export async function reconcileJsonFiles(
   localThemeFileSystem: ThemeFileSystem,
   options: ReconciliationOptions,
 ) {
+  outputDebug('Initiating theme asset reconciliation process')
+
   const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
     remoteChecksums,
     localThemeFileSystem,

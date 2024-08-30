@@ -1,8 +1,9 @@
+import {timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderError, renderText} from '@shopify/cli-kit/node/ui'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
@@ -91,24 +92,34 @@ async function syncChangedAssets(
       const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
       if (asset) {
         await localFileSystem.write(asset)
-        renderText({text: `Synced: get '${asset.key}' from remote theme`})
+        outputInfo(
+          outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
+            `download ${asset.key} from remote theme`,
+          )}`,
+        )
       }
     }),
   )
 }
 
-function deleteRemovedAssets(
+export async function deleteRemovedAssets(
   localFileSystem: ThemeFileSystem,
   assetsDeletedFromRemote: Checksum[],
   options: {noDelete: boolean},
 ) {
   if (!options.noDelete) {
     return Promise.all(
-      assetsDeletedFromRemote.map((file) =>
-        localFileSystem.delete(file.key).then(() => {
-          renderText({text: `Synced: remove '${file.key}' from local theme`})
-        }),
-      ),
+      assetsDeletedFromRemote.map((file) => {
+        if (localFileSystem.files.get(file.key)) {
+          return localFileSystem.delete(file.key).then(() => {
+            outputInfo(
+              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                '»',
+              )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+            )
+          })
+        }
+      }),
     )
   }
 }
@@ -133,5 +144,7 @@ async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, as
 
 function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem) {
   const filteredFiles = localThemeFileSystem.applyIgnoreFilters(files)
-  return filteredFiles.filter((file) => file.key.endsWith('.json'))
+  return filteredFiles
+    .filter((file) => file.key.endsWith('.json'))
+    .filter((file) => !localThemeFileSystem.unsyncedFileKeys.has(file.key))
 }

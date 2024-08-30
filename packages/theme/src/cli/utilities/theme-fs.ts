@@ -4,6 +4,7 @@ import {
   raiseWarningForNonExplicitGlobPatterns,
   getPatternsFromShopifyIgnore,
 } from './asset-ignore.js'
+import {timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -120,12 +121,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const fileKey = getKey(filePath)
     if (isFileIgnored(fileKey)) return
 
-    const lastChecksum = files.get(fileKey)?.checksum
+    const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(() => {
       const file = files.get(fileKey)!
 
-      if (file.checksum === lastChecksum) {
+      if (file.checksum === previousChecksum) {
         // Do not sync if the file has not changed
         return ''
       }
@@ -204,12 +205,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     unsyncedFileKeys,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
-      await removeThemeFile(root, fileKey)
       files.delete(fileKey)
+      await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
-      await writeThemeFile(root, asset)
       files.set(asset.key, asset)
+      await writeThemeFile(root, asset)
     },
     read,
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
@@ -378,11 +379,8 @@ function dirPath(filePath: string) {
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
-    outputContent`• ${new Date().toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })} Synced ${outputToken.raw('»')} ${outputToken.gray(`${action} ${fileKey}`)}`,
+    outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
+      `${action} ${fileKey}`,
+    )}`,
   )
 }

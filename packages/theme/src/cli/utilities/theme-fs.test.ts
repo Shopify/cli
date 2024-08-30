@@ -133,6 +133,27 @@ describe('theme-fs', () => {
       expect(removeFile).not.toBeCalled()
       expect(themeFileSystem.files.has('assets/nonexistent.css')).toBe(false)
     })
+
+    test('delete updates files map before the async removeFile call', async () => {
+      // Given
+      const fileKey = 'assets/base.css'
+      const root = 'src/cli/utilities/fixtures'
+      const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      let filesUpdated = false
+      vi.mocked(removeFile).mockImplementationOnce(() => {
+        filesUpdated = !themeFileSystem.files.has(fileKey)
+        return Promise.resolve()
+      })
+
+      // When
+      expect(themeFileSystem.files.has(fileKey)).toBe(true)
+      await themeFileSystem.delete(fileKey)
+
+      // Then
+      expect(filesUpdated).toBe(true)
+    })
   })
 
   describe('themeFileSystem.write', () => {
@@ -176,6 +197,28 @@ describe('theme-fs', () => {
         checksum: '1010',
         attachment,
       })
+    })
+
+    test('write updates files map before the async writeFile call', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+      const themeFileSystem = await mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      const newAsset = {key: 'assets/new_file.css', checksum: '1010', value: 'content'}
+
+      let filesUpdated = false
+      vi.mocked(writeFile).mockImplementationOnce(() => {
+        filesUpdated = themeFileSystem.files.get(newAsset.key) === newAsset
+        return Promise.resolve()
+      })
+
+      // When
+      expect(themeFileSystem.files.has(newAsset.key)).toBe(false)
+      await themeFileSystem.write(newAsset)
+
+      // Then
+      expect(filesUpdated).toBe(true)
     })
   })
 
