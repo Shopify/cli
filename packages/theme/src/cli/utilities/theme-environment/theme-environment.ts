@@ -44,8 +44,7 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
     workPromise: uploadPromise.then((result) => result.workPromise),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
-        const {userInputPromise, workPromise} = await reconcilePromise
-        await userInputPromise
+        const {workPromise} = await reconcilePromise
         await renderTasksToStdErr([
           {
             title: 'Performing file synchronization. This may take a while...',
@@ -63,7 +62,14 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   }
 }
 
-function handleThemeEditorSync(theme: Theme, ctx: DevServerContext, remoteChecksums: Checksum[]) {
+function handleThemeEditorSync(
+  theme: Theme,
+  ctx: DevServerContext,
+  remoteChecksums: Checksum[],
+): Promise<{
+  updatedRemoteChecksumsPromise: Promise<Checksum[]>
+  workPromise: Promise<void>
+}> {
   if (ctx.options.themeEditorSync) {
     return reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
       noDelete: ctx.options.noDelete,
@@ -71,11 +77,10 @@ function handleThemeEditorSync(theme: Theme, ctx: DevServerContext, remoteChecks
       only: ctx.options.only,
     })
   } else {
-    return {
+    return Promise.resolve({
       updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),
-      userInputPromise: Promise.resolve(),
       workPromise: Promise.resolve(),
-    }
+    })
   }
 }
 
