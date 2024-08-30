@@ -22,6 +22,7 @@ const IframeCapabilitySchema = zod.object({
 const CapabilitiesSchema = zod.object({
   network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
+  intercept_discount: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
   collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
   iframe: IframeCapabilitySchema.optional(),
