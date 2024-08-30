@@ -19,22 +19,29 @@ interface ReconciliationOptions {
   ignore: string[]
 }
 
+const noWorkPromise = {
+  userInputPromise: Promise.resolve(),
+  workPromise: Promise.resolve(),
+}
+
 export async function reconcileJsonFiles(
-  targetTheme: Theme,
-  session: AdminSession,
   remoteChecksums: Checksum[],
   localThemeFileSystem: ThemeFileSystem,
+  targetTheme: Theme,
+  session: AdminSession,
   options: ReconciliationOptions,
 ): Promise<{
-  readyForReconciliationPromise: Promise<void>
-  reconciliationFinishedPromise: Promise<void>
+  userInputPromise: Promise<void>
+  workPromise: Promise<void>
 }> {
+  if (remoteChecksums.length === 0) {
+    return noWorkPromise
+  }
+
   outputDebug('Initiating theme asset reconciliation process')
 
-  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
-    remoteChecksums,
-    localThemeFileSystem,
-  )
+  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} =
+    await identifyFilesToReconcile(remoteChecksums, localThemeFileSystem, options)
 
   if (
     filesOnlyPresentLocally.length === 0 &&
@@ -42,13 +49,10 @@ export async function reconcileJsonFiles(
     filesWithConflictingChecksums.length === 0
   ) {
     outputDebug('Local and remote checksums match - no need to reconcile theme assets')
-    return {
-      readyForReconciliationPromise: Promise.resolve(),
-      reconciliationFinishedPromise: Promise.resolve(),
-    }
+    return noWorkPromise
   }
 
-  const readyForReconciliationPromise = partitionFilesByReconciliationStrategy(
+  const partitionedFilesPromise = partitionFilesByReconciliationStrategy(
     {
       filesOnlyPresentLocally,
       filesOnlyPresentOnRemote,
@@ -57,14 +61,11 @@ export async function reconcileJsonFiles(
     options,
   )
 
-  const reconciliationFinishedPromise = readyForReconciliationPromise.then((partitionedFiles) =>
+  const fileReconciliationPromise = partitionedFilesPromise.then((partitionedFiles) =>
     performFileReconciliation(targetTheme, session, localThemeFileSystem, partitionedFiles),
   )
 
-  return {
-    readyForReconciliationPromise: readyForReconciliationPromise.then(() => {}),
-    reconciliationFinishedPromise,
-  }
+  return {userInputPromise: partitionedFilesPromise.then(() => {}), workPromise: fileReconciliationPromise}
 }
 
 function identifyFilesToReconcile(
@@ -148,7 +149,7 @@ async function promptFileReconciliationStrategy(
   }
 }
 
-async function performFileReconciliation(
+export async function performFileReconciliation(
   targetTheme: Theme,
   session: AdminSession,
   localThemeFileSystem: ThemeFileSystem,

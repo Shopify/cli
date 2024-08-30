@@ -1,8 +1,8 @@
-import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {getHotReloadHandler, setupInMemoryTemplateWatcher} from './hot-reload/server.js'
 import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
+import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
@@ -28,58 +28,42 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
 
-  const editorSyncPromise = remoteChecksumsPromise.then((remoteChecksums) =>
+  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
     handleThemeEditorSync(theme, ctx, remoteChecksums),
   )
 
-  const themeSetupPromise = editorSyncPromise.then(
-    ({updatedRemoteChecksums, reconciliationFinishedPromise, readyForReconciliationPromise}) => {
-      const uploadPromise = reconciliationFinishedPromise.then(() =>
-        uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
-          nodelete: ctx.options.noDelete,
-          ignore: ctx.options.ignore,
-          only: ctx.options.only,
-          deferPartialWork: true,
-        }),
-      )
-
-      return {uploadPromise, reconciliationFinishedPromise, readyForReconciliationPromise}
-    },
-  )
+  const uploadPromise = reconcilePromise.then(async ({updatedRemoteChecksumsPromise}) => {
+    const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+    return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
+      nodelete: ctx.options.noDelete,
+      deferPartialWork: true,
+    })
+  })
 
   return {
-    workPromise: themeSetupPromise.then(async ({uploadPromise}) => (await uploadPromise).workPromise),
+    workPromise: uploadPromise.then((result) => result.workPromise),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
-        await themeSetupPromise.then(({readyForReconciliationPromise}) => readyForReconciliationPromise)
+        const {userInputPromise, workPromise} = await reconcilePromise
+        await userInputPromise
         await renderTasksToStdErr([
           {
             title: 'Performing file synchronization. This may take a while...',
             task: async () => {
-              await themeSetupPromise.then(async ({reconciliationFinishedPromise}) => {
-                await reconciliationFinishedPromise
-              })
+              await workPromise
             },
           },
         ])
       }
 
-      const {renderThemeSyncProgress} = await themeSetupPromise.then(({uploadPromise}) => uploadPromise)
+      const {renderThemeSyncProgress} = await uploadPromise
 
       await renderThemeSyncProgress()
     },
   }
 }
 
-function handleThemeEditorSync(
-  theme: Theme,
-  ctx: DevServerContext,
-  remoteChecksums: Checksum[],
-): Promise<{
-  updatedRemoteChecksums: Checksum[]
-  reconciliationFinishedPromise: Promise<void>
-  readyForReconciliationPromise: Promise<void>
-}> {
+function handleThemeEditorSync(theme: Theme, ctx: DevServerContext, remoteChecksums: Checksum[]) {
   if (ctx.options.themeEditorSync) {
     return reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
       noDelete: ctx.options.noDelete,
@@ -87,11 +71,11 @@ function handleThemeEditorSync(
       only: ctx.options.only,
     })
   } else {
-    return Promise.resolve({
-      updatedRemoteChecksums: remoteChecksums,
-      reconciliationFinishedPromise: Promise.resolve(),
-      readyForReconciliationPromise: Promise.resolve(),
-    })
+    return {
+      updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),
+      userInputPromise: Promise.resolve(),
+      workPromise: Promise.resolve(),
+    }
   }
 }
 
