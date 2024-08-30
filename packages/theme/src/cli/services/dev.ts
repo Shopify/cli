@@ -95,10 +95,15 @@ export async function dev(options: DevOptions) {
     },
   }
 
+  if (options['theme-editor-sync']) {
+    session.storefrontPassword = await storefrontPasswordPromise
+  }
+
   const {serverStart, renderDevSetupProgress} = setupDevServer(options.theme, ctx)
 
-  const storefrontPassword = await storefrontPasswordPromise
-  session.storefrontPassword = storefrontPassword
+  if (!options['theme-editor-sync']) {
+    session.storefrontPassword = await storefrontPasswordPromise
+  }
 
   await renderDevSetupProgress()
   await serverStart()
