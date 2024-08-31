@@ -105,9 +105,8 @@ describe('setupDevServer', () => {
       },
     }
     vi.mocked(reconcileAndPollThemeEditorChanges).mockResolvedValue({
-      updatedRemoteChecksums: [],
-      readyForReconciliationPromise: Promise.resolve(),
-      reconciliationFinishedPromise: Promise.resolve(),
+      updatedRemoteChecksumsPromise: Promise.resolve([]),
+      workPromise: Promise.resolve(),
     })
 
     // When
