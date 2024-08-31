@@ -25,10 +25,10 @@ const noWorkPromise = {
 }
 
 export async function reconcileJsonFiles(
-  remoteChecksums: Checksum[],
-  localThemeFileSystem: ThemeFileSystem,
   targetTheme: Theme,
   session: AdminSession,
+  remoteChecksums: Checksum[],
+  localThemeFileSystem: ThemeFileSystem,
   options: ReconciliationOptions,
 ): Promise<{
   workPromise: Promise<void>

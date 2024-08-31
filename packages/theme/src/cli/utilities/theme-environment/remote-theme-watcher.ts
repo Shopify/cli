@@ -29,7 +29,7 @@ export async function reconcileAndPollThemeEditorChanges(
   outputDebug('Initiating theme asset reconciliation process')
   await localThemeFileSystem.ready()
 
-  const {workPromise} = await reconcileJsonFiles(remoteChecksums, localThemeFileSystem, targetTheme, session, options)
+  const {workPromise} = await reconcileJsonFiles(targetTheme, session, remoteChecksums, localThemeFileSystem, options)
 
   const updatedRemoteChecksumsPromise = workPromise.then(async () => {
     const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)

@@ -14,10 +14,10 @@ vi.mock('./theme-fs.js')
 vi.mock('./theme-downloader.js')
 vi.mock('./theme-uploader.js')
 
-describe('reconcileThemeFiles', () => {
+describe('reconcileJsonFiles', () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
-  const remoteChecksums: Checksum[] = []
+  const remoteChecksums: Checksum[] = [{checksum: '1', key: 'config/settings_schema.json'}]
   const files = new Map<string, ThemeAsset>([])
   const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
   const defaultOptions = {noDelete: false, only: [], ignore: []}
@@ -199,7 +199,11 @@ describe('reconcileThemeFiles', () => {
       )
 
       // Then
-      expect(renderSelectPrompt).not.toHaveBeenCalled()
+      expect(renderSelectPrompt).not.toHaveBeenCalledWith(
+        expect.any(Array),
+        'The files listed below are only present locally. What would you like to do?',
+        expect.any(Object),
+      )
       expect(spy).not.toHaveBeenCalledWith()
     })
   })
@@ -245,9 +249,28 @@ describe('reconcileThemeFiles', () => {
       expect(fetchThemeAsset).not.toHaveBeenCalled()
     })
   })
+
+  test('should not perform any work when remote checksums are empty', async () => {
+    // Given
+    const files = new Map<string, ThemeAsset>([])
+    const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
+    const emptyRemoteChecksums: Checksum[] = []
+
+    // When
+    await reconcileAndWaitForReconciliationFinish(
+      developmentTheme,
+      adminSession,
+      emptyRemoteChecksums,
+      defaultThemeFileSystem,
+      defaultOptions,
+    )
+
+    // Then
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
+  })
 })
 
 async function reconcileAndWaitForReconciliationFinish(...args: Parameters<typeof reconcileJsonFiles>) {
-  const {reconciliationFinishedPromise} = await reconcileJsonFiles(...args)
-  return reconciliationFinishedPromise
+  const {workPromise} = await reconcileJsonFiles(...args)
+  return workPromise
 }
