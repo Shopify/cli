@@ -104,6 +104,10 @@ describe('setupDevServer', () => {
         ...filters,
       },
     }
+    vi.mocked(reconcileAndPollThemeEditorChanges).mockResolvedValue({
+      updatedRemoteChecksumsPromise: Promise.resolve([]),
+      workPromise: Promise.resolve(),
+    })
 
     // When
     await setupDevServer(developmentTheme, context).workPromise

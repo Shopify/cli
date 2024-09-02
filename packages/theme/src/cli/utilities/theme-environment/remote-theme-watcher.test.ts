@@ -6,7 +6,7 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('./theme-reconciliation.js')
@@ -17,17 +17,22 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
 
+  beforeEach(() => {
+    vi.mocked(reconcileJsonFiles).mockResolvedValue({
+      workPromise: Promise.resolve(),
+    })
+  })
+
   test('should call pollThemeEditorChanges with updated checksums if the remote theme was been updated during reconciliation', async () => {
     // Given
     const files = new Map<string, ThemeAsset>([])
     const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
     const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
 
-    vi.mocked(reconcileJsonFiles).mockResolvedValue(undefined)
     vi.mocked(fetchChecksums).mockResolvedValue([{checksum: '2', key: 'templates/asset.json'}])
 
     // When
-    await reconcileAndPollThemeEditorChanges(
+    const {workPromise, updatedRemoteChecksumsPromise} = await reconcileAndPollThemeEditorChanges(
       developmentTheme,
       adminSession,
       initialRemoteChecksums,
@@ -38,6 +43,8 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
         only: [],
       },
     )
+    await workPromise
+    await updatedRemoteChecksumsPromise
 
     // Then
     expect(pollThemeEditorChanges).toHaveBeenCalledWith(
@@ -51,34 +58,6 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
         only: [],
       },
     )
-  })
-
-  test('should not call reconcileJsonFiles when remote theme contains no files', async () => {
-    // Given
-    const files = new Map<string, ThemeAsset>([])
-    const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
-    const emptyRemoteChecksums: [] = []
-    const newFileSystem = fakeThemeFileSystem('tmp', new Map<string, ThemeAsset>([]))
-
-    vi.mocked(fetchChecksums).mockResolvedValue([])
-    const readySpy = vi.spyOn(defaultThemeFileSystem, 'ready').mockResolvedValue()
-
-    // When
-    await reconcileAndPollThemeEditorChanges(
-      developmentTheme,
-      adminSession,
-      emptyRemoteChecksums,
-      defaultThemeFileSystem,
-      {
-        noDelete: false,
-        ignore: [],
-        only: [],
-      },
-    )
-
-    // Then
-    expect(reconcileJsonFiles).not.toHaveBeenCalled()
-    expect(pollThemeEditorChanges).toHaveBeenCalled()
   })
 
   test('should wait for the local theme file system to be ready before reconciling', async () => {
