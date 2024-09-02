@@ -39,7 +39,6 @@ describe('storefrontFormData', () => {
 
   test("returns the params string with correct mappings for apps's content", () => {
     // Given
-    // Given
     const ctx = {
       ...context,
       replaceExtensionTemplates: {

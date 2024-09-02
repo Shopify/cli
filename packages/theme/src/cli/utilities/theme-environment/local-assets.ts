@@ -2,7 +2,7 @@ import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, EventHandlerRequest, H3Event, serveStatic, setResponseHeader} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import type {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 /**
@@ -41,29 +41,31 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
 }
 
 function getFileAndFileSystem(event: H3Event<EventHandlerRequest>, ctx: DevServerContext) {
-  // Matches theme asset filenames in an HTTP Request URL path
-  let assetsFilename = event.path.match(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/)?.[1]
-  let fileKey = assetsFilename && joinPath('assets', assetsFilename)
-  let fileSystem = ctx.localThemeFileSystem
+  const tryGetFile = (pattern: RegExp, fileSystem: VirtualFileSystem) => {
+    const matchedFileName = event.path.match(pattern)?.[1]
 
-  if (fileKey && fileSystem.files.has(fileKey)) {
-    return {
-      file: fileSystem.files.get(fileKey)!,
-      fileSystem,
+    if (matchedFileName) {
+      const file = fileSystem.files.get(joinPath('assets', matchedFileName))
+
+      if (file) {
+        return {file, fileSystem}
+      }
     }
   }
 
-  // Matches theme extension asset filenames in an HTTP Request URL path
-  assetsFilename = event.path.match(/^\/ext\/cdn\/extensions\/.*?\/.*?\/assets\/([^?]+)(\?|$)/)?.[1]
-  fileKey = assetsFilename && joinPath('assets', assetsFilename)
-  fileSystem = ctx.localThemeExtensionFileSystem
+  let result
 
-  if (fileKey && fileSystem.files.has(fileKey)) {
-    return {
-      file: fileSystem.files.get(fileKey)!,
-      fileSystem,
-    }
+  // Try to match theme asset files
+  result = tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeFileSystem)
+  if (result) {
+    return result
   }
 
-  return null
+  // Try to match theme extension asset files
+  result = tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeExtensionFileSystem)
+  if (result) {
+    return result
+  }
+
+  return result
 }

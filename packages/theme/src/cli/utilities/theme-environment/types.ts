@@ -73,12 +73,12 @@ export interface DevServerContext {
     noDelete: boolean
 
     /**
-     * Glob patterns ignore-list for file reconciliation and sychronization.
+     * Glob patterns ignore-list for file reconciliation and synchronization.
      */
     ignore: string[]
 
     /**
-     * Glob patterns allow-list for file reconciliation and sychronization.
+     * Glob patterns allow-list for file reconciliation and synchronization.
      */
     only: string[]
 

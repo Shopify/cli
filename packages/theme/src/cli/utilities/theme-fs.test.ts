@@ -37,7 +37,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
       // Then
@@ -71,7 +71,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/invalid-directory'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
       // Then
@@ -94,7 +94,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       await themeFileSystem.delete('assets/base.css')
 
@@ -110,7 +110,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
       await themeFileSystem.delete('assets/base.css')
@@ -125,7 +125,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       await themeFileSystem.delete('assets/nonexistent.css')
 
@@ -137,8 +137,8 @@ describe('theme-fs', () => {
     test('delete updates files map before the async removeFile call', async () => {
       // Given
       const fileKey = 'assets/base.css'
-      const root = 'src/cli/utilities/fixtures'
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const root = 'src/cli/utilities/fixtures/theme'
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
       let filesUpdated = false
@@ -162,7 +162,7 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
 
@@ -184,7 +184,7 @@ describe('theme-fs', () => {
       const buffer = Buffer.from(attachment, 'base64')
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
 
@@ -202,7 +202,7 @@ describe('theme-fs', () => {
     test('write updates files map before the async writeFile call', async () => {
       // Given
       const root = 'src/cli/utilities/fixtures'
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
       const newAsset = {key: 'assets/new_file.css', checksum: '1010', value: 'content'}
@@ -227,7 +227,7 @@ describe('theme-fs', () => {
       // Given
       const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/404.json'
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       const file = themeFileSystem.files.get(key)
       expect(file).toEqual({

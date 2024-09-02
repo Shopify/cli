@@ -1,11 +1,11 @@
-import {DEFAULT_IGNORE_PATTERNS, readThemeFile} from '../theme-fs.js'
+import {readThemeFile} from '../theme-fs.js'
 import {calculateChecksum} from '../asset-checksum.js'
+import {DEFAULT_IGNORE_PATTERNS} from '../../constants.js'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import EventEmitter from 'node:events'
-import {stat} from 'fs/promises'
 import type {
   ThemeAsset,
   ThemeExtensionFileSystem,
@@ -106,17 +106,6 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
       files.set(asset.key, asset)
     },
     read,
-    stat: async (fileKey: string) => {
-      if (files.has(fileKey)) {
-        const absolutePath = joinPath(root, fileKey)
-        const stats = await stat(absolutePath)
-
-        if (stats.isFile()) {
-          const fileReducedStats = {size: stats.size, mtime: stats.mtime}
-          return fileReducedStats
-        }
-      }
-    },
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },

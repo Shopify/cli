@@ -4,7 +4,7 @@ import {
   raiseWarningForNonExplicitGlobPatterns,
   getPatternsFromShopifyIgnore,
 } from './asset-ignore.js'
-import {timestampDateFormat} from '../constants.js'
+import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -22,24 +22,6 @@ import type {
   ThemeFSEventName,
   ThemeFSEventPayload,
 } from '@shopify/cli-kit/node/themes/types'
-
-export const DEFAULT_IGNORE_PATTERNS = [
-  '**/.git',
-  '**/.vscode',
-  '**/.hg',
-  '**/.bzr',
-  '**/.svn',
-  '**/_darcs',
-  '**/CVS',
-  '**/*.sublime-(project|workspace)',
-  '**/.DS_Store',
-  '**/.sass-cache',
-  '**/Thumbs.db',
-  '**/desktop.ini',
-  '**/config.yml',
-  '**/node_modules/',
-  '.prettierrc.json',
-]
 
 const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',

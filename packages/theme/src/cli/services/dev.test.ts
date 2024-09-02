@@ -17,6 +17,7 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/theme-environment.js')
+vi.mock('../utilities/theme-fs-empty.js')
 vi.mock('../utilities/theme-fs.js')
 
 describe('dev', () => {
@@ -49,6 +50,7 @@ describe('dev', () => {
       vi.mocked(ensureValidPassword).mockResolvedValue('valid-password')
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
+      vi.mocked(emptyThemeExtFileSystem).mockReturnValue(localThemeExtensionFileSystem)
       vi.mocked(setupDevServer).mockReturnValue({
         workPromise: Promise.resolve(),
         renderDevSetupProgress: () => Promise.resolve(),

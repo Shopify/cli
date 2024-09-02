@@ -47,11 +47,6 @@ export interface VirtualFileSystem {
   unsyncedFileKeys: Set<Key>
 
   /**
-   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
-   */
-  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
-
-  /**
    * Promise that resolves when all the initial files are found.
    */
   ready: () => Promise<void>
@@ -80,14 +75,6 @@ export interface VirtualFileSystem {
   read: (fileKey: Key) => Promise<string | Buffer | undefined>
 
   /**
-   * Gets the stats of a file from the local disk and updates the file system
-   * Returns undefined if the file does not exist
-   *
-   * @param fileKey - The key of the file to read
-   */
-  stat: (fileKey: Key) => Promise<Pick<Stats, 'mtime' | 'size'> | undefined>
-
-  /**
    * Add callbacks to run after certain events are fired.
    */
   addEventListener: {
@@ -107,6 +94,11 @@ export interface ThemeFileSystem extends VirtualFileSystem {
    * @returns A Promise that resolves to an FSWatcher instance.
    */
   startWatcher: (themeId: string, adminSession: AdminSession) => Promise<void>
+
+  /**
+   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
+   */
+  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
 }
 
 /**
@@ -164,7 +156,7 @@ export interface Checksum {
   key: Key
 
   /**
-   * Reresents the checksum value of the theme file.
+   * Represents the checksum value of the theme file.
    */
   checksum: string
 }
@@ -190,9 +182,9 @@ export interface ThemeAsset extends Checksum {
 }
 
 /**
- * Represents a single result for a upload or delete operation on a single file
+ * Represents a single result for an upload or delete operation on a single file
  * Each result includes the unique identifier for the file, the type of the operation,
- * the sucesss status of the operation, any errors that occurred, and the asset value of the file.
+ * the success status of the operation, any errors that occurred, and the asset value of the file.
  */
 export interface Result {
   /**
@@ -205,7 +197,7 @@ export interface Result {
    */
   operation: Operation
 
-  /* *
+  /**
    * Indicates whether the upload operation for this file was successful.
    */
   success: boolean
@@ -215,7 +207,7 @@ export interface Result {
    */
   errors?: {asset?: string[]}
 
-  /* *
+  /**
    * The asset that was uploaded as part of the upload operation for this file.
    */
   asset?: Omit<ThemeAsset, 'stats'>

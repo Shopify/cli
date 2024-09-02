@@ -109,9 +109,9 @@ function hotReloadScript() {
   const refreshAppEmbedBlock = async (data: HotReloadEvent & {type: 'extAppBlock'}, block: Element) => {
     const controller = new AbortController()
 
-    const appBlockId = block.id.replace(/^shopify-block-/, '')
+    const appEmbedBlockId = block.id.replace(/^shopify-block-/, '')
     const params = [
-      `app-block-id=${encodeURIComponent(appBlockId)}`,
+      `app-block-id=${encodeURIComponent(appEmbedBlockId)}`,
       `pathname=${encodeURIComponent(window.location.pathname)}`,
       `search=${encodeURIComponent(window.location.search)}`,
     ].join('&')
