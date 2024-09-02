@@ -6,13 +6,17 @@ export function storefrontReplaceTemplatesParams(context: DevServerRenderContext
    * Theme access proxy doesn't support FormData encoding.
    */
   const params = new URLSearchParams()
-  const {method, replaceTemplates} = context
 
-  for (const [path, content] of Object.entries(replaceTemplates)) {
+  for (const [path, content] of Object.entries(context.replaceTemplates)) {
     params.append(`replace_templates[${path}]`, content)
   }
 
-  params.append('_method', method)
+  for (const [path, content] of Object.entries(context.replaceExtensionTemplates ?? [])) {
+    const bucket = path.split('/')[0]
+    params.append(`replace_extension_templates[${bucket}][${path}]`, content)
+  }
+
+  params.append('_method', context.method)
 
   return params
 }

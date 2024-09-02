@@ -9,8 +9,9 @@ import {createError} from 'h3'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
+  const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
 
-  outputDebug(`→ Rendering ${url} (with ${Object.keys(context.replaceTemplates)})...`)
+  outputDebug(`→ Rendering ${url} (with ${replaceTemplates})...`)
 
   const bodyParams = storefrontReplaceTemplatesParams(context)
   const headers = await buildHeaders(session, context)
@@ -90,7 +91,7 @@ async function buildCookies(session: DevServerSession, ctx: DevServerRenderConte
   })
 }
 
-function buildStorefrontUrl(session: DevServerSession, {path, sectionId, query}: DevServerRenderContext) {
+function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBlockId, query}: DevServerRenderContext) {
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}${path}`
   const params = new URLSearchParams({
@@ -102,8 +103,11 @@ function buildStorefrontUrl(session: DevServerSession, {path, sectionId, query}:
     params.append(key, value)
   }
 
+  // The Section Rendering API takes precendence over the Block Rendering API.
   if (sectionId) {
     params.append('section_id', sectionId)
+  } else if (appBlockId) {
+    params.append('app_block_id', appBlockId)
   }
 
   return `${url}?${params}`

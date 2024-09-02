@@ -30,14 +30,14 @@ export interface ThemeFileSystemOptions {
 /**
  * Represents a theme on the file system.
  */
-export interface ThemeFileSystem {
+export interface VirtualFileSystem {
   /**
    * The root path of the theme.
    */
   root: string
 
   /**
-   * Local theme files.
+   * Local files.
    */
   files: Map<Key, ThemeAsset>
 
@@ -47,31 +47,26 @@ export interface ThemeFileSystem {
   unsyncedFileKeys: Set<Key>
 
   /**
-   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
-   */
-  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
-
-  /**
    * Promise that resolves when all the initial files are found.
    */
   ready: () => Promise<void>
 
   /**
-   * Removes a file from the local disk and updates the themeFileSystem
+   * Removes a file from the local disk and updates the file system
    *
    * @param fileKey - The key of the file to remove
    */
   delete: (fileKey: Key) => Promise<void>
 
   /**
-   * Writes a file to the local disk and updates the themeFileSystem
+   * Writes a file to the local disk and updates the file system
    *
    * @param asset - The ThemeAsset representing the file to write
    */
   write: (asset: ThemeAsset) => Promise<void>
 
   /**
-   * Reads a file from the local disk and updates the themeFileSystem
+   * Reads a file from the local disk and updates the file system
    * Returns a ThemeAsset representing the file that was read
    * Returns undefined if the file does not exist
    *
@@ -85,7 +80,12 @@ export interface ThemeFileSystem {
   addEventListener: {
     <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
   }
+}
 
+/**
+ * Represents a theme on the file system.
+ */
+export interface ThemeFileSystem extends VirtualFileSystem {
   /**
    * Starts a file watcher for the theme directory.
    *
@@ -94,6 +94,21 @@ export interface ThemeFileSystem {
    * @returns A Promise that resolves to an FSWatcher instance.
    */
   startWatcher: (themeId: string, adminSession: AdminSession) => Promise<void>
+
+  /**
+   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
+   */
+  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
+}
+
+/**
+ * Represents a theme on the file system.
+ */
+export interface ThemeExtensionFileSystem extends VirtualFileSystem {
+  /**
+   * Starts a file watcher for the theme extension directory.
+   */
+  startWatcher: () => Promise<void>
 }
 
 /**
@@ -141,13 +156,13 @@ export interface Checksum {
   key: Key
 
   /**
-   * Reresents the checksum value of the theme file.
+   * Represents the checksum value of the theme file.
    */
   checksum: string
 }
 
 /**
- * Represents a file in a theme.
+ * Represents a theme or theme extension asset.
  */
 export interface ThemeAsset extends Checksum {
   /**
@@ -167,9 +182,9 @@ export interface ThemeAsset extends Checksum {
 }
 
 /**
- * Represents a single result for a upload or delete operation on a single file
+ * Represents a single result for an upload or delete operation on a single file
  * Each result includes the unique identifier for the file, the type of the operation,
- * the sucesss status of the operation, any errors that occurred, and the asset value of the file.
+ * the success status of the operation, any errors that occurred, and the asset value of the file.
  */
 export interface Result {
   /**
@@ -182,7 +197,7 @@ export interface Result {
    */
   operation: Operation
 
-  /* *
+  /**
    * Indicates whether the upload operation for this file was successful.
    */
   success: boolean
@@ -192,7 +207,7 @@ export interface Result {
    */
   errors?: {asset?: string[]}
 
-  /* *
+  /**
    * The asset that was uploaded as part of the upload operation for this file.
    */
   asset?: Omit<ThemeAsset, 'stats'>

@@ -4,7 +4,7 @@ import {
   raiseWarningForNonExplicitGlobPatterns,
   getPatternsFromShopifyIgnore,
 } from './asset-ignore.js'
-import {timestampDateFormat} from '../constants.js'
+import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
@@ -22,24 +22,6 @@ import type {
   ThemeFSEventName,
   ThemeFSEventPayload,
 } from '@shopify/cli-kit/node/themes/types'
-
-const THEME_DEFAULT_IGNORE_PATTERNS = [
-  '**/.git',
-  '**/.vscode',
-  '**/.hg',
-  '**/.bzr',
-  '**/.svn',
-  '**/_darcs',
-  '**/CVS',
-  '**/*.sublime-(project|workspace)',
-  '**/.DS_Store',
-  '**/.sass-cache',
-  '**/Thumbs.db',
-  '**/desktop.ini',
-  '**/config.yml',
-  '**/node_modules/',
-  '.prettierrc.json',
-]
 
 const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',
@@ -97,7 +79,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const themeSetupPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
-    ignore: THEME_DEFAULT_IGNORE_PATTERNS,
+    ignore: DEFAULT_IGNORE_PATTERNS,
   })
     .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
     .then(([ignoredPatterns]) => {
@@ -221,7 +203,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       const {default: chokidar} = await import('chokidar')
 
       const watcher = chokidar.watch([...directoriesToWatch], {
-        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        ignored: DEFAULT_IGNORE_PATTERNS,
         persistent: !process.env.SHOPIFY_UNIT_TEST,
         ignoreInitial: true,
       })

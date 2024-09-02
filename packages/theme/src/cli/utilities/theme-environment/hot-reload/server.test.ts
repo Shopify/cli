@@ -1,6 +1,7 @@
 import {getHotReloadHandler, getInMemoryTemplates, setupInMemoryTemplateWatcher} from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
+import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
 import {describe, test, expect, vi} from 'vitest'
 import {createEvent} from 'h3'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
@@ -234,6 +235,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
   /** Waits for an event stream to be flushed, or for the last `onSync` callback to be triggered */
   const nextTick = () => new Promise((resolve) => setTimeout(resolve))
 
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
   const upsertFile = (key: string, value: string) => {
     localThemeFileSystem.files.set(key, {checksum: '1', key, value})
@@ -280,6 +282,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
   const ctx: DevServerContext = {
     session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
     localThemeFileSystem,
+    localThemeExtensionFileSystem,
     directory: 'tmp',
     options: {
       ignore: [],

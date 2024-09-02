@@ -4,6 +4,7 @@ import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
+import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -16,6 +17,7 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/theme-environment.js')
+vi.mock('../utilities/theme-fs-empty.js')
 vi.mock('../utilities/theme-fs.js')
 
 describe('dev', () => {
@@ -37,6 +39,8 @@ describe('dev', () => {
     ignore: [],
     only: [],
   }
+
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
 
   describe('Dev-Preview Implementation', async () => {
@@ -46,6 +50,7 @@ describe('dev', () => {
       vi.mocked(ensureValidPassword).mockResolvedValue('valid-password')
       vi.mocked(fetchChecksums).mockResolvedValue([])
       vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
+      vi.mocked(emptyThemeExtFileSystem).mockReturnValue(localThemeExtensionFileSystem)
       vi.mocked(setupDevServer).mockReturnValue({
         workPromise: Promise.resolve(),
         renderDevSetupProgress: () => Promise.resolve(),
@@ -67,6 +72,7 @@ describe('dev', () => {
           expiresAt: expect.any(Date),
         },
         localThemeFileSystem,
+        localThemeExtensionFileSystem,
         directory: 'my-directory',
         options: {
           themeEditorSync: true,

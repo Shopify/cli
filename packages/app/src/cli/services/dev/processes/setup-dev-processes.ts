@@ -143,7 +143,8 @@ export async function setupDevProcesses({
         }),
     commandOptions.devPreview
       ? await setupPreviewThemeAppExtensionsProcessNext({
-          allExtensions: localApp.allExtensions,
+          remoteApp,
+          localApp,
           storeFqdn,
           developerPlatformClient,
           theme: commandOptions.theme,

@@ -19,6 +19,7 @@ describe('dev proxy', () => {
     session: {storeFqdn: 'my-store.myshopify.com'},
     options: {host: 'localhost', port: '1337'},
     localThemeFileSystem: {files: new Map([['assets/file1', 'content']])},
+    localThemeExtensionFileSystem: {files: new Map([['assets/file-ext', 'content']])},
   } as unknown as DevServerContext
 
   describe('injectCdnProxy', () => {
@@ -58,6 +59,28 @@ describe('dev proxy', () => {
                     <script src=\\"/cdn/path/to/assets/file1\\"></script>
                     <link href=\\"/cdn/path/to/assets/file1?v=123\\"></link>
                     <link href=\\"https://cdn.shopify.com/path/to/assets/file2\\"></link>
+                  </head>
+                  <body></body>
+                </html>"
+      `)
+    })
+
+    test('proxies requests to main global CDN for known local theme extension assets through local server', () => {
+      const content = html`<html>
+          <head>
+            <script src="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-4444-ee55555e55ee/0.0.0/assets/file-ext"></script>
+            <link href="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/assets/file-ext?v=123"></link>
+            <link href="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/file2"></link>
+          </head>
+          <body></body>
+        </html>`
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
+        "<html>
+                  <head>
+                    <script src=\\"/ext/cdn/extensions/1aaaa11a-2b22-333c-4444-ee55555e55ee/0.0.0/assets/file-ext\\"></script>
+                    <link href=\\"/ext/cdn/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/assets/file-ext?v=123\\"></link>
+                    <link href=\\"https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/file2\\"></link>
                   </head>
                   <body></body>
                 </html>"

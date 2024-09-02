@@ -20,7 +20,7 @@ const context: DevServerRenderContext = {
 describe('storefrontFormData', () => {
   test("returns the params string with correct mappings for section's content", () => {
     // Given
-    const ctx: DevServerRenderContext = {
+    const ctx = {
       ...context,
       replaceTemplates: {
         'sections/announcement-bar.liquid': '<h1>Content</h1>',
@@ -37,9 +37,29 @@ describe('storefrontFormData', () => {
     )
   })
 
+  test("returns the params string with correct mappings for apps's content", () => {
+    // Given
+    const ctx = {
+      ...context,
+      replaceExtensionTemplates: {
+        'blocks/hello.liquid': 'Hello',
+        'snippets/world.liquid': 'World',
+      },
+    }
+
+    // When
+    const formData = storefrontReplaceTemplatesParams(ctx)
+
+    // Then
+    const formDataContent = formData.toString()
+    expect(formDataContent).toEqual(
+      'replace_extension_templates%5Bblocks%5D%5Bblocks%2Fhello.liquid%5D=Hello&replace_extension_templates%5Bsnippets%5D%5Bsnippets%2Fworld.liquid%5D=World&_method=GET',
+    )
+  })
+
   test('handles empty sections record as expected', () => {
     // Given
-    const ctx: DevServerRenderContext = {
+    const ctx = {
       ...context,
       replaceTemplates: {},
     }
