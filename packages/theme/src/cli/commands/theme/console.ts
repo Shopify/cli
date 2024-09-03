@@ -33,6 +33,7 @@ export default class Console extends ThemeCommand {
     port: Flags.string({
       description: 'Local port to serve authentication service.',
       env: 'SHOPIFY_FLAG_PORT',
+      default: '9293',
     }),
     'store-password': Flags.string({
       description: 'The password for storefronts with password protection.',
@@ -53,7 +54,6 @@ export default class Console extends ThemeCommand {
     const theme = `liquid-console-repl-${cliVersion}`
 
     const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
-    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
     const authUrl = `http://localhost:${port}/password`
 
     if (flags['dev-preview']) {
@@ -61,7 +61,7 @@ export default class Console extends ThemeCommand {
         renderPortDeprecationWarning()
       }
       const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
-      await initializeRepl(adminSession, storefrontToken, themeId, url, storePassword)
+      await initializeRepl(adminSession, themeId, url, themeAccessPassword, storePassword)
       return
     }
 
@@ -73,7 +73,9 @@ export default class Console extends ThemeCommand {
       ],
     })
 
-    return execCLI2(['theme', 'console', '--url', url, '--port', port ?? '9293', '--theme', theme], {
+    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
+
+    return execCLI2(['theme', 'console', '--url', url, '--port', port, '--theme', theme], {
       store,
       adminToken: adminSession.token,
       storefrontToken,

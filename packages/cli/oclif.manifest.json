@@ -4808,6 +4808,7 @@
           "type": "option"
         },
         "port": {
+          "default": "9293",
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,

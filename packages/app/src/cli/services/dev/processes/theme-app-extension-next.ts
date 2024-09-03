@@ -4,7 +4,7 @@ import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-m
 import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -43,9 +43,8 @@ export async function setupPreviewThemeAppExtensionsProcess(
   const themeExtensionDirectory = themeExtension.directory
   const themeExtensionPort = options.themeExtensionPort ?? 9293
 
-  const [adminSession, storefrontToken, appUrl] = await Promise.all([
+  const [adminSession, appUrl] = await Promise.all([
     ensureAuthenticatedAdmin(options.storeFqdn),
-    ensureAuthenticatedStorefront([]),
     buildAppUrl(remoteApp),
   ])
 
@@ -95,7 +94,6 @@ export async function setupPreviewThemeAppExtensionsProcess(
     function: async () => {
       const server = await initializeDevelopmentExtensionServer(theme, {
         adminSession,
-        storefrontToken,
         storefrontPassword,
         themeExtensionDirectory,
         themeExtensionPort,

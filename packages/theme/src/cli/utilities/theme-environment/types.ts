@@ -23,9 +23,19 @@ export interface DevServerSession extends AdminSession {
   storefrontPassword?: string
 
   /**
-   * Timestamp marking when this session expires.
+   * This holds all cookies that impact the rendering of the development server.
+   *
+   * Currently, there are only two cookies that impact rendering:
+   *
+   *   - storefront_digest: This cookie identifies an authenticated
+   *                        session, allowing rendering to occur in a
+   *                        password-protected storefront.
+   *
+   *   - _shopify_essential: This cookie identifies the session, which is
+   *                         crucial for determining the theme used during
+   *                         rendering.
    */
-  expiresAt: Date
+  sessionCookies: {[key: string]: string}
 }
 
 /**
