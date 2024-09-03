@@ -121,6 +121,11 @@ export default class Push extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    'dev-preview': Flags.boolean({
+      hidden: true,
+      description: 'Enables the developer preview for the upcoming `theme push` implementation.',
+      env: 'SHOPIFY_FLAG_BETA',
+    }),
   }
 
   static cli2Flags = [
@@ -150,7 +155,7 @@ export default class Push extends ThemeCommand {
       return
     }
 
-    if (!flags.stable && !flags.password) {
+    if (flags['dev-preview'] || (!flags.stable && !flags.password)) {
       const {path, nodelete, publish, json, force, ignore, only} = flags
 
       const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
