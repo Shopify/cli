@@ -8,15 +8,20 @@ import {
 } from './app-management-client.js'
 import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
+import {CreateAppVersionMutationSchema} from './app-management-client/graphql/create-app-version.js'
+import {ReleaseVersionMutationSchema} from './app-management-client/graphql/release-version.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {AccountInfo} from '../../services/context/partner-account-info.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/api/app-management')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -186,5 +191,202 @@ describe('versionDeepLink', () => {
 
     // Then
     expect(got).toEqual('https://dev.shopify.com/dashboard/1/apps/2/versions/3')
+  })
+})
+
+describe('deploy', () => {
+  const organizationId = '1'
+  const appId = 'gid://shopify/App/2'
+  const versionId = 'gid://shopify/Version/3'
+  const versionTag = 'mytag'
+  const apiKey = 'key'
+  const token = 'business-platform-token'
+
+  const userAccountInfo: AccountInfo = {type: 'UnknownAccount'}
+  const session = {token, accountInfo: userAccountInfo}
+  const client = new AppManagementClient(session)
+
+  test('creates an app version from a bundle URL', async () => {
+    // Given
+    const bundleUrl = 'https://example.com/mybundle'
+    const mockedVersionResponse: CreateAppVersionMutationSchema = {
+      appVersionCreate: {
+        version: {
+          id: versionId,
+          appModules: [],
+          metadata: {message: '', versionTag},
+        },
+        userErrors: [],
+      },
+    }
+
+    vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
+
+    // When
+    const got = await client.deploy({
+      appId,
+      apiKey,
+      name: '',
+      appModules: [],
+      organizationId,
+      versionTag,
+      bundleUrl,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequest)).toHaveBeenCalledWith(
+      organizationId,
+      expect.stringMatching('mutation CreateAppVersion'),
+      token,
+      expect.objectContaining({
+        appId,
+        version: {sourceUrl: bundleUrl},
+        metadata: {versionTag},
+      }),
+    )
+    expect(got.appDeploy.appVersion.versionTag).toEqual(versionTag)
+    expect(got.appDeploy.appVersion.uuid).toEqual(versionId)
+  })
+
+  test('creates an app version directly', async () => {
+    // Given
+    const name = 'my-app-name'
+    const module1 = {
+      uid: 'uid',
+      specificationIdentifier: 'spec',
+      config: '{"key": "value"}',
+      context: 'context',
+      handle: 'handle',
+    }
+    const module2 = {
+      uid: 'uid2',
+      specificationIdentifier: 'spec2',
+      config: '{"key2": "value2"}',
+      context: 'context2',
+      handle: 'handle2',
+    }
+    const appModules = [module1, module2]
+    const mockedVersionResponse: CreateAppVersionMutationSchema = {
+      appVersionCreate: {
+        version: {
+          id: versionId,
+          appModules: appModules.map((mod) => ({
+            uuid: mod.uid,
+            handle: mod.handle,
+            config: JSON.parse(mod.config),
+            specification: {name: mod.specificationIdentifier, identifier: mod.specificationIdentifier},
+          })),
+          metadata: {message: '', versionTag},
+        },
+        userErrors: [],
+      },
+    }
+
+    vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
+
+    // When
+    const got = await client.deploy({
+      appId,
+      apiKey,
+      name,
+      appModules,
+      organizationId,
+      versionTag,
+      bundleUrl: undefined,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequest)).toHaveBeenCalledWith(
+      organizationId,
+      expect.stringMatching('mutation CreateAppVersion'),
+      token,
+      expect.objectContaining({
+        appId,
+        version: {
+          source: {
+            name,
+            appModules: appModules.map((mod) => ({
+              uid: mod.uid,
+              handle: mod.handle,
+              specificationIdentifier: mod.specificationIdentifier,
+              config: JSON.parse(mod.config),
+            })),
+          },
+        },
+        metadata: {versionTag},
+      }),
+    )
+    expect(got.appDeploy.appVersion.versionTag).toEqual(versionTag)
+    expect(got.appDeploy.appVersion.uuid).toEqual(versionId)
+  })
+
+  test('creates an app version and a release', async () => {
+    // Given
+    const name = 'my-app-name'
+    const mockedVersionResponse: CreateAppVersionMutationSchema = {
+      appVersionCreate: {
+        version: {
+          id: versionId,
+          appModules: [],
+          metadata: {message: '', versionTag},
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
+
+    const mockedReleaseResponse: ReleaseVersionMutationSchema = {
+      appReleaseCreate: {
+        release: {
+          version: {
+            id: versionId,
+            metadata: {message: '', versionTag},
+          },
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedReleaseResponse)
+
+    // When
+    const got = await client.deploy({
+      appId,
+      apiKey,
+      name,
+      appModules: [],
+      organizationId,
+      versionTag,
+      bundleUrl: undefined,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequest)).toHaveBeenCalledWith(
+      organizationId,
+      expect.stringMatching('mutation CreateAppVersion'),
+      token,
+      expect.objectContaining({
+        appId,
+        version: {
+          source: {
+            name,
+            appModules: [],
+          },
+        },
+        metadata: {versionTag},
+      }),
+    )
+    expect(vi.mocked(appManagementRequest)).toHaveBeenCalledWith(
+      organizationId,
+      expect.stringMatching('mutation ReleaseVersion'),
+      token,
+      expect.objectContaining({
+        appId,
+        versionId,
+      }),
+    )
+    expect(got.appDeploy.appVersion.versionTag).toEqual(versionTag)
+    expect(got.appDeploy.appVersion.uuid).toEqual(versionId)
   })
 })

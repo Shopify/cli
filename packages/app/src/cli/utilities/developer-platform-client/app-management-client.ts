@@ -628,29 +628,39 @@ export class AppManagementClient implements DeveloperPlatformClient {
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
-    // `name` is from the package.json package name or the directory name, while
-    // the branding module reflects the current specified name in the TOML.
-    // Since it is technically valid to not have a branding module, we will default
-    // to the `name` if no branding module is present.
-    let updatedName = name
-    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
-    if (brandingModule) {
-      updatedName = JSON.parse(brandingModule.config).name
+    let versionInput
+    if (bundleUrl) {
+      versionInput = {
+        sourceUrl: bundleUrl,
+      }
+    } else {
+      // `name` is from the package.json package name or the directory name, while
+      // the branding module reflects the current specified name in the TOML.
+      // Since it is technically valid to not have a branding module, we will default
+      // to the `name` if no branding module is present.
+      let updatedName = name
+      const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
+      if (brandingModule) {
+        updatedName = JSON.parse(brandingModule.config).name
+      }
+      versionInput = {
+        source: {
+          name: updatedName,
+          appModules: (appModules ?? []).map((mod) => {
+            return {
+              uid: mod.uid ?? mod.uuid ?? mod.handle,
+              specificationIdentifier: mod.specificationIdentifier,
+              handle: mod.handle,
+              config: JSON.parse(mod.config),
+            }
+          }),
+        },
+      }
     }
+
     const variables: CreateAppVersionMutationVariables = {
       appId,
-      name: updatedName,
-      appSource: {
-        assetsUrl: bundleUrl,
-        appModules: (appModules ?? []).map((mod) => {
-          return {
-            uid: mod.uid ?? mod.uuid ?? mod.handle,
-            specificationIdentifier: mod.specificationIdentifier,
-            handle: mod.handle,
-            config: JSON.parse(mod.config),
-          }
-        }),
-      },
+      version: versionInput,
       metadata: versionTag ? {versionTag} : {},
     }
 
@@ -908,41 +918,43 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
   return {
-    appSource: {
-      appModules: [
-        {
-          // Change the uid to AppHomeSpecIdentifier
-          uid: 'app_home',
-          specificationIdentifier: AppHomeSpecIdentifier,
-          config: {
-            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-            embedded: isLaunchable,
+    initialVersion: {
+      source: {
+        name,
+        appModules: [
+          {
+            // Change the uid to AppHomeSpecIdentifier
+            uid: 'app_home',
+            specificationIdentifier: AppHomeSpecIdentifier,
+            config: {
+              app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+              embedded: isLaunchable,
+            },
           },
-        },
-        {
-          // Change the uid to BrandingSpecIdentifier
-          uid: 'branding',
-          specificationIdentifier: BrandingSpecIdentifier,
-          config: {name},
-        },
-        {
-          // Change the uid to WebhooksSpecIdentifier
-          uid: 'webhooks',
-          specificationIdentifier: WebhooksSpecIdentifier,
-          config: {api_version: '2024-01'},
-        },
-        {
-          // Change the uid to AppAccessSpecIdentifier
-          uid: 'app_access',
-          specificationIdentifier: AppAccessSpecIdentifier,
-          config: {
-            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
-            ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+          {
+            // Change the uid to BrandingSpecIdentifier
+            uid: 'branding',
+            specificationIdentifier: BrandingSpecIdentifier,
+            config: {name},
           },
-        },
-      ],
+          {
+            // Change the uid to WebhooksSpecIdentifier
+            uid: 'webhooks',
+            specificationIdentifier: WebhooksSpecIdentifier,
+            config: {api_version: '2024-01'},
+          },
+          {
+            // Change the uid to AppAccessSpecIdentifier
+            uid: 'app_access',
+            specificationIdentifier: AppAccessSpecIdentifier,
+            config: {
+              redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+              ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+            },
+          },
+        ],
+      },
     },
-    name,
   }
 }
 
