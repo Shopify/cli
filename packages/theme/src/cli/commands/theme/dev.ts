@@ -140,10 +140,6 @@ You can run this command only in a directory that matches the [default Shopify t
     'notify',
   ]
 
-  /**
-   * Executes the theme serve command.
-   * Every 110 minutes, it will refresh the session token.
-   */
   async run(): Promise<void> {
     showEmbeddedCLIWarning()
     showDeprecationWarnings(this.argv)
@@ -153,7 +149,7 @@ You can run this command only in a directory that matches the [default Shopify t
     const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, !flags['dev-preview'])
 
     let theme: Theme
 

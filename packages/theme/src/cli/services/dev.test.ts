@@ -5,6 +5,8 @@ import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.j
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
+import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {DevServerSession} from '../utilities/theme-environment/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -14,6 +16,7 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('../utilities/theme-environment/dev-server-session.js')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/theme-environment.js')
@@ -40,12 +43,23 @@ describe('dev', () => {
     only: [],
   }
 
+  const session: DevServerSession = {
+    ...adminSession,
+    storefrontToken: 'token_111222333',
+    storefrontPassword: 'password',
+    sessionCookies: {
+      storefront_digest: '00001111222233334444',
+      _shopify_essential: ':00112233445566778899:',
+    },
+  }
+
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
 
   describe('Dev-Preview Implementation', async () => {
     test('calls startDevServer with the correct arguments when the `dev-preview` option is provided', async () => {
       // Given
+      vi.mocked(initializeDevServerSession).mockResolvedValue(session)
       vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
       vi.mocked(ensureValidPassword).mockResolvedValue('valid-password')
       vi.mocked(fetchChecksums).mockResolvedValue([])
@@ -65,12 +79,7 @@ describe('dev', () => {
 
       // Then
       expect(setupDevServer).toHaveBeenCalledWith(options.theme, {
-        session: {
-          ...adminSession,
-          storefrontPassword: 'valid-password',
-          storefrontToken: 'my-storefront-token',
-          expiresAt: expect.any(Date),
-        },
+        session,
         localThemeFileSystem,
         localThemeExtensionFileSystem,
         directory: 'my-directory',

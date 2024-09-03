@@ -1,10 +1,11 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerContext, DevServerSession, LiveReload} from '../utilities/theme-environment/types.js'
+import {DevServerContext, LiveReload} from '../utilities/theme-environment/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
+import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -66,12 +67,6 @@ export async function dev(options: DevOptions) {
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {filters: options})
 
-  const session: DevServerSession = {
-    ...options.adminSession,
-    storefrontToken: options.storefrontToken,
-    expiresAt: new Date(),
-  }
-
   const host = options.host || DEFAULT_HOST
   if (options.port && !(await checkPortAvailability(Number(options.port)))) {
     throw new AbortError(
@@ -81,6 +76,13 @@ export async function dev(options: DevOptions) {
 
   const port = options.port || String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
+  const storefrontPassword = await storefrontPasswordPromise
+  const session = await initializeDevServerSession(
+    options.theme.id.toString(),
+    options.adminSession,
+    options.password,
+    storefrontPassword,
+  )
   const ctx: DevServerContext = {
     session,
     localThemeFileSystem,
@@ -139,6 +141,10 @@ async function legacyDev(options: DevOptions) {
     adminToken = undefined
     storefrontToken = undefined
 
+    /**
+     * Executes the theme serve command.
+     * Every 110 minutes, it will refresh the session token.
+     */
     setInterval(() => {
       outputDebug('Refreshing theme session tokens...')
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -206,11 +212,13 @@ export function showDeprecationWarnings(args: string[]) {
   }
 }
 
-export async function refreshTokens(store: string, password: string | undefined) {
+export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
   const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
   const storefrontToken = await ensureAuthenticatedStorefront([], password)
-  if (useEmbeddedThemeCLI()) {
+
+  if (refreshRubyCLI && useEmbeddedThemeCLI()) {
     await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
   }
+
   return {adminSession, storefrontToken}
 }

@@ -61,7 +61,12 @@ describe('setupDevServer', () => {
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const defaultServerContext: DevServerContext = {
-    session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
+    session: {
+      storefrontToken: '',
+      token: '',
+      storeFqdn: 'my-store.myshopify.com',
+      sessionCookies: {},
+    },
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: 'tmp',

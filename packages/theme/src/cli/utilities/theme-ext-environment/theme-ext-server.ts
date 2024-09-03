@@ -5,6 +5,7 @@ import {getAssetsHandler} from '../theme-environment/local-assets.js'
 import {getProxyHandler} from '../theme-environment/proxy.js'
 import {emitHotReloadEvent, getHotReloadHandler} from '../theme-environment/hot-reload/server.js'
 import {emptyThemeFileSystem} from '../theme-fs-empty.js'
+import {initializeDevServerSession} from '../theme-environment/dev-server-session.js'
 import {createApp, toNodeListener} from 'h3'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {extname} from '@shopify/cli-kit/node/path'
@@ -17,14 +18,13 @@ interface DevelopmentServerInstance {
 
 export interface DevExtensionServerContext {
   adminSession: AdminSession
-  storefrontToken: string
   themeExtensionPort: number
   themeExtensionDirectory: string
   storefrontPassword?: string
 }
 
 export async function initializeDevelopmentExtensionServer(theme: Theme, devExt: DevExtensionServerContext) {
-  const ctx = await contextDevServerContext(devExt)
+  const ctx = await contextDevServerContext(theme, devExt)
 
   await setupInMemoryTemplateWatcher(ctx)
 
@@ -62,14 +62,11 @@ export function createDevelopmentExtensionServer(theme: Theme, ctx: DevServerCon
   }
 }
 
-async function contextDevServerContext(extensionContext: DevExtensionServerContext): Promise<DevServerContext> {
-  const {
-    adminSession,
-    storefrontToken,
-    storefrontPassword,
-    themeExtensionPort,
-    themeExtensionDirectory: directory,
-  } = extensionContext
+async function contextDevServerContext(
+  theme: Theme,
+  extensionContext: DevExtensionServerContext,
+): Promise<DevServerContext> {
+  const {adminSession, storefrontPassword, themeExtensionPort, themeExtensionDirectory: directory} = extensionContext
 
   const host = '127.0.0.1'
   const port = themeExtensionPort ?? 9293
@@ -77,13 +74,10 @@ async function contextDevServerContext(extensionContext: DevExtensionServerConte
   const localThemeExtensionFileSystem = mountThemeExtensionFileSystem(directory)
   await localThemeExtensionFileSystem.ready()
 
+  const session = await initializeDevServerSession(theme.id.toString(), adminSession, undefined, storefrontPassword)
+
   return {
-    session: {
-      ...adminSession,
-      storefrontToken,
-      storefrontPassword,
-      expiresAt: new Date(),
-    },
+    session,
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory,

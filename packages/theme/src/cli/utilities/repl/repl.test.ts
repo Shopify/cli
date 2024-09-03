@@ -14,9 +14,9 @@ describe('handleInput', () => {
   const themeSesssion: DevServerSession = {
     storefrontPassword: 'password',
     token: 'token',
-    expiresAt: new Date(),
     storeFqdn: 'store.myshopify.com',
     storefrontToken: 'storefrontToken',
+    sessionCookies: {},
   }
   const themeId = '123'
   const url = '/'
