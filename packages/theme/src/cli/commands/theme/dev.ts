@@ -186,6 +186,7 @@ You can run this command only in a directory that matches the [default Shopify t
       noDelete: flags.nodelete,
       ignore,
       only,
+      notify: flags.notify,
     })
   }
 }

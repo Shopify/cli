@@ -41,6 +41,7 @@ export interface DevOptions {
   noDelete: boolean
   ignore: string[]
   only: string[]
+  notify?: string
 }
 
 export async function dev(options: DevOptions) {
@@ -65,7 +66,10 @@ export async function dev(options: DevOptions) {
   }
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
-  const localThemeFileSystem = mountThemeFileSystem(options.directory, {filters: options})
+  const localThemeFileSystem = mountThemeFileSystem(options.directory, {
+    filters: options,
+    notify: options.notify,
+  })
 
   const host = options.host || DEFAULT_HOST
   if (options.port && !(await checkPortAvailability(Number(options.port)))) {
