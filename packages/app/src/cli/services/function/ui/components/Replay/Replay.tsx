@@ -143,7 +143,7 @@ function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRunFro
   return (
     <Box flexDirection="column">
       <Text>
-        {figures.pointerSmall} Instruction count delta: {delta}
+        {figures.pointerSmall} Instruction count change: {delta>0 ? '+' : ''}{delta}
       </Text>
     </Box>
   )

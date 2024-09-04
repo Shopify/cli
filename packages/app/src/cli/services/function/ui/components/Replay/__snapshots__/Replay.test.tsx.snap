@@ -67,7 +67,7 @@ Size: 0KB
 ────────────────────────────────────────────────────────────────────────────────────────────────────
 
 › Watching for changes to product-discount...
-› Instruction count delta: 1
+› Instruction count change: +1
 › Press q │ quit
 "
 `;
@@ -139,7 +139,7 @@ Size: 0KB
 ────────────────────────────────────────────────────────────────────────────────────────────────────
 
 › Watching for changes to product-discount...
-› Instruction count delta: 1
+› Instruction count change: +1
 › Press q │ quit
 some error
 "
