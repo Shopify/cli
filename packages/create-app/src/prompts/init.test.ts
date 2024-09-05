@@ -71,7 +71,7 @@ describe('init', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
         {label: 'Build a Remix app (recommended)', value: 'remix'},
-        {label: 'Build an extension only app', value: 'none'},
+        {label: 'Build an extension-only app', value: 'none'},
       ],
       message: 'Get started building your app:',
       defaultValue: 'remix',
@@ -98,7 +98,7 @@ describe('init', () => {
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
         {label: 'Build a Remix app (recommended)', value: 'remix'},
-        {label: 'Build an extension only app', value: 'none'},
+        {label: 'Build an extension-only app', value: 'none'},
       ],
       message: 'Get started building your app:',
       defaultValue: 'remix',

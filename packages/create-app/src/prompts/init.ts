@@ -48,7 +48,7 @@ export const templates = {
   } as Template,
   none: {
     url: 'https://github.com/Shopify/shopify-app-template-none',
-    label: 'Build an extension only app',
+    label: 'Build an extension-only app',
     visible: true,
   } as Template,
   node: {
