@@ -19,6 +19,11 @@ export class Notifier {
   }
 
   async notify(fileInfo: FileChangeInfo): Promise<void> {
+    if (this.notifyPath === '') {
+      outputDebug('Notification skipped: notifyPath is an empty string')
+      return
+    }
+
     try {
       if (!this.initialized && !this.isValidUrl) {
         await this.initFile()
@@ -30,14 +35,18 @@ export class Notifier {
       if (this.isValidUrl) {
         const response = await this.notifyUrl(content)
         if (!response.ok) {
-          outputWarn(`Failed to notify URL: ${response.statusText}`)
+          throw new Error(response.statusText)
         }
       } else {
         await this.notifyFile(content)
       }
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      outputWarn(`Failed to notify filechange listener at ${this.notifyPath}: ${error}`)
+      let message = `Failed to notify filechange listener at ${this.notifyPath}`
+      if (error instanceof Error) {
+        message = message.concat(`: ${error.message}`)
+      }
+      outputWarn(message)
     }
   }
 
@@ -56,7 +65,7 @@ export class Notifier {
 
   private async notifyFile(content: string): Promise<void> {
     outputDebug(`Updating file timestamps at ${this.notifyPath}...`)
-    await fs.appendFile(this.notifyPath, content)
+    await fs.appendFile(this.notifyPath, `${content}\n`)
   }
 
   private validateUrl(url: string): boolean {
