@@ -33,6 +33,8 @@ export type Scalars = {
   PropertyPublicID: {input: string; output: string}
   /** The ID for a Role. */
   RoleID: {input: any; output: any}
+  /** The ID for a Shop. */
+  ShopID: {input: any; output: any}
   /** The ID for a ShopifyShop. */
   ShopifyShopID: {input: any; output: any}
   /** The ID for a StoreAdditionRequest. */
