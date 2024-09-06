@@ -11,11 +11,13 @@ export class Notifier {
   constructor(notifyPath: string) {
     this.notifyPath = notifyPath
     this.isValidUrl = this.validateUrl(notifyPath)
+    if (this.notifyPath === '') {
+      outputWarn('Notification skipped: notifyPath is an empty string')
+    }
   }
 
   async notify(fileName: string): Promise<void> {
     if (this.notifyPath === '') {
-      outputDebug('Notification skipped: notifyPath is an empty string')
       return
     }
 
