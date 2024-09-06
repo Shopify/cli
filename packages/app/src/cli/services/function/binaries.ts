@@ -8,7 +8,7 @@ import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
 const JAVY_VERSION = 'v3.0.1'
-const FUNCTION_RUNNER_VERSION = 'v5.1.4'
+const FUNCTION_RUNNER_VERSION = 'v6.0.0'
 
 // The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
 // Javy and function-runner for now. Those methods may not continue to have the same logic in the future. If they
