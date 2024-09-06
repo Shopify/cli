@@ -54,6 +54,9 @@
       "../../.eslintrc.cjs"
     ]
   },
+  "dependencies": {
+    "esbuild": "0.19.8"
+  },
   "devDependencies": {
     "@oclif/core": "3.26.5",
     "@shopify/app": "3.66.0",

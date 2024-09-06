@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url)
 const external = [
   // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
   'react-devtools-core',
-    // esbuild can't be bundled per design
+  // esbuild can't be bundled per design
   'esbuild',
   'lightningcss',
 ]
