@@ -154,9 +154,6 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.66.0
         version: link:../cli-kit
-      '@shopify/create-app':
-        specifier: 3.66.0
-        version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
@@ -535,6 +532,9 @@ importers:
       '@oclif/core':
         specifier: 3.26.5
         version: 3.26.5
+      '@shopify/app':
+        specifier: 3.66.0
+        version: link:../app
       '@shopify/cli-kit':
         specifier: 3.66.0
         version: link:../cli-kit
