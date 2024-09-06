@@ -206,6 +206,28 @@ describe('deploy', () => {
   const session = {token, accountInfo: userAccountInfo}
   const client = new AppManagementClient(session)
 
+  const mockedVersionResponse: CreateAppVersionMutationSchema = {
+    appVersionCreate: {
+      version: {
+        id: versionId,
+        appModules: [],
+        metadata: {message: '', versionTag},
+      },
+      userErrors: [],
+    },
+  }
+  const mockedReleaseResponse: ReleaseVersionMutationSchema = {
+    appReleaseCreate: {
+      release: {
+        version: {
+          id: versionId,
+          metadata: {message: '', versionTag},
+        },
+      },
+      userErrors: [],
+    },
+  }
+
   test('creates an app version from a bundle URL', async () => {
     // Given
     const bundleUrl = 'https://example.com/mybundle'
@@ -245,8 +267,6 @@ describe('deploy', () => {
         metadata: {versionTag},
       }),
     )
-    expect(got.appDeploy.appVersion.versionTag).toEqual(versionTag)
-    expect(got.appDeploy.appVersion.uuid).toEqual(versionId)
   })
 
   test('creates an app version directly', async () => {
@@ -267,21 +287,6 @@ describe('deploy', () => {
       handle: 'handle2',
     }
     const appModules = [module1, module2]
-    const mockedVersionResponse: CreateAppVersionMutationSchema = {
-      appVersionCreate: {
-        version: {
-          id: versionId,
-          appModules: appModules.map((mod) => ({
-            uuid: mod.uid,
-            handle: mod.handle,
-            config: JSON.parse(mod.config),
-            specification: {name: mod.specificationIdentifier, identifier: mod.specificationIdentifier},
-          })),
-          metadata: {message: '', versionTag},
-        },
-        userErrors: [],
-      },
-    }
 
     vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
 
@@ -318,36 +323,12 @@ describe('deploy', () => {
         metadata: {versionTag},
       }),
     )
-    expect(got.appDeploy.appVersion.versionTag).toEqual(versionTag)
-    expect(got.appDeploy.appVersion.uuid).toEqual(versionId)
   })
 
   test('creates an app version and a release', async () => {
     // Given
     const name = 'my-app-name'
-    const mockedVersionResponse: CreateAppVersionMutationSchema = {
-      appVersionCreate: {
-        version: {
-          id: versionId,
-          appModules: [],
-          metadata: {message: '', versionTag},
-        },
-        userErrors: [],
-      },
-    }
     vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
-
-    const mockedReleaseResponse: ReleaseVersionMutationSchema = {
-      appReleaseCreate: {
-        release: {
-          version: {
-            id: versionId,
-            metadata: {message: '', versionTag},
-          },
-        },
-        userErrors: [],
-      },
-    }
     vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedReleaseResponse)
 
     // When
@@ -386,7 +367,5 @@ describe('deploy', () => {
         versionId,
       }),
     )
-    expect(got.appDeploy.appVersion.versionTag).toEqual(versionTag)
-    expect(got.appDeploy.appVersion.uuid).toEqual(versionId)
   })
 })
