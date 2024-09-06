@@ -77,7 +77,11 @@
   "engine-strict": true,
   "oclif": {
     "bin": "create-app",
-    "commands": "dist/commands",
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    },
     "additionalHelpFlags": [
       "-h"
     ],
