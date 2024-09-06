@@ -1,4 +1,4 @@
-import {functionRunnerBinary, installBinary, javyBinary} from './binaries.js'
+import {installBinary, javyBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -185,27 +185,6 @@ export async function installJavy(app: AppInterface) {
     const javy = javyBinary()
     await installBinary(javy)
   }
-}
-
-interface FunctionRunnerOptions {
-  input?: string
-  json: boolean
-  export?: string
-}
-
-export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigType>, options: FunctionRunnerOptions) {
-  const functionRunner = functionRunnerBinary()
-  await installBinary(functionRunner)
-
-  const outputAsJson = options.json ? ['--json'] : []
-  const withInput = options.input ? ['--input', options.input] : []
-  const exportName = options.export ? ['--export', options.export] : []
-  return exec(functionRunner.path, ['-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName], {
-    cwd: fun.directory,
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
-  })
 }
 
 export interface JavyBuilder {

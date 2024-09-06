@@ -1,5 +1,5 @@
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
-import {runFunctionRunner} from '../../../services/function/build.js'
+import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -78,10 +78,12 @@ export default class FunctionRun extends Command {
           )
         }
 
-        await runFunctionRunner(ourFunction, {
+        await runFunction({
+          functionExtension: ourFunction,
           json: flags.json,
-          input: flags.input,
+          inputPath: flags.input,
           export: functionExport,
+          stdin: 'inherit',
         })
       },
     })
