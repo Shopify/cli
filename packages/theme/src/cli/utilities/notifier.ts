@@ -1,44 +1,31 @@
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import fs from 'fs/promises'
 
-interface FileChangeInfo {
-  name: string
-  accessedAt: Date
-  modifiedAt: Date
-}
-
+// A valid NotifyPath can be:
+// - a URL
+// - a relative or absolute path on the filesystem
 export class Notifier {
   private notifyPath: string
-  private initialized: boolean
   private isValidUrl: boolean
 
   constructor(notifyPath: string) {
     this.notifyPath = notifyPath
-    this.initialized = false
     this.isValidUrl = this.validateUrl(notifyPath)
   }
 
-  async notify(fileInfo: FileChangeInfo): Promise<void> {
+  async notify(fileName: string): Promise<void> {
     if (this.notifyPath === '') {
       outputDebug('Notification skipped: notifyPath is an empty string')
       return
     }
 
     try {
-      if (!this.initialized && !this.isValidUrl) {
-        await this.initFile()
-      }
-
       outputDebug(`Notifying filechange listener at ${this.notifyPath}...`)
-      const content = JSON.stringify({files: [fileInfo]})
 
       if (this.isValidUrl) {
-        const response = await this.notifyUrl(content)
-        if (!response.ok) {
-          throw new Error(response.statusText)
-        }
+        await this.notifyUrl(fileName)
       } else {
-        await this.notifyFile(content)
+        await this.notifyFile(fileName)
       }
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
@@ -50,22 +37,21 @@ export class Notifier {
     }
   }
 
-  private async initFile() {
-    await fs.writeFile(this.notifyPath, '')
-    this.initialized = true
-  }
-
-  private async notifyUrl(content: string): Promise<Response> {
-    return fetch(this.notifyPath, {
+  private async notifyUrl(fileName: string): Promise<void> {
+    const response = await fetch(this.notifyPath, {
       method: 'POST',
-      body: content,
+      body: JSON.stringify({files: [fileName]}),
       headers: {'Content-Type': 'application/json'},
     })
+
+    if (!response.ok) {
+      throw new Error(response.statusText)
+    }
   }
 
-  private async notifyFile(content: string): Promise<void> {
-    outputDebug(`Updating file timestamps at ${this.notifyPath}...`)
-    await fs.appendFile(this.notifyPath, `${content}\n`)
+  private async notifyFile(fileName: string): Promise<void> {
+    await fs.writeFile(this.notifyPath, fileName)
+    await fs.utimes(this.notifyPath, new Date(), new Date())
   }
 
   private validateUrl(url: string): boolean {

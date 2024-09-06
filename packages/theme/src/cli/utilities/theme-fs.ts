@@ -9,7 +9,7 @@ import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {consoleError, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -115,18 +115,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         }
       })
       .catch((error) => {
-        consoleError(`Error handling file event for ${fileKey}: ${error}`)
+        outputWarn(`Error handling file event for ${fileKey}: ${error}`)
       })
   }
 
   function notifyFileChange(fileKey: string): Promise<void> {
-    const fileChange = {
-      name: fileKey,
-      accessedAt: new Date(),
-      modifiedAt: new Date(),
-    }
-
-    return notifier?.notify(fileChange) ?? Promise.resolve()
+    return notifier?.notify(fileKey) ?? Promise.resolve()
   }
 
   const handleFileUpdate = (
