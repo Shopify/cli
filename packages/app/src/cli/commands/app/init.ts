@@ -15,6 +15,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {hyphenate} from '@shopify/cli-kit/common/string'
+import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 export default class Init extends Command {
   static summary?: string | undefined = 'Create a new app project'
@@ -64,7 +65,7 @@ export default class Init extends Command {
     this.validateFlavorValue(flags.template, flags.flavor)
 
     const inferredPackageManager = this.inferPackageManager(flags['package-manager'])
-    const name = flags.name ?? ''
+    const name = flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path}))
 
     // Login and then fetch org and app
     const developerPlatformClient = selectDeveloperPlatformClient()
