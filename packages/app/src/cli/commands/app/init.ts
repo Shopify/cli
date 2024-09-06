@@ -3,16 +3,18 @@ import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../../services/context.js'
 import {selectOrCreateApp} from '../../services/dev/select-app.js'
+import link from '../../services/app/config/link.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 
 export default class Init extends Command {
   static summary?: string | undefined = 'Create a new app project'
@@ -98,6 +100,19 @@ export default class Init extends Command {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
     })
+
+    const hyphenizedName = hyphenate(selectedApp.title)
+    const outputDirectory = joinPath(flags.path, hyphenizedName)
+
+    await link(
+      {
+        directory: outputDirectory,
+        apiKey: selectedApp.apiKey,
+        configName: 'shopify.app.toml',
+        developerPlatformClient,
+      },
+      false,
+    )
   }
 
   validateTemplateValue(template: string | undefined) {
