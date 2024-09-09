@@ -1,4 +1,5 @@
-import {checksum, rejectGeneratedStaticAssets} from './asset-checksum.js'
+import {calculateChecksum, rejectGeneratedStaticAssets} from './asset-checksum.js'
+import {readThemeFile} from './theme-fs.js'
 import {describe, expect, test} from 'vitest'
 
 describe('asset-checksum', () => {
@@ -19,10 +20,10 @@ describe('asset-checksum', () => {
     testCases.forEach(({file, expectedChecksum}) => {
       test(`returns the expected checksum for "${file}"`, async () => {
         // Given
-        const root = 'src/cli/utilities/fixtures'
+        const root = 'src/cli/utilities/fixtures/theme'
 
         // When
-        const actualChecksum = await checksum(root, file)
+        const actualChecksum = await calculateChecksum(file, await readThemeFile(root, file))
 
         // Then
         expect(actualChecksum).toEqual(expectedChecksum)

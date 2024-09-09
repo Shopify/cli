@@ -1,5 +1,5 @@
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -23,10 +23,25 @@ export interface DevServerSession extends AdminSession {
   storefrontPassword?: string
 
   /**
-   * Timestamp marking when this session expires.
+   * This holds all cookies that impact the rendering of the development server.
+   *
+   * Currently, there are only two cookies that impact rendering:
+   *
+   *   - storefront_digest: This cookie identifies an authenticated
+   *                        session, allowing rendering to occur in a
+   *                        password-protected storefront.
+   *
+   *   - _shopify_essential: This cookie identifies the session, which is
+   *                         crucial for determining the theme used during
+   *                         rendering.
    */
-  expiresAt: Date
+  sessionCookies: {[key: string]: string}
 }
+
+/**
+ * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
+ */
+export type LiveReload = 'hot-reload' | 'full-page' | 'off'
 
 /**
  * Maintains the state of local and remote assets in theme development server.
@@ -38,14 +53,19 @@ export interface DevServerContext {
   session: DevServerSession
 
   /**
-   * Checksums of remote assets.
-   */
-  remoteChecksums: Checksum[]
-
-  /**
    * File system tracking local theme assets.
    */
   localThemeFileSystem: ThemeFileSystem
+
+  /**
+   * File system tracking local theme extension assets.
+   */
+  localThemeExtensionFileSystem: ThemeExtensionFileSystem
+
+  /**
+   * Path to the local theme directory.
+   */
+  directory: string
 
   /**
    * Additional options for the development server.
@@ -63,12 +83,12 @@ export interface DevServerContext {
     noDelete: boolean
 
     /**
-     * Glob patterns ignore-list for file reconciliation and sychronization.
+     * Glob patterns ignore-list for file reconciliation and synchronization.
      */
     ignore: string[]
 
     /**
-     * Glob patterns allow-list for file reconciliation and sychronization.
+     * Glob patterns allow-list for file reconciliation and synchronization.
      */
     only: string[]
 
@@ -85,7 +105,7 @@ export interface DevServerContext {
     /**
      * Mode for live reload behavior. Options: ['hot-reload', 'full-page', 'off']
      */
-    liveReload: string
+    liveReload: LiveReload
 
     /**
      * Automatically open the theme preview in the default browser.
@@ -107,6 +127,11 @@ export interface DevServerRenderContext {
   path: string
 
   /**
+   * HTTP method to be used during the rendering.
+   */
+  method: 'GET' | 'HEAD' | 'PATCH' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE'
+
+  /**
    * Theme identifier for rendering.
    */
   themeId: string
@@ -117,14 +142,14 @@ export interface DevServerRenderContext {
   query: [string, string][]
 
   /**
-   * Cookies to be used during rendering.
-   */
-  cookies: string
-
-  /**
    * Optional identifier for rendering only a specific section.
    */
   sectionId?: string
+
+  /**
+   * Optional identifier for rendering only a specific app block.
+   */
+  appBlockId?: string
 
   /**
    * Headers to be used in the rendering request.
@@ -132,7 +157,12 @@ export interface DevServerRenderContext {
   headers: {[key: string]: string}
 
   /**
-   * Custom content to be replaced during rendering.
+   * Custom content to be replaced in the theme during rendering.
    */
   replaceTemplates: {[key: string]: string}
+
+  /**
+   * Custom content to be replaced during rendering.
+   */
+  replaceExtensionTemplates?: {[key: string]: string}
 }

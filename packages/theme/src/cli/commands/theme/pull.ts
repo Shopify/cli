@@ -66,9 +66,9 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       description: 'Performs the pull command by relying on the legacy download implementation.',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
-    beta: Flags.boolean({
+    'dev-preview': Flags.boolean({
       hidden: true,
-      description: 'Performs the pull command by relying on the new download implementation.',
+      description: 'Enables the developer preview for the upcoming `theme pull` implementation.',
       env: 'SHOPIFY_FLAG_BETA',
     }),
   }
@@ -87,7 +87,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       ? developmentThemeManager.find()
       : developmentThemeManager.fetch())
 
-    if (flags.beta) {
+    if (flags['dev-preview']) {
       const {path, nodelete, live, development, only, ignore, force} = flags
 
       const theme = await findOrSelectTheme(adminSession, {

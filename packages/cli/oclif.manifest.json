@@ -1683,8 +1683,7 @@
           "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
+          "multiple": true,
           "name": "store",
           "type": "option"
         },
@@ -4809,6 +4808,7 @@
           "type": "option"
         },
         "port": {
+          "default": "9293",
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
@@ -5128,6 +5128,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "theme": {
@@ -5688,12 +5696,12 @@
       "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "flags": {
-        "beta": {
+        "dev-preview": {
           "allowNo": false,
-          "description": "Performs the pull command by relying on the new download implementation.",
+          "description": "Enables the developer preview for the upcoming `theme pull` implementation.",
           "env": "SHOPIFY_FLAG_BETA",
           "hidden": true,
-          "name": "beta",
+          "name": "dev-preview",
           "type": "boolean"
         },
         "development": {
@@ -6281,6 +6289,14 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
           "type": "option"
         },
         "theme": {

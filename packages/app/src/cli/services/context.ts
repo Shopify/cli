@@ -56,6 +56,7 @@ export interface DevContextOptions {
   storeFqdn?: string
   reset: boolean
   developerPlatformClient: DeveloperPlatformClient
+  customInfoBox?: boolean
 }
 
 interface DevContextOutput {
@@ -65,6 +66,8 @@ interface DevContextOutput {
   storeId: string
   updateURLs: boolean | undefined
   localApp: AppInterface
+  organization?: string
+  configFile?: string
 }
 
 export interface GenerateContextOptions {
@@ -251,14 +254,16 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     })
   }
 
-  showReusedDevValues({
-    selectedApp,
-    selectedStore,
-    cachedInfo,
-    organization,
-  })
+  if (!options.customInfoBox) {
+    showReusedDevValues({
+      selectedApp,
+      selectedStore,
+      cachedInfo,
+      organization,
+    })
+  }
 
-  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo, organization.businessName)
   await logMetadataForLoadedContext({
     organizationId: result.remoteApp.organizationId,
     apiKey: result.remoteApp.apiKey,
@@ -266,7 +271,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   return result
 }
 
-const resetHelpMessage: Token[] = [
+export const resetHelpMessage: Token[] = [
   'You can pass ',
   {command: '--reset'},
   ' to your command to reset your app configuration.',
@@ -299,7 +304,7 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
   return app
 }
 
-const storeFromFqdn = async (
+export const storeFromFqdn = async (
   storeFqdn: string,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
@@ -319,6 +324,7 @@ function buildOutput(
   store: OrganizationStore,
   localApp: AppInterface,
   cachedInfo?: CachedAppInfo,
+  organization?: string,
 ): DevContextOutput {
   return {
     remoteApp: {
@@ -330,6 +336,8 @@ function buildOutput(
     storeId: store.shopId,
     updateURLs: cachedInfo?.updateURLs,
     localApp,
+    organization,
+    configFile: cachedInfo?.configFile,
   }
 }
 
@@ -423,7 +431,7 @@ export interface DeployContextOptions {
  * That means we have a valid session, organization and app.
  *
  * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
- * If there is no API key (or is invalid), show prompts to select an org and app.
+ * If there is no app (or is invalid), show prompts to select an org and app.
  * Finally, the info is updated in the env file.
  *
  * @param options - Current dev context options
@@ -433,8 +441,9 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const {reset, force, noRelease} = options
   let developerPlatformClient = options.developerPlatformClient
-  // do the link here
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, !options.apiKey)
+  const enableLinkingPrompt = !options.apiKey && !isCurrentAppSchema(options.app.configuration)
+  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, enableLinkingPrompt)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -459,6 +468,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     developerPlatformClient,
     envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
     remoteApp,
+    activeAppVersion,
   })
 
   // eslint-disable-next-line no-param-reassign
@@ -815,11 +825,11 @@ async function linkIfNecessary(
   if (reset) clearCachedAppInfo(directory)
 
   const firstTimeSetup = previousCachedInfo === undefined
-  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
   const usingConfigWithNoTomls: boolean =
     previousCachedInfo?.configFile !== undefined && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+  const unlinked = firstTimeSetup || usingConfigWithNoTomls
+  const performAppLink = reset || (enableLinkingPrompt && unlinked)
 
-  const performAppLink = enableLinkingPrompt && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)
   if (performAppLink) {
     return link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
   }
@@ -874,6 +884,28 @@ interface CurrentlyUsedConfigInfoOptions {
   resetMessage?: Token[]
 }
 
+export function formInfoBoxBody(
+  appName: string,
+  org?: string,
+  devStores?: string[],
+  resetMessage?: Token[],
+  updateURLs?: string,
+  includeConfigOnDeploy?: boolean,
+): TokenItem {
+  const items = [`App:             ${appName}`]
+  if (org) items.unshift(`Org:             ${org}`)
+  if (devStores && devStores.length > 0) {
+    devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
+  }
+  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
+  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
+
+  let body: TokenItem = [{list: {items}}]
+  if (resetMessage) body = [...body, '\n', ...resetMessage]
+
+  return body
+}
+
 export function renderCurrentlyUsedConfigInfo({
   org,
   appName,
@@ -884,20 +916,13 @@ export function renderCurrentlyUsedConfigInfo({
   resetMessage,
   includeConfigOnDeploy,
 }: CurrentlyUsedConfigInfoOptions): void {
-  const items = [`App:             ${appName}`]
+  const devStores = []
+  if (devStore) devStores.push(devStore)
 
-  if (org) items.unshift(`Org:             ${org}`)
-  if (devStore) items.push(`Dev store:       ${devStore}`)
-  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
-  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
-
-  let body: TokenItem = [{list: {items}}]
-  if (resetMessage) body = [...body, '\n', ...resetMessage]
-
+  const body = formInfoBoxBody(appName, org, devStores, resetMessage, updateURLs, includeConfigOnDeploy)
   const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
-
   renderInfo({
-    headline: configFile ? `Using ${fileName}:` : 'Using these settings:',
+    headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
     body,
   })
 }

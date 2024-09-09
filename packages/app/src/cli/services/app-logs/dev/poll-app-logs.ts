@@ -24,11 +24,13 @@ export const pollAppLogs = async ({
   appLogsFetchInput: {jwtToken, cursor},
   apiKey,
   resubscribeCallback,
+  storeName,
 }: {
   stdout: Writable
   appLogsFetchInput: {jwtToken: string; cursor?: string}
   apiKey: string
   resubscribeCallback: () => Promise<string>
+  storeName: string
 }) => {
   try {
     let nextJwtToken = jwtToken
@@ -92,6 +94,7 @@ export const pollAppLogs = async ({
             appLogPayload: payload,
             apiKey,
             stdout,
+            storeName,
           })
           stdout.write(
             outputContent`${outputToken.gray('└ ')}${outputToken.link(
@@ -115,6 +118,7 @@ export const pollAppLogs = async ({
         },
         apiKey,
         resubscribeCallback,
+        storeName,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -134,6 +138,7 @@ export const pollAppLogs = async ({
         },
         apiKey,
         resubscribeCallback,
+        storeName,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })

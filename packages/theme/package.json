@@ -26,6 +26,7 @@
   ],
   "scripts": {
     "build": "nx build",
+    "dev": "nx dev",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
@@ -42,8 +43,10 @@
   "dependencies": {
     "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.66.0",
-    "@shopify/theme-check-node": "2.8.0",
-    "@shopify/theme-language-server-node": "1.11.4",
+    "@shopify/theme-check-node": "2.9.0",
+    "@shopify/theme-language-server-node": "1.12.1",
+    "chokidar": "3.5.3",
+    "h3": "1.12.0",
     "yaml": "2.3.2"
   },
   "devDependencies": {

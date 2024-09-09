@@ -1,9 +1,9 @@
+import {isStorefrontPasswordCorrect} from './storefront-session.js'
 import {getStorefrontPassword, removeStorefrontPassword, setStorefrontPassword} from '../../services/local-storage.js'
-import {isStorefrontPasswordCorrect} from '../theme-environment/storefront-session.js'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function ensureValidPassword(password: string | undefined, store: string) {
-  let finalPassword = password || getStorefrontPassword() || (await promptPassword('Enter your theme password'))
+  let finalPassword = password || getStorefrontPassword() || (await promptPassword('Enter your store password'))
   let isPasswordRemoved = false
 
   // eslint-disable-next-line no-await-in-loop

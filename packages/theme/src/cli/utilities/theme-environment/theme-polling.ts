@@ -1,17 +1,15 @@
-import {applyIgnoreFilters} from '../asset-ignore.js'
+import {timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderError, renderText} from '@shopify/cli-kit/node/ui'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
 export interface PollingOptions {
   noDelete: boolean
-  only: string[]
-  ignore: string[]
 }
 
 export function pollThemeEditorChanges(
@@ -45,9 +43,9 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
 ): Promise<Checksum[]> {
-  const previousChecksums = await applyFileFilters(remoteChecksums, localFileSystem, options)
+  const previousChecksums = applyFileFilters(remoteChecksums, localFileSystem)
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
-    applyFileFilters(checksums, localFileSystem, options),
+    applyFileFilters(checksums, localFileSystem),
   )
 
   const changedAssets = getAssetsChangedOnRemote(previousChecksums, latestChecksums)
@@ -94,24 +92,34 @@ async function syncChangedAssets(
       const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
       if (asset) {
         await localFileSystem.write(asset)
-        renderText({text: `Synced: get '${asset.key}' from remote theme`})
+        outputInfo(
+          outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
+            `download ${asset.key} from remote theme`,
+          )}`,
+        )
       }
     }),
   )
 }
 
-function deleteRemovedAssets(
+export async function deleteRemovedAssets(
   localFileSystem: ThemeFileSystem,
   assetsDeletedFromRemote: Checksum[],
   options: {noDelete: boolean},
 ) {
   if (!options.noDelete) {
     return Promise.all(
-      assetsDeletedFromRemote.map((file) =>
-        localFileSystem.delete(file.key).then(() => {
-          renderText({text: `Synced: remove '${file.key}' from local theme`})
-        }),
-      ),
+      assetsDeletedFromRemote.map((file) => {
+        if (localFileSystem.files.get(file.key)) {
+          return localFileSystem.delete(file.key).then(() => {
+            outputInfo(
+              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                '»',
+              )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+            )
+          })
+        }
+      }),
     )
   }
 }
@@ -134,7 +142,9 @@ async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, as
   }
 }
 
-async function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem, options: PollingOptions) {
-  const filteredFiles = await applyIgnoreFilters(files, localThemeFileSystem, options)
-  return filteredFiles.filter((file) => file.key.endsWith('.json'))
+function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem) {
+  const filteredFiles = localThemeFileSystem.applyIgnoreFilters(files)
+  return filteredFiles
+    .filter((file) => file.key.endsWith('.json'))
+    .filter((file) => !localThemeFileSystem.unsyncedFileKeys.has(file.key))
 }

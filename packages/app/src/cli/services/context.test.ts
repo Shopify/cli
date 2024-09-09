@@ -37,6 +37,7 @@ import {
   testThemeExtensions,
   testAppConfigExtensions,
   buildVersionedAppSchema,
+  testAppWithLegacyConfig,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {
@@ -444,6 +445,8 @@ describe('ensureDevContext', async () => {
         remoteAppUpdated: true,
         updateURLs: true,
         localApp: app,
+        organization: 'org1',
+        configFile: 'shopify.app.toml',
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -508,6 +511,8 @@ dev_store_url = "domain1"
         storeId: STORE1.shopId,
         remoteAppUpdated: true,
         updateURLs: true,
+        organization: 'org1',
+        configFile: 'shopify.app.toml',
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -662,7 +667,7 @@ api_version = "2023-04"
           },
           ' to your command to reset your app configuration.',
         ],
-        headline: 'Using shopify.app.toml:',
+        headline: 'Using shopify.app.toml for default values:',
       })
     })
   })
@@ -683,6 +688,7 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
+      organization: 'org1',
     })
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
@@ -719,6 +725,8 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
+      organization: 'org1',
+      configFile: 'shopify.app.toml',
     })
   })
 
@@ -743,6 +751,7 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: false,
       updateURLs: undefined,
+      organization: 'org1',
     })
     expect(fetchOrganizations).not.toHaveBeenCalled()
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
@@ -776,6 +785,27 @@ api_version = "2023-04"
     expect(options.developerPlatformClient.orgAndApps).not.toBeCalled()
   })
 
+  test('suppresses info box when customLogInfoBox flag is passed', async () => {
+    // Given
+    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    const options = devOptions({
+      customInfoBox: true,
+      storeFqdn: 'domain1',
+      storeFqdns: ['domain1', 'domain2'],
+      developerPlatformClient: buildDeveloperPlatformClient({
+        appFromId: () => Promise.resolve(APP1),
+        orgAndApps: () => Promise.resolve(ORG_AND_APPS_RESPONSE),
+      }),
+    })
+    await ensureDevContext(options)
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+
   test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
@@ -801,6 +831,7 @@ api_version = "2023-04"
       storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
+      organization: 'org1',
     })
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
@@ -844,7 +875,7 @@ api_version = "2023-04"
     // Then
     expect(clearCachedAppInfo).toHaveBeenCalledWith(options.directory)
     expect(options.developerPlatformClient.appsForOrg).toBeCalled()
-    expect(link).not.toBeCalled()
+    expect(link).toBeCalled()
   })
 
   test('reset triggers link if opted into config in code', async () => {
@@ -1065,6 +1096,7 @@ describe('ensureDeployContext', () => {
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
     // Given
+    const legacyApp = testAppWithLegacyConfig({config: {}})
     const app = testAppWithConfig({config: {client_id: APP1.apiKey}})
     const identifiers = {
       app: APP1.apiKey,
@@ -1074,12 +1106,9 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(loadApp).mockResolvedValue(legacyApp)
     vi.mocked(link).mockResolvedValue({...app.configuration, organization_id: ORG1.id})
-
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
-      .mockResolvedValue()
+    vi.spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile').mockResolvedValue()
 
     const developerPlatformClient = buildDeveloperPlatformClient({
       async orgAndApps(_orgId: string) {
@@ -1091,17 +1120,17 @@ describe('ensureDeployContext', () => {
       },
       appFromId: () => Promise.resolve(APP2),
     })
-    const opts: DeployContextOptions = {...deployOptions(app), developerPlatformClient}
+    const opts: DeployContextOptions = {...deployOptions(legacyApp), developerPlatformClient}
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
 
     // When
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(link).toBeCalledWith({directory: app.directory}, false)
+    expect(link).toBeCalled()
 
     expect(updateAppIdentifiers).toBeCalledWith({
-      app,
+      app: legacyApp,
       identifiers,
       command: 'deploy',
       developerPlatformClient,
@@ -1274,7 +1303,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1321,7 +1350,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1373,7 +1402,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1425,7 +1454,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1471,7 +1500,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
@@ -1515,7 +1544,7 @@ describe('ensureDeployContext', () => {
         },
         ' to your command to reset your app configuration.',
       ],
-      headline: 'Using shopify.app.toml:',
+      headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
   })

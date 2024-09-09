@@ -342,19 +342,6 @@ module ShopifyCLI
           end
         end
 
-        def test_replaces_shopify_essential_cookie
-          stub_request(:get, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0")
-            .with(
-              headers: {
-                "Cookie" => "_shopify_essential=#{SECURE_SESSION_ID};",
-              },
-            )
-
-          stub_session_id_request
-          request.get("/",
-            "HTTP_COOKIE" => "_shopify_essential=a12cef")
-        end
-
         def test_appends_shopify_essential_cookie
           stub_request(:get, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0")
             .with(
@@ -366,19 +353,6 @@ module ShopifyCLI
           stub_session_id_request
           request.get("/",
             "HTTP_COOKIE" => "cart_currency=CAD; secure_customer_sig=")
-        end
-
-        def test_shopify_essential_cookie_in_the_middle_of_the_cookie_string
-          stub_request(:get, "https://dev-theme-server-store.myshopify.com/?_fd=0&pb=0")
-            .with(
-              headers: {
-                "Cookie" => "cart_currency=CAD; _shopify_essential=#{SECURE_SESSION_ID}; secure_customer_sig=",
-              },
-            )
-
-          stub_session_id_request
-          request.get("/",
-            "HTTP_COOKIE" => "cart_currency=CAD; _shopify_essential=:expired:; secure_customer_sig=")
         end
 
         def test_pass_pending_templates_to_storefront

@@ -35,3 +35,10 @@ const COMMANDS = {
 }
 
 export default COMMANDS
+
+/** Development server for theme extensions */
+export * from './cli/utilities/theme-ext-environment/theme-ext-server.js'
+
+/** Storefront authentication support for running the development server on password-protected stores */
+export {isStorefrontPasswordProtected} from './cli/utilities/theme-environment/storefront-session.js'
+export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-password-prompt.js'

@@ -177,6 +177,10 @@ const POLL_APP_LOGS_FOR_LOGS_UNKNOWN_RESPONSE = {
   errors: [{status: 422, message: 'Unprocessable'}],
 }
 
+const STORE_NAME = 'Test Store'
+const STORE_ID = '1'
+const STORE_NAME_BY_ID = new Map([[STORE_ID, STORE_NAME]])
+
 const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 describe('usePollAppLogs', () => {
@@ -195,7 +199,12 @@ describe('usePollAppLogs', () => {
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
 
     const hook = renderHook(() =>
-      usePollAppLogs({initialJwt: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, resubscribeCallback}),
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback,
+        storeNameById: STORE_NAME_BY_ID,
+      }),
     )
 
     // needed to await the render
@@ -213,6 +222,7 @@ describe('usePollAppLogs', () => {
       source: SOURCE,
       description: `export "run" executed in ${(FUEL_CONSUMED / 1000000).toFixed(4)}M instructions`,
       logTimestamp: TIME,
+      storeName: STORE_NAME,
     })
 
     expect(hook.lastResult?.appLogOutputs[1]!.appLog).toEqual(
@@ -228,6 +238,7 @@ describe('usePollAppLogs', () => {
       source: SOURCE,
       description: `network access response retrieved from cache`,
       logTimestamp: TIME,
+      storeName: STORE_NAME,
     })
 
     expect(hook.lastResult?.appLogOutputs[2]!.appLog).toEqual(
@@ -245,6 +256,7 @@ describe('usePollAppLogs', () => {
       source: SOURCE,
       description: `network access request executed in 80 ms`,
       logTimestamp: TIME,
+      storeName: STORE_NAME,
     })
 
     expect(hook.lastResult?.appLogOutputs[3]!.appLog).toEqual(
@@ -262,6 +274,7 @@ describe('usePollAppLogs', () => {
       source: SOURCE,
       description: `network access request executed`,
       logTimestamp: TIME,
+      storeName: STORE_NAME,
     })
 
     expect(hook.lastResult?.appLogOutputs[4]!.appLog).toEqual(
@@ -275,6 +288,7 @@ describe('usePollAppLogs', () => {
       source: SOURCE,
       description: `network access request executing in background`,
       logTimestamp: TIME,
+      storeName: STORE_NAME,
     })
 
     expect(hook.lastResult?.appLogOutputs[5]!.appLog).toEqual(
@@ -288,6 +302,7 @@ describe('usePollAppLogs', () => {
       source: SOURCE,
       description: `network access request executing in background`,
       logTimestamp: TIME,
+      storeName: STORE_NAME,
     })
 
     expect(vi.getTimerCount()).toEqual(1)
@@ -302,7 +317,14 @@ describe('usePollAppLogs', () => {
 
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
 
-    renderHook(() => usePollAppLogs({initialJwt: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, resubscribeCallback}))
+    renderHook(() =>
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback,
+        storeNameById: STORE_NAME_BY_ID,
+      }),
+    )
 
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
@@ -334,7 +356,12 @@ describe('usePollAppLogs', () => {
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
 
     const hook = renderHook(() =>
-      usePollAppLogs({initialJwt: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, resubscribeCallback}),
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback,
+        storeNameById: STORE_NAME_BY_ID,
+      }),
     )
 
     // needed to await the render
@@ -368,7 +395,12 @@ describe('usePollAppLogs', () => {
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
 
     const hook = renderHook(() =>
-      usePollAppLogs({initialJwt: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, resubscribeCallback}),
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback,
+        storeNameById: STORE_NAME_BY_ID,
+      }),
     )
 
     // needed to await the render
@@ -404,6 +436,7 @@ describe('usePollAppLogs', () => {
         initialJwt: MOCKED_JWT_TOKEN,
         filters: EMPTY_FILTERS,
         resubscribeCallback: vi.fn().mockResolvedValue(MOCKED_JWT_TOKEN),
+        storeNameById: STORE_NAME_BY_ID,
       }),
     )
 
@@ -414,6 +447,28 @@ describe('usePollAppLogs', () => {
     // second poll with no errors
     await vi.advanceTimersToNextTimerAsync()
     expect(hook.lastResult?.errors).toHaveLength(0)
+  })
+
+  test("ignores logs from stores that don't have a matching shop name", async () => {
+    const mockedPollAppLogs = vi.fn().mockResolvedValue(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
+    vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
+
+    const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
+
+    const hook = renderHook(() =>
+      usePollAppLogs({
+        initialJwt: MOCKED_JWT_TOKEN,
+        filters: EMPTY_FILTERS,
+        resubscribeCallback,
+        storeNameById: new Map(),
+      }),
+    )
+
+    // needed to await the render
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(hook.lastResult?.appLogOutputs).toHaveLength(0)
+    expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -9,6 +9,7 @@ import {createLogsDir} from '@shopify/cli-kit/node/logs'
 interface SubscribeAndStartPollingOptions {
   developerPlatformClient: DeveloperPlatformClient
   appLogsSubscribeVariables: AppLogsSubscribeVariables
+  storeName: string
 }
 
 export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPollingOptions> {
@@ -21,11 +22,13 @@ interface Props {
     shopIds: string[]
     apiKey: string
   }
+  storeName: string
 }
 
 export async function setupAppLogsPollingProcess({
   developerPlatformClient,
   subscription: {shopIds, apiKey},
+  storeName,
 }: Props): Promise<AppLogsSubscribeProcess> {
   const {token} = await developerPlatformClient.session()
 
@@ -40,13 +43,14 @@ export async function setupAppLogsPollingProcess({
         apiKey,
         token,
       },
+      storeName,
     },
   }
 }
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
   {stdout, stderr: _stderr, abortSignal: _abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables},
+  {developerPlatformClient, appLogsSubscribeVariables, storeName},
 ) => {
   try {
     const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
@@ -61,6 +65,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       resubscribeCallback: () => {
         return subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
       },
+      storeName,
     })
     // eslint-disable-next-line no-catch-all/no-catch-all,no-empty
   } catch (error) {}

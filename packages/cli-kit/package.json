@@ -157,7 +157,7 @@
     "simple-git": "3.19.1",
     "stacktracey": "2.1.8",
     "strip-ansi": "7.1.0",
-    "supports-hyperlinks": "3.0.0",
+    "supports-hyperlinks": "3.1.0",
     "tempy": "3.0.0",
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",

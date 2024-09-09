@@ -143,7 +143,8 @@ export async function setupDevProcesses({
         }),
     commandOptions.devPreview
       ? await setupPreviewThemeAppExtensionsProcessNext({
-          allExtensions: localApp.allExtensions,
+          remoteApp,
+          localApp,
           storeFqdn,
           developerPlatformClient,
           theme: commandOptions.theme,
@@ -174,6 +175,7 @@ export async function setupDevProcesses({
             shopIds: [storeId],
             apiKey,
           },
+          storeName: storeFqdn,
         })
       : undefined,
   ].filter(stripUndefineds)

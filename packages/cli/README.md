@@ -552,7 +552,7 @@ USAGE
 FLAGS
   -c, --config=<value>     The name of the app configuration.
   -j, --json               Log the run result as a JSON object.
-  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+  -s, --store=<value>...   Store URL. Must be an existing development or Shopify Plus sandbox store.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
@@ -1710,7 +1710,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --port=<value>            Local port to serve authentication service.
+      --port=<value>            [default: 9293] Local port to serve authentication service.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
@@ -1765,7 +1765,7 @@ Uploads the current theme as a development theme to the connected store, then pr
 USAGE
   $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
     [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--poll] [--port
-    <value>] [-s <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+    <value>] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1819,6 +1819,9 @@ FLAGS
 
   --port=<value>
       Local port to serve theme preview from.
+
+  --store-password=<value>
+      The password for storefronts with password protection.
 
   --theme-editor-sync
       Synchronize Theme Editor updates in the local theme files.
