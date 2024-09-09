@@ -2,7 +2,7 @@ import {environmentVariableNames} from '../constants.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, readFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
@@ -87,32 +87,10 @@ interface GenerateCertificateOptions {
 export async function generateCertificate({
   appDirectory,
   onRequiresDownloadConfirmation,
-  resetFirst = false,
   env = process.env,
 }: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string}> {
-  // if we're resetting, delete the .shopify/mkcert file, if it exists
-  if (resetFirst) {
-    const mkcertPath = joinPath(appDirectory, '.shopify', 'mkcert')
-    if (await fileExists(mkcertPath)) {
-      outputDebug(
-        outputContent`${outputToken.failIcon()} Removing existing ${mkcertSnippet} binary at ${outputToken.path(
-          mkcertPath,
-        )}`,
-      )
-      await removeFile(mkcertPath)
-    }
-  }
-
   const mkcertPath = await getMkcertPath(appDirectory, onRequiresDownloadConfirmation, env)
   outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
-
-  // in reset mode, clear the installed CA first
-  if (resetFirst) {
-    outputInfo(outputContent`🔄 Uninstalling ${mkcertSnippet} root certificate...`)
-    // this call is allowed to fail if the CA isn't installed
-    await exec(mkcertPath, ['-uninstall']).catch(() => {})
-  }
-
   const keyPath = joinPath(appDirectory, '.shopify', 'localhost-key.pem')
   const certPath = joinPath(appDirectory, '.shopify', 'localhost.pem')
 

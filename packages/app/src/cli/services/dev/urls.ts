@@ -29,7 +29,7 @@ export interface ApplicationURLs {
 }
 
 export interface FrontendURLOptions {
-  noTunnel: boolean
+  noTunnelUseLocalhost: boolean
   tunnelUrl?: string
   tunnelClient: TunnelClient | undefined
 }
@@ -55,7 +55,7 @@ interface FrontendURLResult {
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
   let frontendPort = 4040
   let frontendUrl = ''
-  let usingLocalhost = false
+  const usingLocalhost = options.noTunnelUseLocalhost
 
   if (codespaceURL()) {
     frontendUrl = `https://${codespaceURL()}-${frontendPort}.${codespacePortForwardingDomain()}`
@@ -98,10 +98,9 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (options.noTunnel) {
+  if (options.noTunnelUseLocalhost) {
     frontendPort = await getAvailableTCPPort()
-    frontendUrl = 'http://localhost'
-    usingLocalhost = true
+    frontendUrl = 'https://localhost'
   } else if (options.tunnelClient) {
     const url = await pollTunnelURL(options.tunnelClient)
     frontendPort = options.tunnelClient.port

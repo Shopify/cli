@@ -1,10 +1,12 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions} from '../../services/dev.js'
+import {dev, DevOptions, TunnelMode} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
+import {generateCertificate} from '../../utilities/mkcert.js'
+import {downloadMkcert} from '../../prompts/dev.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -83,14 +85,15 @@ If you're using the Ruby app template, then you need to complete the following s
       description:
         'Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
-      exclusive: ['no-tunnel', 'tunnel'],
+      exclusive: ['tunnel'],
     }),
-    'no-tunnel': Flags.boolean({
+    'use-localhost': Flags.boolean({
       hidden: true,
-      description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
-      env: 'SHOPIFY_FLAG_NO_TUNNEL',
+      description:
+        "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not Webhooks, Flow Action, App Proxy or POS",
+      env: 'SHOPIFY_FLAG_USE_LOCALHOST',
       default: false,
-      exclusive: ['tunnel-url', 'tunnel'],
+      exclusive: ['tunnel-url'],
     }),
     theme: Flags.string({
       hidden: false,
@@ -128,29 +131,48 @@ If you're using the Ruby app template, then you need to complete the following s
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Dev)
 
-    if (!flags['api-key']) {
-      if (process.env.SHOPIFY_API_KEY) {
-        flags['api-key'] = process.env.SHOPIFY_API_KEY
-      }
+    if (!flags['api-key'] && process.env.SHOPIFY_API_KEY) {
+      flags['api-key'] = process.env.SHOPIFY_API_KEY
     }
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
 
-    await addPublicMetadata(() => ({
-      cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
-      cmd_app_reset_used: flags.reset,
-      cmd_dev_tunnel_type: flags['tunnel-url'] ? 'custom' : 'cloudflare',
-    }))
+    let tunnel: TunnelMode = {mode: 'auto'}
+    let tunnelType = 'cloudflare'
 
-    const commandConfig = this.config
+    if (flags['use-localhost']) {
+      tunnelType = 'use-localhost'
+      tunnel = {
+        mode: 'no-tunnel-use-localhost',
+        provideCertificate: async (appDirectory) => {
+          return generateCertificate({
+            appDirectory,
+            onRequiresDownloadConfirmation: downloadMkcert,
+          })
+        },
+      }
+    } else if (flags['tunnel-url']) {
+      tunnelType = 'custom'
+      tunnel = {
+        mode: 'provided',
+        url: flags['tunnel-url'],
+      }
+    }
+
+    await addPublicMetadata(() => {
+      return {
+        cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
+        cmd_app_reset_used: flags.reset,
+        cmd_dev_tunnel_type: tunnelType,
+      }
+    })
 
     await checkFolderIsValidApp(flags.path)
 
     const appContextResult = await linkedAppContext({
       directory: flags.path,
-      clientId: apiKey,
+      clientId: flags['client-id'] ?? flags['api-key'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
@@ -167,16 +189,15 @@ If you're using the Ruby app template, then you need to complete the following s
       directory: flags.path,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig,
+      commandConfig: this.config,
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
-      tunnelUrl: flags['tunnel-url'],
-      noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      tunnel,
     }
 
     await dev(devOptions)
