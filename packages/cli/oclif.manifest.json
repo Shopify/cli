@@ -461,18 +461,6 @@
           "name": "no-color",
           "type": "boolean"
         },
-        "no-tunnel": {
-          "allowNo": false,
-          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead",
-          "env": "SHOPIFY_FLAG_NO_TUNNEL",
-          "exclusive": [
-            "tunnel-url",
-            "tunnel"
-          ],
-          "hidden": true,
-          "name": "no-tunnel",
-          "type": "boolean"
-        },
         "no-update": {
           "allowNo": false,
           "description": "Skips the Partners Dashboard URL update step.",
@@ -559,7 +547,6 @@
           "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
           "env": "SHOPIFY_FLAG_TUNNEL_URL",
           "exclusive": [
-            "no-tunnel",
             "tunnel"
           ],
           "hasDynamicHelp": false,
@@ -567,6 +554,17 @@
           "multiple": false,
           "name": "tunnel-url",
           "type": "option"
+        },
+        "use-localhost": {
+          "allowNo": false,
+          "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not Webhooks, Flow Action, App Proxy or POS",
+          "env": "SHOPIFY_FLAG_USE_LOCALHOST",
+          "exclusive": [
+            "tunnel-url"
+          ],
+          "hidden": true,
+          "name": "use-localhost",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
