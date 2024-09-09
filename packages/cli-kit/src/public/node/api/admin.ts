@@ -70,7 +70,7 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
     if (error instanceof ClientError && error.response.status === 403) {
       const storeName = session.storeFqdn.replace('.myshopify.com', '')
       throw new AbortError(
-        outputContent`Looks like you don't have access this dev store: (${outputToken.link(
+        outputContent`Looks like you don't have access to this dev store: (${outputToken.link(
           storeName,
           `https://${session.storeFqdn}`,
         )})`,
