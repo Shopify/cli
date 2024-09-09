@@ -41,7 +41,7 @@ beforeEach(() => {
 })
 
 const defaultOptions: FrontendURLOptions = {
-  noTunnel: false,
+  noTunnelUseLocalhost: false,
   tunnelUrl: undefined,
   tunnelClient: {
     getTunnelStatus: () => ({status: 'starting'}),
@@ -448,15 +448,15 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({frontendUrl: 'https://fake-url.cloudflare.io', frontendPort: 3042, usingLocalhost: false})
   })
 
-  test('returns localhost if noTunnel is true', async () => {
+  test('returns localhost if noTunnelUseLocalhost is true', async () => {
     // Given
-    const options = {...defaultOptions, noTunnel: true}
+    const options = {...defaultOptions, noTunnelUseLocalhost: true}
 
     // When
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingLocalhost: true})
+    expect(got).toEqual({frontendUrl: 'https://localhost', frontendPort: 3042, usingLocalhost: true})
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
