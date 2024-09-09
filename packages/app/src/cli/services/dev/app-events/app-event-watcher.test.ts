@@ -13,6 +13,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
@@ -228,17 +229,35 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
         vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
         vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
 
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+
         // When
         const app = testApp({
           allExtensions: initialExtensions,
           configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
         })
 
-        const watcher = new AppEventWatcher(app, tmpDir, 'url', outputOptions)
+        const watcher = new AppEventWatcher(app, 'url', outputOptions, buildOutputPath)
         const emitSpy = vi.spyOn(watcher, 'emit')
         await watcher.start()
 
         await flushPromises()
+
+        // Wait until emitSpy has been called at least once
+        // We need this because there are i/o operations that make the test finish before the event is emitted
+        await new Promise<void>((resolve, reject) => {
+          const interval = setInterval(() => {
+            if (emitSpy.mock.calls.length > 0) {
+              clearInterval(interval)
+              resolve()
+            }
+          }, 100)
+          // Wait max 3 seconds, if not resolved, reject.
+          setTimeout(() => {
+            clearInterval(interval)
+            reject(new Error('Timeout waiting for emitSpy to be called'))
+          }, 3000)
+        })
 
         expect(emitSpy).toHaveBeenCalledWith('all', {
           app: expect.objectContaining({realExtensions: finalExtensions}),
