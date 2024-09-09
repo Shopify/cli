@@ -137,3 +137,11 @@ export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: str
     },
   })
 }
+
+export function downloadMkcert() {
+  return renderConfirmationPrompt({
+    message: '`mkcert` is required but not found. Download it now?',
+    confirmationMessage: 'Yes, download mkcert',
+    cancellationMessage: "No, I'll provide it manually",
+  })
+}

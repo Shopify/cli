@@ -1,10 +1,12 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions} from '../../services/dev.js'
+import {dev, DevOptions, TunnelMode} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
+import {generateCertificate} from '../../utilities/mkcert.js'
+import {downloadMkcert} from '../../prompts/dev.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -105,6 +107,12 @@ If you're using the Ruby app template, then you need to complete the following s
       default: false,
       exclusive: ['tunnel-url', 'tunnel'],
     }),
+    'reset-mkcert': Flags.boolean({
+      hidden: true,
+      description: 'Reset the mkcert CA.',
+      env: 'SHOPIFY_FLAG_RESET_MKCERT',
+      default: false,
+    }),
     theme: Flags.string({
       hidden: false,
       char: 't',
@@ -151,11 +159,42 @@ If you're using the Ruby app template, then you need to complete the following s
     }
     const apiKey = flags['client-id'] || flags['api-key']
 
-    await addPublicMetadata(() => ({
-      cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
-      cmd_app_reset_used: flags.reset,
-      cmd_dev_tunnel_type: flags['tunnel-url'] ? 'custom' : 'cloudflare',
-    }))
+    let tunnel: TunnelMode = {mode: 'auto'}
+    if (flags['no-tunnel']) {
+      tunnel = {
+        mode: 'no-tunnel',
+        provideCertificate: async (appDirectory) => {
+          return generateCertificate({
+            appDirectory,
+            onRequiresDownloadConfirmation: downloadMkcert,
+            resetFirst: flags['reset-mkcert'],
+          })
+        },
+      }
+    } else if (flags['tunnel-url']) {
+      tunnel = {
+        mode: 'provided',
+        url: flags['tunnel-url'],
+      }
+    }
+
+    await addPublicMetadata(() => {
+      let tunnelType
+
+      if (tunnel.mode === 'provided') {
+        tunnelType = 'custom'
+      } else if (tunnel.mode === 'no-tunnel') {
+        tunnelType = 'no-tunnel'
+      } else {
+        tunnelType = 'cloudflare'
+      }
+
+      return {
+        cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
+        cmd_app_reset_used: flags.reset,
+        cmd_dev_tunnel_type: tunnelType,
+      }
+    })
 
     const commandConfig = this.config
 
@@ -183,13 +222,12 @@ If you're using the Ruby app template, then you need to complete the following s
       commandConfig,
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
-      tunnelUrl: flags['tunnel-url'],
-      noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      tunnel,
     }
 
     await dev(devOptions)

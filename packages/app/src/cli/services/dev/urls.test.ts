@@ -415,7 +415,7 @@ describe('generateFrontendURL', () => {
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'http://localhost', frontendPort: 3042, usingLocalhost: true})
+    expect(got).toEqual({frontendUrl: 'https://localhost', frontendPort: 3042, usingLocalhost: true})
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
