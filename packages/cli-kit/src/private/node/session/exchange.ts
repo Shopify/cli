@@ -5,8 +5,9 @@ import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
-import {AbortError, ExtendableError} from '../../../public/node/error.js'
+import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import * as jose from 'jose'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
@@ -83,7 +84,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
   }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  return buildIdentityToken(value)
+  return buildIdentityToken(value, currentToken.userId)
 }
 
 /**
@@ -164,6 +165,7 @@ interface TokenRequestResult {
   expires_in: number
   refresh_token: string
   scope: string
+  id_token?: string
 }
 
 function tokenRequestErrorHandler(error: string) {
@@ -193,12 +195,19 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   return err(payload.error)
 }
 
-function buildIdentityToken(result: TokenRequestResult): IdentityToken {
+function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
+  const userId = result.id_token ? jose.decodeJwt(result.id_token).sub! : existingUserId
+
+  if (!userId) {
+    throw new BugError('Error setting userId for session. No id_token or pre-existing user ID provided.')
+  }
+
   return {
     accessToken: result.access_token,
     refreshToken: result.refresh_token,
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
     scopes: result.scope.split(' '),
+    userId,
   }
 }
 

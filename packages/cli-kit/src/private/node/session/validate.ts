@@ -1,5 +1,5 @@
 import {applicationId} from './identity.js'
-import {ApplicationToken, IdentityToken} from './schema.js'
+import {ApplicationToken, IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
 import {sessionConstants} from '../constants.js'
 import {outputDebug} from '../../../public/node/output.js'
@@ -68,6 +68,10 @@ The validation of the token for application/identity completed with the followin
 - It's expired: ${tokensAreExpired}
 - It's invalid in identity: ${!identityIsValid}
   `)
+
+  if (!validateCachedIdentityTokenStructure(session.identity)) {
+    return 'needs_full_auth'
+  }
 
   if (tokensAreExpired) return 'needs_refresh'
   if (!identityIsValid) return 'needs_full_auth'

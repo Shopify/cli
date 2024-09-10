@@ -91,7 +91,8 @@ export async function fetchOrganizations(): Promise<Organization[]> {
 
   if (organizations.length === 0) {
     const developerPlatformClient = selectDeveloperPlatformClient()
-    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient)
+    const userId = await developerPlatformClient.session().then((session) => session.userId)
+    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient, userId)
     throw new NoOrgError(accountInfo)
   }
   return organizations

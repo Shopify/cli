@@ -124,7 +124,11 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {FunctionUploadUrlGenerateMutation} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
-import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {
+  ensureAuthenticatedAppManagement,
+  ensureAuthenticatedBusinessPlatform,
+  ensureAuthenticatedUserId,
+} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -179,6 +183,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         await this.businessPlatformToken(),
       )
       const token = await ensureAuthenticatedAppManagement()
+      const userId = await ensureAuthenticatedUserId()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -186,6 +191,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             type: 'UserAccount',
             email: userInfoResult.currentUserAccount.email,
           },
+          userId,
         }
       } else {
         this._session = {
@@ -193,6 +199,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           accountInfo: {
             type: 'UnknownAccount',
           },
+          userId,
         }
       }
     }

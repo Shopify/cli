@@ -1,3 +1,4 @@
+import {randomUUID} from './crypto.js'
 import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
 
 /**
@@ -59,12 +60,13 @@ export function getBackendPort(): number | undefined {
  *
  * @returns The identity token information in case it exists.
  */
-export function getIdentityTokenInformation(): {accessToken: string; refreshToken: string} | undefined {
+export function getIdentityTokenInformation(): {accessToken: string; refreshToken: string; userId: string} | undefined {
   const identityToken = getEnvironmentVariables()[environmentVariables.identityToken]
   const refreshToken = getEnvironmentVariables()[environmentVariables.refreshToken]
   if (!identityToken || !refreshToken) return undefined
   return {
     accessToken: identityToken,
     refreshToken,
+    userId: randomUUID(),
   }
 }
