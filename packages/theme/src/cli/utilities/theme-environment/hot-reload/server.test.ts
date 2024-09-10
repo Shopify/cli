@@ -248,7 +248,7 @@ function createH3Event(url: string) {
   return {event, data}
 }
 
-function createTestContext(options?: {files?: [string, string][]}) {
+export function createTestContext(options?: {files?: [string, string][]}) {
   /** Waits for an event stream to be flushed, or for the last `onSync` callback to be triggered */
   const nextTick = () => new Promise((resolve) => setTimeout(resolve))
 
