@@ -1,4 +1,4 @@
-import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
+import {functionFlags, inFunctionContext, getOrGenerateSchemaPath} from '../../../services/function/common.js'
 import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -44,7 +44,7 @@ export default class FunctionRun extends Command {
     await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      callback: async (_app, ourFunction) => {
+      callback: async (app, ourFunction) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
         if (flags.export !== undefined) {
@@ -78,12 +78,18 @@ export default class FunctionRun extends Command {
           )
         }
 
+        const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
+        const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
+        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app)
+
         await runFunction({
           functionExtension: ourFunction,
           json: flags.json,
           inputPath: flags.input,
           export: functionExport,
           stdin: 'inherit',
+          schemaPath,
+          queryPath,
         })
       },
     })

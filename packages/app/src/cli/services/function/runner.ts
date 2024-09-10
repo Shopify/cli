@@ -10,6 +10,8 @@ interface FunctionRunnerOptions {
   inputPath?: string
   export?: string
   json?: boolean
+  schemaPath?: string
+  queryPath?: string
   stdin?: Readable | 'inherit'
   stdout?: Writable | 'inherit'
   stderr?: Writable | 'inherit'
@@ -28,6 +30,10 @@ export async function runFunction(options: FunctionRunnerOptions) {
   }
   if (options.json) {
     args.push('--json')
+  }
+  if (options.schemaPath && options.queryPath) {
+    args.push('--schema-path', options.schemaPath)
+    args.push('--query-path', options.queryPath)
   }
 
   return exec(functionRunner.path, ['-f', options.functionExtension.outputPath, ...args], {
