@@ -91,7 +91,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  * Watchs for file changes and updates in-memory templates, triggering
  * HotReload if needed.
  */
-export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
+export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
     const isAsset = fileKey.startsWith('assets/')
@@ -128,7 +128,6 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
   // is reloaded, we can quickly find what to update in the DOM without
   // spending time reading files.
   return ctx.localThemeFileSystem.ready().then(async () => {
-    await ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session)
     const files = [...ctx.localThemeFileSystem.files]
     return Promise.allSettled(
       files.map(async ([fileKey, file]) => {

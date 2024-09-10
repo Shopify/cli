@@ -32,7 +32,7 @@ describe('hot-reload server', () => {
       files: [[assetJsonKey, JSON.stringify(assetJsonValue)]],
     })
 
-    await setupInMemoryTemplateWatcher(mockTheme, ctx)
+    await setupInMemoryTemplateWatcher(ctx)
     const {event: subscribeEvent, data: hotReloadEvents} = createH3Event('/__hot-reload/subscribe')
     const streamPromise = hotReloadHandler(subscribeEvent)
     // Next tick to flush the connection:
