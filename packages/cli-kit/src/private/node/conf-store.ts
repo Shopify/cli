@@ -158,6 +158,7 @@ function getConfigStoreForPartnerStatus() {
 }
 
 export function getCachedPartnerAccountStatus(partnersToken: string): true | null {
+  if (!partnersToken) return null
   const store = getConfigStoreForPartnerStatus()
 
   const hasPartnerAccount = store.get(partnersToken)

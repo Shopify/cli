@@ -13,6 +13,7 @@ import {store as secureStore, fetch as secureFetch} from './session/store.js'
 import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
+import {getCachedPartnerAccountStatus} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {useDeviceAuth} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
@@ -123,6 +124,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+    expect(getCachedPartnerAccountStatus(got.partners!)).toBe(true)
   })
 
   test('throws an error if there is no session and prompting is disabled', async () => {
