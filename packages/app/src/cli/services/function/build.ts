@@ -8,7 +8,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
-import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {findPathUp, inTemporaryDirectory, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -84,6 +84,16 @@ export async function buildJSFunctionWithTasks(
       },
     },
   ])
+}
+
+async function readSchemaFile(directory: string): Promise<string | null> {
+  const schemaPath = joinPath(directory, 'src', 'run.graphql')
+  if (await fileExists(schemaPath)) {
+    // return readFile(schemaPath)
+    return schemaPath
+  } else {
+    return null
+  }
 }
 
 export async function buildGraphqlTypes(
@@ -194,15 +204,27 @@ export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigTyp
   const functionRunner = functionRunnerBinary()
   await installBinary(functionRunner)
 
+  const inputQueryPath = fun?.directory + fun?.configuration.targeting?.[0]?.input_query
+  console.log('Input Query Path Found:', inputQueryPath)
+
+  const schemaFile = await readSchemaFile(fun?.directory || '')
+  console.log('Schema File:', schemaFile)
+
   const outputAsJson = options.json ? ['--json'] : []
   const withInput = options.input ? ['--input', options.input] : []
   const exportName = options.export ? ['--export', options.export] : []
-  return exec(functionRunner.path, ['-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName], {
-    cwd: fun.directory,
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
-  })
+  const schemaPath = schemaFile ? ['--schema-path', schemaFile] : []
+  const inputPath = inputQueryPath ? ['--query-path', inputQueryPath] : []
+  return exec(
+    functionRunner.path,
+    ['-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName, ...schemaPath, ...inputPath],
+    {
+      cwd: fun.directory,
+      stdin: 'inherit',
+      stdout: 'inherit',
+      stderr: 'inherit',
+    },
+  )
 }
 
 export interface JavyBuilder {
