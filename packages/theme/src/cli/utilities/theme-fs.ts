@@ -236,9 +236,10 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         ignoreInitial: true,
       })
 
-      watcher.on('add', handleFileUpdate.bind(null, 'add', themeId, adminSession))
-      watcher.on('change', handleFileUpdate.bind(null, 'change', themeId, adminSession))
-      watcher.on('unlink', handleFileDelete.bind(null, themeId, adminSession))
+      watcher
+        .on('add', handleFsEvent.bind(null, 'add', themeId, adminSession))
+        .on('change', handleFsEvent.bind(null, 'change', themeId, adminSession))
+        .on('unlink', handleFsEvent.bind(null, 'unlink', themeId, adminSession))
     },
   }
 }
