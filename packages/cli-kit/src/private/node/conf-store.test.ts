@@ -6,6 +6,7 @@ import {
   removeSession,
   setSession,
   runAtMinimumInterval,
+  runWithRateLimit,
 } from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -242,6 +243,147 @@ describe('runAtMinimumInterval', () => {
         timeout,
         async () => {
           taskRan = true
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(true)
+    })
+  })
+})
+
+describe('runWithRateLimit', () => {
+  const key = 'TASK'
+  const timeout = {seconds: 1}
+  const limit = 2
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('runs the task as usual when the cache is not populated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+
+      // When
+      let taskRan = false
+      await runWithRateLimit(
+        {
+          key,
+          timeout,
+          limit,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(true)
+    })
+  })
+
+  test('throttles the task when the cache is populated recently', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      for (let i = 0; i < limit; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await runWithRateLimit(
+          {
+            key,
+            timeout,
+            limit,
+            task: async () => {},
+          },
+          config,
+        )
+      }
+
+      // When
+      let taskRan = false
+      await runWithRateLimit(
+        {
+          key,
+          limit,
+          timeout,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(false)
+    })
+  })
+
+  test("runs the task as usual when the cache is populated recently but the rate limit isn't used up", async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      // Run the task once, but the rate limit is 2
+      await runWithRateLimit(
+        {
+          key,
+          timeout,
+          limit,
+          task: async () => {},
+        },
+        config,
+      )
+
+      // When
+      let taskRan = false
+      await runWithRateLimit(
+        {
+          key,
+          limit,
+          timeout,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(taskRan).toBe(true)
+    })
+  })
+
+  test('runs the task as usual when the cache is populated but outdated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      for (let i = 0; i < limit; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await runWithRateLimit(
+          {
+            key,
+            timeout,
+            limit,
+            task: async () => {},
+          },
+          config,
+        )
+      }
+
+      // When
+      let taskRan = false
+      vi.setSystemTime(vi.getRealSystemTime() + 1000)
+      await runWithRateLimit(
+        {
+          key,
+          limit,
+          timeout,
+          task: async () => {
+            taskRan = true
+          },
         },
         config,
       )
