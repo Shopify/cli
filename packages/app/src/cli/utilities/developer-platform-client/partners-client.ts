@@ -1,10 +1,5 @@
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
-  AllDevStoresByOrganizationQuery,
-  AllDevStoresByOrganizationQueryVariables,
-  AllDevStoresByOrganizationSchema,
-} from '../../api/graphql/all_dev_stores_by_org.js'
-import {
   ActiveAppVersion,
   AppDeployOptions,
   AssetUrlSchema,
@@ -151,6 +146,11 @@ import {
   FindOrganizationQueryVariables,
 } from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
+import {
+  DevStoresByOrg,
+  DevStoresByOrgQuery,
+  DevStoresByOrgQueryVariables,
+} from '../../api/graphql/partners/generated/dev-stores-by-org.js'
 import {
   FunctionUploadUrlGenerate,
   FunctionUploadUrlGenerateMutation,
@@ -359,9 +359,9 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const variables: AllDevStoresByOrganizationQueryVariables = {id: orgId}
-    const result: AllDevStoresByOrganizationSchema = await this.request(AllDevStoresByOrganizationQuery, variables)
-    return result.organizations.nodes[0]!.stores.nodes
+    const variables: DevStoresByOrgQueryVariables = {id: orgId}
+    const result: DevStoresByOrgQuery = await this.requestDoc(DevStoresByOrg, variables)
+    return result.organizations.nodes![0]!.stores.nodes as OrganizationStore[]
   }
 
   async appExtensionRegistrations(
