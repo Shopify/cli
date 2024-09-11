@@ -1221,6 +1221,7 @@ describe('ensureDeployContext', () => {
     expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
   })
+
   test('load the app extension using the remote extensions specifications', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
@@ -1255,6 +1256,7 @@ describe('ensureDeployContext', () => {
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
+
   test('prompts the user to include the configuration and persist the flag if the flag is not present', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
@@ -1307,6 +1309,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
+
   test('prompts the user to include the configuration and set it to false when not confirmed if the flag is not present', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
@@ -1354,6 +1357,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
+
   test('doesnt prompt the user to include the configuration and display the current value if the flag', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
@@ -1406,6 +1410,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
+
   test('prompts the user to include the configuration when reset is used if the flag', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
@@ -1458,6 +1463,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
+
   test('doesnt prompt the user to include the configuration when force is used if the flag is not present', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
@@ -1504,6 +1510,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
+
   test('prompt the user to include the configuration when force is used  if the flag', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
@@ -1547,6 +1554,52 @@ describe('ensureDeployContext', () => {
       headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
+  })
+
+  test('uses the right developer platform client when it changes', async () => {
+    // Given
+    const legacyApp = testAppWithLegacyConfig({config: {}})
+    const app = testAppWithConfig({config: {client_id: APP1.apiKey}})
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(legacyApp)
+    vi.mocked(link).mockResolvedValue({...app.configuration, organization_id: ORG1.id})
+    vi.spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile').mockResolvedValue()
+
+    const anotherDeveloperPlatformClient = buildDeveloperPlatformClient()
+    const appWithAnotherDeveloperPlatformClient = testOrganizationApp({
+      id: '2',
+      title: 'app2',
+      apiKey: 'key2',
+      apiSecretKeys: [{secret: 'secret2'}],
+      developerPlatformClient: anotherDeveloperPlatformClient,
+    })
+
+    const developerPlatformClient = testDeveloperPlatformClient({
+      orgAndApps: () =>
+        Promise.resolve({
+          organization: ORG1,
+          apps: [APP1, appWithAnotherDeveloperPlatformClient],
+          hasMorePages: false,
+        }),
+      appFromId: () => Promise.resolve(appWithAnotherDeveloperPlatformClient),
+    })
+
+    const opts: DeployContextOptions = {...deployOptions(legacyApp), developerPlatformClient}
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+
+    // When
+    await ensureDeployContext(opts)
+
+    // Then
+    expect(developerPlatformClient.activeAppVersion).not.toHaveBeenCalled()
+    expect(anotherDeveloperPlatformClient.activeAppVersion).toHaveBeenCalledOnce()
   })
 })
 
