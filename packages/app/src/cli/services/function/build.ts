@@ -169,7 +169,10 @@ export async function runJavy(
   const javy = javyBinary()
   await installBinary(javy)
 
-  const args = ['compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
+  // Using the `build` command we want to emit:
+  //
+  //    `javy build -C dynamic -C wit=<path> -C wit-world=val -o <path> <function.js>`
+  const args = ['build', '-C', 'dynamic', ...extra, '-o', fun.outputPath, 'dist/function.js']
 
   return exec(javy.path, args, {
     cwd: fun.directory,
@@ -242,7 +245,7 @@ export class ExportJavyBuilder implements JavyBuilder {
       const witPath = joinPath(dir, 'javy-world.wit')
       await writeFile(witPath, witContent)
 
-      return runJavy(fun, options, ['--wit', witPath, '-n', JAVY_WORLD])
+      return runJavy(fun, options, ['-C', `wit=${witPath}`, '-C', `wit-world=${JAVY_WORLD}`])
     })
   }
 
