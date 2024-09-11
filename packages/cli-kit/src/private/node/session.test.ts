@@ -1,4 +1,4 @@
-import {ensureAuthenticated, OAuthApplications, OAuthSession} from './session.js'
+import {ensureAuthenticated, getLastSeenUserIdAfterAuth, OAuthApplications, OAuthSession} from './session.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -35,12 +35,14 @@ const validIdentityToken: IdentityToken = {
   refreshToken: 'refresh_token',
   expiresAt: futureDate,
   scopes: ['scope', 'scope2'],
+  userId: '1234-5678',
 }
 
 const validTokens: OAuthSession = {
   admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
   storefront: 'storefront_token',
   partners: 'partners_token',
+  userId: '1234-5678',
 }
 
 const appTokens: {[x: string]: ApplicationToken} = {
@@ -125,6 +127,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     expect(getCachedPartnerAccountStatus(got.partners!)).toBe(true)
+    expect(getLastSeenUserIdAfterAuth()).toBe(validIdentityToken.userId)
   })
 
   test('throws an error if there is no session and prompting is disabled', async () => {
