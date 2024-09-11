@@ -82,6 +82,12 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
+   * Use the legacy Ruby implementation for the `theme dev` command.
+   * @environment SHOPIFY_FLAG_STABLE
+   */
+  '--stable'?: ''
+
+  /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */
