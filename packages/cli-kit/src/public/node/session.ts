@@ -192,5 +192,9 @@ export async function ensureAuthenticatedUserId(env = process.env): Promise<stri
   }
 
   const tokens = await ensureAuthenticated({}, env, {})
+
+  if (!tokens.userId) {
+    throw new BugError('No user ID found after ensuring authenticated')
+  }
   return tokens.userId
 }

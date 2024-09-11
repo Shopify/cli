@@ -4,11 +4,12 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  ensureAuthenticatedUserId,
 } from './session.js'
 
 import {getPartnersToken} from './environment.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {ensureAuthenticated, getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {vi, describe, expect, test} from 'vitest'
 
@@ -177,5 +178,44 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
+  })
+})
+
+describe('ensureAuthenticatedUserId', () => {
+  test('returns existing user ID if available', async () => {
+    // Given
+    vi.mocked(getLastSeenUserIdAfterAuth).mockReturnValue('existing-user-id')
+
+    // When
+    const userId = await ensureAuthenticatedUserId()
+
+    // Then
+    expect(userId).toBe('existing-user-id')
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
+  test('authenticates and returns user ID if not already available', async () => {
+    // Given
+    vi.mocked(getLastSeenUserIdAfterAuth).mockReturnValue(undefined)
+    vi.mocked(ensureAuthenticated).mockResolvedValue({userId: 'new-user-id'})
+
+    // When
+    const userId = await ensureAuthenticatedUserId()
+
+    // Then
+    expect(userId).toBe('new-user-id')
+    expect(ensureAuthenticated).toHaveBeenCalledWith({}, process.env, {})
+  })
+
+  test('throws error if no user ID is returned after authentication', async () => {
+    // Given
+    vi.mocked(getLastSeenUserIdAfterAuth).mockReturnValue(undefined)
+    vi.mocked(ensureAuthenticated).mockResolvedValue({} as any)
+
+    // When
+    const getUserId = ensureAuthenticatedUserId()
+
+    // Then
+    await expect(getUserId).rejects.toThrow('No user ID found after ensuring authenticated')
   })
 })
