@@ -44,16 +44,6 @@ export async function getStorefrontSessionCookies(
   const cookieRecord: {[key: string]: string} = {}
   const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
 
-  if (!shopifyEssential) {
-    /**
-     * SFR should always define a _shopify_essential, so an error at this point
-     * is likely a Shopify error or firewall issue.
-     */
-    throw new AbortError(
-      'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
-    )
-  }
-
   cookieRecord._shopify_essential = shopifyEssential
 
   if (!password) {
@@ -68,7 +58,8 @@ export async function getStorefrontSessionCookies(
 
   if (!storefrontDigest) {
     throw new AbortError(
-      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+      'Your development session could not be created because the store password is invalid.',
+      'Please, retry with a different password.',
     )
   }
 
@@ -97,6 +88,17 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
+
+  if (!shopifyEssential) {
+    /**
+     * SFR should always define a _shopify_essential, so an error at this point
+     * is likely a Shopify error or firewall issue.
+     */
+    throw new AbortError(
+      `Your development session could not be created because the "_shopify_essential" could not be defined.`,
+      `Please, visit ${url} to check your storefront.`,
+    )
+  }
 
   return shopifyEssential
 }

@@ -94,7 +94,7 @@ describe('Storefront API', () => {
 
       // Then
       await expect(cookies).rejects.toThrow(
-        'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+        'Your development session could not be created because the "_shopify_essential" could not be defined.',
       )
     })
 
@@ -114,7 +114,7 @@ describe('Storefront API', () => {
 
       // Then
       await expect(cookies).rejects.toThrow(
-        'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+        'Your development session could not be created because the store password is invalid.',
       )
     })
   })
