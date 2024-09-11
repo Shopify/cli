@@ -196,7 +196,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
 }
 
 function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
-  const userId = result.id_token ? jose.decodeJwt(result.id_token).sub! : existingUserId
+  const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
 
   if (!userId) {
     throw new BugError('Error setting userId for session. No id_token or pre-existing user ID provided.')
