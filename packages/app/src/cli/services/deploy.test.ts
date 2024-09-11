@@ -243,7 +243,7 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 function', async () => {
+  test('uploads the extension bundle with 1 function extension', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
     vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
@@ -290,7 +290,7 @@ describe('deploy', () => {
       ],
       developerPlatformClient,
       extensionIds: {},
-      bundlePath: undefined,
+      bundlePath: expect.stringMatching(/bundle.zip$/),
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
