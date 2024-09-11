@@ -111,8 +111,7 @@ export default class Push extends ThemeCommand {
     }),
     stable: Flags.boolean({
       hidden: true,
-      description:
-        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
+      description: 'Use the legacy Ruby implementation for the `theme push` command.',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
     force: Flags.boolean({
@@ -120,11 +119,6 @@ export default class Push extends ThemeCommand {
       char: 'f',
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
-    }),
-    'dev-preview': Flags.boolean({
-      hidden: true,
-      description: 'Enables the developer preview for the upcoming `theme push` implementation.',
-      env: 'SHOPIFY_FLAG_BETA',
     }),
   }
 
@@ -155,7 +149,7 @@ export default class Push extends ThemeCommand {
       return
     }
 
-    if (flags['dev-preview'] || (!flags.stable && !flags.password)) {
+    if (!flags.stable && !flags.password) {
       const {path, nodelete, publish, json, force, ignore, only} = flags
 
       const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)

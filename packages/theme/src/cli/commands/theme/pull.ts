@@ -63,13 +63,8 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     }),
     stable: Flags.boolean({
       hidden: true,
-      description: 'Performs the pull command by relying on the legacy download implementation.',
+      description: 'Use the legacy Ruby implementation for the `theme pull` command.',
       env: 'SHOPIFY_FLAG_STABLE',
-    }),
-    'dev-preview': Flags.boolean({
-      hidden: true,
-      description: 'Enables the developer preview for the upcoming `theme pull` implementation.',
-      env: 'SHOPIFY_FLAG_BETA',
     }),
   }
 
@@ -87,7 +82,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       ? developmentThemeManager.find()
       : developmentThemeManager.fetch())
 
-    if (flags['dev-preview']) {
+    if (!flags.stable) {
       const {path, nodelete, live, development, only, ignore, force} = flags
 
       const theme = await findOrSelectTheme(adminSession, {

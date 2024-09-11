@@ -131,11 +131,9 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
-    'dev-preview': Flags.boolean({
-      hidden: true,
-      description:
-        'Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.',
-      env: 'SHOPIFY_FLAG_BETA',
+    stable: Flags.boolean({
+      description: 'Use the legacy Ruby implementation for managing theme app extensions.',
+      env: 'SHOPIFY_FLAG_STABLE',
     }),
   }
 
@@ -184,7 +182,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      devPreview: flags['dev-preview'],
+      devPreview: !flags.stable,
     }
 
     await dev(devOptions)

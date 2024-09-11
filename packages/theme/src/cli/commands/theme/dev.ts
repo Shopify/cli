@@ -90,9 +90,7 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
     stable: Flags.boolean({
-      hidden: true,
-      description:
-        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
+      description: 'Use the legacy Ruby implementation for the `theme dev` command.',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
     force: Flags.boolean({
@@ -116,11 +114,6 @@ You can run this command only in a directory that matches the [default Shopify t
     'store-password': Flags.string({
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
-    }),
-    'dev-preview': Flags.boolean({
-      hidden: true,
-      description: 'Enables the developer preview for the upcoming `theme dev` implementation.',
-      env: 'SHOPIFY_FLAG_BETA',
     }),
   }
 
@@ -181,7 +174,7 @@ You can run this command only in a directory that matches the [default Shopify t
       force: flags.force,
       open: flags.open,
       flagsToPass,
-      'dev-preview': flags['dev-preview'],
+      'dev-preview': !flags.stable,
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
       ignore,
