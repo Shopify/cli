@@ -151,7 +151,7 @@ export async function runAtMinimumInterval(
   return true
 }
 
-function getConfigStoreForPartnerStatus() {
+export function getConfigStoreForPartnerStatus() {
   return new LocalStorage<{[partnerToken: string]: {status: true; checkedAt: string}}>({
     projectName: 'shopify-cli-kit-partner-status',
   })
