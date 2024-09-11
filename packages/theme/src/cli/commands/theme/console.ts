@@ -33,7 +33,6 @@ export default class Console extends ThemeCommand {
     port: Flags.string({
       description: 'Local port to serve authentication service.',
       env: 'SHOPIFY_FLAG_PORT',
-      default: '9293',
     }),
     'store-password': Flags.string({
       description: 'The password for storefronts with password protection.',
@@ -54,7 +53,7 @@ export default class Console extends ThemeCommand {
     const theme = `liquid-console-repl-${cliVersion}`
 
     const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
-    const authUrl = `http://localhost:${port}/password`
+    const authUrl = `http://localhost:${port ?? '9293'}/password`
 
     if (flags['dev-preview']) {
       if (flags.port) {
@@ -75,7 +74,7 @@ export default class Console extends ThemeCommand {
 
     const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
 
-    return execCLI2(['theme', 'console', '--url', url, '--port', port, '--theme', theme], {
+    return execCLI2(['theme', 'console', '--url', url, '--port', port ?? '9293', '--theme', theme], {
       store,
       adminToken: adminSession.token,
       storefrontToken,

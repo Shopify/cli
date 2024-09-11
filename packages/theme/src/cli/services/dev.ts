@@ -61,7 +61,7 @@ export async function dev(options: DevOptions) {
 
   if (options.flagsToPass.includes('--poll')) {
     renderWarning({
-      body: 'The CLI flag --[flag-name] is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
+      body: 'The CLI flag --pull is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
     })
   }
 

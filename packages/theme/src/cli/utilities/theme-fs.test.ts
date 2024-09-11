@@ -47,7 +47,7 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'}),
           fsEntry({checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'}),
           fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
-          fsEntry({checksum: '3f6b44e95dbcf0214a0a82627a37cd53', key: 'config/settings_schema.json'}),
+          fsEntry({checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'}),
           fsEntry({checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'}),
           fsEntry({checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'}),
           fsEntry({checksum: '94d575574a070397f297a2e9bb32ce7d', key: 'locales/en.default.json'}),

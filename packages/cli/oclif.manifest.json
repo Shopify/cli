@@ -4808,7 +4808,6 @@
           "type": "option"
         },
         "port": {
-          "default": "9293",
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
@@ -5864,6 +5863,14 @@
           "description": "Allow push to a live theme.",
           "env": "SHOPIFY_FLAG_ALLOW_LIVE",
           "name": "allow-live",
+          "type": "boolean"
+        },
+        "dev-preview": {
+          "allowNo": false,
+          "description": "Enables the developer preview for the upcoming `theme push` implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "dev-preview",
           "type": "boolean"
         },
         "development": {
