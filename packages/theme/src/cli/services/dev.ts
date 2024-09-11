@@ -81,12 +81,20 @@ export async function dev(options: DevOptions) {
   const port = options.port || String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
   const storefrontPassword = await storefrontPasswordPromise
+
   const session = await initializeDevServerSession(
     options.theme.id.toString(),
     options.adminSession,
     options.password,
     storefrontPassword,
+    {
+      ...options.adminSession,
+      storefrontToken: options.storefrontToken,
+      storefrontPassword,
+      sessionCookies: {},
+    },
   )
+
   const ctx: DevServerContext = {
     session,
     localThemeFileSystem,
@@ -104,15 +112,7 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  if (options['theme-editor-sync']) {
-    session.storefrontPassword = await storefrontPasswordPromise
-  }
-
   const {serverStart, renderDevSetupProgress} = setupDevServer(options.theme, ctx)
-
-  if (!options['theme-editor-sync']) {
-    session.storefrontPassword = await storefrontPasswordPromise
-  }
 
   await renderDevSetupProgress()
   await serverStart()

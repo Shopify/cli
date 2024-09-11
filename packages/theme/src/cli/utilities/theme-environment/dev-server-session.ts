@@ -23,8 +23,10 @@ export async function initializeDevServerSession(
   adminSession: AdminSession,
   adminPassword?: string,
   storefrontPassword?: string,
+  existingSession?: DevServerSession,
 ) {
-  const session = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword, true)
+  const session =
+    existingSession ?? (await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword, true))
 
   setInterval(() => {
     fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)

@@ -3,6 +3,8 @@ import {getHtmlHandler} from './html.js'
 import {getAssetsHandler} from './local-assets.js'
 import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {getStorefrontSessionCookies} from './storefront-session.js'
+import {buildBaseStorefrontUrl} from './storefront-renderer.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
@@ -14,7 +16,21 @@ import type {DevServerContext} from './types.js'
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx)
-  const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() => {})
+
+  const session = ctx.session
+  const sessionCookiePromise = envSetup.workPromise.then(async () => {
+    // Populate _shopify_essential cookie after the theme is uploaded.
+    // This is needed for SFR to be able to render something.
+    session.sessionCookies = await getStorefrontSessionCookies(
+      buildBaseStorefrontUrl(ctx.session),
+      String(theme.id),
+      ctx.session.storefrontPassword,
+      {},
+    )
+  })
+
+  const workPromise = Promise.all([watcherPromise, sessionCookiePromise]).then(() => {})
+
   const server = createDevelopmentServer(theme, ctx, workPromise)
 
   return {

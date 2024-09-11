@@ -1,7 +1,8 @@
 import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
-import {render} from './storefront-renderer.js'
+import {render, buildBaseStorefrontUrl} from './storefront-renderer.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {getStorefrontSessionCookies} from './storefront-session.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
@@ -16,6 +17,7 @@ import {Socket} from 'node:net'
 vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
 vi.mock('./remote-theme-watcher.js')
 vi.mock('./storefront-renderer.js')
+vi.mock('./storefront-session.js')
 
 // Vitest is resetting this mock between tests due to a global config `mockReset: true`.
 // For some reason we need to re-mock it here and in beforeEach:
@@ -82,11 +84,12 @@ describe('setupDevServer', () => {
     },
   }
 
-  test('should upload the development theme to remote', async () => {
+  test('should upload the development theme to remote and create a storefront session', async () => {
     // Given
     const context: DevServerContext = {
       ...defaultServerContext,
     }
+    vi.mocked(buildBaseStorefrontUrl).mockReturnValue('https://my-store.myshopify.com')
 
     // When
     await setupDevServer(developmentTheme, context).workPromise
@@ -96,6 +99,13 @@ describe('setupDevServer', () => {
       nodelete: true,
       deferPartialWork: true,
     })
+
+    expect(getStorefrontSessionCookies).toHaveBeenCalledWith(
+      'https://my-store.myshopify.com',
+      String(developmentTheme.id),
+      context.session.storefrontPassword,
+      {},
+    )
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
