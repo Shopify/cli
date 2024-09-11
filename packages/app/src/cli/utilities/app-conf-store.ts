@@ -1,8 +1,8 @@
 import {AccountInfo} from '../services/context/partner-account-info.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
-// max age is 72 hours
-const MAX_AGE_FOR_ACCOUNT_INFO_STATUS_MS = 72 * 24 * 60 * 60 * 1000
+// max age is 72 hours (3 days)
+const MAX_AGE_FOR_ACCOUNT_INFO_STATUS_MS = 3 * 24 * 60 * 60 * 1000
 
 export function getConfigStoreForAccountInfoStatus() {
   return new LocalStorage<{[subject: string]: {info: AccountInfo; loadedAt: string}}>({
