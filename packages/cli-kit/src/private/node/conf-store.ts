@@ -131,20 +131,20 @@ function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds =
  * days, hours, minutes, and seconds properties.
  * If the most recent occurrence is older than this, the task will be executed.
  * @param task - The task to run if the most recent occurrence is older than the timeout.
- * @returns true, or undefined if the task was not run.
+ * @returns true if the task was run, or false if the task was not run.
  */
 export async function runAtMinimumInterval(
   key: string,
   timeout: TimeInterval,
   task: () => Promise<void>,
   config = cliKitStore(),
-): Promise<true | undefined> {
+): Promise<boolean> {
   const cache: Cache = config.get('cache') || {}
   const cacheKey: MostRecentOccurrenceKey = `most-recent-occurrence-${key}`
   const cached = cache[cacheKey]
 
   if (cached?.value !== undefined && Date.now() - cached.timestamp < timeIntervalToMilliseconds(timeout)) {
-    return undefined
+    return false
   }
 
   await task()
@@ -188,10 +188,7 @@ interface RunWithRateLimitOptions {
  * @param options - The options for the rate limiting.
  * @returns true, or undefined if the task was not run.
  */
-export async function runWithRateLimit(
-  options: RunWithRateLimitOptions,
-  config = cliKitStore(),
-): Promise<true | undefined> {
+export async function runWithRateLimit(options: RunWithRateLimitOptions, config = cliKitStore()): Promise<boolean> {
   const {key, limit, timeout, task} = options
   const cache: Cache = config.get('cache') || {}
   const cacheKey: RateLimitKey = `rate-limited-occurrences-${key}`
@@ -209,7 +206,7 @@ export async function runWithRateLimit(
       cache[cacheKey] = {value: occurrences, timestamp: Date.now()}
       config.set('cache', cache)
 
-      return undefined
+      return false
     }
 
     await task()

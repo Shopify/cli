@@ -193,7 +193,7 @@ describe('runAtMinimumInterval', () => {
 
       // When
       let taskRan = false
-      await runAtMinimumInterval(
+      const got = await runAtMinimumInterval(
         key,
         timeout,
         async () => {
@@ -203,6 +203,7 @@ describe('runAtMinimumInterval', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
     })
   })
@@ -215,7 +216,7 @@ describe('runAtMinimumInterval', () => {
 
       // When
       let taskRan = false
-      await runAtMinimumInterval(
+      const got = await runAtMinimumInterval(
         key,
         timeout,
         async () => {
@@ -225,6 +226,7 @@ describe('runAtMinimumInterval', () => {
       )
 
       // Then
+      expect(got).toBe(false)
       expect(taskRan).toBe(false)
     })
   })
@@ -238,7 +240,7 @@ describe('runAtMinimumInterval', () => {
       // When
       let taskRan = false
       vi.setSystemTime(vi.getRealSystemTime() + 1000)
-      await runAtMinimumInterval(
+      const got = await runAtMinimumInterval(
         key,
         timeout,
         async () => {
@@ -248,6 +250,7 @@ describe('runAtMinimumInterval', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
     })
   })
@@ -269,7 +272,7 @@ describe('runWithRateLimit', () => {
 
       // When
       let taskRan = false
-      await runWithRateLimit(
+      const got = await runWithRateLimit(
         {
           key,
           timeout,
@@ -282,6 +285,7 @@ describe('runWithRateLimit', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
     })
   })
@@ -305,7 +309,7 @@ describe('runWithRateLimit', () => {
 
       // When
       let taskRan = false
-      await runWithRateLimit(
+      const got = await runWithRateLimit(
         {
           key,
           limit,
@@ -318,6 +322,7 @@ describe('runWithRateLimit', () => {
       )
 
       // Then
+      expect(got).toBe(false)
       expect(taskRan).toBe(false)
     })
   })
@@ -339,7 +344,7 @@ describe('runWithRateLimit', () => {
 
       // When
       let taskRan = false
-      await runWithRateLimit(
+      const got = await runWithRateLimit(
         {
           key,
           limit,
@@ -352,6 +357,7 @@ describe('runWithRateLimit', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
     })
   })
@@ -376,7 +382,7 @@ describe('runWithRateLimit', () => {
       // When
       let taskRan = false
       vi.setSystemTime(vi.getRealSystemTime() + 1000)
-      await runWithRateLimit(
+      const got = await runWithRateLimit(
         {
           key,
           limit,
@@ -389,6 +395,7 @@ describe('runWithRateLimit', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
     })
   })
