@@ -443,9 +443,8 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   let developerPlatformClient = options.developerPlatformClient
   const enableLinkingPrompt = !options.apiKey && !isCurrentAppSchema(options.app.configuration)
   const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, enableLinkingPrompt)
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
-
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
   const app: AppInterface = await loadApp({
