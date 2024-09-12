@@ -13,6 +13,7 @@ const IdentityTokenSchema = zod.object({
   refreshToken: zod.string(),
   expiresAt: DateSchema,
   scopes: zod.array(zod.string()),
+  userId: zod.string(),
 })
 
 /**

@@ -28,7 +28,7 @@ vi.mock('./environment.js')
 describe('ensureAuthenticatedStorefront', () => {
   test('returns only storefront token if success', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({storefront: 'storefront_token'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({storefront: 'storefront_token', userId: '1234-5678'})
 
     // When
     const got = await ensureAuthenticatedStorefront()
@@ -47,7 +47,7 @@ describe('ensureAuthenticatedStorefront', () => {
 
   test('throws error if there is no storefront token', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
 
     // When
     const got = ensureAuthenticatedStorefront()
@@ -62,6 +62,7 @@ describe('ensureAuthenticatedAdmin', () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({
       admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
+      userId: '1234-5678',
     })
 
     // When
@@ -73,7 +74,7 @@ describe('ensureAuthenticatedAdmin', () => {
 
   test('throws error if there is no token', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
 
     // When
     const got = ensureAuthenticatedAdmin('mystore')
@@ -86,7 +87,7 @@ describe('ensureAuthenticatedAdmin', () => {
 describe('ensureAuthenticatedPartners', () => {
   test('returns only partners token if success', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
 
     // When
     const got = await ensureAuthenticatedPartners()
@@ -97,7 +98,7 @@ describe('ensureAuthenticatedPartners', () => {
 
   test('throws error if there is no partners token', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
 
     // When
     const got = ensureAuthenticatedPartners()
@@ -108,7 +109,7 @@ describe('ensureAuthenticatedPartners', () => {
 
   test('returns custom partners token if envvar is defined', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
     vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce(partnersToken)
     vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
 
@@ -125,6 +126,7 @@ describe('ensureAuthenticatedTheme', () => {
     // Given
     vi.mocked(ensureAuthenticated).mockResolvedValueOnce({
       admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
+      userId: '1234-5678',
     })
 
     // When
@@ -136,7 +138,7 @@ describe('ensureAuthenticatedTheme', () => {
 
   test('throws error if there is no token when no password is provided', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({userId: ''})
 
     // When
     const got = ensureAuthenticatedThemes('mystore', undefined)
@@ -157,7 +159,7 @@ describe('ensureAuthenticatedTheme', () => {
 describe('ensureAuthenticatedBusinessPlatform', () => {
   test('returns only business-platform token if success', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
 
     // When
     const got = await ensureAuthenticatedBusinessPlatform()
@@ -168,7 +170,7 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
   test('throws error if there is no business_platform token', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
 
     // When
     const got = ensureAuthenticatedBusinessPlatform()

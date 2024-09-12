@@ -68,3 +68,23 @@ export function randomBytes(size: number): Buffer {
 export function randomUUID(): string {
   return crypto.randomUUID()
 }
+
+/**
+ * Generate a non-random UUID string.
+ * Useful for generating an identifier from a string that is consistent
+ * across different runs of the CLI.
+ *
+ * @param subject - The subject to generate the UUID from.
+ * @returns A non-random UUID string.
+ */
+export function nonRandomUUID(subject: string): string {
+  // A fixed namespace UUID
+  const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
+  return crypto
+    .createHash('sha1')
+    .update(Buffer.from(namespace.replace(/-/g, ''), 'hex'))
+    .update(subject)
+    .digest()
+    .toString('hex')
+    .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+}

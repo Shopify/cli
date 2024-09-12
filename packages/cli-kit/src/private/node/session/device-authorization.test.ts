@@ -68,6 +68,7 @@ describe('pollForDeviceAuthorization', () => {
     refreshToken: 'refresh_token',
     expiresAt: new Date(2022, 1, 1, 11),
     scopes: ['scope', 'scope2'],
+    userId: '1234-5678',
   }
 
   test('poll until a valid token is received', async () => {
