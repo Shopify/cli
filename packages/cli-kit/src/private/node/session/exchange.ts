@@ -84,7 +84,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
   }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  return buildIdentityToken(value)
+  return buildIdentityToken(value, currentToken.userId)
 }
 
 /**
