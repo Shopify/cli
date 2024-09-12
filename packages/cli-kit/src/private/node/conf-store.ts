@@ -150,3 +150,27 @@ export async function runAtMinimumInterval(
   config.set('cache', cache)
   return true
 }
+
+export function getConfigStoreForPartnerStatus() {
+  return new LocalStorage<{[partnerToken: string]: {status: true; checkedAt: string}}>({
+    projectName: 'shopify-cli-kit-partner-status',
+  })
+}
+
+export function getCachedPartnerAccountStatus(partnersToken: string): true | null {
+  if (!partnersToken) return null
+  const store = getConfigStoreForPartnerStatus()
+
+  const hasPartnerAccount = store.get(partnersToken)
+  if (hasPartnerAccount) {
+    // this never needs to expire
+    return true
+  }
+  return null
+}
+
+export function setCachedPartnerAccountStatus(partnersToken: string) {
+  const store = getConfigStoreForPartnerStatus()
+
+  store.set(partnersToken, {status: true, checkedAt: new Date().toISOString()})
+}
