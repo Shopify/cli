@@ -93,12 +93,12 @@ describe('ensureAuthenticatedPartners', () => {
     const got = await ensureAuthenticatedPartners()
 
     // Then
-    expect(got).toEqual('partners_token')
+    expect(got).toEqual({token: 'partners_token', userId: '1234-5678'})
   })
 
   test('throws error if there is no partners token', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({userId: '1234-5678'})
 
     // When
     const got = ensureAuthenticatedPartners()
@@ -109,7 +109,6 @@ describe('ensureAuthenticatedPartners', () => {
 
   test('returns custom partners token if envvar is defined', async () => {
     // Given
-    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({partners: 'partners_token', userId: '1234-5678'})
     vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce(partnersToken)
     vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
 
@@ -117,7 +116,8 @@ describe('ensureAuthenticatedPartners', () => {
     const got = await ensureAuthenticatedPartners([])
 
     // Then
-    expect(got).toEqual('custom_partners_token')
+    expect(got).toEqual({token: 'custom_partners_token', userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d'})
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
 
