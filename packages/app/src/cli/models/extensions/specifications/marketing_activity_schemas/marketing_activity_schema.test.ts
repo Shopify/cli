@@ -1,4 +1,4 @@
-import {MarketingActivityExtensionSchema} from './marketing_activity_extension_schema.js'
+import {MarketingActivityExtensionSchema} from './marketing_activity_schema.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -8,7 +8,7 @@ describe('MarketingActivityExtensionSchema', () => {
     type: 'marketing_activity_extension',
     title: 'test extension 123',
     description: 'test description 123',
-    app_api_url: 'http://foo.bar/api',
+    api_path: '/api',
     tactic: 'ad',
     marketing_channel: 'social',
     referring_domain: 'http://foo.bar',
