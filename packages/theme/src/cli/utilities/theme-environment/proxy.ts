@@ -28,6 +28,7 @@ const IGNORED_ENDPOINTS = [
   '/mini-profiler-resources',
   '/web-pixels-manager',
   '/wpm',
+  '/services/',
 ]
 
 /**
