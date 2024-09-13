@@ -143,7 +143,7 @@ describe('runJavy', () => {
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
       javyBinary().path,
-      ['compile', '-d', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
+      ['build', '-C', 'dynamic', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -222,18 +222,20 @@ describe('ExportJavyBuilder', () => {
 
         // Then
         await expect(got).resolves.toBeUndefined()
+
         expect(exec).toHaveBeenCalledWith(
           javyBinary().path,
           [
-            'compile',
-            '-d',
+            'build',
+            '-C',
+            'dynamic',
+            '-C',
+            expect.stringContaining('wit='),
+            '-C',
+            'wit-world=shopify-function',
             '-o',
             joinPath(ourFunction.directory, 'dist/index.wasm'),
             'dist/function.js',
-            '--wit',
-            expect.stringContaining('javy-world.wit'),
-            '-n',
-            'shopify-function',
           ],
           {
             cwd: ourFunction.directory,
