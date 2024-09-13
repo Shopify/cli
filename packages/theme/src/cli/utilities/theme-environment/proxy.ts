@@ -35,7 +35,7 @@ const IGNORED_ENDPOINTS = [
  * Forwards non-HTML requests to the remote SFR instance,
  * or mocks the result for certain endpoints.
  */
-export function getProxyHandler(theme: Theme, ctx: DevServerContext) {
+export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (IGNORED_ENDPOINTS.some((endpoint) => event.path.startsWith(endpoint))) {
       // Mock successful status 204 response
@@ -43,7 +43,7 @@ export function getProxyHandler(theme: Theme, ctx: DevServerContext) {
     }
 
     if (canProxyRequest(event)) {
-      return proxyStorefrontRequest(event, theme, ctx)
+      return proxyStorefrontRequest(event, ctx)
     }
   })
 }
@@ -208,21 +208,21 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   return proxyRequestHeaders
 }
 
-function proxyStorefrontRequest(event: H3Event, theme: Theme, ctx: DevServerContext) {
+function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
-  url.searchParams.set('preview_theme_id', String(theme.id))
-  const target = url.toString()
-
-  const proxyHeaders = getProxyStorefrontHeaders(event)
-  // Required header for CDN requests
-  proxyHeaders.referer = target
-
+  url.searchParams.set('_fd', '0')
+  url.searchParams.set('pb', '0')
+  const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  return sendProxy(event, target, {
-    headers: proxyHeaders,
+  return sendProxy(event, url.toString(), {
+    headers: {
+      ...headers,
+      // Required header for CDN requests
+      referer: url.origin,
+    },
     fetchOptions: {
       ignoreResponseError: false,
       method: event.method,
