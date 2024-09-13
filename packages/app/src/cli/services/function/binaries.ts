@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const FUNCTION_RUNNER_VERSION = 'v6.2.0'
+const FUNCTION_RUNNER_VERSION = 'v6.2.1'
 const JAVY_VERSION = 'v3.1.0'
 
 // The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
