@@ -245,15 +245,15 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
-      const targetQuerystring = '?preview_theme_id=1'
-      const expectedTarget1 = `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js${targetQuerystring}`
+      const referer = `https://${defaultServerContext.session.storeFqdn}`
+      const targetQuerystring = '?_fd=0&pb=0'
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        expectedTarget1,
+        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer: expectedTarget1},
+          headers: {referer},
         }),
       )
 
@@ -266,14 +266,13 @@ describe('setupDevServer', () => {
       // --- Unknown assets:
       fetchStub.mockClear()
       await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
-      const expectedTarget2 = `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css${targetQuerystring}`
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        expectedTarget2,
+        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer: expectedTarget2},
+          headers: {referer},
         }),
       )
     })

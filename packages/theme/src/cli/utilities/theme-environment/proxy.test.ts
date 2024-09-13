@@ -16,7 +16,7 @@ describe('dev proxy', () => {
   const html = String.raw
 
   const ctx = {
-    session: {storeFqdn: 'my-store.myshopify.com'},
+    session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
     options: {host: 'localhost', port: '1337'},
     localThemeFileSystem: {files: new Map([['assets/file1', 'content']])},
     localThemeExtensionFileSystem: {files: new Map([['assets/file-ext', 'content']])},
@@ -167,6 +167,9 @@ describe('dev proxy', () => {
         ]
       `,
       )
+
+      // Stores _shopify_essential for the following requests
+      expect(ctx.session.sessionCookies).toHaveProperty('_shopify_essential', ':AZFbAlZ..yAAH:')
     })
   })
 
