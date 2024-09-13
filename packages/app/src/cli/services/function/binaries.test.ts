@@ -217,9 +217,7 @@ describe('functionRunner', () => {
     })
   })
 
-  // This shouldn't take 20 seconds to run but sometimes the network hangs and
-  // retries need to happen.
-  test('function-runner installs and runs', {timeout: 20000}, async () => {
+  test('function-runner installs and runs', async () => {
     await installBinary(functionRunner)
     await exec(functionRunner.path, ['--help'])
   })

@@ -106,38 +106,26 @@ export async function installBinary(bin: DownloadableBinary) {
   }
   await performActionWithRetryAfterRecovery(
     async () => {
-      const controller = new AbortController()
-      // Picking 5000 ms as the timeout because Javy is around 13 megabytes, so it
-      // will take around 4 seconds to download on a 25 Mbit connection, and also
-      // be able to retry twice in the 13 seconds we have for a test to complete
-      // before timing out.
-      // The timeout continues to apply as the response is processed in case the
-      // server hangs while downloading the binary.
-      const id = setTimeout(() => controller.abort(), 5000)
-      try {
-        const resp = await fetch(url, {signal: controller.signal})
-        if (resp.status !== 200) {
-          throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
-        }
-
-        const responseStream = resp.body
-        if (responseStream === null) {
-          throw new Error(`Downloading ${bin.name} failed with empty response body`)
-        }
-
-        // Download to a temp location and then move the file only after it's fully processed
-        // so the `isInstalled` check above will continue to return false if the file hasn't
-        // been fully processed.
-        await inTemporaryDirectory(async (tmpDir) => {
-          const tmpFile = joinPath(tmpDir, 'binary')
-          const outputStream = createFileWriteStream(tmpFile)
-          await bin.processResponse(responseStream, outputStream)
-          await chmod(tmpFile, 0o775)
-          await moveFile(tmpFile, bin.path)
-        })
-      } finally {
-        clearTimeout(id)
+      const resp = await fetch(url)
+      if (resp.status !== 200) {
+        throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
       }
+
+      const responseStream = resp.body
+      if (responseStream === null) {
+        throw new Error(`Downloading ${bin.name} failed with empty response body`)
+      }
+
+      // Download to a temp location and then move the file only after it's fully processed
+      // so the `isInstalled` check above will continue to return false if the file hasn't
+      // been fully processed.
+      await inTemporaryDirectory(async (tmpDir) => {
+        const tmpFile = joinPath(tmpDir, 'binary')
+        const outputStream = createFileWriteStream(tmpFile)
+        await bin.processResponse(responseStream, outputStream)
+        await chmod(tmpFile, 0o775)
+        await moveFile(tmpFile, bin.path)
+      })
     },
     async () => {},
     2,
