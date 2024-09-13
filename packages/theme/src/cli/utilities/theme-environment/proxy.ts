@@ -1,3 +1,4 @@
+import {buildCookies} from './storefront-renderer.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {
   defineEventHandler,
@@ -30,6 +31,9 @@ const IGNORED_ENDPOINTS = [
   '/wpm',
   '/services/',
 ]
+
+const SESSION_COOKIE_NAME = '_shopify_essential'
+const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=([^;]*)(;|$)`)
 
 /**
  * Forwards non-HTML requests to the remote SFR instance,
@@ -182,7 +186,13 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
   // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader =
     'raw' in response.headers ? response.headers.raw()['set-cookie'] : response.headers.getSetCookie()
-  if (setCookieHeader?.length) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+  if (setCookieHeader?.length) {
+    setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+    const latestShopifyEssential = setCookieHeader.join(',').match(SESSION_COOKIE_REGEXP)?.[1]
+    if (latestShopifyEssential) {
+      ctx.session.sessionCookies[SESSION_COOKIE_NAME] = latestShopifyEssential
+    }
+  }
 }
 
 /**
@@ -222,6 +232,8 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       ...headers,
       // Required header for CDN requests
       referer: url.origin,
+      // Update the cookie with the latest session
+      cookie: buildCookies(ctx.session, {headers}),
     },
     fetchOptions: {
       ignoreResponseError: false,
