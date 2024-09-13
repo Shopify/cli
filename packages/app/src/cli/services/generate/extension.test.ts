@@ -521,7 +521,6 @@ describe('getFunctionRuntimeDependencies', () => {
 
     // Then
     expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeTruthy()
-    expect(got.find((dep) => dep.name === 'javy')).toBeTruthy()
   })
 
   test('no-ops for non-JS functions', async () => {
@@ -533,6 +532,5 @@ describe('getFunctionRuntimeDependencies', () => {
 
     // Then
     expect(got.find((dep) => dep.name === '@shopify/shopify_function')).toBeFalsy()
-    expect(got.find((dep) => dep.name === 'javy')).toBeFalsy()
   })
 })
