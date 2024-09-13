@@ -168,7 +168,6 @@ const HOP_BY_HOP_HEADERS = [
   'transfer-encoding',
   'upgrade',
   'content-security-policy',
-  'content-length',
 ]
 
 function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
