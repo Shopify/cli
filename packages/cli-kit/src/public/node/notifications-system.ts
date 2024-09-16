@@ -4,6 +4,7 @@ import {getCurrentCommandId} from './global-context.js'
 import {fileExists, readFile} from './fs.js'
 import {outputDebug} from './output.js'
 import {zod} from './schema.js'
+import {AbortSilentError} from './error.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {
   NotificationKey,
@@ -58,8 +59,9 @@ export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Pro
     const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
     outputDebug(`Notifications to show: ${notificationsToShow.length}`)
     await renderNotifications(notificationsToShow)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    if (error.message === 'abort') throw new AbortSilentError()
     const errorMessage = `Error retrieving notifications: ${error.message}`
     outputDebug(errorMessage)
     // This is very prone to becoming a circular dependency, so we import it dynamically
@@ -91,6 +93,7 @@ async function renderNotifications(notifications: Notification[]) {
       }
       case 'error': {
         renderError(content)
+        throw new Error('abort')
       }
     }
     cacheStore(`notification-${notification.id}`, new Date().getTime().toString())

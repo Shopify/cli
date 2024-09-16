@@ -352,13 +352,13 @@ describe('notifications-system', () => {
     expect(renderWarning).toHaveBeenCalled()
   })
 
-  test('an error notification triggers a renderError call', async () => {
+  test('an error notification triggers a renderError call and throws an error', async () => {
     // Given
     const notifications = [errorNotification]
     vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
-    await showNotificationsIfNeeded()
+    await expect(showNotificationsIfNeeded()).rejects.toThrowError()
 
     // Then
     expect(renderError).toHaveBeenCalled()
