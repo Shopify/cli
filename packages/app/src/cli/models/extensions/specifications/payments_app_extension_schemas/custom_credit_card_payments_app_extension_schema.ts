@@ -1,5 +1,6 @@
 import {
   BasePaymentsAppExtensionSchema,
+  BuyerLabelSchema,
   BasePaymentsAppExtensionDeployConfigType,
   ConfirmationSchema,
   SupportedBuyerContextsSchema,
@@ -15,7 +16,8 @@ export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
 export const MAX_CHECKOUT_PAYMENT_METHOD_FIELDS = 7
 
-export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(ConfirmationSchema)
+export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(BuyerLabelSchema)
+  .merge(ConfirmationSchema)
   .merge(SupportedBuyerContextsSchema)
   .required({
     refund_session_url: true,
@@ -47,7 +49,10 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
   })
 
 export interface CustomCreditCardPaymentsAppExtensionDeployConfigType extends BasePaymentsAppExtensionDeployConfigType {
-  // Following are overwritten as they are required for custom credit card extensions
+  // BuyerLabelSchema
+  default_buyer_label?: string
+  buyer_label_to_locale?: {locale: string; label: string}[]
+
   start_refund_session_url: string
   start_capture_session_url: string
   start_void_session_url: string
@@ -89,6 +94,8 @@ export function customCreditCardDeployConfigToCLIConfig(
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
     supported_buyer_contexts: config.supported_buyer_contexts,
+    buyer_label: config.default_buyer_label,
+    buyer_label_translations: config.buyer_label_to_locale,
     encryption_certificate_fingerprint: config.encryption_certificate.fingerprint,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
@@ -112,6 +119,8 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
     supported_buyer_contexts: config.supported_buyer_contexts,
+    default_buyer_label: config.buyer_label,
+    buyer_label_to_locale: config.buyer_label_translations,
     encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     supported_payment_methods: config.supported_payment_methods,
     test_mode_available: config.test_mode_available,

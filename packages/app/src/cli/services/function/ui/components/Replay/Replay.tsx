@@ -143,7 +143,8 @@ function StatsDisplay({recentFunctionRuns}: {recentFunctionRuns: [FunctionRunFro
   return (
     <Box flexDirection="column">
       <Text>
-        {figures.pointerSmall} Instruction count delta: {delta}
+        {figures.pointerSmall} Instruction count change: {delta > 0 ? '+' : ''}
+        {delta}
       </Text>
     </Box>
   )
@@ -158,6 +159,7 @@ function ReplayLog({log}: {log: ReplayLog}) {
           <LogDisplay logs={log.logs} />
           <OutputDisplay output={log.output} />
           <BenchmarkDisplay functionRun={log} />
+          <Text>&nbsp;</Text>
         </Box>
       )
     case 'systemMessage':

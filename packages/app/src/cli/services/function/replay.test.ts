@@ -1,11 +1,11 @@
 import {FunctionRunData, replay} from './replay.js'
 import {renderReplay} from './ui.js'
+import {runFunction} from './runner.js'
 import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
-import {exec} from '@shopify/cli-kit/node/system'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
@@ -17,11 +17,11 @@ vi.mock('fs')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
 vi.mock('../../prompts/function/replay.js')
-vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./ui.js')
+vi.mock('./runner.js')
 
 describe('replay', () => {
   const developerPlatformClient = testDeveloperPlatformClient()
@@ -69,7 +69,7 @@ describe('replay', () => {
 
     // Then
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run, file2.run])
-    expectExecToBeCalledWithInput(file1.run.payload.input)
+    expectFunctionRun(extension, file1.run.payload.input)
     expect(outputInfo).not.toHaveBeenCalled()
   })
 
@@ -199,7 +199,7 @@ describe('replay', () => {
     })
 
     // Then
-    expectExecToBeCalledWithInput(file2.run.payload.input)
+    expectFunctionRun(extension, file2.run.payload.input)
   })
 
   test('throws error if the log specified by the --log flag is not found', async () => {
@@ -286,26 +286,8 @@ function createFunctionRunFile(options: FunctionRunFileOptions) {
   return {run, path}
 }
 
-function expectExecToBeCalledWithInput(input: any) {
-  expect(exec).toHaveBeenCalledWith(
-    'npm',
-    [
-      'exec',
-      '--',
-      'function-runner',
-      '-f',
-      '/tmp/project/extensions/my-function/dist/index.wasm',
-      '--json',
-      '--export',
-      'run',
-    ],
-    {
-      cwd: '/tmp/project/extensions/my-function',
-      stdout: 'inherit',
-      stderr: 'inherit',
-      input: JSON.stringify(input),
-    },
-  )
+function expectFunctionRun(functionExtension: ExtensionInstance<FunctionConfigType>, input: unknown) {
+  expect(runFunction).toHaveBeenCalledWith({functionExtension, json: true, export: 'run', input: JSON.stringify(input)})
 }
 
 function mockFileOperations(data: {run: FunctionRunData; path: string}[]) {

@@ -1,5 +1,5 @@
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -23,9 +23,19 @@ export interface DevServerSession extends AdminSession {
   storefrontPassword?: string
 
   /**
-   * Timestamp marking when this session expires.
+   * This holds all cookies that impact the rendering of the development server.
+   *
+   * Currently, there are only two cookies that impact rendering:
+   *
+   *   - storefront_digest: This cookie identifies an authenticated
+   *                        session, allowing rendering to occur in a
+   *                        password-protected storefront.
+   *
+   *   - _shopify_essential: This cookie identifies the session, which is
+   *                         crucial for determining the theme used during
+   *                         rendering.
    */
-  expiresAt: Date
+  sessionCookies: {[key: string]: string}
 }
 
 /**
@@ -43,14 +53,14 @@ export interface DevServerContext {
   session: DevServerSession
 
   /**
-   * Checksums of remote assets.
-   */
-  remoteChecksums: Checksum[]
-
-  /**
    * File system tracking local theme assets.
    */
   localThemeFileSystem: ThemeFileSystem
+
+  /**
+   * File system tracking local theme extension assets.
+   */
+  localThemeExtensionFileSystem: ThemeExtensionFileSystem
 
   /**
    * Path to the local theme directory.
@@ -73,12 +83,12 @@ export interface DevServerContext {
     noDelete: boolean
 
     /**
-     * Glob patterns ignore-list for file reconciliation and sychronization.
+     * Glob patterns ignore-list for file reconciliation and synchronization.
      */
     ignore: string[]
 
     /**
-     * Glob patterns allow-list for file reconciliation and sychronization.
+     * Glob patterns allow-list for file reconciliation and synchronization.
      */
     only: string[]
 
@@ -117,6 +127,11 @@ export interface DevServerRenderContext {
   path: string
 
   /**
+   * HTTP method to be used during the rendering.
+   */
+  method: 'GET' | 'HEAD' | 'PATCH' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE'
+
+  /**
    * Theme identifier for rendering.
    */
   themeId: string
@@ -132,12 +147,22 @@ export interface DevServerRenderContext {
   sectionId?: string
 
   /**
+   * Optional identifier for rendering only a specific app block.
+   */
+  appBlockId?: string
+
+  /**
    * Headers to be used in the rendering request.
    */
   headers: {[key: string]: string}
 
   /**
-   * Custom content to be replaced during rendering.
+   * Custom content to be replaced in the theme during rendering.
    */
   replaceTemplates: {[key: string]: string}
+
+  /**
+   * Custom content to be replaced during rendering.
+   */
+  replaceExtensionTemplates?: {[key: string]: string}
 }

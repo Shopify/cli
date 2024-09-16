@@ -1,39 +1,28 @@
 import {calculateChecksum} from './asset-checksum.js'
+import {
+  applyIgnoreFilters,
+  raiseWarningForNonExplicitGlobPatterns,
+  getPatternsFromShopifyIgnore,
+} from './asset-ignore.js'
+import {Notifier} from './notifier.js'
+import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
-import {stat} from 'fs/promises'
 import type {
   ThemeFileSystem,
+  ThemeFileSystemOptions,
   Key,
   ThemeAsset,
   ThemeFSEventName,
   ThemeFSEventPayload,
 } from '@shopify/cli-kit/node/themes/types'
-
-const THEME_DEFAULT_IGNORE_PATTERNS = [
-  '**/.git',
-  '**/.vscode',
-  '**/.hg',
-  '**/.bzr',
-  '**/.svn',
-  '**/_darcs',
-  '**/CVS',
-  '**/*.sublime-(project|workspace)',
-  '**/.DS_Store',
-  '**/.sass-cache',
-  '**/Thumbs.db',
-  '**/desktop.ini',
-  '**/config.yml',
-  '**/node_modules/',
-  '.prettierrc.json',
-]
 
 const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',
@@ -48,23 +37,33 @@ const THEME_DIRECTORY_PATTERNS = [
 ]
 
 const THEME_PARTITION_REGEX = {
+  sectionLiquidRegex: /^sections\/.+\.liquid$/,
   liquidRegex: /\.liquid$/,
   configRegex: /^config\/(settings_schema|settings_data)\.json$/,
+  sectionJsonRegex: /^sections\/.+\.json$/,
+  templateJsonRegex: /^templates\/.+\.json$/,
   jsonRegex: /^(?!config\/).*\.json$/,
   contextualizedJsonRegex: /\.context\.[^.]+\.json$/i,
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
+export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
+  const unsyncedFileKeys = new Set<string>()
+  const filterPatterns = {
+    ignoreFromFile: [] as string[],
+    ignore: options?.filters?.ignore ?? [],
+    only: options?.filters?.only ?? [],
+  }
   const eventEmitter = new EventEmitter()
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
   }
+  const notifier = options?.notify ? new Notifier(options.notify) : undefined
 
   const read = async (fileKey: string) => {
     const fileContent = await readThemeFile(root, fileKey)
-    const fileChecksum = await calculateChecksum(fileKey, fileContent)
+    const fileChecksum = calculateChecksum(fileKey, fileContent)
 
     files.set(
       fileKey,
@@ -79,77 +78,130 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
     return fileContent
   }
 
-  const initialFilesPromise = glob(THEME_DIRECTORY_PATTERNS, {
+  const themeSetupPromise = glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
     deep: 3,
-    ignore: THEME_DEFAULT_IGNORE_PATTERNS,
-  }).then((filesPaths) => Promise.all(filesPaths.map(read)))
+    ignore: DEFAULT_IGNORE_PATTERNS,
+  })
+    .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
+    .then(([ignoredPatterns]) => {
+      filterPatterns.ignoreFromFile.push(...ignoredPatterns)
+      raiseWarningForNonExplicitGlobPatterns([
+        ...filterPatterns.ignoreFromFile,
+        ...filterPatterns.ignore,
+        ...filterPatterns.only,
+      ])
+    })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
+  const isFileIgnored = (fileKey: string) => applyIgnoreFilters([{key: fileKey}], filterPatterns).length === 0
+
+  function handleFsEvent(
+    eventName: 'add' | 'change' | 'unlink',
+    themeId: string,
+    adminSession: AdminSession,
+    filePath: string,
+  ) {
+    const fileKey = getKey(filePath)
+
+    notifyFileChange(fileKey)
+      .then(() => {
+        switch (eventName) {
+          case 'add':
+          case 'change':
+            return handleFileUpdate(eventName, themeId, adminSession, fileKey)
+          case 'unlink':
+            return handleFileDelete(themeId, adminSession, fileKey)
+        }
+      })
+      .catch((error) => {
+        outputWarn(`Error handling file event for ${fileKey}: ${error}`)
+      })
+  }
+
+  function notifyFileChange(fileKey: string): Promise<void> {
+    return notifier?.notify(fileKey) ?? Promise.resolve()
+  }
+
   const handleFileUpdate = (
     eventName: 'add' | 'change',
     themeId: string,
     adminSession: AdminSession,
-    filePath: string,
+    fileKey: string,
   ) => {
-    const fileKey = getKey(filePath)
+    if (isFileIgnored(fileKey)) return
 
-    const contentPromise = read(fileKey).then(() => files.get(fileKey)?.value ?? '')
+    const previousChecksum = files.get(fileKey)?.checksum
 
-    // contentPromise resolves to file.value and does not include file.attachment
-    const syncPromise = contentPromise.then(async (_content) => {
+    const contentPromise = read(fileKey).then(async () => {
       const file = files.get(fileKey)!
 
-      const results = await bulkUploadThemeAssets(
-        Number(themeId),
-        [{key: fileKey, value: file.value || file.attachment}],
-        adminSession,
-      )
-      results.forEach((result) => {
-        if (result.success) {
-          outputSyncResult('update', fileKey)
-        } else if (result.errors?.asset) {
-          const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+      if (file.checksum === previousChecksum) {
+        // Do not sync if the file has not changed
+        return ''
+      }
 
-          renderError({
-            headline: 'Failed to sync file to remote theme.',
-            body: errorMessage,
-          })
-          throw new Error()
-        }
-      })
+      unsyncedFileKeys.add(fileKey)
+
+      return file.value || file.attachment || ''
+    })
+
+    const syncPromise = contentPromise.then(async (content) => {
+      if (!content) return false
+
+      const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+
+      if (result?.success) {
+        unsyncedFileKeys.delete(fileKey)
+        outputSyncResult('update', fileKey)
+      } else if (result?.errors?.asset) {
+        const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+
+        renderError({
+          headline: 'Failed to sync file to remote theme.',
+          body: errorMessage,
+        })
+
+        return false
+      }
+
+      return true
     })
 
     emitEvent(eventName, {
       fileKey,
       onContent: (fn) => {
-        contentPromise.then(fn).catch(() => {})
+        contentPromise
+          .then((content) => {
+            if (content) fn(content)
+          })
+          .catch(() => {})
       },
       onSync: (fn) => {
-        syncPromise.then(fn).catch(() => {})
+        syncPromise
+          .then((didSync) => {
+            if (didSync) fn()
+          })
+          .catch(() => {})
       },
     })
   }
 
-  const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
-    const fileKey = getKey(filePath)
+  const handleFileDelete = (themeId: string, adminSession: AdminSession, fileKey: string) => {
+    if (isFileIgnored(fileKey)) return
+
+    unsyncedFileKeys.delete(fileKey)
     files.delete(fileKey)
+    emitEvent('unlink', {fileKey})
 
-    const syncPromise = Promise.resolve().then(async () => {
-      const success = await deleteThemeAsset(Number(themeId), fileKey, adminSession)
-      if (success) {
+    deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      .then(async (success) => {
+        if (!success) throw new Error('Unknown issue.')
         outputSyncResult('delete', fileKey)
-      } else {
-        throw new Error(`Failed to delete file ${filePath}`)
-      }
-    })
-
-    emitEvent('unlink', {
-      fileKey,
-      onSync: (fn) => {
-        syncPromise.then(fn).catch(() => {})
-      },
-    })
+      })
+      .catch((error) => {
+        renderWarning({headline: `Failed to delete file "${fileKey}".`, body: error.message})
+      })
   }
 
   const directoriesToWatch = new Set(
@@ -159,26 +211,18 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
   return {
     root,
     files,
-    ready: () => initialFilesPromise.then(() => {}),
+    unsyncedFileKeys,
+    ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
-      await removeThemeFile(root, fileKey)
       files.delete(fileKey)
+      await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
-      await writeThemeFile(root, asset)
       files.set(asset.key, asset)
+      await writeThemeFile(root, asset)
     },
     read,
-    stat: async (fileKey: string) => {
-      if (files.has(fileKey)) {
-        const absolutePath = joinPath(root, fileKey)
-        const stats = await stat(absolutePath)
-        if (stats.isFile()) {
-          const fileReducedStats = {size: stats.size, mtime: stats.mtime}
-          return fileReducedStats
-        }
-      }
-    },
+    applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },
@@ -186,15 +230,15 @@ export async function mountThemeFileSystem(root: string): Promise<ThemeFileSyste
       const {default: chokidar} = await import('chokidar')
 
       const watcher = chokidar.watch([...directoriesToWatch], {
-        ignored: THEME_DEFAULT_IGNORE_PATTERNS,
+        ignored: DEFAULT_IGNORE_PATTERNS,
         persistent: !process.env.SHOPIFY_UNIT_TEST,
         ignoreInitial: true,
       })
 
       watcher
-        .on('add', handleFileUpdate.bind(null, 'add', themeId, adminSession))
-        .on('change', handleFileUpdate.bind(null, 'change', themeId, adminSession))
-        .on('unlink', handleFileDelete.bind(null, themeId, adminSession))
+        .on('add', handleFsEvent.bind(null, 'add', themeId, adminSession))
+        .on('change', handleFsEvent.bind(null, 'change', themeId, adminSession))
+        .on('unlink', handleFsEvent.bind(null, 'unlink', themeId, adminSession))
     },
   }
 }
@@ -246,55 +290,51 @@ export function isJson(path: string) {
   return lookupMimeType(path) === 'application/json'
 }
 
-export function partitionThemeFiles(files: ThemeAsset[]) {
-  const liquidFiles: ThemeAsset[] = []
-  const jsonFiles: ThemeAsset[] = []
-  const contextualizedJsonFiles: ThemeAsset[] = []
-  const configFiles: ThemeAsset[] = []
-  const staticAssetFiles: ThemeAsset[] = []
+export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
+  const sectionLiquidFiles: T[] = []
+  const otherLiquidFiles: T[] = []
+  const sectionJsonFiles: T[] = []
+  const templateJsonFiles: T[] = []
+  const otherJsonFiles: T[] = []
+  const contextualizedJsonFiles: T[] = []
+  const configFiles: T[] = []
+  const staticAssetFiles: T[] = []
 
   files.forEach((file) => {
     const fileKey = file.key
     if (THEME_PARTITION_REGEX.liquidRegex.test(fileKey)) {
-      liquidFiles.push(file)
+      if (THEME_PARTITION_REGEX.sectionLiquidRegex.test(fileKey)) {
+        sectionLiquidFiles.push(file)
+      } else {
+        otherLiquidFiles.push(file)
+      }
     } else if (THEME_PARTITION_REGEX.configRegex.test(fileKey)) {
       configFiles.push(file)
     } else if (THEME_PARTITION_REGEX.jsonRegex.test(fileKey)) {
       if (THEME_PARTITION_REGEX.contextualizedJsonRegex.test(fileKey)) {
         contextualizedJsonFiles.push(file)
+      } else if (THEME_PARTITION_REGEX.sectionJsonRegex.test(fileKey)) {
+        sectionJsonFiles.push(file)
+      } else if (THEME_PARTITION_REGEX.templateJsonRegex.test(fileKey)) {
+        templateJsonFiles.push(file)
       } else {
-        jsonFiles.push(file)
+        otherJsonFiles.push(file)
       }
     } else if (THEME_PARTITION_REGEX.staticAssetRegex.test(fileKey)) {
       staticAssetFiles.push(file)
     }
   })
 
-  return {liquidFiles, jsonFiles, contextualizedJsonFiles, configFiles, staticAssetFiles}
-}
-
-export async function readThemeFilesFromDisk(filesToRead: ThemeAsset[], themeFileSystem: ThemeFileSystem) {
-  outputDebug(`Reading theme files from disk: ${filesToRead.map((file) => file.key).join(', ')}`)
-  await Promise.all(
-    filesToRead.map(async (file) => {
-      const fileKey = file.key
-      const themeAsset = themeFileSystem.files.get(fileKey)
-      if (themeAsset === undefined) {
-        outputDebug(`File ${fileKey} can't be was not found under directory starting with: ${themeFileSystem.root}`)
-        return
-      }
-
-      outputDebug(`Reading theme file: ${fileKey}`)
-      const fileData = await readThemeFile(themeFileSystem.root, fileKey)
-      if (Buffer.isBuffer(fileData)) {
-        themeAsset.attachment = fileData.toString('base64')
-      } else {
-        themeAsset.value = fileData
-      }
-      themeFileSystem.files.set(fileKey, themeAsset)
-    }),
-  )
-  outputDebug('All theme files were read from disk')
+  return {
+    sectionLiquidFiles,
+    otherLiquidFiles,
+    sectionJsonFiles,
+    templateJsonFiles,
+    contextualizedJsonFiles,
+    otherJsonFiles,
+    configFiles,
+    staticAssetFiles,
+  }
 }
 
 export function isTextFile(path: string) {
@@ -348,11 +388,8 @@ function dirPath(filePath: string) {
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
-    outputContent`• ${new Date().toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })} Synced ${outputToken.raw('»')} ${outputToken.gray(`${action} ${fileKey}`)}`,
+    outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
+      `${action} ${fileKey}`,
+    )}`,
   )
 }

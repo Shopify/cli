@@ -1,3 +1,4 @@
+import {buildCookies} from './storefront-renderer.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {
   defineEventHandler,
@@ -12,21 +13,27 @@ import {
   setResponseHeaders,
   setResponseHeader,
   removeResponseHeader,
+  setResponseStatus,
 } from 'h3'
-import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {extname} from '@shopify/cli-kit/node/path'
+import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
 const VANITY_CDN_PREFIX = '/cdn/'
+const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
   '/mini-profiler-resources',
   '/web-pixels-manager',
   '/wpm',
+  '/services/',
 ]
+
+const SESSION_COOKIE_NAME = '_shopify_essential'
+const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=([^;]*)(;|$)`)
 
 /**
  * Forwards non-HTML requests to the remote SFR instance,
@@ -47,15 +54,23 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 
 /**
  * Check if a request should be proxied to the remote SFR instance.
+ *
  * Cases:
- * - /cdn/... -- Proxy
- * - /.../file.js -- Proxy
- * - /.../index.html -- No Proxy
- * - /payments/config | accepts: application/json -- Proxy
- * - /search/suggest | accepts: * / * -- No proxy
+ *
+ * | Path              | Accept header      | Action   |
+ * |-------------------|--------------------|----------|
+ * | /cdn/...          |                    | Proxy    |
+ * | /ext/cdn/...      |                    | Proxy    |
+ * | /.../file.js      |                    | Proxy    |
+ * | /payments/config  | application/json   | Proxy    |
+ * | /search/suggest   | * / *              | No proxy |
+ * | /.../index.html   |                    | No Proxy |
+ *
  */
 function canProxyRequest(event: H3Event) {
+  if (event.method !== 'GET') return true
   if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
+  if (event.path.startsWith(EXTENSION_CDN_PREFIX)) return true
 
   const [pathname] = event.path.split('?') as [string]
   const extension = extname(pathname)
@@ -82,16 +97,27 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${VANITY_CDN_PREFIX}`, 'g')
   content = content.replace(vanityCdnRE, VANITY_CDN_PREFIX)
 
-  // -- Only redirect usages of the main CDN for known local assets to the local server:
+  // -- Only redirect usages of the main CDN for known local theme and theme extension assets to the local server:
   const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?">]+)(?:\?|"|>|$))/g
-  const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter((key) => key.startsWith('assets')))
+  const filterAssets = (key: string) => key.startsWith('assets')
+  const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter(filterAssets))
+  const existingExtAssets = new Set([...ctx.localThemeExtensionFileSystem.files.keys()].filter(filterAssets))
+
   content = content.replace(mainCdnRE, (matchedUrl, pathname, matchedAsset) => {
-    const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset as string)
-    if (!isLocalAsset) return matchedUrl
+    const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset)
+    const isLocalExtAsset = matchedAsset && existingExtAssets.has(matchedAsset) && pathname.startsWith('extensions/')
+    const isImage = lookupMimeType(matchedAsset).startsWith('image/')
+
     // Do not proxy images, they may require filters or other CDN features
-    if (lookupMimeType(matchedAsset).startsWith('image/')) return matchedUrl
-    // Prefix with vanityCdnPath to later read local assets
-    return `${VANITY_CDN_PREFIX}${pathname}`
+    if (isImage) return matchedUrl
+
+    // Proxy theme extension assets
+    if (isLocalExtAsset) return `${EXTENSION_CDN_PREFIX}${pathname}`
+
+    // Proxy theme assets
+    if (isLocalAsset) return `${VANITY_CDN_PREFIX}${pathname}`
+
+    return matchedUrl
   })
 
   return content
@@ -107,7 +133,7 @@ function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
 function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
   // Domains are invalid for localhost:
   const domainRE = new RegExp(`Domain=${getStoreFqdnForRegEx(ctx)};\\s*`, 'gi')
-  return cookieHeader.map((value) => value.replace(domainRE, '')).join(', ')
+  return cookieHeader.map((value) => value.replace(domainRE, ''))
 }
 
 /**
@@ -115,6 +141,7 @@ function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
  * and fix domain inconsistencies between remote instance and local dev.
  */
 export async function patchRenderingResponse(ctx: DevServerContext, event: H3Event, response: NodeResponse) {
+  setResponseStatus(event, response.status, response.statusText)
   setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
   patchProxiedResponseHeaders(ctx, event, response)
 
@@ -141,7 +168,6 @@ const HOP_BY_HOP_HEADERS = [
   'transfer-encoding',
   'upgrade',
   'content-security-policy',
-  'content-length',
 ]
 
 function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
@@ -152,10 +178,20 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
   const linkHeader = response.headers.get('Link')
   if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
 
+  // Location header might contain the store domain, proxy it:
+  const locationHeader = response.headers.get('Location')
+  if (locationHeader) setResponseHeader(event, 'Location', locationHeader.replace(/^https?:\/\/[^/]+/, ''))
+
   // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader =
     'raw' in response.headers ? response.headers.raw()['set-cookie'] : response.headers.getSetCookie()
-  if (setCookieHeader?.length) setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+  if (setCookieHeader?.length) {
+    setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+    const latestShopifyEssential = setCookieHeader.join(',').match(SESSION_COOKIE_REGEXP)?.[1]
+    if (latestShopifyEssential) {
+      ctx.session.sessionCookies[SESSION_COOKIE_NAME] = latestShopifyEssential
+    }
+  }
 }
 
 /**
@@ -182,19 +218,33 @@ export function getProxyStorefrontHeaders(event: H3Event) {
 }
 
 function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
-  const target = `https://${ctx.session.storeFqdn}${event.path}`
-  const pathname = event.path.split('?')[0]!
+  const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
+  const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
+  const url = new URL(path, `https://${host}`)
+  url.searchParams.set('_fd', '0')
+  url.searchParams.set('pb', '0')
+  const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  const proxyHeaders = getProxyStorefrontHeaders(event)
-  // Required header for CDN requests
-  proxyHeaders.referer = target
-
-  return sendProxy(event, target, {
-    headers: proxyHeaders,
-    fetchOptions: {ignoreResponseError: false, method: event.method, body, duplex: body ? 'half' : undefined},
+  return sendProxy(event, url.toString(), {
+    headers: {
+      ...headers,
+      // Required header for CDN requests
+      referer: url.origin,
+      // Update the cookie with the latest session
+      cookie: buildCookies(ctx.session, {headers}),
+    },
+    fetchOptions: {
+      ignoreResponseError: false,
+      method: event.method,
+      body,
+      duplex: body ? 'half' : undefined,
+      // Important to return 3xx responses to the client
+      redirect: 'manual',
+    },
     onResponse: patchProxiedResponseHeaders.bind(null, ctx),
   }).catch(async (error: H3Error) => {
+    const pathname = event.path.split('?')[0]!
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
       const cause = error.cause as undefined | Error
       renderWarning({

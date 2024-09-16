@@ -50,4 +50,35 @@ describe('performActionWithRetryAfterRecovery', () => {
     // When/Then
     await expect(performActionWithRetryAfterRecovery(action, failToRecover)).rejects.toThrow('fail')
   })
+
+  test('succeeds when error on first and second tries but succeeds on third', async () => {
+    // Given
+    let counter = 0
+
+    // When
+    const got = await performActionWithRetryAfterRecovery(
+      async () => {
+        if (counter < 2) {
+          throw new Error('fail')
+        }
+        return 'ok'
+      },
+      async () => {
+        counter++
+      },
+      2,
+    )
+
+    // Then
+    expect(got).toBe('ok')
+  })
+
+  test('fails when error on all three tries', async () => {
+    // Given
+    const {action, failToRecover} = failUntilRecovered()
+    await expect(action()).rejects.toThrow('fail')
+
+    // When/Then
+    await expect(performActionWithRetryAfterRecovery(action, failToRecover, 2)).rejects.toThrow('fail')
+  })
 })

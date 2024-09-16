@@ -222,7 +222,10 @@ export interface DeveloperPlatformClient {
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
-  appExtensionRegistrations: (app: MinimalAppIdentifiers) => Promise<AllAppExtensionRegistrationsQuerySchema>
+  appExtensionRegistrations: (
+    app: MinimalAppIdentifiers,
+    activeAppVersion?: ActiveAppVersion,
+  ) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>

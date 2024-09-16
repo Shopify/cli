@@ -8,7 +8,6 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
@@ -54,17 +53,14 @@ export default class Console extends ThemeCommand {
     const theme = `liquid-console-repl-${cliVersion}`
 
     const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
-    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
-    const authUrl = `http://localhost:${port}/password`
+    const authUrl = `http://localhost:${port ?? '9293'}/password`
 
     if (flags['dev-preview']) {
-      outputInfo('This feature is currently in development and is not ready for use or testing yet.')
-
       if (flags.port) {
         renderPortDeprecationWarning()
       }
       const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
-      await initializeRepl(adminSession, storefrontToken, themeId, url, storePassword)
+      await initializeRepl(adminSession, themeId, url, themeAccessPassword, storePassword)
       return
     }
 
@@ -75,6 +71,8 @@ export default class Console extends ThemeCommand {
         'and enter your store password if prompted.',
       ],
     })
+
+    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
 
     return execCLI2(['theme', 'console', '--url', url, '--port', port ?? '9293', '--theme', theme], {
       store,

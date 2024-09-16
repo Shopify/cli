@@ -19,17 +19,18 @@ describe('getExtensionPointTargetSurface()', () => {
     expect(getExtensionPointTargetSurface('purchase.thank-you.cart-line-list.render-after')).toBe('checkout')
   })
 
-  test('returns "checkout" for a checkout UI extension target that starts with customer-account', async () => {
-    expect(getExtensionPointTargetSurface('customer-account.order-status.block.render')).toBe('checkout')
-    expect(getExtensionPointTargetSurface('customer-account.order-status.customer-information.render-after')).toBe(
-      'checkout',
-    )
-    expect(getExtensionPointTargetSurface('customer-account.order-status.cart-line-item.render-after')).toBe('checkout')
-    expect(getExtensionPointTargetSurface('customer-account.order-status.cart-line-list.render-after')).toBe('checkout')
-  })
-
   test('returns "customer-accounts" for a Customer Account UI extension', async () => {
     expect(getExtensionPointTargetSurface('customer-account.dynamic.render')).toBe('customer-accounts')
+    expect(getExtensionPointTargetSurface('customer-account.order-status.block.render')).toBe('customer-accounts')
+    expect(getExtensionPointTargetSurface('customer-account.order-status.customer-information.render-after')).toBe(
+      'customer-accounts',
+    )
+    expect(getExtensionPointTargetSurface('customer-account.order-status.cart-line-item.render-after')).toBe(
+      'customer-accounts',
+    )
+    expect(getExtensionPointTargetSurface('customer-account.order-status.cart-line-list.render-after')).toBe(
+      'customer-accounts',
+    )
   })
 
   test('returns "post_purchase" for a Post Purchase UI extension', async () => {

@@ -1,9 +1,15 @@
-import {ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {applyIgnoreFilters} from '../asset-ignore.js'
+import type {ThemeAsset, ThemeFileSystem, ThemeFileSystemOptions} from '@shopify/cli-kit/node/themes/types'
 
-export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>): ThemeFileSystem {
+export function fakeThemeFileSystem(
+  root: string,
+  files: Map<string, ThemeAsset>,
+  options?: ThemeFileSystemOptions,
+): ThemeFileSystem {
   return {
     root,
     files,
+    unsyncedFileKeys: new Set(),
     ready: () => Promise.resolve(),
     delete: async (fileKey: string) => {
       files.delete(fileKey)
@@ -14,10 +20,8 @@ export function fakeThemeFileSystem(root: string, files: Map<string, ThemeAsset>
     read: async (fileKey: string) => {
       return files.get(fileKey)?.value || files.get(fileKey)?.attachment
     },
-    stat: async (_fileKey: string) => {
-      return {mtime: new Date(), size: 1}
-    },
     addEventListener: () => {},
+    applyIgnoreFilters: (files) => applyIgnoreFilters(files, options?.filters),
     startWatcher: async () => {},
   }
 }

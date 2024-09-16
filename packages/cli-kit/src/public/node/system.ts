@@ -1,10 +1,12 @@
 import {AbortSignal} from './abort.js'
-import {ExternalError} from './error.js'
-import {cwd} from './path.js'
+import {AbortError, ExternalError} from './error.js'
+import {cwd, dirname} from './path.js'
 import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
+import {renderWarning} from './ui.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
+import which from 'which'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -97,6 +99,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
   }
+  checkCommandSafety(command)
   const commandProcess = execa(command, args, {
     env,
     cwd: options?.cwd,
@@ -115,6 +118,16 @@ Running system process:
   · Working directory: ${options?.cwd ?? cwd()}
 `)
   return commandProcess
+}
+
+function checkCommandSafety(command: string) {
+  const commandDirectory = dirname(which.sync(command))
+  if (commandDirectory === cwd()) {
+    const headline = ['Skipped run of unsecure binary', {command}, 'found in the current directory.']
+    const body = 'Please remove that file or review your current PATH.'
+    renderWarning({headline, body})
+    throw new AbortError(headline, body)
+  }
 }
 
 /**

@@ -4,7 +4,7 @@ import {FunctionConfigType} from '../../../../../../models/extensions/specificat
 import {ExtensionInstance} from '../../../../../../models/extensions/extension-instance.js'
 import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
-import {exec} from '@shopify/cli-kit/node/system'
+import {runFunction} from '../../../../runner.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useState} from 'react'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -129,12 +129,7 @@ async function runFunctionRunnerWithLogInput(
     },
   })
 
-  await exec('npm', ['exec', '--', 'function-runner', '--json', '-f', fun.outputPath, '--export', exportName], {
-    cwd: fun.directory,
-    input,
-    stdout: customStdout,
-    stderr: 'inherit',
-  })
+  await runFunction({functionExtension: fun, input, export: exportName, stdout: customStdout, json: true})
 
   const result = JSON.parse(functionRunnerOutput)
   return {...result, type: 'functionRun'}

@@ -1,6 +1,7 @@
 import {getHotReloadHandler, getInMemoryTemplates, setupInMemoryTemplateWatcher} from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
+import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
 import {describe, test, expect, vi} from 'vitest'
 import {createEvent} from 'h3'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
@@ -38,11 +39,13 @@ describe('hot-reload server', () => {
     await nextTick()
 
     // -- Initial state:
-    expect(getInMemoryTemplates(ctx)).toEqual({})
     expect(addEventListenerSpy).toHaveBeenCalled()
     expect(addEventListenerSpy).toHaveBeenCalledWith('add', expect.any(Function))
     expect(addEventListenerSpy).toHaveBeenCalledWith('change', expect.any(Function))
     expect(addEventListenerSpy).toHaveBeenCalledWith('unlink', expect.any(Function))
+    // Wait for syncing to finish:
+    await nextTick()
+    expect(getInMemoryTemplates(ctx)).toEqual({})
 
     // -- Subscribes to HotReload events:
     expect(hotReloadEvents).toHaveLength(1)
@@ -117,9 +120,7 @@ describe('hot-reload server', () => {
 
     // -- Unlinks the JSON file properly with all its side effects:
     const hotReloadEventsLengthBeforeUnlink = hotReloadEvents.length
-    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', assetJsonKey)
-    // Waits for syncing to finish:
-    expect(unlinkSyncSpy).toHaveBeenCalled()
+    await triggerFileEvent('unlink', assetJsonKey)
     // Does not emit HotReload events:
     expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
     // Removes the JSON file from memory:
@@ -176,6 +177,31 @@ describe('hot-reload server', () => {
     await nextTick()
     expect(getInMemoryTemplates(ctx)).toEqual({})
 
+    // -- Filters templates by locale:
+    const enLocale = 'locales/en.default.json'
+    const enSchemaLocale = 'locales/en.default.schema.json'
+    const esLocale = 'locales/es.json'
+    const esSchemaLocale = 'locales/es.schema.json'
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+    await Promise.all([
+      triggerFileEvent('add', enLocale, jsonContent),
+      triggerFileEvent('add', enSchemaLocale, jsonContent),
+      triggerFileEvent('add', esLocale, jsonContent),
+      triggerFileEvent('add', esSchemaLocale, jsonContent),
+    ])
+    // Unknown locale, uses default:
+    expect(getInMemoryTemplates(ctx)).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
+    expect(getInMemoryTemplates(ctx, undefined, 'unknown')).toEqual({
+      [enLocale]: jsonContent,
+      [enSchemaLocale]: jsonContent,
+    })
+    // Known locale with schemas:
+    expect(getInMemoryTemplates(ctx, undefined, 'en')).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
+    expect(getInMemoryTemplates(ctx, undefined, 'es')).toEqual({[esLocale]: jsonContent, [esSchemaLocale]: jsonContent})
+    // Removed from memory after syncing:
+    await nextTick()
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+
     // -- Promise resolves when connection is stopped:
     subscribeEvent.node.req.destroy()
     await expect(streamPromise).resolves.not.toThrow()
@@ -206,14 +232,25 @@ function createH3Event(url: string) {
 }
 
 function createTestContext(options?: {files?: [string, string][]}) {
-  const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
-  const upsertFile = (key: string, value: string) => localThemeFileSystem.files.set(key, {checksum: '1', key, value})
-  options?.files?.forEach(([key, value]) => upsertFile(key, value))
-
   /** Waits for an event stream to be flushed, or for the last `onSync` callback to be triggered */
   const nextTick = () => new Promise((resolve) => setTimeout(resolve))
 
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
+  const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
+  const upsertFile = (key: string, value: string) => {
+    localThemeFileSystem.files.set(key, {checksum: '1', key, value})
+    localThemeFileSystem.unsyncedFileKeys.add(key)
+    // Sync the file after 2 ticks to simulate async operations:
+    nextTick()
+      .then(nextTick)
+      .then(() => localThemeFileSystem.unsyncedFileKeys.delete(key))
+      .catch(() => {})
+  }
+
+  options?.files?.forEach(([key, value]) => upsertFile(key, value))
+
   const addEventListenerSpy = vi.spyOn(localThemeFileSystem, 'addEventListener')
+
   /** Updates the fake file system and triggers events */
   const triggerFileEvent = async <T extends ThemeFSEventName>(event: T, fileKey: string, content = 'default-value') => {
     const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
@@ -233,17 +270,24 @@ function createTestContext(options?: {files?: [string, string][]}) {
       upsertFile(fileKey, content)
     }
 
-    handler(isUnlink ? {fileKey, onSync: syncSpy} : {fileKey, onContent: contentSpy, onSync: syncSpy})
-    // Waits for the event to be processed:
+    handler(isUnlink ? {fileKey} : {fileKey, onContent: contentSpy, onSync: syncSpy})
+
+    // Waits for the event to be processed. Since we are using a tick here,
+    // the previous async operations need to be deferred by at least 2 ticks.
     await nextTick()
 
-    return isUnlink ? {syncSpy} : {contentSpy, syncSpy}
+    return isUnlink ? {} : {contentSpy, syncSpy}
   }
 
   const ctx: DevServerContext = {
-    session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
-    remoteChecksums: [],
+    session: {
+      storefrontToken: '',
+      token: '',
+      storeFqdn: 'my-store.myshopify.com',
+      sessionCookies: {},
+    },
     localThemeFileSystem,
+    localThemeExtensionFileSystem,
     directory: 'tmp',
     options: {
       ignore: [],

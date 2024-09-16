@@ -1,5 +1,3 @@
-import {applyIgnoreFilters} from './asset-ignore.js'
-
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {ThemeFileSystem, Theme, Checksum} from '@shopify/cli-kit/node/themes/types'
@@ -7,8 +5,6 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface DownloadOptions {
   nodelete: boolean
-  only?: string[]
-  ignore?: string[]
 }
 
 export async function downloadTheme(
@@ -19,7 +15,7 @@ export async function downloadTheme(
   options: DownloadOptions,
 ) {
   const deleteTasks = buildDeleteTasks(remoteChecksums, themeFileSystem, options)
-  const downloadTasks = await buildDownloadTasks(remoteChecksums, theme, themeFileSystem, session, options)
+  const downloadTasks = buildDownloadTasks(remoteChecksums, theme, themeFileSystem, session)
 
   const tasks = [...deleteTasks, ...downloadTasks]
 
@@ -44,14 +40,13 @@ function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFil
   })
 }
 
-async function buildDownloadTasks(
+function buildDownloadTasks(
   remoteChecksums: Checksum[],
   theme: Theme,
   themeFileSystem: ThemeFileSystem,
   session: AdminSession,
-  options: DownloadOptions,
 ) {
-  const checksums = await applyIgnoreFilters(remoteChecksums, themeFileSystem, options)
+  const checksums = themeFileSystem.applyIgnoreFilters(remoteChecksums)
 
   return checksums
     .map((checksum) => {

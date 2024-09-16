@@ -16,9 +16,10 @@ describe('dev proxy', () => {
   const html = String.raw
 
   const ctx = {
-    session: {storeFqdn: 'my-store.myshopify.com'},
+    session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
     options: {host: 'localhost', port: '1337'},
     localThemeFileSystem: {files: new Map([['assets/file1', 'content']])},
+    localThemeExtensionFileSystem: {files: new Map([['assets/file-ext', 'content']])},
   } as unknown as DevServerContext
 
   describe('injectCdnProxy', () => {
@@ -58,6 +59,28 @@ describe('dev proxy', () => {
                     <script src=\\"/cdn/path/to/assets/file1\\"></script>
                     <link href=\\"/cdn/path/to/assets/file1?v=123\\"></link>
                     <link href=\\"https://cdn.shopify.com/path/to/assets/file2\\"></link>
+                  </head>
+                  <body></body>
+                </html>"
+      `)
+    })
+
+    test('proxies requests to main global CDN for known local theme extension assets through local server', () => {
+      const content = html`<html>
+          <head>
+            <script src="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-4444-ee55555e55ee/0.0.0/assets/file-ext"></script>
+            <link href="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/assets/file-ext?v=123"></link>
+            <link href="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/file2"></link>
+          </head>
+          <body></body>
+        </html>`
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
+        "<html>
+                  <head>
+                    <script src=\\"/ext/cdn/extensions/1aaaa11a-2b22-333c-4444-ee55555e55ee/0.0.0/assets/file-ext\\"></script>
+                    <link href=\\"/ext/cdn/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/assets/file-ext?v=123\\"></link>
+                    <link href=\\"https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/file2\\"></link>
                   </head>
                   <body></body>
                 </html>"
@@ -138,8 +161,15 @@ describe('dev proxy', () => {
       )
 
       expect(event.node.res.getHeader('set-cookie')).toMatchInlineSnapshot(
-        `"keep_alive=b810fe75-4242-4554-a19c-0a5ecb70e92f; path=/; expires=Fri, 16 Aug 2024 12:16:24 GMT; HttpOnly; SameSite=Lax, secure_customer_sig=; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; secure; HttpOnly; SameSite=Lax, localization=ES; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; SameSite=Lax, cart_currency=EUR; path=/; expires=Fri, 30 Aug 2024 11:46:24 GMT; SameSite=Lax, _tracking_consent=%7B..%22; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; SameSite=Lax, _cmp_a=%7B..%22purposes%22%; path=/; expires=Sat, 17 Aug 2024 11:46:24 GMT; SameSite=Lax, _shopify_essential=:AZFbAlZ..yAAH:; path=/; Max-Age=31536000; secure; HttpOnly; SameSite=Lax, _shopify_sa_t=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_sa_p=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_y=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_s=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax"`,
+        `
+        [
+          "keep_alive=b810fe75-4242-4554-a19c-0a5ecb70e92f; path=/; expires=Fri, 16 Aug 2024 12:16:24 GMT; HttpOnly; SameSite=Lax, secure_customer_sig=; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; secure; HttpOnly; SameSite=Lax, localization=ES; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; SameSite=Lax, cart_currency=EUR; path=/; expires=Fri, 30 Aug 2024 11:46:24 GMT; SameSite=Lax, _tracking_consent=%7B..%22; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; SameSite=Lax, _cmp_a=%7B..%22purposes%22%; path=/; expires=Sat, 17 Aug 2024 11:46:24 GMT; SameSite=Lax, _shopify_essential=:AZFbAlZ..yAAH:; path=/; Max-Age=31536000; secure; HttpOnly; SameSite=Lax, _shopify_sa_t=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_sa_p=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_y=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_s=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax",
+        ]
+      `,
       )
+
+      // Stores _shopify_essential for the following requests
+      expect(ctx.session.sessionCookies).toHaveProperty('_shopify_essential', ':AZFbAlZ..yAAH:')
     })
   })
 

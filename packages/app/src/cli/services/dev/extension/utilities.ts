@@ -2,13 +2,6 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 
 import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
 
-const CUSTOMER_ACCOUNT_CHECKOUT_RENDERED_TARGETS = new Set([
-  'customer-account.order-status.cart-line-item.render-after',
-  'customer-account.order-status.cart-line-list.render-after',
-  'customer-account.order-status.customer-information.render-after',
-  'customer-account.order-status.block.render',
-])
-
 /**
  * To prepare UI Extensions targeting Checkout for dev'ing we need to retrieve a valid product variant ID
  * @param extensions - The UI Extensions to dev
@@ -41,12 +34,7 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
     }
 
     // Covers Customer Accounts UI extensions (future)
-    case 'customeraccount':
     case 'customer-account': {
-      if (CUSTOMER_ACCOUNT_CHECKOUT_RENDERED_TARGETS.has(extensionPointTarget)) {
-        return 'checkout'
-      }
-
       return 'customer-accounts'
     }
 

@@ -13,13 +13,23 @@ import {
 import {consoleLog} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, vi, expect} from 'vitest'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../models/app/loader.js')
-vi.mock('./context.js')
+vi.mock('./context.js', async () => {
+  const actualModule = await vi.importActual('./context.js')
+
+  return {
+    ...actualModule,
+    ensureDevContext: vi.fn(),
+    storeFromFqdn: vi.fn(),
+  }
+})
 vi.mock('./app-logs/logs-command/ui.js')
 vi.mock('./app-logs/logs-command/render-json-logs.js')
 vi.mock('./app-logs/utils.js')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('logs', () => {
   test('should call json handler when format is json', async () => {
@@ -145,8 +155,8 @@ describe('logs', () => {
     const expectedStoreMap = new Map()
     expectedStoreMap.set('1', 'store-fqdn')
     expectedStoreMap.set('2', 'other-fqdn')
-    expect(consoleLog).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
     expect(consoleLog).toHaveBeenCalledWith('{"subscribedToStores":["store-fqdn","other-fqdn"]}')
+    expect(consoleLog).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
@@ -183,7 +193,6 @@ describe('logs', () => {
     expectedStoreMap.set('1', 'store-fqdn')
     expectedStoreMap.set('2', 'other-fqdn')
     expect(consoleLog).toHaveBeenCalledWith('Waiting for app logs...\n')
-    expect(consoleLog).toHaveBeenCalledWith('Subscribing to additional stores: other-fqdn\n')
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
@@ -191,6 +200,65 @@ describe('logs', () => {
       },
       pollOptions: expect.anything(),
       storeNameById: expectedStoreMap,
+    })
+  })
+
+  test('should call ensureDevContext with customInfoBox flag and render custom info box', async () => {
+    // Given
+    const sources = ['extensions.source']
+    const customInfoBox = true
+    await setupDevContext(sources)
+    vi.mocked(storeFromFqdn).mockResolvedValueOnce(testOrganizationStore({shopId: '2', shopDomain: 'other-fqdn'}))
+
+    // When
+    await logs({
+      reset: false,
+      format: 'text',
+      directory: 'directory',
+      apiKey: 'api-key',
+      storeFqdns: ['store-fqdn', 'other-fqdn'],
+      sources,
+      status: 'status',
+      configName: 'config-name',
+      userProvidedConfigName: 'user-provided-config-name',
+    })
+
+    // Then
+    expect(ensureDevContext).toHaveBeenCalledWith({
+      apiKey: 'api-key',
+      configName: 'config-name',
+      customInfoBox,
+      developerPlatformClient: expect.anything(),
+      directory: 'directory',
+      format: 'text',
+      status: 'status',
+      reset: false,
+      sources: ['extensions.source'],
+      storeFqdn: 'store-fqdn',
+      storeFqdns: ['store-fqdn', 'other-fqdn'],
+      userProvidedConfigName: 'user-provided-config-name',
+    })
+
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: [
+              'Org:             org1',
+              'App:             app1',
+              'Dev store:       store-fqdn',
+              'Dev store:       other-fqdn',
+            ],
+          },
+        },
+        '\n',
+        'You can pass ',
+        {
+          command: '--reset',
+        },
+        ' to your command to reset your app configuration.',
+      ],
+      headline: 'Using these settings:',
     })
   })
 })
@@ -217,6 +285,7 @@ async function setupDevContext(handles: string[]) {
     updateURLs: false,
     storeFqdn: 'store-fqdn',
     storeId: '1',
+    organization: 'org1',
   })
   vi.mocked(subscribeToAppLogs).mockResolvedValue('jwt-token')
 }

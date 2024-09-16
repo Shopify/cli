@@ -1,9 +1,19 @@
 import {javyBinary, functionRunnerBinary, installBinary} from './binaries.js'
-import {exec} from '@shopify/cli-kit/node/system'
-import {describe, expect, test} from 'vitest'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
+import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
+import {describe, expect, test, vi} from 'vitest'
+import {gzipSync} from 'zlib'
 
 const javy = javyBinary()
 const functionRunner = functionRunnerBinary()
+
+vi.mock('@shopify/cli-kit/node/http', async () => {
+  const actualImports = await vi.importActual('@shopify/cli-kit/node/http')
+  return {
+    ...actualImports,
+    fetch: vi.fn(),
+  }
+})
 
 describe('javy', () => {
   test('properties are set correctly', () => {
@@ -107,9 +117,18 @@ describe('javy', () => {
     })
   })
 
-  test('Javy installs and runs', async () => {
+  test('installs Javy', async () => {
+    // Given
+    await removeFile(javy.path)
+    await expect(fileExists(javy.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy binary')))
+
+    // When
     await installBinary(javy)
-    await exec(javy.path, ['--help'])
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(javy.path)).resolves.toBeTruthy()
   })
 })
 
@@ -215,8 +234,17 @@ describe('functionRunner', () => {
     })
   })
 
-  test('function-runner installs and runs', async () => {
+  test('installs function-runner', async () => {
+    // Given
+    await removeFile(functionRunner.path)
+    await expect(fileExists(functionRunner.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('function-runner binary')))
+
+    // When
     await installBinary(functionRunner)
-    await exec(functionRunner.path, ['--help'])
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(functionRunner.path)).resolves.toBeTruthy()
   })
 })

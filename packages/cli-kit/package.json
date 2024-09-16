@@ -143,6 +143,7 @@
     "graphql-request": "5.2.0",
     "ink": "4.4.1",
     "is-interactive": "2.0.0",
+    "jose": "5.8.0",
     "kill-port-process": "3.1.0",
     "latest-version": "7.0.0",
     "liquidjs": "10.9.2",
@@ -159,10 +160,11 @@
     "simple-git": "3.19.1",
     "stacktracey": "2.1.8",
     "strip-ansi": "7.1.0",
-    "supports-hyperlinks": "3.0.0",
+    "supports-hyperlinks": "3.1.0",
     "tempy": "3.0.0",
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",
+    "which": "4.0.0",
     "zod": "3.22.3"
   },
   "devDependencies": {
@@ -174,6 +176,7 @@
     "@types/node": "18.19.3",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
+    "@types/which": "3.0.4",
     "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",

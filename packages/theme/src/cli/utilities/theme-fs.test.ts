@@ -6,10 +6,14 @@ import {
   mountThemeFileSystem,
   partitionThemeFiles,
   readThemeFile,
-  readThemeFilesFromDisk,
 } from './theme-fs.js'
+import {
+  getPatternsFromShopifyIgnore,
+  applyIgnoreFilters,
+  raiseWarningForNonExplicitGlobPatterns,
+} from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {test, describe, expect, vi} from 'vitest'
+import {test, describe, expect, vi, beforeEach} from 'vitest'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
@@ -19,23 +23,31 @@ vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   return {...realModule, ...mockModule}
 })
 
+vi.mock('./asset-ignore.js')
+beforeEach(async () => {
+  vi.mocked(getPatternsFromShopifyIgnore).mockResolvedValue([])
+  const realModule = await vi.importActual<typeof import('./asset-ignore.js')>('./asset-ignore.js')
+  vi.mocked(applyIgnoreFilters).mockImplementation(realModule.applyIgnoreFilters)
+})
+
 describe('theme-fs', () => {
   describe('mountThemeFileSystem', async () => {
     test('mounts the local theme file system when the directory is valid', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
       // Then
       expect(themeFileSystem).toEqual({
+        root,
         files: new Map([
           fsEntry({checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'}),
           fsEntry({checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'}),
           fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
-          fsEntry({checksum: '3f6b44e95dbcf0214a0a82627a37cd53', key: 'config/settings_schema.json'}),
+          fsEntry({checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'}),
           fsEntry({checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'}),
           fsEntry({checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'}),
           fsEntry({checksum: '94d575574a070397f297a2e9bb32ce7d', key: 'locales/en.default.json'}),
@@ -43,12 +55,12 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'}),
           fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
-        root,
+        unsyncedFileKeys: new Set(),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
-        stat: expect.any(Function),
+        applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
       })
@@ -59,18 +71,19 @@ describe('theme-fs', () => {
       const root = 'src/cli/utilities/invalid-directory'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
       // Then
       expect(themeFileSystem).toEqual({
-        files: new Map([]),
         root,
+        files: new Map(),
+        unsyncedFileKeys: new Set(),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
-        stat: expect.any(Function),
+        applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
       })
@@ -78,10 +91,10 @@ describe('theme-fs', () => {
 
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       await themeFileSystem.delete('assets/base.css')
 
@@ -94,10 +107,10 @@ describe('theme-fs', () => {
   describe('themeFileSystem.delete', () => {
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       expect(themeFileSystem.files.has('assets/base.css')).toBe(true)
       await themeFileSystem.delete('assets/base.css')
@@ -109,10 +122,10 @@ describe('theme-fs', () => {
 
     test('does nothing when the theme file does not exist on local disk', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       await themeFileSystem.delete('assets/nonexistent.css')
 
@@ -120,15 +133,36 @@ describe('theme-fs', () => {
       expect(removeFile).not.toBeCalled()
       expect(themeFileSystem.files.has('assets/nonexistent.css')).toBe(false)
     })
+
+    test('delete updates files map before the async removeFile call', async () => {
+      // Given
+      const fileKey = 'assets/base.css'
+      const root = 'src/cli/utilities/fixtures/theme'
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      let filesUpdated = false
+      vi.mocked(removeFile).mockImplementationOnce(() => {
+        filesUpdated = !themeFileSystem.files.has(fileKey)
+        return Promise.resolve()
+      })
+
+      // When
+      expect(themeFileSystem.files.has(fileKey)).toBe(true)
+      await themeFileSystem.delete(fileKey)
+
+      // Then
+      expect(filesUpdated).toBe(true)
+    })
   })
 
   describe('themeFileSystem.write', () => {
     test('"write" creates a file on the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_file.css')).toBeUndefined()
 
@@ -145,12 +179,12 @@ describe('theme-fs', () => {
 
     test('"write" creates an image file on the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const attachment = '0x123!'
       const buffer = Buffer.from(attachment, 'base64')
 
       // When
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       expect(themeFileSystem.files.get('assets/new_image.gif')).toBeUndefined()
 
@@ -164,14 +198,36 @@ describe('theme-fs', () => {
         attachment,
       })
     })
+
+    test('write updates files map before the async writeFile call', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      const newAsset = {key: 'assets/new_file.css', checksum: '1010', value: 'content'}
+
+      let filesUpdated = false
+      vi.mocked(writeFile).mockImplementationOnce(() => {
+        filesUpdated = themeFileSystem.files.get(newAsset.key) === newAsset
+        return Promise.resolve()
+      })
+
+      // When
+      expect(themeFileSystem.files.has(newAsset.key)).toBe(false)
+      await themeFileSystem.write(newAsset)
+
+      // Then
+      expect(filesUpdated).toBe(true)
+    })
   })
 
   describe('themeFileSystem.read', async () => {
     test('"read" returns returns the content from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/404.json'
-      const themeFileSystem = await mountThemeFileSystem(root)
+      const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       const file = themeFileSystem.files.get(key)
       expect(file).toEqual({
@@ -179,6 +235,7 @@ describe('theme-fs', () => {
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
         value: expect.any(String),
         attachment: '',
+        stats: {size: expect.any(Number), mtime: expect.any(Number)},
       })
 
       // When
@@ -191,6 +248,27 @@ describe('theme-fs', () => {
         checksum: 'f14a0bd594f4fee47b13fc09543098ff',
         value: content,
         attachment: '',
+        stats: {size: content?.length, mtime: expect.any(Number)},
+      })
+    })
+  })
+
+  describe('themeFileSystem.applyIgnoreFilters', async () => {
+    test('applies ignore filters to the theme files', async () => {
+      const root = 'src/cli/utilities/fixtures'
+      const files = [{key: 'assets/file.css'}, {key: 'assets/file.json'}]
+      const options = {filters: {ignore: ['assets/*.css']}}
+
+      const themeFileSystem = mountThemeFileSystem(root, options)
+      await themeFileSystem.ready()
+
+      expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
+      expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
+      expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
+      expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
+        ignore: options.filters.ignore,
+        only: [],
+        ignoreFromFile: [],
       })
     })
   })
@@ -198,7 +276,7 @@ describe('theme-fs', () => {
   describe('readThemeFile', () => {
     test('reads theme file when it exists', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/404.json'
 
       // When
@@ -219,7 +297,7 @@ describe('theme-fs', () => {
 
     test(`returns undefined when theme file doesn't exist`, async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/invalid.json'
 
       // When
@@ -231,7 +309,7 @@ describe('theme-fs', () => {
 
     test('returns Buffer for image files', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
       const key = 'assets/sparkle.gif'
 
       // When
@@ -309,20 +387,19 @@ describe('theme-fs', () => {
         {key: 'templates/404.context.uk.json', checksum: '11'},
       ]
       // When
-      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
+        partitionThemeFiles(files)
 
       // Then
-      expect(liquidFiles).toEqual([
+      expect(sectionLiquidFiles).toEqual([{key: 'sections/announcement-bar.liquid', checksum: '10'}])
+      expect(otherLiquidFiles).toEqual([
         {key: 'assets/base.css.liquid', checksum: '2'},
         {key: 'layout/password.liquid', checksum: '4'},
         {key: 'layout/theme.liquid', checksum: '5'},
-        {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
       ])
-      expect(jsonFiles).toEqual([
-        {key: 'locales/en.default.json', checksum: '6'},
-        {key: 'templates/404.json', checksum: '7'},
-      ])
+      expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
+      expect(otherJsonFiles).toEqual([{key: 'locales/en.default.json', checksum: '6'}])
       expect(configFiles).toEqual([
         {key: 'config/settings_schema.json', checksum: '8'},
         {key: 'config/settings_data.json', checksum: '9'},
@@ -338,66 +415,16 @@ describe('theme-fs', () => {
       const files: Checksum[] = []
 
       // When
-      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
+        partitionThemeFiles(files)
 
       // Then
-      expect(liquidFiles).toEqual([])
-      expect(jsonFiles).toEqual([])
+      expect(sectionLiquidFiles).toEqual([])
+      expect(otherLiquidFiles).toEqual([])
+      expect(templateJsonFiles).toEqual([])
+      expect(otherJsonFiles).toEqual([])
       expect(configFiles).toEqual([])
       expect(staticAssetFiles).toEqual([])
-    })
-  })
-
-  describe('readThemeFilesFromDisk', () => {
-    test('should read theme files from disk and update themeFileSystem', async () => {
-      // Given
-      const filesToRead = [{key: 'assets/base.css', checksum: '1'}]
-      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
-      await themeFileSystem.ready()
-
-      // When
-      const testFile = themeFileSystem.files.get('assets/base.css')
-      expect(testFile).toBeDefined()
-      expect(testFile?.value).toBeDefined()
-      delete testFile?.value
-      expect(testFile?.value).toBeUndefined()
-      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
-
-      // Then
-      expect(testFile?.value).toBeDefined()
-    })
-
-    test('should skip files not present in themeFileSystem', async () => {
-      // Given
-      const filesToRead = [{key: 'assets/nonexistent.css', checksum: '1'}]
-      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
-
-      // When
-      const testFile = themeFileSystem.files.get('assets/nonexistent.css')
-      expect(testFile).toBeUndefined()
-      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
-
-      // Then
-      expect(themeFileSystem.files.has('assets/nonexistent.gif')).toBe(false)
-    })
-
-    test('should store image data as attachment', async () => {
-      // Given
-      const filesToRead = [{key: 'assets/sparkle.gif', checksum: '2'}]
-      const themeFileSystem = await mountThemeFileSystem('src/cli/utilities/fixtures')
-      await themeFileSystem.ready()
-
-      // When
-      const testFile = themeFileSystem.files.get('assets/sparkle.gif')
-      expect(testFile).toBeDefined()
-      expect(testFile?.attachment).toBeDefined()
-      delete testFile?.attachment
-      expect(testFile?.attachment).toBeUndefined()
-      await readThemeFilesFromDisk(filesToRead, themeFileSystem)
-
-      // Then
-      expect(testFile?.attachment).toBeDefined()
-      expect(testFile?.value).toBeFalsy()
     })
   })
 
@@ -423,7 +450,7 @@ describe('theme-fs', () => {
   describe('hasRequiredThemeDirectories', () => {
     test(`returns true when directory has all required theme directories`, async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures/theme'
 
       // When
       const result = await hasRequiredThemeDirectories(root)
@@ -445,6 +472,15 @@ describe('theme-fs', () => {
   })
 
   function fsEntry({key, checksum}: Checksum): [string, ThemeAsset] {
-    return [key, {key, checksum, value: expect.any(String), attachment: expect.any(String)}]
+    return [
+      key,
+      {
+        key,
+        checksum,
+        value: expect.any(String),
+        attachment: expect.any(String),
+        stats: {size: expect.any(Number), mtime: expect.any(Number)},
+      },
+    ]
   }
 })

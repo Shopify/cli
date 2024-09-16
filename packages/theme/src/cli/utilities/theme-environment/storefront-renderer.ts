@@ -1,18 +1,18 @@
-import {getStorefrontSessionCookies} from './storefront-session.js'
 import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
 import {DevServerSession, DevServerRenderContext} from './types.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetch, type Response} from '@shopify/cli-kit/node/http'
 import {createError} from 'h3'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
+  const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
 
-  outputDebug(`→ Rendering ${url} (with ${Object.keys(context.replaceTemplates)})...`)
+  outputDebug(`→ Rendering ${url} (with ${replaceTemplates})...`)
 
-  const bodyParams = storefrontReplaceTemplatesParams(context.replaceTemplates)
+  const bodyParams = storefrontReplaceTemplatesParams(context)
   const headers = await buildHeaders(session, context)
 
   const response = await fetch(url, {
@@ -34,14 +34,6 @@ export async function render(session: DevServerSession, context: DevServerRender
   const requestId = response.headers.get('x-request-id')
   outputDebug(`← ${response.status} (request_id: ${requestId})`)
 
-  if (!response.ok) {
-    throw createError({
-      status: response.status,
-      statusText: response.statusText,
-      data: {requestId, url},
-    })
-  }
-
   return response
 }
 
@@ -55,7 +47,7 @@ async function buildHeaders(session: DevServerSession, context: DevServerRenderC
 
 async function buildStandardHeaders(session: DevServerSession, context: DevServerRenderContext) {
   const cookies = await buildCookies(session, context)
-  const storefrontToken = await ensureAuthenticatedStorefront([])
+  const storefrontToken = session.storefrontToken
 
   return cleanHeader({
     ...context.headers,
@@ -66,7 +58,7 @@ async function buildStandardHeaders(session: DevServerSession, context: DevServe
 
 async function buildThemeAccessHeaders(session: DevServerSession, context: DevServerRenderContext) {
   const cookies = await buildCookies(session, context)
-  const storefrontToken = await ensureAuthenticatedStorefront([])
+  const storefrontToken = session.storefrontToken
   const filteredHeaders: {[key: string]: string} = {}
   const filterKeys = ['ACCEPT', 'CONTENT-TYPE', 'CONTENT-LENGTH']
 
@@ -84,13 +76,9 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: DevSe
   })
 }
 
-async function buildCookies(session: DevServerSession, ctx: DevServerRenderContext) {
+export function buildCookies(session: DevServerSession, ctx: Pick<DevServerRenderContext, 'headers'>) {
   const cookies = parseCookies(ctx.headers.cookie ?? ctx.headers.Cookie ?? '')
-  const baseUrl = buildBaseStorefrontUrl(session)
-  const headers = isThemeAccessSession(session) ? themeAccessHeaders(session) : {}
-  const storefrontPassword = session.storefrontPassword
-
-  const sessionCookies = await getStorefrontSessionCookies(baseUrl, ctx.themeId, storefrontPassword, headers)
+  const sessionCookies = session.sessionCookies ?? {}
 
   return serializeCookies({
     ...cookies,
@@ -98,7 +86,7 @@ async function buildCookies(session: DevServerSession, ctx: DevServerRenderConte
   })
 }
 
-function buildStorefrontUrl(session: DevServerSession, {path, sectionId, query}: DevServerRenderContext) {
+function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBlockId, query}: DevServerRenderContext) {
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}${path}`
   const params = new URLSearchParams({
@@ -110,14 +98,17 @@ function buildStorefrontUrl(session: DevServerSession, {path, sectionId, query}:
     params.append(key, value)
   }
 
+  // The Section Rendering API takes precendence over the Block Rendering API.
   if (sectionId) {
     params.append('section_id', sectionId)
+  } else if (appBlockId) {
+    params.append('app_block_id', appBlockId)
   }
 
   return `${url}?${params}`
 }
 
-function buildBaseStorefrontUrl(session: DevServerSession) {
+export function buildBaseStorefrontUrl(session: AdminSession) {
   if (isThemeAccessSession(session)) {
     return 'https://theme-kit-access.shopifyapps.com/cli/sfr'
   } else {
@@ -125,7 +116,7 @@ function buildBaseStorefrontUrl(session: DevServerSession) {
   }
 }
 
-function isThemeAccessSession(session: DevServerSession) {
+function isThemeAccessSession(session: AdminSession) {
   return session.token.startsWith('shptka_')
 }
 
