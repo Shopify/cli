@@ -22,7 +22,6 @@ interface Cache {
   [notifications: NotificationsKey]: CacheValue<string>
   [notification: NotificationKey]: CacheValue<string>
   [MostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
-  [mostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
   [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
