@@ -55,12 +55,6 @@ export interface appdev {
   '--skip-dependencies-installation'?: ''
 
   /**
-   * Use the legacy Ruby implementation for managing theme app extensions.
-   * @environment SHOPIFY_FLAG_STABLE
-   */
-  '--stable'?: ''
-
-  /**
    * Store URL. Must be an existing development or Shopify Plus sandbox store.
    * @environment SHOPIFY_FLAG_STORE
    */

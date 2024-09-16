@@ -48,7 +48,7 @@ describe('Pull', () => {
 
   describe('run with CLI 2 implementation', () => {
     async function run(argv: string[], theme?: Theme) {
-      await runPullCommand(['--stable', ...argv], path, adminSession, theme)
+      await runPullCommand(['--legacy', ...argv], path, adminSession, theme)
     }
 
     function expectCLI2ToHaveBeenCalledWith(command: string) {

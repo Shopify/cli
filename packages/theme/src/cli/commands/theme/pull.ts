@@ -61,10 +61,10 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
-    stable: Flags.boolean({
+    legacy: Flags.boolean({
       hidden: true,
-      description: 'Use the legacy Ruby implementation for the `theme pull` command.',
-      env: 'SHOPIFY_FLAG_STABLE',
+      description: 'Use the legacy Ruby implementation for the `shopify theme pull` command.',
+      env: 'SHOPIFY_FLAG_LEGACY',
     }),
   }
 
@@ -82,7 +82,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       ? developmentThemeManager.find()
       : developmentThemeManager.fetch())
 
-    if (!flags.stable) {
+    if (!flags.legacy) {
       const {path, nodelete, live, development, only, ignore, force} = flags
 
       const theme = await findOrSelectTheme(adminSession, {

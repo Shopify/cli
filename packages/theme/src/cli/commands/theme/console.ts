@@ -38,9 +38,10 @@ export default class Console extends ThemeCommand {
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
-    stable: Flags.boolean({
-      description: 'Use the legacy Ruby implementation for the `theme console` command.',
-      env: 'SHOPIFY_FLAG_STABLE',
+    legacy: Flags.boolean({
+      hidden: true,
+      description: 'Use the legacy Ruby implementation for the `shopify theme console` command.',
+      env: 'SHOPIFY_FLAG_LEGACY',
     }),
   }
 
@@ -54,7 +55,7 @@ export default class Console extends ThemeCommand {
     const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
     const authUrl = `http://localhost:${port ?? '9293'}/password`
 
-    if (!flags.stable) {
+    if (!flags.legacy) {
       if (flags.port) {
         renderPortDeprecationWarning()
       }
