@@ -1,6 +1,7 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
+import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
@@ -32,19 +33,19 @@ export async function ensureAuthenticatedPartners(
   scopes: string[] = [],
   env = process.env,
   options: EnsureAuthenticatedAdditionalOptions = {},
-): Promise<string> {
+): Promise<{token: string; userId: string}> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
   const envToken = getPartnersToken()
   if (envToken) {
-    return (await exchangeCustomPartnerToken(envToken)).accessToken
+    return {token: (await exchangeCustomPartnerToken(envToken)).accessToken, userId: nonRandomUUID(envToken)}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
   if (!tokens.partners) {
     throw new BugError('No partners token found after ensuring authenticated')
   }
-  return tokens.partners
+  return {token: tokens.partners, userId: tokens.userId}
 }
 
 /**
@@ -59,7 +60,7 @@ export async function ensureAuthenticatedAppManagement(
   scopes: string[] = [],
   env = process.env,
   options: EnsureAuthenticatedAdditionalOptions = {},
-): Promise<string> {
+): Promise<{token: string; userId: string}> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
 ${outputToken.json(scopes)}
 `)
@@ -67,7 +68,7 @@ ${outputToken.json(scopes)}
   if (!tokens) {
     throw new BugError('No App Management token found after ensuring authenticated')
   }
-  return tokens.appManagement!
+  return {token: tokens.appManagement!, userId: tokens.userId}
 }
 
 /**

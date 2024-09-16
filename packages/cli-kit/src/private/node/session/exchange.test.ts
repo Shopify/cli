@@ -21,6 +21,8 @@ const data: any = {
   refresh_token: 'refresh_token',
   scope: 'scope scope2',
   expires_in: 3600,
+  // id_token:{sub: '1234-5678'}
+  id_token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0LTU2NzgifQ.L8IiNHncR4xe42f1fLQZFD5D_HBo7oMlfop2FS-NUCU',
 }
 
 const identityToken: IdentityToken = {
@@ -28,6 +30,7 @@ const identityToken: IdentityToken = {
   refreshToken: data.refresh_token,
   expiresAt: expiredDate,
   scopes: data.scope.split(' '),
+  userId: '1234-5678',
 }
 
 vi.mock('../../../public/node/http.js')

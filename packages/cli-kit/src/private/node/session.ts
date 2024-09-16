@@ -97,6 +97,7 @@ export interface OAuthSession {
   storefront?: string
   businessPlatform?: string
   appManagement?: string
+  userId: string
 }
 
 /**
@@ -264,6 +265,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
   }
 }
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 const getFirstOrganization = gql`
   {
     organizations(first: 1) {
@@ -332,7 +334,9 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
   if (!fqdnSession) {
     throw new BugError('No session found after ensuring authenticated')
   }
-  const tokens: OAuthSession = {}
+  const tokens: OAuthSession = {
+    userId: fqdnSession.identity.userId,
+  }
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
@@ -405,7 +409,7 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 function buildIdentityTokenFromEnv(
   scopes: string[],
-  identityTokenInformation: {accessToken: string; refreshToken: string},
+  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string},
 ) {
   return {
     ...identityTokenInformation,
