@@ -173,7 +173,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       onContent: (fn) => {
         contentPromise
           .then((content) => {
-            if (content) fn(content)
+            if (content !== undefined) fn(content)
           })
           .catch(() => {})
       },
