@@ -79,7 +79,7 @@ async function renderNotifications(notifications: Notification[]) {
   notifications.slice(0, 2).forEach((notification) => {
     const content = {
       headline: notification.title,
-      body: notification.message,
+      body: notification.message.replaceAll('\\n', '\n'),
       link: notification.cta,
     }
     switch (notification.type) {
