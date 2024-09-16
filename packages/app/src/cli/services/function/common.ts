@@ -3,11 +3,13 @@ import {loadApp} from '../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {generateSchemaService} from '../generate-schema.js'
+import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 
 export const functionFlags = {
   path: Flags.string({
@@ -49,4 +51,23 @@ export async function inFunctionContext({
   } else {
     throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
   }
+}
+
+export async function getOrGenerateSchemaPath(
+  extension: ExtensionInstance<FunctionConfigType>,
+  app: AppInterface,
+): Promise<string | undefined> {
+  const path = joinPath(extension.directory, 'schema.graphql')
+  if (await fileExists(path)) {
+    return path
+  }
+
+  await generateSchemaService({
+    app,
+    extension,
+    stdout: false,
+    path: extension.directory,
+  })
+
+  return (await fileExists(path)) ? path : undefined
 }

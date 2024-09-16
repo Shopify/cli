@@ -1,14 +1,16 @@
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {chmod, createFileWriteStream, fileExists, mkdir} from '@shopify/cli-kit/node/fs'
+import {chmod, createFileWriteStream, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {PipelineSource} from 'stream'
 import stream from 'node:stream/promises'
 import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const JAVY_VERSION = 'v3.0.1'
-const FUNCTION_RUNNER_VERSION = 'v6.0.0'
+const FUNCTION_RUNNER_VERSION = 'v6.2.1'
+const JAVY_VERSION = 'v3.1.0'
 
 // The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
 // Javy and function-runner for now. Those methods may not continue to have the same logic in the future. If they
@@ -99,18 +101,34 @@ export async function installBinary(bin: DownloadableBinary) {
 
   const url = bin.downloadUrl(process.platform, process.arch)
   outputDebug(`Downloading ${bin.name} ${bin.version} from ${url} to ${bin.path}`)
-  await mkdir(dirname(bin.path))
-  const resp = await fetch(url)
-  if (resp.status !== 200) {
-    throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
+  const dir = dirname(bin.path)
+  if (!(await fileExists(dir))) {
+    await mkdir(dir)
   }
+  await performActionWithRetryAfterRecovery(
+    async () => {
+      const resp = await fetch(url)
+      if (resp.status !== 200) {
+        throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
+      }
 
-  const responseStream = resp.body
-  if (responseStream === null) {
-    throw new Error(`Downloading ${bin.name} failed with empty response body`)
-  }
+      const responseStream = resp.body
+      if (responseStream === null) {
+        throw new Error(`Downloading ${bin.name} failed with empty response body`)
+      }
 
-  const outputStream = createFileWriteStream(bin.path)
-  await bin.processResponse(responseStream, outputStream)
-  await chmod(bin.path, 0o775)
+      // Download to a temp location and then move the file only after it's fully processed
+      // so the `isInstalled` check above will continue to return false if the file hasn't
+      // been fully processed.
+      await inTemporaryDirectory(async (tmpDir) => {
+        const tmpFile = joinPath(tmpDir, 'binary')
+        const outputStream = createFileWriteStream(tmpFile)
+        await bin.processResponse(responseStream, outputStream)
+        await chmod(tmpFile, 0o775)
+        await moveFile(tmpFile, bin.path)
+      })
+    },
+    async () => {},
+    2,
+  )
 }

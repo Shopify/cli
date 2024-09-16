@@ -155,6 +155,11 @@ const PLATFORM_DOMAIN_MAP: {[key: string]: string | null} = {
   flow: null,
 }
 
+function getUrlPath(url: string) {
+  const urlObject = new URL(url)
+  return urlObject.pathname + urlObject.search + urlObject.hash
+}
+
 /**
  * Given a dashboard-built marketing activity extension config file, convert it to toml for the CLI extension
  */
@@ -166,19 +171,19 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
   const localExtensionRepresentation = {
     extensions: [
       {
-        type: 'marketing_activity_extension_cli',
+        type: 'marketing_activity',
         name: config.title,
         handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
         title: config.title,
         description: config.description,
-        app_api_url: config.app_api_url,
+        api_path: getUrlPath(config.app_api_url),
         tactic: config.tactic,
         marketing_channel: PLATFORM_CHANNEL_MAP[config.platform] ?? '',
         referring_domain: PLATFORM_DOMAIN_MAP[config.platform] ?? '',
         is_automation: config.is_automation,
         use_external_editor: config.use_external_editor,
         preview_data: config.preview_data,
-        fields: config.fields,
+        fields: config.fields.map(({id, ...field}) => field),
       },
     ],
   }

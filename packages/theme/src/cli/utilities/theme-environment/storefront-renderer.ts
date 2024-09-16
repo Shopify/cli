@@ -76,7 +76,7 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: DevSe
   })
 }
 
-async function buildCookies(session: DevServerSession, ctx: DevServerRenderContext) {
+export function buildCookies(session: DevServerSession, ctx: Pick<DevServerRenderContext, 'headers'>) {
   const cookies = parseCookies(ctx.headers.cookie ?? ctx.headers.Cookie ?? '')
   const sessionCookies = session.sessionCookies ?? {}
 
