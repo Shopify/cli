@@ -8,6 +8,8 @@ import {outputContent, outputDebug, outputToken} from '../../public/node/output.
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
+import {runWithRateLimit} from '../../private/node/conf-store.js'
+import {reportingRateLimit} from '../../private/node/constants.js'
 import {Interfaces} from '@oclif/core'
 
 export type CommandExitMode =
@@ -35,6 +37,19 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
     const payload = await buildPayload(options)
     if (payload === undefined) {
       // Nothing to log
+      return
+    }
+
+    let withinRateLimit = false
+    await runWithRateLimit({
+      key: 'report-analytics-event',
+      ...reportingRateLimit,
+      task: async () => {
+        withinRateLimit = true
+      },
+    })
+    if (!withinRateLimit) {
+      outputDebug(outputContent`Skipping command analytics due to rate limiting, payload: ${outputToken.json(payload)}`)
       return
     }
 

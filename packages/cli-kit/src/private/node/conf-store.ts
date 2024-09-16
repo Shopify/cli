@@ -10,13 +10,15 @@ interface CacheValue<T> {
 export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
 type MostRecentOccurrenceKey = `most-recent-occurrence-${string}`
+type RateLimitKey = `rate-limited-occurrences-${string}`
 
 type ExportedKey = IntrospectionUrlKey | PackageVersionKey
 
 interface Cache {
   [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
   [packageVersionKey: PackageVersionKey]: CacheValue<string>
-  [MostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
+  [mostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
+  [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
 export interface ConfSchema {
@@ -129,24 +131,91 @@ function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds =
  * days, hours, minutes, and seconds properties.
  * If the most recent occurrence is older than this, the task will be executed.
  * @param task - The task to run if the most recent occurrence is older than the timeout.
- * @returns The result of the task, or undefined if the task was not run.
+ * @returns true if the task was run, or false if the task was not run.
  */
 export async function runAtMinimumInterval(
   key: string,
   timeout: TimeInterval,
   task: () => Promise<void>,
   config = cliKitStore(),
-): Promise<boolean | undefined> {
+): Promise<boolean> {
   const cache: Cache = config.get('cache') || {}
   const cacheKey: MostRecentOccurrenceKey = `most-recent-occurrence-${key}`
   const cached = cache[cacheKey]
 
   if (cached?.value !== undefined && Date.now() - cached.timestamp < timeIntervalToMilliseconds(timeout)) {
-    return undefined
+    return false
   }
 
   await task()
   cache[cacheKey] = {value: true, timestamp: Date.now()}
   config.set('cache', cache)
+  return true
+}
+
+interface RunWithRateLimitOptions {
+  /**
+   * The key to use for the cache.
+   */
+  key: string
+
+  /**
+   * The number of times the task can be run within the limit
+   */
+  limit: number
+
+  /**
+   * The window of time after which the rate limit is refreshed,
+   * expressed as an object with days, hours, minutes, and seconds properties.
+   * If the most recent occurrence is older than this, the task will be executed.
+   */
+  timeout: TimeInterval
+
+  /**
+   * The task to run if the most recent occurrence is older than the timeout.
+   */
+  task: () => Promise<void>
+}
+
+/**
+ * Execute a task with a time-based rate limit. The rate limit is enforced by
+ * checking how many times that task has been executed in a window of time ending
+ * at the current time. If the task has been executed more than the allowed number
+ * of times in that window, the task will not be executed.
+ *
+ * Note that this function has side effects, as it will also remove events prior
+ * to the window of time that is being checked.
+ * @param options - The options for the rate limiting.
+ * @returns true, or undefined if the task was not run.
+ */
+export async function runWithRateLimit(options: RunWithRateLimitOptions, config = cliKitStore()): Promise<boolean> {
+  const {key, limit, timeout, task} = options
+  const cache: Cache = config.get('cache') || {}
+  const cacheKey: RateLimitKey = `rate-limited-occurrences-${key}`
+  const cached = cache[cacheKey]
+  const now = Date.now()
+
+  if (cached?.value) {
+    // First sweep through the cache and eliminate old events
+    const windowStart = now - timeIntervalToMilliseconds(timeout)
+    const occurrences = cached.value.filter((occurrence) => occurrence >= windowStart)
+
+    // Now check that the number of occurrences within the interval is below the limit
+    if (occurrences.length >= limit) {
+      // First remove the old occurrences from the cache
+      cache[cacheKey] = {value: occurrences, timestamp: Date.now()}
+      config.set('cache', cache)
+
+      return false
+    }
+
+    await task()
+    cache[cacheKey] = {value: [...occurrences, now], timestamp: now}
+  } else {
+    await task()
+    cache[cacheKey] = {value: [now], timestamp: now}
+  }
+  config.set('cache', cache)
+
   return true
 }
