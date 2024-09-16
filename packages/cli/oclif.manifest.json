@@ -2104,6 +2104,25 @@
       "pluginType": "core",
       "strict": true
     },
+    "cache:clear": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Clear the CLI cache, used to store some API responses and handle notifications status",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "cache:clear",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "commands": {
       "aliases": [
       ],
