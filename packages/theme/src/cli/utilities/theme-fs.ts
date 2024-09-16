@@ -147,7 +147,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     })
 
     const syncPromise = contentPromise.then(async (content) => {
-      if (!content) return false
+      if (content === undefined) return false
 
       const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
