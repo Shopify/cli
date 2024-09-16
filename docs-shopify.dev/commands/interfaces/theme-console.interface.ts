@@ -19,18 +19,6 @@ export interface themeconsole {
   '--password <value>'?: string
 
   /**
-   * Local port to serve authentication service.
-   * @environment SHOPIFY_FLAG_PORT
-   */
-  '--port <value>'?: string
-
-  /**
-   * Use the legacy Ruby implementation for the `theme console` command.
-   * @environment SHOPIFY_FLAG_STABLE
-   */
-  '--stable'?: ''
-
-  /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */

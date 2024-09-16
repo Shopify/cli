@@ -70,22 +70,10 @@ export interface themedev {
   '--path <value>'?: string
 
   /**
-   * Force polling to detect file changes.
-   * @environment SHOPIFY_FLAG_POLL
-   */
-  '--poll'?: ''
-
-  /**
    * Local port to serve theme preview from.
    * @environment SHOPIFY_FLAG_PORT
    */
   '--port <value>'?: string
-
-  /**
-   * Use the legacy Ruby implementation for the `theme dev` command.
-   * @environment SHOPIFY_FLAG_STABLE
-   */
-  '--stable'?: ''
 
   /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).

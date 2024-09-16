@@ -4,4 +4,4 @@
 '@shopify/cli': minor
 ---
 
-Default to Typescript implementation for theme commands. Legacy implementation is stil available via the `--stable` flag.
+Default to Typescript implementation for theme commands. Legacy implementation is stil available via the `--legacy` flag.

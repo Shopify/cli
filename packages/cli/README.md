@@ -202,9 +202,9 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--no-color]
-    [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [--stable] [-s
-    <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url
-    <value> |  | ] [--verbose]
+    [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>]
+    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> |  | ]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>                    The name of the app configuration.
@@ -221,7 +221,6 @@ FLAGS
       --path=<value>                      The path to your app directory.
       --reset                             Reset all your settings.
       --skip-dependencies-installation    Skips the installation of dependencies. Deprecated, use workspaces instead.
-      --stable                            Use the legacy Ruby implementation for managing theme app extensions.
       --subscription-product-url=<value>  Resource URL for subscription UI extension. Format: "/products/{productId}"
       --theme-app-extension-port=<value>  Local port of the theme app extension development server.
       --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
@@ -548,7 +547,7 @@ Stream detailed logs for your Shopify app.
 ```
 USAGE
   $ shopify app logs [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--source <value>] [--stable] [--status success|failure] [-s <value>] [--verbose]
+    [--source <value>] [--status success|failure] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -559,7 +558,6 @@ FLAGS
       --path=<value>       The path to your app directory.
       --reset              Reset all your settings.
       --source=<value>...  Filters output to the specified log source.
-      --stable             Use the legacy Ruby implementation for managing theme app extensions.
       --status=<option>    Filters output to the specified status (success or failure).
                            <options: success|failure>
       --verbose            Increase the verbosity of the output.
@@ -1712,8 +1710,6 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --port=<value>            Local port to serve authentication service.
-      --stable                  Use the legacy Ruby implementation for the `theme console` command.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
@@ -1767,8 +1763,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 ```
 USAGE
   $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
-    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--poll] [--port
-    <value>] [--stable] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--port <value>]
+    [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1817,14 +1813,8 @@ FLAGS
   --path=<value>
       The path to your theme directory.
 
-  --poll
-      Force polling to detect file changes.
-
   --port=<value>
       Local port to serve theme preview from.
-
-  --stable
-      Use the legacy Ruby implementation for the `theme dev` command.
 
   --store-password=<value>
       The password for storefronts with password protection.

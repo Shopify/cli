@@ -109,10 +109,10 @@ export default class Push extends ThemeCommand {
       description: 'Publish as the live theme after uploading.',
       env: 'SHOPIFY_FLAG_PUBLISH',
     }),
-    stable: Flags.boolean({
+    legacy: Flags.boolean({
       hidden: true,
-      description: 'Use the legacy Ruby implementation for the `theme push` command.',
-      env: 'SHOPIFY_FLAG_STABLE',
+      description: 'Use the legacy Ruby implementation for the `shopify theme push` command.',
+      env: 'SHOPIFY_FLAG_LEGACY',
     }),
     force: Flags.boolean({
       hidden: true,
@@ -133,7 +133,6 @@ export default class Push extends ThemeCommand {
     'json',
     'allow-live',
     'publish',
-    'stable',
     'force',
     'development-theme-id',
   ]
@@ -149,7 +148,7 @@ export default class Push extends ThemeCommand {
       return
     }
 
-    if (!flags.stable && !flags.password) {
+    if (!flags.legacy && !flags.password) {
       const {path, nodelete, publish, json, force, ignore, only} = flags
 
       const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)

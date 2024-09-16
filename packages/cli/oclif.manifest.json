@@ -412,6 +412,14 @@
           "name": "graphiql-port",
           "type": "option"
         },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -474,13 +482,6 @@
           "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
           "hidden": false,
           "name": "skip-dependencies-installation",
-          "type": "boolean"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "name": "stable",
           "type": "boolean"
         },
         "store": {
@@ -1660,7 +1661,8 @@
         "stable": {
           "allowNo": false,
           "description": "Use the legacy Ruby implementation for managing theme app extensions.",
-          "env": "SHOPIFY_FLAG_STABLE",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
           "name": "stable",
           "type": "boolean"
         },
@@ -4781,6 +4783,14 @@
           "name": "environment",
           "type": "option"
         },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme console` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -4801,16 +4811,10 @@
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
+          "hidden": true,
           "multiple": false,
           "name": "port",
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `theme console` command.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",
@@ -4972,7 +4976,6 @@
         "nodelete",
         "only",
         "ignore",
-        "stable",
         "force",
         "notify"
       ],
@@ -5014,6 +5017,14 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -5090,6 +5101,7 @@
           "allowNo": false,
           "description": "Force polling to detect file changes.",
           "env": "SHOPIFY_FLAG_POLL",
+          "hidden": true,
           "name": "poll",
           "type": "boolean"
         },
@@ -5100,13 +5112,6 @@
           "multiple": false,
           "name": "port",
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `theme dev` command.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",
@@ -5718,6 +5723,14 @@
           "name": "ignore",
           "type": "option"
         },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme pull` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
+        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -5767,14 +5780,6 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `theme pull` command.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "hidden": true,
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",
@@ -5829,7 +5834,6 @@
         "json",
         "allow-live",
         "publish",
-        "stable",
         "force",
         "development-theme-id"
       ],
@@ -5888,6 +5892,14 @@
           "name": "json",
           "type": "boolean"
         },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme push` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
+        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -5944,14 +5956,6 @@
           "description": "Publish as the live theme after uploading.",
           "env": "SHOPIFY_FLAG_PUBLISH",
           "name": "publish",
-          "type": "boolean"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `theme push` command.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "hidden": true,
-          "name": "stable",
           "type": "boolean"
         },
         "store": {
@@ -6116,7 +6120,6 @@
         "nodelete",
         "only",
         "ignore",
-        "stable",
         "force",
         "notify"
       ],
@@ -6158,6 +6161,14 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -6234,6 +6245,7 @@
           "allowNo": false,
           "description": "Force polling to detect file changes.",
           "env": "SHOPIFY_FLAG_POLL",
+          "hidden": true,
           "name": "poll",
           "type": "boolean"
         },
@@ -6244,13 +6256,6 @@
           "multiple": false,
           "name": "port",
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `theme dev` command.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",

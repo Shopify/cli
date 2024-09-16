@@ -43,12 +43,6 @@ export interface applogs {
   '--source <value>'?: string
 
   /**
-   * Use the legacy Ruby implementation for managing theme app extensions.
-   * @environment SHOPIFY_FLAG_STABLE
-   */
-  '--stable'?: ''
-
-  /**
    * Filters output to the specified status (success or failure).
    * @environment SHOPIFY_FLAG_STATUS
    */

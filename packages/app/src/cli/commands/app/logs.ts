@@ -37,7 +37,7 @@ export default class Logs extends Command {
     'no-tunnel': Dev.flags['no-tunnel'],
     'graphiql-port': Dev.flags['graphiql-port'],
     'graphiql-key': Dev.flags['graphiql-key'],
-    stable: Dev.flags.stable,
+    stable: Dev.flags.legacy,
     source: Flags.string({
       description: 'Filters output to the specified log source.',
       env: 'SHOPIFY_FLAG_SOURCE',
