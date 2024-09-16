@@ -16,6 +16,10 @@ import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/main/notifications.json'
 
+function url(): string {
+  return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
+}
+
 const NotificationSchema = zod.object({
   id: zod.string(),
   message: zod.string(),
@@ -99,7 +103,7 @@ async function renderNotifications(notifications: Notification[]) {
  * @returns A Notifications object.
  */
 export async function getNotifications(): Promise<Notifications> {
-  const cacheKey: NotificationsKey = `notifications-${URL}`
+  const cacheKey: NotificationsKey = `notifications-${url()}`
   const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, 24 * 3600 * 1000)
   const notifications: object = JSON.parse(rawNotifications)
   return NotificationsSchema.parse(notifications)
@@ -110,7 +114,7 @@ export async function getNotifications(): Promise<Notifications> {
  */
 async function fetchNotifications(): Promise<string> {
   outputDebug(`No cached notifications found. Fetching them...`)
-  const response = await fetch(URL, {signal: AbortSignal.timeout(3 * 1000)})
+  const response = await fetch(url(), {signal: AbortSignal.timeout(3 * 1000)})
   if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
   return response.text() as unknown as string
 }
