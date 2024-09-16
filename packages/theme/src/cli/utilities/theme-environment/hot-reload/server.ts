@@ -67,7 +67,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
     if (!needsTemplateUpdate(fileKey)) continue
 
     const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-    if (!content) continue
+    if (content === undefined) continue
 
     if (hasRouteTemplate && jsonTemplateRE.test(fileKey)) {
       // Filter out unused JSON templates for the current route. If we're not
