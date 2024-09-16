@@ -4,14 +4,15 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 // max age is 72 hours (3 days)
 const MAX_AGE_FOR_ACCOUNT_INFO_STATUS_MS = 3 * 24 * 60 * 60 * 1000
 
-export function getConfigStoreForAccountInfoStatus() {
+export function getConfigStoreForAccountInfoStatus(cwd?: string) {
   return new LocalStorage<{[subject: string]: {info: AccountInfo; loadedAt: string}}>({
     projectName: 'shopify-app-account-info',
+    cwd,
   })
 }
 
-export function getCachedAccountInfo(subject: string) {
-  const store = getConfigStoreForAccountInfoStatus()
+export function getCachedAccountInfo(subject: string, cwd?: string) {
+  const store = getConfigStoreForAccountInfoStatus(cwd)
   const cached = store.get(subject)
   if (cached) {
     // get age of cached data
@@ -24,12 +25,12 @@ export function getCachedAccountInfo(subject: string) {
   return undefined
 }
 
-export function setCachedAccountInfo(subject: string, accountInfo: AccountInfo) {
-  const store = getConfigStoreForAccountInfoStatus()
+export function setCachedAccountInfo(subject: string, accountInfo: AccountInfo, cwd?: string) {
+  const store = getConfigStoreForAccountInfoStatus(cwd)
   store.set(subject, {info: accountInfo, loadedAt: new Date().toISOString()})
 }
 
-export function clearCachedAccountInfo() {
-  const store = getConfigStoreForAccountInfoStatus()
+export function clearCachedAccountInfo(cwd?: string) {
+  const store = getConfigStoreForAccountInfoStatus(cwd)
   store.clear()
 }
