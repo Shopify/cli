@@ -6,10 +6,13 @@ import {
   removeSession,
   setSession,
   runAtMinimumInterval,
+  getConfigStoreForPartnerStatus,
+  getCachedPartnerAccountStatus,
+  setCachedPartnerAccountStatus,
   runWithRateLimit,
 } from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
@@ -397,6 +400,40 @@ describe('runWithRateLimit', () => {
       // Then
       expect(got).toBe(true)
       expect(taskRan).toBe(true)
+    })
+  })
+})
+
+describe('Partner Account Status Cache', () => {
+  beforeEach(() => {
+    // Clear the partner status store before each test
+    const store = getConfigStoreForPartnerStatus()
+    store.clear()
+  })
+
+  describe('getCachedPartnerAccountStatus', () => {
+    test('returns null for empty token', () => {
+      expect(getCachedPartnerAccountStatus('')).toBeNull()
+    })
+
+    test('returns null for non-existent token', () => {
+      expect(getCachedPartnerAccountStatus('non-existent-token')).toBeNull()
+    })
+
+    test('returns true for existing token', () => {
+      const token = 'existing-token'
+      setCachedPartnerAccountStatus(token)
+
+      expect(getCachedPartnerAccountStatus(token)).toBe(true)
+    })
+  })
+
+  describe('setCachedPartnerAccountStatus', () => {
+    test('sets a new token', () => {
+      const token = 'new-token'
+      setCachedPartnerAccountStatus(token)
+
+      expect(getCachedPartnerAccountStatus(token)).toBe(true)
     })
   })
 })
