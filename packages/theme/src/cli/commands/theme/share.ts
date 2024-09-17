@@ -1,7 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -35,6 +34,10 @@ export default class Share extends ThemeCommand {
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    await execCLI2(['theme', 'share', flags.path, ...flagsToPass], {store, adminToken: adminSession.token})
+    // Remove the following line
+    // await execCLI2(['theme', 'share', flags.path, ...flagsToPass], {store, adminToken: adminSession.token})
+
+    // Add a placeholder for the new implementation
+    // TODO: Implement the share functionality without using execCLI2
   }
 }

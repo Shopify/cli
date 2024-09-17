@@ -1,17 +1,14 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {push} from '../../services/push.js'
 import {hasRequiredThemeDirectories} from '../../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {LIVE_THEME_ROLE, Role, UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
@@ -148,53 +145,22 @@ export default class Push extends ThemeCommand {
       return
     }
 
-    if (!flags.legacy && !flags.password) {
-      const {path, nodelete, publish, json, force, ignore, only} = flags
+    const {path, nodelete, publish, json, force, ignore, only} = flags
 
-      const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
-      if (!selectedTheme) {
-        return
-      }
-
-      await push(selectedTheme, adminSession, {
-        path,
-        nodelete,
-        publish,
-        json,
-        force,
-        ignore,
-        only,
-      })
-
+    const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
+    if (!selectedTheme) {
       return
     }
 
-    const flagsForCli2 = flags as typeof flags & FlagValues
-
-    showEmbeddedCLIWarning()
-
-    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-
-    const targetTheme = await (flagsForCli2.development
-      ? developmentThemeManager.findOrCreate()
-      : developmentThemeManager.fetch())
-
-    if (targetTheme) {
-      if (flagsForCli2.development) {
-        flagsForCli2.theme = `${targetTheme.id}`
-        flagsForCli2.development = false
-      }
-      if (useEmbeddedThemeCLI()) {
-        flagsForCli2['development-theme-id'] = targetTheme.id
-      }
-    }
-
-    const flagsToPass = this.passThroughFlags(flagsForCli2, {
-      allowedFlags: Push.cli2Flags,
+    await push(selectedTheme, adminSession, {
+      path,
+      nodelete,
+      publish,
+      json,
+      force,
+      ignore,
+      only,
     })
-    const command = ['theme', 'push', flagsForCli2.path, ...flagsToPass]
-
-    await execCLI2(command, {store, adminToken: adminSession.token})
   }
 }
 

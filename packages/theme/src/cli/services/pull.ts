@@ -1,77 +1,69 @@
-import {downloadTheme} from '../utilities/theme-downloader.js'
-import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
-import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {glob} from '@shopify/cli-kit/node/fs'
+import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {pullTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {themeComponent} from '@shopify/cli-kit/node/themes/theme-components'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {fileExists, mkdir} from '@shopify/cli-kit/node/fs'
 
 interface PullOptions {
   path: string
-  nodelete: boolean
-  force: boolean
+  nodelete?: boolean
   only?: string[]
   ignore?: string[]
+  force?: boolean
 }
 
-export async function pull(theme: Theme, session: AdminSession, options: PullOptions) {
-  const path = options.path
-  const force = options.force
+export async function pull(theme: Theme, adminSession: AdminSession, options: PullOptions) {
+  const directory = options.path
 
-  /**
-   * If users are not forcing the `pull` command, the directory is not empty,
-   * and the directory doesn't look like a theme directory, we ask for
-   * confirmation, because the `pull` command has the destructive behavior of
-   * removing local assets that are not present remotely.
-   */
-  if (
-    !(await isEmptyDir(path)) &&
-    !(await hasRequiredThemeDirectories(path)) &&
-    !(await currentDirectoryConfirmed(force))
-  ) {
-    return
+  if (!(await fileExists(directory))) {
+    await mkdir(directory)
   }
 
-  const themeFileSystem = mountThemeFileSystem(path, {filters: options})
-  const [remoteChecksums] = await Promise.all([fetchChecksums(theme.id, session), themeFileSystem.ready()])
-  const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
+  const componentResults = await pullTheme(theme, adminSession, {
+    directory,
+    nodelete: options.nodelete,
+    only: options.only,
+    ignore: options.ignore,
+  })
 
-  const store = session.storeFqdn
-  const themeId = theme.id
+  const tasks = componentResults.map((result) => {
+    return {
+      title: `Pulling theme files from ${result.name}`,
+      task: async () => {
+        if (result.errors.length > 0) {
+          throw new AbortError(result.errors.join('\n'))
+        }
+      },
+    }
+  })
 
-  await downloadTheme(theme, session, themeChecksums, themeFileSystem, options)
+  await renderTasks(tasks)
+
+  const componentNames = componentResults.map((result) => result.name)
+  const components = componentNames.map((name) => themeComponent(name))
 
   renderSuccess({
-    body: ['The theme', ...themeComponent(theme), 'has been pulled.'],
+    body: ['Your theme has been pulled successfully'],
     nextSteps: [
-      [
-        {
-          link: {
-            label: 'View your theme',
-            url: `https://${store}/?preview_theme_id=${themeId}`,
-          },
-        },
-      ],
-      [
-        {
-          link: {
-            label: 'Customize your theme at the theme editor',
-            url: `https://${store}/admin/themes/${themeId}/editor`,
-          },
-        },
-      ],
+      ['To preview your changes, run', {command: `cd ${basename(directory)}`}, 'and', {command: 'shopify theme serve'}],
     ],
   })
-}
 
-export async function isEmptyDir(path: string) {
-  const entries = await glob('*', {
-    cwd: path,
-    deep: 1,
-    onlyFiles: false,
+  renderInfo({
+    body: [
+      {
+        list: {
+          items: components.map((component) => ({
+            link: {
+              label: component.name,
+              url: joinPath(directory, component.directory),
+            },
+          })),
+        },
+      },
+    ],
   })
-
-  return entries.length === 0
 }

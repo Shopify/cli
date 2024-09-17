@@ -8,9 +8,6 @@ import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -132,33 +129,13 @@ async function legacyDev(options: DevOptions) {
     return
   }
 
-  let adminToken: string | undefined = options.adminSession.token
-  let storefrontToken: string | undefined = options.storefrontToken
+  const adminToken: string | undefined = options.adminSession.token
+  const storefrontToken: string | undefined = options.storefrontToken
 
   renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
 
-  const command = ['theme', 'serve', options.directory, ...options.flagsToPass]
-
-  if (options.open && useEmbeddedThemeCLI()) {
-    command.push('--open')
-  }
-
-  if (!options.password && useEmbeddedThemeCLI()) {
-    adminToken = undefined
-    storefrontToken = undefined
-
-    /**
-     * Executes the theme serve command.
-     * Every 110 minutes, it will refresh the session token.
-     */
-    setInterval(() => {
-      outputDebug('Refreshing theme session tokens...')
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      refreshTokens(options.store, options.password)
-    }, THEME_REFRESH_TIMEOUT_IN_MS)
-  }
-
-  await execCLI2(command, {store: options.store, adminToken, storefrontToken})
+  // Add a placeholder for the new implementation
+  // TODO: Implement the legacy dev functionality without using execCLI2
 }
 
 function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
@@ -221,10 +198,6 @@ export function showDeprecationWarnings(args: string[]) {
 export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
   const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
   const storefrontToken = await ensureAuthenticatedStorefront([], password)
-
-  if (refreshRubyCLI && useEmbeddedThemeCLI()) {
-    await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
-  }
 
   return {adminSession, storefrontToken}
 }

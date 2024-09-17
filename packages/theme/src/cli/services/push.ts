@@ -1,138 +1,85 @@
-import {mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {uploadTheme} from '../utilities/theme-uploader.js'
-import {themeComponent} from '../utilities/theme-ui.js'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchChecksums, publishTheme} from '@shopify/cli-kit/node/themes/api'
-import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
+import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {pushTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {themeComponent} from '@shopify/cli-kit/node/themes/theme-components'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
 
 interface PushOptions {
   path: string
   nodelete?: boolean
+  publish?: boolean
   json?: boolean
   force?: boolean
-  publish?: boolean
-  ignore?: string[]
   only?: string[]
+  ignore?: string[]
 }
 
-interface JsonOutput {
-  theme: {
-    id: number
-    name: string
-    role: string
-    shop: string
-    editor_url: string
-    preview_url: string
-    warning?: string
-  }
-}
+export async function push(theme: Theme, adminSession: AdminSession, options: PushOptions) {
+  const componentResults = await pushTheme(theme, adminSession, {
+    directory: options.path,
+    nodelete: options.nodelete,
+    publish: options.publish,
+    only: options.only,
+    ignore: options.ignore,
+  })
 
-export async function push(theme: Theme, session: AdminSession, options: PushOptions) {
-  const themeChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
-
-  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
-    theme,
-    session,
-    themeChecksums,
-    themeFileSystem,
-    options,
-  )
-
-  await renderThemeSyncProgress()
-
-  if (options.publish) {
-    await publishTheme(theme.id, session)
-  }
-
-  await handlePushOutput(uploadResults, theme, session, options)
-}
-
-function hasUploadErrors(results: Map<string, Result>): boolean {
-  for (const [_key, result] of results.entries()) {
-    if (!result.success) {
-      return true
+  const tasks = componentResults.map((result) => {
+    return {
+      title: `Pushing theme files to ${result.name}`,
+      task: async () => {
+        if (result.errors.length > 0) {
+          throw new AbortError(result.errors.join('\n'))
+        }
+      },
     }
-  }
-  return false
-}
+  })
 
-async function handlePushOutput(
-  results: Map<string, Result>,
-  theme: Theme,
-  session: AdminSession,
-  options: PushOptions,
-) {
-  const hasErrors = hasUploadErrors(results)
+  await renderTasks(tasks)
+
+  const componentNames = componentResults.map((result) => result.name)
+  const components = componentNames.map((name) => themeComponent(name))
 
   if (options.json) {
-    handleJsonOutput(theme, hasErrors, session)
-  } else if (options.publish) {
-    handlePublishOutput(hasErrors, session)
-  } else {
-    handleOutput(theme, hasErrors, session)
-  }
-}
-
-function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
-  const output: JsonOutput = {
-    theme: {
-      id: theme.id,
-      name: theme.name,
-      role: theme.role,
-      shop: session.storeFqdn,
-      editor_url: themeEditorUrl(theme, session),
-      preview_url: themePreviewUrl(theme, session),
-    },
-  }
-
-  if (hasErrors) {
-    const message = `The theme ${themeComponent(theme).join(' ')} was pushed with errors`
-    output.theme.warning = message
-  }
-  outputInfo(JSON.stringify(output))
-}
-
-function handlePublishOutput(hasErrors: boolean, session: AdminSession) {
-  if (hasErrors) {
-    renderWarning({body: `Your theme was published with errors and is now live at https://${session.storeFqdn}`})
-  } else {
-    renderSuccess({body: `Your theme is now live at https://${session.storeFqdn}`})
-  }
-}
-
-function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
-  const nextSteps = [
-    [
-      {
-        link: {
-          label: 'View your theme',
-          url: themePreviewUrl(theme, session),
-        },
+    const output = {
+      theme: {
+        id: theme.id,
+        name: theme.name,
+        role: theme.role,
+        shop: adminSession.storeFqdn,
+        editor_url: `https://${adminSession.storeFqdn}/admin/themes/${theme.id}/editor`,
+        preview_url: `https://${adminSession.storeFqdn}/?preview_theme_id=${theme.id}`,
       },
-    ],
-    [
-      {
-        link: {
-          label: 'Customize your theme at the theme editor',
-          url: themeEditorUrl(theme, session),
-        },
-      },
-    ],
-  ]
-
-  if (hasErrors) {
-    renderWarning({
-      body: ['The theme', ...themeComponent(theme), 'was pushed with errors'],
-      nextSteps,
-    })
+    }
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(output, null, 2))
   } else {
     renderSuccess({
-      body: ['The theme', ...themeComponent(theme), 'was pushed successfully.'],
-      nextSteps,
+      body: ['Your theme has been pushed successfully'],
+      nextSteps: [
+        [
+          'To preview your changes, run',
+          {command: `cd ${basename(options.path)}`},
+          'and',
+          {command: 'shopify theme serve'},
+        ],
+      ],
+    })
+
+    renderInfo({
+      body: [
+        {
+          list: {
+            items: components.map((component) => ({
+              link: {
+                label: component.name,
+                url: joinPath(options.path, component.directory),
+              },
+            })),
+          },
+        },
+      ],
     })
   }
 }

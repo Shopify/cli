@@ -1,15 +1,13 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {pull} from '../../services/pull.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 
 export default class Pull extends ThemeCommand {
   static summary = 'Download your remote theme files locally.'
@@ -82,37 +80,16 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       ? developmentThemeManager.find()
       : developmentThemeManager.fetch())
 
-    if (!flags.legacy) {
-      const {path, nodelete, live, development, only, ignore, force} = flags
+    const {path, nodelete, live, development, only, ignore, force} = flags
 
-      const theme = await findOrSelectTheme(adminSession, {
-        header: 'Select a theme to open',
-        filter: {
-          live,
-          theme: development ? `${developmentTheme?.id}` : flags.theme,
-        },
-      })
+    const theme = await findOrSelectTheme(adminSession, {
+      header: 'Select a theme to open',
+      filter: {
+        live,
+        theme: development ? `${developmentTheme?.id}` : flags.theme,
+      },
+    })
 
-      await pull(theme, adminSession, {path, nodelete, only, ignore, force})
-
-      return
-    }
-
-    const flagsForCli2 = flags as typeof flags & FlagValues
-
-    if (developmentTheme) {
-      if (flagsForCli2.development) {
-        flagsForCli2.theme = `${developmentTheme.id}`
-        flagsForCli2.development = false
-      }
-      if (useEmbeddedThemeCLI()) {
-        flagsForCli2['development-theme-id'] = developmentTheme.id
-      }
-    }
-
-    const flagsToPass = this.passThroughFlags(flagsForCli2, {allowedFlags: Pull.cli2Flags})
-    const command = ['theme', 'pull', flagsForCli2.path, ...flagsToPass]
-
-    await execCLI2(command, {store, adminToken: adminSession.token})
+    await pull(theme, adminSession, {path, nodelete, only, ignore, force})
   }
 }

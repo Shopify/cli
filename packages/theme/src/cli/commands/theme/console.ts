@@ -3,9 +3,8 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {ensureReplEnv, initializeRepl} from '../../services/console.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
@@ -56,30 +55,11 @@ export default class Console extends ThemeCommand {
     const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
     const authUrl = `http://localhost:${port ?? '9293'}/password`
 
-    if (!flags.legacy) {
-      if (flags.port) {
-        renderPortDeprecationWarning()
-      }
-      const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
-      await initializeRepl(adminSession, themeId, url, themeAccessPassword, storePassword)
-      return
+    if (flags.port) {
+      renderPortDeprecationWarning()
     }
-
-    renderInfo({
-      body: [
-        'Activate the Shopify Liquid console in',
-        {link: {label: 'your browser', url: authUrl}},
-        'and enter your store password if prompted.',
-      ],
-    })
-
-    const storefrontToken = await ensureAuthenticatedStorefront([], themeAccessPassword)
-
-    return execCLI2(['theme', 'console', '--url', url, '--port', port ?? '9293', '--theme', theme], {
-      store,
-      adminToken: adminSession.token,
-      storefrontToken,
-    })
+    const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
+    await initializeRepl(adminSession, themeId, url, themeAccessPassword, storePassword)
   }
 }
 function renderPortDeprecationWarning() {
