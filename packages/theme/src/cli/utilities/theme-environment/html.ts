@@ -2,9 +2,10 @@ import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
-import {createError, defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -106,11 +107,15 @@ function assertThemeId(response: Response, html: string, expectedThemeId: string
   const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
 
   if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
-    throw createError({
-      status: 502,
-      statusText: 'Bad Gateway',
-      data: {url: response.url, requestId: response.headers.get('x-request-id')},
-      cause: new Error(`Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}`),
-    })
+    renderFatalError(
+      new AbortError(
+        `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.\nRequest ID: ${response.headers.get(
+          'x-request-id',
+        )}\nURL: ${response.url}`,
+        `This is likely related to an issue in upstream Shopify APIs.\nPlease try again in a few minutes and report this issue:\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
+      ),
+    )
+
+    process.exit(1)
   }
 }
