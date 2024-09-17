@@ -79,7 +79,7 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.unshift(new AppManagementClient())
   return clients
 }
 
