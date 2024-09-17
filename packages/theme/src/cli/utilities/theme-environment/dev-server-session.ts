@@ -48,11 +48,8 @@ async function fetchDevServerSession(
 ): Promise<DevServerSession> {
   const baseUrl = buildBaseStorefrontUrl(adminSession)
 
-  const [session, storefrontToken] = await Promise.all([
-    ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, []),
-    ensureAuthenticatedStorefront([], adminPassword),
-  ])
-
+  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
+  const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
   const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {})
 
   return {
