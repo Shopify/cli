@@ -31,6 +31,12 @@ export interface hydrogenbuild {
   '--entry <value>'?: string
 
   /**
+   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP
+   */
+  '--force-client-sourcemap'?: ''
+
+  /**
    * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.
    * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK
    */
@@ -43,7 +49,7 @@ export interface hydrogenbuild {
   '--path <value>'?: string
 
   /**
-   * Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.
+   * Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.
    * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP
    */
   '--sourcemap'?: ''
