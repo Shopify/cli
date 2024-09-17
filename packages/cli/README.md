@@ -1710,7 +1710,6 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --port=<value>            Local port to serve authentication service.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
@@ -1764,8 +1763,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 ```
 USAGE
   $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
-    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--poll] [--port
-    <value>] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--port <value>]
+    [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1813,9 +1812,6 @@ FLAGS
 
   --path=<value>
       The path to your theme directory.
-
-  --poll
-      Force polling to detect file changes.
 
   --port=<value>
       Local port to serve theme preview from.
