@@ -62,12 +62,6 @@ function hotReloadScript() {
     window.location.reload()
   }
 
-  const reloadIfErrorPage = () => {
-    if (document.body.id === 'full-error-page') {
-      fullPageReload('Error page update')
-    }
-  }
-
   const refreshHTMLLinkElements = (elements: HTMLLinkElement[]) => {
     for (const element of elements) {
       // The `href` property prepends the host to the pathname. Use attributes instead:
@@ -159,17 +153,11 @@ function hotReloadScript() {
         await refreshSections(data, elements)
         logInfo(`Updated sections for "${data.key}":`, data.names)
       } else {
-        // No sections found. This might be an error page or contain syntax errors.
-        reloadIfErrorPage()
-
-        // If we're still here, this might be due to a syntax error in the section file.
-        // In this case, the rendered page does not include the section ID in the DOM,
-        // only a syntax error message as a text node. Check the outerText of the document,
-        // which is the shortest string that contains text nodes:
-        const documentText = document.documentElement.outerText
-        if (documentText.includes('Liquid syntax error')) {
-          fullPageReload(data.key, new Error('Syntax error in document'))
-        }
+        // No sections found. Possible scenarios:
+        // - The section has been removed.
+        // - There's a Liquid syntax error in place of the section.
+        // - This is a full error page.
+        fullPageReload(data.key)
       }
     },
     css: async (data) => {

@@ -190,13 +190,15 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const handleFileDelete = (themeId: string, adminSession: AdminSession, fileKey: string) => {
     if (isFileIgnored(fileKey)) return
 
-    unsyncedFileKeys.delete(fileKey)
+    // Optimistically delete the file from the local file system.
     files.delete(fileKey)
+    unsyncedFileKeys.add(fileKey)
     emitEvent('unlink', {fileKey})
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
         if (!success) throw new Error('Unknown issue.')
+        unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
       .catch((error) => {
