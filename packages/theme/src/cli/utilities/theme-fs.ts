@@ -13,7 +13,7 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -196,12 +196,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
-        if (!success) throw new Error('Unknown issue.')
+        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
       .catch((error) => {
-        renderWarning({headline: `Failed to delete file "${fileKey}".`, body: error.message})
+        outputDebug(error.message)
       })
   }
 
