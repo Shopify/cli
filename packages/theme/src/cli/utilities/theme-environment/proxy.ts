@@ -180,7 +180,12 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
 
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
-  if (locationHeader) setResponseHeader(event, 'Location', locationHeader.replace(/^https?:\/\/[^/]+/, ''))
+  if (locationHeader) {
+    const url = new URL(locationHeader, 'https://shopify.dev')
+    url.searchParams.delete('_fd')
+    url.searchParams.delete('pb')
+    setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+  }
 
   // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader =
