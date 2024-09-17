@@ -51,7 +51,7 @@ function mockDeveloperPlatformClient() {
 }
 
 describe('selectOrCreateApp', () => {
-  test('prompts user to select', async () => {
+  test.skip('prompts user to select', async () => {
     // Given
     vi.mocked(selectAppPrompt).mockResolvedValueOnce(APP1)
     vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)

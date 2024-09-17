@@ -73,7 +73,7 @@ describe('fetchOrganizations', async () => {
     expect(appManagementClient.organizations).not.toHaveBeenCalled()
   })
 
-  test('returns fetched organizations from Partners and App Management with USE_APP_MANAGEMENT_API', async () => {
+  test('returns fetched organizations from App Management and Partners with USE_APP_MANAGEMENT_API', async () => {
     // Given
     vi.stubEnv('USE_APP_MANAGEMENT_API', '1')
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
@@ -89,7 +89,7 @@ describe('fetchOrganizations', async () => {
     const got = await fetchOrganizations()
 
     // Then
-    expect(got).toEqual([ORG1, ORG2])
+    expect(got).toEqual([ORG2, ORG1])
     expect(partnersClient.organizations).toHaveBeenCalled()
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })

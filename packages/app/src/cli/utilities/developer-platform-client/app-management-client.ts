@@ -43,6 +43,7 @@ import {
   OrganizationBetaFlagsQueryVariables,
   organizationBetaFlagsQuery,
 } from './app-management-client/graphql/organization_beta_flags.js'
+import {PartnersClient} from './partners-client.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -283,6 +284,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       this.orgFromId(organizationId),
       this.appsForOrg(organizationId),
     ])
+    const parntersClient = new PartnersClient()
+    const partnersOrgs = await parntersClient.organizations()
+    const partnersOrg = partnersOrgs.find((org) => org.businessName === organization?.businessName)
+    const partnersApps = partnersOrg ? await parntersClient.appsForOrg(partnersOrg.id) : {apps: []}
+    apps.push(...partnersApps.apps)
+
     return {organization: organization!, apps, hasMorePages}
   }
 

@@ -79,7 +79,7 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
+  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.unshift(new AppManagementClient())
   return clients
 }
 
@@ -135,6 +135,15 @@ function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration |
   if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
     return new AppManagementClient()
   return new PartnersClient()
+}
+
+function selectDeveloperPlatformClientByApp(app: MinimalAppIdentifiers): DeveloperPlatformClient {
+  return app.id.startsWith('gid://shopify/App/') ? new AppManagementClient() : new PartnersClient()
+}
+
+export function appFromId(app: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  const client = selectDeveloperPlatformClientByApp(app)
+  return client.appFromId(app)
 }
 
 export interface CreateAppOptions {
