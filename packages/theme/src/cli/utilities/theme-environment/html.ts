@@ -2,9 +2,10 @@ import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
-import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {createError, defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -29,6 +30,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         html = prettifySyntaxErrors(html)
 
+        assertThemeId(response, html, String(theme.id))
+
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)
         }
@@ -50,7 +53,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         let errorPageHtml = getErrorPage({
           title,
           header: title,
-          message: [...rest, error.message].join('<br>'),
+          message: [...rest, cause?.message ?? error.message].join('<br>'),
           code: error.stack?.replace(`${error.message}\n`, '') ?? '',
         })
 
@@ -97,4 +100,17 @@ function getErrorPage(options: {title: string; header: string; message: string; 
       <pre>${options.code}</pre>
     </body>
   </html>`
+}
+
+function assertThemeId(response: Response, html: string, expectedThemeId: string) {
+  const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
+
+  if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
+    throw createError({
+      status: 502,
+      statusText: 'Bad Gateway',
+      data: {url: response.url, requestId: response.headers.get('x-request-id')},
+      cause: new Error(`Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}`),
+    })
+  }
 }
