@@ -281,8 +281,8 @@ importers:
         specifier: 3.66.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 8.4.2
-        version: 8.4.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 8.4.3
+        version: 8.4.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.66.0
         version: link:../cli-kit
@@ -6007,8 +6007,8 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@8.4.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-W7Cf2bHc9171LunmlIic+y0LNDXDv6dK+EwRaonEbW9hodSi2RIY7RZVBsk6ekIcKDOLEkJHQ8AdUsliMsEjjg==}
+  /@shopify/cli-hydrogen@8.4.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-qqSJKm/bLaRqo+PKWb+5gcYjaA0Fps/J3Nq+UWvMo2WZwJwoGDw9wmQWsP3Zhr/XvNpnKZn1iyorSTxWz/GaMQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
