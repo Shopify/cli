@@ -136,18 +136,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const contentPromise = read(fileKey).then(async () => {
       const file = files.get(fileKey)!
 
-      if (file.checksum === previousChecksum) {
-        // Do not sync if the file has not changed
-        return ''
+      if (file.checksum !== previousChecksum) {
+        // Sync only if the file has changed
+        unsyncedFileKeys.add(fileKey)
       }
-
-      unsyncedFileKeys.add(fileKey)
 
       return file.value || file.attachment || ''
     })
 
     const syncPromise = contentPromise.then(async (content) => {
-      if (!content) return false
+      if (!unsyncedFileKeys.has(fileKey)) return false
 
       const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
@@ -173,7 +171,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       onContent: (fn) => {
         contentPromise
           .then((content) => {
-            if (content) fn(content)
+            // Run only if content has changed
+            if (unsyncedFileKeys.has(fileKey)) fn(content)
           })
           .catch(() => {})
       },
