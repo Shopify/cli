@@ -131,6 +131,23 @@ describe('hot-reload server', () => {
     expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
     await nextTick()
 
+    // -- Updates section groups:
+    const sectionGroupFileKey = testSectionFileKey.replace('.liquid', '.json')
+    const sectionGroupContent = JSON.stringify({
+      sections: {first: {type: testSectionType}, second: {type: testSectionType}},
+    })
+    const {contentSpy: addSectionGroupContentSpy} = await triggerFileEvent(
+      'add',
+      sectionGroupFileKey,
+      sectionGroupContent,
+    )
+    expect(addSectionGroupContentSpy).toHaveBeenCalled()
+    expect(getInMemoryTemplates(ctx)).toEqual({[sectionGroupFileKey]: sectionGroupContent})
+    // Finds section names based on the existing JSON file:
+    expect(hotReloadEvents.at(-1)).toMatch(
+      `data: {"type":"section","key":"${sectionGroupFileKey}","names":["first","second"]}`,
+    )
+
     // -- Updates CSS files:
     const cssFileKey = 'assets/style.css'
     const {syncSpy: cssSyncSpy} = await triggerFileEvent('add', cssFileKey)
