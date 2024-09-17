@@ -143,7 +143,7 @@ You can run this command only in a directory that matches the [default Shopify t
     const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, flags.legacy)
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, Boolean(flags.legacy))
 
     let theme: Theme
 
