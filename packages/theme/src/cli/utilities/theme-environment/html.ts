@@ -104,6 +104,17 @@ function getErrorPage(options: {title: string; header: string; message: string; 
 }
 
 function assertThemeId(response: Response, html: string, expectedThemeId: string) {
+  /**
+   * DOM example:
+   *
+   * ```
+   * <script>var Shopify = Shopify || {};
+   * Shopify.locale = "en";
+   * Shopify.theme = {"name":"Development","id":143509762348,"theme_store_id":null,"role":"development"};
+   * Shopify.theme.handle = "null";
+   * ...;</script>
+   * ```
+   */
   const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
 
   if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
