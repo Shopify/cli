@@ -219,7 +219,15 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
-      files.set(asset.key, asset)
+      files.set(
+        asset.key,
+        buildThemeAsset({
+          key: asset.key,
+          checksum: asset.checksum,
+          value: asset.value ?? '',
+          attachment: asset.attachment ?? '',
+        }),
+      )
       await writeThemeFile(root, asset)
     },
     read,

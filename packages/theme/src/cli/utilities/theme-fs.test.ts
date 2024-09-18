@@ -181,6 +181,8 @@ describe('theme-fs', () => {
         key: 'assets/new_file.css',
         checksum: '1010',
         value: 'content',
+        stats: {size: 7, mtime: expect.any(Number)},
+        attachment: '',
       })
     })
 
@@ -203,6 +205,8 @@ describe('theme-fs', () => {
         key: 'assets/new_image.gif',
         checksum: '1010',
         attachment,
+        value: '',
+        stats: {size: 6, mtime: expect.any(Number)},
       })
     })
 
@@ -216,7 +220,13 @@ describe('theme-fs', () => {
 
       let filesUpdated = false
       vi.mocked(writeFile).mockImplementationOnce(() => {
-        filesUpdated = themeFileSystem.files.get(newAsset.key) === newAsset
+        expect(themeFileSystem.files.get(newAsset.key)).toEqual({
+          ...newAsset,
+          attachment: '',
+          stats: {size: 7, mtime: expect.any(Number)},
+        })
+        filesUpdated = true
+
         return Promise.resolve()
       })
 
