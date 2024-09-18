@@ -1,6 +1,7 @@
 import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {getExtensions} from './fetch-extensions.js'
+import {importDeclarativeWebhooks} from './webhook/import-declarative-webhooks.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -26,6 +27,11 @@ export async function importExtensions(options: ImportOptions) {
   const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
   await logMetadataForLoadedContext(remoteApp)
+
+  if (options.extensionTypes.includes('webhooks')) {
+    await importDeclarativeWebhooks(options.app, remoteApp)
+    return
+  }
 
   const initialRemoteExtensions = await developerPlatformClient.appExtensionRegistrations({
     id: remoteApp.apiKey,

@@ -9,7 +9,6 @@ export type ListWebhookSubscriptionsQuery = {
   webhookSubscriptions: {
     edges: {
       node: {
-        id: string
         topic: Types.WebhookSubscriptionTopic
         endpoint:
           | {__typename: 'WebhookEventBridgeEndpoint'}
@@ -51,7 +50,6 @@ export const ListWebhookSubscriptions = {
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
-                            {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                             {kind: 'Field', name: {kind: 'Name', value: 'topic'}},
                             {
                               kind: 'Field',
