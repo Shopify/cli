@@ -66,9 +66,6 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
   for (const fileKey of ctx.localThemeFileSystem.unsyncedFileKeys) {
     if (!needsTemplateUpdate(fileKey)) continue
 
-    const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-    if (!content) continue
-
     if (hasRouteTemplate && jsonTemplateRE.test(fileKey)) {
       // Filter out unused JSON templates for the current route. If we're not
       // sure about the current route's template, we send all (modified) JSON templates.
@@ -81,7 +78,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
       } else if (!fileKey.includes('.default.')) continue
     }
 
-    inMemoryTemplates[fileKey] = content
+    inMemoryTemplates[fileKey] = ctx.localThemeFileSystem.files.get(fileKey)?.value ?? ''
   }
 
   return inMemoryTemplates
@@ -120,6 +117,7 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
     sectionNamesByFile.delete(fileKey)
+    triggerHotReload(fileKey, ctx)
   })
 
   // Once the initial files are loaded, read all the JSON files so that
@@ -187,12 +185,19 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       }
 
       const replaceTemplates: {[key: string]: string} = {}
-
       const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
-      const sectionTemplate =
-        inMemoryTemplateFiles.has(sectionKey) && ctx.localThemeFileSystem.files.get(sectionKey)?.value
 
-      if (sectionTemplate) replaceTemplates[sectionKey] = sectionTemplate
+      if (inMemoryTemplateFiles.has(sectionKey)) {
+        const sectionTemplate = ctx.localThemeFileSystem.files.get(sectionKey)?.value
+        if (!sectionTemplate) {
+          // If the section template is not found, it means that the section has been removed.
+          // The remote version might not yet be synced so, instead of rendering it remotely,
+          // which should return an empty section, we directly return the same thing here.
+          return ''
+        }
+
+        replaceTemplates[sectionKey] = sectionTemplate
+      }
 
       // If a JSON file changed locally and updated the ID of a section,
       // there's a chance the cloud won't know how to render a modified section ID.

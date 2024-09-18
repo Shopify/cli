@@ -136,18 +136,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const contentPromise = read(fileKey).then(async () => {
       const file = files.get(fileKey)!
 
-      if (file.checksum === previousChecksum) {
-        // Do not sync if the file has not changed
-        return ''
+      if (file.checksum !== previousChecksum) {
+        // Sync only if the file has changed
+        unsyncedFileKeys.add(fileKey)
       }
-
-      unsyncedFileKeys.add(fileKey)
 
       return file.value || file.attachment || ''
     })
 
     const syncPromise = contentPromise.then(async (content) => {
-      if (!content) return false
+      if (!unsyncedFileKeys.has(fileKey)) return false
 
       const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
@@ -173,7 +171,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       onContent: (fn) => {
         contentPromise
           .then((content) => {
-            if (content) fn(content)
+            // Run only if content has changed
+            if (unsyncedFileKeys.has(fileKey)) fn(content)
           })
           .catch(() => {})
       },
@@ -190,13 +189,15 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const handleFileDelete = (themeId: string, adminSession: AdminSession, fileKey: string) => {
     if (isFileIgnored(fileKey)) return
 
-    unsyncedFileKeys.delete(fileKey)
+    // Optimistically delete the file from the local file system.
     files.delete(fileKey)
+    unsyncedFileKeys.add(fileKey)
     emitEvent('unlink', {fileKey})
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
         if (!success) throw new Error('Unknown issue.')
+        unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
       .catch((error) => {

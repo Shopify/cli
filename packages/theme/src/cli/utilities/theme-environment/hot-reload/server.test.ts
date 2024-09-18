@@ -119,16 +119,16 @@ describe('hot-reload server', () => {
     await nextTick()
 
     // -- Unlinks the JSON file properly with all its side effects:
-    const hotReloadEventsLengthBeforeUnlink = hotReloadEvents.length
     await triggerFileEvent('unlink', assetJsonKey)
-    // Does not emit HotReload events:
-    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
+    // We don't know if this file is referenced or not in code so it emits a full reload event:
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${assetJsonKey}"}`)
     // Removes the JSON file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
     await nextTick()
+    const hotReloadEventsLengthBeforeChange = hotReloadEvents.length
     // Since the JSON file was removed, the section file is not referenced anymore:
     await triggerFileEvent('change', testSectionFileKey)
-    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
+    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeChange)
     await nextTick()
 
     // -- Updates CSS files:
