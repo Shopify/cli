@@ -18,7 +18,7 @@ interface ThemeStorePasswordSchema {
 let _themeLocalStorageInstance: LocalStorage<ThemeLocalStorageSchema> | undefined
 let _developmentThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
 let _replThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
-let _themeStoreLocalStorageInstance: LocalStorage<ThemeStorePasswordSchema> | undefined
+let _themeStorePasswordStorageInstance: LocalStorage<ThemeStorePasswordSchema> | undefined
 
 function themeLocalStorage() {
   if (!_themeLocalStorageInstance) {
@@ -45,13 +45,13 @@ function replThemeLocalStorage() {
   return _replThemeLocalStorageInstance
 }
 
-function themeStoreLocalStorage() {
-  if (!_themeStoreLocalStorageInstance) {
-    _themeStoreLocalStorageInstance = new LocalStorage<ThemeStorePasswordSchema>({
+function themeStorePasswordStorage() {
+  if (!_themeStorePasswordStorageInstance) {
+    _themeStorePasswordStorageInstance = new LocalStorage<ThemeStorePasswordSchema>({
       projectName: 'shopify-cli-theme-store-password',
     })
   }
-  return _themeStoreLocalStorageInstance
+  return _themeStorePasswordStorageInstance
 }
 
 export function getThemeStore() {
@@ -95,17 +95,17 @@ export function removeREPLTheme(): void {
 export function getStorefrontPassword(): string | undefined {
   const themeStore = getThemeStore()
   outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
-  return themeStoreLocalStorage().get(getThemeStore())
+  return themeStorePasswordStorage().get(getThemeStore())
 }
 
 export function setStorefrontPassword(password: string): void {
   const themeStore = getThemeStore()
   outputDebug(outputContent`Setting storefront password for shop ${themeStore}...`)
-  themeStoreLocalStorage().set(themeStore, password)
+  themeStorePasswordStorage().set(themeStore, password)
 }
 
 export function removeStorefrontPassword(): void {
   const themeStore = getThemeStore()
   outputDebug(outputContent`Removing storefront password for ${themeStore}...`)
-  themeStoreLocalStorage().delete(themeStore)
+  themeStorePasswordStorage().delete(themeStore)
 }
