@@ -23,12 +23,15 @@ import type {DevServerContext} from '../types.js'
 
 /** Store existing section names and types read from JSON files in the project */
 const sectionNamesByFile = new Map<string, [string, string][]>()
+interface SectionGroup {
+  [key: string]: {type: string}
+}
 
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null)
   if (!maybeJson) return
 
-  const sections: undefined | {[key: string]: {type: string}} = maybeJson?.sections
+  const sections: SectionGroup | undefined = maybeJson?.sections
 
   if (sections) {
     sectionNamesByFile.set(
@@ -260,10 +263,10 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
     return emitHotReloadEvent({type: 'full', key})
   }
 
-  const type = key.split('/')[0]
+  const [type] = key.split('/')
 
   if (type === 'sections') {
-    hotReloadSections(key)
+    hotReloadSections(key, ctx)
   } else if (type === 'assets' && key.endsWith('.css')) {
     emitHotReloadEvent({type: 'css', key})
   } else {
@@ -271,15 +274,28 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
   }
 }
 
-function hotReloadSections(key: string) {
-  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
-  if (!sectionId) return
-
+function hotReloadSections(key: string, ctx: DevServerContext) {
   const sectionsToUpdate = new Set<string>()
-  for (const [_fileKey, sections] of sectionNamesByFile) {
-    for (const [type, name] of sections) {
-      if (type === sectionId) {
-        sectionsToUpdate.add(name)
+
+  if (key.endsWith('.json')) {
+    // Update section groups by reading the section names from the group JSON file.
+    const content = ctx.localThemeFileSystem.files.get(key)?.value
+    if (content) {
+      const sections: SectionGroup | undefined = parseJSON(content, null)?.sections
+      for (const sectionName of Object.keys(sections || {})) {
+        sectionsToUpdate.add(sectionName)
+      }
+    }
+  } else {
+    // Update specific sections by reading the section names from the in-memory map.
+    const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
+    if (sectionId) {
+      for (const [_fileKey, sections] of sectionNamesByFile) {
+        for (const [type, name] of sections) {
+          if (type === sectionId) {
+            sectionsToUpdate.add(name)
+          }
+        }
       }
     }
   }
