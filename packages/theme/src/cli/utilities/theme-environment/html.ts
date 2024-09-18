@@ -120,10 +120,12 @@ function assertThemeId(response: Response, html: string, expectedThemeId: string
   if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
     renderFatalError(
       new AbortError(
-        `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.\nRequest ID: ${response.headers.get(
-          'x-request-id',
-        )}\nURL: ${response.url}`,
-        `This is likely related to an issue in upstream Shopify APIs.\nPlease try again in a few minutes and report this issue:\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
+        `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.` +
+          `\nRequest ID: ${response.headers.get('x-request-id')}` +
+          `\nURL: ${response.url}`,
+        `This is likely related to an issue in upstream Shopify APIs.` +
+          `\nPlease try again in a few minutes and report this issue:` +
+          `\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
       ),
     )
 
