@@ -45,6 +45,8 @@ export function buildChecksum(asset?: RemoteAssetResponse): Checksum | undefined
   return {key, checksum}
 }
 
+export function buildThemeAsset(asset: undefined): undefined
+export function buildThemeAsset(asset: RemoteAssetResponse): ThemeAsset
 export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undefined {
   if (!asset) return
 
