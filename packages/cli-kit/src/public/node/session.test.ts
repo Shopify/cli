@@ -1,5 +1,6 @@
 import {
   ensureAuthenticatedAdmin,
+  ensureAuthenticatedAdminAsApp,
   ensureAuthenticatedBusinessPlatform,
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
@@ -7,6 +8,7 @@ import {
 } from './session.js'
 
 import {getPartnersToken} from './environment.js'
+import {fetch} from './http.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
@@ -23,6 +25,7 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
+vi.mock('./http.js')
 vi.mock('./environment.js')
 
 describe('ensureAuthenticatedStorefront', () => {
@@ -177,5 +180,29 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
+  })
+})
+
+describe('ensureAuthenticatedAdminAsApp', () => {
+  test('uses client_credentials grant type', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: vi.fn().mockResolvedValue({access_token: 'access_token'}),
+    } as any)
+
+    // When
+    const got = await ensureAuthenticatedAdminAsApp('mystore', 'apiKey', 'apiSecret')
+
+    // Then
+    expect(got).toEqual({token: 'access_token', storeFqdn: 'mystore.myshopify.com'})
+    expect(fetch).toHaveBeenCalledWith(
+      'https://mystore.myshopify.com/admin/oauth/access_token?client_id=apiKey&client_secret=apiSecret&grant_type=client_credentials',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
   })
 })
