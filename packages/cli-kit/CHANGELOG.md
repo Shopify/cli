@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.67.0
+
+### Minor Changes
+
+- 9cc4d7c1d: Messaging improved for authorization errors related to invalid targets when using `theme` command
+- e9aeab01e: Ensure output is also interactive when prompting
+
+### Patch Changes
+
+- 435c88bf1: Fix customer login functionality during development
+
 ## 3.66.0
 
 ### Minor Changes
