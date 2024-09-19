@@ -52,7 +52,7 @@ describe('fetchThemes', () => {
   })
 })
 
-describe('fetchChecksums', () => {
+describe('fetwchChecksums', () => {
   test('returns theme checksums', async () => {
     // Given
     vi.mocked(restRequest).mockResolvedValue({
@@ -104,11 +104,19 @@ describe('createTheme', () => {
     const processing = false
     const params: ThemeParams = {name, role}
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role, processing}},
-      status: 200,
-      headers: {},
-    })
+    vi.mocked(restRequest)
+      .mockResolvedValueOnce({
+        json: {theme: {id, name, role, processing}},
+        status: 200,
+        headers: {},
+      })
+      .mockResolvedValueOnce({
+        json: {
+          results: [],
+        },
+        status: 207,
+        headers: {},
+      })
 
     // When
     const theme = await createTheme(params, session)

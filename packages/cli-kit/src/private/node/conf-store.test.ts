@@ -6,9 +6,13 @@ import {
   removeSession,
   setSession,
   runAtMinimumInterval,
+  getConfigStoreForPartnerStatus,
+  getCachedPartnerAccountStatus,
+  setCachedPartnerAccountStatus,
+  runWithRateLimit,
 } from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
@@ -192,7 +196,7 @@ describe('runAtMinimumInterval', () => {
 
       // When
       let taskRan = false
-      await runAtMinimumInterval(
+      const got = await runAtMinimumInterval(
         key,
         timeout,
         async () => {
@@ -202,6 +206,7 @@ describe('runAtMinimumInterval', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
     })
   })
@@ -214,7 +219,7 @@ describe('runAtMinimumInterval', () => {
 
       // When
       let taskRan = false
-      await runAtMinimumInterval(
+      const got = await runAtMinimumInterval(
         key,
         timeout,
         async () => {
@@ -224,6 +229,7 @@ describe('runAtMinimumInterval', () => {
       )
 
       // Then
+      expect(got).toBe(false)
       expect(taskRan).toBe(false)
     })
   })
@@ -237,7 +243,7 @@ describe('runAtMinimumInterval', () => {
       // When
       let taskRan = false
       vi.setSystemTime(vi.getRealSystemTime() + 1000)
-      await runAtMinimumInterval(
+      const got = await runAtMinimumInterval(
         key,
         timeout,
         async () => {
@@ -247,7 +253,187 @@ describe('runAtMinimumInterval', () => {
       )
 
       // Then
+      expect(got).toBe(true)
       expect(taskRan).toBe(true)
+    })
+  })
+})
+
+describe('runWithRateLimit', () => {
+  const key = 'TASK'
+  const timeout = {seconds: 1}
+  const limit = 2
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('runs the task as usual when the cache is not populated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+
+      // When
+      let taskRan = false
+      const got = await runWithRateLimit(
+        {
+          key,
+          timeout,
+          limit,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(got).toBe(true)
+      expect(taskRan).toBe(true)
+    })
+  })
+
+  test('throttles the task when the cache is populated recently', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      for (let i = 0; i < limit; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await runWithRateLimit(
+          {
+            key,
+            timeout,
+            limit,
+            task: async () => {},
+          },
+          config,
+        )
+      }
+
+      // When
+      let taskRan = false
+      const got = await runWithRateLimit(
+        {
+          key,
+          limit,
+          timeout,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(got).toBe(false)
+      expect(taskRan).toBe(false)
+    })
+  })
+
+  test("runs the task as usual when the cache is populated recently but the rate limit isn't used up", async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      // Run the task once, but the rate limit is 2
+      await runWithRateLimit(
+        {
+          key,
+          timeout,
+          limit,
+          task: async () => {},
+        },
+        config,
+      )
+
+      // When
+      let taskRan = false
+      const got = await runWithRateLimit(
+        {
+          key,
+          limit,
+          timeout,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(got).toBe(true)
+      expect(taskRan).toBe(true)
+    })
+  })
+
+  test('runs the task as usual when the cache is populated but outdated', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<any>({cwd})
+      for (let i = 0; i < limit; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await runWithRateLimit(
+          {
+            key,
+            timeout,
+            limit,
+            task: async () => {},
+          },
+          config,
+        )
+      }
+
+      // When
+      let taskRan = false
+      vi.setSystemTime(vi.getRealSystemTime() + 1000)
+      const got = await runWithRateLimit(
+        {
+          key,
+          limit,
+          timeout,
+          task: async () => {
+            taskRan = true
+          },
+        },
+        config,
+      )
+
+      // Then
+      expect(got).toBe(true)
+      expect(taskRan).toBe(true)
+    })
+  })
+})
+
+describe('Partner Account Status Cache', () => {
+  beforeEach(() => {
+    // Clear the partner status store before each test
+    const store = getConfigStoreForPartnerStatus()
+    store.clear()
+  })
+
+  describe('getCachedPartnerAccountStatus', () => {
+    test('returns null for empty token', () => {
+      expect(getCachedPartnerAccountStatus('')).toBeNull()
+    })
+
+    test('returns null for non-existent token', () => {
+      expect(getCachedPartnerAccountStatus('non-existent-token')).toBeNull()
+    })
+
+    test('returns true for existing token', () => {
+      const token = 'existing-token'
+      setCachedPartnerAccountStatus(token)
+
+      expect(getCachedPartnerAccountStatus(token)).toBe(true)
+    })
+  })
+
+  describe('setCachedPartnerAccountStatus', () => {
+    test('sets a new token', () => {
+      const token = 'new-token'
+      setCachedPartnerAccountStatus(token)
+
+      expect(getCachedPartnerAccountStatus(token)).toBe(true)
     })
   })
 })

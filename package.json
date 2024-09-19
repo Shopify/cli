@@ -34,7 +34,8 @@
     "knip": "knip",
     "graphql-codegen": "nx run-many --target=graphql-codegen --all",
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
-    "deploy-experimental": "node bin/deploy-experimental.js"
+    "deploy-experimental": "node bin/deploy-experimental.js",
+    "update-docs": "pnpm shopify docs generate && pnpm build-docs"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
@@ -99,6 +100,7 @@
     "vite": "5.3.1",
     "@oclif/core": "3.26.5",
     "whatwg-url": "14.0.0",
+    "supports-hyperlinks": "3.1.0",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
     "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
   },

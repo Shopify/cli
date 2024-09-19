@@ -8,7 +8,7 @@ describe('asset-checksum', () => {
       {file: 'assets/base.css', expectedChecksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17'},
       {file: 'assets/sparkle.gif', expectedChecksum: '7adcd48a3cc215a81fabd9dafb919507'},
       {file: 'config/settings_data.json', expectedChecksum: '22e69af13b7953914563c60035a831bc'},
-      {file: 'config/settings_schema.json', expectedChecksum: '3f6b44e95dbcf0214a0a82627a37cd53'},
+      {file: 'config/settings_schema.json', expectedChecksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57'},
       {file: 'layout/password.liquid', expectedChecksum: '7a92d18f1f58b2396c46f98f9e502c6a'},
       {file: 'layout/theme.liquid', expectedChecksum: '2374357fdadd3b4636405e80e21e87fc'},
       {file: 'locales/en.default.json', expectedChecksum: '94d575574a070397f297a2e9bb32ce7d'},
@@ -20,7 +20,7 @@ describe('asset-checksum', () => {
     testCases.forEach(({file, expectedChecksum}) => {
       test(`returns the expected checksum for "${file}"`, async () => {
         // Given
-        const root = 'src/cli/utilities/fixtures'
+        const root = 'src/cli/utilities/fixtures/theme'
 
         // When
         const actualChecksum = await calculateChecksum(file, await readThemeFile(root, file))

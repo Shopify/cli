@@ -178,7 +178,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      const token = await ensureAuthenticatedAppManagement()
+      const {token, userId} = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -186,6 +186,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             type: 'UserAccount',
             email: userInfoResult.currentUserAccount.email,
           },
+          userId,
         }
       } else {
         this._session = {
@@ -193,6 +194,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           accountInfo: {
             type: 'UnknownAccount',
           },
+          userId,
         }
       }
     }
@@ -204,10 +206,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const newToken = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const {token} = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
     const session = await this.session()
-    if (newToken) {
-      session.token = newToken
+    if (token) {
+      session.token = token
     }
     return session.token
   }
@@ -227,7 +229,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const {app} = await this.fetchApp(appIdentifiers)
+    const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
@@ -406,19 +408,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(
     appIdentifiers: MinimalAppIdentifiers,
+    activeAppVersion?: ActiveAppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    const {app} = await this.fetchApp(appIdentifiers)
+    const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
+
     const configurationRegistrations: ExtensionRegistration[] = []
     const extensionRegistrations: ExtensionRegistration[] = []
-    app.activeRelease.version.appModules.forEach((mod) => {
+    app.appModuleVersions.forEach((mod) => {
       const registration = {
-        id: mod.uuid,
-        uid: mod.uuid,
-        uuid: mod.uuid,
-        title: mod.specification.name,
-        type: mod.specification.identifier,
+        id: mod.registrationId,
+        uid: mod.registrationUid!,
+        uuid: mod.registrationUuid!,
+        title: mod.registrationTitle,
+        type: mod.type,
       }
-      if (CONFIG_EXTENSION_IDS.includes(mod.uuid)) {
+      if (CONFIG_EXTENSION_IDS.includes(registration.id)) {
         configurationRegistrations.push(registration)
       } else {
         extensionRegistrations.push(registration)
@@ -869,23 +873,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
 
-  private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
-  }
-
   private async activeAppVersionRawResult({
     id,
     organizationId,
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+    const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(
-      organizationId,
-      ActiveAppReleaseQuery,
-      await this.token(),
-      variables,
-    )
+    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
   private async organizationBetaFlags(

@@ -21,6 +21,8 @@ const data: any = {
   refresh_token: 'refresh_token',
   scope: 'scope scope2',
   expires_in: 3600,
+  // id_token:{sub: '1234-5678'}
+  id_token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0LTU2NzgifQ.L8IiNHncR4xe42f1fLQZFD5D_HBo7oMlfop2FS-NUCU',
 }
 
 const identityToken: IdentityToken = {
@@ -28,6 +30,7 @@ const identityToken: IdentityToken = {
   refreshToken: data.refresh_token,
   expiresAt: expiredDate,
   scopes: data.scope.split(' '),
+  userId: '1234-5678',
 }
 
 vi.mock('../../../public/node/http.js')
@@ -162,7 +165,7 @@ describe('exchange identity token for application tokens', () => {
 })
 
 describe('refresh access tokens', () => {
-  test('throws a InvalidGrantError when Identity returns invalid_grant', async () => {
+  test('throws an InvalidGrantError when Identity returns invalid_grant', async () => {
     // Given
     const error = {error: 'invalid_grant'}
     const response = new Response(JSON.stringify(error), {status: 400})
@@ -175,7 +178,7 @@ describe('refresh access tokens', () => {
     return expect(got).rejects.toThrowError(InvalidGrantError)
   })
 
-  test('throws a InvalidRequestError when Identity returns invalid_request', async () => {
+  test('throws an InvalidRequestError when Identity returns invalid_request', async () => {
     // Given
     const error = {error: 'invalid_request'}
     const response = new Response(JSON.stringify(error), {status: 400})
@@ -186,6 +189,30 @@ describe('refresh access tokens', () => {
 
     // Then
     return expect(got).rejects.toThrowError(InvalidRequestError)
+  })
+
+  test('throws an InvalidTargetError when Identity returns invalid_target', async () => {
+    // Given
+    const error = {error: 'invalid_target'}
+    const response = new Response(JSON.stringify(error), {status: 400})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const got = () => refreshAccessToken(identityToken)
+
+    // Then
+    await expect(got).rejects.toThrowError(
+      'You are not authorized to use the CLI to develop in the provided store.' +
+        '\n\n' +
+        "You can't use Shopify CLI with development stores if you only have Partner " +
+        'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
+        'you should be the store owner or create a staff account on the store.' +
+        '\n\n' +
+        "If you're the store owner, then you need to log in to the store directly using the " +
+        'store URL at least once before you log in using Shopify CLI.' +
+        'Logging in to the Shopify admin directly connects the development ' +
+        'store with your Shopify login.',
+    )
   })
 
   test('throws an AbortError when Identity returns another error', async () => {

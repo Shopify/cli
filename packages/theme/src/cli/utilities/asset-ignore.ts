@@ -1,30 +1,27 @@
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
 
-export async function applyIgnoreFilters(
-  themeChecksums: Checksum[],
-  themeFileSystem: ThemeFileSystem,
-  options: {ignore?: string[]; only?: string[]} = {},
+export function applyIgnoreFilters<T extends {key: string}>(
+  files: T[],
+  options: {ignoreFromFile?: string[]; ignore?: string[]; only?: string[]} = {},
 ) {
-  const shopifyIgnore = await shopifyIgnoredPatterns(themeFileSystem)
-
+  const shopifyIgnore = options.ignoreFromFile ?? []
   const ignoreOptions = options.ignore ?? []
   const onlyOptions = options.only ?? []
 
   raiseWarningForNonExplicitGlobPatterns([...shopifyIgnore, ...ignoreOptions, ...onlyOptions])
 
-  return themeChecksums
+  return files
     .filter(filterBy(shopifyIgnore, '.shopifyignore'))
     .filter(filterBy(ignoreOptions, '--ignore'))
     .filter(filterBy(onlyOptions, '--only', true))
 }
 
 function filterBy(patterns: string[], type: string, invertMatch = false) {
-  return ({key}: Checksum) => {
+  return ({key}: {key: string}) => {
     if (patterns.length === 0) return true
 
     const match = patterns.some((pattern) => matchGlob(key, pattern) || regexMatch(key, pattern))
@@ -39,7 +36,7 @@ function filterBy(patterns: string[], type: string, invertMatch = false) {
   }
 }
 
-async function shopifyIgnoredPatterns({root}: ThemeFileSystem) {
+export async function getPatternsFromShopifyIgnore(root: string) {
   const shopifyIgnorePath = joinPath(root, SHOPIFY_IGNORE)
 
   const shopifyIgnoreExists = await fileExists(shopifyIgnorePath)
@@ -68,7 +65,7 @@ function matchGlob(key: string, pattern: string) {
   return false
 }
 
-function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
+export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
   const allPatterns = new Set(patterns)
   allPatterns.forEach((pattern) => {
     if (shouldReplaceGlobPattern(pattern)) {

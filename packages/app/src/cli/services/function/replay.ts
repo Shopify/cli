@@ -1,4 +1,5 @@
 import {renderReplay} from './ui.js'
+import {runFunction} from './runner.js'
 import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -8,7 +9,6 @@ import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
-import {exec} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
@@ -71,32 +71,17 @@ export async function replay(options: ReplayOptions) {
         extension,
       })
     } else {
-      await runFunctionRunnerWithLogInput(extension, options, JSON.stringify(input), runExport)
+      await runFunction({
+        functionExtension: extension,
+        json: options.json,
+        input: JSON.stringify(input),
+        export: runExport,
+      })
     }
   } catch (error) {
     abortController.abort()
     throw error
   }
-}
-
-async function runFunctionRunnerWithLogInput(
-  fun: ExtensionInstance<FunctionConfigType>,
-  options: ReplayOptions,
-  input: string,
-  exportName: string,
-) {
-  const outputAsJson = options.json ? ['--json'] : []
-
-  return exec(
-    'npm',
-    ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...['--export', exportName]],
-    {
-      cwd: fun.directory,
-      input,
-      stdout: 'inherit',
-      stderr: 'inherit',
-    },
-  )
 }
 
 async function getRunFromIdentifier(

@@ -32,15 +32,23 @@ interface JsonOutput {
 
 export async function push(theme: Theme, session: AdminSession, options: PushOptions) {
   const themeChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = await mountThemeFileSystem(options.path)
+  const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
-  const results = await uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
+    theme,
+    session,
+    themeChecksums,
+    themeFileSystem,
+    options,
+  )
+
+  await renderThemeSyncProgress()
 
   if (options.publish) {
     await publishTheme(theme.id, session)
   }
 
-  await handlePushOutput(results, theme, session, options)
+  await handlePushOutput(uploadResults, theme, session, options)
 }
 
 function hasUploadErrors(results: Map<string, Result>): boolean {

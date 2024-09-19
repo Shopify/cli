@@ -187,7 +187,7 @@ describe('collectCredentials', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Using shopify.app.toml:                                                     │
+      │  Using shopify.app.toml for default values:                                  │
       │                                                                              │
       │    • App:             app1                                                   │
       │                                                                              │

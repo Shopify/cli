@@ -1,22 +1,42 @@
-import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
+import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
+import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
+vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
 vi.mock('./remote-theme-watcher.js')
-vi.mock('../theme-uploader.js')
 vi.mock('./storefront-renderer.js')
 
-describe('startDevServer', () => {
+// Vitest is resetting this mock between tests due to a global config `mockReset: true`.
+// For some reason we need to re-mock it here and in beforeEach:
+vi.mock('../theme-uploader.js', async () => {
+  return {
+    uploadTheme: vi.fn(() => {
+      return {
+        workPromise: Promise.resolve(),
+        uploadResults: new Map(),
+        renderThemeSyncProgress: () => Promise.resolve(),
+      }
+    }),
+  }
+})
+beforeEach(() => {
+  vi.mocked(uploadTheme).mockImplementation(() => {
+    return {workPromise: Promise.resolve(), uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()}
+  })
+})
+
+describe('setupDevServer', () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const localFiles = new Map([
     ['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}],
@@ -39,10 +59,16 @@ describe('startDevServer', () => {
   ])
 
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
+  const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const defaultServerContext: DevServerContext = {
-    session: {storefrontToken: '', token: '', storeFqdn: 'my-store.myshopify.com', expiresAt: new Date()},
-    remoteChecksums: [],
+    session: {
+      storefrontToken: '',
+      token: '',
+      storeFqdn: 'my-store.myshopify.com',
+      sessionCookies: {},
+    },
     localThemeFileSystem,
+    localThemeExtensionFileSystem,
     directory: 'tmp',
     options: {
       ignore: ['assets/*.json'],
@@ -63,67 +89,68 @@ describe('startDevServer', () => {
     }
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
-    expect(uploadTheme).toHaveBeenCalledWith(
-      developmentTheme,
-      context.session,
-      context.remoteChecksums,
-      context.localThemeFileSystem,
-      {
-        ignore: ['assets/*.json'],
-        nodelete: true,
-        only: ['templates/*.liquid'],
-      },
-    )
+    expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
+      nodelete: true,
+      deferPartialWork: true,
+    })
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
     // Given
+    const filters = {
+      ignore: ['assets/*.json'],
+      only: ['templates/*.liquid'],
+    }
     const context: DevServerContext = {
       ...defaultServerContext,
       options: {
         ...defaultServerContext.options,
         themeEditorSync: true,
+        ...filters,
       },
     }
+    vi.mocked(reconcileAndPollThemeEditorChanges).mockResolvedValue({
+      updatedRemoteChecksumsPromise: Promise.resolve([]),
+      workPromise: Promise.resolve(),
+    })
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(reconcileAndPollThemeEditorChanges).toHaveBeenCalledWith(
       developmentTheme,
       context.session,
-      context.remoteChecksums,
+      [],
       context.localThemeFileSystem,
-      {
-        ignore: ['assets/*.json'],
-        noDelete: true,
-        only: ['templates/*.liquid'],
-      },
+      {noDelete: true, ...filters},
     )
   })
 
   test('should skip deletion of remote files if noDelete flag is passed', async () => {
     // Given
-    const context = {...defaultServerContext, options: {...defaultServerContext.options, noDelete: true}}
+    const context = {
+      ...defaultServerContext,
+      options: {...defaultServerContext.options, noDelete: true},
+    }
 
     // When
-    await setupDevServer(developmentTheme, context)
+    await setupDevServer(developmentTheme, context).workPromise
 
     // Then
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
-      ignore: ['assets/*.json'],
       nodelete: true,
-      only: ['templates/*.liquid'],
+      deferPartialWork: true,
     })
   })
 
   describe('request handling', async () => {
     const context = {...defaultServerContext}
-    const {dispatch} = await setupDevServer(developmentTheme, context)
+    const server = setupDevServer(developmentTheme, context)
+
     const html = String.raw
     const decoder = new TextDecoder()
 
@@ -154,7 +181,7 @@ describe('startDevServer', () => {
         return resEnd(content)
       }
 
-      await dispatch(event)
+      await server.dispatchEvent(event)
       return {res, status: res.statusCode, body}
     }
 
@@ -218,13 +245,15 @@ describe('startDevServer', () => {
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
-      const expectedTarget1 = `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js`
+      const referer = `https://${defaultServerContext.session.storeFqdn}`
+      const targetQuerystring = '?_fd=0&pb=0'
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        expectedTarget1,
+        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
-          headers: {referer: expectedTarget1},
+          redirect: 'manual',
+          headers: {referer},
         }),
       )
 
@@ -237,13 +266,13 @@ describe('startDevServer', () => {
       // --- Unknown assets:
       fetchStub.mockClear()
       await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
-      const expectedTarget2 = `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css`
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        expectedTarget2,
+        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
-          headers: {referer: expectedTarget2},
+          redirect: 'manual',
+          headers: {referer},
         }),
       )
     })

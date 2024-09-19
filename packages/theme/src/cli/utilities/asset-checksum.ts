@@ -2,7 +2,7 @@ import {isThemeAsset, isJson, isTextFile} from './theme-fs.js'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {fileHash} from '@shopify/cli-kit/node/crypto'
 
-export async function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
+export function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
   let content = fileContent
 
   if (!content) return ''
@@ -11,7 +11,7 @@ export async function calculateChecksum(fileKey: string, fileContent: string | B
 
   if (isTextFile(fileKey)) content = content.replace(/\r\n/g, '\n')
 
-  if (isJson(fileKey)) {
+  if (isJson(fileKey) && !isThemeAsset(fileKey) && !isSettingsSchema(fileKey)) {
     content = normalizeJson(content)
 
     /**
@@ -22,9 +22,7 @@ export async function calculateChecksum(fileKey: string, fileContent: string | B
      * approach here (note that already escaped forward slashes are not
      * re-escaped).
      */
-    if (!isThemeAsset(fileKey)) {
-      content = content.replace(/(?<!\\)\//g, '\\/')
-    }
+    content = content.replace(/(?<!\\)\//g, '\\/')
   }
 
   return md5(content)
@@ -92,4 +90,8 @@ export function rejectGeneratedStaticAssets(themeChecksums: Checksum[]) {
  */
 function hasLiquidSource(checksums: Checksum[], key: string) {
   return checksums.some((checksum) => checksum.key === `${key}.liquid`)
+}
+
+function isSettingsSchema(path: string) {
+  return path.endsWith('/settings_schema.json')
 }

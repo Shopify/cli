@@ -1,7 +1,8 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {defineEventHandler, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
+import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -14,12 +15,14 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
     return render(ctx.session, {
+      method: event.method,
       path: browserPathname,
       query: [...new URLSearchParams(browserSearch)],
       themeId: String(theme.id),
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
-      replaceTemplates: getInMemoryTemplates(ctx, browserPathname),
+      replaceExtensionTemplates: getExtensionInMemoryTemplates(ctx),
+      replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {
         let html = await patchRenderingResponse(ctx, event, response)
@@ -61,7 +64,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 }
 
 export function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid(?: syntax)? error \([^\n]+\n/, getErrorSection)
+  return html.replace(/Liquid(?: syntax)? error \([^\n]+(?:\n|<)/g, getErrorSection)
 }
 
 function getErrorSection(error: string) {
