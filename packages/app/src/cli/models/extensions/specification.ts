@@ -265,11 +265,12 @@ export function createContractBasedConfigModuleSpecification<TKey extends string
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   identifier: string,
+  appModuleFeatures?: ExtensionFeature[],
 ) {
   return createExtensionSpecification({
     identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
-    appModuleFeatures: () => [],
+    appModuleFeatures: () => appModuleFeatures ?? [],
     deployConfig: async (config, _) => {
       return config
     },
