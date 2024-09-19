@@ -15,6 +15,7 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
+import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
@@ -97,6 +98,7 @@ export interface OAuthSession {
   storefront?: string
   businessPlatform?: string
   appManagement?: string
+  userId: string
 }
 
 /**
@@ -177,7 +179,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
   if (!envToken && tokens.partners) {
-    await ensureUserHasPartnerAccount(tokens.partners)
+    await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
 
   return tokens
@@ -243,11 +245,11 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  *
  * @param partnersToken - Partners token.
  */
-async function ensureUserHasPartnerAccount(partnersToken: string) {
+async function ensureUserHasPartnerAccount(partnersToken: string, userId: string | undefined) {
   if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
 
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
-  if (!(await hasPartnerAccount(partnersToken))) {
+  if (!(await hasPartnerAccount(partnersToken, userId))) {
     outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
     outputInfo(`👉 Press any key to create one`)
     await keypress()
@@ -255,7 +257,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
     outputInfo(outputContent`👉 Press any key when you have ${outputToken.cyan('created the organization')}`)
     outputWarn(outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
-    if (!(await hasPartnerAccount(partnersToken))) {
+    if (!(await hasPartnerAccount(partnersToken, userId))) {
       throw new AbortError(
         `Couldn't find your Shopify Partners organization`,
         `Have you confirmed your accounts from the emails you received?`,
@@ -264,6 +266,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
   }
 }
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 const getFirstOrganization = gql`
   {
     organizations(first: 1) {
@@ -280,9 +283,18 @@ const getFirstOrganization = gql`
  * @param partnersToken - Partners token.
  * @returns A promise that resolves to true if the token is valid for partners API.
  */
-async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
+async function hasPartnerAccount(partnersToken: string, userId?: string): Promise<boolean> {
+  const cacheKey = userId ?? partnersToken
+  const cachedStatus = getCachedPartnerAccountStatus(cacheKey)
+
+  if (cachedStatus) {
+    outputDebug(`Confirmed partner account exists from cache`)
+    return true
+  }
+
   try {
     await partnersRequest(getFirstOrganization, partnersToken)
+    setCachedPartnerAccountStatus(cacheKey)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -332,7 +344,9 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
   if (!fqdnSession) {
     throw new BugError('No session found after ensuring authenticated')
   }
-  const tokens: OAuthSession = {}
+  const tokens: OAuthSession = {
+    userId: fqdnSession.identity.userId,
+  }
   if (applications.adminApi) {
     const appId = applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
@@ -405,7 +419,7 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
 
 function buildIdentityTokenFromEnv(
   scopes: string[],
-  identityTokenInformation: {accessToken: string; refreshToken: string},
+  identityTokenInformation: {accessToken: string; refreshToken: string; userId: string},
 ) {
   return {
     ...identityTokenInformation,

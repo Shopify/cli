@@ -52,42 +52,6 @@ const data: LandingTemplateSchema = {
     },
     {
       type: 'Generic',
-      anchorLink: 'requirements-themes',
-      title: 'Requirements for themes',
-      sectionContent: `
-To work with themes, your system must meet the following additional requirements:
-- [Ruby](https://www.ruby-lang.org/en/) version 2.7.5 or higher
-
-> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.
-`,
-      codeblock: {
-        title: 'Installation requirements for themes',
-        tabs: [
-          {
-            title: 'macOS: brew',
-            code: 'examples/requirements.brew.example.sh',
-            language: 'bash',
-          },
-          {
-            title: 'Windows',
-            code: 'examples/requirements.win.example.sh',
-            language: 'bash',
-          },
-          {
-            title: 'Linux: apt',
-            code: 'examples/requirements.apt.example.sh',
-            language: 'bash',
-          },
-          {
-            title: 'Linux: yum',
-            code: 'examples/requirements.yum.example.sh',
-            language: 'bash',
-          },
-        ],
-      },
-    },
-    {
-      type: 'Generic',
       anchorLink: 'commands',
       title: 'Commands',
       sectionContent: `

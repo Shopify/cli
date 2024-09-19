@@ -51,6 +51,7 @@ function testSession(): Session {
         refreshToken: 'refreshToken',
         expiresAt: new Date(),
         scopes: ['foo'],
+        userId: '1234-5678',
       },
       applications: {
         adminApi: testToken,

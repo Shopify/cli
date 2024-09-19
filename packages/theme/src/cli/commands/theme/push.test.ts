@@ -34,8 +34,8 @@ describe('Push', () => {
     vi.mocked(removeDevelopmentTheme).mockImplementation(() => undefined)
   })
 
-  describe('run with CLI 3 implementation', () => {
-    test('should run the CLI 2 implementation if the password flag is provided', async () => {
+  describe('run with TS implementation', () => {
+    test('should run the Ruby implementation if the password flag is provided', async () => {
       // Given
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
       vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
@@ -185,8 +185,8 @@ describe('Push', () => {
     })
   })
 
-  describe('run with CLI 2 implementation', () => {
-    test('should pass development theme from local storage to CLI 2', async () => {
+  describe('run with Ruby implementation', () => {
+    test('should pass development theme from local storage to Ruby implementation', async () => {
       // Given
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
       vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
@@ -196,10 +196,10 @@ describe('Push', () => {
       // Then
       expect(DevelopmentThemeManager.prototype.findOrCreate).not.toHaveBeenCalled()
       expect(DevelopmentThemeManager.prototype.fetch).toHaveBeenCalledOnce()
-      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --stable --development-theme-id ${theme.id}`)
+      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --development-theme-id ${theme.id}`)
     })
 
-    test('should pass theme and development theme from local storage to CLI 2', async () => {
+    test('should pass theme and development theme from local storage to Ruby implementation', async () => {
       // Given
       const themeId = 2
       const theme = buildTheme({id: 3, name: 'Theme', role: 'development'})!
@@ -208,22 +208,20 @@ describe('Push', () => {
       await run([`--theme=${themeId}`])
 
       // Then
-      expectCLI2ToHaveBeenCalledWith(
-        `theme push ${path} --theme ${themeId} --stable --development-theme-id ${theme.id}`,
-      )
+      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --theme ${themeId} --development-theme-id ${theme.id}`)
     })
 
-    test('should not pass development theme to CLI 2 if local storage is empty', async () => {
+    test('should not pass development theme to Ruby implementation if local storage is empty', async () => {
       // When
       await run([])
 
       // Then
       expect(DevelopmentThemeManager.prototype.findOrCreate).not.toHaveBeenCalled()
       expect(DevelopmentThemeManager.prototype.fetch).toHaveBeenCalledOnce()
-      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --stable`)
+      expectCLI2ToHaveBeenCalledWith(`theme push ${path}`)
     })
 
-    test('should pass theme and development theme to CLI 2', async () => {
+    test('should pass theme and development theme to Ruby implementation', async () => {
       // Given
       const theme = buildTheme({id: 4, name: 'Theme', role: 'development'})!
       vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
@@ -233,14 +231,12 @@ describe('Push', () => {
       // Then
       expect(DevelopmentThemeManager.prototype.findOrCreate).toHaveBeenCalledOnce()
       expect(DevelopmentThemeManager.prototype.fetch).not.toHaveBeenCalled()
-      expectCLI2ToHaveBeenCalledWith(
-        `theme push ${path} --stable --theme ${theme.id} --development-theme-id ${theme.id}`,
-      )
+      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --theme ${theme.id} --development-theme-id ${theme.id}`)
     })
   })
 
   async function run(argv: string[]) {
-    await runPushCommand(['--stable', ...argv], path, adminSession)
+    await runPushCommand(['--legacy', ...argv], path, adminSession)
   }
 
   function expectCLI2ToHaveBeenCalledWith(command: string) {

@@ -1,7 +1,7 @@
 import {validateSession} from './validate.js'
 import {validateIdentityToken} from './identity-token-validation.js'
 import {applicationId} from './identity.js'
-import {IdentityToken} from './schema.js'
+import {IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
 import {OAuthApplications} from '../session.js'
 import {expect, describe, test, vi, afterAll, beforeEach} from 'vitest'
 
@@ -16,6 +16,7 @@ const validIdentity: IdentityToken = {
   refreshToken: 'refresh',
   expiresAt: futureDate,
   scopes: ['scope', 'scope2', 'scope3'],
+  userId: '1234-5678',
 }
 
 const expiredIdentity: IdentityToken = {
@@ -23,6 +24,7 @@ const expiredIdentity: IdentityToken = {
   refreshToken: 'refresh',
   expiresAt: pastDate,
   scopes: ['scope', 'scope2', 'scope3'],
+  userId: '1234-5678',
 }
 
 const validApplications = {
@@ -69,9 +71,11 @@ const defaultApps: OAuthApplications = {
 
 vi.mock('./identity-token-validation')
 vi.mock('./identity')
+vi.mock('./schema')
 
 beforeEach(() => {
   vi.mocked(applicationId).mockImplementation((id: any) => id)
+  vi.mocked(validateCachedIdentityTokenStructure).mockReturnValue(true)
   vi.setSystemTime(currentDate)
   vi.mocked(validateIdentityToken).mockResolvedValue(true)
 })
@@ -94,6 +98,21 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('ok')
+  })
+
+  test('returns needs_full_auth if validateCachedIdentityTokenStructure returns false', async () => {
+    // Given
+    const session = {
+      identity: validIdentity,
+      applications: validApplications,
+    }
+    vi.mocked(validateCachedIdentityTokenStructure).mockReturnValueOnce(false)
+
+    // When
+    const got = await validateSession(requestedScopes, defaultApps, session)
+
+    // Then
+    expect(got).toBe('needs_full_auth')
   })
 
   test('returns needs_full_auth if there is no session', async () => {

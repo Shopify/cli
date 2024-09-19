@@ -93,6 +93,26 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
     )
   })
 
+  test('returns an error if buyer_label_translations has invalid format', async () => {
+    // When/Then
+    expect(() =>
+      CustomCreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        buyer_label_translations: [{label: 'Translation without locale key'}],
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'string',
+          received: 'undefined',
+          path: ['buyer_label_translations', 0, 'locale'],
+          message: 'Required',
+        },
+      ]),
+    )
+  })
+
   test('returns an error if encryption certificate fingerprint is not present', async () => {
     // When/Then
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -157,6 +177,8 @@ describe('customCreditCardPaymentsAppExtensionDeployConfig', () => {
       supported_buyer_contexts: config.supported_buyer_contexts,
       encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
       test_mode_available: config.test_mode_available,
+      default_buyer_label: config.buyer_label,
+      buyer_label_to_locale: config.buyer_label_translations,
       multiple_capture: config.multiple_capture,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       checkout_hosted_fields: config.checkout_hosted_fields,

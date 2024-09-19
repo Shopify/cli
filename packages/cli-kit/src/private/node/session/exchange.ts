@@ -5,11 +5,13 @@ import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
-import {AbortError, ExtendableError} from '../../../public/node/error.js'
+import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import * as jose from 'jose'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
+class InvalidTargetError extends AbortError {}
 
 export interface ExchangeScopes {
   admin: string[]
@@ -83,7 +85,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
   }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  return buildIdentityToken(value)
+  return buildIdentityToken(value, currentToken.userId)
 }
 
 /**
@@ -164,9 +166,21 @@ interface TokenRequestResult {
   expires_in: number
   refresh_token: string
   scope: string
+  id_token?: string
 }
 
 function tokenRequestErrorHandler(error: string) {
+  const invalidTargetErrorMessage =
+    'You are not authorized to use the CLI to develop in the provided store.' +
+    '\n\n' +
+    "You can't use Shopify CLI with development stores if you only have Partner " +
+    'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
+    'you should be the store owner or create a staff account on the store.' +
+    '\n\n' +
+    "If you're the store owner, then you need to log in to the store directly using the " +
+    'store URL at least once before you log in using Shopify CLI.' +
+    'Logging in to the Shopify admin directly connects the development ' +
+    'store with your Shopify login.'
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
@@ -176,6 +190,9 @@ function tokenRequestErrorHandler(error: string) {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
     return new InvalidRequestError()
+  }
+  if (error === 'invalid_target') {
+    return new InvalidTargetError(invalidTargetErrorMessage)
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
   return new AbortError(error)
@@ -193,12 +210,19 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   return err(payload.error)
 }
 
-function buildIdentityToken(result: TokenRequestResult): IdentityToken {
+function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
+  const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
+
+  if (!userId) {
+    throw new BugError('Error setting userId for session. No id_token or pre-existing user ID provided.')
+  }
+
   return {
     accessToken: result.access_token,
     refreshToken: result.refresh_token,
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
     scopes: result.scope.split(' '),
+    userId,
   }
 }
 

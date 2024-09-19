@@ -54,6 +54,7 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_LIVE_RELOAD',
     }),
     poll: Flags.boolean({
+      hidden: true,
       description: 'Force polling to detect file changes.',
       env: 'SHOPIFY_FLAG_POLL',
     }),
@@ -89,11 +90,10 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Skip hot reloading any files that match the specified pattern.',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    stable: Flags.boolean({
+    legacy: Flags.boolean({
       hidden: true,
-      description:
-        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
-      env: 'SHOPIFY_FLAG_STABLE',
+      description: 'Use the legacy Ruby implementation for the `shopify theme dev` command.',
+      env: 'SHOPIFY_FLAG_LEGACY',
     }),
     force: Flags.boolean({
       hidden: true,
@@ -117,11 +117,6 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
-    'dev-preview': Flags.boolean({
-      hidden: true,
-      description: 'Enables the developer preview for the upcoming `theme dev` implementation.',
-      env: 'SHOPIFY_FLAG_BETA',
-    }),
   }
 
   static cli2Flags = [
@@ -135,7 +130,6 @@ You can run this command only in a directory that matches the [default Shopify t
     'nodelete',
     'only',
     'ignore',
-    'stable',
     'force',
     'notify',
   ]
@@ -149,7 +143,7 @@ You can run this command only in a directory that matches the [default Shopify t
     const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, !flags['dev-preview'])
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, Boolean(flags.legacy))
 
     let theme: Theme
 
@@ -181,7 +175,7 @@ You can run this command only in a directory that matches the [default Shopify t
       force: flags.force,
       open: flags.open,
       flagsToPass,
-      'dev-preview': flags['dev-preview'],
+      legacy: flags.legacy,
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
       ignore,

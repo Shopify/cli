@@ -39,6 +39,8 @@ describe('runFunction', () => {
       stdin: new Readable(),
       stdout: new Writable(),
       stderr: new Writable(),
+      schemaPath: 'schemaPath',
+      queryPath: 'src/queryPath',
     }
 
     // When
@@ -47,7 +49,19 @@ describe('runFunction', () => {
     // Then
     expect(exec).toHaveBeenCalledWith(
       functionRunnerBinary().path,
-      ['-f', functionExtension.outputPath, '--input', options.inputPath, '--export', options.export, '--json'],
+      [
+        '-f',
+        functionExtension.outputPath,
+        '--input',
+        options.inputPath,
+        '--export',
+        options.export,
+        '--json',
+        '--schema-path',
+        options.schemaPath,
+        '--query-path',
+        options.queryPath,
+      ],
       {
         cwd: functionExtension.directory,
         stdin: options.stdin,

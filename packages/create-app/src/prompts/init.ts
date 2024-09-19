@@ -36,7 +36,7 @@ interface Template {
 export const templates = {
   remix: {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
-    label: 'Start with Remix (recommended)',
+    label: 'Build a Remix app (recommended)',
     visible: true,
     branches: {
       prompt: 'For your Remix template, which language do you want?',
@@ -48,7 +48,7 @@ export const templates = {
   } as Template,
   none: {
     url: 'https://github.com/Shopify/shopify-app-template-none',
-    label: 'Start by adding your first extension',
+    label: 'Build an extension-only app',
     visible: true,
   } as Template,
   node: {

@@ -34,7 +34,8 @@
     "knip": "knip",
     "graphql-codegen": "nx run-many --target=graphql-codegen --all",
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
-    "deploy-experimental": "node bin/deploy-experimental.js"
+    "deploy-experimental": "node bin/deploy-experimental.js",
+    "update-docs": "pnpm shopify docs generate && pnpm build-docs"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
