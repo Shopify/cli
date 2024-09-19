@@ -44,7 +44,7 @@ describe('webhook_subscription', () => {
       const webhookSpec = spec
 
       const result = webhookSpec.transformLocalToRemote!(object, {
-        application_url: 'https://my-app-url.com',
+        application_url: 'https://my-app-url.com/',
       } as unknown as AppConfigurationWithoutPath)
 
       expect(result).toEqual({

@@ -70,12 +70,6 @@ export interface themedev {
   '--path <value>'?: string
 
   /**
-   * Force polling to detect file changes.
-   * @environment SHOPIFY_FLAG_POLL
-   */
-  '--poll'?: ''
-
-  /**
    * Local port to serve theme preview from.
    * @environment SHOPIFY_FLAG_PORT
    */
@@ -86,6 +80,12 @@ export interface themedev {
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>'?: string
+
+  /**
+   * The password for storefronts with password protection.
+   * @environment SHOPIFY_FLAG_STORE_PASSWORD
+   */
+  '--store-password <value>'?: string
 
   /**
    * Theme ID or name of the remote theme.

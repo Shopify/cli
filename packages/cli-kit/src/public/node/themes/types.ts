@@ -1,44 +1,115 @@
+import {AdminSession} from '../session.js'
+
 /**
  * {@link Key} represents the unique identifier of a file in a theme.
  */
 export type Key = string
 
+export type ThemeFSEventName = 'add' | 'change' | 'unlink'
+
+type ThemeFSEvent =
+  | {
+      type: 'unlink'
+      payload: {fileKey: Key}
+    }
+  | {
+      type: 'add' | 'change'
+      payload: {
+        fileKey: Key
+        onContent: (fn: (content: string) => void) => void
+        onSync: (fn: () => void) => void
+      }
+    }
+
+export type ThemeFSEventPayload<T extends ThemeFSEventName = 'add'> = (ThemeFSEvent & {type: T})['payload']
+
+export interface ThemeFileSystemOptions {
+  filters?: {ignore?: string[]; only?: string[]}
+  notify?: string
+}
+
 /**
  * Represents a theme on the file system.
  */
-export interface ThemeFileSystem {
+export interface VirtualFileSystem {
   /**
    * The root path of the theme.
    */
   root: string
 
   /**
-   * Local theme files.
+   * Local files.
    */
   files: Map<Key, ThemeAsset>
 
   /**
-   * Removes a file from the local disk and updates the themeFileSystem
-   *
-   * @param assetKey - The key of the file to remove
+   * File keys that have been modified in memory and are not uploaded yet.
    */
-  delete: (assetKey: string) => Promise<void>
+  unsyncedFileKeys: Set<Key>
 
   /**
-   * Writes a file to the local disk and updates the themeFileSystem
+   * Promise that resolves when all the initial files are found.
+   */
+  ready: () => Promise<void>
+
+  /**
+   * Removes a file from the local disk and updates the file system
+   *
+   * @param fileKey - The key of the file to remove
+   */
+  delete: (fileKey: Key) => Promise<void>
+
+  /**
+   * Writes a file to the local disk and updates the file system
    *
    * @param asset - The ThemeAsset representing the file to write
    */
   write: (asset: ThemeAsset) => Promise<void>
 
   /**
-   * Reads a file from the local disk and updates the themeFileSystem
+   * Reads a file from the local disk and updates the file system
    * Returns a ThemeAsset representing the file that was read
    * Returns undefined if the file does not exist
    *
-   * @param assetKey - The key of the file to read
+   * @param fileKey - The key of the file to read
    */
-  read: (assetKey: string) => Promise<string | Buffer | undefined>
+  read: (fileKey: Key) => Promise<string | Buffer | undefined>
+
+  /**
+   * Add callbacks to run after certain events are fired.
+   */
+  addEventListener: {
+    <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
+  }
+}
+
+/**
+ * Represents a theme on the file system.
+ */
+export interface ThemeFileSystem extends VirtualFileSystem {
+  /**
+   * Starts a file watcher for the theme directory.
+   *
+   * @param themeId - The ID of the theme being watched.
+   * @param adminSession - The admin session for API communication.
+   * @returns A Promise that resolves to an FSWatcher instance.
+   */
+  startWatcher: (themeId: string, adminSession: AdminSession) => Promise<void>
+
+  /**
+   * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
+   */
+  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
+}
+
+/**
+ * Represents a theme on the file system.
+ */
+export interface ThemeExtensionFileSystem extends VirtualFileSystem {
+  /**
+   * Starts a file watcher for the theme extension directory.
+   */
+  startWatcher: () => Promise<void>
 }
 
 /**
@@ -86,13 +157,13 @@ export interface Checksum {
   key: Key
 
   /**
-   * Reresents the checksum value of the theme file.
+   * Represents the checksum value of the theme file.
    */
   checksum: string
 }
 
 /**
- * Represents a file in a theme.
+ * Represents a theme or theme extension asset.
  */
 export interface ThemeAsset extends Checksum {
   /**
@@ -104,12 +175,17 @@ export interface ThemeAsset extends Checksum {
    * The text content of the asset, such as the HTML and Liquid markup of a template file.
    */
   value?: string
+
+  /**
+   * File stats at time of last modification. For attachments, this is the size of the base64 string.
+   */
+  stats?: {mtime: number; size: number}
 }
 
 /**
- * Represents a single result for a upload or delete operation on a single file
+ * Represents a single result for an upload or delete operation on a single file
  * Each result includes the unique identifier for the file, the type of the operation,
- * the sucesss status of the operation, any errors that occurred, and the asset value of the file.
+ * the success status of the operation, any errors that occurred, and the asset value of the file.
  */
 export interface Result {
   /**
@@ -122,7 +198,7 @@ export interface Result {
    */
   operation: Operation
 
-  /* *
+  /**
    * Indicates whether the upload operation for this file was successful.
    */
   success: boolean
@@ -132,10 +208,10 @@ export interface Result {
    */
   errors?: {asset?: string[]}
 
-  /* *
+  /**
    * The asset that was uploaded as part of the upload operation for this file.
    */
-  asset?: ThemeAsset
+  asset?: Omit<ThemeAsset, 'stats'>
 }
 
 export enum Operation {

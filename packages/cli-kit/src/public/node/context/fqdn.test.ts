@@ -1,5 +1,5 @@
 import {partnersFqdn, appManagementFqdn, identityFqdn, normalizeStoreFqdn, businessPlatformFqdn} from './fqdn.js'
-import {spinFqdn, isSpinEnvironment} from '../context/spin.js'
+import {spinFqdn} from '../context/spin.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {expect, describe, test, vi} from 'vitest'
 
@@ -185,7 +185,7 @@ describe('normalizeStore', () => {
 
   test('parses store name without domain in spin', async () => {
     // Given
-    vi.mocked(isSpinEnvironment).mockReturnValue(true)
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Spin)
     vi.mocked(spinFqdn).mockResolvedValue('mydomain.spin.dev')
 
     // When
@@ -193,5 +193,16 @@ describe('normalizeStore', () => {
 
     // Then
     expect(got).toEqual('example.shopify.mydomain.spin.dev')
+  })
+
+  test('parses store name without domain in local', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+
+    // When
+    const got = await normalizeStoreFqdn('example')
+
+    // Then
+    expect(got).toEqual('example.myshopify.io')
   })
 })

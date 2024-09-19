@@ -30,7 +30,7 @@ describe('Pull', () => {
   describe('run with CLI 3 implementation', () => {
     test('should pass call the CLI 3 command', async () => {
       const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-      const flags = ['--ignore=config', '--only=assets', '--nodelete', '--beta']
+      const flags = ['--ignore=config', '--only=assets', '--nodelete']
 
       vi.mocked(useEmbeddedThemeCLI).mockReturnValue(true)
       vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
@@ -48,7 +48,7 @@ describe('Pull', () => {
 
   describe('run with CLI 2 implementation', () => {
     async function run(argv: string[], theme?: Theme) {
-      await runPullCommand(['--stable', ...argv], path, adminSession, theme)
+      await runPullCommand(['--legacy', ...argv], path, adminSession, theme)
     }
 
     function expectCLI2ToHaveBeenCalledWith(command: string) {

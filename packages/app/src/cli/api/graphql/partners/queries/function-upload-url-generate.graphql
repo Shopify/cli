@@ -1,0 +1,11 @@
+mutation functionUploadUrlGenerate {
+  functionUploadUrlGenerate {
+    generatedUrlDetails {
+      url
+      moduleId
+      headers
+      maxBytes
+      maxSize
+    }
+  }
+}

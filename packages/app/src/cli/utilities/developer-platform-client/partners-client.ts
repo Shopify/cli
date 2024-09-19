@@ -1,10 +1,5 @@
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
-  AllDevStoresByOrganizationQuery,
-  AllDevStoresByOrganizationQueryVariables,
-  AllDevStoresByOrganizationSchema,
-} from '../../api/graphql/all_dev_stores_by_org.js'
-import {
   ActiveAppVersion,
   AppDeployOptions,
   AssetUrlSchema,
@@ -151,15 +146,19 @@ import {
   FindOrganizationQueryVariables,
 } from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
+import {
+  DevStoresByOrg,
+  DevStoresByOrgQuery,
+  DevStoresByOrgQueryVariables,
+} from '../../api/graphql/partners/generated/dev-stores-by-org.js'
+import {
+  FunctionUploadUrlGenerate,
+  FunctionUploadUrlGenerateMutation,
+} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {
-  FunctionUploadUrlGenerateMutation,
-  FunctionUploadUrlGenerateResponse,
-  partnersRequest,
-  partnersRequestDoc,
-} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -214,6 +213,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public webUiName = 'Partner Dashboard'
   public supportsAtomicDeployments = false
   public requiresOrganization = false
+  public supportsDevSessions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -225,13 +225,14 @@ export class PartnersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
-      const token = await ensureAuthenticatedPartners()
+      const {token, userId} = await ensureAuthenticatedPartners()
       this._session = {
         token,
         accountInfo: {type: 'UnknownAccount'},
+        userId,
       }
-      const accountInfo = await fetchCurrentAccountInformation(this)
-      this._session = {token, accountInfo}
+      const accountInfo = await fetchCurrentAccountInformation(this, userId)
+      this._session = {token, accountInfo, userId}
     }
     return this._session
   }
@@ -252,10 +253,10 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+    const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
     const session = await this.session()
-    if (newToken) {
-      session.token = newToken
+    if (token) {
+      session.token = token
     }
     return session.token
   }
@@ -359,12 +360,15 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
-    const variables: AllDevStoresByOrganizationQueryVariables = {id: orgId}
-    const result: AllDevStoresByOrganizationSchema = await this.request(AllDevStoresByOrganizationQuery, variables)
-    return result.organizations.nodes[0]!.stores.nodes
+    const variables: DevStoresByOrgQueryVariables = {id: orgId}
+    const result: DevStoresByOrgQuery = await this.requestDoc(DevStoresByOrg, variables)
+    return result.organizations.nodes![0]!.stores.nodes as OrganizationStore[]
   }
 
-  async appExtensionRegistrations({apiKey}: MinimalAppIdentifiers): Promise<AllAppExtensionRegistrationsQuerySchema> {
+  async appExtensionRegistrations(
+    {apiKey}: MinimalAppIdentifiers,
+    _activeAppVersion?: ActiveAppVersion,
+  ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
   }
@@ -403,8 +407,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
-    return this.request(FunctionUploadUrlGenerateMutation)
+  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
+    return this.requestDoc(FunctionUploadUrlGenerate)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -532,9 +536,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     throw new Error('Unsupported operation')
   }
 
-  async devSessionDelete(_input: unknown): Promise<never> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async devSessionDelete(_input: unknown): Promise<any> {
     // Dev Sessions are not supported in partners client.
-    throw new Error('Unsupported operation')
+    return Promise.resolve()
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {

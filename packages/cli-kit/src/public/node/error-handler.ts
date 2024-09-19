@@ -12,9 +12,10 @@ import {
 } from './error.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
-import {bugsnagApiKey} from '../../private/node/constants.js'
+import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
@@ -104,6 +105,19 @@ export async function sendErrorToBugsnag(
     })
     .join('\n')
   reportableError.stack = `Error: ${reportableError.message}\n${formattedStacktrace}`
+
+  let withinRateLimit = false
+  await runWithRateLimit({
+    key: 'send-error-to-bugsnag',
+    ...reportingRateLimit,
+    task: async () => {
+      withinRateLimit = true
+    },
+  })
+  if (!withinRateLimit) {
+    outputDebug(`Skipping Bugsnag report due to rate limiting`)
+    report = false
+  }
 
   if (report) {
     initializeBugsnag()
@@ -259,5 +273,6 @@ function initializeBugsnag() {
     appVersion: CLI_KIT_VERSION,
     autoTrackSessions: false,
     autoDetectErrors: false,
+    enabledReleaseStages: ['production'],
   })
 }

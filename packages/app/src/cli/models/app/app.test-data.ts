@@ -10,11 +10,11 @@ import {
   getAppVersionedSchema,
 } from './app.js'
 import {ExtensionTemplate} from './template.js'
+import {Organization, OrganizationStore, MinimalAppIdentifiers, OrganizationApp} from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {MinimalAppIdentifiers, Organization, OrganizationApp} from '../organization.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
@@ -558,6 +558,17 @@ export async function testPaymentsAppExtension(
   return extension
 }
 
+export function testOrganizationStore({shopId, shopDomain}: {shopId?: string; shopDomain?: string}): OrganizationStore {
+  return {
+    shopId: shopId ?? '1',
+    link: 'link1',
+    shopDomain: shopDomain ?? 'domain1',
+    shopName: 'store1',
+    transferDisabled: false,
+    convertableToPartnerTest: false,
+  }
+}
+
 const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
@@ -995,6 +1006,7 @@ export const testPartnersUserSession: PartnersSession = {
     type: 'UserAccount',
     email: 'partner@shopify.com',
   },
+  userId: '1234-5678',
 }
 
 const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = {
@@ -1202,6 +1214,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
+    supportsDevSessions: stubs.supportsDevSessions ?? false,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -1258,7 +1271,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName'
+          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName' | 'supportsDevSessions'
         >
       ] = vi.fn().mockImplementation(value)
     }
@@ -1272,6 +1285,7 @@ export const testPartnersServiceSession: PartnersSession = {
     type: 'ServiceAccount',
     orgName: 'organization',
   },
+  userId: '1234-5678',
 }
 
 export async function buildVersionedAppSchema() {

@@ -123,8 +123,8 @@ import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
+import {FunctionUploadUrlGenerateMutation} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -157,6 +157,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public webUiName = 'Developer Dashboard'
   public requiresOrganization = true
   public supportsAtomicDeployments = true
+  public supportsDevSessions = true
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -177,7 +178,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      const token = await ensureAuthenticatedAppManagement()
+      const {token, userId} = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -185,6 +186,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             type: 'UserAccount',
             email: userInfoResult.currentUserAccount.email,
           },
+          userId,
         }
       } else {
         this._session = {
@@ -192,6 +194,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           accountInfo: {
             type: 'UnknownAccount',
           },
+          userId,
         }
       }
     }
@@ -203,10 +206,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const newToken = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const {token} = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
     const session = await this.session()
-    if (newToken) {
-      session.token = newToken
+    if (token) {
+      session.token = token
     }
     return session.token
   }
@@ -226,7 +229,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
-    const {app} = await this.fetchApp(appIdentifiers)
+    const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
@@ -405,19 +408,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(
     appIdentifiers: MinimalAppIdentifiers,
+    activeAppVersion?: ActiveAppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    const {app} = await this.fetchApp(appIdentifiers)
+    const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
+
     const configurationRegistrations: ExtensionRegistration[] = []
     const extensionRegistrations: ExtensionRegistration[] = []
-    app.activeRelease.version.appModules.forEach((mod) => {
+    app.appModuleVersions.forEach((mod) => {
       const registration = {
-        id: mod.uuid,
-        uid: mod.uuid,
-        uuid: mod.uuid,
-        title: mod.specification.name,
-        type: mod.specification.identifier,
+        id: mod.registrationId,
+        uid: mod.registrationUid!,
+        uuid: mod.registrationUuid!,
+        title: mod.registrationTitle,
+        type: mod.type,
       }
-      if (CONFIG_EXTENSION_IDS.includes(mod.uuid)) {
+      if (CONFIG_EXTENSION_IDS.includes(registration.id)) {
         configurationRegistrations.push(registration)
       } else {
         extensionRegistrations.push(registration)
@@ -594,7 +599,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
+  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
     throw new BugError('Not implemented: functionUploadUrl')
   }
 
@@ -847,12 +852,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    if (result.devSessionCreate?.userErrors?.length) {
+      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+    }
+    return result
   }
 
   async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    if (result.devSessionUpdate?.userErrors?.length) {
+      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
+    }
+    return result
   }
 
   async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
@@ -860,23 +873,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
 
-  private async fetchApp({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
-  }
-
   private async activeAppVersionRawResult({
     id,
     organizationId,
   }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
+    const query = ActiveAppReleaseQuery
     const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(
-      organizationId,
-      ActiveAppReleaseQuery,
-      await this.token(),
-      variables,
-    )
+    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
   }
 
   private async organizationBetaFlags(

@@ -9,9 +9,10 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -36,6 +37,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | DevSessionProcess
   | AppLogsSubscribeProcess
 
 export type DevProcesses = DevProcessDefinition[]
@@ -82,7 +84,7 @@ export async function setupDevProcesses({
 }> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
-  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
@@ -122,16 +124,27 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    await setupDraftableExtensionsProcess({
-      localApp,
-      remoteApp,
-      apiKey,
-      developerPlatformClient,
-      proxyUrl: network.proxyUrl,
-    }),
+    developerPlatformClient.supportsDevSessions
+      ? await setupDevSessionProcess({
+          app: localApp,
+          apiKey,
+          developerPlatformClient,
+          url: network.proxyUrl,
+          appId: remoteApp.id,
+          organizationId: remoteApp.organizationId,
+          storeFqdn,
+        })
+      : await setupDraftableExtensionsProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          developerPlatformClient,
+          proxyUrl: network.proxyUrl,
+        }),
     commandOptions.devPreview
       ? await setupPreviewThemeAppExtensionsProcessNext({
-          allExtensions: localApp.allExtensions,
+          remoteApp,
+          localApp,
           storeFqdn,
           developerPlatformClient,
           theme: commandOptions.theme,
@@ -162,6 +175,7 @@ export async function setupDevProcesses({
             shopIds: [storeId],
             apiKey,
           },
+          storeName: storeFqdn,
         })
       : undefined,
   ].filter(stripUndefineds)
@@ -192,7 +206,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
     processes.map(async (process) => {
       const rules: {[key: string]: string} = {}
 
-      if (process.type === 'web') {
+      if (process.type === 'web' && process.options.roles.includes(WebType.Frontend)) {
         const targetPort = process.options.portFromConfig || process.options.port
         rules.default = `http://localhost:${targetPort}`
         const hmrServer = process.options.hmrServerOptions

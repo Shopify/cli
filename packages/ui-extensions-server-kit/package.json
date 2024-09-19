@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "private": false,
   "license": "MIT",
   "exports": {

@@ -1,5 +1,11 @@
 # @shopify/eslint-plugin-cli
 
+## 3.47.2
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+
 ## 3.47.1
 
 ### Patch Changes

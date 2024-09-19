@@ -89,6 +89,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   })
   let developerPlatformClient = selectDeveloperPlatformClient({configuration})
   const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
+
   const {
     storeFqdn,
     storeId,
@@ -162,7 +163,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 }
 
-async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConfig) {
+async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp, developerPlatformClient}: DevConfig) {
+  if (developerPlatformClient.supportsDevSessions) return
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
@@ -310,14 +312,17 @@ async function launchDevProcesses({
   const apiKey = config.remoteApp.apiKey
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    canEnablePreviewMode: await canEnablePreviewMode({
-      localApp: config.localApp,
-      developerPlatformClient,
-      apiKey,
-      organizationId: config.remoteApp.organizationId,
-    }),
+    canEnablePreviewMode: developerPlatformClient.supportsDevSessions
+      ? false
+      : await canEnablePreviewMode({
+          localApp: config.localApp,
+          developerPlatformClient,
+          apiKey,
+          organizationId: config.remoteApp.organizationId,
+        }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
+    id: config.remoteApp.id,
     developerPlatformClient,
     extensions: config.localApp.allExtensions,
   }
@@ -338,6 +343,15 @@ export function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): DeveloperPreviewController {
+  if (developerPlatformClient.supportsDevSessions) {
+    return {
+      fetchMode: () => Promise.resolve(false),
+      enable: () => Promise.resolve(),
+      disable: () => Promise.resolve(),
+      update: () => Promise.resolve(false),
+    }
+  }
+
   const refreshToken = async () => {
     await developerPlatformClient.refreshToken()
   }

@@ -22,7 +22,7 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {isSpin, spinFqdn, appPort, appHost, fetchSpinPort} from '@shopify/cli-kit/node/context/spin'
 import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
 vi.mock('../app/write-app-configuration-file.js')
@@ -36,7 +36,7 @@ vi.mock('@shopify/cli-kit/node/system')
 beforeEach(() => {
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
   vi.mocked(isUnitTest).mockReturnValue(true)
-  vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
 })
 
 const defaultOptions: FrontendURLOptions = {

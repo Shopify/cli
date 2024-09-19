@@ -45,11 +45,16 @@ export function buildChecksum(asset?: RemoteAssetResponse): Checksum | undefined
   return {key, checksum}
 }
 
+export function buildThemeAsset(asset: undefined): undefined
+export function buildThemeAsset(asset: RemoteAssetResponse): ThemeAsset
 export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undefined {
   if (!asset) return
 
   const {key, checksum, attachment, value} = asset
-  return {key, checksum, attachment, value}
+  // Note: for attachments, this is the size of the base64 string, not the real length of the file
+  const stats = {size: (value || attachment).length, mtime: Date.now()}
+
+  return {key, checksum, attachment, value, stats}
 }
 
 export function buildBulkUploadResults(

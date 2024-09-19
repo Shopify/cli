@@ -1,5 +1,28 @@
 # @shopify/cli-kit
 
+## 3.67.0
+
+### Minor Changes
+
+- 9cc4d7c1d: Messaging improved for authorization errors related to invalid targets when using `theme` command
+- e9aeab01e: Ensure output is also interactive when prompting
+
+### Patch Changes
+
+- 435c88bf1: Fix customer login functionality during development
+
+## 3.66.0
+
+### Minor Changes
+
+- 05cbe63566: - Add cached package version checks
+  - Make CLI upgrade message smarter
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+- dd4b730962: Small UI fix when using an invalid shop
+
 ## 3.65.0
 
 ## 3.64.0

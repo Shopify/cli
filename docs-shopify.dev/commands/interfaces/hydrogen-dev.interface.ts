@@ -91,7 +91,7 @@ export interface hydrogendev {
   '--port <value>'?: string
 
   /**
-   * [Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.
+   * [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.
    * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP
    */
   '--sourcemap'?: ''

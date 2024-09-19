@@ -21,6 +21,15 @@
         "cwd": "packages/theme"
       }
     },
+    "dev": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "pnpm tsc -b ./tsconfig.build.json --watch",
+        "cwd": "packages/theme"
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

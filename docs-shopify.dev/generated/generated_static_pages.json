@@ -10,7 +10,7 @@
         "type": "Generic",
         "anchorLink": "requirements",
         "title": "Requirements",
-        "sectionContent": "\n- [Node.js](https://nodejs.org/en/download/): 18.20+, 20.10 or higher\n- [Git](https://git-scm.com/downloads): 2.28.0 or higher\n"
+        "sectionContent": "\n- [Node.js](https://nodejs.org/en/download/): 18.20+, 20.10 or higher\n- A Node.js package manager: [npm](https://www.npmjs.com/get-npm), [Yarn 1.x](https://classic.yarnpkg.com/lang/en/docs/install), or [pnpm](https://pnpm.io/installation).\n- [Git](https://git-scm.com/downloads): 2.28.0 or higher\n"
       },
       {
         "type": "Generic",
@@ -38,37 +38,6 @@
             {
               "title": "homebrew",
               "code": "# Only for macOS\nbrew tap shopify/shopify\nbrew install shopify-cli\n",
-              "language": "bash"
-            }
-          ]
-        }
-      },
-      {
-        "type": "Generic",
-        "anchorLink": "requirements-themes",
-        "title": "Requirements for themes",
-        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.5 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
-        "codeblock": {
-          "title": "Installation requirements for themes",
-          "tabs": [
-            {
-              "title": "macOS: brew",
-              "code": "brew install ruby\n",
-              "language": "bash"
-            },
-            {
-              "title": "Windows",
-              "code": "Install Ruby+Devkit 3.0 using https://rubyinstaller.org/downloads/\n\nSelect the MSYS2 component and the MSYS2 base installation option\n",
-              "language": "bash"
-            },
-            {
-              "title": "Linux: apt",
-              "code": "\nsudo apt update && sudo apt upgrade\n\nsudo apt install curl gcc g++ make\n\nsudo apt install ruby-full\n\nsudo apt install ruby-dev\n# Ruby development environment\n\nsudo apt install git\n",
-              "language": "bash"
-            },
-            {
-              "title": "Linux: yum",
-              "code": "sudo yum install curl\n\nsudo yum group install \"Development Tools\"\n# Includes GCC, g++, and Make\n\nsudo yum install ruby\nsudo yum install ruby-devel\n# Ruby development environment\n\nsudo yum install git\n",
               "language": "bash"
             }
           ]

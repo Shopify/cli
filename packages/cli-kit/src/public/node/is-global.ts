@@ -2,7 +2,7 @@ import {isUnitTest} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {cwd, sniffForPath} from './path.js'
-import {captureOutput, exec, terminalSupportsRawMode} from './system.js'
+import {captureOutput, exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {execaSync} from 'execa'
 
@@ -73,7 +73,7 @@ export interface InstallGlobalCLIPromptResult {
  * @returns `true` if the user has installed the global CLI.
  */
 export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
-  if (!terminalSupportsRawMode()) return {install: false, alreadyInstalled: false}
+  if (!terminalSupportsPrompting()) return {install: false, alreadyInstalled: false}
   if (await isGlobalCLIInstalled()) {
     return {install: false, alreadyInstalled: true}
   }

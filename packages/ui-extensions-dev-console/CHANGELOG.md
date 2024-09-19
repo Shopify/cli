@@ -1,5 +1,15 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.67.0
+
+## 3.66.0
+
+### Patch Changes
+
+- 40a7b1229a: CLI now better handles 429 rate limiting for large projects
+- Updated dependencies [40a7b1229a]
+  - @shopify/ui-extensions-server-kit@5.2.1
+
 ## 3.65.0
 
 ## 3.64.0

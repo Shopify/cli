@@ -18,6 +18,7 @@ import {
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
+import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -62,7 +63,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
 
   if (extensionsToConfirm.dashboardOnlyExtensions.length > 0) {
-    remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations(options)
+    remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations({...options, activeAppVersion: undefined})
   }
   let extensionIdentifiersBreakdown = loadLocalExtensionsIdentifiersBreakdown(extensionsToConfirm)
   if (options.release) {
@@ -74,6 +75,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
         extensionsToConfirm.extensionsToCreate,
         extensionsToConfirm.dashboardOnlyExtensions,
         options.app.specifications ?? [],
+        options.activeAppVersion,
       )) ?? extensionIdentifiersBreakdown
   }
   return {
@@ -118,6 +120,7 @@ export async function configExtensionsIdentifiersBreakdown({
   localApp,
   versionAppModules,
   release,
+  activeAppVersion,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
@@ -125,6 +128,7 @@ export async function configExtensionsIdentifiersBreakdown({
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
+  activeAppVersion?: ActiveAppVersion
 }) {
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
@@ -134,6 +138,7 @@ export async function configExtensionsIdentifiersBreakdown({
     remoteApp,
     localApp,
     versionAppModules,
+    activeAppVersion,
   )
 }
 
@@ -149,7 +154,7 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 async function fetchRemoteExtensionsRegistrations(
   options: EnsureDeploymentIdsPresenceOptions,
 ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-  return options.developerPlatformClient.appExtensionRegistrations(options.remoteApp)
+  return options.developerPlatformClient.appExtensionRegistrations(options.remoteApp, options.activeAppVersion)
 }
 
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(
@@ -157,6 +162,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   remoteApp: MinimalOrganizationApp,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
+  activeAppVersion?: ActiveAppVersion,
 ) {
   const remoteConfig: Partial<AppConfigurationUsedByCli> =
     (await fetchAppRemoteConfiguration(
@@ -164,6 +170,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
       developerPlatformClient,
       app.specifications ?? [],
       app.remoteFlags,
+      activeAppVersion,
     )) ?? {}
   const baselineConfig = (
     versionAppModules
@@ -175,7 +182,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   if (baselineConfig?.webhooks?.subscriptions?.length) {
     baselineConfig.webhooks.subscriptions = baselineConfig.webhooks.subscriptions.map((subscription) => {
       if (subscription.uri.startsWith('/')) {
-        subscription.uri = `${baselineConfig.application_url}${subscription.uri}`
+        subscription.uri = `${removeTrailingSlash(baselineConfig.application_url)}${subscription.uri}`
       }
       return subscription
     })
@@ -322,23 +329,19 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   specs: ExtensionSpecification[],
+  activeAppVersion?: ActiveAppVersion,
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
-  if (!activeAppVersion) return
+  const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
+  if (!version) return
 
-  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
-    activeAppVersion,
-    localRegistration,
-    toCreate,
-    specs,
-  )
+  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(version, localRegistration, toCreate, specs)
 
   const dashboardOnlyFinal = dashboardOnly.filter(
     (dashboardOnly) =>
       !Object.values(localRegistration).includes(dashboardOnly.uuid) &&
       !toCreate.map((source) => source.localIdentifier).includes(dashboardOnly.uuid),
   )
-  const dashboardIdentifiersBreakdown = loadDashboardIdentifiersBreakdown(dashboardOnlyFinal, activeAppVersion)
+  const dashboardIdentifiersBreakdown = loadDashboardIdentifiersBreakdown(dashboardOnlyFinal, version)
 
   return {
     onlyRemote: [...extensionIdentifiersBreakdown.onlyRemote, ...dashboardIdentifiersBreakdown.onlyRemote],

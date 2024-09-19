@@ -8,6 +8,7 @@ import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import type {LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -53,6 +54,7 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_LIVE_RELOAD',
     }),
     poll: Flags.boolean({
+      hidden: true,
       description: 'Force polling to detect file changes.',
       env: 'SHOPIFY_FLAG_POLL',
     }),
@@ -88,11 +90,10 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Skip hot reloading any files that match the specified pattern.',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    stable: Flags.boolean({
+    legacy: Flags.boolean({
       hidden: true,
-      description:
-        'Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)',
-      env: 'SHOPIFY_FLAG_STABLE',
+      description: 'Use the legacy Ruby implementation for the `shopify theme dev` command.',
+      env: 'SHOPIFY_FLAG_LEGACY',
     }),
     force: Flags.boolean({
       hidden: true,
@@ -112,10 +113,9 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_OPEN',
       default: false,
     }),
-    'dev-preview': Flags.boolean({
-      hidden: true,
-      description: 'Enables the developer preview for the upcoming `theme dev` implementation.',
-      env: 'SHOPIFY_FLAG_BETA',
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
   }
 
@@ -130,15 +130,10 @@ You can run this command only in a directory that matches the [default Shopify t
     'nodelete',
     'only',
     'ignore',
-    'stable',
     'force',
     'notify',
   ]
 
-  /**
-   * Executes the theme serve command.
-   * Every 110 minutes, it will refresh the session token.
-   */
   async run(): Promise<void> {
     showEmbeddedCLIWarning()
     showDeprecationWarnings(this.argv)
@@ -148,7 +143,7 @@ You can run this command only in a directory that matches the [default Shopify t
     const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, Boolean(flags.legacy))
 
     let theme: Theme
 
@@ -172,18 +167,20 @@ You can run this command only in a directory that matches the [default Shopify t
       directory: flags.path,
       store,
       password: flags.password,
+      storePassword: flags['store-password'],
       theme,
       host: flags.host,
       port: flags.port,
-      'live-reload': flags['live-reload'],
+      'live-reload': flags['live-reload'] as LiveReload,
       force: flags.force,
       open: flags.open,
       flagsToPass,
-      'dev-preview': flags['dev-preview'],
+      legacy: flags.legacy,
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
       ignore,
       only,
+      notify: flags.notify,
     })
   }
 }

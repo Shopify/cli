@@ -4,7 +4,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ActiveAppVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 export type PartnersAppForIdentifierMatching = MinimalOrganizationApp
@@ -19,6 +19,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   release: boolean
   remoteApp: PartnersAppForIdentifierMatching
   includeDraftExtensions?: boolean
+  activeAppVersion?: ActiveAppVersion
 }
 
 export interface RemoteSource {
@@ -51,6 +52,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     localApp: options.app,
     remoteApp: options.remoteApp,
     release: options.release,
+    activeAppVersion: options.activeAppVersion,
   })
 
   const confirmed = await deployOrReleaseConfirmationPrompt({

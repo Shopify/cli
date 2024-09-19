@@ -3,6 +3,7 @@ import {devUIExtensions} from '../extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 const MANIFEST_VERSION = '3'
 
@@ -56,7 +57,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     signal: abortSignal,
     url: proxyUrl,
     port,
-    storeFqdn,
+    storeFqdn: await normalizeStoreFqdn(storeFqdn),
     storeId,
     apiKey,
     grantedScopes,
