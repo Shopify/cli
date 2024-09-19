@@ -5703,14 +5703,6 @@
           "name": "ignore",
           "type": "option"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme pull` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
         "live": {
           "allowNo": false,
           "char": "l",

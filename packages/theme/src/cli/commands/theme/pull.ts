@@ -60,11 +60,6 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for the `shopify theme pull` command.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
   }
 
   static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
