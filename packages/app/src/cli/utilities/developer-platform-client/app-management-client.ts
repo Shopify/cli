@@ -178,7 +178,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         UserInfoQuery,
         await this.businessPlatformToken(),
       )
-      const token = await ensureAuthenticatedAppManagement()
+      const {token, userId} = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
           token,
@@ -186,6 +186,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             type: 'UserAccount',
             email: userInfoResult.currentUserAccount.email,
           },
+          userId,
         }
       } else {
         this._session = {
@@ -193,6 +194,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           accountInfo: {
             type: 'UnknownAccount',
           },
+          userId,
         }
       }
     }
@@ -204,10 +206,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const newToken = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const {token} = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
     const session = await this.session()
-    if (newToken) {
-      session.token = newToken
+    if (token) {
+      session.token = token
     }
     return session.token
   }

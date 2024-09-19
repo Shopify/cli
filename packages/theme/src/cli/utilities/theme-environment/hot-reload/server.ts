@@ -23,12 +23,15 @@ import type {DevServerContext} from '../types.js'
 
 /** Store existing section names and types read from JSON files in the project */
 const sectionNamesByFile = new Map<string, [string, string][]>()
+interface SectionGroup {
+  [key: string]: {type: string}
+}
 
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null)
   if (!maybeJson) return
 
-  const sections: undefined | {[key: string]: {type: string}} = maybeJson?.sections
+  const sections: SectionGroup | undefined = maybeJson?.sections
 
   if (sections) {
     sectionNamesByFile.set(
@@ -66,9 +69,6 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
   for (const fileKey of ctx.localThemeFileSystem.unsyncedFileKeys) {
     if (!needsTemplateUpdate(fileKey)) continue
 
-    const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-    if (!content) continue
-
     if (hasRouteTemplate && jsonTemplateRE.test(fileKey)) {
       // Filter out unused JSON templates for the current route. If we're not
       // sure about the current route's template, we send all (modified) JSON templates.
@@ -81,7 +81,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
       } else if (!fileKey.includes('.default.')) continue
     }
 
-    inMemoryTemplates[fileKey] = content
+    inMemoryTemplates[fileKey] = ctx.localThemeFileSystem.files.get(fileKey)?.value ?? ''
   }
 
   return inMemoryTemplates
@@ -91,7 +91,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  * Watchs for file changes and updates in-memory templates, triggering
  * HotReload if needed.
  */
-export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
+export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
     const isAsset = fileKey.startsWith('assets/')
@@ -120,6 +120,7 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
     sectionNamesByFile.delete(fileKey)
+    triggerHotReload(fileKey, ctx)
   })
 
   // Once the initial files are loaded, read all the JSON files so that
@@ -127,7 +128,6 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
   // is reloaded, we can quickly find what to update in the DOM without
   // spending time reading files.
   return ctx.localThemeFileSystem.ready().then(async () => {
-    await ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session)
     const files = [...ctx.localThemeFileSystem.files]
     return Promise.allSettled(
       files.map(async ([fileKey, file]) => {
@@ -187,12 +187,19 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       }
 
       const replaceTemplates: {[key: string]: string} = {}
-
       const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
-      const sectionTemplate =
-        inMemoryTemplateFiles.has(sectionKey) && ctx.localThemeFileSystem.files.get(sectionKey)?.value
 
-      if (sectionTemplate) replaceTemplates[sectionKey] = sectionTemplate
+      if (inMemoryTemplateFiles.has(sectionKey)) {
+        const sectionTemplate = ctx.localThemeFileSystem.files.get(sectionKey)?.value
+        if (!sectionTemplate) {
+          // If the section template is not found, it means that the section has been removed.
+          // The remote version might not yet be synced so, instead of rendering it remotely,
+          // which should return an empty section, we directly return the same thing here.
+          return ''
+        }
+
+        replaceTemplates[sectionKey] = sectionTemplate
+      }
 
       // If a JSON file changed locally and updated the ID of a section,
       // there's a chance the cloud won't know how to render a modified section ID.
@@ -255,10 +262,10 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
     return emitHotReloadEvent({type: 'full', key})
   }
 
-  const type = key.split('/')[0]
+  const [type] = key.split('/')
 
   if (type === 'sections') {
-    hotReloadSections(key)
+    hotReloadSections(key, ctx)
   } else if (type === 'assets' && key.endsWith('.css')) {
     emitHotReloadEvent({type: 'css', key})
   } else {
@@ -266,15 +273,28 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
   }
 }
 
-function hotReloadSections(key: string) {
-  const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
-  if (!sectionId) return
-
+function hotReloadSections(key: string, ctx: DevServerContext) {
   const sectionsToUpdate = new Set<string>()
-  for (const [_fileKey, sections] of sectionNamesByFile) {
-    for (const [type, name] of sections) {
-      if (type === sectionId) {
-        sectionsToUpdate.add(name)
+
+  if (key.endsWith('.json')) {
+    // Update section groups by reading the section names from the group JSON file.
+    const content = ctx.localThemeFileSystem.files.get(key)?.value
+    if (content) {
+      const sections: SectionGroup | undefined = parseJSON(content, null)?.sections
+      for (const sectionName of Object.keys(sections || {})) {
+        sectionsToUpdate.add(sectionName)
+      }
+    }
+  } else {
+    // Update specific sections by reading the section names from the in-memory map.
+    const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
+    if (sectionId) {
+      for (const [_fileKey, sections] of sectionNamesByFile) {
+        for (const [type, name] of sections) {
+          if (type === sectionId) {
+            sectionsToUpdate.add(name)
+          }
+        }
       }
     }
   }

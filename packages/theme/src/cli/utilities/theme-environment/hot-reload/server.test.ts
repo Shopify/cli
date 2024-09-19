@@ -32,7 +32,7 @@ describe('hot-reload server', () => {
       files: [[assetJsonKey, JSON.stringify(assetJsonValue)]],
     })
 
-    await setupInMemoryTemplateWatcher(mockTheme, ctx)
+    await setupInMemoryTemplateWatcher(ctx)
     const {event: subscribeEvent, data: hotReloadEvents} = createH3Event('/__hot-reload/subscribe')
     const streamPromise = hotReloadHandler(subscribeEvent)
     // Next tick to flush the connection:
@@ -119,17 +119,34 @@ describe('hot-reload server', () => {
     await nextTick()
 
     // -- Unlinks the JSON file properly with all its side effects:
-    const hotReloadEventsLengthBeforeUnlink = hotReloadEvents.length
     await triggerFileEvent('unlink', assetJsonKey)
-    // Does not emit HotReload events:
-    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
+    // We don't know if this file is referenced or not in code so it emits a full reload event:
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${assetJsonKey}"}`)
     // Removes the JSON file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
     await nextTick()
+    const hotReloadEventsLengthBeforeChange = hotReloadEvents.length
     // Since the JSON file was removed, the section file is not referenced anymore:
     await triggerFileEvent('change', testSectionFileKey)
-    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeUnlink)
+    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeChange)
     await nextTick()
+
+    // -- Updates section groups:
+    const sectionGroupFileKey = testSectionFileKey.replace('.liquid', '.json')
+    const sectionGroupContent = JSON.stringify({
+      sections: {first: {type: testSectionType}, second: {type: testSectionType}},
+    })
+    const {contentSpy: addSectionGroupContentSpy} = await triggerFileEvent(
+      'add',
+      sectionGroupFileKey,
+      sectionGroupContent,
+    )
+    expect(addSectionGroupContentSpy).toHaveBeenCalled()
+    expect(getInMemoryTemplates(ctx)).toEqual({[sectionGroupFileKey]: sectionGroupContent})
+    // Finds section names based on the existing JSON file:
+    expect(hotReloadEvents.at(-1)).toMatch(
+      `data: {"type":"section","key":"${sectionGroupFileKey}","names":["first","second"]}`,
+    )
 
     // -- Updates CSS files:
     const cssFileKey = 'assets/style.css'

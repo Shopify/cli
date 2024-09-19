@@ -70,12 +70,6 @@ export interface themedev {
   '--path <value>'?: string
 
   /**
-   * Force polling to detect file changes.
-   * @environment SHOPIFY_FLAG_POLL
-   */
-  '--poll'?: ''
-
-  /**
    * Local port to serve theme preview from.
    * @environment SHOPIFY_FLAG_PORT
    */

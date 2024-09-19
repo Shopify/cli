@@ -4,15 +4,16 @@ import {
   raiseWarningForNonExplicitGlobPatterns,
   getPatternsFromShopifyIgnore,
 } from './asset-ignore.js'
+import {Notifier} from './notifier.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -58,6 +59,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const emitEvent = <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => {
     eventEmitter.emit(eventName, payload)
   }
+  const notifier = options?.notify ? new Notifier(options.notify) : undefined
 
   const read = async (fileKey: string) => {
     const fileContent = await readThemeFile(root, fileKey)
@@ -94,32 +96,56 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const getKey = (filePath: string) => relativePath(root, filePath)
   const isFileIgnored = (fileKey: string) => applyIgnoreFilters([{key: fileKey}], filterPatterns).length === 0
 
+  function handleFsEvent(
+    eventName: 'add' | 'change' | 'unlink',
+    themeId: string,
+    adminSession: AdminSession,
+    filePath: string,
+  ) {
+    const fileKey = getKey(filePath)
+
+    notifyFileChange(fileKey)
+      .then(() => {
+        switch (eventName) {
+          case 'add':
+          case 'change':
+            return handleFileUpdate(eventName, themeId, adminSession, fileKey)
+          case 'unlink':
+            return handleFileDelete(themeId, adminSession, fileKey)
+        }
+      })
+      .catch((error) => {
+        outputWarn(`Error handling file event for ${fileKey}: ${error}`)
+      })
+  }
+
+  function notifyFileChange(fileKey: string): Promise<void> {
+    return notifier?.notify(fileKey) ?? Promise.resolve()
+  }
+
   const handleFileUpdate = (
     eventName: 'add' | 'change',
     themeId: string,
     adminSession: AdminSession,
-    filePath: string,
+    fileKey: string,
   ) => {
-    const fileKey = getKey(filePath)
     if (isFileIgnored(fileKey)) return
 
     const previousChecksum = files.get(fileKey)?.checksum
 
-    const contentPromise = read(fileKey).then(() => {
+    const contentPromise = read(fileKey).then(async () => {
       const file = files.get(fileKey)!
 
-      if (file.checksum === previousChecksum) {
-        // Do not sync if the file has not changed
-        return ''
+      if (file.checksum !== previousChecksum) {
+        // Sync only if the file has changed
+        unsyncedFileKeys.add(fileKey)
       }
-
-      unsyncedFileKeys.add(fileKey)
 
       return file.value || file.attachment || ''
     })
 
     const syncPromise = contentPromise.then(async (content) => {
-      if (!content) return false
+      if (!unsyncedFileKeys.has(fileKey)) return false
 
       const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
@@ -145,7 +171,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       onContent: (fn) => {
         contentPromise
           .then((content) => {
-            if (content) fn(content)
+            // Run only if content has changed
+            if (unsyncedFileKeys.has(fileKey)) fn(content)
           })
           .catch(() => {})
       },
@@ -159,21 +186,22 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     })
   }
 
-  const handleFileDelete = (themeId: string, adminSession: AdminSession, filePath: string) => {
-    const fileKey = getKey(filePath)
+  const handleFileDelete = (themeId: string, adminSession: AdminSession, fileKey: string) => {
     if (isFileIgnored(fileKey)) return
 
-    unsyncedFileKeys.delete(fileKey)
+    // Optimistically delete the file from the local file system.
     files.delete(fileKey)
+    unsyncedFileKeys.add(fileKey)
     emitEvent('unlink', {fileKey})
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
-      .then((success) => {
-        if (!success) throw new Error('Unknown issue.')
+      .then(async (success) => {
+        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+        unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
       .catch((error) => {
-        renderWarning({headline: `Failed to delete file "${fileKey}".`, body: error.message})
+        outputDebug(error.message)
       })
   }
 
@@ -191,7 +219,15 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
-      files.set(asset.key, asset)
+      files.set(
+        asset.key,
+        buildThemeAsset({
+          key: asset.key,
+          checksum: asset.checksum,
+          value: asset.value ?? '',
+          attachment: asset.attachment ?? '',
+        }),
+      )
       await writeThemeFile(root, asset)
     },
     read,
@@ -209,9 +245,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       })
 
       watcher
-        .on('add', handleFileUpdate.bind(null, 'add', themeId, adminSession))
-        .on('change', handleFileUpdate.bind(null, 'change', themeId, adminSession))
-        .on('unlink', handleFileDelete.bind(null, themeId, adminSession))
+        .on('add', handleFsEvent.bind(null, 'add', themeId, adminSession))
+        .on('change', handleFsEvent.bind(null, 'change', themeId, adminSession))
+        .on('unlink', handleFsEvent.bind(null, 'unlink', themeId, adminSession))
     },
   }
 }

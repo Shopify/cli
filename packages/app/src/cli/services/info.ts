@@ -117,15 +117,13 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    let developerPlatformClient = this.options.developerPlatformClient!
     const {cachedInfo, remoteApp} = await getAppContext({
-      developerPlatformClient,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
       enableLinkingPrompt: false,
     })
-    developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
+    const developerPlatformClient = remoteApp?.developerPlatformClient ?? this.options.developerPlatformClient!
 
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,

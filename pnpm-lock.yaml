@@ -9,6 +9,7 @@ overrides:
   vite: 5.3.1
   '@oclif/core': 3.26.5
   whatwg-url: 14.0.0
+  supports-hyperlinks: 3.1.0
   '@shopify/cli-hydrogen>@shopify/cli-kit': link:./packages/cli-kit
   '@shopify/cli-hydrogen>@shopify/plugin-cloudflare': link:./packages/plugin-cloudflare
 
@@ -152,13 +153,16 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../cli-kit
+      '@shopify/create-app':
+        specifier: 3.67.0
+        version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -167,7 +171,7 @@ importers:
         specifier: 8.0.0
         version: 8.0.0
       '@shopify/theme':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../theme
       '@shopify/theme-check-node':
         specifier: 2.9.0
@@ -274,22 +278,22 @@ importers:
         specifier: 5.1.2
         version: 5.1.2
       '@shopify/app':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 8.4.0
-        version: 8.4.0(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 8.4.4
+        version: 8.4.4(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../theme
       '@types/node':
         specifier: 18.19.3
@@ -423,6 +427,9 @@ importers:
       is-interactive:
         specifier: 2.0.0
         version: 2.0.0
+      jose:
+        specifier: 5.8.0
+        version: 5.8.0
       kill-port-process:
         specifier: 3.1.0
         version: 3.1.0
@@ -472,8 +479,8 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
       supports-hyperlinks:
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 3.1.0
+        version: 3.1.0
       tempy:
         specifier: 3.0.0
         version: 3.0.0
@@ -483,6 +490,9 @@ importers:
       ts-error:
         specifier: 1.0.6
         version: 1.0.6
+      which:
+        specifier: 4.0.0
+        version: 4.0.0
       zod:
         specifier: 3.22.3
         version: 3.22.3
@@ -511,6 +521,9 @@ importers:
       '@types/semver':
         specifier: ^7.5.2
         version: 7.5.8
+      '@types/which':
+        specifier: 3.0.4
+        version: 3.0.4
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
@@ -528,15 +541,16 @@ importers:
         version: 5.2.2
 
   packages/create-app:
+    dependencies:
+      esbuild:
+        specifier: 0.19.8
+        version: 0.19.8
     devDependencies:
       '@oclif/core':
         specifier: 3.26.5
         version: 3.26.5
-      '@shopify/app':
-        specifier: 3.66.0
-        version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../cli-kit
       '@types/node':
         specifier: 18.19.3
@@ -660,7 +674,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -673,7 +687,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -689,7 +703,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.66.0
+        specifier: 3.67.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 2.9.0
@@ -4644,7 +4658,7 @@ packages:
       graphql-request: 6.1.0(graphql@16.8.1)
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.4
-      jose: 5.4.0
+      jose: 5.8.0
       js-yaml: 4.1.0
       lodash: 4.17.21
       scuid: 1.1.0
@@ -5321,7 +5335,7 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       supports-color: 8.1.1
-      supports-hyperlinks: 2.3.0
+      supports-hyperlinks: 3.1.0
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -5997,15 +6011,15 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@8.4.0(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-Ko8686rkofiE42RL5urDnK9QLZBPl2OCjVfPu7x87dHgmJDHlqsWade3goZjGN8rrsbrCHivfBLF9CY/Ra+hYw==}
+  /@shopify/cli-hydrogen@8.4.4(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-zPZZ8Mo5lKiclkPMPIk0KIHXqBh3xTx+7Kdo/d1SREa8QrmxDt4mSlWShW+sHFkdIOyEGRdkwotJmvOGkaotZw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
       '@shopify/hydrogen-codegen': ^0.3.1
-      '@shopify/mini-oxygen': ^3.0.4
+      '@shopify/mini-oxygen': ^3.0.5
       graphql-config: ^5.0.3
       vite: 5.3.1
     peerDependenciesMeta:
@@ -7116,6 +7130,10 @@ packages:
 
   /@types/uuid@9.0.1:
     resolution: {integrity: sha512-rFT3ak0/2trgvp4yYZo5iKFEPsET7vKydKF+VRCxlQ9bpheehyAJH89dAkaLEq/j/RZXJIqcgsmPJKUP1Z28HA==}
+    dev: true
+
+  /@types/which@3.0.4:
+    resolution: {integrity: sha512-liyfuo/106JdlgSchJzXEQCVArk0CvevqPote8F8HgWgJ3dRCcTHgJIsLDuee0kxk/mhbInzIZk3QWSZJ8R+2w==}
     dev: true
 
   /@types/wrap-ansi@3.0.0:
@@ -11761,7 +11779,6 @@ packages:
   /isexe@3.1.1:
     resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
     engines: {node: '>=16'}
-    dev: true
 
   /isobject@2.1.0:
     resolution: {integrity: sha512-+OUdGJlgjOBZDfxnDjYYG6zp487z0JGNQq3cYQYg5f5hKR+syHMsaztzGeml/4kGG55CSpKSpWTY+jYGgsHLgA==}
@@ -11911,9 +11928,8 @@ packages:
   /jju@1.4.0:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
 
-  /jose@5.4.0:
-    resolution: {integrity: sha512-6rpxTHPAQyWMb9A35BroFl1Sp0ST3DpPcm5EVIxZxdH+e0Hv9fwhyB3XLKFUcHNpdSDnETmBfuPPTTlYz5+USw==}
-    dev: true
+  /jose@5.8.0:
+    resolution: {integrity: sha512-E7CqYpL/t7MMnfGnK/eg416OsFCVUrU/Y3Vwe7QjKhu/BkS1Ms455+2xsqZQVN57/U2MHMBvEb5SrmAZWAIntA==}
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -14948,20 +14964,12 @@ packages:
     dependencies:
       has-flag: 4.0.0
 
-  /supports-hyperlinks@2.3.0:
-    resolution: {integrity: sha512-RpsAZlpWcDwOPQA22aCH4J0t7L8JmAvsCxfOSEwm7cQs3LshN36QaTkwd70DnBOXDWGssw2eUoc8CaRWT0XunA==}
-    engines: {node: '>=8'}
-    dependencies:
-      has-flag: 4.0.0
-      supports-color: 7.2.0
-
-  /supports-hyperlinks@3.0.0:
-    resolution: {integrity: sha512-QBDPHyPQDRTy9ku4URNGY5Lah8PAaXs6tAAwp55sL5WCsSW7GIfdf6W5ixfziW+t7wh3GVvHyHHyQ1ESsoRvaA==}
+  /supports-hyperlinks@3.1.0:
+    resolution: {integrity: sha512-2rn0BZ+/f7puLOHZm1HOJfwBggfaHXUpPUSSG/SWM4TWp5KCfmNYwnC3hruy2rZlMnmWZ+QAGpZfchu3f3695A==}
     engines: {node: '>=14.18'}
     dependencies:
       has-flag: 4.0.0
       supports-color: 7.2.0
-    dev: false
 
   /supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
@@ -15040,7 +15048,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       ansi-escapes: 5.0.0
-      supports-hyperlinks: 2.3.0
+      supports-hyperlinks: 3.1.0
     dev: false
 
   /test-exclude@6.0.0:
@@ -16032,7 +16040,6 @@ packages:
     hasBin: true
     dependencies:
       isexe: 3.1.1
-    dev: true
 
   /why-is-node-running@2.2.2:
     resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}

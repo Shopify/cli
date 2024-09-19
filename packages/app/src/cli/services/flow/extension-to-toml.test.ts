@@ -54,12 +54,12 @@ required = true
 `)
   })
 
-  test('truncates the handle if the title has >30 characters', () => {
+  test('truncates the handle if the title has >50 characters', () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '26237698049',
       uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
-      title: 'flow action @ Char! flow action @ Char! flow action @ Char!',
+      title: 'flow action @ Char! flow action @ Char! flow action @ Char! flow action @ Char!',
       type: 'flow_action_definition',
       draftVersion: {
         config:
@@ -74,7 +74,7 @@ required = true
     expect(got).toEqual(`[[extensions]]
 type = "flow_action"
 name = "action title"
-handle = "flow-action-char-flow-actio"
+handle = "flow-action-char-flow-action-char-flow-actio"
 description = "action description"
 runtime_url = "https://google.es"
 config_page_url = "https://destinationsurl.test.dev"

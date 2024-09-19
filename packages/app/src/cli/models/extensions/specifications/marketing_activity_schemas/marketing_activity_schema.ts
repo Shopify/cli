@@ -2,7 +2,6 @@ import {BaseSchema} from '../../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const BaseFieldSchema = zod.object({
-  id: zod.string(),
   ui_type: zod.string(),
 })
 
@@ -122,7 +121,7 @@ const UISchemaMapping: {[key: string]: zod.Schema} = {
 export const MarketingActivityExtensionSchema = BaseSchema.extend({
   title: zod.string().min(1),
   description: zod.string().min(1),
-  app_api_url: zod.string(),
+  api_path: zod.string(),
   tactic: zod.enum([
     'ad',
     'retargeting',
