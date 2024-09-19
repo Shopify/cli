@@ -28,7 +28,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, writeFile, copyFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
@@ -336,13 +336,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.isFunctionExtension ? this.outputPath : joinPath(bundleDirectory, extensionId, outputFile)
+      this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
     }
 
     await this.build(options)
-    if (this.isFunctionExtension) {
-      await copyFile(this.outputPath, joinPath(bundleDirectory, extensionId, 'index.wasm'))
-    }
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }

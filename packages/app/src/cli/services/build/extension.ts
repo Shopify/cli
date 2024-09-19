@@ -10,6 +10,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -141,10 +142,17 @@ export async function buildFunctionExtension(
   }
 
   try {
+    const bundlePath = joinPath(extension.outputPath.split('/').slice(0, -2).join('/'), 'index.wasm')
+    extension.outputPath = joinPath(extension.directory, joinPath('dist', 'function.wasm'))
     if (extension.isJavaScript) {
       await runCommandOrBuildJSFunction(extension, options)
     } else {
       await buildOtherFunction(extension, options)
+    }
+    if (fileExistsSync(extension.outputPath)) {
+      const base64Contents = await readFile(extension.outputPath, {encoding: 'base64'})
+      await touchFile(bundlePath)
+      await writeFile(bundlePath, base64Contents)
     }
   } finally {
     await releaseLock()

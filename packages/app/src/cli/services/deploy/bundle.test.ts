@@ -108,7 +108,7 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('creates a zip file with wasm file in it for a function extension', async () => {
+  test('creates a zip file for a function extension', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
