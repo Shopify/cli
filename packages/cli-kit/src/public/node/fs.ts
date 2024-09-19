@@ -414,17 +414,6 @@ export async function chmod(path: string, mode: number | string): Promise<void> 
 }
 
 /**
- * Checks if a file at some path is executable.
- *
- * @param path - Path to the file or directory whose permissions will be fetched.
- */
-export async function isExecutable(path: string): Promise<boolean> {
-  const stats = await fsStat(path)
-  const isExecutable = Boolean(stats.mode & fsConstants.S_IXUSR)
-  return isExecutable
-}
-
-/**
  * Checks if a file has executable permissions.
  *
  * @param path - Path to the file whose permissions will be checked.
