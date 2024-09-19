@@ -1,8 +1,22 @@
 import {isStorefrontPasswordCorrect} from './storefront-session.js'
-import {getStorefrontPassword, removeStorefrontPassword, setStorefrontPassword} from '../../services/local-storage.js'
+import {
+  getStorefrontPassword,
+  getThemeStore,
+  removeStorefrontPassword,
+  setStorefrontPassword,
+} from '../../services/local-storage.js'
+import {ensureThemeStore} from '../theme-store.js'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function ensureValidPassword(password: string | undefined, store: string) {
+  /*
+   * This allows us to call ensureValidPassword() in other packages
+   * without the need to explicitly import and call ensureThemeStore() upstream
+   */
+  if (!getThemeStore()) {
+    ensureThemeStore({store})
+  }
+
   let finalPassword = password || getStorefrontPassword() || (await promptPassword('Enter your store password'))
   let isPasswordRemoved = false
 
