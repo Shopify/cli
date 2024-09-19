@@ -284,6 +284,7 @@ describe('ensureGenerateContext', () => {
       specifications: [],
       remoteFlags: [],
     })
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(input.developerPlatformClient)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -314,6 +315,7 @@ describe('ensureGenerateContext', () => {
       specifications: [],
       remoteFlags: [],
     })
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(input.developerPlatformClient)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -345,6 +347,7 @@ describe('ensureGenerateContext', () => {
       specifications: [],
       remoteFlags: [],
     })
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(input.developerPlatformClient)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -407,6 +410,7 @@ describe('ensureDevContext', async () => {
   test('returns selected data using config file set in cache', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
       vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       vi.mocked(loadAppConfiguration).mockReset()
       const {schema: configSchema} = await buildVersionedAppSchema()
@@ -500,6 +504,7 @@ dev_store_url = "domain1"
       })
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
       const options = devOptions({apiKey: APP2.apiKey})
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
       // When
       const got = await ensureDevContext(options)
@@ -553,6 +558,7 @@ dev_store_url = "domain1"
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
       const options = devOptions()
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
       // When
       await ensureDevContext(options)
@@ -589,6 +595,7 @@ dev_store_url = "domain1"
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
       const options = devOptions()
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
       // When
       await ensureDevContext(options)
@@ -643,6 +650,7 @@ api_version = "2023-04"
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
       const options = devOptions()
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
       // When
       await ensureDevContext(options)
@@ -904,6 +912,7 @@ api_version = "2023-04"
       const app = await mockApp(tmp, localApp)
       vi.mocked(loadApp).mockResolvedValue(app)
       const options = devOptions({reset: true})
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
 
       // When
       const got = await ensureDevContext(options)
