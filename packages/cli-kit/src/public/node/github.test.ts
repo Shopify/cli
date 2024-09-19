@@ -175,7 +175,7 @@ function createMockRelease(size = 1, mocks: Partial<GithubRelease> = {}): Github
 describe('downloadGitHubRelease', () => {
   const repo = 'testuser/testrepo'
   const version = 'v1.0.0'
-  const asset = 'test-asset.exe'
+  const asset = 'test-asset'
 
   testWithTempDir('successfully downloads the release asset', async ({tempDir}) => {
     const content = Buffer.from('hello')
@@ -185,7 +185,8 @@ describe('downloadGitHubRelease', () => {
     }
     vi.mocked(fetch).mockResolvedValue(mockResponse as any)
 
-    const targetPath = joinPath(tempDir, 'downloads', 'example')
+    const binary = process.platform === 'win32' ? 'test-asset.exe' : 'test-asset'
+    const targetPath = joinPath(tempDir, 'downloads', binary)
 
     await downloadGitHubRelease(repo, version, asset, targetPath)
 
