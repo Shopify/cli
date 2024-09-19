@@ -766,13 +766,11 @@ interface AppContext {
 export async function getAppContext({
   reset,
   directory,
-  developerPlatformClient,
   configName,
   enableLinkingPrompt = true,
 }: {
   reset: boolean
   directory: string
-  developerPlatformClient: DeveloperPlatformClient
   configName?: string
   enableLinkingPrompt?: boolean
 }): Promise<AppContext> {
@@ -784,6 +782,8 @@ export async function getAppContext({
     directory,
     userProvidedConfigName: configName,
   })
+
+  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
 
   let remoteApp
   if (isCurrentAppSchema(configuration)) {
