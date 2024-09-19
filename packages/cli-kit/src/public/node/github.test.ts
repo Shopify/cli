@@ -175,7 +175,7 @@ function createMockRelease(size = 1, mocks: Partial<GithubRelease> = {}): Github
 describe('downloadGitHubRelease', () => {
   const repo = 'testuser/testrepo'
   const version = 'v1.0.0'
-  const asset = 'test-asset.zip'
+  const asset = 'test-asset.exe'
 
   testWithTempDir('successfully downloads the release asset', async ({tempDir}) => {
     const content = Buffer.from('hello')
