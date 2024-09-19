@@ -12,7 +12,7 @@ import {
   testAppConfigExtensions,
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -24,6 +24,7 @@ vi.mock('./local-storage.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('../utilities/developer-platform-client.js')
 
 const APP = testOrganizationApp()
 const APP1 = testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'})
@@ -128,6 +129,7 @@ describe('info', () => {
         }),
         configContents: testConfig,
       })
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
 
       // When
       const result = stringifyMessage(await info(app, infoOptions()))
