@@ -14,12 +14,16 @@ const mkcertSnippet = outputToken.genericShellCommand('mkcert')
 async function getMkcertPath(
   appDirectory: string,
   onRequiresDownload: () => Promise<boolean>,
-  env = process.env,
+  env: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+  arch: NodeJS.Architecture,
 ): Promise<string> {
   const envPath = env[environmentVariableNames.mkcertBinaryPath]
   if (envPath) return envPath
 
-  const defaultPath = joinPath(appDirectory, '.shopify', 'mkcert')
+  const binaryName = platform === 'win32' ? 'mkcert.exe' : 'mkcert'
+
+  const defaultPath = joinPath(appDirectory, '.shopify', binaryName)
   if (await fileExists(defaultPath)) return defaultPath
 
   // Check if mkcert is available on the system PATH
@@ -39,13 +43,11 @@ async function getMkcertPath(
     )
   }
 
-  await downloadMkcert(defaultPath)
+  await downloadMkcert(defaultPath, platform, arch)
   return defaultPath
 }
 
-async function downloadMkcert(targetPath: string): Promise<void> {
-  const platform = process.platform
-  const arch = process.arch
+async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arch: NodeJS.Architecture): Promise<void> {
   let assetName: string
 
   switch (platform) {
@@ -72,6 +74,8 @@ interface GenerateCertificateOptions {
   onRequiresDownloadConfirmation: () => Promise<boolean>
   resetFirst?: boolean
   env?: NodeJS.ProcessEnv
+  platform?: NodeJS.Platform
+  arch?: NodeJS.Architecture
 }
 
 /**
@@ -88,8 +92,11 @@ export async function generateCertificate({
   appDirectory,
   onRequiresDownloadConfirmation,
   env = process.env,
+  platform = process.platform,
+  arch = process.arch,
 }: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string}> {
-  const mkcertPath = await getMkcertPath(appDirectory, onRequiresDownloadConfirmation, env)
+  const mkcertPath = await getMkcertPath(appDirectory, onRequiresDownloadConfirmation, env, platform, arch)
+
   outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
   const keyPath = joinPath(appDirectory, '.shopify', 'localhost-key.pem')
   const certPath = joinPath(appDirectory, '.shopify', 'localhost.pem')
