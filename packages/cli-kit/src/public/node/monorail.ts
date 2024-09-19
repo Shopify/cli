@@ -10,7 +10,7 @@ const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 type Optional<T> = T | null
 
 // This is the topic name of the main event we log to Monorail, the command tracker
-export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.12'
+export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.13'
 
 export interface Schemas {
   [MONORAIL_COMMAND_TOPIC]: {
@@ -43,6 +43,7 @@ export interface Schemas {
       node_version: string
       is_employee: boolean
       store_fqdn_hash?: Optional<string>
+      user_id: string
 
       // Any and all commands
       cmd_all_alias_used?: Optional<string>

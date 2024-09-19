@@ -101,6 +101,11 @@ export interface OAuthSession {
   userId: string
 }
 
+let userId: undefined | string
+export function getLastSeenUserIdAfterAuth() {
+  return userId
+}
+
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
@@ -181,7 +186,7 @@ The CLI is currently unable to prompt for reauthentication.`,
   if (!envToken && tokens.partners) {
     await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
-
+  userId = tokens.userId
   return tokens
 }
 
