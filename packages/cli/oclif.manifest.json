@@ -468,6 +468,14 @@
           "name": "reset",
           "type": "boolean"
         },
+        "reset-mkcert": {
+          "allowNo": false,
+          "description": "Reset the mkcert CA.",
+          "env": "SHOPIFY_FLAG_RESET_MKCERT",
+          "hidden": true,
+          "name": "reset-mkcert",
+          "type": "boolean"
+        },
         "skip-dependencies-installation": {
           "allowNo": false,
           "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
