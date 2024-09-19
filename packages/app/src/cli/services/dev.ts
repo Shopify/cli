@@ -47,7 +47,11 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface NoTunnel {
   mode: 'no-tunnel'
-  provideCertificate(appDirectory: string): Promise<{keyContent: string; certContent: string}>
+  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string}>
+}
+
+interface NoTunnelNoCert {
+  mode: 'no-tunnel-no-cert'
 }
 
 interface AutoTunnel {
@@ -59,7 +63,7 @@ interface TunnelProvided {
   url: string
 }
 
-export type TunnelMode = NoTunnel | AutoTunnel | TunnelProvided
+export type TunnelMode = NoTunnel | AutoTunnel | TunnelProvided | NoTunnelNoCert
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -313,6 +317,7 @@ async function setupNetworkingOptions(
   const [{frontendUrl, frontendPort: proxyPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
     generateFrontendURL({
       noTunnel: tunnelOptions.mode === 'no-tunnel',
+      noTunnelNoCert: tunnelOptions.mode === 'no-tunnel-no-cert',
       tunnelUrl: tunnelOptions.mode === 'provided' ? tunnelOptions.url : undefined,
       tunnelClient,
     }),
