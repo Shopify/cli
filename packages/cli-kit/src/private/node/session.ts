@@ -106,6 +106,10 @@ export function getLastSeenUserIdAfterAuth() {
   return userId
 }
 
+export function setLastSeenUserIdAfterAuth(id: string) {
+  userId = id
+}
+
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
@@ -174,6 +178,8 @@ The CLI is currently unable to prompt for reauthentication.`,
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
+  setLastSeenUserIdAfterAuth(completeSession[fqdn]!.identity.userId)
+
   // Save the new session info if it has changed
   if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
   const tokens = await tokensFor(applications, completeSession, fqdn)
@@ -186,7 +192,7 @@ The CLI is currently unable to prompt for reauthentication.`,
   if (!envToken && tokens.partners) {
     await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
-  userId = tokens.userId
+
   return tokens
 }
 

@@ -104,7 +104,10 @@ beforeEach(() => {
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(applicationId).mockImplementation((app) => app)
-  vi.mocked(exchangeCustomPartnerToken).mockResolvedValue(partnersToken)
+  vi.mocked(exchangeCustomPartnerToken).mockResolvedValue({
+    accessToken: partnersToken.accessToken,
+    userId: validIdentityToken.userId,
+  })
   vi.mocked(partnersRequest).mockResolvedValue(undefined)
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
 })
