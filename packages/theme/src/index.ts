@@ -14,6 +14,7 @@ import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
 import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
+import {pull} from './cli/services/pull.js'
 
 const COMMANDS = {
   'theme:init': Init,
@@ -33,6 +34,12 @@ const COMMANDS = {
   'theme:serve': Serve,
   'theme:share': Share,
 }
+
+const PUBLIC_COMMANDS = {
+  pull,
+}
+
+export {PUBLIC_COMMANDS}
 
 export default COMMANDS
 
