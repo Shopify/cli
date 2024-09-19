@@ -97,14 +97,22 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       description:
         'Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
-      exclusive: ['no-tunnel', 'tunnel'],
+      exclusive: ['no-tunnel', 'no-tunnel-http'],
     }),
     'no-tunnel': Flags.boolean({
       hidden: true,
       description: 'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead',
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
-      exclusive: ['tunnel-url', 'tunnel'],
+      exclusive: ['tunnel-url', 'no-tunnel-http'],
+    }),
+    'no-tunnel-http': Flags.boolean({
+      hidden: true,
+      description:
+        'Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead. No certificate will be generated.',
+      env: 'SHOPIFY_FLAG_NO_TUNNEL_HTTP',
+      default: false,
+      exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     'reset-mkcert': Flags.boolean({
       hidden: true,
@@ -174,6 +182,10 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
             resetFirst: flags['reset-mkcert'],
           })
         },
+      }
+    } else if (flags['no-tunnel-http']) {
+      tunnel = {
+        mode: 'no-tunnel-no-cert',
       }
     } else if (flags['tunnel-url']) {
       tunnel = {

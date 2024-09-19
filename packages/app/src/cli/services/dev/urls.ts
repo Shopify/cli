@@ -35,6 +35,7 @@ export interface PartnersURLs {
 
 export interface FrontendURLOptions {
   noTunnel: boolean
+  noTunnelNoCert: boolean
   tunnelUrl?: string
   tunnelClient: TunnelClient | undefined
 }
@@ -105,6 +106,10 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   if (options.noTunnel) {
     frontendPort = await getAvailableTCPPort()
     frontendUrl = 'https://localhost'
+    usingLocalhost = true
+  } else if (options.noTunnelNoCert) {
+    frontendPort = await getAvailableTCPPort()
+    frontendUrl = 'http://localhost'
     usingLocalhost = true
   } else if (options.tunnelClient) {
     const url = await pollTunnelURL(options.tunnelClient)

@@ -434,10 +434,22 @@
           "env": "SHOPIFY_FLAG_NO_TUNNEL",
           "exclusive": [
             "tunnel-url",
-            "tunnel"
+            "no-tunnel-http"
           ],
           "hidden": true,
           "name": "no-tunnel",
+          "type": "boolean"
+        },
+        "no-tunnel-http": {
+          "allowNo": false,
+          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead. No certificate will be generated.",
+          "env": "SHOPIFY_FLAG_NO_TUNNEL_HTTP",
+          "exclusive": [
+            "tunnel-url",
+            "no-tunnel"
+          ],
+          "hidden": true,
+          "name": "no-tunnel-http",
           "type": "boolean"
         },
         "no-update": {
@@ -535,7 +547,7 @@
           "env": "SHOPIFY_FLAG_TUNNEL_URL",
           "exclusive": [
             "no-tunnel",
-            "tunnel"
+            "no-tunnel-http"
           ],
           "hasDynamicHelp": false,
           "hidden": false,
@@ -1632,7 +1644,7 @@
           "env": "SHOPIFY_FLAG_NO_TUNNEL",
           "exclusive": [
             "tunnel-url",
-            "tunnel"
+            "no-tunnel-http"
           ],
           "hidden": true,
           "name": "no-tunnel",
