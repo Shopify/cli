@@ -424,6 +424,9 @@ importers:
       ink:
         specifier: 4.4.1
         version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
+      is-executable:
+        specifier: 2.0.1
+        version: 2.0.1
       is-interactive:
         specifier: 2.0.0
         version: 2.0.0
@@ -11536,6 +11539,11 @@ packages:
     resolution: {integrity: sha512-F+i2BKsFrH66iaUFc0woD8sLy8getkwTwtOBjvs56Cx4CgJDeKQeqfz8wAYiSb8JOprWhHH5p77PbmYCvvUuXQ==}
     engines: {node: '>=8'}
     hasBin: true
+
+  /is-executable@2.0.1:
+    resolution: {integrity: sha512-0b7IBZndv6UF62ROvSL0lCmYwgLa2etNumsVdmNZQf/pJdYstJihfg/XDzG+p+5nBzT+1hDm2G5rKkhIDnXSCg==}
+    engines: {node: '>=14.16'}
+    dev: false
 
   /is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}

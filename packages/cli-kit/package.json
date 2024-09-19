@@ -136,6 +136,7 @@
     "graphql": "16.8.1",
     "graphql-request": "5.2.0",
     "ink": "4.4.1",
+    "is-executable": "2.0.1",
     "is-interactive": "2.0.0",
     "jose": "5.8.0",
     "latest-version": "7.0.0",
