@@ -3,18 +3,16 @@ import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../../services/context.js'
 import {selectOrCreateApp} from '../../services/dev/select-app.js'
-import link from '../../services/app/config/link.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
-import {hyphenate} from '@shopify/cli-kit/common/string'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 
 export default class Init extends Command {
@@ -67,18 +65,15 @@ export default class Init extends Command {
     const inferredPackageManager = this.inferPackageManager(flags['package-manager'])
     const name = flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path}))
 
-    // Login and then fetch org and app
+    // Authenticate and select organization and app
     const developerPlatformClient = selectDeveloperPlatformClient()
     const org = await selectOrg()
     const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
     const selectedApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient)
-    //
 
     const promptAnswers = await initPrompt({
-      name: selectedApp.title,
       template: flags.template,
       flavor: flags.flavor,
-      directory: flags.path,
     })
 
     if (promptAnswers.globalCLIResult.install) {
@@ -91,29 +86,18 @@ export default class Init extends Command {
     }))
 
     await initService({
-      name: promptAnswers.name,
+      name: selectedApp.title,
+      app: selectedApp,
       packageManager: inferredPackageManager,
       template: promptAnswers.template,
       local: flags.local,
       directory: flags.path,
       useGlobalCLI: promptAnswers.globalCLIResult.alreadyInstalled || promptAnswers.globalCLIResult.install,
+      developerPlatformClient,
       postCloneActions: {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
     })
-
-    const hyphenizedName = hyphenate(selectedApp.title)
-    const outputDirectory = joinPath(flags.path, hyphenizedName)
-
-    await link(
-      {
-        directory: outputDirectory,
-        apiKey: selectedApp.apiKey,
-        configName: 'shopify.app.toml',
-        developerPlatformClient,
-      },
-      false,
-    )
   }
 
   validateTemplateValue(template: string | undefined) {

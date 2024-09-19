@@ -1,16 +1,12 @@
-import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderText, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface InitOptions {
-  name?: string
   template?: string
   flavor?: string
-  directory: string
 }
 
 interface InitOutput {
-  name: string
   template: string
   // e.g. 'remix'
   templateType: PredefinedTemplate | 'custom'
@@ -21,6 +17,7 @@ interface TemplateBranch {
   branch: string
   label: string
 }
+
 interface Template {
   url: string
   label?: string
@@ -72,36 +69,14 @@ export const visibleTemplates = allTemplates.filter((key) => templates[key].visi
 const templateOptionsInOrder = ['remix', 'none'] as const
 
 const init = async (options: InitOptions): Promise<InitOutput> => {
-  let name = options.name
   let template = options.template
   const flavor = options.flavor
 
   const defaults = {
-    name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
     template: templates.remix.url,
   } as const
 
   let welcomed = false
-
-  if (!name) {
-    renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
-    welcomed = true
-    name = await renderTextPrompt({
-      message: 'Your project name?',
-      defaultValue: defaults.name,
-      validate: (value) => {
-        if (value.length === 0) {
-          return "App name can't be empty"
-        }
-        if (value.length > 30) {
-          return 'Enter a shorter name (30 character max.)'
-        }
-        if (value.toLowerCase().includes('shopify')) {
-          return "App name can't include the word 'shopify'"
-        }
-      },
-    })
-  }
 
   if (!template) {
     if (!welcomed) {
@@ -122,7 +97,6 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
   const answers: InitOutput = {
     ...options,
-    name,
     template,
     templateType: isPredefinedTemplate(template) ? template : 'custom',
     globalCLIResult: {install: false, alreadyInstalled: false},

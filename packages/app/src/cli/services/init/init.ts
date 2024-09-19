@@ -1,5 +1,8 @@
 import {getDeepInstallNPMTasks, updateCLIDependencies} from './template/npm.js'
 import cleanup from './template/cleanup.js'
+import link from '../app/config/link.js'
+import {OrganizationApp} from '../../models/organization.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   findUpAndReadPackageJson,
   lockfiles,
@@ -31,11 +34,13 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 interface InitOptions {
   name: string
+  app: OrganizationApp
   directory: string
   template: string
   packageManager: PackageManager
   local: boolean
   useGlobalCLI: boolean
+  developerPlatformClient: DeveloperPlatformClient
   postCloneActions: {
     removeLockfilesFromGitignore: boolean
   }
@@ -187,6 +192,17 @@ async function init(options: InitOptions) {
 
     await moveFile(templateScaffoldDir, outputDirectory)
   })
+
+  // Link the new project to the selected App
+  await link(
+    {
+      directory: outputDirectory,
+      apiKey: options.app.apiKey,
+      configName: 'shopify.app.toml',
+      developerPlatformClient: options.developerPlatformClient,
+    },
+    false,
+  )
 
   renderSuccess({
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
