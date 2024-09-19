@@ -30,6 +30,7 @@ describe('mkcert', () => {
         env: {
           SHOPIFY_CLI_MKCERT_BINARY: '/path/to/mkcert',
         },
+        platform: 'linux',
       })
 
       expect(keyContent).toBe('key')
@@ -55,6 +56,7 @@ describe('mkcert', () => {
       const {keyContent, certContent} = await generateCertificate({
         appDirectory,
         onRequiresDownloadConfirmation,
+        platform: 'linux',
       })
 
       expect(keyContent).toBe('key')
@@ -78,6 +80,7 @@ describe('mkcert', () => {
       const {keyContent, certContent} = await generateCertificate({
         appDirectory,
         onRequiresDownloadConfirmation: onRequiresDownload,
+        platform: 'linux',
       })
 
       expect(keyContent).toBe('key')
@@ -99,6 +102,36 @@ describe('mkcert', () => {
       const {keyContent, certContent} = await generateCertificate({
         appDirectory,
         onRequiresDownloadConfirmation,
+        platform: 'linux',
+      })
+
+      expect(keyContent).toBe('key')
+      expect(certContent).toBe('cert')
+      expect(onRequiresDownloadConfirmation).toHaveBeenCalled()
+      expect(downloadGitHubRelease).toHaveBeenCalledWith(
+        'FiloSottile/mkcert',
+        'v1.4.4',
+        expect.any(String),
+        mkcertDefaultPath,
+      )
+    })
+
+    testWithTempDir('generates a certificate using a downloaded mkcert.exe on windows', async ({tempDir}) => {
+      const appDirectory = tempDir
+
+      const mkcertDefaultPath = joinPath(appDirectory, '.shopify', 'mkcert.exe')
+      vi.mocked(exec).mockImplementation(async (command) => {
+        expect(command).toBe(mkcertDefaultPath)
+        await mkdir(joinPath(appDirectory, '.shopify'))
+        await writeFile(joinPath(appDirectory, '.shopify', 'localhost-key.pem'), 'key')
+        await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
+      })
+
+      const onRequiresDownloadConfirmation = vi.fn().mockReturnValue(true)
+      const {keyContent, certContent} = await generateCertificate({
+        appDirectory,
+        onRequiresDownloadConfirmation,
+        platform: 'win32',
       })
 
       expect(keyContent).toBe('key')
