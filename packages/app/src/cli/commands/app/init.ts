@@ -3,9 +3,9 @@ import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../../services/context.js'
 import {selectOrCreateApp} from '../../services/dev/select-app.js'
+import AppCommand from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import Command from '@shopify/cli-kit/node/base-command'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -14,8 +14,9 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
 import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {renderText} from '@shopify/cli-kit/node/ui'
 
-export default class Init extends Command {
+export default class Init extends AppCommand {
   static summary?: string | undefined = 'Create a new app project'
 
   static flags = {
@@ -67,6 +68,8 @@ export default class Init extends Command {
 
     // Authenticate and select organization and app
     const developerPlatformClient = selectDeveloperPlatformClient()
+    renderText({text: '\nWelcome. Let’s get started by linking this new project to an app in your organization.'})
+
     const org = await selectOrg()
     const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
     const selectedApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient)
@@ -85,6 +88,8 @@ export default class Init extends Command {
       cmd_create_app_template_url: promptAnswers.template,
     }))
 
+    const platformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
+
     await initService({
       name: selectedApp.title,
       app: selectedApp,
@@ -93,7 +98,7 @@ export default class Init extends Command {
       local: flags.local,
       directory: flags.path,
       useGlobalCLI: promptAnswers.globalCLIResult.alreadyInstalled || promptAnswers.globalCLIResult.install,
-      developerPlatformClient,
+      developerPlatformClient: platformClient,
       postCloneActions: {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
