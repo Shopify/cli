@@ -12,7 +12,7 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
   }
 })
 
-const successResponse = {ok: true, status: 200, headers: {get: vi.fn()}} as any
+const successResponse = {ok: true, status: 200, headers: {get: vi.fn(), delete: vi.fn()}} as any
 
 const session: DevServerSession = {
   token: 'admin_token_abc123',
@@ -50,6 +50,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
+    expect(response.headers.delete).toBeCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0',
       expect.objectContaining({
@@ -74,6 +75,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
+    expect(response.headers.delete).toBeCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',
       expect.objectContaining({
@@ -109,6 +111,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
+    expect(response.headers.delete).toBeCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&section_id=sections--1__announcement-bar',
       expect.objectContaining({
@@ -135,6 +138,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
+    expect(response.headers.delete).toBeCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&app_block_id=00001111222233334444',
       expect.objectContaining({
@@ -162,6 +166,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
+    expect(response.headers.delete).toBeCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&section_id=sections--1__announcement-bar',
       expect.objectContaining({
@@ -191,6 +196,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
+    expect(response.headers.delete).toBeCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&value=A&value=B',
       expect.objectContaining({
