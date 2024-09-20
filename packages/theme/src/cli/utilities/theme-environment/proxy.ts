@@ -4,7 +4,7 @@ import {
   defineEventHandler,
   clearResponseHeaders,
   sendProxy,
-  getProxyRequestHeaders,
+  getRequestHeaders,
   getRequestWebStream,
   getRequestIP,
   type H3Event,
@@ -167,7 +167,9 @@ const HOP_BY_HOP_HEADERS = [
   'trailer',
   'transfer-encoding',
   'upgrade',
+  'expect',
   'content-security-policy',
+  'host',
 ]
 
 function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
@@ -203,10 +205,8 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
  * Filters headers to forward to SFR.
  */
 export function getProxyStorefrontHeaders(event: H3Event) {
-  const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string}
+  const proxyRequestHeaders = getRequestHeaders(event) as {[key: string]: string}
 
-  // H3 already removes most hop-by-hop request headers:
-  // https://github.com/unjs/h3/blob/ac6d83de2abe5411d4eaea8ecf2165ace16a65f3/src/utils/proxy.ts#L25
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
   }
