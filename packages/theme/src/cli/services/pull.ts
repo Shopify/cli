@@ -34,6 +34,8 @@ export interface PullFlags {
   only?: string[]
   ignore?: string[]
   force?: boolean
+  noColor?: boolean
+  verbose?: boolean
 }
 
 /**
@@ -51,6 +53,8 @@ export interface PullFlags {
  * @param {string[]} [flags.only] - Download only the specified files (Multiple flags allowed).
  * @param {string[]} [flags.ignore] - Skip downloading the specified files (Multiple flags allowed).
  * @param {boolean} [flags.force] - Proceed without confirmation, if current directory does not seem to be theme directory.
+ * @param {boolean} [flags.noColor] - Disable color output.
+ * @param {boolean} [flags.verbose] - Increase the verbosity of the output.
  * @returns {Promise<void>} Resolves when the pull operation is complete.
  */
 export async function pull(flags: PullFlags) {
