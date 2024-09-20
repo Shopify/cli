@@ -5,7 +5,6 @@
       ],
       "args": {
       },
-      "enableJsonFlag": false,
       "flags": {
         "flavor": {
           "description": "Which flavor of the given template to use.",
@@ -86,15 +85,9 @@
       "hiddenAliases": [
       ],
       "id": "init",
-      "isESM": true,
       "pluginAlias": "@shopify/create-app",
       "pluginName": "@shopify/create-app",
       "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "commands",
-        "init.js"
-      ],
       "strict": true,
       "summary": "Create a new app project"
     }
