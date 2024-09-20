@@ -87,6 +87,26 @@ describe('dev proxy', () => {
       `)
     })
 
+    test('proxies urls in JS files', () => {
+      const content = `
+        console.log('https://cdn.shopify.com/path/to/assets/file1');
+        // Comment: https://cdn.shopify.com/path/to/assets/file1 something
+        const url = "https://cdn.shopify.com/path/to/assets/file1#zzz";
+        fetch(\`https://cdn.shopify.com/path/to/assets/file1?q=123\`);
+      `
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(
+        `
+        "
+                console.log('/cdn/path/to/assets/file1');
+                // Comment: /cdn/path/to/assets/file1 something
+                const url = \\"/cdn/path/to/assets/file1#zzz\\";
+                fetch(\`/cdn/path/to/assets/file1?q=123\`);
+              "
+      `,
+      )
+    })
+
     test('proxies urls in Link header', () => {
       const linkHeader =
         `<https://cdn.shopify.com>; rel="preconnect", <https://cdn.shopify.com>; rel="preconnect"; crossorigin,` +
