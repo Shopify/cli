@@ -543,9 +543,6 @@ importers:
         specifier: 0.19.8
         version: 0.19.8
     devDependencies:
-      '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
       '@shopify/app':
         specifier: 3.67.0
         version: link:../app

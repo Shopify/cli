@@ -1,5 +1,4 @@
-import {isValidURL} from './url.js'
-import {safeParseURL} from './url'
+import {isValidURL, safeParseURL} from './url.js'
 import {describe, expect, test} from 'vitest'
 
 describe('isValidURL', () => {

@@ -58,7 +58,6 @@
     "esbuild": "0.19.8"
   },
   "devDependencies": {
-    "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.67.0",
     "@shopify/app": "3.67.0",
     "@types/node": "18.19.3",
