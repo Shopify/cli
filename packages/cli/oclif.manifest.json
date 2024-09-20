@@ -4595,6 +4595,59 @@
       "pluginType": "core",
       "strict": true
     },
+    "store:execute": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Execute a script in the context of a Shopify store",
+      "enableJsonFlag": false,
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "script-file": {
+          "description": "Path to the script file to execute",
+          "env": "SHOPIFY_FLAG_SCRIPT_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "script-file",
+          "required": true,
+          "type": "option"
+        },
+        "shop": {
+          "description": "The shop domain to execute the script against",
+          "env": "SHOPIFY_FLAG_SHOP",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "shop",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:execute",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "theme:check": {
       "aliases": [
       ],
