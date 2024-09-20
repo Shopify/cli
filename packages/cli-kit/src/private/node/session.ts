@@ -102,8 +102,21 @@ export interface OAuthSession {
 }
 
 let userId: undefined | string
-export function getLastSeenUserIdAfterAuth() {
-  return userId
+
+/**
+ * Retrieves the user ID from the current session or returns 'unknown' if not found.
+ * This function first checks for a cached user ID in memory (obtained in the current run)
+ * Then attempts to fetch it from the secure store. (from a previous auth session)
+ * If no user ID is found, it returns 'unknown'.
+ *
+ * @returns A Promise that resolves to the user ID as a string.
+ */
+export async function getLastSeenUserIdAfterAuth(): Promise<string> {
+  if (userId) return userId
+  const currentSession = (await secureStore.fetch()) || {}
+  const fqdn = await identityFqdn()
+  const cachedUserId = currentSession[fqdn]?.identity.userId
+  return cachedUserId ?? 'unknown'
 }
 
 export function setLastSeenUserIdAfterAuth(id: string) {

@@ -154,7 +154,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       ...publicMetadata,
       cmd_all_timing_active_ms: totalTimeWithoutSubtimers,
       cmd_all_exit: exitMode,
-      user_id: getLastSeenUserIdAfterAuth() ?? 'unknown',
+      user_id: getLastSeenUserIdAfterAuth(),
     },
     sensitive: {
       args: startArgs.join(' '),
