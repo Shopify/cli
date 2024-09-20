@@ -4,6 +4,7 @@ import {captureOutput, exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
+import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
@@ -705,4 +706,17 @@ export async function writePackageJSON(directory: string, packageJSON: PackageJs
   outputDebug(outputContent`JSON-encoding and writing content to package.json at ${outputToken.path(directory)}...`)
   const packagePath = joinPath(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
+}
+
+export function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+    return optionsPackageManager as PackageManager
+  }
+  const usedPackageManager = packageManagerFromUserAgent()
+  if (usedPackageManager !== 'unknown') return usedPackageManager
+
+  const globalPackageManager = inferPackageManagerForGlobalCLI()
+  if (globalPackageManager !== 'unknown') return globalPackageManager
+
+  return 'npm'
 }
