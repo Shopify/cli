@@ -123,6 +123,7 @@ module.exports = {
     '@shopify/cli/banner-headline-format': 'warn',
     '@shopify/cli/required-fields-when-loading-app': 'error',
     '@shopify/cli/no-inline-graphql': 'error',
+    '@shopify/cli/ensure-user-id': 'error',
     'no-restricted-syntax': [
       'error',
       {
