@@ -524,13 +524,14 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [-d npm|yarn|pnpm|bun] [-p <value>]
-    [--template <value>] [--verbose]
+  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [-d
+    npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
   -n, --name=<value>
   -p, --path=<value>              [default: .]
+      --client-id=<value>         The Client ID of your app.
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
       --template=<value>          The app template. Accepts one of the following:

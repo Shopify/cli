@@ -1,5 +1,5 @@
 import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {renderText, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface InitOptions {
   template?: string
@@ -76,13 +76,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     template: templates.remix.url,
   } as const
 
-  let welcomed = false
-
   if (!template) {
-    if (!welcomed) {
-      renderText({text: '\nWelcome. Let’s get started by choosing a template for your app project.'})
-      welcomed = true
-    }
     template = await renderSelectPrompt({
       choices: templateOptionsInOrder.map((key) => {
         return {

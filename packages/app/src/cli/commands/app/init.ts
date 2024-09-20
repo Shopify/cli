@@ -1,21 +1,22 @@
-import initPrompt, {isPredefinedTemplate, templates, visibleTemplates} from '../../prompts/init/init.js'
+import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {selectOrg} from '../../services/context.js'
+import {appFromId, selectOrg} from '../../services/context.js'
 import {selectOrCreateApp} from '../../services/dev/select-app.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
-import {AppInterface} from '../../models/app/app.js'
+import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
+import {OrganizationApp} from '../../models/organization.js'
+import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
+import {loadApp} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-import {PackageManager, packageManager, packageManagerFromUserAgent} from '@shopify/cli-kit/node/node-package-manager'
-import {inferPackageManagerForGlobalCLI, installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
+import {installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderText} from '@shopify/cli-kit/node/ui'
+import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class Init extends AppCommand {
   static summary?: string | undefined = 'Create a new app project'
@@ -56,24 +57,36 @@ export default class Init extends AppCommand {
       default: false,
       hidden: true,
     }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
+    }),
   }
 
   async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Init)
 
-    this.validateTemplateValue(flags.template)
-    this.validateFlavorValue(flags.template, flags.flavor)
+    validateTemplateValue(flags.template)
+    validateFlavorValue(flags.template, flags.flavor)
 
-    const inferredPackageManager = this.inferPackageManager(flags['package-manager'])
+    const inferredPackageManager = inferPackageManager(flags['package-manager'])
     const name = flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path}))
 
     // Authenticate and select organization and app
     const developerPlatformClient = selectDeveloperPlatformClient()
-    renderText({text: '\nWelcome. Let’s get started by linking this new project to an app in your organization.'})
 
-    const org = await selectOrg()
-    const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-    const selectedApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient)
+    let selectedApp: OrganizationApp
+    if (flags['client-id']) {
+      // If a client-id is provided we don't need to prompt the user and can link directly to that app.
+      selectedApp = await appFromId({apiKey: flags['client-id'], developerPlatformClient})
+    } else {
+      renderText({text: "\nWelcome. Let's get started by linking this new project to an app in your organization."})
+      const org = await selectOrg()
+      const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
+      selectedApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient)
+    }
 
     const promptAnswers = await initPrompt({
       template: flags.template,
@@ -91,7 +104,7 @@ export default class Init extends AppCommand {
 
     const platformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
 
-    const appId = await initService({
+    await initService({
       name: selectedApp.title,
       app: selectedApp,
       packageManager: inferredPackageManager,
@@ -107,90 +120,13 @@ export default class Init extends AppCommand {
 
     const userId = (await platformClient.session()).userId
 
-    return {
-      userId: '',
-      app: {} as unknown as AppInterface,
-    }
-  }
+    const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
+    const app = await loadApp({
+      specifications,
+      directory: flags.path,
+      userProvidedConfigName: undefined,
+    })
 
-  validateTemplateValue(template: string | undefined) {
-    if (!template) {
-      return
-    }
-
-    const url = this.parseURL(template)
-    if (url && url.origin !== 'https://github.com')
-      throw new AbortError(
-        'Only GitHub repository references are supported, ' +
-          'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
-      )
-    if (!url && !isPredefinedTemplate(template))
-      throw new AbortError(
-        outputContent`Only ${visibleTemplates
-          .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
-          .join(', ')} template aliases are supported, please provide a valid URL`,
-      )
-  }
-
-  validateFlavorValue(template: string | undefined, flavor: string | undefined) {
-    if (!template) {
-      if (flavor) {
-        throw new AbortError(
-          outputContent`The ${outputToken.yellow('--flavor')} flag requires the ${outputToken.yellow(
-            '--template',
-          )} flag to be set`,
-        )
-      } else {
-        return
-      }
-    }
-
-    if (!flavor) {
-      return
-    }
-
-    if (!isPredefinedTemplate(template)) {
-      throw new AbortError(
-        outputContent`The ${outputToken.yellow('--flavor')} flag is not supported for custom templates`,
-      )
-    }
-
-    const templateConfig = templates[template]
-
-    if (!templateConfig.branches) {
-      throw new AbortError(outputContent`The ${outputToken.yellow(template)} template does not support flavors`)
-    }
-
-    if (!templateConfig.branches.options[flavor]) {
-      throw new AbortError(
-        outputContent`Invalid option for ${outputToken.yellow('--flavor')}\nThe ${outputToken.yellow(
-          '--flavor',
-        )} flag for ${outputToken.yellow(template)} accepts only ${Object.keys(templateConfig.branches.options)
-          .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
-          .join(', ')}`,
-      )
-    }
-  }
-
-  parseURL(url: string): URL | undefined {
-    try {
-      return new URL(url)
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      return undefined
-    }
-  }
-
-  inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
-    if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
-      return optionsPackageManager as PackageManager
-    }
-    const usedPackageManager = packageManagerFromUserAgent()
-    if (usedPackageManager !== 'unknown') return usedPackageManager
-
-    const globalPackageManager = inferPackageManagerForGlobalCLI()
-    if (globalPackageManager !== 'unknown') return globalPackageManager
-
-    return 'npm'
+    return {userId, app}
   }
 }
