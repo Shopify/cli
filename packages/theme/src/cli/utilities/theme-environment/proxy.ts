@@ -207,8 +207,6 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
 export function getProxyStorefrontHeaders(event: H3Event) {
   const proxyRequestHeaders = getRequestHeaders(event) as {[key: string]: string}
 
-  // H3 already removes most hop-by-hop request headers:
-  // https://github.com/unjs/h3/blob/ac6d83de2abe5411d4eaea8ecf2165ace16a65f3/src/utils/proxy.ts#L25
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
   }
