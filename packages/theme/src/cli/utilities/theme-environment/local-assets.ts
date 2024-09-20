@@ -72,8 +72,8 @@ function findLocalFile(event: H3Event<EventHandlerRequest>, ctx: DevServerContex
 
   // Try to match theme asset files first and fallback to theme extension asset files
   return (
-    tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeFileSystem) ??
-    tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeExtensionFileSystem) ?? {
+    tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
+    tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
       isUnsynced: false,
       fileKey: undefined,
       file: undefined,
