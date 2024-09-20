@@ -3,10 +3,12 @@ import {getCachedAccountInfo, setCachedAccountInfo} from '../../utilities/app-co
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+export type UserID = string
+
 export interface PartnersSession {
   token: string
   accountInfo: AccountInfo
-  userId: string
+  userId: UserID
 }
 
 export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountInfo

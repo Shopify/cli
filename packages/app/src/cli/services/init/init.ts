@@ -194,7 +194,7 @@ async function init(options: InitOptions) {
   })
 
   // Link the new project to the selected App
-  await link(
+  const configuration = await link(
     {
       directory: outputDirectory,
       apiKey: options.app.apiKey,
@@ -219,6 +219,8 @@ async function init(options: InitOptions) {
       ],
     ],
   })
+
+  return configuration.client_id
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
