@@ -50,7 +50,11 @@ async function fetchDevServerSession(
 
   const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
   const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
-  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {})
+  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {
+    'X-Shopify-Shop': session.storeFqdn,
+    'X-Shopify-Access-Token': session.token,
+    Authorization: `Bearer ${storefrontToken}`,
+  })
 
   return {
     ...session,
