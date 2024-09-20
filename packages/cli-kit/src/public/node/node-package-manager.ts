@@ -708,11 +708,23 @@ export async function writePackageJSON(directory: string, packageJSON: PackageJs
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }
 
-export function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+/**
+ * Infers the package manager to be used based on the provided options and environment.
+ *
+ * This function determines the package manager in the following order of precedence:
+ * 1. Uses the package manager specified in the options, if valid.
+ * 2. Infers the package manager from the user agent string.
+ * 3. Infers the package manager used for the global CLI installation.
+ * 4. Defaults to 'npm' if no other method succeeds.
+ *
+ * @param optionsPackageManager - The package manager specified in the options (if any).
+ * @returns The inferred package manager as a PackageManager type.
+ */
+export function inferPackageManager(optionsPackageManager: string | undefined, env = process.env): PackageManager {
   if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
     return optionsPackageManager as PackageManager
   }
-  const usedPackageManager = packageManagerFromUserAgent()
+  const usedPackageManager = packageManagerFromUserAgent(env)
   if (usedPackageManager !== 'unknown') return usedPackageManager
 
   const globalPackageManager = inferPackageManagerForGlobalCLI()
