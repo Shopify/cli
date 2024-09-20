@@ -200,9 +200,9 @@ describe('dev proxy', () => {
       // Removed:
       event.node.req.headers.connection = '...'
       event.node.req.headers['proxy-authenticate'] = '...'
-      event.node.req.headers.accept = 'text/html'
       event.node.req.headers.host = 'abnb'
       // Kept:
+      event.node.req.headers.accept = 'text/html'
       event.node.req.headers.cookie = 'oreo'
       event.node.req.headers['user-agent'] = 'vitest'
       event.node.req.headers['x-custom'] = 'true'
@@ -210,6 +210,7 @@ describe('dev proxy', () => {
       expect(getProxyStorefrontHeaders(event)).toMatchInlineSnapshot(`
         {
           "X-Forwarded-For": "42",
+          "accept": "text/html",
           "cookie": "oreo",
           "user-agent": "vitest",
           "x-custom": "true",
