@@ -6,6 +6,18 @@
       "args": {
       },
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "flavor": {
           "description": "Which flavor of the given template to use.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",
