@@ -107,6 +107,14 @@ Please check the module path for ${target}`.value,
     }
   }
 
+  if (
+    uniqueTargets.indexOf('customer-account.order.page.render') >= 0 &&
+    uniqueTargets.indexOf('customer-account.page.render') >= 0
+  ) {
+    errors.push(
+      `An extension can't target both 'customer-account.order.page.render' and 'customer-account.page.render'`,
+    )
+  }
   if (duplicateTargets.length) {
     errors.push(`Duplicate targets found: ${duplicateTargets.join(', ')}\nExtension point targets must be unique`)
   }

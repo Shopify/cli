@@ -324,6 +324,39 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
     })
+
+    test('returns err(message) when there are both customer-account.order.page.render and customer-account.order.render targets', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointB.js'))
+
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          extensionPoints: [
+            {
+              target: 'customer-account.order.page.render',
+              module: './src/ExtensionPointA.js',
+            },
+            {
+              target: 'customer-account.page.render',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        })
+
+        // When
+        const result = await uiExtension.validate()
+
+        // Then
+        expect(result).toEqual(
+          err(`An extension can't target both 'customer-account.order.page.render' and 'customer-account.page.render'
+
+Please check the configuration in ${uiExtension.configurationPath}`),
+        )
+      })
+    })
   })
 
   describe('deployConfig()', () => {
