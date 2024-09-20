@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 3.67.1
+
+### Patch Changes
+
+- 72859c9cb: Fix Theme Access authentication on `shopify theme dev` and `shopify theme console` commands
+- 28de21b0e: Fixes a bug where some users were unable to intialize their app dev command with theme app extensions
+- Updated dependencies [926963590]
+  - @shopify/cli-kit@3.67.1
+
 ## 3.67.0
 
 ### Minor Changes

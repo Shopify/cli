@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.67.1
+
+### Patch Changes
+
+- 926963590: Fix a bug when building empty theme assets
+
 ## 3.67.0
 
 ### Minor Changes
