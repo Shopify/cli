@@ -178,7 +178,6 @@ The CLI is currently unable to prompt for reauthentication.`,
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
-  setLastSeenUserIdAfterAuth(completeSession[fqdn]!.identity.userId)
 
   // Save the new session info if it has changed
   if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
@@ -193,6 +192,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
 
+  setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }
 
