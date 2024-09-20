@@ -1,10 +1,11 @@
 import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {selectOrg} from '../../services/context.js'
+import {appFromId, selectOrg} from '../../services/context.js'
 import {selectOrCreateApp} from '../../services/dev/select-app.js'
 import AppCommand from '../../utilities/app-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -54,6 +55,12 @@ export default class Init extends AppCommand {
       default: false,
       hidden: true,
     }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
+    }),
   }
 
   async run(): Promise<void> {
@@ -67,10 +74,17 @@ export default class Init extends AppCommand {
 
     // Authenticate and select organization and app
     const developerPlatformClient = selectDeveloperPlatformClient()
-    renderText({text: "\nWelcome. Let's get started by linking this new project to an app in your organization."})
-    const org = await selectOrg()
-    const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-    const selectedApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient)
+
+    let selectedApp: OrganizationApp
+    if (flags['client-id']) {
+      // If a client-id is provided we don't need to prompt the user and can link directly to that app.
+      selectedApp = await appFromId({apiKey: flags['client-id'], developerPlatformClient})
+    } else {
+      renderText({text: "\nWelcome. Let's get started by linking this new project to an app in your organization."})
+      const org = await selectOrg()
+      const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
+      selectedApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient)
+    }
 
     const promptAnswers = await initPrompt({
       template: flags.template,
