@@ -451,6 +451,7 @@ describe('theme-fs', () => {
       expect(isTextFile('assets/style1.css')).toBeTruthy()
       expect(isTextFile('assets/style2.scss')).toBeTruthy()
       expect(isTextFile('assets/style3.sass')).toBeTruthy()
+      expect(isTextFile('assets/icon.svg')).toBeTruthy()
       expect(isTextFile('sections/template.liquid')).toBeTruthy()
       expect(isTextFile('templates/cart.json')).toBeTruthy()
     })

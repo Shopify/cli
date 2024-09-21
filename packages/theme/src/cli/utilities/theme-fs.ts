@@ -360,6 +360,7 @@ export function isTextFile(path: string) {
     'text/css',
     'text/x-sass',
     'text/x-scss',
+    'image/svg+xml',
   ]
 
   return textFileTypes.includes(lookupMimeType(path))
