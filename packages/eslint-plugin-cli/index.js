@@ -13,6 +13,7 @@ module.exports = {
     'banner-headline-format': require('./rules/banner-headline-format'),
     'required-fields-when-loading-app': require('./rules/required-fields-when-loading-app'),
     'no-inline-graphql': require('./rules/no-inline-graphql'),
+    'app-commands-requirements': require('./rules/app-commands-requirements'),
   },
 
   configs: {
