@@ -44,7 +44,15 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
       return
     }
 
-    const fileContent = file.value ? injectCdnProxy(file.value, ctx) : Buffer.from(file.attachment ?? '', 'base64')
+    // Normalize the file content to a Buffer:
+    // - For attachments, we need to decode the base64 string.
+    // - For normal files, we need to get the real length of
+    //   the file using Buffer to avoid issues with non-breaking
+    //   spaces (NBSP, Unicode U+00A0), which have a different
+    //   byte length than their visual representation.
+    const fileContent = file.value
+      ? Buffer.from(injectCdnProxy(file.value, ctx))
+      : Buffer.from(file.attachment ?? '', 'base64')
 
     return serveStatic(event, {
       getContents: () => fileContent,
@@ -72,8 +80,8 @@ function findLocalFile(event: H3Event<EventHandlerRequest>, ctx: DevServerContex
 
   // Try to match theme asset files first and fallback to theme extension asset files
   return (
-    tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeFileSystem) ??
-    tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeExtensionFileSystem) ?? {
+    tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
+    tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
       isUnsynced: false,
       fileKey: undefined,
       file: undefined,

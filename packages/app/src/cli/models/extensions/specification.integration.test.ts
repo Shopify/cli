@@ -1,4 +1,5 @@
 import {loadLocalExtensionsSpecifications} from './load-specifications.js'
+import {createContractBasedModuleSpecification} from './specification.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
 
@@ -24,5 +25,22 @@ describe('allLocalSpecs', () => {
 
     // Then
     expect(got.length).not.toEqual(0)
+  })
+})
+
+describe('createContractBasedModuleSpecification', () => {
+  test('creates a specification with the given identifier', () => {
+    // When
+    const got = createContractBasedModuleSpecification('test', ['bundling'])
+
+    // Then
+    expect(got).toMatchObject(
+      expect.objectContaining({
+        identifier: 'test',
+        experience: 'extension',
+        uidStrategy: 'uuid',
+      }),
+    )
+    expect(got.appModuleFeatures()).toEqual(['bundling'])
   })
 })
