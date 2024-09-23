@@ -248,11 +248,7 @@ describe('exchangeCustomPartnerToken', () => {
     const response = new Response(JSON.stringify(data))
 
     // Need to do it 3 times because a Response can only be used once
-    vi.mocked(shopifyFetch)
-      .mockResolvedValue(response)
-      .mockResolvedValueOnce(response.clone())
-      .mockResolvedValueOnce(response.clone())
-      .mockResolvedValueOnce(response.clone())
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
 
     // When
     const result = await exchangeCustomPartnerToken(token)
