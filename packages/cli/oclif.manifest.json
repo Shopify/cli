@@ -1595,24 +1595,6 @@
           "name": "config",
           "type": "option"
         },
-        "graphiql-key": {
-          "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
-          "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "graphiql-key",
-          "type": "option"
-        },
-        "graphiql-port": {
-          "description": "Local port of the GraphiQL development server.",
-          "env": "SHOPIFY_FLAG_GRAPHIQL_PORT",
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "graphiql-port",
-          "type": "option"
-        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -1627,18 +1609,6 @@
           "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
           "name": "no-color",
-          "type": "boolean"
-        },
-        "no-tunnel": {
-          "allowNo": false,
-          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead",
-          "env": "SHOPIFY_FLAG_NO_TUNNEL",
-          "exclusive": [
-            "tunnel-url",
-            "tunnel"
-          ],
-          "hidden": true,
-          "name": "no-tunnel",
           "type": "boolean"
         },
         "path": {
@@ -1668,14 +1638,6 @@
           "multiple": true,
           "name": "source",
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "stable",
-          "type": "boolean"
         },
         "status": {
           "description": "Filters output to the specified status (success or failure).",
