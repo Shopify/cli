@@ -1,4 +1,3 @@
-/* eslint-disable tsdoc/syntax */
 import {downloadTheme} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
