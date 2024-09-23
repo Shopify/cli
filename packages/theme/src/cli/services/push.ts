@@ -20,7 +20,7 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
-interface ThemeSelectionOptions {
+export interface ThemeSelectionOptions {
   live?: boolean
   development?: boolean
   unpublished?: boolean
@@ -107,25 +107,9 @@ export interface PushFlags {
  * Initiates the push process based on provided flags.
  *
  * @param flags - The flags for the push operation.
- * @param flags.path - The path to your theme directory.
- * @param flags.password - Password generated from the Theme Access app.
- * @param flags.store - Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
- * @param flags.environment - The environment to apply to the current command.
- * @param flags.theme - Theme ID or name of the remote theme.
- * @param flags.development - Push theme files from your remote development theme.
- * @param flags.live - Push theme files from your remote live theme.
- * @param flags.unpublished - Create a new unpublished theme and push to it.
- * @param flags.nodelete - Runs the push command without deleting local files.
- * @param flags.only - Download only the specified files (Multiple flags allowed).
- * @param flags.ignore - Skip downloading the specified files (Multiple flags allowed).
- * @param flags.json - Output JSON instead of a UI.
- * @param flags.allowLive - Allow push to a live theme.
- * @param flags.publish - Publish as the live theme after uploading.
- * @param flags.force - Proceed without confirmation, if current directory does not seem to be theme directory.
- * @param flags.noColor - Disable color output.
- * @param flags.verbose - Increase the verbosity of the output.
+ * @returns {Promise<void>} Resolves when the push operation is complete.
  */
-export async function push(flags: PushFlags) {
+export async function push(flags: PushFlags): Promise<void> {
   const {path} = flags
   const force = flags.force ?? false
 
