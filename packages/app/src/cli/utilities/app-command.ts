@@ -5,10 +5,11 @@ import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
  * By forcing all commands to return `AppCommandOutput` we can be sure that during the run of each command we:
- * - Authenticate the user
+ * - Authenticate the user (PENDING)
  * - Load an app
  */
 export interface AppCommandOutput {
+  // session: PartnersSession (PENDING)
   app: AppInterface
 }
 

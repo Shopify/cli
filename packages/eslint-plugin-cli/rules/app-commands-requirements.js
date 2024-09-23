@@ -3,7 +3,7 @@ const path = require('path')
 /**
  * Every App Command should have a default export that extends `AppCommand`
  *
- * This way we control that all commands are contrained by what's defined in the `AppCommand` abstract class.
+ * This way we control that all commands are constrained by what's defined in the `AppCommand` abstract class.
  * Such as the return type for the run() function.
  */
 module.exports = {
