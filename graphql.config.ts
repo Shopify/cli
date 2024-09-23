@@ -73,5 +73,6 @@ export default {
     businessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql'),
     businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
+    admin: projectFactory('admin', 'admin_schema.graphql'),
   },
 }

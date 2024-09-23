@@ -23,6 +23,12 @@ interface MigrationChoice {
 
 const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
   {
+    label: 'Webhooks',
+    value: 'webhooks',
+    extensionTypes: ['webhooks'],
+    buildTomlObject: () => '',
+  },
+  {
     label: 'Payments Extensions',
     value: 'payments',
     extensionTypes: [
