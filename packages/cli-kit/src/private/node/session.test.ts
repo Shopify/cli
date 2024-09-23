@@ -1,4 +1,10 @@
-import {ensureAuthenticated, OAuthApplications, OAuthSession} from './session.js'
+import {
+  ensureAuthenticated,
+  getLastSeenUserIdAfterAuth,
+  OAuthApplications,
+  OAuthSession,
+  setLastSeenUserIdAfterAuth,
+} from './session.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
@@ -110,6 +116,7 @@ beforeEach(() => {
   })
   vi.mocked(partnersRequest).mockResolvedValue(undefined)
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
+  setLastSeenUserIdAfterAuth(undefined as any)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -128,6 +135,10 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+
+    // The userID is cached in memory and the secureStore is not accessed again
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 
   test('throws an error if there is no session and prompting is disabled', async () => {
@@ -145,6 +156,9 @@ The CLI is currently unable to prompt for reauthentication.`,
 
     // Then
     expect(authorize).not.toHaveBeenCalled()
+
+    // If there never was an auth event, the userId is 'unknown'
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('unknown')
   })
 
   test('executes complete auth flow if session is for a different fqdn', async () => {
@@ -163,6 +177,8 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(newSession)
     expect(got).toEqual(validTokens)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 
   test('executes complete auth flow if requesting additional scopes', async () => {
@@ -180,6 +196,8 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
 
@@ -198,6 +216,8 @@ describe('when existing session is valid', () => {
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 
   test('overwrites partners token if provided with a custom CLI token', async () => {
@@ -216,6 +236,8 @@ describe('when existing session is valid', () => {
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 
   test('refreshes token if forceRefresh is true', async () => {
@@ -233,6 +255,8 @@ describe('when existing session is valid', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
 
@@ -252,6 +276,8 @@ describe('when existing session is expired', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 
   test('attempts to refresh the token and executes a complete flow if identity returns an invalid grant error', async () => {
@@ -272,5 +298,56 @@ describe('when existing session is expired', () => {
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+})
+
+describe('getLastSeenUserIdAfterAuth', () => {
+  test('returns cached userId if available', async () => {
+    // Given
+    setLastSeenUserIdAfterAuth('cached-in-memory-user-id')
+
+    // When
+    const userId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    expect(userId).toBe('cached-in-memory-user-id')
+    expect(secureFetch).not.toHaveBeenCalled()
+  })
+
+  test('returns userId from secure store if not cached in memory', async () => {
+    // Given
+    const storedSession: Session = {
+      [fqdn]: {
+        identity: {
+          userId: 'stored-user-id',
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+          expiresAt: new Date(),
+          scopes: [],
+        },
+        applications: {},
+      },
+    }
+    vi.mocked(secureFetch).mockResolvedValue(storedSession)
+
+    // When
+    const userId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    expect(userId).toBe('stored-user-id')
+  })
+
+  test('returns "unknown" if no userId is found', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+
+    // When
+    const userId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    expect(userId).toBe('unknown')
+    expect(secureFetch).toHaveBeenCalled()
   })
 })
