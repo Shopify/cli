@@ -814,7 +814,7 @@ export async function getAppContext({
   }
 }
 
-async function linkIfNecessary(
+export async function linkIfNecessary(
   directory: string,
   reset: boolean,
   enableLinkingPrompt: boolean,
