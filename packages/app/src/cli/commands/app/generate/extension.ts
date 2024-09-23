@@ -1,14 +1,14 @@
 import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
-import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
+import AppCommand from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class AppGenerateExtension extends Command {
+export default class AppGenerateExtension extends AppCommand {
   static summary = 'Generate a new app Extension.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 

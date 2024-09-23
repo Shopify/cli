@@ -1,7 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import use from '../../../services/app/config/use.js'
-import Command from '../../../utilities/app-command.js'
+import AppCommand from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -9,7 +9,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 // `--config` flag, because we're passing it as an argument.
 const {config, ...appFlagsWithoutConfig} = appFlags
 
-export default class ConfigUse extends Command {
+export default class ConfigUse extends AppCommand {
   static summary = 'Activate an app configuration.'
 
   static descriptionWithMarkdown = `Sets default configuration when you run app-related CLI commands. If you omit the \`config-name\` parameter, then you'll be prompted to choose from the configuration files in your project.`

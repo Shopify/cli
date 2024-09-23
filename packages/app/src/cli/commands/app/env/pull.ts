@@ -2,14 +2,14 @@ import {appFlags} from '../../../flags.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getDotEnvFileName, loadApp} from '../../../models/app/loader.js'
 import {pullEnv} from '../../../services/app/env/pull.js'
-import Command from '../../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import AppCommand from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-export default class EnvPull extends Command {
+export default class EnvPull extends AppCommand {
   static summary = 'Pull app and extensions environment variables.'
 
   static descriptionWithMarkdown = `Creates or updates an \`.env\` files that contains app and app extension environment variables.

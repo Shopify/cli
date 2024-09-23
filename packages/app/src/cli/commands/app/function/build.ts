@@ -1,11 +1,11 @@
 import {inFunctionContext, functionFlags} from '../../../services/function/common.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {appFlags} from '../../../flags.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import AppCommand from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
-export default class FunctionBuild extends Command {
+export default class FunctionBuild extends AppCommand {
   static summary = 'Compile a function to wasm.'
 
   static descriptionWithMarkdown = `Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.`

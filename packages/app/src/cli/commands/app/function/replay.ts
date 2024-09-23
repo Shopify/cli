@@ -2,11 +2,11 @@ import {functionFlags, inFunctionContext} from '../../../services/function/commo
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import AppCommand from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
-export default class FunctionReplay extends Command {
+export default class FunctionReplay extends AppCommand {
   static summary = 'Replays a function run from an app log.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`

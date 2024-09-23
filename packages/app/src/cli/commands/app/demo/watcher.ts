@@ -1,15 +1,15 @@
 import {appFlags} from '../../../flags.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
-import Command from '../../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppEventWatcher, EventType} from '../../../services/dev/app-events/app-event-watcher.js'
+import AppCommand from '../../../utilities/app-command.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
 
-export default class DemoWatcher extends Command {
+export default class DemoWatcher extends AppCommand {
   static summary = 'Watch and prints out changes to an app.'
   static hidden = true
 

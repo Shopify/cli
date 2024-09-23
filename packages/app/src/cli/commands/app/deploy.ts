@@ -3,16 +3,16 @@ import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
-import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import AppCommand from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Deploy extends Command {
+export default class Deploy extends AppCommand {
   static summary = 'Deploy your Shopify app.'
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.

@@ -2,11 +2,11 @@ import {DELIVERY_METHOD, WebhookTriggerFlags} from '../../../services/webhook/tr
 import {webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
+import AppCommand from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import Command from '@shopify/cli-kit/node/base-command'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class WebhookTrigger extends Command {
+export default class WebhookTrigger extends AppCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
 
   static descriptionWithMarkdown = `

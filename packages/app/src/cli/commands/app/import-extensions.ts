@@ -6,8 +6,8 @@ import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
 import {importExtensions} from '../../services/import-extensions.js'
-import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import AppCommand from '../../utilities/app-command.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -53,7 +53,7 @@ const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
     : []),
 ]
 
-export default class ImportExtensions extends Command {
+export default class ImportExtensions extends AppCommand {
   static description = 'Import dashboard-managed extensions into your app.'
 
   static flags = {

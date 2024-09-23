@@ -1,15 +1,15 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
-import Command from '../../utilities/app-command.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import AppCommand from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Release extends Command {
+export default class Release extends AppCommand {
   static summary = 'Release an app version.'
 
   static usage = `app:release --version <version>`

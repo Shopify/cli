@@ -1,13 +1,13 @@
 import Dev from './dev.js'
-import Command from '../../utilities/app-command.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
+import AppCommand from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
-export default class Logs extends Command {
+export default class Logs extends AppCommand {
   static summary = 'Stream detailed logs for your Shopify app.'
 
   static descriptionWithMarkdown = `

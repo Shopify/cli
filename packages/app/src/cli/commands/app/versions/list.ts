@@ -1,14 +1,14 @@
 import {appFlags} from '../../../flags.js'
-import Command from '../../../utilities/app-command.js'
 import versionList from '../../../services/versions-list.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
+import AppCommand from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 
-export default class VersionsList extends Command {
+export default class VersionsList extends AppCommand {
   static summary = 'List deployed versions of your app.'
 
   static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
