@@ -51,48 +51,79 @@ interface JsonOutput {
 }
 
 export interface PushFlags {
+  /** The path to your theme directory. */
   path?: string
+
+  /** Password generated from the Theme Access app. */
   password?: string
+
+  /** Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com). */
   store?: string
+
+  /** The environment to apply to the current command. */
   environment?: string
+
+  /** Theme ID or name of the remote theme. */
   theme?: string
+
+  /** Push theme files from your remote development theme. */
   development?: boolean
+
+  /** Push theme files from your remote live theme. */
   live?: boolean
+
+  /** Create a new unpublished theme and push to it. */
   unpublished?: boolean
+
+  /** Runs the push command without deleting local files. */
   nodelete?: boolean
+
+  /** Download only the specified files (Multiple flags allowed). */
   only?: string[]
+
+  /** Skip downloading the specified files (Multiple flags allowed). */
   ignore?: string[]
+
+  /** Output JSON instead of a UI. */
   json?: boolean
+
+  /** Allow push to a live theme. */
   allowLive?: boolean
+
+  /** Publish as the live theme after uploading. */
   publish?: boolean
+
+  /** Proceed without confirmation, if current directory does not seem to be theme directory. */
   force?: boolean
+
+  /** Disable color output. */
   noColor?: boolean
+
+  /** Increase the verbosity of the output. */
   verbose?: boolean
 }
 
 /**
  * Initiates the push process based on provided flags.
  *
- * @param {PushFlags} flags - The flags for the push operation.
- * @param {string} [flags.path] - The path to your theme directory.
- * @param {string} [flags.password] - Password generated from the Theme Access app.
- * @param {string} [flags.store] - Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
- * @param {string} [flags.environment] - The environment to apply to the current command.
- * @param {string} [flags.theme] - Theme ID or name of the remote theme.
- * @param {boolean} [flags.development] - Push theme files from your remote development theme.
- * @param {boolean} [flags.live] - Push theme files from your remote live theme.
- * @param {boolean} [flags.unpublished] - Create a new unpublished theme and push to it.
- * @param {boolean} [flags.nodelete] - Runs the push command without deleting local files.
- * @param {string[]} [flags.only] - Download only the specified files (Multiple flags allowed).
- * @param {string[]} [flags.ignore] - Skip downloading the specified files (Multiple flags allowed).
- * @param {boolean} [flags.json] - Output JSON instead of a UI.
- * @param {boolean} [flags.allowLive] - Allow push to a live theme.
- * @param {boolean} [flags.publish] - Publish as the live theme after uploading.
- * @param {boolean} [flags.legacy] - Use the legacy Ruby implementation for the `shopify theme push` command.
- * @param {boolean} [flags.force] - Proceed without confirmation, if current directory does not seem to be theme directory.
- * @param {boolean} [flags.noColor] - Disable color output.
- * @param {boolean} [flags.verbose] - Increase the verbosity of the output.
- * @returns {Promise<void>} Resolves when the push operation is complete.
+ * @param flags - The flags for the push operation.
+ * @param flags.path - The path to your theme directory.
+ * @param flags.password - Password generated from the Theme Access app.
+ * @param flags.store - Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+ * @param flags.environment - The environment to apply to the current command.
+ * @param flags.theme - Theme ID or name of the remote theme.
+ * @param flags.development - Push theme files from your remote development theme.
+ * @param flags.live - Push theme files from your remote live theme.
+ * @param flags.unpublished - Create a new unpublished theme and push to it.
+ * @param flags.nodelete - Runs the push command without deleting local files.
+ * @param flags.only - Download only the specified files (Multiple flags allowed).
+ * @param flags.ignore - Skip downloading the specified files (Multiple flags allowed).
+ * @param flags.json - Output JSON instead of a UI.
+ * @param flags.allowLive - Allow push to a live theme.
+ * @param flags.publish - Publish as the live theme after uploading.
+ * @param flags.force - Proceed without confirmation, if current directory does not seem to be theme directory.
+ * @param flags.noColor - Disable color output.
+ * @param flags.verbose - Increase the verbosity of the output.
  */
 export async function push(flags: PushFlags) {
   const {path} = flags
@@ -125,9 +156,9 @@ export async function push(flags: PushFlags) {
 /**
  * Executes the push operation for a given theme.
  *
- * @param {Theme} theme - The theme to be pushed.
- * @param {AdminSession} session - The admin session for the theme.
- * @param {PushOptions} options - The options for the push operation.
+ * @param theme - The theme to be pushed.
+ * @param session - The admin session for the theme.
+ * @param options - The options for the push operation.
  * @returns {Promise<void>} Resolves when the push operation is complete.
  */
 async function executePush(theme: Theme, session: AdminSession, options: PushOptions) {
@@ -154,7 +185,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
 /**
  * Checks if there are any upload errors in the results.
  *
- * @param {Map<string, Result>} results - The map of upload results.
+ * @param results - The map of upload results.
  * @returns {boolean} - Returns true if there are any upload errors, otherwise false.
  */
 function hasUploadErrors(results: Map<string, Result>): boolean {
@@ -169,10 +200,10 @@ function hasUploadErrors(results: Map<string, Result>): boolean {
 /**
  * Handles the output based on the push operation results.
  *
- * @param {Map<string, Result>} results - The map of upload results.
- * @param {Theme} theme - The theme being pushed.
- * @param {AdminSession} session - The admin session for the theme.
- * @param {PushOptions} options - The options for the push operation.
+ * @param results - The map of upload results.
+ * @param theme - The theme being pushed.
+ * @param session - The admin session for the theme.
+ * @param options - The options for the push operation.
  * @returns {Promise<void>} Resolves when the output handling is complete.
  */
 async function handlePushOutput(
@@ -195,9 +226,9 @@ async function handlePushOutput(
 /**
  * Handles the JSON output for the push operation.
  *
- * @param {Theme} theme - The theme being pushed.
- * @param {boolean} hasErrors - Indicates if there were any errors during the push operation.
- * @param {AdminSession} session - The admin session for the theme.
+ * @param theme - The theme being pushed.
+ * @param hasErrors - Indicates if there were any errors during the push operation.
+ * @param session - The admin session for the theme.
  * @returns {void}
  */
 function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
@@ -222,8 +253,8 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
 /**
  * Handles the output for the publish operation.
  *
- * @param {boolean} hasErrors - Indicates if there were any errors during the push operation.
- * @param {AdminSession} session - The admin session for the theme.
+ * @param hasErrors - Indicates if there were any errors during the push operation.
+ * @param session - The admin session for the theme.
  * @returns {void}
  */
 function handlePublishOutput(hasErrors: boolean, session: AdminSession) {
@@ -237,9 +268,9 @@ function handlePublishOutput(hasErrors: boolean, session: AdminSession) {
 /**
  * Handles the output for the push operation.
  *
- * @param {Theme} theme - The theme being pushed.
- * @param {boolean} hasErrors - Indicates if there were any errors during the push operation.
- * @param {AdminSession} session - The admin session for the theme.
+ * @param theme - The theme being pushed.
+ * @param hasErrors - Indicates if there were any errors during the push operation.
+ * @param session - The admin session for the theme.
  * @returns {void}
  */
 function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
