@@ -109,7 +109,10 @@ describe('ensureAuthenticatedPartners', () => {
 
   test('returns custom partners token if envvar is defined', async () => {
     // Given
-    vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce(partnersToken)
+    vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce({
+      accessToken: partnersToken.accessToken,
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
     vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
 
     // When

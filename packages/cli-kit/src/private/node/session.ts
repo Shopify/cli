@@ -101,6 +101,28 @@ export interface OAuthSession {
   userId: string
 }
 
+let userId: undefined | string
+
+/**
+ * Retrieves the user ID from the current session or returns 'unknown' if not found.
+ * This function first checks for a cached user ID in memory (obtained in the current run)
+ * Then attempts to fetch it from the secure store. (from a previous auth session)
+ * If no user ID is found, it returns 'unknown'.
+ *
+ * @returns A Promise that resolves to the user ID as a string.
+ */
+export async function getLastSeenUserIdAfterAuth(): Promise<string> {
+  if (userId) return userId
+  const currentSession = (await secureStore.fetch()) || {}
+  const fqdn = await identityFqdn()
+  const cachedUserId = currentSession[fqdn]?.identity.userId
+  return cachedUserId ?? 'unknown'
+}
+
+export function setLastSeenUserIdAfterAuth(id: string) {
+  userId = id
+}
+
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
@@ -169,6 +191,7 @@ The CLI is currently unable to prompt for reauthentication.`,
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
+
   // Save the new session info if it has changed
   if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
   const tokens = await tokensFor(applications, completeSession, fqdn)
@@ -182,6 +205,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
 
+  setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }
 
