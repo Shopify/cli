@@ -1,4 +1,3 @@
-/* eslint-disable tsdoc/syntax */
 import {downloadTheme} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
@@ -23,41 +22,79 @@ interface PullOptions {
 }
 
 export interface PullFlags {
+  /**
+   * The directory path to download the theme.
+   */
   path?: string
+
+  /**
+   * The password for authenticating with the store.
+   */
   password?: string
+
+  /**
+   * The environment to apply to the current command.
+   */
   environment?: string
+
+  /**
+   * Store URL. It can be the store prefix (example.myshopify.com) or the full myshopify.com URL (https://example.myshopify.com).
+   */
   store?: string
+
+  /**
+   * Theme ID or name of the remote theme.
+   */
   theme?: string
+
+  /**
+   * Pull theme files from your remote development theme.
+   */
   development?: boolean
+
+  /**
+   * Pull theme files from your remote live theme.
+   */
   live?: boolean
+
+  /**
+   * Runs the pull command without deleting local files.
+   */
   nodelete?: boolean
+
+  /**
+   * Download only the specified files (Multiple flags allowed).
+   */
   only?: string[]
+
+  /**
+   * Skip downloading the specified files (Multiple flags allowed).
+   */
   ignore?: string[]
+
+  /**
+   * Proceed without confirmation, if current directory does not seem to be theme directory.
+   */
   force?: boolean
+
+  /**
+   * Disable color output.
+   */
   noColor?: boolean
+
+  /**
+   * Increase the verbosity of the output.
+   */
   verbose?: boolean
 }
 
 /**
  * Initiates the pull process based on provided flags.
  *
- * @param {PullFlags} flags - The flags for the pull operation.
- * @param {string} [flags.path] - The directory path to download the theme.
- * @param {string} [flags.password] - The password for authenticating with the store.
- * @param {string} [flags.store] - Store URL. It can be the store prefix (example.myshopify.com) or the full myshopify.com URL (https://example.myshopify.com).
- * @param {string} [flags.environment] - The environment to apply to the current command.
- * @param {string} [flags.theme] - Theme ID or name of the remote theme.
- * @param {boolean} [flags.develop`ment] - Pull theme files from your remote development theme.
- * @param {boolean} [flags.live] - Pull theme files from your remote live theme.
- * @param {boolean} [flags.nodelete] - Runs the pull command without deleting local files.
- * @param {string[]} [flags.only] - Download only the specified files (Multiple flags allowed).
- * @param {string[]} [flags.ignore] - Skip downloading the specified files (Multiple flags allowed).
- * @param {boolean} [flags.force] - Proceed without confirmation, if current directory does not seem to be theme directory.
- * @param {boolean} [flags.noColor] - Disable color output.
- * @param {boolean} [flags.verbose] - Increase the verbosity of the output.
- * @returns {Promise<void>} Resolves when the pull operation is complete.
+ * @param flags - The flags for the pull operation.
+ * @returns Resolves when the pull operation is complete.
  */
-export async function pull(flags: PullFlags) {
+export async function pull(flags: PullFlags): Promise<void> {
   showEmbeddedCLIWarning()
 
   const store = ensureThemeStore({store: flags.store})
@@ -88,10 +125,10 @@ export async function pull(flags: PullFlags) {
 /**
  * Executes the pull operation for a specific theme.
  *
- * @param {Theme} theme - The theme to pull.
- * @param {AdminSession} session - The admin session.
- * @param {PullOptions} options - The options for pulling.
- * @returns {Promise<void>} Resolves when the pull operation is complete.
+ * @param theme - The theme to pull.
+ * @param session - The admin session.
+ * @param options - The options for pulling.
+ * @returns  Resolves when the pull operation is complete.
  */
 async function executePull(theme: Theme, session: AdminSession, options: PullOptions) {
   const path = options.path
@@ -146,8 +183,8 @@ async function executePull(theme: Theme, session: AdminSession, options: PullOpt
 /**
  * Checks if the specified directory is empty.
  *
- * @param {string} path - The path to the directory.
- * @returns {Promise<boolean>} True if the directory is empty, false otherwise.
+ * @param  path - The path to the directory.
+ * @returns  True if the directory is empty, false otherwise.
  */
 export async function isEmptyDir(path: string) {
   const entries = await glob('*', {
