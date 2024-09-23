@@ -143,12 +143,21 @@ export default class Push extends ThemeCommand {
     const pushFlags: PushFlags = {
       path: flags.path,
       password: flags.password,
-      environment: flags.environment,
       store: flags.store,
+      environment: flags.environment,
       theme: flags.theme,
       development: flags.development,
       live: flags.live,
       unpublished: flags.unpublished,
+      nodelete: flags.nodelete,
+      only: flags.only,
+      ignore: flags.ignore,
+      json: flags.json,
+      allowLive: flags['allow-live'],
+      publish: flags.publish,
+      force: flags.force,
+      noColor: flags['no-color'],
+      verbose: flags.verbose,
     }
 
     await push(pushFlags)
