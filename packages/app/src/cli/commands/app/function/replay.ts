@@ -2,7 +2,7 @@ import {functionFlags, inFunctionContext} from '../../../services/function/commo
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
@@ -51,14 +51,14 @@ export default class FunctionReplay extends AppCommand {
     }),
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FunctionReplay)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] || flags['api-key']
 
-    await inFunctionContext({
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
@@ -71,7 +71,9 @@ export default class FunctionReplay extends AppCommand {
           json: flags.json,
           watch: flags.watch,
         })
+        return app
       },
     })
+    return {app}
   }
 }

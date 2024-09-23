@@ -29,7 +29,7 @@ export async function inFunctionContext({
 }: {
   path: string
   userProvidedConfigName?: string
-  callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<void>
+  callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<AppInterface>
 }) {
   const specifications = await loadLocalExtensionsSpecifications()
   const app: AppInterface = await loadApp({specifications, directory: path, userProvidedConfigName})

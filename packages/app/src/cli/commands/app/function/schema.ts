@@ -2,7 +2,7 @@ import {generateSchemaService} from '../../../services/generate-schema.js'
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {appFlags} from '../../../flags.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -40,14 +40,14 @@ export default class FetchSchema extends AppCommand {
     }),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FetchSchema)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] || flags['api-key']
 
-    await inFunctionContext({
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
@@ -58,7 +58,10 @@ export default class FetchSchema extends AppCommand {
           stdout: flags.stdout,
           path: flags.path,
         })
+        return app
       },
     })
+
+    return {app}
   }
 }

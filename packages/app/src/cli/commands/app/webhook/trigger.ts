@@ -2,7 +2,7 @@ import {DELIVERY_METHOD, WebhookTriggerFlags} from '../../../services/webhook/tr
 import {webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -85,7 +85,7 @@ export default class WebhookTrigger extends AppCommand {
     }),
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(WebhookTrigger)
 
     const usedFlags: WebhookTriggerFlags = {
@@ -107,6 +107,7 @@ export default class WebhookTrigger extends AppCommand {
       })
     }
 
-    await webhookTriggerService(usedFlags)
+    const result = await webhookTriggerService(usedFlags)
+    return {app: result.app}
   }
 }

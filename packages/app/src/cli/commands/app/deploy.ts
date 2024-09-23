@@ -7,7 +7,7 @@ import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.j
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import AppCommand from '../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -77,7 +77,7 @@ export default class Deploy extends AppCommand {
     }),
   }
 
-  async run(): Promise<void> {
+  async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Deploy)
 
     await metadata.addPublicMetadata(() => ({
@@ -110,7 +110,7 @@ export default class Deploy extends AppCommand {
     if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    await deploy({
+    const result = await deploy({
       app,
       apiKey,
       reset: flags.reset,
@@ -120,5 +120,7 @@ export default class Deploy extends AppCommand {
       version: flags.version,
       commitReference: flags['source-control-url'],
     })
+
+    return {app: result.app}
   }
 }

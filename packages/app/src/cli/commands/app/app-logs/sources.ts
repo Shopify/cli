@@ -3,7 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {sources} from '../../../services/app-logs/sources.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Sources extends AppCommand {
@@ -18,7 +18,7 @@ export default class Sources extends AppCommand {
     ...appFlags,
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Sources)
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({
@@ -33,5 +33,6 @@ export default class Sources extends AppCommand {
     } else {
       sources(app)
     }
+    return {app}
   }
 }

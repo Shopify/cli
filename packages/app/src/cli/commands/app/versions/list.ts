@@ -4,7 +4,7 @@ import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load
 import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 
@@ -43,7 +43,7 @@ export default class VersionsList extends AppCommand {
     file: Args.string(),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(VersionsList)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
@@ -62,5 +62,7 @@ export default class VersionsList extends AppCommand {
       reset: false,
       json: flags.json,
     })
+
+    return {app}
   }
 }

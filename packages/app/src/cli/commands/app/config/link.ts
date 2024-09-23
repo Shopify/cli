@@ -1,6 +1,8 @@
 import {appFlags} from '../../../flags.js'
+import {loadApp} from '../../../models/app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -24,7 +26,7 @@ export default class ConfigLink extends AppCommand {
     }),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(ConfigLink)
 
     const options: LinkOptions = {
@@ -33,5 +35,15 @@ export default class ConfigLink extends AppCommand {
     }
 
     await link(options)
+
+    const specifications = await loadLocalExtensionsSpecifications()
+
+    const app = await loadApp({
+      specifications,
+      directory: flags.path,
+      userProvidedConfigName: undefined,
+    })
+
+    return {app}
   }
 }

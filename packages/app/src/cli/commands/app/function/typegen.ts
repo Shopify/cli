@@ -20,13 +20,15 @@ export default class FunctionTypegen extends AppCommand {
 
   public async run() {
     const {flags} = await this.parse(FunctionTypegen)
-    await inFunctionContext({
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
         await buildGraphqlTypes(ourFunction, {stdout: process.stdout, stderr: process.stderr, app})
         renderSuccess({headline: 'GraphQL types generated successfully.'})
+        return app
       },
     })
+    return {app}
   }
 }

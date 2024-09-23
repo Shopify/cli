@@ -1,7 +1,8 @@
 import {appFlags} from '../../../flags.js'
-import {checkFolderIsValidApp} from '../../../models/app/loader.js'
+import {checkFolderIsValidApp, loadApp} from '../../../models/app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import use from '../../../services/app/config/use.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -35,10 +36,20 @@ export default class ConfigUse extends AppCommand {
     }),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags, args} = await this.parse(ConfigUse)
 
     await checkFolderIsValidApp(flags.path)
     await use({directory: flags.path, configName: args.config, reset: flags.reset})
+
+    const specifications = await loadLocalExtensionsSpecifications()
+
+    const app = await loadApp({
+      specifications,
+      directory: flags.path,
+      userProvidedConfigName: undefined,
+    })
+
+    return {app}
   }
 }

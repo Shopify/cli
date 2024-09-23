@@ -4,7 +4,7 @@ import {loadApp} from '../../models/app/loader.js'
 import build from '../../services/build.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import AppCommand from '../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -41,7 +41,7 @@ export default class Build extends AppCommand {
     }),
   }
 
-  async run(): Promise<void> {
+  async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Build)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
@@ -59,5 +59,7 @@ export default class Build extends AppCommand {
       userProvidedConfigName: flags.config,
     })
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
+
+    return {app}
   }
 }

@@ -1,7 +1,7 @@
 import {functionFlags, inFunctionContext, getOrGenerateSchemaPath} from '../../../services/function/common.js'
 import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
@@ -39,9 +39,9 @@ export default class FunctionRun extends AppCommand {
     }),
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FunctionRun)
-    await inFunctionContext({
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
@@ -91,7 +91,10 @@ export default class FunctionRun extends AppCommand {
           schemaPath,
           queryPath,
         })
+        return app
       },
     })
+
+    return {app}
   }
 }

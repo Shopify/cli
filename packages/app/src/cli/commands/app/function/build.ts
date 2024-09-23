@@ -1,7 +1,7 @@
 import {inFunctionContext, functionFlags} from '../../../services/function/common.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {appFlags} from '../../../flags.js'
-import AppCommand from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
@@ -18,9 +18,9 @@ export default class FunctionBuild extends AppCommand {
     ...functionFlags,
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FunctionBuild)
-    await inFunctionContext({
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
@@ -32,7 +32,9 @@ export default class FunctionBuild extends AppCommand {
           environment: 'production',
         })
         renderSuccess({headline: 'Function built successfully.'})
+        return app
       },
     })
+    return {app}
   }
 }

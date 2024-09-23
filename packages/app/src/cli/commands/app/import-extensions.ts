@@ -7,7 +7,7 @@ import {loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
 import {importExtensions} from '../../services/import-extensions.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import AppCommand from '../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -67,7 +67,7 @@ export default class ImportExtensions extends AppCommand {
     }),
   }
 
-  async run(): Promise<void> {
+  async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(ImportExtensions)
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({
@@ -84,7 +84,7 @@ export default class ImportExtensions extends AppCommand {
     const migrationChoice = migrationChoices.find((choice) => choice.value === promptAnswer)
     if (migrationChoice === undefined) {
       renderFatalError(new AbortError('Invalid migration choice'))
-      return
+      return {app}
     }
     await importExtensions({
       app,
@@ -92,5 +92,7 @@ export default class ImportExtensions extends AppCommand {
       extensionTypes: migrationChoice.extensionTypes,
       buildTomlObject: migrationChoice.buildTomlObject,
     })
+
+    return {app}
   }
 }

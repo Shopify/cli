@@ -2,7 +2,7 @@ import {appFlags} from '../../flags.js'
 import {dev, DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
-import AppCommand from '../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -142,7 +142,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     return 'app dev stop'
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Dev)
 
     if (!flags['api-key']) {
@@ -186,6 +186,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       devPreview: !flags.legacy,
     }
 
-    await dev(devOptions)
+    const result = await dev(devOptions)
+    return {app: result.app}
   }
 }

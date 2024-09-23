@@ -44,7 +44,7 @@ module.exports = {
         if (!hasDefaultExport || !extendsAppCommand) {
           context.report({
             node,
-            message: 'Files in app/commands must have a default export that extends AppCommand',
+            message: 'Files in commands/app must have a default export that extends AppCommand',
           })
         }
       },

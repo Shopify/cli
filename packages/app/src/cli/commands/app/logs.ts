@@ -2,7 +2,7 @@ import Dev from './dev.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
-import AppCommand from '../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -51,7 +51,7 @@ export default class Logs extends AppCommand {
     }),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Logs)
 
     const apiKey = flags['client-id'] || flags['api-key']
@@ -68,6 +68,7 @@ export default class Logs extends AppCommand {
       format: (flags.json ? 'json' : 'text') as Format,
     }
 
-    await logs(logOptions)
+    const app = await logs(logOptions)
+    return {app}
   }
 }
