@@ -83,7 +83,7 @@ describe('setAppInfo', async () => {
         {appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId},
         storage,
       )
-      const got = storage.get('/app2/something')
+      const got = storage.get('/app2/something')!
 
       // Then
       expect(got.appId).toEqual(APP2.appId)

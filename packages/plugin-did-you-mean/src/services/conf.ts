@@ -1,7 +1,7 @@
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 export function isAutocorrectEnabled(conf: LocalStorage<ConfigSchema> = getConfig()): boolean {
-  return conf.get('autocorrectEnabled')
+  return Boolean(conf.get('autocorrectEnabled'))
 }
 
 export function setAutocorrect(value: boolean, conf: LocalStorage<ConfigSchema> = getConfig()) {

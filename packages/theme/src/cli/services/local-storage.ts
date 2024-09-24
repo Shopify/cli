@@ -1,3 +1,4 @@
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
@@ -64,48 +65,71 @@ export function setThemeStore(store: string) {
 
 export function getDevelopmentTheme(): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeLocalStorage().get(getThemeStore())
+  return withOptionalThemeStore((themeStore) => {
+    return developmentThemeLocalStorage().get(themeStore)
+  })
 }
 
 export function setDevelopmentTheme(theme: string): void {
   outputDebug(outputContent`Setting development theme...`)
-  developmentThemeLocalStorage().set(getThemeStore(), theme)
+  developmentThemeLocalStorage().set(requireThemeStore(), theme)
 }
 
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
-  developmentThemeLocalStorage().delete(getThemeStore())
+  return withOptionalThemeStore((themeStore) => {
+    developmentThemeLocalStorage().delete(themeStore)
+  })
 }
 
 export function getREPLTheme(): string | undefined {
   outputDebug(outputContent`Getting REPL theme...`)
-  return replThemeLocalStorage().get(getThemeStore())
+  return withOptionalThemeStore((themeStore) => {
+    return replThemeLocalStorage().get(themeStore)
+  })
 }
 
 export function setREPLTheme(theme: string): void {
   outputDebug(outputContent`Setting REPL theme to ${theme}...`)
-  replThemeLocalStorage().set(getThemeStore(), theme)
+  replThemeLocalStorage().set(requireThemeStore(), theme)
 }
 
 export function removeREPLTheme(): void {
   outputDebug(outputContent`Removing REPL theme...`)
-  replThemeLocalStorage().delete(getThemeStore())
+  replThemeLocalStorage().delete(requireThemeStore())
 }
 
 export function getStorefrontPassword(): string | undefined {
-  const themeStore = getThemeStore()
-  outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
-  return themeStorePasswordStorage().get(getThemeStore())
+  return withOptionalThemeStore((themeStore) => {
+    outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
+    return themeStorePasswordStorage().get(themeStore)
+  })
 }
 
 export function setStorefrontPassword(password: string): void {
-  const themeStore = getThemeStore()
+  const themeStore = requireThemeStore()
   outputDebug(outputContent`Setting storefront password for shop ${themeStore}...`)
   themeStorePasswordStorage().set(themeStore, password)
 }
 
 export function removeStorefrontPassword(): void {
-  const themeStore = getThemeStore()
+  const themeStore = requireThemeStore()
   outputDebug(outputContent`Removing storefront password for ${themeStore}...`)
   themeStorePasswordStorage().delete(themeStore)
+}
+
+function requireThemeStore(): string {
+  const themeStore = getThemeStore()
+  if (!themeStore) {
+    throw new AbortError('Theme store is not set')
+  }
+  return themeStore
+}
+
+function withOptionalThemeStore<T>(callback: (themeStore: string) => T | undefined): T | undefined {
+  const themeStore = getThemeStore()
+  if (!themeStore) {
+    return
+  }
+  return callback(themeStore)
 }
