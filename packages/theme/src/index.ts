@@ -14,9 +14,6 @@ import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
 import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
-import {pull} from './cli/services/pull.js'
-import {push} from './cli/services/push.js'
-import {publicFetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
 
 const COMMANDS = {
   'theme:init': Init,
@@ -37,14 +34,6 @@ const COMMANDS = {
   'theme:share': Share,
 }
 
-const PUBLIC_COMMANDS = {
-  pull,
-  push,
-  publicFetchStoreThemes,
-}
-
-export {PUBLIC_COMMANDS}
-
 export default COMMANDS
 
 /** Development server for theme extensions */
@@ -53,3 +42,8 @@ export * from './cli/utilities/theme-ext-environment/theme-ext-server.js'
 /** Storefront authentication support for running the development server on password-protected stores */
 export {isStorefrontPasswordProtected} from './cli/utilities/theme-environment/storefront-session.js'
 export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-password-prompt.js'
+
+// Public Theme Commands
+export {pull} from './cli/services/pull.js'
+export {push} from './cli/services/push.js'
+export {publicFetchStoreThemes as fetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
