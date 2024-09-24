@@ -1,10 +1,21 @@
 import {fetchThemes} from '@shopify/cli-kit/node/themes/api'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
 export type Role = 'live' | 'development' | 'unpublished'
 export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
+
+/**
+ * Fetches the themes from the store.
+ * @param store - The store to fetch the themes from.
+ * @param password - The password to authenticate with.
+ * @returns The themes from the store.
+ */
+export async function publicFetchStoreThemes(store: string, password: string) {
+  const adminSession = await ensureAuthenticatedThemes(store, password)
+  return fetchStoreThemes(adminSession)
+}
 
 export async function fetchStoreThemes(session: AdminSession) {
   const store = session.storeFqdn

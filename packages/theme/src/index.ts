@@ -16,6 +16,7 @@ import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
 import {pull} from './cli/services/pull.js'
 import {push} from './cli/services/push.js'
+import {publicFetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
 
 const COMMANDS = {
   'theme:init': Init,
@@ -39,6 +40,7 @@ const COMMANDS = {
 const PUBLIC_COMMANDS = {
   pull,
   push,
+  publicFetchStoreThemes,
 }
 
 export {PUBLIC_COMMANDS}
