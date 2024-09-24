@@ -8,9 +8,9 @@ export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
 
 /**
  * Fetches the themes from the store.
- * @param store - The store to fetch the themes from.
- * @param password - The password to authenticate with.
- * @returns The themes from the store.
+ * @param store - Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+ * @param password - Password generated from the Theme Access app.
+ * @returns An array of themes from the store.
  */
 export async function publicFetchStoreThemes(store: string, password: string) {
   const adminSession = await ensureAuthenticatedThemes(store, password)
