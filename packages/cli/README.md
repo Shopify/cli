@@ -531,7 +531,8 @@ FLAGS
   -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
   -n, --name=<value>
   -p, --path=<value>              [default: .]
-      --client-id=<value>         The Client ID of your app.
+      --client-id=<value>         The Client ID of your app. Use this to automatically link your new project to an
+                                  existing app. Using this flag avoids the app selection prompt.
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
       --template=<value>          The app template. Accepts one of the following:
