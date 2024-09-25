@@ -148,6 +148,8 @@ export async function patchRenderingResponse(ctx: DevServerContext, event: H3Eve
   // We are decoding the payload here, remove the header:
   let html = await response.text()
   removeResponseHeader(event, 'content-encoding')
+  // Ensure the content type indicates UTF-8 charset:
+  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8')
 
   html = injectCdnProxy(html, ctx)
   html = patchBaseUrlAttributes(html, ctx)
