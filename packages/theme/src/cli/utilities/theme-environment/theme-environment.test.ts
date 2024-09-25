@@ -56,6 +56,15 @@ describe('setupDevServer', () => {
         value: '.another-class {}',
       },
     ],
+    [
+      'assets/file-with-nbsp.js',
+      {
+        checksum: '1',
+        key: 'assets/file-with-nbsp.js',
+        // Contains a non-breaking space
+        value: 'const x = "Hello\u00A0World";',
+      },
+    ],
   ])
 
   const localThemeFileSystem = fakeThemeFileSystem('tmp', localFiles)
@@ -165,10 +174,10 @@ describe('setupDevServer', () => {
     const dispatchEvent = async (
       url: string,
       headers?: {[key: string]: string},
-    ): Promise<{res: ServerResponse<IncomingMessage>; status: number; body?: string}> => {
+    ): Promise<{res: ServerResponse<IncomingMessage>; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node
-      let body: string | undefined
+      let body: string | Buffer | undefined
       const resWrite = res.write.bind(res)
       res.write = (chunk) => {
         body ??= ''
@@ -182,7 +191,7 @@ describe('setupDevServer', () => {
       }
 
       await server.dispatchEvent(event)
-      return {res, status: res.statusCode, body}
+      return {res, status: res.statusCode, body: body!}
     }
 
     test('mocks known endpoints', async () => {
@@ -200,7 +209,25 @@ describe('setupDevServer', () => {
       const {res, body} = await eventPromise
       expect(res.getHeader('content-type')).toEqual('text/css')
       // The URL is proxied:
-      expect(body).toMatchInlineSnapshot(`".some-class { background: url(\\"/cdn/path/to/assets/file2.css\\") }"`)
+      expect(body.toString()).toMatchInlineSnapshot(
+        `".some-class { background: url(\\"/cdn/path/to/assets/file2.css\\") }"`,
+      )
+    })
+
+    test('gets the right content for assets with non-breaking spaces', async () => {
+      const eventPromise = dispatchEvent('/cdn/somepathhere/assets/file-with-nbsp.js')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {res, body: bodyBuffer} = await eventPromise
+      const bodyString = bodyBuffer?.toString() ?? ''
+      expect(bodyString).toMatchInlineSnapshot(`"const x = \\"Hello\u00A0World\\";"`)
+
+      // Ensure content-length contains the real length:
+      expect(bodyString.length).toEqual(24)
+      expect(bodyBuffer.length).toEqual(25)
+      expect(res.getHeader('content-length')).toEqual(25)
     })
 
     test('renders HTML', async () => {
@@ -225,7 +252,7 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
-      expect(res.getHeader('content-type')).toEqual('text/html')
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
       expect(res.getHeader('link')).toMatch('</cdn/path/to/assets/file1.css>')
       expect(body).toMatch('link href="/cdn/path/to/assets/file1.css"')
     })

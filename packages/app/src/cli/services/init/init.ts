@@ -198,6 +198,8 @@ async function init(options: InitOptions) {
     {
       directory: outputDirectory,
       apiKey: options.app.apiKey,
+      appId: options.app.id,
+      organizationId: options.app.organizationId,
       configName: 'shopify.app.toml',
       developerPlatformClient: options.developerPlatformClient,
     },

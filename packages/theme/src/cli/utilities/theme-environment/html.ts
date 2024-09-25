@@ -3,8 +3,10 @@ import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.j
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -29,6 +31,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         html = prettifySyntaxErrors(html)
 
+        assertThemeId(response, html, String(theme.id))
+
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)
         }
@@ -50,7 +54,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         let errorPageHtml = getErrorPage({
           title,
           header: title,
-          message: [...rest, error.message].join('<br>'),
+          message: [...rest, cause?.message ?? error.message].join('<br>'),
           code: error.stack?.replace(`${error.message}\n`, '') ?? '',
         })
 
@@ -97,4 +101,34 @@ function getErrorPage(options: {title: string; header: string; message: string; 
       <pre>${options.code}</pre>
     </body>
   </html>`
+}
+
+function assertThemeId(response: Response, html: string, expectedThemeId: string) {
+  /**
+   * DOM example:
+   *
+   * ```
+   * <script>var Shopify = Shopify || {};
+   * Shopify.locale = "en";
+   * Shopify.theme = {"name":"Development","id":143509762348,"theme_store_id":null,"role":"development"};
+   * Shopify.theme.handle = "null";
+   * ...;</script>
+   * ```
+   */
+  const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
+
+  if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
+    renderFatalError(
+      new AbortError(
+        `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.` +
+          `\nRequest ID: ${response.headers.get('x-request-id')}` +
+          `\nURL: ${response.url}`,
+        `This is likely related to an issue in upstream Shopify APIs.` +
+          `\nPlease try again in a few minutes and report this issue:` +
+          `\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
+      ),
+    )
+
+    process.exit(1)
+  }
 }

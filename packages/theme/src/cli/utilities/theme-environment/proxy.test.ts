@@ -87,6 +87,26 @@ describe('dev proxy', () => {
       `)
     })
 
+    test('proxies urls in JS files', () => {
+      const content = `
+        console.log('https://cdn.shopify.com/path/to/assets/file1');
+        // Comment: https://cdn.shopify.com/path/to/assets/file1 something
+        const url = "https://cdn.shopify.com/path/to/assets/file1#zzz";
+        fetch(\`https://cdn.shopify.com/path/to/assets/file1?q=123\`);
+      `
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(
+        `
+        "
+                console.log('/cdn/path/to/assets/file1');
+                // Comment: /cdn/path/to/assets/file1 something
+                const url = \\"/cdn/path/to/assets/file1#zzz\\";
+                fetch(\`/cdn/path/to/assets/file1?q=123\`);
+              "
+      `,
+      )
+    })
+
     test('proxies urls in Link header', () => {
       const linkHeader =
         `<https://cdn.shopify.com>; rel="preconnect", <https://cdn.shopify.com>; rel="preconnect"; crossorigin,` +
@@ -180,9 +200,9 @@ describe('dev proxy', () => {
       // Removed:
       event.node.req.headers.connection = '...'
       event.node.req.headers['proxy-authenticate'] = '...'
-      event.node.req.headers.accept = 'text/html'
       event.node.req.headers.host = 'abnb'
       // Kept:
+      event.node.req.headers.accept = 'text/html'
       event.node.req.headers.cookie = 'oreo'
       event.node.req.headers['user-agent'] = 'vitest'
       event.node.req.headers['x-custom'] = 'true'
@@ -190,6 +210,7 @@ describe('dev proxy', () => {
       expect(getProxyStorefrontHeaders(event)).toMatchInlineSnapshot(`
         {
           "X-Forwarded-For": "42",
+          "accept": "text/html",
           "cookie": "oreo",
           "user-agent": "vitest",
           "x-custom": "true",

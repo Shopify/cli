@@ -1,7 +1,6 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
-import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
@@ -39,7 +38,8 @@ ${outputToken.json(scopes)}
 `)
   const envToken = getPartnersToken()
   if (envToken) {
-    return {token: (await exchangeCustomPartnerToken(envToken)).accessToken, userId: nonRandomUUID(envToken)}
+    const result = await exchangeCustomPartnerToken(envToken)
+    return {token: result.accessToken, userId: result.userId}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
   if (!tokens.partners) {
