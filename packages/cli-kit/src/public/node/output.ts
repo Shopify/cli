@@ -153,7 +153,7 @@ export function outputContent(
 
     if (typeof token === 'string') {
       output += token
-    } else {
+    } else if (token) {
       const enumTokenOutput = token.output()
 
       if (Array.isArray(enumTokenOutput)) {
