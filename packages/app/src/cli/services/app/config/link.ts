@@ -58,7 +58,10 @@ export interface LinkOptions {
  * @param shouldRenderSuccess - Whether to render a success message to the user. This is useful for testing.
  * @returns The final app configuration object that was written to the filesystem
  */
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<CurrentAppConfiguration> {
+export default async function link(
+  options: LinkOptions,
+  shouldRenderSuccess = true,
+): Promise<{configuration: CurrentAppConfiguration; remoteApp: OrganizationApp}> {
   // First, select (or create, if the user chooses to) a remote app to link to
   const {remoteApp, appDirectory, developerPlatformClient} = await selectOrCreateRemoteAppToLinkTo(options)
 
@@ -91,7 +94,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  return mergedAppConfiguration
+  return {configuration: mergedAppConfiguration, remoteApp}
 }
 
 /**
