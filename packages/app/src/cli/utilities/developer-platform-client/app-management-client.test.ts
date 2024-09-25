@@ -236,16 +236,6 @@ describe('deploy', () => {
   test('creates an app version from a bundle URL', async () => {
     // Given
     const bundleUrl = 'https://example.com/mybundle'
-    const mockedVersionResponse: CreateAppVersionMutationSchema = {
-      appVersionCreate: {
-        version: {
-          id: versionId,
-          appModules: [],
-          metadata: {message: '', versionTag},
-        },
-        userErrors: [],
-      },
-    }
 
     vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
 
@@ -274,7 +264,7 @@ describe('deploy', () => {
     )
   })
 
-  test('creates an app version directly', async () => {
+  test('creates an app version directly from a manifest', async () => {
     // Given
     const name = 'my-app-name'
     const module1 = testAppModuleSettings()
@@ -318,7 +308,7 @@ describe('deploy', () => {
     )
   })
 
-  test('creates an app version and a release', async () => {
+  test('creates an app version and a release when skipPublish is not true', async () => {
     // Given
     const name = 'my-app-name'
     vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
