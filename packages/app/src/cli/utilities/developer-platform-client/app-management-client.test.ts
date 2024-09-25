@@ -10,7 +10,12 @@ import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {CreateAppVersionMutationSchema} from './app-management-client/graphql/create-app-version.js'
 import {ReleaseVersionMutationSchema} from './app-management-client/graphql/release-version.js'
-import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {
+  testUIExtension,
+  testRemoteExtensionTemplates,
+  testOrganizationApp,
+  testAppModuleSettings,
+} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AccountInfo} from '../../services/context/partner-account-info.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -203,7 +208,7 @@ describe('deploy', () => {
   const token = 'business-platform-token'
 
   const userAccountInfo: AccountInfo = {type: 'UnknownAccount'}
-  const session = {token, accountInfo: userAccountInfo}
+  const session = {token, accountInfo: userAccountInfo, userId: 'user'}
   const client = new AppManagementClient(session)
 
   const mockedVersionResponse: CreateAppVersionMutationSchema = {
@@ -272,20 +277,8 @@ describe('deploy', () => {
   test('creates an app version directly', async () => {
     // Given
     const name = 'my-app-name'
-    const module1 = {
-      uid: 'uid',
-      specificationIdentifier: 'spec',
-      config: '{"key": "value"}',
-      context: 'context',
-      handle: 'handle',
-    }
-    const module2 = {
-      uid: 'uid2',
-      specificationIdentifier: 'spec2',
-      config: '{"key2": "value2"}',
-      context: 'context2',
-      handle: 'handle2',
-    }
+    const module1 = testAppModuleSettings()
+    const module2 = testAppModuleSettings({uid: 'uid2', specificationIdentifier: 'spec2'})
     const appModules = [module1, module2]
 
     vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedVersionResponse)
@@ -312,10 +305,10 @@ describe('deploy', () => {
         version: {
           source: {
             name,
-            appModules: appModules.map((mod) => ({
+            modules: appModules.map((mod) => ({
               uid: mod.uid,
               handle: mod.handle,
-              specificationIdentifier: mod.specificationIdentifier,
+              type: mod.specificationIdentifier,
               config: JSON.parse(mod.config),
             })),
           },
@@ -352,7 +345,7 @@ describe('deploy', () => {
         version: {
           source: {
             name,
-            appModules: [],
+            modules: [],
           },
         },
         metadata: {versionTag},

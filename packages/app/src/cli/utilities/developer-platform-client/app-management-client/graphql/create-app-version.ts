@@ -33,18 +33,7 @@ export const CreateAppVersionMutation = gql`
 
 export interface CreateAppVersionMutationVariables {
   appId: string
-  version: {
-    sourceUrl?: string
-    source?: {
-      name: string
-      handle?: string
-      appModules: {
-        uid: string
-        specificationIdentifier?: string
-        config: JsonMapType
-      }[]
-    }
-  }
+  version: {sourceUrl: string} | {source: JsonMapType}
   metadata?: {
     message?: string
     sourceControlUrl?: string

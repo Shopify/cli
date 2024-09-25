@@ -643,13 +643,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
       if (brandingModule) {
         updatedName = JSON.parse(brandingModule.config).name
       }
+
       versionInput = {
         source: {
           name: updatedName,
-          appModules: (appModules ?? []).map((mod) => {
+          modules: (appModules ?? []).map((mod) => {
             return {
+              type: mod.specificationIdentifier,
               uid: mod.uid ?? mod.uuid ?? mod.handle,
-              specificationIdentifier: mod.specificationIdentifier,
               handle: mod.handle,
               config: JSON.parse(mod.config),
             }
@@ -921,11 +922,11 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
     initialVersion: {
       source: {
         name,
-        appModules: [
+        modules: [
           {
             // Change the uid to AppHomeSpecIdentifier
             uid: 'app_home',
-            specificationIdentifier: AppHomeSpecIdentifier,
+            type: AppHomeSpecIdentifier,
             config: {
               app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
               embedded: isLaunchable,
@@ -934,19 +935,19 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           {
             // Change the uid to BrandingSpecIdentifier
             uid: 'branding',
-            specificationIdentifier: BrandingSpecIdentifier,
+            type: BrandingSpecIdentifier,
             config: {name},
           },
           {
             // Change the uid to WebhooksSpecIdentifier
             uid: 'webhooks',
-            specificationIdentifier: WebhooksSpecIdentifier,
+            type: WebhooksSpecIdentifier,
             config: {api_version: '2024-01'},
           },
           {
             // Change the uid to AppAccessSpecIdentifier
             uid: 'app_access',
-            specificationIdentifier: AppAccessSpecIdentifier,
+            type: AppAccessSpecIdentifier,
             config: {
               redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
               ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),

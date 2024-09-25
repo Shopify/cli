@@ -28,7 +28,7 @@ import {
   DevSessionOptions,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
-import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {ConvertDevToTransferDisabledStoreVariables} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {
@@ -149,6 +149,17 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   } as CurrentAppConfiguration
 
   return app as AppInterface<CurrentAppConfiguration>
+}
+
+export function testAppModuleSettings(settings?: Partial<AppModuleSettings>): AppModuleSettings {
+  const defaultSettings = {
+    uid: 'uid',
+    specificationIdentifier: 'spec',
+    config: '{"key": "value"}',
+    context: 'context',
+    handle: 'handle',
+  }
+  return {...defaultSettings, ...settings}
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {

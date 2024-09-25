@@ -19,18 +19,7 @@ export const CreateAppMutation = gql`
 `
 
 export interface CreateAppMutationVariables {
-  initialVersion: {
-    source?: {
-      name: string
-      handle?: string
-      appModules: {
-        uid: string
-        specificationIdentifier: string
-        config: JsonMapType
-      }[]
-    }
-    sourceUrl?: string
-  }
+  initialVersion: {sourceUrl: string} | {source: JsonMapType}
 }
 
 export interface CreateAppMutationSchema {
