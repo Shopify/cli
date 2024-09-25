@@ -1,0 +1,15 @@
+mutation upsertThemeFileBodies($id: ID!, $files: [OnlineStoreThemeFilesUpsertFileInput!]!) {
+  themeFilesUpsert(themeId: $id, files: $files) {
+    job {
+      id
+    }
+    upsertedThemeFiles {
+      filename
+    }
+    userErrors {
+      code
+      filename
+      message
+    }
+  }
+}
