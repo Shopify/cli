@@ -1454,8 +1454,19 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "enableJsonFlag": false,
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "flavor": {
           "description": "Which flavor of the given template to use.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",

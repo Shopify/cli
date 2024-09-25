@@ -52,7 +52,6 @@
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.67.0",
-    "@shopify/create-app": "3.67.0",
     "@shopify/theme": "3.67.0",
     "@shopify/function-runner": "4.1.1",
     "@shopify/plugin-cloudflare": "3.67.0",
