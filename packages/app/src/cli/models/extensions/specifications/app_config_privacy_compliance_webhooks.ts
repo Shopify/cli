@@ -2,6 +2,7 @@ import {WebhookSubscription, WebhooksConfig} from './types/app_config_webhook.js
 import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
 import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription_schema.js'
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
+import {removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
@@ -89,7 +90,7 @@ function getComplianceUri(webhooks: WebhooksConfig, complianceTopic: string): st
 }
 
 function relativeUri(uri?: string, appUrl?: string) {
-  return appUrl && uri?.startsWith('/') ? `${appUrl}${uri}` : uri
+  return appUrl && uri?.startsWith('/') ? `${removeTrailingSlash(appUrl)}${uri}` : uri
 }
 
 function getCustomersDeletionUri(webhooks: WebhooksConfig) {
