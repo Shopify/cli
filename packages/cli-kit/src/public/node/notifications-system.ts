@@ -16,6 +16,7 @@ import {
 import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://raw.githubusercontent.com/Shopify/cli/main/notifications.json'
+const CACHE_DURATION_IN_MS = 3600 * 1000
 
 function url(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
@@ -101,13 +102,13 @@ async function renderNotifications(notifications: Notification[]) {
 }
 
 /**
- * Get notifications list from cache or fetch it if not present.
+ * Get notifications list from cache (refreshed every hour) or fetch it if not present.
  *
  * @returns A Notifications object.
  */
 export async function getNotifications(): Promise<Notifications> {
   const cacheKey: NotificationsKey = `notifications-${url()}`
-  const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, 24 * 3600 * 1000)
+  const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, CACHE_DURATION_IN_MS)
   const notifications: object = JSON.parse(rawNotifications)
   return NotificationsSchema.parse(notifications)
 }
