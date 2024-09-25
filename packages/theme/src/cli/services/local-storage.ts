@@ -65,9 +65,7 @@ export function setThemeStore(store: string) {
 
 export function getDevelopmentTheme(): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return withOptionalThemeStore((themeStore) => {
-    return developmentThemeLocalStorage().get(themeStore)
-  })
+  return developmentThemeLocalStorage().get(requireThemeStore())
 }
 
 export function setDevelopmentTheme(theme: string): void {
@@ -77,16 +75,12 @@ export function setDevelopmentTheme(theme: string): void {
 
 export function removeDevelopmentTheme(): void {
   outputDebug(outputContent`Removing development theme...`)
-  return withOptionalThemeStore((themeStore) => {
-    developmentThemeLocalStorage().delete(themeStore)
-  })
+  developmentThemeLocalStorage().delete(requireThemeStore())
 }
 
 export function getREPLTheme(): string | undefined {
   outputDebug(outputContent`Getting REPL theme...`)
-  return withOptionalThemeStore((themeStore) => {
-    return replThemeLocalStorage().get(themeStore)
-  })
+  return replThemeLocalStorage().get(requireThemeStore())
 }
 
 export function setREPLTheme(theme: string): void {
@@ -100,10 +94,9 @@ export function removeREPLTheme(): void {
 }
 
 export function getStorefrontPassword(): string | undefined {
-  return withOptionalThemeStore((themeStore) => {
-    outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
-    return themeStorePasswordStorage().get(themeStore)
-  })
+  const themeStore = requireThemeStore()
+  outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
+  return themeStorePasswordStorage().get(themeStore)
 }
 
 export function setStorefrontPassword(password: string): void {
@@ -124,12 +117,4 @@ function requireThemeStore(): string {
     throw new AbortError('Theme store is not set')
   }
   return themeStore
-}
-
-function withOptionalThemeStore<T>(callback: (themeStore: string) => T | undefined): T | undefined {
-  const themeStore = getThemeStore()
-  if (!themeStore) {
-    return
-  }
-  return callback(themeStore)
 }
