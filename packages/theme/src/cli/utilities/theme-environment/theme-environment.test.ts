@@ -252,7 +252,7 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
-      expect(res.getHeader('content-type')).toEqual('text/html')
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
       expect(res.getHeader('link')).toMatch('</cdn/path/to/assets/file1.css>')
       expect(body).toMatch('link href="/cdn/path/to/assets/file1.css"')
     })
