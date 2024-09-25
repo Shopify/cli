@@ -4,7 +4,7 @@ import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
 type DevelopmentThemeId = string
 
-interface ThemeLocalStorageSchema {
+export interface ThemeLocalStorageSchema {
   themeStore: string
 }
 
@@ -55,12 +55,12 @@ function themeStorePasswordStorage() {
   return _themeStorePasswordStorageInstance
 }
 
-export function getThemeStore() {
-  return themeLocalStorage().get('themeStore')
+export function getThemeStore(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
+  return storage.get('themeStore')
 }
 
-export function setThemeStore(store: string) {
-  themeLocalStorage().set('themeStore', store)
+export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
+  storage.set('themeStore', store)
 }
 
 export function getDevelopmentTheme(): string | undefined {
@@ -111,8 +111,8 @@ export function removeStorefrontPassword(): void {
   themeStorePasswordStorage().delete(themeStore)
 }
 
-function requireThemeStore(): string {
-  const themeStore = getThemeStore()
+export function requireThemeStore(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()): string {
+  const themeStore = getThemeStore(storage)
   if (!themeStore) {
     throw new BugError(
       'Theme store is not set. This indicates an unexpected issue with the CLI. Please report this to the Shopify CLI team.',
