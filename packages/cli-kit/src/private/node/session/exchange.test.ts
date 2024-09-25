@@ -1,6 +1,7 @@
 import {
   exchangeAccessForApplicationTokens,
   exchangeCodeForAccessToken,
+  exchangeCustomPartnerToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -9,6 +10,7 @@ import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import {getLastSeenUserIdAfterAuth} from '../session.js'
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -165,7 +167,7 @@ describe('exchange identity token for application tokens', () => {
 })
 
 describe('refresh access tokens', () => {
-  test('throws a InvalidGrantError when Identity returns invalid_grant', async () => {
+  test('throws an InvalidGrantError when Identity returns invalid_grant', async () => {
     // Given
     const error = {error: 'invalid_grant'}
     const response = new Response(JSON.stringify(error), {status: 400})
@@ -178,7 +180,7 @@ describe('refresh access tokens', () => {
     return expect(got).rejects.toThrowError(InvalidGrantError)
   })
 
-  test('throws a InvalidRequestError when Identity returns invalid_request', async () => {
+  test('throws an InvalidRequestError when Identity returns invalid_request', async () => {
     // Given
     const error = {error: 'invalid_request'}
     const response = new Response(JSON.stringify(error), {status: 400})
@@ -189,6 +191,30 @@ describe('refresh access tokens', () => {
 
     // Then
     return expect(got).rejects.toThrowError(InvalidRequestError)
+  })
+
+  test('throws an InvalidTargetError when Identity returns invalid_target', async () => {
+    // Given
+    const error = {error: 'invalid_target'}
+    const response = new Response(JSON.stringify(error), {status: 400})
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const got = () => refreshAccessToken(identityToken)
+
+    // Then
+    await expect(got).rejects.toThrowError(
+      'You are not authorized to use the CLI to develop in the provided store.' +
+        '\n\n' +
+        "You can't use Shopify CLI with development stores if you only have Partner " +
+        'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
+        'you should be the store owner or create a staff account on the store.' +
+        '\n\n' +
+        "If you're the store owner, then you need to log in to the store directly using the " +
+        'store URL at least once before you log in using Shopify CLI.' +
+        'Logging in to the Shopify admin directly connects the development ' +
+        'store with your Shopify login.',
+    )
   })
 
   test('throws an AbortError when Identity returns another error', async () => {
@@ -202,5 +228,33 @@ describe('refresh access tokens', () => {
 
     // Then
     return expect(got).rejects.toThrowError(AbortError)
+  })
+})
+
+describe('exchangeCustomPartnerToken', () => {
+  const token = 'customToken'
+
+  // Generated from `customToken` using `nonRandomUUID()`
+  const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
+
+  test('returns access token and user ID for a valid token', async () => {
+    // Given
+    const data = {
+      access_token: 'access_token',
+      expires_in: 300,
+      scope: 'scope,scope2',
+    }
+    // Given
+    const response = new Response(JSON.stringify(data))
+
+    // Need to do it 3 times because a Response can only be used once
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const result = await exchangeCustomPartnerToken(token)
+
+    // Then
+    expect(result).toEqual({accessToken: 'access_token', userId})
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(userId)
   })
 })

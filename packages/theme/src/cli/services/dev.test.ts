@@ -36,7 +36,7 @@ describe('dev', () => {
     flagsToPass: [],
     password: 'my-token',
     'theme-editor-sync': false,
-    'dev-preview': false,
+    legacy: true,
     'live-reload': 'hot-reload',
     noDelete: false,
     ignore: [],
@@ -56,8 +56,8 @@ describe('dev', () => {
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
 
-  describe('Dev-Preview Implementation', async () => {
-    test('calls startDevServer with the correct arguments when the `dev-preview` option is provided', async () => {
+  describe('TS implementation', async () => {
+    test('calls startDevServer with the correct arguments when the `legacy` option is false', async () => {
       // Given
       vi.mocked(initializeDevServerSession).mockResolvedValue(session)
       vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
@@ -72,7 +72,7 @@ describe('dev', () => {
         serverStart: async () => ({close: async () => {}}),
       })
 
-      const devOptions = {...options, storePassword: 'wrong-password', 'dev-preview': true, 'theme-editor-sync': true}
+      const devOptions = {...options, storePassword: 'wrong-password', legacy: false, 'theme-editor-sync': true}
 
       // When
       await dev(devOptions)
@@ -97,7 +97,7 @@ describe('dev', () => {
     })
   })
 
-  describe('execCLI2', async () => {
+  describe('Ruby implementation', async () => {
     test('runs theme serve on CLI2 without passing a token when no password is used', async () => {
       // Given
       const devOptions = {...options, password: undefined}

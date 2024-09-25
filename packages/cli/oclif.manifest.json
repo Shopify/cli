@@ -394,14 +394,6 @@
           "name": "config",
           "type": "option"
         },
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
-          "type": "boolean"
-        },
         "graphiql-key": {
           "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
           "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
@@ -419,6 +411,14 @@
           "multiple": false,
           "name": "graphiql-port",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -1584,32 +1584,6 @@
           "name": "config",
           "type": "option"
         },
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `app dev` implementation for building theme app extensions.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
-          "type": "boolean"
-        },
-        "graphiql-key": {
-          "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
-          "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "graphiql-key",
-          "type": "option"
-        },
-        "graphiql-port": {
-          "description": "Local port of the GraphiQL development server.",
-          "env": "SHOPIFY_FLAG_GRAPHIQL_PORT",
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "graphiql-port",
-          "type": "option"
-        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -1624,18 +1598,6 @@
           "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
           "name": "no-color",
-          "type": "boolean"
-        },
-        "no-tunnel": {
-          "allowNo": false,
-          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead",
-          "env": "SHOPIFY_FLAG_NO_TUNNEL",
-          "exclusive": [
-            "tunnel-url",
-            "tunnel"
-          ],
-          "hidden": true,
-          "name": "no-tunnel",
           "type": "boolean"
         },
         "path": {
@@ -2618,6 +2580,13 @@
           "name": "entry",
           "type": "option"
         },
+        "force-client-sourcemap": {
+          "allowNo": false,
+          "description": "Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP",
+          "name": "force-client-sourcemap",
+          "type": "boolean"
+        },
         "lockfile-check": {
           "allowNo": true,
           "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
@@ -2635,7 +2604,7 @@
         },
         "sourcemap": {
           "allowNo": true,
-          "description": "Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
+          "description": "Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP",
           "name": "sourcemap",
           "type": "boolean"
@@ -3208,7 +3177,7 @@
         },
         "sourcemap": {
           "allowNo": true,
-          "description": "[Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
+          "description": "[Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP",
           "name": "sourcemap",
           "type": "boolean"
@@ -4831,14 +4800,6 @@
       "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "flags": {
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `theme console` implementation.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
-          "type": "boolean"
-        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -4847,6 +4808,14 @@
           "multiple": false,
           "name": "environment",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme console` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -4868,6 +4837,7 @@
           "description": "Local port to serve authentication service.",
           "env": "SHOPIFY_FLAG_PORT",
           "hasDynamicHelp": false,
+          "hidden": true,
           "multiple": false,
           "name": "port",
           "type": "option"
@@ -5032,7 +5002,6 @@
         "nodelete",
         "only",
         "ignore",
-        "stable",
         "force",
         "notify"
       ],
@@ -5040,14 +5009,6 @@
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `theme dev` implementation.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
-          "type": "boolean"
-        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -5082,6 +5043,14 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -5158,6 +5127,7 @@
           "allowNo": false,
           "description": "Force polling to detect file changes.",
           "env": "SHOPIFY_FLAG_POLL",
+          "hidden": true,
           "name": "poll",
           "type": "boolean"
         },
@@ -5168,14 +5138,6 @@
           "multiple": false,
           "name": "port",
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "hidden": true,
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",
@@ -5752,14 +5714,6 @@
       "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "flags": {
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `theme pull` implementation.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
-          "type": "boolean"
-        },
         "development": {
           "allowNo": false,
           "char": "d",
@@ -5794,6 +5748,14 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme pull` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "live": {
           "allowNo": false,
@@ -5844,14 +5806,6 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Performs the pull command by relying on the legacy download implementation.",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "hidden": true,
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",
@@ -5906,7 +5860,6 @@
         "json",
         "allow-live",
         "publish",
-        "stable",
         "force",
         "development-theme-id"
       ],
@@ -5920,14 +5873,6 @@
           "description": "Allow push to a live theme.",
           "env": "SHOPIFY_FLAG_ALLOW_LIVE",
           "name": "allow-live",
-          "type": "boolean"
-        },
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `theme push` implementation.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
           "type": "boolean"
         },
         "development": {
@@ -5971,6 +5916,14 @@
           "description": "Output JSON instead of a UI.",
           "env": "SHOPIFY_FLAG_JSON",
           "name": "json",
+          "type": "boolean"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme push` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
           "type": "boolean"
         },
         "live": {
@@ -6029,14 +5982,6 @@
           "description": "Publish as the live theme after uploading.",
           "env": "SHOPIFY_FLAG_PUBLISH",
           "name": "publish",
-          "type": "boolean"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "hidden": true,
-          "name": "stable",
           "type": "boolean"
         },
         "store": {
@@ -6201,7 +6146,6 @@
         "nodelete",
         "only",
         "ignore",
-        "stable",
         "force",
         "notify"
       ],
@@ -6209,14 +6153,6 @@
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Enables the developer preview for the upcoming `theme dev` implementation.",
-          "env": "SHOPIFY_FLAG_BETA",
-          "hidden": true,
-          "name": "dev-preview",
-          "type": "boolean"
-        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -6251,6 +6187,14 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "legacy": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
+          "env": "SHOPIFY_FLAG_LEGACY",
+          "hidden": true,
+          "name": "legacy",
+          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -6327,6 +6271,7 @@
           "allowNo": false,
           "description": "Force polling to detect file changes.",
           "env": "SHOPIFY_FLAG_POLL",
+          "hidden": true,
           "name": "poll",
           "type": "boolean"
         },
@@ -6337,14 +6282,6 @@
           "multiple": false,
           "name": "port",
           "type": "option"
-        },
-        "stable": {
-          "allowNo": false,
-          "description": "Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)",
-          "env": "SHOPIFY_FLAG_STABLE",
-          "hidden": true,
-          "name": "stable",
-          "type": "boolean"
         },
         "store": {
           "char": "s",
@@ -6647,5 +6584,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.66.0"
+  "version": "3.67.0"
 }

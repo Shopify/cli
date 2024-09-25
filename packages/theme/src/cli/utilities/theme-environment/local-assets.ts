@@ -1,6 +1,14 @@
 import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
-import {defineEventHandler, EventHandlerRequest, H3Event, serveStatic, setResponseHeader} from 'h3'
+import {
+  defineEventHandler,
+  EventHandlerRequest,
+  H3Event,
+  serveStatic,
+  setResponseHeader,
+  sendError,
+  createError,
+} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import type {Theme, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -14,13 +22,12 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
 
     // Matches asset filenames in an HTTP Request URL path
 
-    const fileAndFileSystem = getFileAndFileSystem(event, ctx)
-    if (!fileAndFileSystem) return
+    const {file, fileKey, isUnsynced} = findLocalFile(event, ctx)
+    if (!fileKey) return
 
-    const {file, fileSystem} = fileAndFileSystem
-    const mimeType = lookupMimeType(file.key)
+    const mimeType = lookupMimeType(fileKey)
 
-    if (mimeType.startsWith('image/') && event.path.includes('&') && !fileSystem.unsyncedFileKeys.has(file.key)) {
+    if (mimeType.startsWith('image/') && event.path.includes('&') && !isUnsynced) {
       // This is likely a request for an image with filters (e.g. crop),
       // which we don't support locally. Bypass and get it from the CDN.
       return
@@ -29,7 +36,23 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     // Add header for debugging that the files come from the local assets
     setResponseHeader(event, 'X-Local-Asset', 'true')
 
-    const fileContent = file.value ? injectCdnProxy(file.value, ctx) : Buffer.from(file.attachment ?? '', 'base64')
+    if (!file) {
+      // If a missing file is unsynced, it means the file has been removed locally.
+      // In this case, we return a 404 to the client so they know the file is gone.
+      // Otherwise, fallback to the CDN proxy to get the remote version of the file.
+      if (isUnsynced) sendError(event, createError({statusCode: 404, statusMessage: 'Not found'}))
+      return
+    }
+
+    // Normalize the file content to a Buffer:
+    // - For attachments, we need to decode the base64 string.
+    // - For normal files, we need to get the real length of
+    //   the file using Buffer to avoid issues with non-breaking
+    //   spaces (NBSP, Unicode U+00A0), which have a different
+    //   byte length than their visual representation.
+    const fileContent = file.value
+      ? Buffer.from(injectCdnProxy(file.value, ctx))
+      : Buffer.from(file.attachment ?? '', 'base64')
 
     return serveStatic(event, {
       getContents: () => fileContent,
@@ -40,32 +63,28 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function getFileAndFileSystem(event: H3Event<EventHandlerRequest>, ctx: DevServerContext) {
+function findLocalFile(event: H3Event<EventHandlerRequest>, ctx: DevServerContext) {
   const tryGetFile = (pattern: RegExp, fileSystem: VirtualFileSystem) => {
     const matchedFileName = event.path.match(pattern)?.[1]
 
     if (matchedFileName) {
-      const file = fileSystem.files.get(joinPath('assets', matchedFileName))
+      const fileKey = joinPath('assets', matchedFileName)
+      const file = fileSystem.files.get(fileKey)
+      const isUnsynced = fileSystem.unsyncedFileKeys.has(fileKey)
 
-      if (file) {
-        return {file, fileSystem}
+      if (file || isUnsynced) {
+        return {file, isUnsynced, fileKey}
       }
     }
   }
 
-  let result
-
-  // Try to match theme asset files
-  result = tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeFileSystem)
-  if (result) {
-    return result
-  }
-
-  // Try to match theme extension asset files
-  result = tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/.*?\/assets\/([^?]+)(\?|$)/, ctx.localThemeExtensionFileSystem)
-  if (result) {
-    return result
-  }
-
-  return result
+  // Try to match theme asset files first and fallback to theme extension asset files
+  return (
+    tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
+    tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
+      isUnsynced: false,
+      fileKey: undefined,
+      file: undefined,
+    }
+  )
 }

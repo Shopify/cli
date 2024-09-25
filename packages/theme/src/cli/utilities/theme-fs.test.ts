@@ -14,6 +14,10 @@ import {
 } from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
+import chokidar from 'chokidar'
+import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import EventEmitter from 'events'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
@@ -22,8 +26,11 @@ vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
 
   return {...realModule, ...mockModule}
 })
-
 vi.mock('./asset-ignore.js')
+vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/output')
+
 beforeEach(async () => {
   vi.mocked(getPatternsFromShopifyIgnore).mockResolvedValue([])
   const realModule = await vi.importActual<typeof import('./asset-ignore.js')>('./asset-ignore.js')
@@ -174,6 +181,8 @@ describe('theme-fs', () => {
         key: 'assets/new_file.css',
         checksum: '1010',
         value: 'content',
+        stats: {size: 7, mtime: expect.any(Number)},
+        attachment: '',
       })
     })
 
@@ -196,6 +205,8 @@ describe('theme-fs', () => {
         key: 'assets/new_image.gif',
         checksum: '1010',
         attachment,
+        value: '',
+        stats: {size: 6, mtime: expect.any(Number)},
       })
     })
 
@@ -209,7 +220,13 @@ describe('theme-fs', () => {
 
       let filesUpdated = false
       vi.mocked(writeFile).mockImplementationOnce(() => {
-        filesUpdated = themeFileSystem.files.get(newAsset.key) === newAsset
+        expect(themeFileSystem.files.get(newAsset.key)).toEqual({
+          ...newAsset,
+          attachment: '',
+          stats: {size: 7, mtime: expect.any(Number)},
+        })
+        filesUpdated = true
+
         return Promise.resolve()
       })
 
@@ -434,6 +451,7 @@ describe('theme-fs', () => {
       expect(isTextFile('assets/style1.css')).toBeTruthy()
       expect(isTextFile('assets/style2.scss')).toBeTruthy()
       expect(isTextFile('assets/style3.sass')).toBeTruthy()
+      expect(isTextFile('assets/icon.svg')).toBeTruthy()
       expect(isTextFile('sections/template.liquid')).toBeTruthy()
       expect(isTextFile('templates/cart.json')).toBeTruthy()
     })
@@ -468,6 +486,84 @@ describe('theme-fs', () => {
 
       // Then
       expect(result).toBeFalsy()
+    })
+  })
+
+  describe('handleFileDelete', () => {
+    const themeId = '1'
+    const adminSession = {token: 'token', storeFqdn: 'store.myshopify.com'}
+    const root = 'src/cli/utilities/fixtures/theme'
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    test('deletes file from remote theme', async () => {
+      // Given
+      vi.mocked(fetchThemeAsset).mockResolvedValue({
+        key: 'assets/base.css',
+        checksum: '1',
+        value: 'content',
+        attachment: '',
+        stats: {size: 100, mtime: 100},
+      })
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      const deleteOperationPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Explicitly emit the 'unlink' event
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/assets/base.css`)
+
+      await deleteOperationPromise
+
+      // Then
+      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+    })
+
+    test('renders a warning to debug if the file deletion fails', async () => {
+      // Given
+      vi.mocked(fetchThemeAsset).mockResolvedValue({
+        key: 'assets/base.css',
+        value: 'file content',
+        checksum: '1',
+        stats: {size: 100, mtime: 100},
+      })
+      vi.mocked(deleteThemeAsset).mockResolvedValue(false)
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      const deleteOperationPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Explicitly emit the 'unlink' event
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/assets/base.css`)
+
+      await deleteOperationPromise
+
+      // Then
+      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+      expect(outputDebug).toHaveBeenCalledWith('Failed to delete file "assets/base.css" from remote theme.')
     })
   })
 

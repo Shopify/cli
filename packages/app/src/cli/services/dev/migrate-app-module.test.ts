@@ -44,11 +44,11 @@ describe('getPaymentsExtensionsToMigrate()', () => {
     // Given
     const localExtension = getLocalExtension({
       type: 'payments_extension',
-      localIdentifier: 'ten-chars-ten-chars-ten-chars',
+      localIdentifier: 'ten-chars-ten-chars-ten-chars-ten-chars-ten-123456',
     })
     const remoteExtension = getRemoteExtension({
       type: 'payments_app_credit_card',
-      title: 'Ten Chars Ten Chars Ten Chars Ten Chars',
+      title: 'Ten Chars Ten Chars Ten Chars Ten Chars Ten 123456789',
       uuid: 'yy',
     })
 

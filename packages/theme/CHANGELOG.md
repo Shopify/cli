@@ -1,5 +1,19 @@
 # @shopify/theme
 
+## 3.67.0
+
+### Minor Changes
+
+- 4b4146186: Default to Typescript implementation for theme commands. Legacy implementation is stil available via the `--legacy` flag.
+
+### Patch Changes
+
+- 60ff8754c: Bump Shopify/theme-tools packages
+- Updated dependencies [435c88bf1]
+- Updated dependencies [9cc4d7c1d]
+- Updated dependencies [e9aeab01e]
+  - @shopify/cli-kit@3.67.0
+
 ## 3.66.0
 
 ### Minor Changes

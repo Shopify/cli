@@ -1,5 +1,32 @@
 # @shopify/app
 
+## 3.67.0
+
+### Minor Changes
+
+- 4b4146186: Default to Typescript implementation for theme commands. Legacy implementation is stil available via the `--legacy` flag.
+- a8223592d: Bumps function-runner version to include details on dynamic resource limits.
+- e9aeab01e: Ensure output is also interactive when prompting
+
+### Patch Changes
+
+- af9876efe: Updates the function-runner version to 6.2.1
+- 60ff8754c: Bump Shopify/theme-tools packages
+- 57e497b31: Add proper user-agent header for pollAppLogs
+- 8e78b9d72: Add timeout and retries to Javy and function-runner download
+- 97aade125: Remove duplicated slashes when deploying webhooks with relative URIs
+- 3c35e6e34: Ensure Javy is always installed before running it
+- 30b000f08: Allow managed stores
+- Updated dependencies [435c88bf1]
+- Updated dependencies [60ff8754c]
+- Updated dependencies [9cc4d7c1d]
+- Updated dependencies [4b4146186]
+- Updated dependencies [e9aeab01e]
+  - @shopify/cli-kit@3.67.0
+  - @shopify/theme@3.67.0
+  - @shopify/create-app@3.67.0
+  - @shopify/plugin-cloudflare@3.67.0
+
 ## 3.66.0
 
 ### Minor Changes

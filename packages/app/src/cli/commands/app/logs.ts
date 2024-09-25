@@ -34,10 +34,6 @@ export default class Logs extends Command {
       parse: async (input) => normalizeStoreFqdn(input),
     }),
     reset: Dev.flags.reset,
-    'no-tunnel': Dev.flags['no-tunnel'],
-    'graphiql-port': Dev.flags['graphiql-port'],
-    'graphiql-key': Dev.flags['graphiql-key'],
-    'dev-preview': Dev.flags['dev-preview'],
     source: Flags.string({
       description: 'Filters output to the specified log source.',
       env: 'SHOPIFY_FLAG_SOURCE',
@@ -60,14 +56,12 @@ export default class Logs extends Command {
 
     const apiKey = flags['client-id'] || flags['api-key']
 
-    const sources = flags.source
-
     await checkFolderIsValidApp(flags.path)
     const logOptions = {
       apiKey,
       directory: flags.path,
       storeFqdns: flags.store,
-      sources,
+      sources: flags.source,
       status: flags.status,
       configName: flags.config,
       reset: flags.reset,

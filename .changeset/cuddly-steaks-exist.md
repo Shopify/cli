@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Allow managed stores
+Updates Javy to version 3.1.1

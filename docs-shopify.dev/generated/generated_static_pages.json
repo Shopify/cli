@@ -45,37 +45,6 @@
       },
       {
         "type": "Generic",
-        "anchorLink": "requirements-themes",
-        "title": "Requirements for themes",
-        "sectionContent": "\nTo work with themes, your system must meet the following additional requirements:\n- [Ruby](https://www.ruby-lang.org/en/) version 2.7.5 or higher\n\n> Note: Theme requirements are automatically installed on macOS when you use Homebrew to install Shopify CLI.\n",
-        "codeblock": {
-          "title": "Installation requirements for themes",
-          "tabs": [
-            {
-              "title": "macOS: brew",
-              "code": "brew install ruby\n",
-              "language": "bash"
-            },
-            {
-              "title": "Windows",
-              "code": "Install Ruby+Devkit 3.0 using https://rubyinstaller.org/downloads/\n\nSelect the MSYS2 component and the MSYS2 base installation option\n",
-              "language": "bash"
-            },
-            {
-              "title": "Linux: apt",
-              "code": "\nsudo apt update && sudo apt upgrade\n\nsudo apt install curl gcc g++ make\n\nsudo apt install ruby-full\n\nsudo apt install ruby-dev\n# Ruby development environment\n\nsudo apt install git\n",
-              "language": "bash"
-            },
-            {
-              "title": "Linux: yum",
-              "code": "sudo yum install curl\n\nsudo yum group install \"Development Tools\"\n# Includes GCC, g++, and Make\n\nsudo yum install ruby\nsudo yum install ruby-devel\n# Ruby development environment\n\nsudo yum install git\n",
-              "language": "bash"
-            }
-          ]
-        }
-      },
-      {
-        "type": "Generic",
         "anchorLink": "commands",
         "title": "Commands",
         "sectionContent": "\nShopify CLI groups commands into topics. The command syntax is: `shopify [topic] [command]`.\nRefer to each topic section in the sidebar for a list of available commands.\n\nOr, run the `help` command to get this information right in your terminal.\n",

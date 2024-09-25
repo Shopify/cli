@@ -6,11 +6,14 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
+import {setLastSeenUserIdAfterAuth} from '../session.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import * as jose from 'jose'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
+class InvalidTargetError extends AbortError {}
 
 export interface ExchangeScopes {
   admin: string[]
@@ -93,11 +96,14 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
  * @param token - The CLI token passed as ENV variable
  * @returns An instance with the application access tokens.
  */
-export async function exchangeCustomPartnerToken(token: string): Promise<ApplicationToken> {
+export async function exchangeCustomPartnerToken(token: string): Promise<{accessToken: string; userId: string}> {
   const appId = applicationId('partners')
   try {
     const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
-    return newToken[appId]!
+    const accessToken = newToken[appId]!.accessToken
+    const userId = nonRandomUUID(token)
+    setLastSeenUserIdAfterAuth(userId)
+    return {accessToken, userId}
   } catch (error) {
     throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
   }
@@ -169,6 +175,17 @@ interface TokenRequestResult {
 }
 
 function tokenRequestErrorHandler(error: string) {
+  const invalidTargetErrorMessage =
+    'You are not authorized to use the CLI to develop in the provided store.' +
+    '\n\n' +
+    "You can't use Shopify CLI with development stores if you only have Partner " +
+    'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
+    'you should be the store owner or create a staff account on the store.' +
+    '\n\n' +
+    "If you're the store owner, then you need to log in to the store directly using the " +
+    'store URL at least once before you log in using Shopify CLI.' +
+    'Logging in to the Shopify admin directly connects the development ' +
+    'store with your Shopify login.'
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
@@ -178,6 +195,9 @@ function tokenRequestErrorHandler(error: string) {
     // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
     return new InvalidRequestError()
+  }
+  if (error === 'invalid_target') {
+    return new InvalidTargetError(invalidTargetErrorMessage)
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
   return new AbortError(error)

@@ -4,7 +4,7 @@ import {
   defineEventHandler,
   clearResponseHeaders,
   sendProxy,
-  getProxyRequestHeaders,
+  getRequestHeaders,
   getRequestWebStream,
   getRequestIP,
   type H3Event,
@@ -98,8 +98,8 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   content = content.replace(vanityCdnRE, VANITY_CDN_PREFIX)
 
   // -- Only redirect usages of the main CDN for known local theme and theme extension assets to the local server:
-  const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?">]+)(?:\?|"|>|$))/g
-  const filterAssets = (key: string) => key.startsWith('assets')
+  const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?#"'`>\s]+))/g
+  const filterAssets = (key: string) => key.startsWith('assets/')
   const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter(filterAssets))
   const existingExtAssets = new Set([...ctx.localThemeExtensionFileSystem.files.keys()].filter(filterAssets))
 
@@ -148,6 +148,8 @@ export async function patchRenderingResponse(ctx: DevServerContext, event: H3Eve
   // We are decoding the payload here, remove the header:
   let html = await response.text()
   removeResponseHeader(event, 'content-encoding')
+  // Ensure the content type indicates UTF-8 charset:
+  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8')
 
   html = injectCdnProxy(html, ctx)
   html = patchBaseUrlAttributes(html, ctx)
@@ -167,7 +169,9 @@ const HOP_BY_HOP_HEADERS = [
   'trailer',
   'transfer-encoding',
   'upgrade',
+  'expect',
   'content-security-policy',
+  'host',
 ]
 
 function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
@@ -180,7 +184,12 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
 
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
-  if (locationHeader) setResponseHeader(event, 'Location', locationHeader.replace(/^https?:\/\/[^/]+/, ''))
+  if (locationHeader) {
+    const url = new URL(locationHeader, 'https://shopify.dev')
+    url.searchParams.delete('_fd')
+    url.searchParams.delete('pb')
+    setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+  }
 
   // Cookies are set for the vanity domain, fix it for localhost:
   const setCookieHeader =
@@ -198,10 +207,8 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
  * Filters headers to forward to SFR.
  */
 export function getProxyStorefrontHeaders(event: H3Event) {
-  const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string}
+  const proxyRequestHeaders = getRequestHeaders(event) as {[key: string]: string}
 
-  // H3 already removes most hop-by-hop request headers:
-  // https://github.com/unjs/h3/blob/ac6d83de2abe5411d4eaea8ecf2165ace16a65f3/src/utils/proxy.ts#L25
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
   }

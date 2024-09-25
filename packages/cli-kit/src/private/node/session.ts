@@ -15,6 +15,7 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
+import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
@@ -100,6 +101,28 @@ export interface OAuthSession {
   userId: string
 }
 
+let userId: undefined | string
+
+/**
+ * Retrieves the user ID from the current session or returns 'unknown' if not found.
+ * This function first checks for a cached user ID in memory (obtained in the current run)
+ * Then attempts to fetch it from the secure store. (from a previous auth session)
+ * If no user ID is found, it returns 'unknown'.
+ *
+ * @returns A Promise that resolves to the user ID as a string.
+ */
+export async function getLastSeenUserIdAfterAuth(): Promise<string> {
+  if (userId) return userId
+  const currentSession = (await secureStore.fetch()) || {}
+  const fqdn = await identityFqdn()
+  const cachedUserId = currentSession[fqdn]?.identity.userId
+  return cachedUserId ?? 'unknown'
+}
+
+export function setLastSeenUserIdAfterAuth(id: string) {
+  userId = id
+}
+
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
@@ -168,6 +191,7 @@ The CLI is currently unable to prompt for reauthentication.`,
   }
 
   const completeSession: Session = {...currentSession, ...newSession}
+
   // Save the new session info if it has changed
   if (Object.keys(newSession).length > 0) await secureStore.store(completeSession)
   const tokens = await tokensFor(applications, completeSession, fqdn)
@@ -178,9 +202,10 @@ The CLI is currently unable to prompt for reauthentication.`,
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
   if (!envToken && tokens.partners) {
-    await ensureUserHasPartnerAccount(tokens.partners)
+    await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
 
+  setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }
 
@@ -244,11 +269,11 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  *
  * @param partnersToken - Partners token.
  */
-async function ensureUserHasPartnerAccount(partnersToken: string) {
+async function ensureUserHasPartnerAccount(partnersToken: string, userId: string | undefined) {
   if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
 
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
-  if (!(await hasPartnerAccount(partnersToken))) {
+  if (!(await hasPartnerAccount(partnersToken, userId))) {
     outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
     outputInfo(`👉 Press any key to create one`)
     await keypress()
@@ -256,7 +281,7 @@ async function ensureUserHasPartnerAccount(partnersToken: string) {
     outputInfo(outputContent`👉 Press any key when you have ${outputToken.cyan('created the organization')}`)
     outputWarn(outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`)
     await keypress()
-    if (!(await hasPartnerAccount(partnersToken))) {
+    if (!(await hasPartnerAccount(partnersToken, userId))) {
       throw new AbortError(
         `Couldn't find your Shopify Partners organization`,
         `Have you confirmed your accounts from the emails you received?`,
@@ -282,9 +307,18 @@ const getFirstOrganization = gql`
  * @param partnersToken - Partners token.
  * @returns A promise that resolves to true if the token is valid for partners API.
  */
-async function hasPartnerAccount(partnersToken: string): Promise<boolean> {
+async function hasPartnerAccount(partnersToken: string, userId?: string): Promise<boolean> {
+  const cacheKey = userId ?? partnersToken
+  const cachedStatus = getCachedPartnerAccountStatus(cacheKey)
+
+  if (cachedStatus) {
+    outputDebug(`Confirmed partner account exists from cache`)
+    return true
+  }
+
   try {
     await partnersRequest(getFirstOrganization, partnersToken)
+    setCachedPartnerAccountStatus(cacheKey)
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

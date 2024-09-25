@@ -24,7 +24,7 @@ export async function initializeDevServerSession(
   adminPassword?: string,
   storefrontPassword?: string,
 ) {
-  const session = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword, true)
+  const session = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
 
   setInterval(() => {
     fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
@@ -45,16 +45,16 @@ async function fetchDevServerSession(
   adminSession: AdminSession,
   adminPassword?: string,
   storefrontPassword?: string,
-  forceRefresh = false,
 ): Promise<DevServerSession> {
   const baseUrl = buildBaseStorefrontUrl(adminSession)
 
-  const [session, storefrontToken] = await Promise.all([
-    ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [], forceRefresh),
-    ensureAuthenticatedStorefront([], adminPassword, forceRefresh),
-  ])
-
-  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {})
+  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
+  const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
+  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {
+    'X-Shopify-Shop': session.storeFqdn,
+    'X-Shopify-Access-Token': session.token,
+    Authorization: `Bearer ${storefrontToken}`,
+  })
 
   return {
     ...session,

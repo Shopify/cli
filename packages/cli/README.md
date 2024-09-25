@@ -847,7 +847,7 @@ Builds a Hydrogen storefront for production.
 ```
 USAGE
   $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
-    [--entry <value>] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
+    [--entry <value>] [--force-client-sourcemap] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
 
 FLAGS
   --[no-]bundle-stats            Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to
@@ -857,11 +857,13 @@ FLAGS
                                  this file exists.
   --disable-route-warning        Disables any warnings about missing standard routes.
   --entry=<value>                Entry file for the worker. Defaults to `./server`.
+  --force-client-sourcemap       Client sourcemapping is avoided by default because it makes backend code visible in the
+                                 browser. Use this flag to force enabling it.
   --[no-]lockfile-check          Checks that there is exactly one valid lockfile in the project. Defaults to `true`.
                                  Deactivate with `--no-lockfile-check`.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
-  --[no-]sourcemap               Controls whether sourcemaps are generated. Default to `true`. Deactivate
+  --[no-]sourcemap               Controls whether server sourcemaps are generated. Default to `true`. Deactivate
                                  `--no-sourcemaps`.
   --watch                        Watches for changes and rebuilds the project writing output to disk.
 
@@ -1031,8 +1033,8 @@ FLAGS
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
-  --[no-]sourcemap               [Classic Remix Compiler] Controls whether sourcemaps are generated. Default to `true`.
-                                 Deactivate `--no-sourcemaps`.
+  --[no-]sourcemap               [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to
+                                 `true`. Deactivate `--no-sourcemaps`.
   --verbose                      Outputs more information about the command's execution.
 
 DESCRIPTION
@@ -1710,7 +1712,6 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --port=<value>            Local port to serve authentication service.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
@@ -1764,8 +1765,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 ```
 USAGE
   $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
-    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--poll] [--port
-    <value>] [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--port <value>]
+    [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1813,9 +1814,6 @@ FLAGS
 
   --path=<value>
       The path to your theme directory.
-
-  --poll
-      Force polling to detect file changes.
 
   --port=<value>
       Local port to serve theme preview from.
