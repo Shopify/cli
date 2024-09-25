@@ -6565,5 +6565,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.67.1"
+  "version": "3.67.2"
 }

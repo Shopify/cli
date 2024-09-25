@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.67.2
+
+### Patch Changes
+
+- 27c345b81: Remove duplicated slashes when deploying privacy compliance webhooks with relative URIs
+- Updated dependencies [cf73ca498]
+  - @shopify/cli-kit@3.67.2
+  - @shopify/create-app@3.67.2
+  - @shopify/plugin-cloudflare@3.67.2
+  - @shopify/theme@3.67.2
+
 ## 3.67.1
 
 ### Patch Changes

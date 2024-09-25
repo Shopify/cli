@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.67.2
+
+### Patch Changes
+
+- cf73ca498: Avoid outputContent errors with undefined variables
+
 ## 3.67.1
 
 ### Patch Changes
