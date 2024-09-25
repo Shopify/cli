@@ -121,8 +121,8 @@ Running system process:
 }
 
 function checkCommandSafety(command: string) {
-  const commandDirectory = dirname(which.sync(command))
-  if (commandDirectory === cwd()) {
+  const commandPath = which.sync(command, {nothrow: true})
+  if (commandPath && dirname(commandPath) === cwd()) {
     const headline = ['Skipped run of unsecure binary', {command}, 'found in the current directory.']
     const body = 'Please remove that file or review your current PATH.'
     renderWarning({headline, body})
