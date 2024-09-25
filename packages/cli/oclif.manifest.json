@@ -2048,6 +2048,71 @@
       "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     },
+    "app:write-config": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "TODO",
+      "descriptionWithMarkdown": "TODO",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "format": {
+          "default": "ts",
+          "description": "The format of the output.",
+          "env": "SHOPIFY_FLAG_FORMAT",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "format",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:write-config",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "TODO    "
+    },
     "auth:logout": {
       "aliases": [
       ],

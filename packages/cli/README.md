@@ -21,6 +21,7 @@
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
+* [`shopify app write-config`](#shopify-app-write-config)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
@@ -720,6 +721,27 @@ DESCRIPTION
   - Trigger requests are rate-limited using the "Partner API rate limit"
   (https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
+```
+
+## `shopify app write-config`
+
+TODO
+
+```
+USAGE
+  $ shopify app write-config [-c <value>] [--format <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>  The name of the app configuration.
+      --format=<value>  [default: ts] The format of the output.
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the output.
+
+DESCRIPTION
+  TODO
+
+  TODO
 ```
 
 ## `shopify auth logout`

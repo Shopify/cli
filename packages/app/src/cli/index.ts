@@ -25,6 +25,7 @@ import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
 import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
+import WriteConfig from './commands/app/write-config.js'
 
 export const commands = {
   'app:build': Build,
@@ -50,6 +51,7 @@ export const commands = {
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
   'webhook:trigger': WebhookTriggerDeprecated,
+  'app:write-config': WriteConfig,
   'demo:watcher': DemoWatcher,
 }
 
