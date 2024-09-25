@@ -57,7 +57,8 @@ export default class Init extends AppCommand {
     }),
     'client-id': Flags.string({
       hidden: false,
-      description: 'The Client ID of your app.',
+      description:
+        'The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
