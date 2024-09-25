@@ -1,15 +1,17 @@
 import {storeAdminUrl} from './urls.js'
-import {buildBulkUploadResults, buildTheme, buildThemeAsset} from './factories.js'
-import {Result, Checksum, Key, Theme, ThemeAsset} from './types.js'
+import {buildTheme, buildThemeAsset} from './factories.js'
+import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
 import * as throttler from '../api/rest-api-throttler.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
+import {UpsertThemeFileBodies} from '../../../cli/api/graphql/admin/generated/upsert_theme_file_bodies.js'
 
 import {adminRequestDoc, restRequest, RestResponse} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
+import {OnlineStoreThemeFilesUpsertFileInput} from '../../../cli/api/graphql/admin/generated/types.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
@@ -163,11 +165,61 @@ export async function bulkUploadThemeAssets(
   assets: AssetParams[],
   session: AdminSession,
 ): Promise<Result[]> {
-  const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
-  if (response.status !== 207) {
-    throw new AbortError('Upload failed, could not reach the server')
+  const files: OnlineStoreThemeFilesUpsertFileInput[] = assets.map((asset) => {
+    // TODO: Handle large uploads
+    if (asset.value) {
+      return {
+        filename: asset.key,
+        body: {
+          type: 'TEXT',
+          value: asset.value,
+        },
+      }
+    } else {
+      return {
+        filename: asset.key,
+        body: {
+          type: 'BASE64',
+          value: asset.attachment!,
+        },
+      }
+    }
+  })
+
+  const response = await adminRequestDoc(
+    UpsertThemeFileBodies,
+    session,
+    {
+      id: `gid://shopify/OnlineStoreTheme/${id}`,
+      files,
+    },
+    'unstable',
+  )
+
+  const results: Result[] = []
+  if (response.themeFilesUpsert?.upsertedThemeFiles) {
+    response.themeFilesUpsert.upsertedThemeFiles.forEach((file) => {
+      results.push({
+        key: file.filename,
+        operation: Operation.Upload,
+        success: true,
+      })
+    })
   }
-  return buildBulkUploadResults(response.json.results, assets)
+
+  if (response.themeFilesUpsert?.userErrors) {
+    response.themeFilesUpsert.userErrors.forEach((file) => {
+      if (file.filename) {
+        results.push({
+          key: file.filename,
+          operation: Operation.Upload,
+          success: false,
+        })
+      }
+    })
+  }
+
+  return results
 }
 
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {

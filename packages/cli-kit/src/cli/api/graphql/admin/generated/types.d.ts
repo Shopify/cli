@@ -118,6 +118,23 @@ export type Scalars = {
   UtcOffset: {input: any; output: any}
 }
 
+/** The input fields for the theme file body. */
+export type OnlineStoreThemeFileBodyInput = {
+  /** The input type of the theme file body. */
+  type: OnlineStoreThemeFileBodyInputType
+  /** The body of the theme file. */
+  value: Scalars['String']['input']
+}
+
+/** The input type for a theme file body. */
+export type OnlineStoreThemeFileBodyInputType =
+  /** The base64 encoded body of a theme file. */
+  | 'BASE64'
+  /** The text body of the theme file. */
+  | 'TEXT'
+  /** The url of the body of a theme file. */
+  | 'URL'
+
 /** Type of a theme file operation result. */
 export type OnlineStoreThemeFileResultType =
   /** Operation was malformed or invalid. */
@@ -134,6 +151,33 @@ export type OnlineStoreThemeFileResultType =
   | 'TIMEOUT'
   /** Operation could not be processed due to issues with input data. */
   | 'UNPROCESSABLE_ENTITY'
+
+/** The input fields for the file to create or update. */
+export type OnlineStoreThemeFilesUpsertFileInput = {
+  /** The body of the theme file. */
+  body: OnlineStoreThemeFileBodyInput
+  /** The filename of the theme file. */
+  filename: Scalars['String']['input']
+}
+
+/** Possible error codes that can be returned by `OnlineStoreThemeFilesUserErrors`. */
+export type OnlineStoreThemeFilesUserErrorsCode =
+  /** Access denied. */
+  | 'ACCESS_DENIED'
+  /** There are files with the same filename. */
+  | 'DUPLICATE_FILE_INPUT'
+  /** Error. */
+  | 'ERROR'
+  /** The file is invalid. */
+  | 'FILE_VALIDATION_ERROR'
+  /** The input value should be less than or equal to the maximum value allowed. */
+  | 'LESS_THAN_OR_EQUAL_TO'
+  /** The record with the ID used as the input value couldn't be found. */
+  | 'NOT_FOUND'
+  /** There are theme files with conflicts. */
+  | 'THEME_FILES_CONFLICT'
+  /** This action is not available on your current plan. Please upgrade to access theme editing features. */
+  | 'THEME_LIMITED_PLAN'
 
 /** The role of the theme. */
 export type ThemeRole =
