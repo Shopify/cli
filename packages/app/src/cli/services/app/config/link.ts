@@ -42,6 +42,8 @@ import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 export interface LinkOptions {
   directory: string
   apiKey?: string
+  appId?: string
+  organizationId?: string
   configName?: string
   baseConfigName?: string
   developerPlatformClient?: DeveloperPlatformClient
@@ -116,7 +118,12 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
+    const remoteApp = await appFromId({
+      apiKey: options.apiKey,
+      id: options.appId,
+      developerPlatformClient,
+      organizationId: options.organizationId,
+    })
     if (!remoteApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
