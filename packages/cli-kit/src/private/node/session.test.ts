@@ -380,13 +380,78 @@ describe('getLastSeenUserIdAfterAuth', () => {
     // Given
     vi.mocked(secureFetch).mockResolvedValue(undefined)
     vi.mocked(getPartnersToken).mockReturnValue('partners-token-456')
-    const env = {}
 
     // When
-    const userId = await getLastSeenUserIdAfterAuth(env)
+    const userId = await getLastSeenUserIdAfterAuth()
 
     // Then
     expect(userId).not.toBe('unknown')
     expect(userId).toBe(nonRandomUUID('partners-token-456'))
+  })
+})
+
+describe('getLastSeenAuthMethod', () => {
+  beforeEach(() => {
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+    vi.mocked(getPartnersToken).mockReturnValue(undefined)
+    vi.mocked(themeToken).mockReturnValue(undefined)
+    setLastSeenAuthMethod('none')
+  })
+
+  test('returns the existing authMethod if set', async () => {
+    // Given
+    setLastSeenAuthMethod('device_auth')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('device_auth')
+    expect(secureFetch).not.toHaveBeenCalled()
+  })
+
+  test('returns device_auth if there is a cached session', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('device_auth')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns partners_token if there is a partners token in the environment', async () => {
+    // Given
+    vi.mocked(getPartnersToken).mockReturnValue('partners-token-456')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('partners_token')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns theme_password if there is a theme token in the environment', async () => {
+    // Given
+    vi.mocked(themeToken).mockReturnValue('theme-token-123')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('theme_password')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns none if no auth method is detected', async () => {
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('none')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 })

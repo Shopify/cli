@@ -17,7 +17,7 @@ import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/
 import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
+import {firstPartyDev, themeToken, themeToken, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -132,8 +132,23 @@ export function setLastSeenUserIdAfterAuth(id: string) {
   userId = id
 }
 
-export function getLastSeenAuthMethod() {
-  return authMethod
+export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
+  if (authMethod !== 'none') return authMethod
+
+  // If there is a cached session, we can assume it was created using `device_auth`.
+  const currentSession = (await secureStore.fetch()) || {}
+  const fqdn = await identityFqdn()
+  const cachedUserId = currentSession[fqdn]?.identity.userId
+  if (cachedUserId) return 'device_auth'
+
+  // If there is a token in the environment, but we never parsed it, use it as identifier of the auth method.
+  const partnersToken = getPartnersToken()
+  if (partnersToken) return 'partners_token'
+  const themePassword = themeToken()
+  if (themePassword) return 'theme_password'
+
+  // If none of the above is true, we don't have enough information and will report as `none`
+  return 'none'
 }
 
 export function setLastSeenAuthMethod(method: AuthMethod) {

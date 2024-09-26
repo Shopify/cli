@@ -85,7 +85,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_cloud: cloudEnvironment().platform,
     env_package_manager: await getPackageManager(cwd()),
     env_is_global: currentProcessIsGlobal(),
-    env_auth_method: getLastSeenAuthMethod(),
+    env_auth_method: await getLastSeenAuthMethod(),
   }
 }
 
