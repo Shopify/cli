@@ -142,7 +142,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
     // The userID is cached in memory and the secureStore is not accessed again
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -161,7 +161,7 @@ The CLI is currently unable to prompt for reauthentication.`,
 
     // Then
     expect(authorize).not.toHaveBeenCalled()
-    expect(getLastSeenAuthMethod()).toEqual('none')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('none')
 
     // If there never was an auth event, the userId is 'unknown'
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('unknown')
@@ -184,7 +184,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(secureStore).toBeCalledWith(newSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -204,7 +204,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
@@ -225,7 +225,7 @@ describe('when existing session is valid', () => {
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -246,7 +246,7 @@ describe('when existing session is valid', () => {
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('partners_token')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('partners_token')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -266,7 +266,7 @@ describe('when existing session is valid', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
@@ -288,7 +288,7 @@ describe('when existing session is expired', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -311,7 +311,7 @@ describe('when existing session is expired', () => {
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
-    expect(getLastSeenAuthMethod()).toEqual('device_auth')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
