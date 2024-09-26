@@ -101,7 +101,10 @@ export interface OAuthSession {
   userId: string
 }
 
+export type AuthMethod = 'partners_token' | 'device_auth' | 'none'
+
 let userId: undefined | string
+let authMethod: AuthMethod = 'none'
 
 /**
  * Retrieves the user ID from the current session or returns 'unknown' if not found.
@@ -121,6 +124,14 @@ export async function getLastSeenUserIdAfterAuth(): Promise<string> {
 
 export function setLastSeenUserIdAfterAuth(id: string) {
   userId = id
+}
+
+export function getLastSeenAuthMethod() {
+  return authMethod
+}
+
+export function setLastSeenAuthMethod(method: AuthMethod) {
+  authMethod = method
 }
 
 /**
@@ -205,6 +216,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
 
+  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }

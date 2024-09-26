@@ -107,6 +107,7 @@ describe('event tracking', () => {
         cmd_all_timing_network_ms: 30,
         cmd_all_timing_prompts_ms: 20,
         user_id: 'unknown',
+        env_auth_method: 'none',
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
