@@ -93,7 +93,7 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
 
   if (extensions) {
     // If the config has an array, find our extension using the handle.
-    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, abort)
+    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, false, abort)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
     if (!extensionConfig) {
