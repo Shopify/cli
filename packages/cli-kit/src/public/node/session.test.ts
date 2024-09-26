@@ -8,7 +8,7 @@ import {
 
 import {getPartnersToken} from './environment.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {vi, describe, expect, test} from 'vitest'
 
@@ -35,6 +35,8 @@ describe('ensureAuthenticatedStorefront', () => {
 
     // Then
     expect(got).toEqual('storefront_token')
+    expect(setLastSeenAuthMethod).not.toBeCalled()
+    expect(setLastSeenUserIdAfterAuth).not.toBeCalled()
   })
 
   test('returns the password if provided', async () => {
@@ -43,6 +45,8 @@ describe('ensureAuthenticatedStorefront', () => {
 
     // Then
     expect(got).toEqual('theme_access_password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme-password')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('dd5e7850-e2de-d283-9c5f-79c8190a19d18b52e0ce')
   })
 
   test('throws error if there is no storefront token', async () => {
@@ -137,6 +141,8 @@ describe('ensureAuthenticatedTheme', () => {
 
     // Then
     expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
+    expect(setLastSeenAuthMethod).not.toBeCalled()
+    expect(setLastSeenUserIdAfterAuth).not.toBeCalled()
   })
 
   test('throws error if there is no token when no password is provided', async () => {
@@ -156,6 +162,8 @@ describe('ensureAuthenticatedTheme', () => {
 
     // Then
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme-password')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('f5c7086f-320b-3b93-bcdc-a2296adbec02d71eb733')
   })
 })
 

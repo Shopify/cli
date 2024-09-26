@@ -1,10 +1,11 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
+import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -84,7 +85,11 @@ export async function ensureAuthenticatedStorefront(
   password: string | undefined = undefined,
   forceRefresh = false,
 ): Promise<string> {
-  if (password) return password
+  if (password) {
+    setLastSeenAuthMethod('theme-password')
+    setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    return password
+  }
 
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
@@ -146,7 +151,11 @@ export async function ensureAuthenticatedThemes(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+  if (password) {
+    setLastSeenAuthMethod('theme-password')
+    setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+  }
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 
