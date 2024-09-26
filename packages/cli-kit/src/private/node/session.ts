@@ -17,7 +17,7 @@ import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/
 import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, themeToken, themeToken, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
+import {firstPartyDev, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
