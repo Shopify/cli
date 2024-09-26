@@ -22,10 +22,11 @@ import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
-import {useDeviceAuth} from '../../public/node/context/local.js'
+import {themeToken, useDeviceAuth} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {getPartnersToken} from '../../public/node/environment.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -361,5 +362,31 @@ describe('getLastSeenUserIdAfterAuth', () => {
     // Then
     expect(userId).toBe('unknown')
     expect(secureFetch).toHaveBeenCalled()
+  })
+
+  test('returns UUID based on theme token if present in environment', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+    vi.mocked(themeToken).mockReturnValue('theme-token-123')
+    // When
+    const userId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    // expect(userId).not.toBe('unknown')
+    expect(userId).toBe(nonRandomUUID('theme-token-123'))
+  })
+
+  test('returns UUID based on partners token if present in environment', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+    vi.mocked(getPartnersToken).mockReturnValue('partners-token-456')
+    const env = {}
+
+    // When
+    const userId = await getLastSeenUserIdAfterAuth(env)
+
+    // Then
+    expect(userId).not.toBe('unknown')
+    expect(userId).toBe(nonRandomUUID('partners-token-456'))
   })
 })

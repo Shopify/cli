@@ -17,7 +17,7 @@ import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/
 import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
+import {firstPartyDev, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -29,6 +29,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isSpin} from '@shopify/cli-kit/node/context/spin'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -107,10 +108,13 @@ let userId: undefined | string
 let authMethod: AuthMethod = 'none'
 
 /**
- * Retrieves the user ID from the current session or returns 'unknown' if not found.
+ * Retrieves the user ID from the current session or returns 'unknown' if not found:
+ *
  * This function first checks for a cached user ID in memory (obtained in the current run)
  * Then attempts to fetch it from the secure store. (from a previous auth session)
- * If no user ID is found, it returns 'unknown'.
+ * If not, then it checks if a custom token was used (either as a theme password or partners token)
+ * It a custom token is present in the enviroment, generate a UUID and use it as userId
+ * If after all this we don't have a userId, then report as `unknown`
  *
  * @returns A Promise that resolves to the user ID as a string.
  */
@@ -119,7 +123,9 @@ export async function getLastSeenUserIdAfterAuth(): Promise<string> {
   const currentSession = (await secureStore.fetch()) || {}
   const fqdn = await identityFqdn()
   const cachedUserId = currentSession[fqdn]?.identity.userId
-  return cachedUserId ?? 'unknown'
+  if (cachedUserId) return cachedUserId
+  const customToken = getPartnersToken() ?? themeToken()
+  return customToken ? nonRandomUUID(customToken) : 'unknown'
 }
 
 export function setLastSeenUserIdAfterAuth(id: string) {

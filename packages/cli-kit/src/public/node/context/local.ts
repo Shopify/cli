@@ -193,6 +193,16 @@ export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolea
 }
 
 /**
+ * The token used to run a theme command with a custom password.
+ *
+ * @param env - Environment variables used when the cli is launched.
+ * @returns A string with the token.
+ */
+export function themeToken(env = process.env): string | undefined {
+  return env[environmentVariables.themeToken]
+}
+
+/**
  * Returns the cloud environment platform name and if the platform support online IDE in case the CLI is run from one of
  * them. Platform name 'localhost' is returned otherwise.
  *
