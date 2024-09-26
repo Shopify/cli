@@ -155,6 +155,7 @@ import {
   FunctionUploadUrlGenerate,
   FunctionUploadUrlGenerateMutation,
 } from '../../api/graphql/partners/generated/function-upload-url-generate.js'
+import {MigrateAppsQuery, MigrateAppsSchema, MigrateAppsVariables} from '../../api/graphql/migrate_apps.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -540,6 +541,10 @@ export class PartnersClient implements DeveloperPlatformClient {
   async devSessionDelete(_input: unknown): Promise<any> {
     // Dev Sessions are not supported in partners client.
     return Promise.resolve()
+  }
+
+  async migrateApps(input: MigrateAppsVariables): Promise<MigrateAppsSchema> {
+    return this.request(MigrateAppsQuery, input)
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
