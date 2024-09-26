@@ -1,31 +1,58 @@
-import {requireThemeStore, setThemeStore, ThemeLocalStorageSchema} from './local-storage.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {
+  getDevelopmentTheme,
+  setDevelopmentTheme,
+  removeDevelopmentTheme,
+  getREPLTheme,
+  setREPLTheme,
+  removeREPLTheme,
+  getStorefrontPassword,
+  setStorefrontPassword,
+  removeStorefrontPassword,
+  ThemeLocalStorageSchema,
+  setThemeStore,
+} from './local-storage.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {describe, expect, test} from 'vitest'
 
-describe('requireThemeStore', async () => {
-  await inTemporaryDirectory(async (cwd) => {
-    test('throws an error if the theme store is not set', async () => {
-      // Given
-      const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
+describe('local-storage', () => {
+  const testCases = [
+    {name: 'getDevelopmentTheme', func: getDevelopmentTheme},
+    {
+      name: 'setDevelopmentTheme',
+      func: (storage: LocalStorage<ThemeLocalStorageSchema>) => setDevelopmentTheme('theme-id', storage),
+    },
+    {name: 'removeDevelopmentTheme', func: removeDevelopmentTheme},
+    {name: 'getREPLTheme', func: getREPLTheme},
+    {
+      name: 'setREPLTheme',
+      func: (storage: LocalStorage<ThemeLocalStorageSchema>) => setREPLTheme('repl-theme-id', storage),
+    },
+    {name: 'removeREPLTheme', func: removeREPLTheme},
+    {name: 'getStorefrontPassword', func: getStorefrontPassword},
+    {
+      name: 'setStorefrontPassword',
+      func: (storage: LocalStorage<ThemeLocalStorageSchema>) => setStorefrontPassword('password', storage),
+    },
+    {name: 'removeStorefrontPassword', func: removeStorefrontPassword},
+  ]
 
-      // When
-      // Then
-      await expect(() => requireThemeStore(storage)).toThrowError(AbortError)
-      await expect(() => requireThemeStore(storage)).toThrowError('Theme store is not set')
-    })
+  testCases.forEach(({name, func}) => {
+    describe(func.name, () => {
+      test('throws error when theme store is not set', async () => {
+        await inTemporaryDirectory(async (cwd) => {
+          const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
+          await expect(() => func(storage)).toThrow('Theme store is not set')
+        })
+      })
 
-    test('returns the theme store if it is set', async () => {
-      // Given
-      const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
-      setThemeStore('my-theme-store.myshopify.com', storage)
-
-      // When
-      const result = requireThemeStore(storage)
-
-      // Then
-      expect(result).toBe('my-theme-store.myshopify.com')
+      test('does not throw error when theme store is set', async () => {
+        await inTemporaryDirectory(async (cwd) => {
+          const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
+          setThemeStore('test-store', storage)
+          await expect(() => func(storage)).not.toThrow()
+        })
+      })
     })
   })
 })
