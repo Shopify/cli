@@ -45,7 +45,7 @@ describe('ensureAuthenticatedStorefront', () => {
 
     // Then
     expect(got).toEqual('theme_access_password')
-    expect(setLastSeenAuthMethod).toBeCalledWith('theme-password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme_password')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith('dd5e7850-e2de-d283-9c5f-79c8190a19d18b52e0ce')
   })
 
@@ -162,7 +162,7 @@ describe('ensureAuthenticatedTheme', () => {
 
     // Then
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
-    expect(setLastSeenAuthMethod).toBeCalledWith('theme-password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme_password')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith('f5c7086f-320b-3b93-bcdc-a2296adbec02d71eb733')
   })
 })

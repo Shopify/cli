@@ -86,7 +86,7 @@ export async function ensureAuthenticatedStorefront(
   forceRefresh = false,
 ): Promise<string> {
   if (password) {
-    setLastSeenAuthMethod('theme-password')
+    setLastSeenAuthMethod('theme_password')
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
     return password
   }
@@ -152,7 +152,7 @@ export async function ensureAuthenticatedThemes(
 ${outputToken.json(scopes)}
 `)
   if (password) {
-    setLastSeenAuthMethod('theme-password')
+    setLastSeenAuthMethod('theme_password')
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
     return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
   }
