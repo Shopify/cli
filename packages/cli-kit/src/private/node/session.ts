@@ -101,7 +101,7 @@ export interface OAuthSession {
   userId: string
 }
 
-export type AuthMethod = 'partners_token' | 'device_auth' | 'none'
+type AuthMethod = 'partners_token' | 'device_auth' | 'none'
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
