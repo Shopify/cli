@@ -506,7 +506,9 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
-          const {extensions, ...restConfig} = mergedConfig
+
+          // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
+          const {extensions, path, ...restConfig} = mergedConfig
           if (!restConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
