@@ -142,7 +142,7 @@ export async function buildFunctionExtension(
   }
 
   try {
-    const bundlePath = joinPath(extension.outputPath.split('/').slice(0, -2).join('/'), 'index.wasm')
+    const bundlePath = extension.outputPath
     extension.outputPath = joinPath(extension.directory, joinPath('dist', 'function.wasm'))
     if (extension.isJavaScript) {
       await runCommandOrBuildJSFunction(extension, options)
