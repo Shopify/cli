@@ -43,7 +43,7 @@ export * from './cli/utilities/theme-ext-environment/theme-ext-server.js'
 export {isStorefrontPasswordProtected} from './cli/utilities/theme-environment/storefront-session.js'
 export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-password-prompt.js'
 
-// Public Theme Commands
+// Expose core utilities for developers to build and expand on the CLI
 export {pull} from './cli/services/pull.js'
 export {push} from './cli/services/push.js'
 export {publicFetchStoreThemes as fetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
