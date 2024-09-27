@@ -433,7 +433,7 @@ describe('getLastSeenAuthMethod', () => {
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
-  test('returns theme_password if there is a theme token in the environment', async () => {
+  test('returns custom_app_token if there is a theme token in the environment and doesnt start with shptka_', async () => {
     // Given
     vi.mocked(themeToken).mockReturnValue('theme-token-123')
 
@@ -441,7 +441,19 @@ describe('getLastSeenAuthMethod', () => {
     const method = await getLastSeenAuthMethod()
 
     // Then
-    expect(method).toBe('theme_password')
+    expect(method).toBe('custom_app_token')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns theme_access_token if there is a theme token in the environment and starts with shptka_', async () => {
+    // Given
+    vi.mocked(themeToken).mockReturnValue('shptka_theme-token-123')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('theme_access_token')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
