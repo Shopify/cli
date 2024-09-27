@@ -63,7 +63,11 @@ export interface LinkOptions {
 export default async function link(
   options: LinkOptions,
   shouldRenderSuccess = true,
-): Promise<{configuration: CurrentAppConfiguration; remoteApp: OrganizationApp}> {
+): Promise<{
+  configuration: CurrentAppConfiguration
+  remoteApp: OrganizationApp
+  configFileName: AppConfigurationFileName
+}> {
   // First, select (or create, if the user chooses to) a remote app to link to
   const {remoteApp, appDirectory, developerPlatformClient} = await selectOrCreateRemoteAppToLinkTo(options)
 
@@ -96,7 +100,7 @@ export default async function link(
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  return {configuration: mergedAppConfiguration, remoteApp}
+  return {configuration: mergedAppConfiguration, remoteApp, configFileName}
 }
 
 /**

@@ -20,7 +20,7 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
@@ -228,6 +228,27 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
 
   const loader = new AppLoader<AppConfiguration, TModuleSpec>({
     mode: options.mode,
+    loadedConfiguration,
+  })
+  return loader.loaded()
+}
+
+export async function loadAppUsingConfigurationState<TConfig extends AppConfigurationState>(
+  configState: TConfig,
+  {
+    specifications,
+    remoteFlags,
+    mode,
+  }: {
+    specifications: RemoteAwareExtensionSpecification[]
+    remoteFlags?: Flag[]
+    mode: AppLoaderMode
+  },
+): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
+  const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
+
+  const loader = new AppLoader({
+    mode,
     loadedConfiguration,
   })
   return loader.loaded()

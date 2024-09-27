@@ -1,15 +1,17 @@
-import {appFromId, InvalidApiKeyErrorMessage, linkIfNecessary} from './context.js'
+import {appFromId, InvalidApiKeyErrorMessage} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {loadApp, loadAppConfiguration} from '../models/app/loader.js'
+import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface LoadedAppContextOutput {
-  app: AppInterface
+  localApp: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
 }
@@ -39,53 +41,46 @@ export async function linkedAndLoadedAppContext({
   clientId,
   reset,
   configName,
-  enableLinkingPrompt,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
-  // This function handles the case where the app was never linked or using the `reset` flag.
-  await linkIfNecessary(directory, reset ?? false, enableLinkingPrompt ?? true)
-
-  const result = await loadAppConfiguration({directory, userProvidedConfigName: configName})
-  let configuration = result.configuration
-  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
-  let remoteApp: OrganizationApp
-
-  // If the user provides a clientId when the app is already linked, use that clientId just to fetch the remoteApp
-  // If the user doesn't provide a clientId, and the app is linked, use the clientIf from the configuration file
-  // If the app is not linked, link it, using the clientId from the flags if provided.
-  if (clientId && configuration.client_id) {
-    remoteApp = await fetchAppFromCustomClientId(developerPlatformClient, clientId)
-  } else if (configuration.client_id) {
-    const organizationId = isCurrentAppSchema(configuration) ? configuration.organization_id : undefined
-    remoteApp = await appFromId({apiKey: String(configuration.client_id), developerPlatformClient, organizationId})
-  } else {
-    const result = await link({directory, apiKey: clientId})
-    configuration = result.configuration
+  let configState = await getAppConfigurationState(directory, configName)
+  let remoteApp: OrganizationApp | undefined
+  if (configState.state === 'template-only' || reset) {
+    // Link the app
+    const result = await link({directory, apiKey: clientId, configName})
     remoteApp = result.remoteApp
+    configState = {
+      state: 'connected-app',
+      basicConfiguration: result.configuration,
+      appDirectory: directory,
+      configurationPath: joinPath(directory, result.configFileName),
+      configSource: configName ? 'flag' : 'cached',
+      configurationFileName: result.configFileName,
+    }
   }
 
+  let developerPlatformClient = selectDeveloperPlatformClient({configuration: configState.basicConfiguration})
+  if (!remoteApp) {
+    const clientIdToFetchRemoteApp = clientId ?? configState.basicConfiguration.client_id
+    remoteApp = await fetchAppFromCustomClientId(developerPlatformClient, clientIdToFetchRemoteApp)
+  }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
-  const localApp = await loadApp({
-    directory,
+  const localApp = await loadAppUsingConfigurationState(configState, {
     specifications,
-    userProvidedConfigName: configName,
     remoteFlags: remoteApp.flags,
+    mode: 'strict',
   })
 
   // If the remoteApp is the same as the linked one, update the cached info.
   const cachedInfo = getCachedAppInfo(directory)
   const rightApp = remoteApp.apiKey === cachedInfo?.appId
   if (!cachedInfo || rightApp) {
-    setCachedAppInfo({
-      appId: remoteApp.apiKey,
-      title: remoteApp.title,
-      directory,
-      orgId: remoteApp.organizationId,
-    })
+    setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient}
+  return {localApp, remoteApp, developerPlatformClient}
 }
 
 async function fetchAppFromCustomClientId(developerPlatformClient: DeveloperPlatformClient, clientId: string) {
