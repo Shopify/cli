@@ -6,6 +6,7 @@ import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {isThemeAccessSession} from '../../private/node/api/rest.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -86,7 +87,9 @@ export async function ensureAuthenticatedStorefront(
   forceRefresh = false,
 ): Promise<string> {
   if (password) {
-    setLastSeenAuthMethod('theme_password')
+    const session = {token: password, storeFqdn: ''}
+    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
+    setLastSeenAuthMethod(authMethod)
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
     return password
   }
@@ -152,9 +155,11 @@ export async function ensureAuthenticatedThemes(
 ${outputToken.json(scopes)}
 `)
   if (password) {
-    setLastSeenAuthMethod('theme_password')
+    const session = {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
+    setLastSeenAuthMethod(authMethod)
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
-    return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+    return session
   }
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }

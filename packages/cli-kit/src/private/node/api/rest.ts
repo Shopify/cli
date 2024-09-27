@@ -40,6 +40,6 @@ export function restRequestHeaders(session: AdminSession) {
   return headers
 }
 
-function isThemeAccessSession(session: AdminSession) {
+export function isThemeAccessSession(session: AdminSession) {
   return session.token.startsWith('shptka_')
 }

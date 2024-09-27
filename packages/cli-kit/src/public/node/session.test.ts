@@ -39,14 +39,24 @@ describe('ensureAuthenticatedStorefront', () => {
     expect(setLastSeenUserIdAfterAuth).not.toBeCalled()
   })
 
-  test('returns the password if provided', async () => {
+  test('returns the password if provided, and auth method is custom_app_token', async () => {
     // Given/When
     const got = await ensureAuthenticatedStorefront([], 'theme_access_password')
 
     // Then
     expect(got).toEqual('theme_access_password')
-    expect(setLastSeenAuthMethod).toBeCalledWith('theme_password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith('dd5e7850-e2de-d283-9c5f-79c8190a19d18b52e0ce')
+  })
+
+  test('returns the password if provided, and auth method is theme_access_token', async () => {
+    // Given/When
+    const got = await ensureAuthenticatedStorefront([], 'shptka_theme_access_password')
+
+    // Then
+    expect(got).toEqual('shptka_theme_access_password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('730a64df-ab2c-3d92-8b11-76a66aadee947aa5c1ce')
   })
 
   test('throws error if there is no storefront token', async () => {
@@ -156,14 +166,24 @@ describe('ensureAuthenticatedTheme', () => {
     await expect(got).rejects.toThrow(`No admin token`)
   })
 
-  test('returns the password when is provided', async () => {
+  test('returns the password when is provided and custom_app_token', async () => {
     // When
     const got = await ensureAuthenticatedThemes('mystore', 'password')
 
     // Then
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
-    expect(setLastSeenAuthMethod).toBeCalledWith('theme_password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith('f5c7086f-320b-3b93-bcdc-a2296adbec02d71eb733')
+  })
+
+  test('returns the password when is provided and theme_access_token', async () => {
+    // When
+    const got = await ensureAuthenticatedThemes('mystore', 'shptka_password')
+
+    // Then
+    expect(got).toEqual({token: 'shptka_password', storeFqdn: 'mystore.myshopify.com'})
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('e3d08cca-4e68-504a-00ec-23e2cea12a6340bb257b')
   })
 })
 

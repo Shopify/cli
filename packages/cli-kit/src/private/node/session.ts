@@ -16,6 +16,7 @@ import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
+import {isThemeAccessSession} from './api/rest.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
@@ -102,7 +103,7 @@ export interface OAuthSession {
   userId: string
 }
 
-type AuthMethod = 'partners_token' | 'device_auth' | 'theme_password' | 'none'
+type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'custom_app_token' | 'none'
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
@@ -159,7 +160,9 @@ export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
   if (partnersToken) return 'partners_token'
 
   const themePassword = themeToken()
-  if (themePassword) return 'theme_password'
+  if (themePassword) {
+    return isThemeAccessSession({token: themePassword, storeFqdn: ''}) ? 'theme_access_token' : 'custom_app_token'
+  }
 
   return 'none'
 }
