@@ -1,10 +1,12 @@
 import {appFlags} from '../../../flags.js'
+import {loadApp} from '../../../models/app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
-import Command from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
-export default class ConfigLink extends Command {
+export default class ConfigLink extends AppCommand {
   static summary = 'Fetch your app configuration from the Partner Dashboard.'
 
   static descriptionWithMarkdown = `Pulls app configuration from the Partner Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.
@@ -24,7 +26,7 @@ export default class ConfigLink extends Command {
     }),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(ConfigLink)
 
     const options: LinkOptions = {
@@ -33,5 +35,15 @@ export default class ConfigLink extends Command {
     }
 
     await link(options)
+
+    const specifications = await loadLocalExtensionsSpecifications()
+
+    const app = await loadApp({
+      specifications,
+      directory: flags.path,
+      userProvidedConfigName: undefined,
+    })
+
+    return {app}
   }
 }

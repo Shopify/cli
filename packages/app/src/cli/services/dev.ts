@@ -73,6 +73,7 @@ export async function dev(commandOptions: DevOptions) {
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
+  return {app: config.localApp}
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {

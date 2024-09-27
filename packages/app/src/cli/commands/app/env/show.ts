@@ -3,11 +3,11 @@ import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {showEnv} from '../../../services/app/env/show.js'
-import Command from '../../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
-export default class EnvShow extends Command {
+export default class EnvShow extends AppCommand {
   static summary = 'Display app and extensions environment variables.'
 
   static descriptionWithMarkdown = `Displays environment variables that can be used to deploy apps and app extensions.`
@@ -19,7 +19,7 @@ export default class EnvShow extends Command {
     ...appFlags,
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(EnvShow)
     const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({
@@ -29,5 +29,6 @@ export default class EnvShow extends Command {
       mode: 'report',
     })
     outputInfo(await showEnv(app))
+    return {app}
   }
 }

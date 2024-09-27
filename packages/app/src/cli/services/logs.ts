@@ -83,6 +83,8 @@ export async function logs(commandOptions: LogsOptions) {
       storeNameById: logsConfig.storeNameById,
     })
   }
+
+  return logsConfig.localApp
 }
 
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{

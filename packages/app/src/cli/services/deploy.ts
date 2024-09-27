@@ -145,6 +145,8 @@ export async function deploy(options: DeployOptions) {
       throw error
     }
   })
+
+  return {app}
 }
 
 async function outputCompletionMessage({

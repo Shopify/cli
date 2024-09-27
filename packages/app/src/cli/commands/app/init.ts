@@ -3,9 +3,11 @@ import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromId, selectOrg} from '../../services/context.js'
 import {selectOrCreateApp} from '../../services/dev/select-app.js'
-import AppCommand from '../../utilities/app-command.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {loadApp} from '../../models/app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -64,7 +66,7 @@ export default class Init extends AppCommand {
     }),
   }
 
-  async run(): Promise<void> {
+  async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Init)
 
     validateTemplateValue(flags.template)
@@ -103,7 +105,7 @@ export default class Init extends AppCommand {
 
     const platformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
 
-    await initService({
+    const result = await initService({
       name: selectedApp.title,
       app: selectedApp,
       packageManager: inferredPackageManager,
@@ -116,5 +118,15 @@ export default class Init extends AppCommand {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
     })
+
+    const specifications = await loadLocalExtensionsSpecifications()
+
+    const app = await loadApp({
+      specifications,
+      directory: result.outputDirectory,
+      userProvidedConfigName: undefined,
+    })
+
+    return {app}
   }
 }

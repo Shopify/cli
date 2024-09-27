@@ -221,6 +221,8 @@ async function init(options: InitOptions) {
       ],
     ],
   })
+
+  return {outputDirectory}
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {
