@@ -1,8 +1,9 @@
-import {JsonMap} from '../../private/common/json.js'
+import {JsonMap, AnyJson, JsonArray} from '../../private/common/json.js'
 import * as toml from '@iarna/toml'
 
 export type JsonMapType = JsonMap
-
+export type AnyJsonType = AnyJson
+export type JsonArrayType = JsonArray
 /**
  * Given a TOML string, it returns a JSON object.
  *

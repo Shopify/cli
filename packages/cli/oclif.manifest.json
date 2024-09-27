@@ -4182,6 +4182,24 @@
       "pluginType": "core",
       "strict": true
     },
+    "include-demo": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Demo command for showing how config files can be composed through directives.",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "include-demo",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "kitchen-sink": {
       "aliases": [
       ],
