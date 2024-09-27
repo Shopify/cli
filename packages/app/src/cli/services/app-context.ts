@@ -11,7 +11,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface LoadedAppContextOutput {
-  localApp: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
 }
@@ -25,27 +25,25 @@ export interface LoadedAppContextOptions {
 }
 
 /**
- * Make sure we have a valid app: linked with a remote app and loaded in memory
+ * This function always returns an app that has been correctly linked and was loaded using the remote specifications.
  *
- * This function performs the following steps:
- * 1. Links the app if necessary
- * 2. Loads the app configuration
- * 4. Retrieves or selects an organization
- * 5. Fetches or selects a remote app
- * 6. Fetches app specifications
- * 7. Loads the local app
- * 8. Updates cached app information
+ * You can use a custom configName to load a specific config file.
+ * In any case, if the selected config file is not linked, this function will force a link.
+ *
+ * @returns The local app, the remote app, and the developer platform client.
  */
-export async function linkedAndLoadedAppContext({
+export async function linkedAppContext({
   directory,
   clientId,
   reset,
   configName,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
+  // Get current app configuration state
   let configState = await getAppConfigurationState(directory, configName)
   let remoteApp: OrganizationApp | undefined
+
+  // IF the app is not linked, force a link.
   if (configState.state === 'template-only' || reset) {
-    // Link the app
     const result = await link({directory, apiKey: clientId, configName})
     remoteApp = result.remoteApp
     configState = {
@@ -58,6 +56,8 @@ export async function linkedAndLoadedAppContext({
     }
   }
 
+  // Fetch the remote app, using a different clientID if provided via flag.
+  // Then update the current developerPlatformClient with the one from the remoteApp
   let developerPlatformClient = selectDeveloperPlatformClient({configuration: configState.basicConfiguration})
   if (!remoteApp) {
     const clientIdToFetchRemoteApp = clientId ?? configState.basicConfiguration.client_id
@@ -65,8 +65,10 @@ export async function linkedAndLoadedAppContext({
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
+  // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
+  // Load the local app using the configuration state and the remote app's specifications
   const localApp = await loadAppUsingConfigurationState(configState, {
     specifications,
     remoteFlags: remoteApp.flags,
@@ -80,7 +82,7 @@ export async function linkedAndLoadedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  return {localApp, remoteApp, developerPlatformClient}
+  return {app: localApp, remoteApp, developerPlatformClient}
 }
 
 async function fetchAppFromCustomClientId(developerPlatformClient: DeveloperPlatformClient, clientId: string) {
