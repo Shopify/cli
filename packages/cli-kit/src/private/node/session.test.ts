@@ -372,7 +372,6 @@ describe('getLastSeenUserIdAfterAuth', () => {
     const userId = await getLastSeenUserIdAfterAuth()
 
     // Then
-    // expect(userId).not.toBe('unknown')
     expect(userId).toBe(nonRandomUUID('theme-token-123'))
   })
 
