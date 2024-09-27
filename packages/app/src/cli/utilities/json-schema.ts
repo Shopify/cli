@@ -25,8 +25,13 @@ export async function unifiedConfigurationParserFactory(
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
-    const subjectForAjv = zodValidatedData ?? config
-    const jsonSchemaParse = jsonSchemaValidate(subjectForAjv, contract)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const subjectForAjv = zodValidatedData ?? (config as any)
+
+    // These are loaded automatically for all modules, but are considered "first class" and not part of extension contracts
+    // If a module needs them, they can access them from the manifest.
+    const {type, handle, uid, name, ...subjectForAjvWithoutFirstClassFields} = subjectForAjv
+    const jsonSchemaParse = jsonSchemaValidate(subjectForAjvWithoutFirstClassFields, contract)
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
     let errors = zodParse.errors || []
