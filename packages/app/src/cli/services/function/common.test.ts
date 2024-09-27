@@ -39,6 +39,7 @@ describe('ensure we are within a function context', () => {
       path: joinPath(app.directory, 'extensions/my-function'),
       callback: async (_app, _fun) => {
         ranCallback = true
+        return _app
       },
     })
 
@@ -74,6 +75,7 @@ describe('ensure we are within a function context', () => {
         path: 'random/dir',
         callback: async (_app, _fun) => {
           ranCallback = true
+          return _app
         },
       }),
     ).rejects.toThrowError()

@@ -1,4 +1,3 @@
-/* eslint-disable @shopify/cli/app-commands-requirements */
 import {AppCommandOutput} from '../../../utilities/app-command.js'
 import AppGenerateExtension from '../generate/extension.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'

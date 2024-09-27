@@ -681,7 +681,6 @@
       "customPluginName": "@shopify/app",
       "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "descriptionWithMarkdown": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
-      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -738,7 +737,6 @@
       "customPluginName": "@shopify/app",
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
-      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "Application's API key",
@@ -846,7 +844,6 @@
       "customPluginName": "@shopify/app",
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
-      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -931,7 +928,6 @@
       "customPluginName": "@shopify/app",
       "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
-      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "The API key to fetch the schema with.",
@@ -1020,7 +1016,6 @@
       "customPluginName": "@shopify/app",
       "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
-      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -1230,7 +1225,6 @@
       "customPluginName": "@shopify/app",
       "description": "\"DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "[DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
-      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "The API key to fetch the schema with.",
@@ -1309,7 +1303,6 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
       "summary": "Fetch the latest GraphQL schema for a function."
     },
     "app:import-extensions": {
@@ -1941,7 +1934,6 @@
       "customPluginName": "@shopify/app",
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
-      "enableJsonFlag": false,
       "flags": {
         "address": {
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
@@ -6418,7 +6410,6 @@
       "customPluginName": "@shopify/app",
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
-      "enableJsonFlag": false,
       "flags": {
         "address": {
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
@@ -6534,7 +6525,6 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },

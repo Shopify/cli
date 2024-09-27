@@ -1,6 +1,5 @@
 import {configurationFileNames} from '../constants.js'
 import {AppInterface} from '../models/app/app.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -18,7 +17,5 @@ export default abstract class AppCommand extends BaseCommand {
     return configurationFileNames.appEnvironments
   }
 
-  public async run(): Promise<AppCommandOutput> {
-    throw new AbortError('You should not call this method directly, implement it in a subclass')
-  }
+  public abstract run(): Promise<AppCommandOutput>
 }
