@@ -13,7 +13,6 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
   AppConfigurationFileName,
-  AppConfigurationState,
   AppConfigurationStateLinked,
   getAppConfigurationFileName,
   loadApp,
@@ -55,6 +54,11 @@ export interface LinkOptions {
   developerPlatformClient?: DeveloperPlatformClient
 }
 
+export interface LinkOutput {
+  configuration: CurrentAppConfiguration
+  remoteApp: OrganizationApp
+  state: AppConfigurationStateLinked
+}
 /**
  * Link a local app configuration file to a remote app on the Shopify platform.
  *
@@ -66,15 +70,7 @@ export interface LinkOptions {
  * @param shouldRenderSuccess - Whether to render a success message to the user. This is useful for testing.
  * @returns The final app configuration object that was written to the filesystem
  */
-export default async function link(
-  options: LinkOptions,
-  shouldRenderSuccess = true,
-): Promise<{
-  configuration: CurrentAppConfiguration
-  remoteApp: OrganizationApp
-  configFileName: AppConfigurationFileName
-  state: AppConfigurationStateLinked
-}> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<LinkOutput> {
   // First, select (or create, if the user chooses to) a remote app to link to
   const {remoteApp, appDirectory, developerPlatformClient} = await selectOrCreateRemoteAppToLinkTo(options)
 
@@ -116,7 +112,7 @@ export default async function link(
     configurationFileName: configFileName,
   }
 
-  return {configuration: mergedAppConfiguration, remoteApp, configFileName, state}
+  return {configuration: mergedAppConfiguration, remoteApp, state}
 }
 
 /**

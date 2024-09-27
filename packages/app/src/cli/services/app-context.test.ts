@@ -81,7 +81,6 @@ describe('linkedAppContext', () => {
           application_url: 'https://test-app.com',
           path: joinPath(tmp, 'shopify.app.toml'),
         },
-        configFileName: 'shopify.app.toml',
       })
 
       vi.mocked(fetchSpecifications).mockResolvedValue([])
@@ -178,7 +177,6 @@ describe('linkedAppContext', () => {
           application_url: 'https://test-app.com',
           path: joinPath(tmp, 'shopify.app.toml'),
         },
-        configFileName: 'shopify.app.toml',
       })
       vi.mocked(fetchSpecifications).mockResolvedValue([])
 
