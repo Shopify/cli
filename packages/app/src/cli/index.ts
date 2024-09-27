@@ -27,6 +27,9 @@ import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
 
+/**
+ * All app commands should extend AppCommand.
+ */
 export const commands: {[key: string]: typeof AppCommand} = {
   'app:build': Build,
   'app:deploy': Deploy,
