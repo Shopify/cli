@@ -6,7 +6,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
-import {setLastSeenUserIdAfterAuth} from '../session.js'
+import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import * as jose from 'jose'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -103,6 +103,7 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
     const accessToken = newToken[appId]!.accessToken
     const userId = nonRandomUUID(token)
     setLastSeenUserIdAfterAuth(userId)
+    setLastSeenAuthMethod('partners_token')
     return {accessToken, userId}
   } catch (error) {
     throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
