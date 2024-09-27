@@ -769,7 +769,7 @@ interface AppConfigurationStateBasics {
   configurationFileName: AppConfigurationFileName
 }
 
-type AppConfigurationStateLinked = AppConfigurationStateBasics & {
+export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
   state: 'connected-app'
   basicConfiguration: BasicAppConfigurationWithoutModules
 }
@@ -779,7 +779,7 @@ type AppConfigurationStateTemplate = AppConfigurationStateBasics & {
   startingOptions: Omit<LegacyAppConfiguration, 'client_id'>
 }
 
-type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
+export type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
 
 /**
  * Get the app configuration state from the file system.

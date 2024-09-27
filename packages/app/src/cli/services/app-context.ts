@@ -8,7 +8,6 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utiliti
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface LoadedAppContextOutput {
   app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
@@ -42,18 +41,11 @@ export async function linkedAppContext({
   let configState = await getAppConfigurationState(directory, configName)
   let remoteApp: OrganizationApp | undefined
 
-  // IF the app is not linked, force a link.
+  // If the app is not linked, force a link.
   if (configState.state === 'template-only' || reset) {
     const result = await link({directory, apiKey: clientId, configName})
     remoteApp = result.remoteApp
-    configState = {
-      state: 'connected-app',
-      basicConfiguration: result.configuration,
-      appDirectory: directory,
-      configurationPath: joinPath(directory, result.configFileName),
-      configSource: configName ? 'flag' : 'cached',
-      configurationFileName: result.configFileName,
-    }
+    configState = result.state
   }
 
   // Fetch the remote app, using a different clientID if provided via flag.

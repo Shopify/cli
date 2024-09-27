@@ -11,7 +11,13 @@ import {
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {AppConfigurationFileName, getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
+import {
+  AppConfigurationFileName,
+  AppConfigurationState,
+  AppConfigurationStateLinked,
+  getAppConfigurationFileName,
+  loadApp,
+} from '../../../models/app/loader.js'
 import {
   fetchOrCreateOrganizationApp,
   logMetadataForLoadedContext,
@@ -67,6 +73,7 @@ export default async function link(
   configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
   configFileName: AppConfigurationFileName
+  state: AppConfigurationStateLinked
 }> {
   // First, select (or create, if the user chooses to) a remote app to link to
   const {remoteApp, appDirectory, developerPlatformClient} = await selectOrCreateRemoteAppToLinkTo(options)
@@ -100,7 +107,16 @@ export default async function link(
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  return {configuration: mergedAppConfiguration, remoteApp, configFileName}
+  const state: AppConfigurationStateLinked = {
+    state: 'connected-app',
+    basicConfiguration: mergedAppConfiguration,
+    appDirectory: options.directory,
+    configurationPath: joinPath(options.directory, configFileName),
+    configSource: options.configName ? 'flag' : 'cached',
+    configurationFileName: configFileName,
+  }
+
+  return {configuration: mergedAppConfiguration, remoteApp, configFileName, state}
 }
 
 /**
