@@ -20,7 +20,6 @@ import {
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
-import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
@@ -194,19 +193,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async deployConfig({
     apiKey,
-    developerPlatformClient,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient, appConfiguration})
+    if (this.isFunctionExtension) return this.functionDeployConfig(apiKey)
     return this.commonDeployConfig(apiKey, appConfiguration)
   }
 
-  async functionDeployConfig({
-    apiKey,
-    developerPlatformClient,
-  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    // To ensure this is not a breaking change we will delete this upload line on a second pass after we've ensured the new file upload process from core is working.
-    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, developerPlatformClient)
+  async functionDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
+    const moduleId = await randomUUID()
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 

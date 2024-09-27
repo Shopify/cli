@@ -149,7 +149,7 @@ export async function buildFunctionExtension(
     } else {
       await buildOtherFunction(extension, options)
     }
-    if (fileExistsSync(extension.outputPath)) {
+    if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
       const base64Contents = await readFile(extension.outputPath, {encoding: 'base64'})
       await touchFile(bundlePath)
       await writeFile(bundlePath, base64Contents)

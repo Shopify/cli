@@ -59,7 +59,7 @@ export async function updateExtensionDraft({
     const compiledFiles = await readFile(extension.outputPath, {encoding: 'base64'})
     draftableConfig = {
       ...draftableConfig,
-      uploaded_files: {'index.wasm': compiledFiles},
+      uploaded_files: {'dist/index.wasm': compiledFiles},
     }
   }
   const extensionInput: ExtensionUpdateDraftMutationVariables = {

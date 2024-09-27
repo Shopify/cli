@@ -6,15 +6,14 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppDeployOptions, AssetUrlSchema, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
-import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand, outputContent} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {cwd} from '@shopify/cli-kit/node/path'
-import {assertStringMap} from '@shopify/cli-kit/common/ts/json-narrowing'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -387,56 +386,6 @@ export async function getExtensionUploadURL(
   }
 
   return result.assetUrl
-}
-
-export async function uploadWasmBlob(
-  extensionIdentifier: string,
-  wasmPath: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<{url: string; moduleId: string}> {
-  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadUrlFromPartners(developerPlatformClient)
-  headers['Content-Type'] = 'application/wasm'
-
-  const functionContent = await readFile(wasmPath, {})
-  const res = await fetch(url, {body: functionContent, headers, method: 'PUT'})
-  const resBody = res.body?.read()?.toString() || ''
-
-  if (res.status === 200) {
-    return {url, moduleId}
-  } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
-    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extensionIdentifier} is too large. It must be less than ${maxSize}.`
-    throw new AbortError(errorMessage)
-  } else if (res.status >= 400 && res.status < 500) {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. The server responded with status ${res.status.toString()} and body: ${resBody}`
-    throw new BugError(errorMessage)
-  } else {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. Try again.`
-    throw new AbortError(errorMessage)
-  }
-}
-
-interface GetFunctionExtensionUploadURLOutput {
-  url: string
-  moduleId: string
-  maxSize: string
-  headers: {[key: string]: string}
-}
-
-async function getFunctionExtensionUploadUrlFromPartners(
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res = await handlePartnersErrors(() => developerPlatformClient.functionUploadUrl())
-
-  const generatedUrlDetails = res.functionUploadUrlGenerate?.generatedUrlDetails
-
-  if (!generatedUrlDetails) {
-    throw new AbortError('Something went wrong generating the upload URL for the Function.', 'Try again later.')
-  }
-
-  const headers = generatedUrlDetails.headers
-  assertStringMap(headers)
-
-  return {...generatedUrlDetails, headers}
 }
 
 async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {

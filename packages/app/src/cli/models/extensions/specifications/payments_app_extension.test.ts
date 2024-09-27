@@ -6,13 +6,10 @@ import {
   testPaymentsAppExtension,
 } from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import * as upload from '../../../services/deploy/upload.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-
-vi.mock('../../../services/deploy/upload.js')
+import {beforeEach, describe, expect, test} from 'vitest'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
@@ -51,11 +48,6 @@ describe('PaymentsAppExtension', () => {
   }
 
   beforeEach(async () => {
-    vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
-      url: 'http://foo.bar',
-      moduleId,
-    })
-
     extension = await testPaymentsAppExtension({
       dir: '/payments_app_extensions',
       config,

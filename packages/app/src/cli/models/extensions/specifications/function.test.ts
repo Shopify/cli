@@ -5,17 +5,16 @@ import {
   testFunctionExtension,
 } from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import * as upload from '../../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-
-vi.mock('../../../services/deploy/upload.js')
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+vi.mock('@shopify/cli-kit/node/crypto')
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -51,15 +50,11 @@ describe('functionConfiguration', () => {
   }
 
   beforeEach(async () => {
-    vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
-      url: 'http://foo.bar',
-      moduleId,
-    })
-
     extension = await testFunctionExtension({
       dir: '/function',
       config: {...config},
     })
+    vi.mocked(randomUUID).mockResolvedValue(moduleId)
   })
 
   test('returns a snake_case object with all possible fields', async () => {

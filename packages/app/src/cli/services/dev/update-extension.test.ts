@@ -10,14 +10,14 @@ import {
 import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
-import {uploadWasmBlob} from '../deploy/upload.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
-vi.mock('../deploy/upload.js')
+vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
@@ -193,13 +193,14 @@ describe('updateExtensionDraft()', () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     await inTemporaryDirectory(async (tmpDir) => {
       const mockExtension = await testFunctionExtension({dir: tmpDir})
+      const moduleId = 'moduleId'
+      vi.mocked(randomUUID).mockResolvedValue(moduleId)
 
       const filepath = 'index.wasm'
       const content = 'test content'
       const base64Content = Buffer.from(content).toString('base64')
       await mkdir(joinPath(mockExtension.directory, 'dist'))
       await writeFile(joinPath(mockExtension.directory, 'dist', filepath), content)
-      vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId: 'moduleId'})
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -218,14 +219,14 @@ describe('updateExtensionDraft()', () => {
         registrationId,
         config: JSON.stringify({
           title: 'test function extension',
-          module_id: 'moduleId',
+          module_id: moduleId,
           description: 'description',
           app_key: 'mock-api-key',
           api_type: 'product_discounts',
           api_version: '2022-07',
           enable_creation_ui: true,
           localization: {},
-          uploaded_files: {'index.wasm': base64Content},
+          uploaded_files: {'dist/index.wasm': base64Content},
         }),
       })
     })
