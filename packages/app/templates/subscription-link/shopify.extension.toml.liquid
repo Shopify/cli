@@ -1,0 +1,10 @@
+[[extensions]]
+type = "subscription_link_extension"
+name = "{{ name }}"
+handle = "{{ handle }}"
+{% if uid %}uid = "{{ uid }}"{% endif %}
+pattern = "/subscriptions{?customer_id,shop}&id={contract_id}"
+
+# This template is here temporarily to test the subscription link extension
+# This template should be moved to https://github.com/Shopify/extensions-templates for production
+# Need to also update the template repo path in partners

@@ -27,6 +27,7 @@ import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import customDataSpec, {CustomDataSpecIdentifier} from './specifications/custom_data.js'
+import subscriptionLinkSpec from './specifications/subscription_link.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -78,6 +79,7 @@ function loadSpecifications() {
     uiExtensionSpec,
     webPixelSpec,
     editorExtensionCollectionSpecification,
+    subscriptionLinkSpec,
   ] as ExtensionSpecification[]
 
   return [...configModuleSpecs, ...moduleSpecs]

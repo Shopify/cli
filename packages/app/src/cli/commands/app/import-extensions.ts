@@ -1,6 +1,7 @@
 import {buildTomlObject as buildPaymentsTomlObject} from '../../services/payments/extension-to-toml.js'
 import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extension-to-toml.js'
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
+import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../../services/subscription_link/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
@@ -51,6 +52,12 @@ const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
         },
       ]
     : []),
+  {
+    label: 'Subscription Link Extensions',
+    value: 'subscription link',
+    extensionTypes: ['subscription_link'],
+    buildTomlObject: buildSubscriptionLinkTomlObject,
+  },
 ]
 
 export default class ImportExtensions extends Command {

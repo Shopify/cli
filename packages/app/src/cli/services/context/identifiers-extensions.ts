@@ -7,6 +7,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {getMarketingActivtyExtensionsToMigrate} from '../dev/migrate-marketing-activity-extension.js'
+import {getSubscriptionLinkExtensionsToMigrate} from '../dev/migrate-subscription-link-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
@@ -41,6 +42,12 @@ export async function ensureExtensionsIds(
     ? getMarketingActivtyExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
     : []
   const paymentsExtensionsToMigrate = getPaymentsExtensionsToMigrate(
+    localExtensions,
+    dashboardOnlyExtensions,
+    validIdentifiers,
+  )
+
+  const subscriptionLinkExtensionsToMigrate = getSubscriptionLinkExtensionsToMigrate(
     localExtensions,
     dashboardOnlyExtensions,
     validIdentifiers,
@@ -89,6 +96,19 @@ export async function ensureExtensionsIds(
       paymentsExtensionsToMigrate,
       options.appId,
       'payments_extension',
+      dashboardOnlyExtensions,
+      options.developerPlatformClient,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+  }
+
+  if (subscriptionLinkExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(subscriptionLinkExtensionsToMigrate, false)
+    if (!confirmedMigration) throw new AbortSilentError()
+    const newRemoteExtensions = await migrateAppModules(
+      subscriptionLinkExtensionsToMigrate,
+      options.appId,
+      'subscription_link_extension',
       dashboardOnlyExtensions,
       options.developerPlatformClient,
     )
