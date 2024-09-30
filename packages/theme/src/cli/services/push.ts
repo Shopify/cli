@@ -107,7 +107,6 @@ export interface PushFlags {
  * Initiates the push process based on provided flags.
  *
  * @param flags - The flags for the push operation.
- * @returns {Promise<void>} Resolves when the push operation is complete.
  */
 export async function push(flags: PushFlags): Promise<void> {
   const {path} = flags
@@ -138,12 +137,11 @@ export async function push(flags: PushFlags): Promise<void> {
 }
 
 /**
- * Executes the push operation for a given theme.
+ * Executes the push operation for a specific theme.
  *
- * @param theme - The theme to be pushed.
- * @param session - The admin session for the theme.
- * @param options - The options for the push operation.
- * @returns {Promise<void>} Resolves when the push operation is complete.
+ * @param theme - the remote theme to be updated by the push command
+ * @param session - the admin session to access the API and upload the theme
+ * @param options - the options that modify how the theme gets uploaded
  */
 async function executePush(theme: Theme, session: AdminSession, options: PushOptions) {
   const themeChecksums = await fetchChecksums(theme.id, session)
