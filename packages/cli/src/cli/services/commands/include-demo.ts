@@ -16,6 +16,7 @@ async function processLoadedContent(
   loadedContent: AnyJsonType,
   basePath: string,
   processedFiles: Set<string>,
+  isPartOfArray = false,
 ): Promise<AnyJsonType> {
   if (typeof loadedContent !== 'object' || loadedContent === null || loadedContent instanceof Date) {
     return loadedContent
@@ -23,7 +24,7 @@ async function processLoadedContent(
 
   if (Array.isArray(loadedContent)) {
     return Promise.all(
-      loadedContent.map((item) => processLoadedContent(item, basePath, processedFiles)),
+      loadedContent.map((item) => processLoadedContent(item, basePath, processedFiles, true)),
     ) as Promise<JsonArrayType>
   }
 
@@ -42,10 +43,8 @@ async function processLoadedContent(
         )
       ).flat()
       includeDirectives.push({key, pathsToInclude})
-    } else if (typeof value === 'object' && value !== null) {
-      result[key] = await processLoadedContent(value, basePath, processedFiles)
     } else {
-      result[key] = value
+      result[key] = await processLoadedContent(value, basePath, processedFiles)
     }
   }
 
@@ -53,7 +52,7 @@ async function processLoadedContent(
     for (const includePath of pathsToInclude) {
       // Create a new Set for each include operation
       const includeProcessedFiles = new Set<string>(processedFiles)
-      result = await processIncludePath(result, includePath, includeProcessedFiles)
+      result = await processIncludePath(result, includePath, includeProcessedFiles, isPartOfArray)
     }
   }
 
@@ -67,6 +66,7 @@ async function processIncludePath(
   currentResult: JsonMapType,
   includePath: string,
   processedFiles: Set<string>,
+  isPartOfArray: boolean,
 ): Promise<JsonMapType> {
   if (processedFiles.has(includePath)) {
     // If the file has already been processed in this include chain, throw an error
@@ -92,27 +92,32 @@ async function processIncludePath(
   ) {
     const processedKeys = Object.keys(processedInclude)
     const singleKey: string | undefined = processedKeys[0]
-    if (processedKeys.length === 1 && singleKey && typeof processedInclude[singleKey] === 'object') {
+    if (processedKeys.length === 1 && singleKey) {
       const currentValueUnderKey = currentResult[singleKey]
-      if (
-        Array.isArray(processedInclude[singleKey]) &&
-        (Array.isArray(currentValueUnderKey) || currentValueUnderKey === undefined)
-      ) {
-        // Handle array entries
-        return {
-          ...currentResult,
-          [singleKey]: [
-            ...(currentValueUnderKey || []),
-            ...(processedInclude[singleKey] as AnyJsonType[]).map((item) =>
-              applyMetaSelectively(item as JsonMapType, meta),
-            ),
-          ] as JsonArrayType,
+      if (typeof processedInclude[singleKey] === 'object') {
+        if (
+          Array.isArray(processedInclude[singleKey]) &&
+          (Array.isArray(currentValueUnderKey) || currentValueUnderKey === undefined)
+        ) {
+          // Handle array entries
+          return {
+            ...currentResult,
+            [singleKey]: [
+              ...(currentValueUnderKey || []),
+              ...(processedInclude[singleKey] as AnyJsonType[]).map((item) => applyMeta(item as JsonMapType, meta)),
+            ] as JsonArrayType,
+          }
+        } else {
+          // Handle single object
+          return {
+            ...currentResult,
+            [singleKey]: applyMeta(processedInclude[singleKey] as JsonMapType, meta),
+          }
         }
-      } else {
-        // Handle single object
+      } else if (Array.isArray(currentValueUnderKey)) {
         return {
           ...currentResult,
-          [singleKey]: applyMetaSelectively(processedInclude[singleKey] as JsonMapType, meta),
+          [singleKey]: [...currentValueUnderKey, applyMeta(processedInclude, meta)] as JsonArrayType,
         }
       }
     }
@@ -120,27 +125,18 @@ async function processIncludePath(
 
   // Merge the processed include, giving priority to the included content
   const mergedResult = {...currentResult, ...(processedInclude as JsonMapType)}
-  return applyMetaSelectively(mergedResult, meta)
+  return applyMeta(mergedResult, meta)
 }
 
 /**
- * Apply meta selectively to the content.
- *
- * If `path` or `root` are already present in the content, they are not overridden.
+ * Apply meta to the content.
  *
  * @param content - The content to apply meta to.
  * @param meta - The meta to apply.
  * @returns The content with meta applied selectively.
  */
-function applyMetaSelectively(content: JsonMapType, meta: {path: string; root: string}): JsonMapType {
-  const result = {...content}
-  if (!('path' in result)) {
-    result.path = meta.path
-  }
-  if (!('root' in result)) {
-    result.root = meta.root
-  }
-  return result
+function applyMeta(content: JsonMapType, meta: {path: string; root: string}): JsonMapType {
+  return {...content, ...meta}
 }
 
 /**
@@ -170,7 +166,7 @@ async function readAndDecodeFile(
 
 export async function includeDemoService(filePath: string): Promise<AnyJsonType> {
   const {content, meta} = await readAndDecodeFile(filePath)
-  const contentWithMeta = applyMetaSelectively(content as JsonMapType, meta)
+  const contentWithMeta = applyMeta(content as JsonMapType, meta)
   const processedFiles = new Set<string>([filePath])
   return processLoadedContent(contentWithMeta, dirname(filePath), processedFiles)
 }

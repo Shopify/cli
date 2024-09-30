@@ -216,8 +216,8 @@ describe('includeDemoService', () => {
         path: startFilePath,
         root: dirname(startFilePath),
         example: {
-          path: extra1FilePath,
-          root: dirname(extra1FilePath),
+          path: extra2FilePath,
+          root: dirname(extra2FilePath),
           hello: 'world',
           foo: 'bar',
         },
@@ -228,8 +228,8 @@ describe('includeDemoService', () => {
         root = "${dirname(startFilePath)}"
 
         [example]
-        path = "${extra1FilePath}"
-        root = "${dirname(extra1FilePath)}"
+        path = "${extra2FilePath}"
+        root = "${dirname(extra2FilePath)}"
         hello = "world"
         foo = "bar"
       `),
@@ -263,8 +263,8 @@ describe('includeDemoService', () => {
         path: startFilePath,
         root: dirname(startFilePath),
         example: {
-          path: extra1FilePath,
-          root: dirname(extra1FilePath),
+          path: extra2FilePath,
+          root: dirname(extra2FilePath),
           hello: 'world',
           foo: 'bar',
         },
@@ -275,8 +275,8 @@ describe('includeDemoService', () => {
         root = "${dirname(startFilePath)}"
 
         [example]
-        path = "${extra1FilePath}"
-        root = "${dirname(extra1FilePath)}"
+        path = "${extra2FilePath}"
+        root = "${dirname(extra2FilePath)}"
         hello = "world"
         foo = "bar"
       `),
@@ -356,8 +356,8 @@ describe('includeDemoService', () => {
         path: startFilePath,
         root: dirname(startFilePath),
         example: {
-          path: extra1FilePath,
-          root: dirname(extra1FilePath),
+          path: extra2FilePath,
+          root: dirname(extra2FilePath),
           hello: 'world',
           foo: 'bar',
           existing: 'from extra2',
@@ -369,8 +369,8 @@ describe('includeDemoService', () => {
         root = "${dirname(startFilePath)}"
 
         [example]
-        path = "${extra1FilePath}"
-        root = "${dirname(extra1FilePath)}"
+        path = "${extra2FilePath}"
+        root = "${dirname(extra2FilePath)}"
         hello = "world"
         foo = "bar"
         existing = "from extra2"
@@ -518,6 +518,81 @@ describe('includeDemoService', () => {
         root = "${dirname(extension2Path)}"
         name = "Extension 2"
         type = "function"
+      `),
+      )
+    })
+  })
+
+  test('handles an exploding include', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const startTomlContent = `
+        [[extensions]]
+        name = "original extension 1"
+
+        [[extensions]]
+        _include = "./extensions/*.toml"
+
+        [[extensions]]
+        name = "original extension 2"
+      `
+      const extension1Content = `
+        name = "Included extension 1"
+      `
+      const extension2Content = `
+        name = "Included extension 2"
+      `
+
+      const startFilePath = await writeToml(tmpDir, 'start.toml', startTomlContent)
+      const extension1Path = await writeToml(tmpDir, 'extensions/extension1.toml', extension1Content)
+      const extension2Path = await writeToml(tmpDir, 'extensions/extension2.toml', extension2Content)
+
+      // When
+      const result = await includeDemoService(startFilePath)
+
+      // Then
+      expect(result).toEqual({
+        path: startFilePath,
+        root: dirname(startFilePath),
+        extensions: [
+          {
+            name: 'original extension 1',
+          },
+          {
+            path: extension1Path,
+            root: dirname(extension1Path),
+            name: 'Included extension 1',
+          },
+          {
+            path: extension2Path,
+            root: dirname(extension2Path),
+            name: 'Included extension 2',
+          },
+          {
+            name: 'original extension 2',
+          },
+        ],
+      })
+      expect(result).toEqual(
+        decodeToml(`
+        path = "${startFilePath}"
+        root = "${dirname(startFilePath)}"
+
+        [[extensions]]
+        name = "original extension 1"
+
+        [[extensions]]
+        path = "${extension1Path}"
+        root = "${dirname(extension1Path)}"
+        name = "Included extension 1"
+
+        [[extensions]]
+        path = "${extension2Path}"
+        root = "${dirname(extension2Path)}"
+        name = "Included extension 2"
+
+        [[extensions]]
+        name = "original extension 2"
       `),
       )
     })
