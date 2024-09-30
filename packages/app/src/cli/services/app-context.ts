@@ -1,4 +1,4 @@
-import {appFromId, InvalidApiKeyErrorMessage} from './context.js'
+import {appFromId} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
@@ -7,7 +7,6 @@ import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface LoadedAppContextOutput {
   app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
@@ -52,8 +51,10 @@ export async function linkedAppContext({
   // Then update the current developerPlatformClient with the one from the remoteApp
   let developerPlatformClient = selectDeveloperPlatformClient({configuration: configState.basicConfiguration})
   if (!remoteApp) {
-    const clientIdToFetchRemoteApp = clientId ?? configState.basicConfiguration.client_id
-    remoteApp = await fetchAppFromCustomClientId(developerPlatformClient, clientIdToFetchRemoteApp)
+    const apiKey = clientId ?? configState.basicConfiguration.client_id
+    const organizationId = configState.basicConfiguration.organization_id
+    const id = configState.basicConfiguration.app_id
+    remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId, id})
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -75,13 +76,4 @@ export async function linkedAppContext({
   }
 
   return {app: localApp, remoteApp, developerPlatformClient}
-}
-
-async function fetchAppFromCustomClientId(developerPlatformClient: DeveloperPlatformClient, clientId: string) {
-  const remoteApp = await appFromId({apiKey: clientId, developerPlatformClient})
-  if (!remoteApp) {
-    const errorMessage = InvalidApiKeyErrorMessage(clientId)
-    throw new AbortError(errorMessage.message, errorMessage.tryMessage)
-  }
-  return remoteApp
 }

@@ -379,12 +379,11 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
   }
 
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
+
   const mergedAppConfiguration = {
     ...deepMergeObjects<AppConfiguration, CurrentAppConfiguration>(
       {
         ...(localAppOptions.existingConfig ?? {}),
-        // Scopes changes position from the template config format to the current one. Delete it if its left behind.
-        scopes: undefined,
       },
       {
         app_id: remoteApp.id,
@@ -402,6 +401,12 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
       linkedAppWasNewlyCreated: Boolean(remoteApp.newApp),
     }),
   }
+
+  // We were previously forcing scopes to be undefined, because scopes is no longer a top-level key.
+  // This works fine when writing to a file, but not when trying to parse the config object again in code.
+  // Make sure to delete it so that parsing works.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (mergedAppConfiguration as any).scopes
 
   // Always output using the canonical schema
   const schema = getAppVersionedSchema(specifications)
