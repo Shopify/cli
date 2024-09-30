@@ -5,7 +5,7 @@ import {appFromId} from './context.js'
 
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -21,28 +21,28 @@ async function writeAppConfig(tmp: string, content: string) {
   await writeFile(packageJsonPath, '{}')
 }
 
-describe('linkedAppContext', () => {
-  const mockDeveloperPlatformClient = testDeveloperPlatformClient()
-  const mockRemoteApp = testOrganizationApp({
-    apiKey: 'test-api-key',
-    title: 'Test App',
-    organizationId: 'test-org-id',
-    developerPlatformClient: mockDeveloperPlatformClient,
-  })
+const mockDeveloperPlatformClient = testDeveloperPlatformClient()
+const mockRemoteApp = testOrganizationApp({
+  apiKey: 'test-api-key',
+  title: 'Test App',
+  organizationId: 'test-org-id',
+  developerPlatformClient: mockDeveloperPlatformClient,
+})
 
+beforeEach(() => {
+  vi.mocked(fetchSpecifications).mockResolvedValue([])
+  vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
+})
+
+describe('linkedAppContext', () => {
   test('returns linked app context when app is already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `client_id="test-api-key"`
       await writeAppConfig(tmp, content)
 
-      vi.mocked(fetchSpecifications).mockResolvedValue([])
-      vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
-
       // When
-      const result = await linkedAppContext({
-        directory: tmp,
-      })
+      const result = await linkedAppContext({directory: tmp})
 
       // Then
       expect(result).toEqual({
@@ -83,12 +83,8 @@ describe('linkedAppContext', () => {
         },
       })
 
-      vi.mocked(fetchSpecifications).mockResolvedValue([])
-
       // When
-      const result = await linkedAppContext({
-        directory: tmp,
-      })
+      const result = await linkedAppContext({directory: tmp})
 
       // Then
       expect(result).toEqual({
@@ -106,8 +102,6 @@ describe('linkedAppContext', () => {
       const content = `client_id="test-api-key"`
       await writeAppConfig(tmp, content)
 
-      vi.mocked(fetchSpecifications).mockResolvedValue([])
-      vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
       vi.mocked(getCachedAppInfo).mockReturnValue({
         appId: 'test-api-key',
         title: 'Old Title',
@@ -116,9 +110,7 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      await linkedAppContext({
-        directory: tmp,
-      })
+      await linkedAppContext({directory: tmp})
 
       // Then
       expect(link).not.toHaveBeenCalled()
@@ -138,14 +130,10 @@ describe('linkedAppContext', () => {
       await writeAppConfig(tmp, content)
       const newClientId = 'new-api-key'
 
-      vi.mocked(fetchSpecifications).mockResolvedValue([])
       vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: newClientId})
 
       // When
-      const result = await linkedAppContext({
-        directory: tmp,
-        clientId: newClientId,
-      })
+      const result = await linkedAppContext({directory: tmp, clientId: newClientId})
 
       // Then
       expect(link).not.toHaveBeenCalled()
@@ -178,13 +166,9 @@ describe('linkedAppContext', () => {
           path: joinPath(tmp, 'shopify.app.toml'),
         },
       })
-      vi.mocked(fetchSpecifications).mockResolvedValue([])
 
       // When
-      await linkedAppContext({
-        directory: tmp,
-        reset: true,
-      })
+      await linkedAppContext({directory: tmp, reset: true})
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
