@@ -186,7 +186,6 @@ function hasUploadErrors(results: Map<string, Result>): boolean {
  * @param theme - The theme being pushed.
  * @param session - The admin session for the theme.
  * @param options - The options for the push operation.
- * @returns {Promise<void>} Resolves when the output handling is complete.
  */
 async function handlePushOutput(
   results: Map<string, Result>,
@@ -211,7 +210,6 @@ async function handlePushOutput(
  * @param theme - The theme being pushed.
  * @param hasErrors - Indicates if there were any errors during the push operation.
  * @param session - The admin session for the theme.
- * @returns {void}
  */
 function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
   const output: JsonOutput = {
@@ -237,7 +235,6 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
  *
  * @param hasErrors - Indicates if there were any errors during the push operation.
  * @param session - The admin session for the theme.
- * @returns {void}
  */
 function handlePublishOutput(hasErrors: boolean, session: AdminSession) {
   if (hasErrors) {
@@ -253,7 +250,6 @@ function handlePublishOutput(hasErrors: boolean, session: AdminSession) {
  * @param theme - The theme being pushed.
  * @param hasErrors - Indicates if there were any errors during the push operation.
  * @param session - The admin session for the theme.
- * @returns {void}
  */
 function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
   const nextSteps = [
