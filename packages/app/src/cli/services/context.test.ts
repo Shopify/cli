@@ -121,6 +121,7 @@ const ORG_AND_APPS_RESPONSE = {
   organization: ORG1,
   apps: [APP1, APP2],
   hasMorePages: false,
+  developerPlatformClient: buildDeveloperPlatformClient(),
 }
 
 const DEFAULT_SELECT_APP_OPTIONS = {
@@ -1642,6 +1643,8 @@ describe('ensureReleaseContext', () => {
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
     const developerPlatformClient = buildDeveloperPlatformClient()
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, appId: 'key2'})
 
     // When
     const got = await ensureReleaseContext({
