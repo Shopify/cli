@@ -301,6 +301,8 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
 
   if (sectionsToUpdate.size > 0) {
     emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+  } else {
+    emitHotReloadEvent({type: 'full', key})
   }
 }
 
