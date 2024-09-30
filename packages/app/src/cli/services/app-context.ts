@@ -9,13 +9,13 @@ import {getAppConfigurationState, loadAppUsingConfigurationState} from '../model
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export interface LoadedAppContextOutput {
+interface LoadedAppContextOutput {
   app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export interface LoadedAppContextOptions {
+interface LoadedAppContextOptions {
   directory: string
   clientId?: string
   reset?: boolean

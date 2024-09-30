@@ -779,7 +779,7 @@ type AppConfigurationStateTemplate = AppConfigurationStateBasics & {
   startingOptions: Omit<LegacyAppConfiguration, 'client_id'>
 }
 
-export type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
+type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
 
 /**
  * Get the app configuration state from the file system.
