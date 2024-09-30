@@ -77,7 +77,7 @@ export async function linkedAppContext({
 
   // If the remoteApp is the same as the linked one, update the cached info.
   const cachedInfo = getCachedAppInfo(directory)
-  const rightApp = remoteApp.apiKey === cachedInfo?.appId
+  const rightApp = remoteApp.apiKey === localApp.configuration.client_id
   if (!cachedInfo || rightApp) {
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }

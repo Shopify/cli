@@ -3,13 +3,12 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
 import {appFromId} from './context.js'
 
-import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
+import * as localStorage from './local-storage.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-vi.mock('./local-storage.js')
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
@@ -99,23 +98,25 @@ describe('linkedAppContext', () => {
   test('updates cached app info when remoteApp matches', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: 'test-api-key-new'})
+      const content = `client_id="test-api-key-new"`
       await writeAppConfig(tmp, content)
-
-      vi.mocked(getCachedAppInfo).mockReturnValue({
-        appId: 'test-api-key',
-        title: 'Old Title',
+      localStorage.setCachedAppInfo({
+        appId: 'test-api-key-old',
+        title: 'Test App',
         directory: tmp,
-        orgId: 'old-org-id',
+        orgId: 'test-org-id',
       })
 
       // When
       await linkedAppContext({directory: tmp})
+      const result = localStorage.getCachedAppInfo(tmp)
 
       // Then
       expect(link).not.toHaveBeenCalled()
-      expect(setCachedAppInfo).toHaveBeenCalledWith({
-        appId: 'test-api-key',
+
+      expect(result).toEqual({
+        appId: 'test-api-key-new',
         title: 'Test App',
         directory: tmp,
         orgId: 'test-org-id',
