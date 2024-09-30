@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.67.3
+
+### Patch Changes
+
+- 36d4b975a: Update checksum calculation to no longer minify assets before calculating
+  - @shopify/cli-kit@3.67.3
+
 ## 3.67.2
 
 ### Patch Changes
