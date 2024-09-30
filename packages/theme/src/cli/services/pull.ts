@@ -125,10 +125,9 @@ export async function pull(flags: PullFlags): Promise<void> {
 /**
  * Executes the pull operation for a specific theme.
  *
- * @param theme - The theme to pull.
- * @param session - The admin session.
- * @param options - The options for pulling.
- * @returns  Resolves when the pull operation is complete.
+ * @param theme - the remote theme to be downloaded by the pull command
+ * @param session - the admin session to access the API and download the theme
+ * @param options - the options that modify how the theme gets downloaded
  */
 async function executePull(theme: Theme, session: AdminSession, options: PullOptions) {
   const path = options.path
