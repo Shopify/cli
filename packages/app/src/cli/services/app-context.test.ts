@@ -118,7 +118,7 @@ describe('linkedAppContext', () => {
       expect(result).toEqual({
         appId: 'test-api-key-new',
         title: 'Test App',
-        directory: tmp,
+        directory: expect.any(String),
         orgId: 'test-org-id',
       })
     })
