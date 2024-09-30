@@ -250,7 +250,7 @@ describe('deploy', () => {
     const functionExtension = await testFunctionExtension()
     const moduleId = 'module-id'
     vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
-    vi.mocked(randomUUID).mockResolvedValue(moduleId)
+    vi.mocked(randomUUID).mockReturnValue(moduleId)
 
     const app = testApp({allExtensions: [functionExtension]})
     const mockedFunctionConfiguration = {

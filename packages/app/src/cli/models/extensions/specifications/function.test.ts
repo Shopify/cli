@@ -9,16 +9,13 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test} from 'vitest'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-vi.mock('@shopify/cli-kit/node/crypto')
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  const moduleId = 'module_id'
   const apiKey = 'app-key'
   const inputQuery = 'query { f }'
 
@@ -54,7 +51,6 @@ describe('functionConfiguration', () => {
       dir: '/function',
       config: {...config},
     })
-    vi.mocked(randomUUID).mockResolvedValue(moduleId)
   })
 
   test('returns a snake_case object with all possible fields', async () => {
@@ -94,7 +90,7 @@ describe('functionConfiguration', () => {
         enable_creation_ui: true,
         localization: {},
         targets: undefined,
-        module_id: moduleId,
+        module_id: expect.any(String),
       })
     })
   })
@@ -119,7 +115,7 @@ describe('functionConfiguration', () => {
         app_key: apiKey,
         api_type: undefined,
         api_version: extension.configuration.api_version,
-        module_id: moduleId,
+        module_id: expect.any(String),
         enable_creation_ui: true,
         input_query: undefined,
         input_query_variables: undefined,
@@ -215,7 +211,7 @@ describe('functionConfiguration', () => {
             },
           },
           enable_creation_ui: true,
-          module_id: moduleId,
+          module_id: expect.any(String),
           localization: {},
           targets: undefined,
         })
@@ -242,7 +238,7 @@ describe('functionConfiguration', () => {
           app_key: apiKey,
           api_type: 'order_discounts',
           api_version: extension.configuration.api_version,
-          module_id: moduleId,
+          module_id: expect.any(String),
           enable_creation_ui: true,
           input_query: undefined,
           input_query_variables: undefined,

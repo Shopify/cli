@@ -194,7 +194,8 @@ describe('updateExtensionDraft()', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const mockExtension = await testFunctionExtension({dir: tmpDir})
       const moduleId = 'moduleId'
-      vi.mocked(randomUUID).mockResolvedValue(moduleId)
+
+      vi.mocked(randomUUID).mockReturnValue(moduleId)
 
       const filepath = 'index.wasm'
       const content = 'test content'

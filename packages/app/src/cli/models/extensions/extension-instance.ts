@@ -195,13 +195,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig(apiKey)
     return this.commonDeployConfig(apiKey, appConfiguration)
-  }
-
-  async functionDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
-    const moduleId = await randomUUID()
-    return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
   async commonDeployConfig(
