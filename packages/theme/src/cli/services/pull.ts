@@ -89,10 +89,10 @@ export interface PullFlags {
 }
 
 /**
- * Initiates the pull process based on provided flags.
+ * Pulls the theme files from an authenticated store. Will prompt to select a
+ * theme if not provided.
  *
- * @param flags - The flags for the pull operation.
- * @returns Resolves when the pull operation is complete.
+ * @param flags - All flags are optional.
  */
 export async function pull(flags: PullFlags): Promise<void> {
   showEmbeddedCLIWarning()
