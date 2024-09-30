@@ -1,4 +1,4 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {BugError} from '@shopify/cli-kit/node/error'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
@@ -114,7 +114,14 @@ export function removeStorefrontPassword(): void {
 function requireThemeStore(): string {
   const themeStore = getThemeStore()
   if (!themeStore) {
-    throw new AbortError('Theme store is not set')
+    throw new BugError(
+      'Theme store is not set. This indicates an unexpected issue with the CLI. Please report this to the Shopify CLI team.',
+      [
+        'It may be possible to recover by running',
+        {command: 'shopify theme list --store <store>'},
+        '(setting the store flag to the store you wish to use) and then running the command again.',
+      ],
+    )
   }
   return themeStore
 }
