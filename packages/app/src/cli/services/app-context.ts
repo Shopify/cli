@@ -14,12 +14,19 @@ interface LoadedAppContextOutput {
   developerPlatformClient: DeveloperPlatformClient
 }
 
+/**
+ * Input options for the `linkedAppContext` function.
+ *
+ * @param directory - The directory containing the app.
+ * @param clientId - The client ID to use when linking the app or when fetching the remote app.
+ * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
+ * @param configName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ */
 interface LoadedAppContextOptions {
   directory: string
   clientId?: string
-  reset?: boolean
+  forceRelink?: boolean
   configName?: string
-  enableLinkingPrompt?: boolean
 }
 
 /**
@@ -33,7 +40,7 @@ interface LoadedAppContextOptions {
 export async function linkedAppContext({
   directory,
   clientId,
-  reset,
+  forceRelink,
   configName,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   // Get current app configuration state
@@ -41,7 +48,7 @@ export async function linkedAppContext({
   let remoteApp: OrganizationApp | undefined
 
   // If the app is not linked, force a link.
-  if (configState.state === 'template-only' || reset) {
+  if (configState.state === 'template-only' || forceRelink) {
     const result = await link({directory, apiKey: clientId, configName})
     remoteApp = result.remoteApp
     configState = result.state

@@ -168,7 +168,7 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      await linkedAppContext({directory: tmp, reset: true})
+      await linkedAppContext({directory: tmp, forceRelink: true})
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
