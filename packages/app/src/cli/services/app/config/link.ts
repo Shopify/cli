@@ -54,7 +54,7 @@ export interface LinkOptions {
   developerPlatformClient?: DeveloperPlatformClient
 }
 
-export interface LinkOutput {
+interface LinkOutput {
   configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
   state: AppConfigurationStateLinked
