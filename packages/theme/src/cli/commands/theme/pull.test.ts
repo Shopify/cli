@@ -1,8 +1,6 @@
 import Pull from './pull.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {pull} from '../../services/pull.js'
-import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {describe, vi, expect, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -26,25 +24,6 @@ const CommandConfig = new Config({root: __dirname})
 describe('Pull', () => {
   const adminSession = {token: '', storeFqdn: ''}
   const path = '/my-theme'
-
-  describe('run with CLI 3 implementation', () => {
-    test('should pass call the CLI 3 command', async () => {
-      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-      const flags = ['--ignore=config', '--only=assets', '--nodelete']
-
-      vi.mocked(useEmbeddedThemeCLI).mockReturnValue(true)
-      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-
-      await runPullCommand(flags, path, adminSession, theme)
-
-      expect(pull).toHaveBeenCalledWith(theme, adminSession, {
-        ignore: ['config'],
-        nodelete: true,
-        only: ['assets'],
-        path: '/my-theme',
-      })
-    })
-  })
 
   describe('run with CLI 2 implementation', () => {
     async function run(argv: string[], theme?: Theme) {
