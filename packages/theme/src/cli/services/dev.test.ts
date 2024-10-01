@@ -36,7 +36,6 @@ describe('dev', () => {
     flagsToPass: [],
     password: 'my-token',
     'theme-editor-sync': false,
-    legacy: true,
     'live-reload': 'hot-reload',
     noDelete: false,
     ignore: [],
@@ -93,72 +92,6 @@ describe('dev', () => {
           noDelete: false,
           only: [],
         },
-      })
-    })
-  })
-
-  describe('Ruby implementation', async () => {
-    test('runs theme serve on CLI2 without passing a token when no password is used', async () => {
-      // Given
-      const devOptions = {...options, password: undefined}
-
-      // When
-      await dev(devOptions)
-
-      // Then
-      const expectedParams = ['theme', 'serve', 'my-directory']
-      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-        store: 'my-store',
-        adminToken: undefined,
-        storefrontToken: undefined,
-      })
-    })
-
-    test('runs theme serve on CLI2 passing a token when a password is used', async () => {
-      // Given
-      const devOptions = {...options, password: 'my-token'}
-
-      // When
-      await dev(devOptions)
-
-      // Then
-      const expectedParams = ['theme', 'serve', 'my-directory']
-      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-        store: 'my-store',
-        adminToken: 'my-token',
-        storefrontToken: 'my-storefront-token',
-      })
-    })
-
-    test("runs theme serve on CLI2 passing '--open' flag when it's true", async () => {
-      // Given
-      const devOptions = {...options, open: true}
-
-      // When
-      await dev(devOptions)
-
-      // Then
-      const expectedParams = ['theme', 'serve', 'my-directory', '--open']
-      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-        store: 'my-store',
-        adminToken: 'my-token',
-        storefrontToken: 'my-storefront-token',
-      })
-    })
-
-    test("runs theme serve on CLI2 passing '--open' flag when it's false", async () => {
-      // Given
-      const devOptions = {...options, open: false}
-
-      // When
-      await dev(devOptions)
-
-      // Then
-      const expectedParams = ['theme', 'serve', 'my-directory']
-      expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
-        store: 'my-store',
-        adminToken: 'my-token',
-        storefrontToken: 'my-storefront-token',
       })
     })
   })
