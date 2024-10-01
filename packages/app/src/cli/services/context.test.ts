@@ -434,6 +434,7 @@ describe('ensureDevContext', async () => {
       // Given
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
       vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+      vi.spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile').mockResolvedValue()
       vi.mocked(loadAppConfiguration).mockReset()
       const {schema: configSchema} = await buildVersionedAppSchema()
       const localApp = {
@@ -1039,6 +1040,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
+    vi.spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile').mockResolvedValue()
 
     // When
     const got = await ensureDeployContext(deployOptions(app))
@@ -1316,10 +1318,9 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: true})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
-      {...app.configuration, build: {include_config_on_deploy: true}},
-      app.configSchema,
-    )
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(app.configuration.path, {
+      build: {include_config_on_deploy: true},
+    })
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1364,10 +1365,9 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
-      {...app.configuration, build: {include_config_on_deploy: false}},
-      app.configSchema,
-    )
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(app.configuration.path, {
+      build: {include_config_on_deploy: false},
+    })
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1470,10 +1470,10 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: false})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
-      {...app.configuration, build: {include_config_on_deploy: false}},
-      app.configSchema,
-    )
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(app.configuration.path, {
+      build: {include_config_on_deploy: false},
+    })
+
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
