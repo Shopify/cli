@@ -105,7 +105,10 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
       )
     }
 
-    configObject = {...configuration, ...extensionConfig}
+    const mergedConfig = {...configuration, ...extensionConfig}
+    // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
+    const {extensions, path, ...restConfig} = mergedConfig
+    configObject = restConfig
   }
 
   const newConfig = await parseConfigurationObjectAgainstSpecification(
