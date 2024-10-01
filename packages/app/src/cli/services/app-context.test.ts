@@ -41,7 +41,12 @@ describe('linkedAppContext', () => {
       await writeAppConfig(tmp, content)
 
       // When
-      const result = await linkedAppContext({directory: tmp})
+      const result = await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        configName: undefined,
+        clientId: undefined,
+      })
 
       // Then
       expect(result).toEqual({
@@ -83,7 +88,12 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      const result = await linkedAppContext({directory: tmp})
+      const result = await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        configName: undefined,
+        clientId: undefined,
+      })
 
       // Then
       expect(result).toEqual({
@@ -109,7 +119,7 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      await linkedAppContext({directory: tmp})
+      await linkedAppContext({directory: tmp, forceRelink: false, configName: undefined, clientId: undefined})
       const result = localStorage.getCachedAppInfo(tmp)
 
       // Then
@@ -134,7 +144,12 @@ describe('linkedAppContext', () => {
       vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: newClientId})
 
       // When
-      const result = await linkedAppContext({directory: tmp, clientId: newClientId})
+      const result = await linkedAppContext({
+        directory: tmp,
+        clientId: newClientId,
+        forceRelink: false,
+        configName: undefined,
+      })
 
       // Then
       expect(link).not.toHaveBeenCalled()
@@ -169,7 +184,12 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      await linkedAppContext({directory: tmp, forceRelink: true})
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: true,
+        configName: undefined,
+        clientId: undefined,
+      })
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})

@@ -50,7 +50,12 @@ export default class Build extends AppCommand {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const {app} = await linkedAppContext({directory: flags.path, clientId: flags['client-id']})
+    const {app} = await linkedAppContext({
+      directory: flags.path,
+      clientId: flags['client-id'],
+      forceRelink: false,
+      configName: flags.config,
+    })
 
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
 
