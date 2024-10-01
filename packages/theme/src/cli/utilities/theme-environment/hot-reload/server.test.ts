@@ -128,7 +128,7 @@ describe('hot-reload server', () => {
     const hotReloadEventsLengthBeforeChange = hotReloadEvents.length
     // Since the JSON file was removed, the section file is not referenced anymore:
     await triggerFileEvent('change', testSectionFileKey)
-    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeChange)
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${testSectionFileKey}"}`)
     await nextTick()
 
     // -- Updates section groups:
