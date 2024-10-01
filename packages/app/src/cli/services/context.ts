@@ -235,10 +235,16 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
   if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const patch = {build: {...configuration.build, dev_store_url: selectedStore?.shopDomain}}
-
-    const newConfiguration = {...configuration, ...patch}
+    const newConfiguration = {
+      ...configuration,
+      build: {
+        ...configuration.build,
+        dev_store_url: selectedStore?.shopDomain,
+      },
+    }
     localApp.configuration = newConfiguration
+
+    const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
     await patchAppConfigurationFile(configuration.path, patch)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
