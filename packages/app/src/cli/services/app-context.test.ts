@@ -124,7 +124,7 @@ describe('linkedAppContext', () => {
     })
   })
 
-  test('uses provided clientId when available', async () => {
+  test('uses provided clientId when available and updates the app configuration', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `client_id="test-api-key"`
@@ -139,7 +139,7 @@ describe('linkedAppContext', () => {
       // Then
       expect(link).not.toHaveBeenCalled()
       expect(result.remoteApp.apiKey).toBe(newClientId)
-      expect(result.app.configuration.client_id).toEqual('test-api-key')
+      expect(result.app.configuration.client_id).toEqual('new-api-key')
       expect(appFromId).toHaveBeenCalledWith(expect.objectContaining({apiKey: newClientId}))
     })
   })

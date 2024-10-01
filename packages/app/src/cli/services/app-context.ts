@@ -54,11 +54,16 @@ export async function linkedAppContext({
     configState = result.state
   }
 
+  // If the clientId is provided, update the configuration state with the new clientId
+  if (clientId && clientId !== configState.basicConfiguration.client_id) {
+    configState.basicConfiguration.client_id = clientId
+  }
+
   // Fetch the remote app, using a different clientID if provided via flag.
   // Then update the current developerPlatformClient with the one from the remoteApp
   let developerPlatformClient = selectDeveloperPlatformClient({configuration: configState.basicConfiguration})
   if (!remoteApp) {
-    const apiKey = clientId ?? configState.basicConfiguration.client_id
+    const apiKey = configState.basicConfiguration.client_id
     const organizationId = configState.basicConfiguration.organization_id
     const id = configState.basicConfiguration.app_id
     remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId, id})
