@@ -1,4 +1,5 @@
 import {isEmptyDir, pull, PullFlags} from './pull.js'
+import {setThemeStore} from './local-storage.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
@@ -39,7 +40,11 @@ describe('pull', () => {
   const fetchDevelopmentThemeSpy = vi.spyOn(DevelopmentThemeManager.prototype, 'fetch')
 
   beforeEach(() => {
-    vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
+    vi.mocked(ensureThemeStore).mockImplementation(() => {
+      const themeStore = 'example.myshopify.com'
+      setThemeStore(themeStore)
+      return themeStore
+    })
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
     vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
     vi.mocked(fetchChecksums).mockResolvedValue([])
