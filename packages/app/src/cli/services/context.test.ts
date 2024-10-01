@@ -628,20 +628,8 @@ dev_store_url = "domain1"
       const content = await readFile(joinPath(tmp, 'shopify.app.dev.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "key2"
-name = "my app"
-application_url = "https://myapp.com"
-embedded = true
-
 [build]
 dev_store_url = "domain1"
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-
-[webhooks]
-api_version = "2023-04"
 `
       expect(content).toEqual(expectedContent)
     })
