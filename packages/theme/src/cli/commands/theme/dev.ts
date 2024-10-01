@@ -90,16 +90,6 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Skip hot reloading any files that match the specified pattern.',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for the `shopify theme dev` command.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
-    'legacy-3.66': Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for the `shopify theme dev` command.',
-      env: 'SHOPIFY_FLAG_LEGACY_3_66',
-    }),
     force: Flags.boolean({
       hidden: true,
       char: 'f',
@@ -148,7 +138,7 @@ You can run this command only in a directory that matches the [default Shopify t
     const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, Boolean(flags.legacy))
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
 
     let theme: Theme
 
@@ -180,7 +170,6 @@ You can run this command only in a directory that matches the [default Shopify t
       force: flags.force,
       open: flags.open,
       flagsToPass,
-      legacy: flags['legacy-3.66'],
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
       ignore,

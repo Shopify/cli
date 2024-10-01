@@ -9,7 +9,6 @@ import {initializeDevServerSession} from '../utilities/theme-environment/dev-ser
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -18,9 +17,6 @@ import {openURL} from '@shopify/cli-kit/node/system'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
-
-// Tokens are valid for 120 min, better to be safe and refresh every 110 min
-const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
 
 export interface DevOptions {
   adminSession: AdminSession
@@ -35,7 +31,6 @@ export interface DevOptions {
   port?: string
   force: boolean
   flagsToPass: string[]
-  legacy: boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
   noDelete: boolean
@@ -45,10 +40,7 @@ export interface DevOptions {
 }
 
 export async function dev(options: DevOptions) {
-  if (options.legacy) {
-    await legacyDev(options)
-    return
-  }
+  showNewVersionInfo()
 
   if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
     return
@@ -124,40 +116,6 @@ export async function dev(options: DevOptions) {
       renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
     })
   }
-}
-
-async function legacyDev(options: DevOptions) {
-  if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
-    return
-  }
-
-  let adminToken: string | undefined = options.adminSession.token
-  let storefrontToken: string | undefined = options.storefrontToken
-
-  renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
-
-  const command = ['theme', 'serve', options.directory, ...options.flagsToPass]
-
-  if (options.open && useEmbeddedThemeCLI()) {
-    command.push('--open')
-  }
-
-  if (!options.password && useEmbeddedThemeCLI()) {
-    adminToken = undefined
-    storefrontToken = undefined
-
-    /**
-     * Executes the theme serve command.
-     * Every 110 minutes, it will refresh the session token.
-     */
-    setInterval(() => {
-      outputDebug('Refreshing theme session tokens...')
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      refreshTokens(options.store, options.password)
-    }, THEME_REFRESH_TIMEOUT_IN_MS)
-  }
-
-  await execCLI2(command, {store: options.store, adminToken, storefrontToken})
 }
 
 function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
