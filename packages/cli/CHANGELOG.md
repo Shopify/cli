@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.68.0
+
+### Minor Changes
+
+- 2200be0ae: force a minor CLI 3.68.0 release from patch changes
+
 ## 3.67.0
 
 ### Minor Changes
