@@ -12,13 +12,13 @@ import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
  */
 export async function patchAppConfigurationFile(path: string, patch: {[key: string]: unknown}) {
   const tomlContents = await readFile(path)
-  const extensionConfig = decodeToml(tomlContents)
+  const configuration = decodeToml(tomlContents)
 
-  const updatedConfig = {...extensionConfig, ...patch}
+  const updatedConfig = {...configuration, ...patch}
 
   const encodedString = encodeToml(updatedConfig)
 
-  const file = addDefaultCommentsToToml(encodedString)
+  const fileContents = addDefaultCommentsToToml(encodedString)
 
-  writeFileSync(path, file)
+  writeFileSync(path, fileContents)
 }
