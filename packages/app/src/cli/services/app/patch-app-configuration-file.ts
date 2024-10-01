@@ -1,5 +1,6 @@
 import {addDefaultCommentsToToml} from './write-app-configuration-file.js'
-import {readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
 
 /**
@@ -13,12 +14,8 @@ import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
 export async function patchAppConfigurationFile(path: string, patch: {[key: string]: unknown}) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
-
-  const updatedConfig = {...configuration, ...patch}
-
+  const updatedConfig = deepMergeObjects(configuration, patch)
   const encodedString = encodeToml(updatedConfig)
-
   const fileContents = addDefaultCommentsToToml(encodedString)
-
-  writeFileSync(path, fileContents)
+  await writeFile(path, fileContents)
 }

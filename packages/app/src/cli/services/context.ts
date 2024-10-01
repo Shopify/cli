@@ -540,7 +540,7 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
 
-  const patch = {build: localConfiguration.build}
+  const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
   await patchAppConfigurationFile(localConfiguration.path, patch)
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }

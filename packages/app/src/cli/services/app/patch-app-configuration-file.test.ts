@@ -80,4 +80,32 @@ command = 'echo "Build command"'
 `)
     })
   })
+
+  test('Adds a new field to a toml table, merging with exsisting values', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+      const patch = {
+        access_scopes: {
+          new_scope: true,
+        },
+      }
+
+      await patchAppConfigurationFile(configPath, patch)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile)
+        .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+new_scope = true
+`)
+    })
+  })
 })
