@@ -274,7 +274,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     deployConfig: async (config, _) => {
       // These are loaded automatically for all modules, but are considered "first class" and not part of extension contracts
       // If a module needs them, they can access them from the manifest.
-      const {type, handle, uid, name, ...configWithoutFirstClassFields} = config
+      const {type, handle, uid, ...configWithoutFirstClassFields} = config
       return configWithoutFirstClassFields
     },
   })
