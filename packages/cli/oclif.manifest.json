@@ -4965,22 +4965,6 @@
           "name": "ignore",
           "type": "option"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
-        "legacy-3.66": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY_3_66",
-          "hidden": true,
-          "name": "legacy-3.66",
-          "type": "boolean"
-        },
         "live-reload": {
           "default": "hot-reload",
           "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
@@ -6106,22 +6090,6 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
-        },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
-        "legacy-3.66": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY_3_66",
-          "hidden": true,
-          "name": "legacy-3.66",
-          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
