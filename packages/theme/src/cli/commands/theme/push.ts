@@ -104,11 +104,6 @@ export default class Push extends ThemeCommand {
       description: 'Publish as the live theme after uploading.',
       env: 'SHOPIFY_FLAG_PUBLISH',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for the `shopify theme push` command.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
     force: Flags.boolean({
       hidden: true,
       char: 'f',
@@ -135,7 +130,7 @@ export default class Push extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    if (flags.password || flags.legacy) {
+    if (flags.password) {
       await this.execLegacyPush()
       return
     }
