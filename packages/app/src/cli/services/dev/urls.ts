@@ -217,6 +217,7 @@ export async function updateURLs(
           }
         : {}),
     }
+
     await patchAppConfigurationFile(localApp.configuration.path, patch)
   }
 }

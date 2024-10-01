@@ -17,7 +17,7 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
+import * as patchAppConfigurationFile from './app/patch-app-configuration-file.js'
 import {
   MinimalAppIdentifiers,
   Organization,
@@ -1039,9 +1039,6 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
-      .mockResolvedValue()
 
     // When
     const got = await ensureDeployContext(deployOptions(app))
@@ -1099,8 +1096,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
 
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const opts = deployOptions(app)
 
@@ -1122,7 +1119,7 @@ describe('ensureDeployContext', () => {
     expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -1140,7 +1137,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(legacyApp)
     const configuration = {...app.configuration, organization_id: ORG1.id}
     vi.mocked(link).mockResolvedValue({configuration, remoteApp, state})
-    vi.spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile').mockResolvedValue()
+    vi.spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile').mockResolvedValue()
 
     const developerPlatformClient = buildDeveloperPlatformClient({
       async orgAndApps(_orgId: string) {
@@ -1210,8 +1207,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(link).mockResolvedValue({configuration: (app as any).configuration, remoteApp, state})
     vi.mocked(loadApp).mockResolvedValue(app)
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     const developerPlatformClient = buildDeveloperPlatformClient({
@@ -1251,7 +1248,7 @@ describe('ensureDeployContext', () => {
     expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('load the app extension using the remote extensions specifications', async () => {
@@ -1306,8 +1303,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
 
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
@@ -1319,7 +1316,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: true})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
       {...app.configuration, build: {include_config_on_deploy: true}},
       app.configSchema,
     )
@@ -1339,7 +1336,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('prompts the user to include the configuration and set it to false when not confirmed if the flag is not present', async () => {
@@ -1358,8 +1355,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     // When
@@ -1367,7 +1364,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
       {...app.configuration, build: {include_config_on_deploy: false}},
       app.configSchema,
     )
@@ -1387,7 +1384,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('doesnt prompt the user to include the configuration and display the current value if the flag', async () => {
@@ -1405,8 +1402,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(link).mockResolvedValue((app as any).configuration)
     // vi.mocked(selectDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
@@ -1423,7 +1420,7 @@ describe('ensureDeployContext', () => {
     )
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(patchAppConfigurationFileSpy).not.toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1440,7 +1437,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('prompts the user to include the configuration when reset is used if the flag', async () => {
@@ -1458,8 +1455,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
@@ -1473,7 +1470,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: false})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
       {...app.configuration, build: {include_config_on_deploy: false}},
       app.configSchema,
     )
@@ -1493,7 +1490,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('doesnt prompt the user to include the configuration when force is used if the flag is not present', async () => {
@@ -1511,8 +1508,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     const options = deployOptions(app, false, true)
@@ -1523,7 +1520,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(patchAppConfigurationFileSpy).not.toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1540,7 +1537,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('prompt the user to include the configuration when force is used  if the flag', async () => {
@@ -1559,8 +1556,8 @@ describe('ensureDeployContext', () => {
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     vi.mocked(link).mockResolvedValue({configuration: app.configuration, remoteApp, state})
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
-    const writeAppConfigurationFileSpy = vi
-      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     // When
@@ -1568,7 +1565,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(patchAppConfigurationFileSpy).not.toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1585,7 +1582,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    writeAppConfigurationFileSpy.mockRestore()
+    patchAppConfigurationFileSpy.mockRestore()
   })
 
   test('uses the right developer platform client when it changes', async () => {
@@ -1603,7 +1600,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(legacyApp)
     const configuration = {...app.configuration, organization_id: ORG1.id}
     vi.mocked(link).mockResolvedValue({configuration, remoteApp, state})
-    vi.spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile').mockResolvedValue()
+    vi.spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile').mockResolvedValue()
 
     const anotherDeveloperPlatformClient = buildDeveloperPlatformClient()
     const appWithAnotherDeveloperPlatformClient = testOrganizationApp({
