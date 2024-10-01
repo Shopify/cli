@@ -195,13 +195,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    return this.commonDeployConfig(apiKey, appConfiguration)
-  }
-
-  async commonDeployConfig(
-    apiKey: string,
-    appConfiguration: AppConfigurationWithoutPath,
-  ): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
@@ -351,7 +344,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
-    const configValue = await this.deployConfig({apiKey, developerPlatformClient, appConfiguration})
+    const configValue = await this.deployConfig({apiKey, appConfiguration})
     if (!configValue) return undefined
 
     const result = {
@@ -390,7 +383,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
 interface ExtensionDeployConfigOptions {
   apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
   appConfiguration: AppConfigurationWithoutPath
 }
 

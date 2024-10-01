@@ -48,7 +48,7 @@ export async function updateExtensionDraft({
     // When updating just the theme extension draft, upload the files as part of the config.
     config = await themeExtensionConfig(extension)
   } else {
-    config = (await extension.deployConfig({apiKey, developerPlatformClient, appConfiguration})) || {}
+    config = (await extension.deployConfig({apiKey, appConfiguration})) || {}
   }
 
   let draftableConfig: {[key: string]: unknown} = {

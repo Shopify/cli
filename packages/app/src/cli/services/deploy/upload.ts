@@ -93,7 +93,7 @@ interface UploadExtensionsBundleOptions {
   commitReference?: string
 }
 
-export interface UploadExtensionValidationError {
+interface UploadExtensionValidationError {
   uuid: string
   errors: {
     message: string

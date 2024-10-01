@@ -642,7 +642,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   ) {
     if (!extensionInstance) return
 
-    const configContent = await extensionInstance.commonDeployConfig(apiKey, appConfiguration)
+    const configContent = await extensionInstance.deployConfig({apiKey, appConfiguration})
     return configContent ? extensionInstance : undefined
   }
 

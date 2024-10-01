@@ -1,17 +1,10 @@
 import {PaymentsAppExtensionConfigType} from './payments_app_extension.js'
 import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
-import {
-  placeholderAppConfiguration,
-  testDeveloperPlatformClient,
-  testPaymentsAppExtension,
-} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testPaymentsAppExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {beforeEach, describe, expect, test} from 'vitest'
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('PaymentsAppExtension', () => {
   let extension: ExtensionInstance<PaymentsAppExtensionConfigType>
@@ -63,7 +56,6 @@ describe('PaymentsAppExtension', () => {
       // When
       const result = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
       const extensionConfiguration = extension.configuration as OffsitePaymentsAppExtensionConfigType

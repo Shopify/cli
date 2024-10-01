@@ -345,7 +345,7 @@ export class App<
   async manifest(): Promise<JsonMapType> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
-        const config = await module.commonDeployConfig('', this.configuration)
+        const config = await module.deployConfig({apiKey: '', appConfiguration: this.configuration})
         return {
           type: module.externalType,
           handle: module.handle,

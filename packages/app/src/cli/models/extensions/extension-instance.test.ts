@@ -143,7 +143,6 @@ describe('deployConfig', async () => {
     const extensionInstance = await testThemeExtensions()
 
     const got = await extensionInstance.deployConfig({
-      developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
     })
@@ -155,7 +154,6 @@ describe('deployConfig', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
     const got = await extensionInstance.deployConfig({
-      developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
     })
@@ -167,7 +165,6 @@ describe('deployConfig', async () => {
     const extensionInstance = await testAppConfigExtensions(true)
 
     const got = await extensionInstance.deployConfig({
-      developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
     })

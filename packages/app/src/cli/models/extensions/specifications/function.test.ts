@@ -1,18 +1,11 @@
 import {FunctionConfigType} from './function.js'
-import {
-  placeholderAppConfiguration,
-  testDeveloperPlatformClient,
-  testFunctionExtension,
-} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test} from 'vitest'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -62,7 +55,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -104,7 +96,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -141,7 +132,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -159,7 +149,7 @@ describe('functionConfiguration', () => {
 
     // When & Then
     await expect(() =>
-      extension.deployConfig({apiKey, developerPlatformClient, appConfiguration: placeholderAppConfiguration}),
+      extension.deployConfig({apiKey, appConfiguration: placeholderAppConfiguration}),
     ).rejects.toThrowError(AbortError)
   })
 
@@ -185,7 +175,6 @@ describe('functionConfiguration', () => {
         // When
         const got = await extension.deployConfig({
           apiKey,
-          developerPlatformClient,
           appConfiguration: placeholderAppConfiguration,
         })
 
@@ -227,7 +216,6 @@ describe('functionConfiguration', () => {
         // When
         const got = await extension.deployConfig({
           apiKey,
-          developerPlatformClient,
           appConfiguration: placeholderAppConfiguration,
         })
 
@@ -268,7 +256,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -293,7 +280,6 @@ describe('functionConfiguration', () => {
       // When
       const got = (await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
@@ -311,7 +297,6 @@ describe('functionConfiguration', () => {
       // When
       const got = (await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
