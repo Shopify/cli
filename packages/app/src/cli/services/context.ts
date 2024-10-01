@@ -5,9 +5,9 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
-import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -235,15 +235,11 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
   if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const newConfiguration = {
-      ...configuration,
-      build: {
-        ...configuration.build,
-        dev_store_url: selectedStore?.shopDomain,
-      },
-    }
+    const patch = {build: {...configuration.build, dev_store_url: selectedStore?.shopDomain}}
+
+    const newConfiguration = {...configuration, ...patch}
     localApp.configuration = newConfiguration
-    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
+    await patchAppConfigurationFile(configuration.path, patch)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -544,8 +540,8 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
 
-  await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
-
+  const patch = {build: localConfiguration.build}
+  await patchAppConfigurationFile(localConfiguration.path, patch)
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 
