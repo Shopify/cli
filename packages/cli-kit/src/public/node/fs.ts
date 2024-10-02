@@ -522,6 +522,7 @@ export async function findPathUp(
 
 export interface MatchGlobOptions {
   matchBase: boolean
+  noglobstar: boolean
 }
 
 /**
@@ -531,6 +532,6 @@ export interface MatchGlobOptions {
  * @param options - The options to refine the matching approach.
  * @returns true if the key matches the pattern, false otherwise.
  */
-export function matchGlob(key: string, pattern: string, options: MatchGlobOptions = {matchBase: true}): boolean {
+export function matchGlob(key: string, pattern: string, options?: MatchGlobOptions): boolean {
   return minimatch(key, pattern, options)
 }
