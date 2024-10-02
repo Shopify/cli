@@ -304,6 +304,7 @@ export async function createOrSelectTheme(
     )
   } else {
     const selectedTheme = await findOrSelectTheme(adminSession, {
+      create: true,
       header: 'Select a theme to push to:',
       filter: {
         live,
