@@ -43,6 +43,9 @@ export function parseFunctionRunPayload(payload: string): FunctionRunLog {
     fuelConsumed: parsedPayload.fuel_consumed,
     errorMessage: parsedPayload.error_message,
     errorType: parsedPayload.error_type,
+    inputQueryVariablesMetafieldValue: parsedPayload.input_query_variables_metafield_value,
+    inputQueryVariablesMetafieldNamespace: parsedPayload.input_query_variables_metafield_namespace,
+    inputQueryVariablesMetafieldKey: parsedPayload.input_query_variables_metafield_key,
   })
 }
 
@@ -239,16 +242,17 @@ export const subscribeToAppLogs = async (
 }
 
 export function prettyPrintJsonIfPossible(json: unknown) {
-  try {
-    if (typeof json === 'string') {
-      const jsonObject = JSON.parse(json)
-      return JSON.stringify(jsonObject, null, 2)
-    } else if (typeof json === 'object' && json !== null) {
-      return JSON.stringify(json, null, 2)
-    } else {
+  if (typeof json === 'string') {
+    try {
+      const parsedJson = JSON.parse(json)
+      return JSON.stringify(parsedJson, null, 2)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
       return json
     }
-  } catch (error) {
-    throw new Error(`Error parsing JSON: ${error as string}`)
+  } else if (typeof json === 'object' && json !== null) {
+    return JSON.stringify(json, null, 2)
+  } else {
+    return json
   }
 }
