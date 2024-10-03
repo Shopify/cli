@@ -1,17 +1,8 @@
 import {themeFlags} from '../../flags.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
-import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
-import {hasRequiredThemeDirectories} from '../../utilities/theme-fs.js'
-import {currentDirectoryConfirmed} from '../../utilities/theme-ui.js'
-import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -130,11 +121,6 @@ export default class Push extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    if (flags.password) {
-      await this.execLegacyPush()
-      return
-    }
-
     const pushFlags: PushFlags = {
       path: flags.path,
       password: flags.password,
@@ -156,46 +142,5 @@ export default class Push extends ThemeCommand {
     }
 
     await push(pushFlags)
-  }
-
-  async execLegacyPush() {
-    const {flags} = await this.parse(Push)
-    const path = flags.path || cwd()
-    const force = flags.force || false
-
-    const store = ensureThemeStore({store: flags.store})
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-
-    const workingDirectory = path ? resolvePath(path) : cwd()
-    if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await currentDirectoryConfirmed(force))) {
-      return
-    }
-
-    const flagsForCli2 = flags as typeof flags & FlagValues
-
-    showEmbeddedCLIWarning()
-
-    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-
-    const targetTheme = await (flagsForCli2.development
-      ? developmentThemeManager.findOrCreate()
-      : developmentThemeManager.fetch())
-
-    if (targetTheme) {
-      if (flagsForCli2.development) {
-        flagsForCli2.theme = `${targetTheme.id}`
-        flagsForCli2.development = false
-      }
-      if (useEmbeddedThemeCLI()) {
-        flagsForCli2['development-theme-id'] = targetTheme.id
-      }
-    }
-
-    const flagsToPass = this.passThroughFlags(flagsForCli2, {
-      allowedFlags: Push.cli2Flags,
-    })
-    const command = ['theme', 'push', flagsForCli2.path, ...flagsToPass]
-
-    await execCLI2(command, {store, adminToken: adminSession.token})
   }
 }
