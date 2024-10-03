@@ -3,6 +3,7 @@ import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import {selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
@@ -57,6 +58,7 @@ export default class FunctionReplay extends AppCommand {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] || flags['api-key']
+    const developerPlatformClient = selectDeveloperPlatformClient()
 
     const app = await inFunctionContext({
       path: flags.path,
@@ -70,6 +72,7 @@ export default class FunctionReplay extends AppCommand {
           log: flags.log,
           json: flags.json,
           watch: flags.watch,
+          developerPlatformClient,
         })
         return app
       },
