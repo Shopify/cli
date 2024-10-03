@@ -253,7 +253,7 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
     async onResponse(event, response) {
       patchProxiedResponseHeaders(ctx, event, response)
 
-      const fileName = new URL(response.url).pathname.split('/').at(-1)
+      const fileName = url.pathname.split('/').at(-1)
       if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
         // Patch Liquid assets like .css.liquid
         const body = await response.text()
