@@ -21,6 +21,7 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
+const CART_PREFIX = '/cart/'
 const VANITY_CDN_PREFIX = '/cdn/'
 const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 const IGNORED_ENDPOINTS = [
@@ -62,13 +63,15 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
  * | /cdn/...          |                    | Proxy    |
  * | /ext/cdn/...      |                    | Proxy    |
  * | /.../file.js      |                    | Proxy    |
+ * | /cart/...         |                    | Proxy    |
  * | /payments/config  | application/json   | Proxy    |
  * | /search/suggest   | * / *              | No proxy |
  * | /.../index.html   |                    | No Proxy |
  *
  */
-function canProxyRequest(event: H3Event) {
+export function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
+  if (event.path.startsWith(CART_PREFIX)) return true
   if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
   if (event.path.startsWith(EXTENSION_CDN_PREFIX)) return true
 
