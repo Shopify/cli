@@ -1,4 +1,5 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
+import {setCachedAppInfo} from './local-storage.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -37,7 +38,15 @@ export async function ensureConnectedAppFunctionContext(
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app.creationDefaultOptions())).apiKey
+    const createdApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
+    apiKey = createdApp.apiKey
+
+    await setCachedAppInfo({
+      appId: apiKey,
+      title: createdApp.title,
+      directory: app.directory,
+      orgId: createdApp.organizationId,
+    })
   }
   return {apiKey, developerPlatformClient}
 }
