@@ -14,6 +14,7 @@ import {
   setResponseHeader,
   removeResponseHeader,
   setResponseStatus,
+  send,
 } from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
@@ -249,7 +250,16 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       // Important to return 3xx responses to the client
       redirect: 'manual',
     },
-    onResponse: patchProxiedResponseHeaders.bind(null, ctx),
+    async onResponse(event, response) {
+      patchProxiedResponseHeaders(ctx, event, response)
+
+      const fileName = url.pathname.split('/').at(-1)
+      if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
+        // Patch Liquid assets like .css.liquid
+        const body = await response.text()
+        await send(event, injectCdnProxy(body, ctx))
+      }
+    },
   }).catch(async (error: H3Error) => {
     const pathname = event.path.split('?')[0]!
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
