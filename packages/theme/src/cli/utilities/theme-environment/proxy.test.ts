@@ -1,4 +1,4 @@
-import {getProxyStorefrontHeaders, injectCdnProxy, patchRenderingResponse} from './proxy.js'
+import {canProxyRequest, getProxyStorefrontHeaders, injectCdnProxy, patchRenderingResponse} from './proxy.js'
 import {describe, test, expect} from 'vitest'
 import {createEvent} from 'h3'
 import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
@@ -6,9 +6,14 @@ import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from './types.js'
 
-function createH3Event() {
+function createH3Event(method = 'GET', path = '/', headers = {}) {
   const req = new IncomingMessage(new Socket())
   const res = new ServerResponse(req)
+
+  req.method = method
+  req.url = path
+  req.headers = headers
+
   return createEvent(req, res)
 }
 
@@ -216,6 +221,53 @@ describe('dev proxy', () => {
           "x-custom": "true",
         }
       `)
+    })
+  })
+
+  describe('canProxyRequest', () => {
+    test('should proxy non-GET requests', () => {
+      const event = createH3Event('POST', '/some-path.html')
+      expect(canProxyRequest(event)).toBe(true)
+    })
+
+    test('should proxy Cart requests as they are not supported by the SFR client', () => {
+      const event = createH3Event('GET', '/cart/some-path')
+      expect(canProxyRequest(event)).toBe(true)
+    })
+
+    test('should proxy CDN requests', () => {
+      const event = createH3Event('GET', '/cdn/some-path')
+      expect(canProxyRequest(event)).toBe(true)
+    })
+
+    test('should proxy CDN requests for extensions', () => {
+      const event = createH3Event('GET', '/ext/cdn/some-path')
+      expect(canProxyRequest(event)).toBe(true)
+    })
+
+    test('should proxy requests with file extensions', () => {
+      const event = createH3Event('GET', '/some-path.js')
+      expect(canProxyRequest(event)).toBe(true)
+    })
+
+    test('should proxy requests with a non-default accept header', () => {
+      const event = createH3Event('GET', '/some-path', {accept: 'application/json'})
+      expect(canProxyRequest(event)).toBe(true)
+    })
+
+    test('should not proxy requests with a default accept header and no extension, allowing them to be rendered by the SFR client', () => {
+      const event = createH3Event('GET', '/some-path', {accept: '*/*'})
+      expect(canProxyRequest(event)).toBe(false)
+    })
+
+    test('should not proxy HTML requests (based on the extension), allowing them to be rendered by the SFR client', () => {
+      const event = createH3Event('GET', '/some-path.html')
+      expect(canProxyRequest(event)).toBe(false)
+    })
+
+    test('should not proxy HTML requests (based on the "accept" header), allowing them to be rendered by the SFR client', () => {
+      const event = createH3Event('GET', '/some-path', {accept: 'text/html'})
+      expect(canProxyRequest(event)).toBe(false)
     })
   })
 })
