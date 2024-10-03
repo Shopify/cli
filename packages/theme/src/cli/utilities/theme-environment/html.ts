@@ -77,11 +77,11 @@ function logRequestLine(event: H3Event, response: Response) {
       : event.path
   const serverTiming = response.headers.get('server-timing')
   const requestDuration = serverTiming?.match(/cfRequestDuration;dur=([\d.]+)/)?.[1]
-  const durationString = requestDuration ? Math.round(Number(requestDuration)) : 'N/A'
+  const durationString = requestDuration ? `${Math.round(Number(requestDuration))}ms` : ''
 
   outputInfo(
     outputContent`• ${timestampDateFormat.format(new Date())} Request ${outputToken.raw('»')} ${outputToken.gray(
-      `${event.method} ${truncatedPath} ${durationString}ms`,
+      `${event.method} ${truncatedPath} ${durationString}`,
     )}`,
   )
 }
