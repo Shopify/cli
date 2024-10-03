@@ -29,7 +29,7 @@ import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, moveFile, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const CONFIG_EXTENSION_IDS = [
@@ -338,8 +338,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
     }
 
+    console.log('this.directory: ', this.directory)
+    console.log('this.outputPath: ', this.outputPath)
+
     await this.build(options)
 
+    if (this.features.includes('bundling')) {
+      // && if extension sourcemaps == true
+      const sourcemapOutputPath = joinPath(this.directory, 'dist', `${this.outputFileName}.map`)
+      console.log('sourcemapOutputPath ', sourcemapOutputPath)
+      const sourcemapInputPath = `${this.outputPath}.map`
+      moveFile(sourcemapInputPath, sourcemapOutputPath, {overwrite: true})
+    }
+
+    console.log('===')
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }
