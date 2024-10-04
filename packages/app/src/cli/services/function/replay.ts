@@ -6,7 +6,6 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
@@ -26,7 +25,6 @@ interface ReplayOptions {
   json: boolean
   watch: boolean
   log?: string
-  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export interface FunctionRunData {
