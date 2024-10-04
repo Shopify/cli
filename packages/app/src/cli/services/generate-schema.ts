@@ -28,7 +28,10 @@ export async function ensureConnectedAppFunctionContext(
   const {app} = options
   const developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
+  let apiKey =
+    options.apiKey ||
+    getAppIdentifiers({app}, developerPlatformClient).app ||
+    (await getCachedAppInfo(app.directory))?.apiKey
 
   if (!apiKey) {
     if (!isTerminalInteractive()) {
@@ -38,20 +41,13 @@ export async function ensureConnectedAppFunctionContext(
       )
     }
 
-    const findCachedApp = await getCachedAppInfo(app.directory)
-    apiKey = findCachedApp?.appId
+    const promptApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
+    apiKey = promptApp.apiKey
 
-    if (!apiKey) {
-      const createdApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
-      apiKey = createdApp.apiKey
-
-      await setCachedAppInfo({
-        appId: apiKey,
-        title: createdApp.title,
-        directory: app.directory,
-        orgId: createdApp.organizationId,
-      })
-    }
+    await setCachedAppInfo({
+      apiKey: promptApp.apiKey,
+      directory: app.directory,
+    })
   }
   return {apiKey, developerPlatformClient}
 }

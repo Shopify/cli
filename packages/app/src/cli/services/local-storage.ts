@@ -13,6 +13,7 @@ export interface CachedAppInfo {
   storeFqdn?: string
   updateURLs?: boolean
   previousAppId?: string
+  apiKey?: string
 }
 
 // We store each app info using the directory as the key
