@@ -65,20 +65,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function getErrorSection(error: string) {
-  const html = String.raw
-  const color = 'orangered'
-
-  return html`
-    <div
-      id="section-error"
-      style="border: solid thick ${color}; background: color(from ${color} srgb r g b / 0.2); padding: 20px;"
-    >
-      <pre>${error}</pre>
-    </div>
-  `
-}
-
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
   const html = String.raw
 
