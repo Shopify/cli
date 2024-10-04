@@ -162,6 +162,9 @@ async function legacyDev(options: DevOptions) {
 }
 
 function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
+  const remoteUrl = `https://${store}`
+  const localUrl = `http://${host}:${port}`
+
   renderSuccess({
     body: [
       {
@@ -170,7 +173,7 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
           items: [
             {
               link: {
-                url: `http://${host}:${port}`,
+                url: localUrl,
               },
             },
           ],
@@ -182,7 +185,7 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
         {
           link: {
             label: 'Customize your theme at the theme editor',
-            url: `https://${store}/admin/themes/${themeId}/editor`,
+            url: `${remoteUrl}/admin/themes/${themeId}/editor`,
           },
         },
       ],
@@ -190,11 +193,19 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
         {
           link: {
             label: 'Share your theme preview',
-            url: `https://${store}/?preview_theme_id=${themeId}`,
+            url: `${remoteUrl}/?preview_theme_id=${themeId}`,
           },
         },
         {
-          subdued: `(https://${store}/?preview_theme_id=${themeId})`,
+          subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
+        },
+      ],
+      [
+        {
+          link: {
+            label: 'Preview your gift cards',
+            url: `${localUrl}/gift_cards/123/preview`,
+          },
         },
       ],
     ],
