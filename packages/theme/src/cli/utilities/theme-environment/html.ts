@@ -29,8 +29,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       .then(async (response) => {
         let html = await patchRenderingResponse(ctx, event, response)
 
-        html = prettifySyntaxErrors(html)
-
         assertThemeId(response, html, String(theme.id))
 
         if (ctx.options.liveReload !== 'off') {
@@ -65,10 +63,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return errorPageHtml
       })
   })
-}
-
-export function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid(?: syntax)? error \([^\n]+(?:\n|<)/g, getErrorSection)
 }
 
 function getErrorSection(error: string) {
