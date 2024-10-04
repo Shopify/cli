@@ -29,7 +29,7 @@ function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFil
 
   const remoteKeys = new Set(remoteChecksums.map((checksum) => checksum.key))
 
-  const localKeys = Array.from(themeFileSystem.files.keys())
+  const localKeys = themeFileSystem.applyIgnoreFilters([...themeFileSystem.files.values()]).map(({key}) => key)
   const localFilesToBeDeleted = localKeys.filter((key) => !remoteKeys.has(key))
 
   return localFilesToBeDeleted.map((key) => {
