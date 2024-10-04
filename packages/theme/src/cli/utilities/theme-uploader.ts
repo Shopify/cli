@@ -49,12 +49,11 @@ export function uploadTheme(
         reportFailedUploads(operationResults)
       })
     : deleteJobPromise
-        .then((result) => result.promise)
+        .then((result) => {
+          return result.promise
+        })
         .catch(() => {
           renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-        })
-        .then(() => {
-          reportFailedUploads(operationResults)
         })
 
   return {
@@ -141,9 +140,13 @@ function buildDeleteJob(
           progress.current++
         }),
     ),
-  ).then(() => {
-    progress.current = progress.total
-  })
+  )
+    .then(() => {
+      progress.current = progress.total
+    })
+    .finally(() => {
+      reportFailedUploads(operationResults)
+    })
 
   return {progress, promise}
 }
