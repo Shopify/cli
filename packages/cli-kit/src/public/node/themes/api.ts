@@ -1,5 +1,5 @@
 import {storeAdminUrl} from './urls.js'
-import {buildTheme, buildThemeAsset} from './factories.js'
+import {buildTheme} from './factories.js'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
 import * as throttler from '../api/rest-api-throttler.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
@@ -7,6 +7,9 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {UpsertThemeFileBodies} from '../../../cli/api/graphql/admin/generated/upsert_theme_file_bodies.js'
+import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
+import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 
 import {adminRequestDoc, restRequest, RestResponse} from '../api/admin.js'
 import {AdminSession} from '../session.js'
@@ -17,7 +20,7 @@ export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | '
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const vars = {id: `gid://shopify/OnlineStoreTheme/${id}`}
+  const vars = {id: themeGid(id)}
   const response = await adminRequestDoc(GetTheme, session, vars, 'unstable')
 
   const theme = response.theme
@@ -84,13 +87,6 @@ export async function createTheme(params: ThemeParams, session: AdminSession): P
   return buildTheme({...response.json.theme, createdAtRuntime: true})
 }
 
-export async function fetchThemeAsset(id: number, key: Key, session: AdminSession): Promise<ThemeAsset | undefined> {
-  const response = await request('GET', `/themes/${id}/assets`, session, undefined, {
-    'asset[key]': key,
-  })
-  return buildThemeAsset(response.json.asset)
-}
-
 export async function fetchThemeAssets(id: number, filenames: Key[], session: AdminSession): Promise<ThemeAsset[]> {
   const assets: ThemeAsset[] = []
   let after: string | null = null
@@ -101,7 +97,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
       GetThemeFileBodies,
       session,
       {
-        id: `gid://shopify/OnlineStoreTheme/${id}`,
+        id: themeGid(id),
         filenames,
         after,
       },
@@ -153,11 +149,9 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
   }
 }
 
-export async function deleteThemeAsset(id: number, key: Key, session: AdminSession): Promise<boolean> {
-  const response = await request('DELETE', `/themes/${id}/assets`, session, undefined, {
-    'asset[key]': key,
-  })
-  return Boolean(response.json.message)
+export async function deleteThemeAssets(id: number, keys: Key[], session: AdminSession): Promise<boolean> {
+  const response = await adminRequestDoc(ThemeFilesDelete, session, {themeId: themeGid(id), files: keys}, 'unstable')
+  return Boolean(response.themeFilesDelete?.userErrors)
 }
 
 export async function bulkUploadThemeAssets(
@@ -190,7 +184,7 @@ export async function bulkUploadThemeAssets(
     UpsertThemeFileBodies,
     session,
     {
-      id: `gid://shopify/OnlineStoreTheme/${id}`,
+      id: themeGid(id),
       files,
     },
     'unstable',
@@ -228,12 +222,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(
-      GetThemeFileChecksums,
-      session,
-      {id: `gid://shopify/OnlineStoreTheme/${id}`, after},
-      'unstable',
-    )
+    const response = await adminRequestDoc(GetThemeFileChecksums, session, {id: themeGid(id), after}, 'unstable')
 
     if (!response?.theme?.files?.nodes || !response?.theme?.files?.pageInfo) {
       return checksums
@@ -258,32 +247,43 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
   }
 }
 
-interface UpgradeThemeOptions {
-  fromTheme: number
-  toTheme: number
-  script?: string
-  session: AdminSession
-}
-
-export async function upgradeTheme(upgradeOptions: UpgradeThemeOptions): Promise<Theme | undefined> {
-  const {fromTheme, toTheme, session, script} = upgradeOptions
-  const params = {from_theme: fromTheme, to_theme: toTheme, ...(script && {script})}
-  const response = await request('POST', `/themes`, session, params)
-  return buildTheme(response.json.theme)
-}
-
 export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('PUT', `/themes/${id}`, session, {theme: {id, ...params}})
-  return buildTheme(response.json.theme)
+  const name = params.name
+  if (name === undefined) {
+    throw new Error('Theme name is required')
+  }
+  const response = await adminRequestDoc(
+    ThemeUpdate,
+    session,
+    {
+      id: themeGid(id),
+      name,
+    },
+    'unstable',
+  )
+  const theme = response.themeUpdate?.theme
+  if (!theme) {
+    throw new Error('Invalid response from ThemeUpdate mutation')
+  }
+  return buildTheme({
+    id: parseInt((theme.id as unknown as string).split('/').pop() as string, 10),
+    name: theme.name,
+    role: theme.role.toLowerCase(),
+  })
 }
 
 export async function publishTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   return updateTheme(id, {role: 'main'}, session)
 }
 
-export async function deleteTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('DELETE', `/themes/${id}`, session)
-  return buildTheme(response.json.theme)
+export async function deleteTheme(id: number, session: AdminSession): Promise<boolean | undefined> {
+  const response = await adminRequestDoc(ThemeDelete, session, {id: themeGid(id)}, 'unstable')
+  const themeId = response.themeDelete?.deletedThemeId
+  if (!themeId) {
+    // Check userErrors?
+    throw new Error('Invalid response from ThemeDelete mutation')
+  }
+  return true
 }
 
 async function request<T>(
@@ -358,4 +358,8 @@ function errorMessage(response: RestResponse): string {
   }
 
   return ''
+}
+
+function themeGid(id: number): string {
+  return `gid://shopify/OnlineStoreTheme/${id}`
 }

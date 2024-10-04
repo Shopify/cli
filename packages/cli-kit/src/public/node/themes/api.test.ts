@@ -5,7 +5,6 @@ import {
   ThemeParams,
   updateTheme,
   publishTheme,
-  upgradeTheme,
   fetchChecksums,
   bulkUploadThemeAssets,
   AssetParams,
@@ -14,6 +13,7 @@ import {
 import {RemoteBulkUploadResponse} from './factories.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
+import {UpsertThemeFileBodies} from '../../../cli/api/graphql/admin/generated/upsert_theme_file_bodies.js'
 import {test, vi, expect, describe} from 'vitest'
 import {adminRequestDoc, restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -28,8 +28,8 @@ describe('fetchThemes', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue({
       themes: {
         nodes: [
-          {id: 'gid://shopify/Theme/123', name: 'store theme 1', processing: false, role: 'main'},
-          {id: 'gid://shopify/Theme/456', name: 'store theme 2', processing: true, role: 'unpublished'},
+          {id: 'gid://shopify/OnlineStoreTheme/123', name: 'store theme 1', processing: false, role: 'main'},
+          {id: 'gid://shopify/OnlineStoreTheme/456', name: 'store theme 2', processing: true, role: 'unpublished'},
         ],
         pageInfo: {hasNextPage: false, endCursor: null},
       },
@@ -39,7 +39,7 @@ describe('fetchThemes', () => {
     const themes = await fetchThemes(session)
 
     // Then
-    expect(adminRequestDoc).toHaveBeenCalledWith(GetThemes, session, {after: null}, "unstable")
+    expect(adminRequestDoc).toHaveBeenCalledWith(GetThemes, session, {after: null}, 'unstable')
     expect(themes).toHaveLength(2)
 
     expect(themes[0]!.id).toEqual(123)
@@ -53,7 +53,7 @@ describe('fetchThemes', () => {
   })
 })
 
-describe('fetwchChecksums', () => {
+describe('fetchChecksums', () => {
   test('returns theme checksums', async () => {
     // Given
     vi.mocked(adminRequestDoc).mockResolvedValue({
@@ -89,10 +89,15 @@ describe('fetwchChecksums', () => {
     const checksum = await fetchChecksums(id, session)
 
     // Then
-    expect(adminRequestDoc).toHaveBeenCalledWith(GetThemeFileChecksums, session, {
-      id: `gid://shopify/Theme/${id}`,
-      after: null,
-    }, "unstable")
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      GetThemeFileChecksums,
+      session,
+      {
+        id: `gid://shopify/OnlineStoreTheme/${id}`,
+        after: null,
+      },
+      'unstable',
+    )
     expect(checksum).toHaveLength(3)
     expect(checksum[0]!.key).toEqual('snippets/product-variant-picker.liquid')
     expect(checksum[1]!.key).toEqual('templates/404.json')
@@ -136,65 +141,6 @@ describe('createTheme', () => {
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
     expect(theme!.processing).toBeFalsy()
-  })
-})
-
-describe('upgradeTheme', () => {
-  test('upgrades a theme with a script', async () => {
-    // Given
-    const fromTheme = 123
-    const toTheme = 456
-    const id = 789
-    const name = 'updated-theme'
-    const role = 'unpublished'
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
-      status: 200,
-      headers: {},
-    })
-
-    // When
-    const theme = await upgradeTheme({fromTheme, toTheme, session})
-
-    // Then
-    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {from_theme: fromTheme, to_theme: toTheme}, {})
-    expect(theme).not.toBeNull()
-    expect(theme!.id).toEqual(id)
-    expect(theme!.name).toEqual(name)
-    expect(theme!.role).toEqual(role)
-  })
-
-  test('upgrades a theme without a script', async () => {
-    // Given
-    const fromTheme = 123
-    const toTheme = 456
-    const script = 'update_extension.json contents'
-    const id = 789
-    const name = 'updated-theme'
-    const role = 'unpublished'
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
-      status: 200,
-      headers: {},
-    })
-
-    // When
-    const theme = await upgradeTheme({fromTheme, toTheme, script, session})
-
-    // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'POST',
-      `/themes`,
-      session,
-      {from_theme: fromTheme, to_theme: toTheme, script},
-      {},
-    )
-    expect(theme).not.toBeNull()
-    expect(theme!.id).toEqual(id)
-    expect(theme!.name).toEqual(name)
-    expect(theme!.role).toEqual(role)
   })
 })
 
@@ -362,27 +308,24 @@ describe('bulkUploadThemeAssets', async () => {
       },
     ]
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {results: mockResults},
-      status: 207,
-      headers: {},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      upsertedThemeFiles: [],
     })
 
     // When
     const bulkUploadresults = await bulkUploadThemeAssets(id, assets, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'PUT',
-      `/themes/${id}/assets/bulk`,
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      UpsertThemeFileBodies,
       session,
       {
-        assets: [
-          {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-          {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
-        ],
+        id: `gid://shopify/OnlineStoreTheme/${id}`,
+        files: assets.map(({key, value}) => {
+          return {filename: key, body: {type: 'TEXT', value}}
+        }),
       },
-      {},
+      'unstable',
     )
     expect(bulkUploadresults).toHaveLength(2)
     expect(bulkUploadresults[0]).toEqual({
@@ -413,7 +356,7 @@ describe('bulkUploadThemeAssets', async () => {
       {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
     ]
 
-    vi.mocked(restRequest).mockResolvedValue({
+    vi.mocked(adminRequestDoc).mockResolvedValue({
       json: {},
       status: 404,
       headers: {},
@@ -435,12 +378,8 @@ describe('bulkUploadThemeAssets', async () => {
     ]
     const message = `Cannot delete generated asset 'assets/bla.css'. Delete 'assets/bla.css.liquid' instead.`
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {
-        message,
-      },
-      status: 403,
-      headers: {},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      upsertedThemeFiles: [],
     })
 
     // When

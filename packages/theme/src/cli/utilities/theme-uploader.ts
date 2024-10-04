@@ -3,8 +3,8 @@ import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderWarning, Task} from '@shopify/cli-kit/node/ui'
+import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
@@ -124,18 +124,26 @@ function buildDeleteJob(
   const remoteFilesToBeDeleted = getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
+  if (orderedFiles.length === 0) {
+    return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
+  }
+
   const progress = {current: 0, total: orderedFiles.length}
-  const promise = Promise.all(
-    orderedFiles.map((file) =>
-      deleteThemeAsset(theme.id, file.key, session)
-        .catch((error) => {
-          renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.message})
-        })
-        .finally(() => {
-          progress.current++
-        }),
-    ),
-  ).then(() => {
+  // TODO: handle errors
+  const deleteInBatches = async (files: Checksum[], batchSize: number) => {
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize)
+      // eslint-disable-next-line no-await-in-loop
+      await deleteThemeAssets(
+        theme.id,
+        batch.map((file) => file.key),
+        session,
+      )
+      progress.current += batch.length
+    }
+  }
+
+  const promise = deleteInBatches(orderedFiles, 50).then(() => {
     progress.current = progress.total
   })
 

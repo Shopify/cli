@@ -1,7 +1,7 @@
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchThemeAsset, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {fetchThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -160,14 +160,20 @@ async function performFileReconciliation(
 
   const deleteLocalFiles = localFilesToDelete.map((file) => localThemeFileSystem.delete(file.key))
   const downloadRemoteFiles = filesToDownload.map(async (file) => {
-    const asset = await fetchThemeAsset(targetTheme.id, file.key, session)
+    // TODO: We can fetch more than one.
+    const asset = (await fetchThemeAssets(targetTheme.id, [file.key], session))[0]
     if (asset) {
       return localThemeFileSystem.write(asset)
     }
   })
-  const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
+  // TODO: Chunk this
+  const deleteRemoteFiles = deleteThemeAssets(
+    targetTheme.id,
+    remoteFilesToDelete.map((file) => file.key),
+    session,
+  )
 
-  await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
+  await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, deleteRemoteFiles])
 }
 
 async function partitionFilesByReconciliationStrategy(

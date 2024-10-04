@@ -1,0 +1,9 @@
+mutation themeUpdate($id: ID!, $name: String!) {
+  themeUpdate(id: $id, input: { name: $name } ) {
+    theme {
+      id
+      name
+      role
+    }
+  }
+}

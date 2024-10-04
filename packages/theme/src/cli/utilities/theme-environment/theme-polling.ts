@@ -1,6 +1,6 @@
 import {timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderError} from '@shopify/cli-kit/node/ui'
@@ -89,7 +89,8 @@ async function syncChangedAssets(
       if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
         return
       }
-      const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
+      // TODO: Fetch more than one
+      const asset = (await fetchThemeAssets(targetTheme.id, [file.key], currentSession))[0]
       if (asset) {
         await localFileSystem.write(asset)
         outputInfo(
