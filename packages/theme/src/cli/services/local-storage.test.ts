@@ -38,7 +38,7 @@ describe('local-storage', () => {
   ]
 
   testCases.forEach(({name, func}) => {
-    describe(func.name, () => {
+    describe(name, () => {
       test('throws error when theme store is not set', async () => {
         await inTemporaryDirectory(async (cwd) => {
           const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
