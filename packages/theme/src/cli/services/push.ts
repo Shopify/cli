@@ -147,7 +147,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
-  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
+  const {operationResults, renderThemeSyncProgress} = await uploadTheme(
     theme,
     session,
     themeChecksums,
@@ -161,7 +161,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
     await publishTheme(theme.id, session)
   }
 
-  await handlePushOutput(uploadResults, theme, session, options)
+  await handlePushOutput(operationResults, theme, session, options)
 }
 
 /**

@@ -2,9 +2,9 @@ import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {Result, Checksum, Theme, ThemeFileSystem, Operation} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderWarning, Task} from '@shopify/cli-kit/node/ui'
+import {renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
@@ -29,31 +29,36 @@ export function uploadTheme(
   options: UploadOptions = {},
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
-  const uploadResults: Map<string, Result> = new Map()
+  const operationResults: Map<string, Result> = new Map()
   const getProgress = (params: {current: number; total: number}) =>
     `[${Math.round((params.current / params.total) * 100)}%]`
 
   const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
 
   const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
-    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, uploadResults),
+    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, operationResults),
   )
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
-    .then(() => reportFailedUploads(uploadResults))
-    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options))
+    // .then(() => reportFailedUploads(operationResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, operationResults))
 
   const workPromise = options?.deferPartialWork
-    ? themeCreationPromise
+    ? themeCreationPromise.then(() => {
+        reportFailedUploads(operationResults)
+      })
     : deleteJobPromise
         .then((result) => result.promise)
         .catch(() => {
           renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
         })
+        .then(() => {
+          reportFailedUploads(operationResults)
+        })
 
   return {
-    uploadResults,
+    operationResults,
     workPromise,
     renderThemeSyncProgress: async () => {
       if (options?.deferPartialWork) return
@@ -116,6 +121,7 @@ function buildDeleteJob(
   theme: Theme,
   session: AdminSession,
   options: Pick<UploadOptions, 'nodelete'>,
+  operationResults: Map<string, Result>,
 ): SyncJob {
   if (options.nodelete) {
     return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
@@ -129,7 +135,7 @@ function buildDeleteJob(
     orderedFiles.map((file) =>
       deleteThemeAsset(theme.id, file.key, session)
         .catch((error) => {
-          renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.message})
+          reportDeleteResult(operationResults, file, error)
         })
         .finally(() => {
           progress.current++
@@ -140,6 +146,17 @@ function buildDeleteJob(
   })
 
   return {progress, promise}
+}
+
+function reportDeleteResult(operationResults: Map<string, Result>, file: Checksum, error: Error) {
+  // renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.message})
+
+  operationResults.set(file.key, {
+    key: file.key,
+    operation: Operation.Delete,
+    success: false,
+    errors: {asset: [error.message]},
+  })
 }
 
 function getRemoteFilesToBeDeleted(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem): Checksum[] {
@@ -406,7 +423,7 @@ function reportFailedUploads(uploadResults: Map<string, Result>) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
       const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
-      outputWarn(`Failed to upload file ${key}:`)
+      outputWarn(`Failed to ${result.operation.toLowerCase()} file ${key}:`)
       outputInfo(`${errorMessage}`)
       outputNewline()
     }
