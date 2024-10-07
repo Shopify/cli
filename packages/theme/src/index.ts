@@ -42,3 +42,8 @@ export * from './cli/utilities/theme-ext-environment/theme-ext-server.js'
 /** Storefront authentication support for running the development server on password-protected stores */
 export {isStorefrontPasswordProtected} from './cli/utilities/theme-environment/storefront-session.js'
 export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-password-prompt.js'
+
+// Expose core utilities for developers to build and expand on the CLI
+export {pull} from './cli/services/pull.js'
+export {push} from './cli/services/push.js'
+export {publicFetchStoreThemes as fetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'

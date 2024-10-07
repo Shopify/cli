@@ -24,9 +24,9 @@ interface LoadedAppContextOutput {
  */
 interface LoadedAppContextOptions {
   directory: string
-  clientId?: string
-  forceRelink?: boolean
-  configName?: string
+  forceRelink: boolean
+  clientId: string | undefined
+  configName: string | undefined
 }
 
 /**

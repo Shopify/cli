@@ -272,7 +272,10 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
     deployConfig: async (config, _) => {
-      return config
+      // These are loaded automatically for all modules, but are considered "first class" and not part of extension contracts
+      // If a module needs them, they can access them from the manifest.
+      const {type, handle, uid, ...configWithoutFirstClassFields} = config
+      return configWithoutFirstClassFields
     },
   })
 }

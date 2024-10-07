@@ -83,7 +83,7 @@ describe('setAppInfo', async () => {
         {appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId},
         storage,
       )
-      const got = storage.get('/app2/something')
+      const got = storage.get('/app2/something')!
 
       // Then
       expect(got.appId).toEqual(APP2.appId)
@@ -114,14 +114,29 @@ describe('clearCurrentConfigFile', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
-      setCachedAppInfo({directory: APP1_WITH_CONFIG_FILE.directory, configFile: 'shopify.app.staging.toml'})
+      setCachedAppInfo({directory: APP1_WITH_CONFIG_FILE.directory, configFile: 'shopify.app.staging.toml'}, storage)
 
       // When
       clearCurrentConfigFile(APP1_WITH_CONFIG_FILE.directory, storage)
       const got = getCachedAppInfo(APP1_WITH_CONFIG_FILE.directory, storage)
 
       // Then
-      expect(got?.configFile).toBeUndefined()
+      expect(got).toBeDefined()
+      expect(got!.configFile).toBeUndefined()
+    })
+  })
+
+  test('no-ops if there is no current config in local storage', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+
+      // When
+      clearCurrentConfigFile(APP1_WITH_CONFIG_FILE.directory, storage)
+      const got = getCachedAppInfo(APP1_WITH_CONFIG_FILE.directory, storage)
+
+      // Then
+      expect(got).toBeUndefined()
     })
   })
 })

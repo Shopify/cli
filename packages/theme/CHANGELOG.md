@@ -1,5 +1,20 @@
 # @shopify/theme
 
+## 3.68.0
+
+### Patch Changes
+
+- fc7d5ce58: Fix content in SVG files
+- cce54b10b: Fix Theme Access authentication on `shopify theme dev` and `shopify theme console` commands
+- 53459a23f: Fixes a bug where some users were unable to intialize their app dev command with theme app extensions
+- 492225c47: Fix cart/add request in development.
+- dc30dca87: Fix encoding of certain characters in HTML responses in the new theme dev server.
+- a2f31c249: Fix hot reload on sections
+- a1887fc14: Fix serving local assets that contain non-printable characters.
+- d6c661f06: Update checksum calculation to no longer minify assets before calculating
+- Updated dependencies [4d89691ad]
+  - @shopify/cli-kit@3.68.0
+
 ## 3.67.0
 
 ### Minor Changes

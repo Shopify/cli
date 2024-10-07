@@ -1,12 +1,33 @@
-import {fetchStoreThemes} from './fetch.js'
+import {fetchStoreThemes, publicFetchStoreThemes} from './fetch.js'
 import {fetchThemes} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, vi, describe, expect} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
 
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/session')
+
+// This function serves as a wrapper around fetchStoreThemes
+// which allows library users to pass a password to authenticate with the Theme API.
+describe('publicFetchStoreThemes', () => {
+  test('authenticates and fetches themes', async () => {
+    // Given
+    const store = 'my-store'
+    const password = 'password123'
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+    vi.mocked(fetchThemes).mockResolvedValue([theme(1, 'unpublished'), theme(2, 'live'), theme(3, 'unpublished')])
+
+    // When
+    await publicFetchStoreThemes(store, password)
+
+    // Then
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(store, password)
+    expect(fetchThemes).toHaveBeenCalledWith(session)
+  })
+})
 
 describe('fetchStoreThemes', () => {
   test('returns only allowed themes', async () => {

@@ -57,6 +57,14 @@ describe('setupDevServer', () => {
       },
     ],
     [
+      'assets/file3.css.liquid',
+      {
+        checksum: '3',
+        key: 'assets/file3.css.liquid',
+        value: '.some-class {}',
+      },
+    ],
+    [
       'assets/file-with-nbsp.js',
       {
         checksum: '1',
@@ -302,6 +310,28 @@ describe('setupDevServer', () => {
           headers: {referer},
         }),
       )
+    })
+
+    test('proxies .css.liquid assets with injected CDN', async () => {
+      const fetchStub = vi.fn(
+        () =>
+          new Response(
+            `.some-class {
+              font-family: "My Font";
+              src: url(//${defaultServerContext.session.storeFqdn}/cdn/shop/t/img/assets/font.woff2);
+            }`,
+            {headers: {'content-type': 'text/css'}},
+          ),
+      )
+
+      vi.stubGlobal('fetch', fetchStub)
+
+      const eventPromise = dispatchEvent('/cdn/shop/t/img/assets/file3.css')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {body} = await eventPromise
+      expect(body).toMatch(`src: url(/cdn/shop/t/img/assets/font.woff2)`)
     })
   })
 })

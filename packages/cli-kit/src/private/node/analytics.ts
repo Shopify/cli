@@ -1,3 +1,4 @@
+import {getLastSeenAuthMethod} from './session.js'
 import {hashString} from '../../public/node/crypto.js'
 import {getPackageManager, packageManagerFromUserAgent} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
@@ -61,6 +62,7 @@ interface EnvironmentData {
   env_cloud: string
   env_package_manager: string
   env_is_global: boolean
+  env_auth_method: string
 }
 
 export async function getEnvironmentData(config: Interfaces.Config): Promise<EnvironmentData> {
@@ -83,6 +85,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_cloud: cloudEnvironment().platform,
     env_package_manager: await getPackageManager(cwd()),
     env_is_global: currentProcessIsGlobal(),
+    env_auth_method: await getLastSeenAuthMethod(),
   }
 }
 
