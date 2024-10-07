@@ -5,7 +5,6 @@ import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
-import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {pushUpdatesForDevSession} from './dev-session.js'
 import {
   testAppAccessConfigExtension,
@@ -26,6 +25,7 @@ import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {initializeDevelopmentExtensionServer} from '@shopify/theme'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -197,7 +197,7 @@ describe('setup-dev-processes', () => {
     expect(res.processes[4]).toMatchObject({
       type: 'theme-app-extensions',
       prefix: 'theme-extensions',
-      function: runThemeAppExtensionsServer,
+      function: initializeDevelopmentExtensionServer,
       options: {
         adminSession: {
           storeFqdn: 'store.myshopify.io',
