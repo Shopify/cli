@@ -529,20 +529,19 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           const mergedConfig = {...configuration, ...extensionConfig}
 
           // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
-          const {extensions, path, ...restConfig} = mergedConfig
-          if (!restConfig.handle) {
+          if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+              outputContent`Missing handle for extension "${mergedConfig.name}" at ${relativePath(
                 appDirectory,
                 configurationPath,
               )}`,
               undefined,
               configurationPath,
             )
-            restConfig.handle = 'unknown-handle'
+            mergedConfig.handle = 'unknown-handle'
           }
-          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
+          return this.createExtensionInstance(mergedConfig.type, mergedConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
