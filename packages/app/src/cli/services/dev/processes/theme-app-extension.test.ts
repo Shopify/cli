@@ -1,4 +1,4 @@
-import {setupPreviewThemeAppExtensionsProcess, findOrCreateHostTheme} from './theme-app-extension-next.js'
+import {setupPreviewThemeAppExtensionsProcess, findOrCreateHostTheme} from './theme-app-extension.js'
 import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {testApp, testOrganizationApp, testThemeExtensions} from '../../../models/app/app.test-data.js'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
