@@ -1,10 +1,8 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
 import build from '../../services/build.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -52,12 +50,13 @@ export default class Build extends AppCommand {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+    const {app} = await linkedAppContext({
       directory: flags.path,
-      userProvidedConfigName: flags.config,
+      clientId: flags['client-id'],
+      forceRelink: false,
+      configName: flags.config,
     })
+
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
 
     return {app}
