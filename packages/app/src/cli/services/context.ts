@@ -830,7 +830,8 @@ async function linkIfNecessary(
   const performAppLink = reset || (enableLinkingPrompt && unlinked)
 
   if (performAppLink) {
-    return link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
+    const {configuration} = await link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
+    return configuration
   }
 }
 
