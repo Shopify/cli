@@ -206,14 +206,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     developerPlatformClient,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
     const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, developerPlatformClient)
-    return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
+    return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, this.features, moduleId)
   }
 
   async commonDeployConfig(
     apiKey: string,
     appConfiguration: AppConfigurationWithoutPath,
   ): Promise<{[key: string]: unknown} | undefined> {
-    const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const deployConfig = await this.specification.deployConfig?.(
+      this.configuration,
+      this.directory,
+      apiKey,
+      this.features,
+      undefined,
+    )
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined

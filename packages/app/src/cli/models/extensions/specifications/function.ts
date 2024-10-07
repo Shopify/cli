@@ -77,7 +77,7 @@ const functionSpec = createExtensionSpecification({
   ],
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
-  deployConfig: async (config, directory, apiKey, moduleId) => {
+  deployConfig: async (config, directory, apiKey, _, moduleId) => {
     let inputQuery: string | undefined
     const inputQueryPath = joinPath(directory, 'input.graphql')
     if (await fileExists(inputQueryPath)) {

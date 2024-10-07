@@ -8,6 +8,7 @@ import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
+import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -17,6 +18,7 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
+  | 'localization'
 
 export interface TransformationConfig {
   [key: string]: string
@@ -50,6 +52,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     config: TConfiguration,
     directory: string,
     apiKey: string,
+    modeuleFeatures: ExtensionFeature[],
     moduleId?: string,
   ) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
@@ -271,10 +274,17 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
-    deployConfig: async (config, _) => {
+    deployConfig: async (config, directory) => {
       // These are loaded automatically for all modules, but are considered "first class" and not part of extension contracts
       // If a module needs them, they can access them from the manifest.
-      const {type, handle, uid, ...configWithoutFirstClassFields} = config
+      let {type, handle, uid, ...configWithoutFirstClassFields} = config
+      //Check for 'localization' feature and load the locales configuration
+      if (appModuleFeatures?.includes('localization')) {
+        configWithoutFirstClassFields = {
+          ...configWithoutFirstClassFields,
+          localization: await loadLocalesConfig(directory, config.type),
+        }
+      }
       return configWithoutFirstClassFields
     },
   })
