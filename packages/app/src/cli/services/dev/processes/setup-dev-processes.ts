@@ -140,7 +140,6 @@ export async function setupDevProcesses({
       remoteApp,
       localApp,
       storeFqdn,
-      developerPlatformClient,
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
     }),

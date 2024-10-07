@@ -1,5 +1,4 @@
-import {BaseProcess} from './types.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {BaseProcess, DevProcessFunction} from './types.js'
 import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
@@ -13,7 +12,11 @@ import {initializeDevelopmentExtensionServer, ensureValidPassword, isStorefrontP
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ThemeAppExtensionServerOptions {
-  developerPlatformClient: DeveloperPlatformClient
+  theme: Theme
+  adminSession: AdminSession
+  storefrontPassword?: string
+  themeExtensionDirectory: string
+  themeExtensionPort: number
 }
 
 interface HostThemeSetupOptions {
@@ -22,7 +25,6 @@ interface HostThemeSetupOptions {
   storeFqdn: string
   theme?: string
   themeExtensionPort?: number
-  developerPlatformClient: DeveloperPlatformClient
 }
 
 export interface PreviewThemeAppExtensionsProcess extends BaseProcess<ThemeAppExtensionServerOptions> {
@@ -91,20 +93,29 @@ export async function setupPreviewThemeAppExtensionsProcess(
   return {
     type: 'theme-app-extensions',
     prefix: 'theme-extensions',
-    function: async () => {
-      const server = await initializeDevelopmentExtensionServer(theme, {
-        adminSession,
-        storefrontPassword,
-        themeExtensionDirectory,
-        themeExtensionPort,
-      })
-
-      await server.start()
-    },
+    function: runThemeAppExtensionsServer,
     options: {
-      developerPlatformClient: options.developerPlatformClient,
+      theme,
+      adminSession,
+      storefrontPassword,
+      themeExtensionDirectory,
+      themeExtensionPort,
     },
   }
+}
+
+export const runThemeAppExtensionsServer: DevProcessFunction<ThemeAppExtensionServerOptions> = async (
+  _,
+  {theme, adminSession, storefrontPassword, themeExtensionDirectory, themeExtensionPort},
+) => {
+  const server = await initializeDevelopmentExtensionServer(theme, {
+    adminSession,
+    storefrontPassword,
+    themeExtensionDirectory,
+    themeExtensionPort,
+  })
+
+  await server.start()
 }
 
 export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: string): Promise<Theme> {
