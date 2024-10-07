@@ -6,9 +6,6 @@ import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-export const appTomlInitialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
-export const appTomlScopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
-
 // toml does not support comments and there aren't currently any good/maintained libs for this,
 // so for now, we manually add comments
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
@@ -83,6 +80,9 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
 }
 
 export function addDefaultCommentsToToml(fileString: string) {
+  const appTomlInitialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
+  const appTomlScopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
+
   const fileSplit = fileString.split(/(\r\n|\r|\n)/)
   fileSplit.unshift('\n')
   fileSplit.unshift(appTomlInitialComment)
