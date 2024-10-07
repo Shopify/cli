@@ -19,6 +19,7 @@ export const ActiveAppReleaseQuery = gql`
           name
           appModules {
             uuid
+            userIdentifier
             handle
             config
             specification {
@@ -45,6 +46,7 @@ interface AppModuleSpecification {
 
 interface AppModule {
   uuid: string
+  userIdentifier: string
   handle: string
   config: JsonMapType
   specification: AppModuleSpecification
