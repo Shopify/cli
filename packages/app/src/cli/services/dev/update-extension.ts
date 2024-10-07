@@ -51,16 +51,13 @@ export async function updateExtensionDraft({
     config = (await extension.deployConfig({apiKey, appConfiguration})) || {}
   }
 
-  let draftableConfig: {[key: string]: unknown} = {
+  const draftableConfig: {[key: string]: unknown} = {
     ...config,
     serialized_script: encodedFile,
   }
   if (extension.isFunctionExtension) {
     const compiledFiles = await readFile(extension.outputPath, {encoding: 'base64'})
-    draftableConfig = {
-      ...draftableConfig,
-      uploaded_files: {'dist/index.wasm': compiledFiles},
-    }
+    draftableConfig.uploaded_files = {'dist/index.wasm': compiledFiles}
   }
   const extensionInput: ExtensionUpdateDraftMutationVariables = {
     apiKey,
