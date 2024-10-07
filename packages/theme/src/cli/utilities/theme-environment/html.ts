@@ -32,8 +32,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         let html = await patchRenderingResponse(ctx, event, response)
 
-        html = prettifySyntaxErrors(html)
-
         assertThemeId(response, html, String(theme.id))
 
         if (ctx.options.liveReload !== 'off') {
@@ -84,24 +82,6 @@ function logRequestLine(event: H3Event, response: Response) {
       `${event.method} ${truncatedPath} ${durationString}`,
     )}`,
   )
-}
-
-export function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid(?: syntax)? error \([^\n]+(?:\n|<)/g, getErrorSection)
-}
-
-function getErrorSection(error: string) {
-  const html = String.raw
-  const color = 'orangered'
-
-  return html`
-    <div
-      id="section-error"
-      style="border: solid thick ${color}; background: color(from ${color} srgb r g b / 0.2); padding: 20px;"
-    >
-      <pre>${error}</pre>
-    </div>
-  `
 }
 
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
