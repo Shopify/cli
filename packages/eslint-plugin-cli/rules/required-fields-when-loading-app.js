@@ -12,7 +12,7 @@ module.exports = {
   },
 
   create: function (context) {
-    const loadFunctions = ['loadApp', 'loadAppConfiguration', 'inFunctionContext']
+    const loadFunctions = ['loadApp', 'loadAppConfiguration', 'inFunctionContext', 'linkedAppContext']
 
     return {
       CallExpression: function (node) {

@@ -1,12 +1,6 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
-import {ensureGenerateContext} from './context.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {
-  DeveloperPlatformClient,
-  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
-} from '../utilities/developer-platform-client.js'
-import {AppInterface} from '../models/app/app.js'
-import {loadApp} from '../models/app/loader.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
@@ -19,7 +13,8 @@ import {
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
 import {ExtensionTemplate} from '../models/app/template.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {OrganizationApp} from '../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -29,27 +24,24 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface GenerateOptions {
+  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  specifications: RemoteAwareExtensionSpecification[]
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
   directory: string
   reset: boolean
-  apiKey?: string
   template?: string
   flavor?: string
   name?: string
   cloneUrl?: string
-  configName?: string
-  developerPlatformClient?: DeveloperPlatformClient
 }
 
 async function generate(options: GenerateOptions) {
-  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
-  const remoteApp = await ensureGenerateContext({...options, developerPlatformClient})
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
-  const app: AppInterface = await loadApp({
-    directory: options.directory,
-    userProvidedConfigName: options.configName,
-    specifications,
-  })
+  const developerPlatformClient = options.developerPlatformClient
+  const remoteApp = options.remoteApp
+  const specifications = options.specifications
+  const app = options.app
+
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
@@ -62,7 +54,6 @@ async function generate(options: GenerateOptions) {
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
   renderSuccessMessage(generatedExtension, app.packageManager)
-  return {app}
 }
 
 async function buildPromptOptions(

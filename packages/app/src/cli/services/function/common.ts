@@ -1,9 +1,9 @@
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
+import {linkedAppContext} from '../app-context.js'
+import {RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
@@ -29,10 +29,18 @@ export async function inFunctionContext({
 }: {
   path: string
   userProvidedConfigName?: string
-  callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<AppInterface>
+  callback: (
+    app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>,
+    ourFunction: ExtensionInstance<FunctionConfigType>,
+  ) => Promise<AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>>
 }) {
-  const specifications = await loadLocalExtensionsSpecifications()
-  const app: AppInterface = await loadApp({specifications, directory: path, userProvidedConfigName})
+  const {app} = await linkedAppContext({
+    directory: path,
+    clientId: undefined,
+    forceRelink: false,
+    userProvidedConfigName,
+    mode: 'strict',
+  })
 
   const allFunctions = app.allExtensions.filter(
     (ext) => ext.isFunctionExtension,

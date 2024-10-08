@@ -1,6 +1,5 @@
 import {appFlags} from '../../../flags.js'
-import {loadApp} from '../../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
@@ -34,14 +33,14 @@ export default class ConfigLink extends AppCommand {
       apiKey: flags['client-id'],
     }
 
-    await link(options)
+    const result = await link(options)
 
-    const specifications = await loadLocalExtensionsSpecifications()
-
-    const app = await loadApp({
-      specifications,
+    const {app} = await linkedAppContext({
       directory: flags.path,
-      userProvidedConfigName: undefined,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: result.state.configurationFileName,
+      mode: 'strict',
     })
 
     return {app}

@@ -44,7 +44,7 @@ describe('linkedAppContext', () => {
       const result = await linkedAppContext({
         directory: tmp,
         forceRelink: false,
-        configName: undefined,
+        userProvidedConfigName: undefined,
         clientId: undefined,
       })
 
@@ -91,7 +91,7 @@ describe('linkedAppContext', () => {
       const result = await linkedAppContext({
         directory: tmp,
         forceRelink: false,
-        configName: undefined,
+        userProvidedConfigName: undefined,
         clientId: undefined,
       })
 
@@ -119,7 +119,12 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      await linkedAppContext({directory: tmp, forceRelink: false, configName: undefined, clientId: undefined})
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+      })
       const result = localStorage.getCachedAppInfo(tmp)
 
       // Then
@@ -148,7 +153,7 @@ describe('linkedAppContext', () => {
         directory: tmp,
         clientId: newClientId,
         forceRelink: false,
-        configName: undefined,
+        userProvidedConfigName: undefined,
       })
 
       // Then
@@ -187,7 +192,7 @@ describe('linkedAppContext', () => {
       await linkedAppContext({
         directory: tmp,
         forceRelink: true,
-        configName: undefined,
+        userProvidedConfigName: undefined,
         clientId: undefined,
       })
 

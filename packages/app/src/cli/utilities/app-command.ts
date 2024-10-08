@@ -1,5 +1,6 @@
 import {configurationFileNames} from '../constants.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -9,7 +10,7 @@ import BaseCommand from '@shopify/cli-kit/node/base-command'
  */
 export interface AppCommandOutput {
   // session: PartnersSession (PENDING)
-  app: AppInterface
+  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
 }
 
 export default abstract class AppCommand extends BaseCommand {

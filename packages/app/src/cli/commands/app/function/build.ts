@@ -20,6 +20,7 @@ export default class FunctionBuild extends AppCommand {
 
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FunctionBuild)
+
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
