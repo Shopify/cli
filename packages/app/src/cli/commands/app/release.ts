@@ -1,10 +1,8 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -64,11 +62,12 @@ export default class Release extends AppCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      mode: 'strict',
     })
 
     const requiredNonTTYFlags = ['force']
@@ -77,8 +76,8 @@ export default class Release extends AppCommand {
 
     await release({
       app,
-      apiKey,
-      reset: flags.reset,
+      remoteApp,
+      developerPlatformClient,
       force: flags.force,
       version: flags.version,
     })
