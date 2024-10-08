@@ -3,7 +3,8 @@ import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/typ
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
@@ -21,19 +22,46 @@ export function pollThemeEditorChanges(
 ) {
   outputDebug('Listening for changes in the theme editor')
 
-  return setTimeout(() => {
-    pollRemoteJsonChanges(targetTheme, session, remoteChecksum, localFileSystem, options)
-      .then((latestChecksums) => {
-        pollThemeEditorChanges(targetTheme, session, latestChecksums, localFileSystem, options)
+  let failedPollingAttempts = 0
+  let latestChecksums = remoteChecksum
+  const poll = async () => {
+    // Asynchronously wait for the polling interval, similar to a setInterval
+    // but ensure the polling work is done before starting the next interval.
+    await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
+
+    // eslint-disable-next-line require-atomic-updates
+    latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
+      .then((checksums) => {
+        failedPollingAttempts = 0
+        return checksums
       })
-      .catch((err) => {
-        if (err instanceof PollingError) {
-          renderError({body: err.message})
+      .catch((err: Error | AbortError) => {
+        failedPollingAttempts++
+        if (err instanceof AbortError) {
+          renderFatalError(err)
         } else {
-          throw err
+          renderError({headline: 'Error while polling for changes.', body: err.stack})
         }
+
+        if (failedPollingAttempts >= 5) {
+          renderFatalError(
+            new AbortError('Too many polling errors...', 'Please check your internet connection and try again.'),
+          )
+
+          process.exit(1)
+        }
+
+        return latestChecksums
       })
-  }, POLLING_INTERVAL)
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  setTimeout(async () => {
+    while (true) {
+      // eslint-disable-next-line no-await-in-loop
+      await poll()
+    }
+  })
 }
 
 export async function pollRemoteJsonChanges(
