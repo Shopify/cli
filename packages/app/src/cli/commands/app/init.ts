@@ -6,8 +6,7 @@ import {selectOrCreateApp} from '../../services/dev/select-app.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {loadApp} from '../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -105,7 +104,7 @@ export default class Init extends AppCommand {
 
     const platformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
 
-    const result = await initService({
+    const {outputDirectory} = await initService({
       name: selectedApp.title,
       app: selectedApp,
       packageManager: inferredPackageManager,
@@ -119,12 +118,12 @@ export default class Init extends AppCommand {
       },
     })
 
-    const specifications = await loadLocalExtensionsSpecifications()
-
-    const app = await loadApp({
-      specifications,
-      directory: result.outputDirectory,
+    const {app} = await linkedAppContext({
+      directory: outputDirectory,
+      clientId: undefined,
+      forceRelink: false,
       userProvidedConfigName: undefined,
+      mode: 'strict',
     })
 
     return {app}

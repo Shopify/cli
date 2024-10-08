@@ -194,7 +194,7 @@ async function init(options: InitOptions) {
   })
 
   // Link the new project to the selected App
-  await link(
+  const result = await link(
     {
       directory: outputDirectory,
       apiKey: options.app.apiKey,
