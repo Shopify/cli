@@ -13,7 +13,8 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -144,27 +145,38 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       return file.value || file.attachment || ''
     })
 
-    const syncPromise = contentPromise.then(async (content) => {
-      if (!unsyncedFileKeys.has(fileKey)) return false
+    const syncPromise = contentPromise
+      .then(async (content) => {
+        if (!unsyncedFileKeys.has(fileKey)) return false
 
-      const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+        const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
-      if (result?.success) {
+        if (!result?.success) {
+          throw new Error(
+            result?.errors?.asset
+              ? `\n\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+              : 'Response was not successful.',
+          )
+        }
+
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('update', fileKey)
-      } else if (result?.errors?.asset) {
-        const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
 
-        renderError({
-          headline: 'Failed to sync file to remote theme.',
-          body: errorMessage,
-        })
+        return true
+      })
+      .catch((error: Error | AbortError) => {
+        const headline = `Failed to upload file "${fileKey}" to remote theme.`
+        // Even if there's a syncing error, we can still continue
+        // with local development instead of interrupting the process.
+        if (error instanceof AbortError) {
+          error.message = `${headline}.\n${error.message}`
+          renderFatalError(error)
+        } else {
+          renderError({headline, body: error.message})
+        }
 
         return false
-      }
-
-      return true
-    })
+      })
 
     emitEvent(eventName, {
       fileKey,
@@ -195,13 +207,22 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     emitEvent('unlink', {fileKey})
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
-      .then(async (success) => {
-        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+      .then((success) => {
+        if (!success) throw new Error(`Response was not successful.`)
+
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
-      .catch((error) => {
-        outputDebug(error.message)
+      .catch((error: Error | AbortError) => {
+        const headline = `Failed to delete file "${fileKey}" from remote theme.`
+        // Even if there's a deleting error, we can still continue
+        // with local development instead of interrupting the process.
+        if (error instanceof AbortError) {
+          error.message = `${headline}.\n${error.message}`
+          renderFatalError(error)
+        } else {
+          renderError({headline, body: error.stack})
+        }
       })
   }
 
