@@ -37,10 +37,7 @@ interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const developerPlatformClient = options.developerPlatformClient
-  const remoteApp = options.remoteApp
-  const specifications = options.specifications
-  const app = options.app
+  const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
@@ -48,7 +45,7 @@ async function generate(options: GenerateOptions) {
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
-  await saveAnalyticsMetadata(promptAnswers, options.template)
+  await saveAnalyticsMetadata(promptAnswers, template)
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)

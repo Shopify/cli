@@ -1,7 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import versionList from '../../../services/versions-list.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
@@ -63,6 +63,7 @@ export default class VersionsList extends AppCommand {
       json: flags.json,
     })
 
-    return {app}
+    // PENDING: Use linkedAppContext
+    return {app: app as AppLinkedInterface}
   }
 }

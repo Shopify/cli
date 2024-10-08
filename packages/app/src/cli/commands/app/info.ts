@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {Format, info} from '../../services/info.js'
 import {loadApp} from '../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
@@ -53,6 +53,8 @@ export default class AppInfo extends AppCommand {
       }),
     )
     if (app.errors) process.exit(2)
-    return {app}
+
+    // PENDING: Use linkedAppContext
+    return {app: app as AppLinkedInterface}
   }
 }

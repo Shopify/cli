@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
@@ -121,6 +121,7 @@ export default class Deploy extends AppCommand {
       commitReference: flags['source-control-url'],
     })
 
-    return {app: result.app}
+    // PENDING: Use linkedAppContext
+    return {app: result.app as AppLinkedInterface}
   }
 }

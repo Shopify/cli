@@ -3,6 +3,7 @@ import {dev, DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -189,6 +190,8 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     }
 
     const result = await dev(devOptions)
-    return {app: result.app}
+
+    // PENDING: Use linkedAppContext
+    return {app: result.app as AppLinkedInterface}
   }
 }

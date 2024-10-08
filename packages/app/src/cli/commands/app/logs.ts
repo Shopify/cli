@@ -3,6 +3,7 @@ import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -69,6 +70,8 @@ export default class Logs extends AppCommand {
     }
 
     const app = await logs(logOptions)
-    return {app}
+
+    // PENDING: Use linkedAppContext
+    return {app: app as AppLinkedInterface}
   }
 }

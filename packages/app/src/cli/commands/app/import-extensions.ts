@@ -4,7 +4,7 @@ import {buildTomlObject as buildMarketingActivityTomlObject} from '../../service
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {importExtensions} from '../../services/import-extensions.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
@@ -84,7 +84,7 @@ export default class ImportExtensions extends AppCommand {
     const migrationChoice = migrationChoices.find((choice) => choice.value === promptAnswer)
     if (migrationChoice === undefined) {
       renderFatalError(new AbortError('Invalid migration choice'))
-      return {app}
+      return {app: app as AppLinkedInterface}
     }
     await importExtensions({
       app,
@@ -93,6 +93,7 @@ export default class ImportExtensions extends AppCommand {
       buildTomlObject: migrationChoice.buildTomlObject,
     })
 
-    return {app}
+    // PENDING: Use linkedAppContext
+    return {app: app as AppLinkedInterface}
   }
 }
