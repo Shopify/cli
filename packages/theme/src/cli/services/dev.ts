@@ -184,6 +184,14 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
       [
         {
           link: {
+            label: 'Preview your gift cards',
+            url: `${localUrl}/gift_cards/[store_id]/preview`,
+          },
+        },
+      ],
+      [
+        {
+          link: {
             label: 'Customize your theme at the theme editor',
             url: `${remoteUrl}/admin/themes/${themeId}/editor`,
           },
@@ -198,14 +206,6 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
         },
         {
           subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
-        },
-      ],
-      [
-        {
-          link: {
-            label: 'Preview your gift cards',
-            url: `${localUrl}/gift_cards/123/preview`,
-          },
         },
       ],
     ],
