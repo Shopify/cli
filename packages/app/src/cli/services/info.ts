@@ -1,10 +1,11 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {AppInterface, getAppScopes} from '../models/app/app.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AppInterface, AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {OrganizationApp} from '../models/organization.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {relativePath} from '@shopify/cli-kit/node/path'
@@ -17,25 +18,27 @@ export interface InfoOptions {
   configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
-  developerPlatformClient?: DeveloperPlatformClient
+  developerPlatformClient: DeveloperPlatformClient
 }
 interface Configurable {
   type: string
   externalType: string
 }
 
-export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
-  options.developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
+export async function info(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  options: InfoOptions,
+): Promise<OutputMessage> {
   if (options.webEnv) {
-    return infoWeb(app, options)
+    return infoWeb(app, remoteApp, options)
   } else {
     return infoApp(app, options)
   }
 }
 
-async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
-  return outputEnv(app, format)
+async function infoWeb(app: AppInterface, remoteApp: OrganizationApp, {format}: InfoOptions): Promise<OutputMessage> {
+  return outputEnv(app, remoteApp, format)
 }
 
 async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
@@ -123,7 +126,7 @@ class AppInfo {
       configName: this.options.configName,
       enableLinkingPrompt: false,
     })
-    const developerPlatformClient = remoteApp?.developerPlatformClient ?? this.options.developerPlatformClient!
+    const developerPlatformClient = remoteApp?.developerPlatformClient ?? this.options.developerPlatformClient
 
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,

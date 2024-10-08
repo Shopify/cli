@@ -38,7 +38,7 @@ export default class EnvPull extends AppCommand {
       mode: 'report',
     })
     const envFile = joinPath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configuration.path))
-    outputInfo(await pullEnv(app, remoteApp, {envFile}))
+    outputInfo(await pullEnv({app, remoteApp, envFile}))
     return {app}
   }
 }
