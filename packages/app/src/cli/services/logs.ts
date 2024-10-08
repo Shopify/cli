@@ -2,9 +2,11 @@ import {DevContextOptions, ensureDevContext, storeFromFqdn, formInfoBoxBody, res
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
-import {AppInterface} from '../models/app/app.js'
-import {loadAppConfiguration, getAppConfigurationFileName} from '../models/app/loader.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {getAppConfigurationFileName} from '../models/app/loader.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {OrganizationApp} from '../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {consoleLog} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -12,6 +14,9 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 export type Format = 'json' | 'text'
 
 interface LogsOptions {
+  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
   directory: string
   reset: boolean
   apiKey?: string
@@ -45,7 +50,7 @@ export async function logs(commandOptions: LogsOptions) {
 
   const variables = {
     shopIds: logsConfig.storeIds,
-    apiKey: logsConfig.apiKey,
+    apiKey: logsConfig.remoteApp.apiKey,
     token: '',
   }
 
@@ -90,32 +95,37 @@ export async function logs(commandOptions: LogsOptions) {
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   storeIds: string[]
   storeNameById: Map<string, string>
+  localApp: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
-  apiKey: string
-  localApp: AppInterface
 }> {
-  const {configuration} = await loadAppConfiguration({
-    ...commandOptions,
-    userProvidedConfigName: commandOptions.configName,
-  })
-  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
   const primaryStoreFqdn = commandOptions.storeFqdns?.[0]
   const devContextOptions: DevContextOptions = {
     ...commandOptions,
     storeFqdn: primaryStoreFqdn,
-    developerPlatformClient,
+    developerPlatformClient: commandOptions.developerPlatformClient,
     customInfoBox: true,
   }
-  const {storeId, storeFqdn, remoteApp, localApp, organization, configFile} = await ensureDevContext(devContextOptions)
+  const {storeId, storeFqdn, organization, configFile} = await ensureDevContext(devContextOptions)
   if (commandOptions.format === 'text') {
-    renderAppLogsConfigInfo(remoteApp.title, storeFqdn, commandOptions.storeFqdns, configFile, organization)
+    renderAppLogsConfigInfo(
+      commandOptions.remoteApp.title,
+      storeFqdn,
+      commandOptions.storeFqdns,
+      configFile,
+      organization,
+    )
   }
   const storeNameById = new Map<string, string>()
   storeNameById.set(storeId, storeFqdn)
   if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
     await Promise.all(
       commandOptions.storeFqdns?.slice(1).map((storeFqdn) => {
-        return storeFromFqdn(storeFqdn, remoteApp.organizationId, developerPlatformClient).then((store) => {
+        return storeFromFqdn(
+          storeFqdn,
+          commandOptions.remoteApp.organizationId,
+          commandOptions.developerPlatformClient,
+        ).then((store) => {
           storeNameById.set(store.shopId, storeFqdn)
         })
       }),
@@ -123,14 +133,12 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   }
   const storeIds = Array.from(storeNameById.keys())
 
-  const apiKey = remoteApp.apiKey
-
   return {
     storeIds,
     storeNameById,
-    developerPlatformClient: remoteApp.developerPlatformClient ?? developerPlatformClient,
-    apiKey,
-    localApp,
+    localApp: commandOptions.app,
+    remoteApp: commandOptions.remoteApp,
+    developerPlatformClient: commandOptions.developerPlatformClient,
   }
 }
 
