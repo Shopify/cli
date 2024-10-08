@@ -1,4 +1,4 @@
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppLinkedInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {logMetadataForLoadedContext} from '../../context.js'
 
@@ -9,22 +9,12 @@ import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface PullEnvOptions {
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   envFile: string
 }
 
-export async function pullEnv(
-  app: AppInterface,
-  remoteApp: OrganizationApp,
-  {envFile}: PullEnvOptions,
-): Promise<OutputMessage> {
-  return updateEnvFile(app, remoteApp, envFile)
-}
-
-async function updateEnvFile(
-  app: AppInterface,
-  remoteApp: OrganizationApp,
-  envFile: PullEnvOptions['envFile'],
-): Promise<OutputMessage> {
+export async function pullEnv({app, remoteApp, envFile}: PullEnvOptions): Promise<OutputMessage> {
   await logMetadataForLoadedContext(remoteApp)
 
   const updatedValues = {
