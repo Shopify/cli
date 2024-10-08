@@ -5646,16 +5646,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "theme",
-        "development",
-        "live",
-        "nodelete",
-        "only",
-        "ignore",
-        "force",
-        "development-theme-id"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",

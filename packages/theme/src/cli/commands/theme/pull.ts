@@ -1,7 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {pull, PullFlags} from '../../services/pull.js'
-import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
@@ -57,10 +56,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     }),
   }
 
-  static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
-
   async run(): Promise<void> {
-    showEmbeddedCLIWarning()
     const {flags} = await this.parse(Pull)
     const pullFlags: PullFlags = {
       path: flags.path,
