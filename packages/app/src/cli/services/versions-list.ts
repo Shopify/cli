@@ -125,7 +125,7 @@ export default async function versionList(options: VersionListOptions) {
 
   const link = outputToken.link(
     developerPlatformClient.webUiName,
-    [await developerPlatformClient.appDeepLink(result.remoteApp), 'versions'].join('/'),
+    [await developerPlatformClient.appDeepLink(options.remoteApp), 'versions'].join('/'),
   )
 
   outputInfo(outputContent`\nView all ${String(totalResults)} app versions in the ${link}`)
