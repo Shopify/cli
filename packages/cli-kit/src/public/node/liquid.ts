@@ -40,10 +40,10 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
   outputDebug(outputContent`Copying template from directory ${outputToken.path(from)} to ${outputToken.path(to)}`)
   const templateFiles: string[] = await glob(joinPath(from, '**/*'), {dot: true})
 
-  const ignoreFilePath = joinPath(from, '.shopifyignore')
-  let ignorePatterns: string[] = []
-  if (await fileExists(ignoreFilePath)) {
-    ignorePatterns = (await readFile(ignoreFilePath)).split('\n').filter((line) => line.trim().length > 0)
+  const bypassPaths = joinPath(from, '.cli-liquid-bypass')
+  let bypassPatterns: string[] = []
+  if (await fileExists(bypassPaths)) {
+    bypassPatterns = (await readFile(bypassPaths)).split('\n').filter((line) => line.trim().length > 0)
   }
 
   const sortedTemplateFiles = templateFiles
@@ -53,7 +53,7 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
   await Promise.all(
     sortedTemplateFiles.map(async (templateItemPath) => {
       const outputPath = await renderLiquidTemplate(joinPath(to, relativePath(from, templateItemPath)), data)
-      const isIgnored = ignorePatterns.some((pattern) => {
+      const bypass = bypassPatterns.some((pattern) => {
         const path = relativePath(from, templateItemPath)
         const cleanPattern = pattern.replace(/^\.\//, '')
 
@@ -62,7 +62,7 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
 
       if (await isDirectory(templateItemPath)) {
         await mkdir(outputPath)
-      } else if (templateItemPath.endsWith('.liquid') && !isIgnored) {
+      } else if (templateItemPath.endsWith('.liquid') && !bypass) {
         await mkdir(dirname(outputPath))
         const content = await readFile(templateItemPath)
         const contentOutput = await renderLiquidTemplate(content, data)
