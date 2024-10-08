@@ -1,10 +1,9 @@
 import {themeFlags} from '../../flags.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {getRandomName} from '@shopify/cli-kit/common/string'
 
 export default class Share extends ThemeCommand {
   static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
@@ -30,11 +29,16 @@ export default class Share extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Share)
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Share.cli2Flags})
 
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+    const pushFlags: PushFlags = {
+      force: flags.force,
+      path: flags.path,
+      password: flags.password,
+      store: flags.store,
+      unpublished: true,
+      theme: getRandomName('creative'),
+    }
 
-    await execCLI2(['theme', 'share', flags.path, ...flagsToPass], {store, adminToken: adminSession.token})
+    await push(pushFlags)
   }
 }

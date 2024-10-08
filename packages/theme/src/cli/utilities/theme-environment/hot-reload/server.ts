@@ -1,7 +1,6 @@
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
-import {prettifySyntaxErrors} from '../html.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {
   createError,
@@ -238,8 +237,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
             })
           }
 
-          const html = await patchRenderingResponse(ctx, event, response)
-          return prettifySyntaxErrors(html)
+          return patchRenderingResponse(ctx, event, response)
         })
         .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
           let headline = `Failed to render section on Hot Reload with status ${error.statusCode} (${error.statusMessage}).`
