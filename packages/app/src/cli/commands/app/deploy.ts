@@ -1,13 +1,11 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -100,17 +98,19 @@ export default class Deploy extends AppCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const app: AppInterface = await loadApp({
+    const {app} = await linkedAppContext({
       directory: flags.path,
+      clientId: undefined,
+      forceRelink: false,
       userProvidedConfigName: flags.config,
-      specifications: await loadLocalExtensionsSpecifications(),
+      mode: 'report',
     })
 
     const requiredNonTTYFlags = ['force']
     if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    const result = await deploy({
+    await deploy({
       app,
       apiKey,
       reset: flags.reset,
@@ -121,6 +121,6 @@ export default class Deploy extends AppCommand {
       commitReference: flags['source-control-url'],
     })
 
-    return {app: result.app}
+    return {app}
   }
 }
