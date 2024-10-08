@@ -1,10 +1,11 @@
 import {getOrGenerateSchemaPath, inFunctionContext} from './common.js'
 import {loadApp} from '../../models/app/loader.js'
-import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
-import {AppInterface} from '../../models/app/app.js'
+import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
 import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -87,15 +88,16 @@ describe('ensure we are within a function context', () => {
 
 describe('getOrGenerateSchemaPath', () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  let app: AppInterface
-
+  let app: AppLinkedInterface
+  let developerPlatformClient: DeveloperPlatformClient
   beforeEach(() => {
     extension = {
       directory: '/path/to/function',
       configuration: {},
     } as ExtensionInstance<FunctionConfigType>
 
-    app = {} as AppInterface
+    app = {} as AppLinkedInterface
+    developerPlatformClient = testDeveloperPlatformClient()
   })
 
   test('returns the path if the schema file exists', async () => {
@@ -104,7 +106,7 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValue(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app)
+    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient)
 
     // Then
     expect(result).toBe(expectedPath)
@@ -119,7 +121,7 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValueOnce(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app)
+    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient)
 
     // Then
     expect(result).toBe(expectedPath)

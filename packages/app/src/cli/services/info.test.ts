@@ -1,7 +1,7 @@
 import {InfoOptions, info} from './info.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
-import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {MinimalAppIdentifiers, OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -10,6 +10,7 @@ import {
   testOrganizationApp,
   testUIExtension,
   testAppConfigExtensions,
+  testAppLinked,
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -81,6 +82,8 @@ function infoOptions(): InfoOptions {
 }
 
 describe('info', () => {
+  const remoteApp = testOrganizationApp()
+
   test('returns update shopify cli reminder when last version is greater than current version', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -89,7 +92,7 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
     })
@@ -132,7 +135,7 @@ describe('info', () => {
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
 
       // Then
       expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
@@ -159,7 +162,7 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
 
       // Then
       expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
@@ -178,7 +181,7 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
 
       // Then
       expect(unstyled(result)).toMatch(/App name\s*Not yet configured/)
@@ -196,7 +199,7 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
       // When
-      const result = stringifyMessage(await info(app, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
       expect(unstyled(result)).not.toMatch('CLI reminder')
@@ -212,7 +215,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, {...infoOptions(), webEnv: true})
+      const result = await info(app, remoteApp, {...infoOptions(), webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -233,7 +236,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, {...infoOptions(), format: 'json', webEnv: true})
+      const result = await info(app, remoteApp, {...infoOptions(), webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -282,7 +285,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
-      const result = await info(app, infoOptions())
+      const result = await info(app, remoteApp, infoOptions())
 
       // Then
       expect(result).toContain('Extensions with errors')
@@ -321,7 +324,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
-      const result = await info(app, infoOptions())
+      const result = await info(app, remoteApp, infoOptions())
 
       // Then
       expect(result).toContain('📂 handle-for-extension-1')
@@ -342,7 +345,7 @@ describe('info', () => {
         },
       })
       const configExtension = await testAppConfigExtensions()
-
+      const developerPlatformClient = testDeveloperPlatformClient()
       const app = mockApp({
         directory: tmp,
         app: {
@@ -353,7 +356,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
-      const result = await info(app, {format: 'json', webEnv: false})
+      const result = await info(app, remoteApp, {format: 'json', webEnv: false, developerPlatformClient})
 
       // Then
       expect(result).toBeInstanceOf(TokenizedString)
@@ -375,13 +378,13 @@ function mockApp({
   currentVersion?: string
   configContents?: string
   app?: Partial<AppInterface>
-}): AppInterface {
+}): AppLinkedInterface {
   const nodeDependencies: {[key: string]: string} = {}
   nodeDependencies['@shopify/cli'] = currentVersion
 
   writeFileSync(joinPath(directory, 'shopify.app.toml'), configContents)
 
-  return testApp({
+  return testAppLinked({
     name: 'my app',
     directory,
     configuration: {
