@@ -1,4 +1,4 @@
-import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
@@ -66,7 +66,8 @@ export async function inFunctionContext({
 
 export async function getOrGenerateSchemaPath(
   extension: ExtensionInstance<FunctionConfigType>,
-  app: AppInterface,
+  app: AppLinkedInterface,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<string | undefined> {
   const path = joinPath(extension.directory, 'schema.graphql')
   if (await fileExists(path)) {
@@ -75,6 +76,7 @@ export async function getOrGenerateSchemaPath(
 
   await generateSchemaService({
     app,
+    developerPlatformClient,
     extension,
     stdout: false,
     path: extension.directory,
