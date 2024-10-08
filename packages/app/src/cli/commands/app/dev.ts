@@ -192,7 +192,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     const result = await dev(devOptions)
 
-    // PENDING: Do a proper loading of the app for dev
+    // PENDING: Stop using ensureDevContext
     const app = result.app as AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
     return {app}
   }

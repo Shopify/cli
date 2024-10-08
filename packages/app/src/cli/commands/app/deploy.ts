@@ -103,13 +103,14 @@ export default class Deploy extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
+      mode: 'strict',
     })
 
     const requiredNonTTYFlags = ['force']
     if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
+    // PENDING: stop using ensureDeployContext
     await deploy({
       app,
       apiKey,
