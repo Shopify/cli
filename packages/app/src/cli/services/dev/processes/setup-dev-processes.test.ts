@@ -6,7 +6,7 @@ import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session.js'
-import {runThemeAppExtensionsServer} from './theme-app-extension-next.js'
+import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
