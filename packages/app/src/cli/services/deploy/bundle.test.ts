@@ -1,5 +1,5 @@
 import {bundleAndBuildExtensions} from './bundle.js'
-import {testApp, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
@@ -104,6 +104,37 @@ describe('bundleAndBuildExtensions', () => {
       expect(extensionBundleMock).toHaveBeenCalledTimes(2)
       expect(file.writeFileSync).not.toHaveBeenCalled()
 
+      await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
+    })
+  })
+
+  test('creates a zip file for a function extension', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+
+      const functionExtension = await testFunctionExtension()
+      const extensionBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
+        file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
+      })
+      functionExtension.buildForBundle = extensionBundleMock
+      const app = testApp({allExtensions: [functionExtension]})
+
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+
+      // When
+      await bundleAndBuildExtensions({app, identifiers, bundlePath}, {})
+
+      // Then
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
   })
