@@ -20,7 +20,7 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
@@ -228,6 +228,27 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
 
   const loader = new AppLoader<AppConfiguration, TModuleSpec>({
     mode: options.mode,
+    loadedConfiguration,
+  })
+  return loader.loaded()
+}
+
+export async function loadAppUsingConfigurationState<TConfig extends AppConfigurationState>(
+  configState: TConfig,
+  {
+    specifications,
+    remoteFlags,
+    mode,
+  }: {
+    specifications: RemoteAwareExtensionSpecification[]
+    remoteFlags?: Flag[]
+    mode: AppLoaderMode
+  },
+): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
+  const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
+
+  const loader = new AppLoader({
+    mode,
     loadedConfiguration,
   })
   return loader.loaded()
@@ -508,20 +529,19 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           const mergedConfig = {...configuration, ...extensionConfig}
 
           // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
-          const {extensions, path, ...restConfig} = mergedConfig
-          if (!restConfig.handle) {
+          if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+              outputContent`Missing handle for extension "${mergedConfig.name}" at ${relativePath(
                 appDirectory,
                 configurationPath,
               )}`,
               undefined,
               configurationPath,
             )
-            restConfig.handle = 'unknown-handle'
+            mergedConfig.handle = 'unknown-handle'
           }
-          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
+          return this.createExtensionInstance(mergedConfig.type, mergedConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
@@ -622,7 +642,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   ) {
     if (!extensionInstance) return
 
-    const configContent = await extensionInstance.commonDeployConfig(apiKey, appConfiguration)
+    const configContent = await extensionInstance.deployConfig({apiKey, appConfiguration})
     return configContent ? extensionInstance : undefined
   }
 
@@ -750,7 +770,7 @@ interface AppConfigurationStateBasics {
   configurationFileName: AppConfigurationFileName
 }
 
-type AppConfigurationStateLinked = AppConfigurationStateBasics & {
+export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
   state: 'connected-app'
   basicConfiguration: BasicAppConfigurationWithoutModules
 }

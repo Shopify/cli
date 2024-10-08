@@ -151,10 +151,6 @@ import {
   DevStoresByOrgQuery,
   DevStoresByOrgQueryVariables,
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
-import {
-  FunctionUploadUrlGenerate,
-  FunctionUploadUrlGenerateMutation,
-} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -405,10 +401,6 @@ export class PartnersClient implements DeveloperPlatformClient {
         }
       }),
     }
-  }
-
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
-    return this.requestDoc(FunctionUploadUrlGenerate)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
