@@ -1,9 +1,10 @@
-import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
+import {renderCurrentlyUsedConfigInfo} from './context.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {OrganizationApp} from '../models/organization.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
@@ -82,20 +83,17 @@ async function fetchAppVersions(
 }
 
 interface VersionListOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: false
+  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
   json: boolean
-  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const result = await ensureVersionsListContext(options)
-  const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
+  const developerPlatformClient = options.developerPlatformClient
+  const {organizationId, title} = options.remoteApp
 
-  const {organizationId, title} = result.remoteApp
-
-  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, result.remoteApp, options.json)
+  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, options.remoteApp, options.json)
 
   const {businessName: org} = await fetchOrgFromId(organizationId, developerPlatformClient)
 
