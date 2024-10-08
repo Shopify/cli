@@ -4,7 +4,7 @@ import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderWarning, Task} from '@shopify/cli-kit/node/ui'
+import {renderError, Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
@@ -48,8 +48,12 @@ export function uploadTheme(
     ? themeCreationPromise
     : deleteJobPromise
         .then((result) => result.promise)
-        .catch(() => {
-          renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
+        .catch((error) => {
+          // Do not throw here since the process still works locally.
+          renderError({
+            headline: 'Failed to delete outdated files from remote theme.',
+            body: error.stack,
+          })
         })
 
   return {
@@ -129,7 +133,7 @@ function buildDeleteJob(
     orderedFiles.map((file) =>
       deleteThemeAsset(theme.id, file.key, session)
         .catch((error) => {
-          renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.message})
+          renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.stack})
         })
         .finally(() => {
           progress.current++
