@@ -8,6 +8,7 @@ import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -272,10 +273,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
     deployConfig: async (config, _) => {
-      // These are loaded automatically for all modules, but are considered "first class" and not part of extension contracts
-      // If a module needs them, they can access them from the manifest.
-      const {type, handle, uid, ...configWithoutFirstClassFields} = config
-      return configWithoutFirstClassFields
+      return configWithoutFirstClassFields(config)
     },
   })
 }
@@ -404,4 +402,20 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
     }
     return result
   }, {})
+}
+
+/**
+ * Remove the first class fields from the config.
+ *
+ * These are the fields that are not part of the specific extension contract, but are added automatically to all modules tomls.
+ * So it must be cleaned before validation or deployment.
+ * (this was initially done automatically by zod, but is not supported by JSON Schema & contracts)
+ *
+ * @param config - The config to remove the first class fields from
+ *
+ * @returns The config without the first class fields
+ */
+export function configWithoutFirstClassFields(config: JsonMapType): JsonMapType {
+  const {type, handle, uid, path, extensions, ...configWithoutFirstClassFields} = config
+  return configWithoutFirstClassFields
 }
