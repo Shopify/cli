@@ -3,6 +3,8 @@ import {dev, DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -189,6 +191,9 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     }
 
     const result = await dev(devOptions)
-    return {app: result.app}
+
+    // PENDING: Do a proper loading of the app for dev
+    const app = result.app as AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+    return {app}
   }
 }
