@@ -1,8 +1,8 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
-import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 
 import {logMetadataForLoadedContext} from '../../context.js'
 
+import {OrganizationApp} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -12,18 +12,24 @@ interface PullEnvOptions {
   envFile: string
 }
 
-export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Promise<OutputMessage> {
-  return updateEnvFile(app, envFile)
+export async function pullEnv(
+  app: AppInterface,
+  remoteApp: OrganizationApp,
+  {envFile}: PullEnvOptions,
+): Promise<OutputMessage> {
+  return updateEnvFile(app, remoteApp, envFile)
 }
 
-async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<OutputMessage> {
-  const orgApp = await fetchAppFromConfigOrSelect(app)
-
-  await logMetadataForLoadedContext(orgApp)
+async function updateEnvFile(
+  app: AppInterface,
+  remoteApp: OrganizationApp,
+  envFile: PullEnvOptions['envFile'],
+): Promise<OutputMessage> {
+  await logMetadataForLoadedContext(remoteApp)
 
   const updatedValues = {
-    SHOPIFY_API_KEY: orgApp.apiKey,
-    SHOPIFY_API_SECRET: orgApp.apiSecretKeys[0]?.secret,
+    SHOPIFY_API_KEY: remoteApp.apiKey,
+    SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0]?.secret,
     SCOPES: getAppScopes(app.configuration),
   }
 

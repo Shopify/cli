@@ -24,7 +24,7 @@ export default class FunctionBuild extends AppCommand {
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
+      callback: async (app, _, ourFunction) => {
         await buildFunctionExtension(ourFunction, {
           app,
           stdout: process.stdout,

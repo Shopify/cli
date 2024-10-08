@@ -30,7 +30,7 @@ export default class EnvPull extends AppCommand {
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(EnvPull)
 
-    const {app} = await linkedAppContext({
+    const {app, remoteApp} = await linkedAppContext({
       directory: flags.path,
       clientId: undefined,
       forceRelink: false,
@@ -38,7 +38,7 @@ export default class EnvPull extends AppCommand {
       mode: 'report',
     })
     const envFile = joinPath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configuration.path))
-    outputInfo(await pullEnv(app, {envFile}))
+    outputInfo(await pullEnv(app, remoteApp, {envFile}))
     return {app}
   }
 }

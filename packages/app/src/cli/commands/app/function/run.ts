@@ -44,7 +44,7 @@ export default class FunctionRun extends AppCommand {
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
+      callback: async (app, _, ourFunction) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
         if (flags.export !== undefined) {

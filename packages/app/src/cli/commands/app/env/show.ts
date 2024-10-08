@@ -19,14 +19,14 @@ export default class EnvShow extends AppCommand {
 
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(EnvShow)
-    const {app} = await linkedAppContext({
+    const {app, remoteApp} = await linkedAppContext({
       directory: flags.path,
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
       mode: 'report',
     })
-    outputInfo(await showEnv(app))
+    outputInfo(await showEnv(app, remoteApp))
     return {app}
   }
 }

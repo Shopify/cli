@@ -1,9 +1,9 @@
-import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
 import {linkedAppContext} from '../app-context.js'
-import {RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
@@ -25,18 +25,21 @@ export const functionFlags = {
 export async function inFunctionContext({
   path,
   userProvidedConfigName,
+  apiKey,
   callback,
 }: {
   path: string
   userProvidedConfigName?: string
+  apiKey?: string
   callback: (
-    app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>,
+    app: AppLinkedInterface,
+    developerPlatformClient: DeveloperPlatformClient,
     ourFunction: ExtensionInstance<FunctionConfigType>,
-  ) => Promise<AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>>
+  ) => Promise<AppLinkedInterface>
 }) {
-  const {app} = await linkedAppContext({
+  const {app, developerPlatformClient} = await linkedAppContext({
     directory: path,
-    clientId: undefined,
+    clientId: apiKey,
     forceRelink: false,
     userProvidedConfigName,
     mode: 'strict',
@@ -48,14 +51,14 @@ export async function inFunctionContext({
   const ourFunction = allFunctions.find((fun) => fun.directory === path)
 
   if (ourFunction) {
-    return callback(app, ourFunction)
+    return callback(app, developerPlatformClient, ourFunction)
   } else if (isTerminalInteractive()) {
     const selectedFunction = await renderAutocompletePrompt({
       message: 'Which function?',
       choices: allFunctions.map((shopifyFunction) => ({label: shopifyFunction.handle, value: shopifyFunction})),
     })
 
-    return callback(app, selectedFunction)
+    return callback(app, developerPlatformClient, selectedFunction)
   } else {
     throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
   }

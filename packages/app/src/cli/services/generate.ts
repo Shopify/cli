@@ -1,6 +1,6 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
@@ -24,7 +24,7 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface GenerateOptions {
-  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  app: AppLinkedInterface
   specifications: RemoteAwareExtensionSpecification[]
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient

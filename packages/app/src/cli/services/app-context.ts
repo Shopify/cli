@@ -2,14 +2,14 @@ import {appFromId} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppLoaderMode, getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 
 interface LoadedAppContextOutput {
-  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   specifications: RemoteAwareExtensionSpecification[]
