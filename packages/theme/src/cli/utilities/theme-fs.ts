@@ -5,7 +5,7 @@ import {
   getPatternsFromShopifyIgnore,
 } from './asset-ignore.js'
 import {Notifier} from './notifier.js'
-import {renderCatchError} from './errors.js'
+import {createRenderCatchError} from './errors.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -163,7 +163,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         return true
       })
-      .catch(renderCatchError(fileKey, 'upload'))
+      .catch(createRenderCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
       fileKey,
@@ -200,7 +200,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
-      .catch(renderCatchError(fileKey, 'delete'))
+      .catch(createRenderCatchError(fileKey, 'delete'))
   }
 
   const directoriesToWatch = new Set(

@@ -1,5 +1,5 @@
 import {timestampDateFormat} from '../../constants.js'
-import {renderCatchError} from '../errors.js'
+import {renderThrownError} from '../errors.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -46,7 +46,7 @@ export function pollThemeEditorChanges(
 
         if (error.message !== lastError) {
           lastError = error.message
-          renderCatchError('Error while polling for changes.')(error)
+          renderThrownError('Error while polling for changes.', error)
         }
 
         if (failedPollingAttempts >= maxPollingAttempts) {
