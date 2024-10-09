@@ -5,10 +5,9 @@ import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
+import {abortCatchError} from '../errors.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {createServer} from 'node:http'
 import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -30,17 +29,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 }
 
 function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
-  const abort = (error: Error | AbortError) => {
-    const headline = 'Failed to perform the initial theme synchronization.'
-    if (error instanceof AbortError) {
-      error.message = `${headline}\n${error.message}`
-      renderFatalError(error)
-    } else {
-      renderError({headline, body: error.stack})
-    }
-
-    process.exit(1)
-  }
+  const abort = abortCatchError('Failed to perform the initial theme synchronization.')
 
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session).catch(abort)
 
@@ -54,6 +43,7 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
       return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
         nodelete: ctx.options.noDelete,
         deferPartialWork: true,
+        backgroundWorkCatch: abort,
       })
     })
     .catch(abort)

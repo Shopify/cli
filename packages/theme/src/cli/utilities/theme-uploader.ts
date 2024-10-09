@@ -5,12 +5,13 @@ import {renderCatchError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, Task} from '@shopify/cli-kit/node/ui'
+import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
   nodelete?: boolean
   deferPartialWork?: boolean
+  backgroundWorkCatch?: (error: Error) => never
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -47,15 +48,16 @@ export function uploadTheme(
 
   const workPromise = options?.deferPartialWork
     ? themeCreationPromise
-    : deleteJobPromise
-        .then((result) => result.promise)
-        .catch((error) => {
-          // Do not throw here since the process still works locally.
-          renderError({
-            headline: 'Failed to delete outdated files from remote theme.',
-            body: error.stack,
-          })
-        })
+    : deleteJobPromise.then((result) => result.promise)
+
+  if (options?.backgroundWorkCatch) {
+    // Aggregate all backgorund work in a single promise and handle errors
+    Promise.all([
+      themeCreationPromise,
+      uploadJobPromise.then((result) => result.promise),
+      deleteJobPromise.then((result) => result.promise),
+    ]).catch(options.backgroundWorkCatch)
+  }
 
   return {
     uploadResults,

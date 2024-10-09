@@ -28,3 +28,21 @@ export function renderCatchError(resource: string, preset?: 'delete' | 'upload')
     }
   }
 }
+
+/**
+ * Renders a fatal error banner and exits the process without continuing.
+ * @param headline - The headline for the error.
+ * @returns A function that accepts an error and renders it.
+ */
+export function abortCatchError(headline: string) {
+  return (error: Error | AbortError): never => {
+    if (error instanceof AbortError) {
+      error.message = `${headline}\n${error.message}`
+      renderFatalError(error)
+    } else {
+      renderError({headline, body: error.message})
+    }
+
+    process.exit(1)
+  }
+}
