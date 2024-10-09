@@ -129,11 +129,16 @@ function buildDeleteJob(
   const remoteFilesToBeDeleted = getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
+  let failedDeleteAttempts = 0
   const progress = {current: 0, total: orderedFiles.length}
   const promise = Promise.all(
     orderedFiles.map((file) =>
       deleteThemeAsset(theme.id, file.key, session)
-        .catch(renderCatchError(file.key, 'delete'))
+        .catch((error: Error) => {
+          failedDeleteAttempts++
+          if (failedDeleteAttempts > 3) throw error
+          renderCatchError(file.key, 'delete')(error)
+        })
         .finally(() => {
           progress.current++
         }),
