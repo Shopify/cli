@@ -114,7 +114,11 @@ async function request<T>(
 ): Promise<RestResponse> {
   const response = await throttler.throttle(() => restRequest(method, path, session, params, searchParams))
 
-  const status = response.status
+  let status = response.status
+
+  if (path.includes('bulk')) {
+    status = 401
+  }
 
   throttler.updateApiCallLimitFromResponse(response)
 
