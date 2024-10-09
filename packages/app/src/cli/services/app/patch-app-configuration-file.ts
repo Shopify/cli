@@ -12,12 +12,17 @@ import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
  * @param path - The path to the app configuration file.
  * @param patch - The patch to apply to the app configuration file.
  */
-export async function patchAppConfigurationFile(path: string, patch: {[key: string]: unknown}, schema: zod.ZodTypeAny) {
+export async function patchAppConfigurationFile(
+  path: string,
+  patch: {[key: string]: unknown},
+  schema: zod.AnyZodObject,
+) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
   const updatedConfig = deepMergeObjects(configuration, patch)
   // Re-parse the config with the schema to validate the patch and keep the same order in the file
-  const validatedConfig = schema.parse(updatedConfig)
+  // Make every field optional to not crash on invalid tomls that are missing fields.
+  const validatedConfig = schema.partial().parse(updatedConfig)
   const encodedString = encodeToml(validatedConfig)
   const fileContents = addDefaultCommentsToToml(encodedString)
   await writeFile(path, fileContents)

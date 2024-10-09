@@ -91,16 +91,20 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(appWithConfig.configuration.path, {
-      application_url: 'https://example.com',
-      auth: {
-        redirect_urls: [
-          'https://example.com/auth/callback',
-          'https://example.com/auth/shopify/callback',
-          'https://example.com/api/auth/callback',
-        ],
+    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+      appWithConfig.configuration.path,
+      {
+        application_url: 'https://example.com',
+        auth: {
+          redirect_urls: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
+        },
       },
-    })
+      expect.any(Object),
+    )
   })
 
   test('throws an error if requests has a user error', async () => {
@@ -173,21 +177,25 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(appWithConfig.configuration.path, {
-      application_url: 'https://example.com',
-      auth: {
-        redirect_urls: [
-          'https://example.com/auth/callback',
-          'https://example.com/auth/shopify/callback',
-          'https://example.com/api/auth/callback',
-        ],
+    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+      appWithConfig.configuration.path,
+      {
+        application_url: 'https://example.com',
+        auth: {
+          redirect_urls: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
+        },
+        app_proxy: {
+          url: 'https://example.com',
+          subpath: 'subpath',
+          prefix: 'prefix',
+        },
       },
-      app_proxy: {
-        url: 'https://example.com',
-        subpath: 'subpath',
-        prefix: 'prefix',
-      },
-    })
+      expect.any(Object),
+    )
   })
 })
 
@@ -332,9 +340,13 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration.path, {
-      build: {automatically_update_urls_on_dev: true},
-    })
+    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+      localApp.configuration.path,
+      {
+        build: {automatically_update_urls_on_dev: true},
+      },
+      expect.any(Object),
+    )
   })
 })
 

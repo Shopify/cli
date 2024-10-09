@@ -1324,9 +1324,13 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: true})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(app.configuration.path, {
-      build: {include_config_on_deploy: true},
-    })
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
+      app.configuration.path,
+      {
+        build: {include_config_on_deploy: true},
+      },
+      expect.any(Object),
+    )
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1371,9 +1375,13 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(app.configuration.path, {
-      build: {include_config_on_deploy: false},
-    })
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
+      app.configuration.path,
+      {
+        build: {include_config_on_deploy: false},
+      },
+      expect.any(Object),
+    )
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -1476,9 +1484,13 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: false})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(app.configuration.path, {
-      build: {include_config_on_deploy: false},
-    })
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
+      app.configuration.path,
+      {
+        build: {include_config_on_deploy: false},
+      },
+      expect.any(Object),
+    )
 
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
