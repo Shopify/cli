@@ -40,7 +40,8 @@ export default class ConfigLink extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: result.state.configurationFileName,
-      mode: 'strict',
+      // Using report because a bad extension config shouldn't prevent the app from being linked
+      mode: 'report',
     })
 
     return {app}
