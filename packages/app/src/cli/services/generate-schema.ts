@@ -1,4 +1,5 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
+import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -27,7 +28,10 @@ export async function ensureConnectedAppFunctionContext(
   const {app} = options
   const developerPlatformClient =
     options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
+  let apiKey =
+    options.apiKey ||
+    getAppIdentifiers({app}, developerPlatformClient).app ||
+    (await getCachedAppInfo(app.directory))?.apiKey
 
   if (!apiKey) {
     if (!isTerminalInteractive()) {
@@ -37,7 +41,13 @@ export async function ensureConnectedAppFunctionContext(
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app.creationDefaultOptions())).apiKey
+    const promptApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
+    apiKey = promptApp.apiKey
+
+    await setCachedAppInfo({
+      apiKey: promptApp.apiKey,
+      directory: app.directory,
+    })
   }
   return {apiKey, developerPlatformClient}
 }

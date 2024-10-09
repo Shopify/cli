@@ -1,17 +1,18 @@
 import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './context.js'
-import * as identifiers from '../models/app/identifiers.js'
+import * as localStorage from './local-storage.js'
+import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
 import {
   testApp,
   testDeveloperPlatformClient,
   testFunctionExtension,
   testOrganizationApp,
 } from '../models/app/app.test-data.js'
-import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
-import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import * as identifiers from '../models/app/identifiers.js'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
+import {beforeEach, describe, expect, vi, test, MockedFunction} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as output from '@shopify/cli-kit/node/output'
 
@@ -22,6 +23,7 @@ vi.mock('../models/app/identifiers.js', async () => {
   return {
     ...identifiers,
     getAppIdentifiers: vi.fn(),
+    getCachedAppInfo: vi.fn(),
   }
 })
 vi.mock('./context.js', async () => {
@@ -31,6 +33,26 @@ vi.mock('./context.js', async () => {
     fetchOrCreateOrganizationApp: vi.fn(),
   }
 })
+vi.mock('./local-storage.js', async () => {
+  const localStorage: any = await vi.importActual('./local-storage.js')
+  return {
+    ...localStorage,
+    setCachedAppInfo: vi.fn(),
+    getCachedAppInfo: vi.fn(),
+  }
+})
+
+vi.mock('./context')
+vi.mock('./local-storage')
+vi.mock('./local-storage.js', async () => {
+  const localStorage: any = await vi.importActual('./local-storage.js')
+  return {
+    ...localStorage,
+    setCachedAppInfo: vi.fn(),
+  }
+})
+vi.mock('../utilities/developer-platform-client')
+vi.mock('../models/app/identifiers')
 
 describe('generateSchemaService', () => {
   test('Save the latest GraphQL schema to ./[extension]/schema.graphql when stdout flag is ABSENT', async () => {
@@ -211,6 +233,8 @@ describe('generateSchemaService', () => {
     const fetchOrCreateOrganizationApp = localEnvironment.fetchOrCreateOrganizationApp as MockedFunction<
       typeof localEnvironment.fetchOrCreateOrganizationApp
     >
+    const setCachedAppInfo = localStorage.setCachedAppInfo as MockedFunction<typeof localStorage.setCachedAppInfo>
+    const getCachedAppInfo = localStorage.getCachedAppInfo as MockedFunction<typeof localStorage.getCachedAppInfo>
 
     beforeEach(async () => {
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
@@ -277,7 +301,7 @@ describe('generateSchemaService', () => {
       })
     })
 
-    test('prompts for app if no API key is provided in interactive mode', async () => {
+    test('prompts for app if no API key is provided and sets cached api key when in interactive mode', async () => {
       // Given
       const app = testApp()
       const extension = await testFunctionExtension()
@@ -303,6 +327,46 @@ describe('generateSchemaService', () => {
         version,
         type,
       })
+
+      expect(fetchOrCreateOrganizationApp).toHaveBeenCalled()
+      expect(setCachedAppInfo).toHaveBeenCalledWith({
+        apiKey: promptApiKey,
+        directory: app.directory,
+      })
+    })
+
+    test('uses cached API key when no API key is provided and cache exists', async () => {
+      // Given
+      const app = testApp()
+      const extension = await testFunctionExtension()
+      const {
+        configuration: {api_version: version},
+        type,
+      } = extension
+      const cachedApiKey = 'cached-api-key'
+
+      vi.spyOn(localStorage, 'getCachedAppInfo').mockResolvedValue({apiKey: cachedApiKey, directory: app.directory})
+      vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+      const developerPlatformClient = testDeveloperPlatformClient()
+
+      // When
+      await generateSchemaService({
+        app,
+        extension,
+        path: '',
+        stdout: true,
+        developerPlatformClient,
+      })
+
+      // Then
+      expect(localStorage.getCachedAppInfo).toHaveBeenCalledWith(app.directory)
+      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
+        apiKey: cachedApiKey,
+        version,
+        type,
+      })
+      expect(fetchOrCreateOrganizationApp).not.toHaveBeenCalled()
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
     })
 
     test('aborts if no API key is provided in non-interactive mode', async () => {
