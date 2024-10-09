@@ -84,21 +84,36 @@ async function syncChangedAssets(
   localFileSystem: ThemeFileSystem,
   assetsChangedOnRemote: Checksum[],
 ) {
+  const filesToGet = assetsChangedOnRemote.filter(
+    (file) => localFileSystem.files.get(file.key)?.checksum !== file.checksum,
+  )
+
+  // Chunk by 50
+  const chunks = []
+  for (let i = 0; i < filesToGet.length; i += 50) {
+    chunks.push(filesToGet.slice(i, i + 50))
+  }
+
   await Promise.all(
-    assetsChangedOnRemote.map(async (file) => {
-      if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
-        return
-      }
-      // TODO: Fetch more than one
-      const asset = (await fetchThemeAssets(targetTheme.id, [file.key], currentSession))[0]
-      if (asset) {
-        await localFileSystem.write(asset)
-        outputInfo(
-          outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
-            `download ${asset.key} from remote theme`,
-          )}`,
+    chunks.map(async (chunk) => {
+      return fetchThemeAssets(
+        targetTheme.id,
+        chunk.map((file) => file.key),
+        currentSession,
+      ).then((assets) => {
+        return Promise.all(
+          assets.map(async (asset) => {
+            if (asset) {
+              await localFileSystem.write(asset)
+              outputInfo(
+                outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                  '»',
+                )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
+              )
+            }
+          }),
         )
-      }
+      })
     }),
   )
 }

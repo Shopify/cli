@@ -159,19 +159,38 @@ async function performFileReconciliation(
   const {localFilesToDelete, filesToDownload, remoteFilesToDelete} = partitionedFiles
 
   const deleteLocalFiles = localFilesToDelete.map((file) => localThemeFileSystem.delete(file.key))
-  const downloadRemoteFiles = filesToDownload.map(async (file) => {
-    // TODO: We can fetch more than one.
-    const asset = (await fetchThemeAssets(targetTheme.id, [file.key], session))[0]
-    if (asset) {
-      return localThemeFileSystem.write(asset)
-    }
+
+  const downloadChunks = []
+  for (let i = 0; i < filesToDownload.length; i += 50) {
+    downloadChunks.push(filesToDownload.slice(i, i + 50))
+  }
+  const downloadRemoteFiles = downloadChunks.map(async (files) => {
+    const assets = await fetchThemeAssets(
+      targetTheme.id,
+      files.map((file) => file.key),
+      session,
+    )
+    return Promise.all(
+      assets.map((asset) => {
+        if (asset) {
+          return localThemeFileSystem.write(asset)
+        }
+      }),
+    )
   })
-  // TODO: Chunk this
-  const deleteRemoteFiles = deleteThemeAssets(
-    targetTheme.id,
-    remoteFilesToDelete.map((file) => file.key),
-    session,
-  )
+
+  const deleteChunks = []
+  for (let i = 0; i < remoteFilesToDelete.length; i += 50) {
+    deleteChunks.push(remoteFilesToDelete.slice(i, i + 50))
+  }
+
+  const deleteRemoteFiles = deleteChunks.map((files) => {
+    return deleteThemeAssets(
+      targetTheme.id,
+      files.map((file) => file.key),
+      session,
+    )
+  })
 
   await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, deleteRemoteFiles])
 }

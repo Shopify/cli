@@ -255,9 +255,7 @@ describe('pollRemoteJsonChanges', async () => {
       await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
 
       // Then
-      expect(fetchThemeAssets).toHaveBeenCalledTimes(2)
-      expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset1.json'], adminSession)
-      expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset3.json'], adminSession)
+      expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset1.json', 'templates/asset3.json'], adminSession)
       expect(fetchThemeAssets).not.toHaveBeenCalledWith(1, ['templates/asset2.json'], adminSession)
     })
   })
