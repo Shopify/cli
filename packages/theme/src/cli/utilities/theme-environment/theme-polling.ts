@@ -51,7 +51,10 @@ export function pollThemeEditorChanges(
 
         if (failedPollingAttempts >= maxPollingAttempts) {
           renderFatalError(
-            new AbortError('Too many polling errors...', 'Please check your internet connection and try again.'),
+            new AbortError(
+              'Too many polling errors...',
+              'Please check the errors above and ensure you have a stable internet connection.',
+            ),
           )
 
           process.exit(1)
