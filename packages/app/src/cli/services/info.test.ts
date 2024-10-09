@@ -236,7 +236,7 @@ describe('info', () => {
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
-      const result = await info(app, remoteApp, {...infoOptions(), webEnv: true})
+      const result = await info(app, remoteApp, {...infoOptions(), format: 'json', webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`

@@ -46,6 +46,7 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
 
       // Then
@@ -58,6 +59,7 @@ describe('linkedAppContext', () => {
         }),
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
+        specifications: [],
       })
       expect(link).not.toHaveBeenCalled()
     })
@@ -93,6 +95,7 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
 
       // Then
@@ -100,6 +103,7 @@ describe('linkedAppContext', () => {
         app: expect.any(Object),
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
+        specifications: [],
       })
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
     })
@@ -124,6 +128,7 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
       const result = localStorage.getCachedAppInfo(tmp)
 
@@ -154,6 +159,7 @@ describe('linkedAppContext', () => {
         clientId: newClientId,
         forceRelink: false,
         userProvidedConfigName: undefined,
+        mode: 'report',
       })
 
       // Then
@@ -194,6 +200,7 @@ describe('linkedAppContext', () => {
         forceRelink: true,
         userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
 
       // Then

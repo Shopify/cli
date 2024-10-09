@@ -124,7 +124,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 }
 
 export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
-  return testApp(app) as AppLinkedInterface
+  return testApp(app, 'current') as AppLinkedInterface
 }
 
 interface TestAppWithConfigOptions {
@@ -574,7 +574,7 @@ export function testOrganizationStore({shopId, shopDomain}: {shopId?: string; sh
   }
 }
 
-const testRemoteSpecifications: RemoteSpecification[] = [
+export const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',

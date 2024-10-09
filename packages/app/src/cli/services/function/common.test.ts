@@ -1,18 +1,23 @@
 import {getOrGenerateSchemaPath, inFunctionContext} from './common.js'
-import {loadApp} from '../../models/app/loader.js'
-import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
+import {
+  testApp,
+  testDeveloperPlatformClient,
+  testFunctionExtension,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
 import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {linkedAppContext} from '../app-context.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
 import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 
-vi.mock('../../models/app/loader.js')
+vi.mock('../app-context.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -24,7 +29,12 @@ let ourFunction: ExtensionInstance
 beforeEach(async () => {
   ourFunction = await testFunctionExtension()
   app = testApp({allExtensions: [ourFunction]})
-  vi.mocked(loadApp).mockResolvedValue(app)
+  vi.mocked(linkedAppContext).mockResolvedValue({
+    app: app as AppLinkedInterface,
+    remoteApp: testOrganizationApp(),
+    developerPlatformClient: testDeveloperPlatformClient(),
+    specifications: [],
+  })
   vi.mocked(renderFatalError).mockReturnValue('')
   vi.mocked(renderAutocompletePrompt).mockResolvedValue(ourFunction)
   vi.mocked(isTerminalInteractive).mockReturnValue(true)

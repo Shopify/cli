@@ -3,6 +3,7 @@ import {ensureGenerateContext} from './context.js'
 import {generateExtensionTemplate} from './generate/extension.js'
 import {loadApp} from '../models/app/loader.js'
 import {
+  testAppLinked,
   testAppWithConfig,
   testDeveloperPlatformClient,
   testFunctionExtension,
@@ -14,9 +15,14 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
 import * as developerPlatformClient from '../utilities/developer-platform-client.js'
 import {PartnersClient} from '../utilities/developer-platform-client/partners-client.js'
-import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {AppLinkedInterface} from '../models/app/app.js'
+import {OrganizationApp} from '../models/organization.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
 
 vi.mock('../constants.js', async () => {
   const actual: any = await vi.importActual('../constants.js')
@@ -48,12 +54,23 @@ afterEach(() => {
 })
 
 describe('generate', () => {
+  const app: AppLinkedInterface = testAppLinked()
+  const remoteApp: OrganizationApp = testOrganizationApp()
+  let specifications: RemoteAwareExtensionSpecification[] = []
+  let developerPlatformClient: DeveloperPlatformClient
+
+  beforeEach(async () => {
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    specifications = allSpecs.map((spec) => spec as RemoteAwareExtensionSpecification)
+    developerPlatformClient = testDeveloperPlatformClient()
+  })
+
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient: testDeveloperPlatformClient()})
+    await generate({directory: '/', reset: false, app, remoteApp, specifications, developerPlatformClient})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -75,7 +92,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient: testDeveloperPlatformClient()})
+    await generate({directory: '/', reset: false, app, remoteApp, specifications, developerPlatformClient})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -97,7 +114,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({directory: '/', reset: false, developerPlatformClient: testDeveloperPlatformClient()})
+    await generate({directory: '/', reset: false, app, remoteApp, specifications, developerPlatformClient})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -121,8 +138,11 @@ describe('generate', () => {
     const got = generate({
       directory: '/',
       reset: false,
+      app,
+      remoteApp,
+      specifications,
+      developerPlatformClient,
       template: 'unknown_type',
-      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
@@ -138,8 +158,11 @@ describe('generate', () => {
     const got = generate({
       directory: '/',
       reset: false,
+      app,
+      remoteApp,
+      specifications,
+      developerPlatformClient,
       template: 'subscription_ui',
-      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
@@ -155,8 +178,11 @@ describe('generate', () => {
     const got = generate({
       directory: '/',
       reset: false,
+      app,
+      remoteApp,
+      specifications,
+      developerPlatformClient,
       template: 'product_discounts',
-      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
@@ -171,9 +197,12 @@ describe('generate', () => {
     const got = generate({
       directory: '/',
       reset: false,
+      app,
+      remoteApp,
+      specifications,
+      developerPlatformClient,
       template: 'cart_checkout_validation',
       flavor: 'unknown',
-      developerPlatformClient: testDeveloperPlatformClient(),
     })
 
     // Then
