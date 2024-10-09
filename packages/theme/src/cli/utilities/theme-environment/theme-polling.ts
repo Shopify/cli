@@ -22,8 +22,11 @@ export function pollThemeEditorChanges(
 ) {
   outputDebug('Listening for changes in the theme editor')
 
+  const maxPollingAttempts = 5
   let failedPollingAttempts = 0
+  let lastError = ''
   let latestChecksums = remoteChecksum
+
   const poll = async () => {
     // Asynchronously wait for the polling interval, similar to a setInterval
     // but ensure the polling work is done before starting the next interval.
@@ -33,17 +36,19 @@ export function pollThemeEditorChanges(
     latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
       .then((checksums) => {
         failedPollingAttempts = 0
+        lastError = ''
         return checksums
       })
-      .catch((err: Error | AbortError) => {
+      .catch((err: Error) => {
         failedPollingAttempts++
-        if (err instanceof AbortError) {
-          renderFatalError(err)
-        } else {
-          renderError({headline: 'Error while polling for changes.', body: err.stack})
+        if (err.message !== lastError) {
+          lastError = err.message
+          const headline = 'Error while polling for changes.'
+          renderError({headline, body: err.message})
+          outputDebug(`${headline}\n${err.stack ?? err.message}`)
         }
 
-        if (failedPollingAttempts >= 5) {
+        if (failedPollingAttempts >= maxPollingAttempts) {
           renderFatalError(
             new AbortError('Too many polling errors...', 'Please check your internet connection and try again.'),
           )
