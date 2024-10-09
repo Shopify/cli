@@ -123,7 +123,6 @@ import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
-import {FunctionUploadUrlGenerateMutation} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -597,10 +596,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
       }),
       ...result.app.activeRelease,
     }
-  }
-
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
-    throw new BugError('Not implemented: functionUploadUrl')
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {

@@ -1,25 +1,14 @@
 import {FunctionConfigType} from './function.js'
-import {
-  placeholderAppConfiguration,
-  testDeveloperPlatformClient,
-  testFunctionExtension,
-} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import * as upload from '../../../services/deploy/upload.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test} from 'vitest'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-
-vi.mock('../../../services/deploy/upload.js')
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  const moduleId = 'module_id'
   const apiKey = 'app-key'
   const inputQuery = 'query { f }'
 
@@ -51,11 +40,6 @@ describe('functionConfiguration', () => {
   }
 
   beforeEach(async () => {
-    vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
-      url: 'http://foo.bar',
-      moduleId,
-    })
-
     extension = await testFunctionExtension({
       dir: '/function',
       config: {...config},
@@ -71,7 +55,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -99,7 +82,7 @@ describe('functionConfiguration', () => {
         enable_creation_ui: true,
         localization: {},
         targets: undefined,
-        module_id: moduleId,
+        module_id: expect.any(String),
       })
     })
   })
@@ -113,7 +96,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -124,7 +106,7 @@ describe('functionConfiguration', () => {
         app_key: apiKey,
         api_type: undefined,
         api_version: extension.configuration.api_version,
-        module_id: moduleId,
+        module_id: expect.any(String),
         enable_creation_ui: true,
         input_query: undefined,
         input_query_variables: undefined,
@@ -150,7 +132,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -168,7 +149,7 @@ describe('functionConfiguration', () => {
 
     // When & Then
     await expect(() =>
-      extension.deployConfig({apiKey, developerPlatformClient, appConfiguration: placeholderAppConfiguration}),
+      extension.deployConfig({apiKey, appConfiguration: placeholderAppConfiguration}),
     ).rejects.toThrowError(AbortError)
   })
 
@@ -194,7 +175,6 @@ describe('functionConfiguration', () => {
         // When
         const got = await extension.deployConfig({
           apiKey,
-          developerPlatformClient,
           appConfiguration: placeholderAppConfiguration,
         })
 
@@ -220,7 +200,7 @@ describe('functionConfiguration', () => {
             },
           },
           enable_creation_ui: true,
-          module_id: moduleId,
+          module_id: expect.any(String),
           localization: {},
           targets: undefined,
         })
@@ -236,7 +216,6 @@ describe('functionConfiguration', () => {
         // When
         const got = await extension.deployConfig({
           apiKey,
-          developerPlatformClient,
           appConfiguration: placeholderAppConfiguration,
         })
 
@@ -247,7 +226,7 @@ describe('functionConfiguration', () => {
           app_key: apiKey,
           api_type: 'order_discounts',
           api_version: extension.configuration.api_version,
-          module_id: moduleId,
+          module_id: expect.any(String),
           enable_creation_ui: true,
           input_query: undefined,
           input_query_variables: undefined,
@@ -277,7 +256,6 @@ describe('functionConfiguration', () => {
       // When
       const got = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
 
@@ -302,7 +280,6 @@ describe('functionConfiguration', () => {
       // When
       const got = (await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
@@ -320,7 +297,6 @@ describe('functionConfiguration', () => {
       // When
       const got = (await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })) as unknown as {ui: {ui_extension_handle: string}}
 

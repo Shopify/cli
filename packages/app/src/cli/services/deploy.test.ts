@@ -1,6 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {uploadWasmBlob, uploadExtensionsBundle} from './deploy/upload.js'
+import {uploadExtensionsBundle} from './deploy/upload.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {
   testApp,
@@ -20,6 +20,7 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 const versionTag = 'unique-version-tag'
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -35,6 +36,7 @@ vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
 
@@ -243,13 +245,14 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 function', async () => {
+  test('uploads the extension bundle with 1 function extension', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    const moduleId = 'module-id'
     vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
+    vi.mocked(randomUUID).mockReturnValue(moduleId)
 
     const app = testApp({allExtensions: [functionExtension]})
-    const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
       module_id: moduleId,
@@ -260,7 +263,6 @@ describe('deploy', () => {
       enable_creation_ui: true,
       localization: {},
     }
-    vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
     await testDeployBundle({
@@ -290,7 +292,7 @@ describe('deploy', () => {
       ],
       developerPlatformClient,
       extensionIds: {},
-      bundlePath: undefined,
+      bundlePath: expect.stringMatching(/bundle.zip$/),
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
