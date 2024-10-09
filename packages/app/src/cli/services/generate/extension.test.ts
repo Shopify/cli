@@ -9,7 +9,7 @@ import {blocks, configurationFileNames} from '../../constants.js'
 import {loadApp} from '../../models/app/loader.js'
 import * as functionBuild from '../function/build.js'
 import {
-  productSubscriptionUIExtensionTemplate,
+  checkoutUITemplate,
   testDeveloperPlatformClient,
   testRemoteExtensionTemplates,
 } from '../../models/app/app.test-data.js'
@@ -29,7 +29,6 @@ import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 
-// vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
   return {
@@ -41,15 +40,20 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
 })
 
 describe('initialize a extension', async () => {
-  const allUITemplates = [productSubscriptionUIExtensionTemplate]
+  const allUITemplates = [checkoutUITemplate]
   const allFunctionTemplates = testRemoteExtensionTemplates
   const specifications = await loadLocalExtensionsSpecifications()
+  const onGetTemplateRepository = (_url: string, destination: string) => {
+    const locationOfThisFile = dirname(__filename)
+    const templateFixturesDir = joinPath(locationOfThisFile, 'template-fixtures')
+    return file.copyFile(templateFixturesDir, destination)
+  }
 
   test('successfully generates the extension when no other extensions exist', async () => {
     await withTemporaryApp(async (tmpDir) => {
       vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
       const name = 'my-ext-1'
-      const specification = productSubscriptionUIExtensionTemplate
+      const specification = checkoutUITemplate
       const extensionFlavor = 'vanilla-js'
       const extensionDir = await createFromTemplate({
         name,
@@ -57,6 +61,7 @@ describe('initialize a extension', async () => {
         extensionFlavor,
         appDirectory: tmpDir,
         specifications,
+        onGetTemplateRepository,
       })
       const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
       const generatedExtension = app.allExtensions[0]!
@@ -70,7 +75,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       const name1 = 'my-ext-1'
       const name2 = 'my-ext-2'
-      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'subscription_ui')!
+      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'checkout_ui')!
       const extensionFlavor = 'vanilla-js'
       await createFromTemplate({
         name: name1,
@@ -78,6 +83,7 @@ describe('initialize a extension', async () => {
         extensionFlavor,
         appDirectory: tmpDir,
         specifications,
+        onGetTemplateRepository,
       })
       await createFromTemplate({
         name: name2,
@@ -85,6 +91,7 @@ describe('initialize a extension', async () => {
         extensionFlavor,
         appDirectory: tmpDir,
         specifications,
+        onGetTemplateRepository,
       })
 
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
@@ -97,7 +104,7 @@ describe('initialize a extension', async () => {
   test('errors when trying to re-generate an existing extension', async () => {
     await withTemporaryApp(async (tmpDir: string) => {
       const name = 'my-ext-1'
-      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'subscription_ui')!
+      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'checkout_ui')!
       const extensionFlavor = 'vanilla-js'
       await createFromTemplate({
         name,
@@ -105,6 +112,7 @@ describe('initialize a extension', async () => {
         extensionFlavor,
         appDirectory: tmpDir,
         specifications,
+        onGetTemplateRepository,
       })
       await expect(
         createFromTemplate({
@@ -113,6 +121,7 @@ describe('initialize a extension', async () => {
           extensionFlavor,
           appDirectory: tmpDir,
           specifications,
+          onGetTemplateRepository,
         }),
       ).rejects.toThrow(`A directory with this name (${name}) already exists.\nChoose a new name for your extension.`)
     })
@@ -133,6 +142,7 @@ describe('initialize a extension', async () => {
           name: 'extension-name',
           extensionFlavor: 'typescript-react',
           specifications,
+          onGetTemplateRepository,
         })
 
         expect(addResolutionOrOverrideMock).toHaveBeenCalledOnce()
@@ -164,6 +174,7 @@ describe('initialize a extension', async () => {
           appDirectory: tmpDir,
           name: 'extension-name',
           specifications,
+          onGetTemplateRepository,
         })
 
         expect(addResolutionOrOverrideMock).not.toHaveBeenCalled()
@@ -193,6 +204,7 @@ describe('initialize a extension', async () => {
           extensionFlavor: flavor,
           appDirectory: tmpDir,
           specifications,
+          onGetTemplateRepository,
         })
 
         const srcFiles = await file.glob(joinPath(tmpDir, 'extensions', name, 'src', `*`))
@@ -220,6 +232,7 @@ describe('initialize a extension', async () => {
           extensionFlavor: flavor,
           appDirectory: tmpDir,
           specifications,
+          onGetTemplateRepository,
         })
 
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
@@ -231,41 +244,6 @@ describe('initialize a extension', async () => {
       })
     },
   )
-
-  test('uses the custom templatePath for extensions', async () => {
-    await withTemporaryApp(async (tmpDir) => {
-      // Given
-      vi.spyOn(extensionsCommon, 'ensureLocalExtensionFlavorExists').mockImplementationOnce(
-        async () => 'path/to/custom/template',
-      )
-      const name = 'my-ext-1'
-      const specification = productSubscriptionUIExtensionTemplate
-      specification.supportedFlavors[1]!.path = 'path/to/custom/template'
-      const extensionFlavor = 'vanilla-js'
-      const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()
-
-      // When
-      await createFromTemplate({
-        name,
-        extensionTemplate: specification,
-        extensionFlavor,
-        appDirectory: tmpDir,
-        specifications,
-      })
-
-      // Then
-      expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(
-        expect.stringContaining('path/to/custom/template'),
-        expect.any(String),
-        {
-          srcFileExtension: 'js',
-          name,
-          handle: slugify(name),
-          flavor: extensionFlavor,
-        },
-      )
-    })
-  })
 
   test('uses the custom templateURL for functions', async () => {
     await withTemporaryApp(async (tmpDir) => {
@@ -415,6 +393,7 @@ describe('initialize a extension', async () => {
           extensionFlavor,
           appDirectory: tmpDir,
           specifications,
+          onGetTemplateRepository: vi.fn(),
         })
 
         // Then
@@ -444,6 +423,7 @@ describe('initialize a extension', async () => {
         extensionFlavor,
         appDirectory: tmpDir,
         specifications,
+        onGetTemplateRepository: vi.fn(),
       })
 
       // Then
@@ -459,6 +439,7 @@ interface CreateFromTemplateOptions {
   appDirectory: string
   extensionFlavor: ExtensionFlavorValue
   specifications: ExtensionSpecification[]
+  onGetTemplateRepository?: (url: string, destination: string) => Promise<void>
 }
 async function createFromTemplate({
   name,
@@ -466,12 +447,14 @@ async function createFromTemplate({
   appDirectory,
   extensionFlavor,
   specifications,
+  onGetTemplateRepository,
 }: CreateFromTemplateOptions): Promise<string> {
   const result = await generateExtensionTemplate({
     extensionTemplate: specification,
     app: await loadApp({directory: appDirectory, specifications, userProvidedConfigName: undefined}),
     extensionChoices: {name, flavor: extensionFlavor},
     developerPlatformClient: testDeveloperPlatformClient(),
+    onGetTemplateRepository,
   })
   return result.directory
 }
