@@ -245,7 +245,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     localApp.configuration = newConfiguration
 
     const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
-    await patchAppConfigurationFile(configuration.path, patch)
+    await patchAppConfigurationFile(configuration.path, patch, localApp.configSchema)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -547,7 +547,7 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   }
 
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchAppConfigurationFile(localConfiguration.path, patch)
+  await patchAppConfigurationFile(localConfiguration.path, patch, options.localApp.configSchema)
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 

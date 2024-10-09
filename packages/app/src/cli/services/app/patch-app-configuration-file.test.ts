@@ -1,4 +1,6 @@
 import {patchAppConfigurationFile} from './patch-app-configuration-file.js'
+import {getAppVersionedSchema} from '../../models/app/app.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -6,13 +8,23 @@ import {describe, expect, test} from 'vitest'
 const defaultToml = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 client_id = "12345"
 name = "app1"
-application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [
+  "https://example.com/redirect",
+  "https://example.com/redirect2"
+]
+
+[webhooks]
+api_version = "2023-04"
 `
+
+const schema = getAppVersionedSchema(await loadLocalExtensionsSpecifications(), false)
 
 function writeDefaulToml(tmpDir: string) {
   const configPath = joinPath(tmpDir, 'shopify.app.toml')
@@ -26,13 +38,13 @@ describe('patchAppConfigurationFile', () => {
       const configPath = writeDefaulToml(tmpDir)
       const patch = {
         name: 'Updated App Name',
-        new_field: 'new value',
+        application_url: 'https://example.com',
         access_scopes: {
           use_legacy_install_flow: false,
         },
       }
 
-      await patchAppConfigurationFile(configPath, patch)
+      await patchAppConfigurationFile(configPath, patch, schema)
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -42,11 +54,19 @@ client_id = "12345"
 name = "Updated App Name"
 application_url = "https://example.com"
 embedded = true
-new_field = "new value"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://example.com/redirect",
+  "https://example.com/redirect2"
+]
+
+[webhooks]
+api_version = "2023-04"
 `)
     })
   })
@@ -55,12 +75,13 @@ use_legacy_install_flow = false
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
       const patch = {
+        application_url: 'https://example.com',
         build: {
-          command: 'echo "Build command"',
+          dev_store_url: 'example.myshopify.com',
         },
       }
 
-      await patchAppConfigurationFile(configPath, patch)
+      await patchAppConfigurationFile(configPath, patch, schema)
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -71,12 +92,21 @@ name = "app1"
 application_url = "https://example.com"
 embedded = true
 
+[build]
+dev_store_url = "example.myshopify.com"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 
-[build]
-command = 'echo "Build command"'
+[auth]
+redirect_urls = [
+  "https://example.com/redirect",
+  "https://example.com/redirect2"
+]
+
+[webhooks]
+api_version = "2023-04"
 `)
     })
   })
@@ -85,12 +115,13 @@ command = 'echo "Build command"'
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
       const patch = {
+        application_url: 'https://example.com',
         access_scopes: {
-          new_scope: true,
+          scopes: 'read_products',
         },
       }
 
-      await patchAppConfigurationFile(configPath, patch)
+      await patchAppConfigurationFile(configPath, patch, schema)
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -103,8 +134,17 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
-new_scope = true
+
+[auth]
+redirect_urls = [
+  "https://example.com/redirect",
+  "https://example.com/redirect2"
+]
+
+[webhooks]
+api_version = "2023-04"
 `)
     })
   })
