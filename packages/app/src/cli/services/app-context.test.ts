@@ -44,8 +44,9 @@ describe('linkedAppContext', () => {
       const result = await linkedAppContext({
         directory: tmp,
         forceRelink: false,
-        configName: undefined,
+        userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
 
       // Then
@@ -58,6 +59,7 @@ describe('linkedAppContext', () => {
         }),
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
+        specifications: [],
       })
       expect(link).not.toHaveBeenCalled()
     })
@@ -91,8 +93,9 @@ describe('linkedAppContext', () => {
       const result = await linkedAppContext({
         directory: tmp,
         forceRelink: false,
-        configName: undefined,
+        userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
 
       // Then
@@ -100,6 +103,7 @@ describe('linkedAppContext', () => {
         app: expect.any(Object),
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
+        specifications: [],
       })
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
     })
@@ -119,7 +123,13 @@ describe('linkedAppContext', () => {
       })
 
       // When
-      await linkedAppContext({directory: tmp, forceRelink: false, configName: undefined, clientId: undefined})
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        mode: 'report',
+      })
       const result = localStorage.getCachedAppInfo(tmp)
 
       // Then
@@ -148,7 +158,8 @@ describe('linkedAppContext', () => {
         directory: tmp,
         clientId: newClientId,
         forceRelink: false,
-        configName: undefined,
+        userProvidedConfigName: undefined,
+        mode: 'report',
       })
 
       // Then
@@ -187,8 +198,9 @@ describe('linkedAppContext', () => {
       await linkedAppContext({
         directory: tmp,
         forceRelink: true,
-        configName: undefined,
+        userProvidedConfigName: undefined,
         clientId: undefined,
+        mode: 'report',
       })
 
       // Then

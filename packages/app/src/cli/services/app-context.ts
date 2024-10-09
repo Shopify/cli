@@ -2,16 +2,17 @@ import {appFromId} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
+import {AppLoaderMode, getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 
 interface LoadedAppContextOutput {
-  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+  app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
+  specifications: RemoteAwareExtensionSpecification[]
 }
 
 /**
@@ -26,7 +27,8 @@ interface LoadedAppContextOptions {
   directory: string
   forceRelink: boolean
   clientId: string | undefined
-  configName: string | undefined
+  userProvidedConfigName: string | undefined
+  mode: AppLoaderMode
 }
 
 /**
@@ -41,15 +43,16 @@ export async function linkedAppContext({
   directory,
   clientId,
   forceRelink,
-  configName,
+  userProvidedConfigName,
+  mode,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   // Get current app configuration state
-  let configState = await getAppConfigurationState(directory, configName)
+  let configState = await getAppConfigurationState(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 
   // If the app is not linked, force a link.
   if (configState.state === 'template-only' || forceRelink) {
-    const result = await link({directory, apiKey: clientId, configName})
+    const result = await link({directory, apiKey: clientId, configName: userProvidedConfigName})
     remoteApp = result.remoteApp
     configState = result.state
   }
@@ -77,7 +80,7 @@ export async function linkedAppContext({
   const localApp = await loadAppUsingConfigurationState(configState, {
     specifications,
     remoteFlags: remoteApp.flags,
-    mode: 'strict',
+    mode,
   })
 
   // If the remoteApp is the same as the linked one, update the cached info.
@@ -87,5 +90,5 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient}
+  return {app: localApp, remoteApp, developerPlatformClient, specifications}
 }
