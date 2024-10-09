@@ -27,7 +27,7 @@ import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import customDataSpec, {CustomDataSpecIdentifier} from './specifications/custom_data.js'
-import adminLinkSpec, {AdminLinkSpecIdentifier} from './specifications/admin_link_extension.js'
+import adminLinkSpec from './specifications/admin_link_extension.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -39,7 +39,6 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   PosSpecIdentifier,
   AppHomeSpecIdentifier,
   CustomDataSpecIdentifier,
-  AdminLinkSpecIdentifier,
 ]
 
 /**
