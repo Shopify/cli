@@ -5,6 +5,7 @@ import {
   getPatternsFromShopifyIgnore,
 } from './asset-ignore.js'
 import {Notifier} from './notifier.js'
+import {renderCatchError} from './errors.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -13,8 +14,6 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -164,19 +163,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         return true
       })
-      .catch((error: Error | AbortError) => {
-        const headline = `Failed to upload file "${fileKey}" to remote theme.`
-        // Even if there's a syncing error, we can still continue
-        // with local development instead of interrupting the process.
-        if (error instanceof AbortError) {
-          error.message = `${headline}.\n${error.message}`
-          renderFatalError(error)
-        } else {
-          renderError({headline, body: error.message})
-        }
-
-        return false
-      })
+      .catch(renderCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
       fileKey,
@@ -213,17 +200,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
-      .catch((error: Error | AbortError) => {
-        const headline = `Failed to delete file "${fileKey}" from remote theme.`
-        // Even if there's a deleting error, we can still continue
-        // with local development instead of interrupting the process.
-        if (error instanceof AbortError) {
-          error.message = `${headline}.\n${error.message}`
-          renderFatalError(error)
-        } else {
-          renderError({headline, body: error.stack})
-        }
-      })
+      .catch(renderCatchError(fileKey, 'delete'))
   }
 
   const directoriesToWatch = new Set(

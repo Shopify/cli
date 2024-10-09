@@ -1,9 +1,10 @@
 import {timestampDateFormat} from '../../constants.js'
+import {renderCatchError} from '../errors.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const POLLING_INTERVAL = 3000
@@ -37,15 +38,15 @@ export function pollThemeEditorChanges(
       .then((checksums) => {
         failedPollingAttempts = 0
         lastError = ''
+
         return checksums
       })
-      .catch((err: Error) => {
+      .catch((error: Error) => {
         failedPollingAttempts++
-        if (err.message !== lastError) {
-          lastError = err.message
-          const headline = 'Error while polling for changes.'
-          renderError({headline, body: err.message})
-          outputDebug(`${headline}\n${err.stack ?? err.message}`)
+
+        if (error.message !== lastError) {
+          lastError = error.message
+          renderCatchError('Error while polling for changes.')(error)
         }
 
         if (failedPollingAttempts >= maxPollingAttempts) {

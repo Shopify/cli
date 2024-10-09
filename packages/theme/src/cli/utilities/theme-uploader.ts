@@ -1,6 +1,7 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
+import {renderCatchError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -132,9 +133,7 @@ function buildDeleteJob(
   const promise = Promise.all(
     orderedFiles.map((file) =>
       deleteThemeAsset(theme.id, file.key, session)
-        .catch((error) => {
-          renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.stack})
-        })
+        .catch(renderCatchError(file.key, 'delete'))
         .finally(() => {
           progress.current++
         }),
