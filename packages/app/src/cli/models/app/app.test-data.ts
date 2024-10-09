@@ -856,7 +856,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
-export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
+const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
   identifier: 'subscription_ui',
   name: 'Subscription UI',
   defaultName: 'subscription-ui',
