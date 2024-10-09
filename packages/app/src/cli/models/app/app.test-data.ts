@@ -1063,18 +1063,6 @@ const appVersionsDiffResponse: AppVersionsDiffSchema = {
   },
 }
 
-const functionUploadUrlResponse = {
-  functionUploadUrlGenerate: {
-    generatedUrlDetails: {
-      headers: {},
-      maxSize: '200 kb',
-      url: 'https://example.com/upload-url',
-      moduleId: 'module-id',
-      maxBytes: 200,
-    },
-  },
-}
-
 export const extensionCreateResponse: ExtensionCreateSchema = {
   extensionCreate: {
     extensionRegistration: {
@@ -1240,7 +1228,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
     appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
-    functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),

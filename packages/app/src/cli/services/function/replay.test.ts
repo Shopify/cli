@@ -7,7 +7,7 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
+import {describe, expect, beforeAll, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {readdirSync} from 'fs'

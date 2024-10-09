@@ -1,11 +1,11 @@
 import {getOrGenerateSchemaPath, inFunctionContext} from './common.js'
 import {
-  testApp,
+  testAppLinked,
   testDeveloperPlatformClient,
   testFunctionExtension,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
-import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
@@ -23,14 +23,14 @@ vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
 
-let app: AppInterface
+let app: AppLinkedInterface
 let ourFunction: ExtensionInstance
 
 beforeEach(async () => {
   ourFunction = await testFunctionExtension()
-  app = testApp({allExtensions: [ourFunction]})
+  app = testAppLinked({allExtensions: [ourFunction]})
   vi.mocked(linkedAppContext).mockResolvedValue({
-    app: app as AppLinkedInterface,
+    app,
     remoteApp: testOrganizationApp(),
     developerPlatformClient: testDeveloperPlatformClient(),
     specifications: [],
@@ -106,7 +106,7 @@ describe('getOrGenerateSchemaPath', () => {
       configuration: {},
     } as ExtensionInstance<FunctionConfigType>
 
-    app = {} as AppLinkedInterface
+    app = testAppLinked()
     developerPlatformClient = testDeveloperPlatformClient()
   })
 

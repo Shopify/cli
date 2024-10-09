@@ -19,9 +19,11 @@ interface LoadedAppContextOutput {
  * Input options for the `linkedAppContext` function.
  *
  * @param directory - The directory containing the app.
- * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
- * @param configName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param clientId - The client ID to use when linking the app or when fetching the remote app.
+ * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param mode - The mode of the app loader, it can be 'strict' or 'report'. 'report' will not throw an error when the app/extension configuration is invalid.
+ * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
  */
 interface LoadedAppContextOptions {
   directory: string
@@ -37,7 +39,7 @@ interface LoadedAppContextOptions {
  * You can use a custom configName to load a specific config file.
  * In any case, if the selected config file is not linked, this function will force a link.
  *
- * @returns The local app, the remote app, and the developer platform client.
+ * @returns The local app, the remote app, the correct developer platform client, and the remote specifications list.
  */
 export async function linkedAppContext({
   directory,
