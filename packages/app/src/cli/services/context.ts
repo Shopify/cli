@@ -847,15 +847,6 @@ export function renderCurrentlyUsedConfigInfo({
   })
 }
 
-function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
-  renderCurrentlyUsedConfigInfo({
-    org,
-    appName: cachedAppInfo.title!,
-    configFile: cachedAppInfo.configFile,
-    resetMessage: resetHelpMessage,
-  })
-}
-
 /**
  * Message shown to the user in case we are reusing a previous configuration
  * @param org - Organization name
