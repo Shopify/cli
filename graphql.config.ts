@@ -1,11 +1,11 @@
-function projectFactory(name: string, schemaName: string) {
+function projectFactory(name: string, schemaName: string, project: string = "app") {
   return {
-    schema: `./packages/app/src/cli/api/graphql/${name}/${schemaName}`,
-    documents: [`./packages/app/src/cli/api/graphql/${name}/queries/**/*.graphql`],
+    schema: `./packages/${project}/src/cli/api/graphql/${name}/${schemaName}`,
+    documents: [`./packages/${project}/src/cli/api/graphql/${name}/queries/**/*.graphql`],
     extensions: {
       codegen: {
         generates: {
-          [`./packages/app/src/cli/api/graphql/${name}/generated/types.d.ts`]: {
+          [`./packages/${project}/src/cli/api/graphql/${name}/generated/types.d.ts`]: {
             plugins: [
               {'graphql-codegen-typescript-operation-types': {enumsAsTypes: true, useTypeImports: true}},
               {
@@ -24,7 +24,7 @@ function projectFactory(name: string, schemaName: string) {
               },
             },
           },
-          [`./packages/app/src/cli/api/graphql/${name}/generated/`]: {
+          [`./packages/${project}/src/cli/api/graphql/${name}/generated/`]: {
             preset: 'near-operation-file',
             plugins: [
               {
@@ -73,5 +73,6 @@ export default {
     businessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql'),
     businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
+    admin: projectFactory('admin', 'admin_schema.graphql', 'cli-kit'),
   },
 }
