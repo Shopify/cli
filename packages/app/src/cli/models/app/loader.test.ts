@@ -34,9 +34,9 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 import colors from '@shopify/cli-kit/node/colors'
-// eslint-disable-next-line no-restricted-imports
+
+import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
 import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
@@ -322,7 +322,7 @@ wrong = "property"
 
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
-    vi.mocked(currentProcessIsGlobal).mockReturnValueOnce(true)
+    vi.mocked(isGlobalCLIInstalled).mockResolvedValue(true)
     const mockOutput = mockAndCaptureOutput()
     mockOutput.clear()
     await writeConfig(appConfiguration, {
@@ -339,11 +339,11 @@ wrong = "property"
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  You are running a global installation of Shopify CLI                        │
+      │  There are two installations of the CLI: global and as a dependency of the   │
+      │  project.                                                                    │
       │                                                                              │
-      │  This project has Shopify CLI as a local dependency in package.json. If you  │
-      │   prefer to use that version, run the command with your package manager      │
-      │  (e.g. npm run shopify).                                                     │
+      │  We recommend to remove the @shopify/cli and @shopify/app dependencies from  │
+      │   your package.json.                                                         │
       │                                                                              │
       │  For more information, see Shopify CLI documentation [1]                     │
       │                                                                              │
