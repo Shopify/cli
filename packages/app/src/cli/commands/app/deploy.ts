@@ -118,7 +118,6 @@ export default class Deploy extends AppCommand {
     await deploy({
       app,
       remoteApp,
-      apiKey,
       reset: flags.reset,
       force: flags.force,
       noRelease: flags['no-release'],
