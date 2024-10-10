@@ -30,7 +30,6 @@ export interface DevOptions {
   host?: string
   port?: string
   force: boolean
-  flagsToPass: string[]
   'theme-editor-sync': boolean
   'live-reload': LiveReload
   noDelete: boolean
@@ -50,12 +49,6 @@ export async function dev(options: DevOptions) {
     (needsPassword) =>
       needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
   )
-
-  if (options.flagsToPass.includes('--poll')) {
-    renderWarning({
-      body: 'The CLI flag --pull is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
-    })
-  }
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
@@ -170,6 +163,7 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
 
 export function showDeprecationWarnings(args: string[]) {
   const eFlagIndex = args.findIndex((arg) => arg === '-e')
+
   const wrongEnvFlag = eFlagIndex >= 0 && (!args[eFlagIndex + 1] || args[eFlagIndex + 1]?.startsWith('-'))
   if (wrongEnvFlag) {
     renderWarning({
@@ -184,24 +178,10 @@ export function showDeprecationWarnings(args: string[]) {
     })
   }
 
-  const legacyFlagPresent = args.find((arg) => arg === '--legacy')
-
-  if (legacyFlagPresent) {
+  const pollFlagPresent = args.find((arg) => arg === '--poll')
+  if (pollFlagPresent) {
     renderWarning({
-      headline: ['The', {command: '--legacy'}, 'flag is deprecated.'],
-      body: [
-        'The',
-        {command: '--legacy'},
-        'flag has been deprecated. If this variable is essential to your workflow, please report an issue at',
-        {
-          link: {
-            url: 'https://github.com/Shopify/cli/issues',
-          },
-        },
-        {
-          char: '.',
-        },
-      ],
+      body: 'The CLI flag --poll is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
     })
   }
 }

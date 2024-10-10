@@ -33,7 +33,6 @@ describe('dev', () => {
     theme: buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!,
     force: false,
     open: false,
-    flagsToPass: [],
     password: 'my-token',
     'theme-editor-sync': false,
     'live-reload': 'hot-reload',
@@ -129,6 +128,17 @@ describe('showDeprecationWarnings', () => {
 
     // Then
     expect(outputMock.output()).toMatch(/reserved for environments/)
+  })
+
+  test('shows a warning message when the --poll flag is used', () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    showDeprecationWarnings(['--poll'])
+
+    // Then
+    expect(outputMock.output()).toMatch(/The CLI flag --poll is now deprecated/)
   })
 })
 
