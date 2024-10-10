@@ -732,3 +732,21 @@ export function inferPackageManager(optionsPackageManager: string | undefined, e
 
   return 'npm'
 }
+
+/**
+ * Returns true if the CLI is installed as a local dependency.
+ *
+ * @param directory - Current directory to look for the package.json file.
+ * @returns `true` if the CLI is installed locally.
+ */
+export async function isLocalCLIInstalled(directory: string): Promise<boolean> {
+  try {
+    const packageJSONPath = joinPath(directory, 'package.json')
+    console.log(packageJSONPath)
+    const dependencies = await getDependencies(packageJSONPath)
+    return dependencies['@shopify/cli'] !== undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
