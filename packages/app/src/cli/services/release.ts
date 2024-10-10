@@ -32,6 +32,7 @@ export async function release(options: ReleaseOptions) {
   const {app, remoteApp, developerPlatformClient} = options
 
   // Not sure if these two lines are actually needed, the app already loads the identifiers, why update them?
+  // Extracted them `ensureReleaseContext`
   const identifiers = getAppIdentifiers({app}, developerPlatformClient) as Identifiers
   await updateAppIdentifiers({
     app: options.app,
