@@ -37,6 +37,7 @@ import {
   getPackageManager,
   getPackageName,
   usesWorkspaces as appUsesWorkspaces,
+  isLocalCLIInstalled,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -48,7 +49,7 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -304,7 +305,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(directory)
-    this.showGlobalCLIWarningIfNeeded(nodeDependencies, packageManager)
+    await this.showMultipleCLIWarningIfNeeded(directory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -352,18 +353,21 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
-  private showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
-    const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
-    // Show the warning IFF:
-    // - The current process is global
-    // - The project has a local CLI
+  private async showMultipleCLIWarningIfNeeded(directory: string) {
+    // Show the warning if:
+    // - There is a global installation
+    // - The project has a local CLI dependency
     // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
-    if (currentProcessIsGlobal() && hasLocalCLI && !sniffForJson() && !alreadyShownCLIWarning) {
+    // - The warning hasn't been shown yet during the current command execution
+    if (
+      (await isGlobalCLIInstalled()) &&
+      (await isLocalCLIInstalled(directory)) &&
+      !sniffForJson() &&
+      !alreadyShownCLIWarning
+    ) {
       const warningContent = {
-        headline: 'You are running a global installation of Shopify CLI',
-        body: [
-          `This project has Shopify CLI as a local dependency in package.json. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
-        ],
+        headline: 'There are two installations of the CLI: global and as a dependency of the project.',
+        body: [`We recommend to remove the @shopify/cli and @shopify/app dependencies from your package.json.`],
         link: {
           label: 'For more information, see Shopify CLI documentation',
           url: 'https://shopify.dev/docs/apps/tools/cli',
