@@ -112,6 +112,7 @@ describe('setupDevServer', () => {
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       nodelete: true,
       deferPartialWork: true,
+      backgroundWorkCatch: expect.any(Function),
     })
   })
 
@@ -161,6 +162,7 @@ describe('setupDevServer', () => {
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       nodelete: true,
       deferPartialWork: true,
+      backgroundWorkCatch: expect.any(Function),
     })
   })
 

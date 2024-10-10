@@ -16,7 +16,7 @@ import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'events'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
@@ -563,7 +563,10 @@ describe('theme-fs', () => {
 
       // Then
       expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
-      expect(outputDebug).toHaveBeenCalledWith('Failed to delete file "assets/base.css" from remote theme.')
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Failed to delete file "assets/base.css" from remote theme.',
+        body: expect.any(String),
+      })
     })
   })
 
