@@ -1,9 +1,10 @@
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {gql} from 'graphql-request'
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const CreateAppVersionMutation = gql`
-  mutation CreateAppVersion($appId: ID!, $appSource: AppSourceInput!, $name: String!, $metadata: VersionMetadataInput) {
-    appVersionCreate(appId: $appId, appSource: $appSource, name: $name, metadata: $metadata) {
+  mutation CreateAppVersion($appId: ID!, $version: AppVersionInput!, $metadata: VersionMetadataInput) {
+    appVersionCreate(appId: $appId, version: $version, metadata: $metadata) {
       version {
         id
         appModules {
@@ -32,15 +33,7 @@ export const CreateAppVersionMutation = gql`
 
 export interface CreateAppVersionMutationVariables {
   appId: string
-  name?: string
-  appSource: {
-    assetsUrl?: string
-    appModules: {
-      uid: string
-      specificationIdentifier?: string
-      config: JsonMapType
-    }[]
-  }
+  version: {sourceUrl: string} | {source: JsonMapType}
   metadata?: {
     message?: string
     sourceControlUrl?: string
