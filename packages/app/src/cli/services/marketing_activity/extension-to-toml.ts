@@ -172,7 +172,7 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
     extensions: [
       {
         type: 'marketing_activity',
-        name: config.title,
+        name: extension.title,
         handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
         title: config.title,
         description: config.description,
