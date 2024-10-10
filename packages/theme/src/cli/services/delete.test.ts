@@ -1,6 +1,6 @@
-import {deleteThemes, renderDeprecatedArgsWarning} from './delete.js'
+import {themesDelete, renderDeprecatedArgsWarning} from './delete.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
-import {deleteTheme} from '@shopify/cli-kit/node/themes/api'
+import {themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -36,7 +36,7 @@ const options = {
   themes: [],
 }
 
-describe('deleteThemes', () => {
+describe('themesDelete', () => {
   test('deletes the development theme', async () => {
     // Given
     const confirmed = true
@@ -45,10 +45,10 @@ describe('deleteThemes', () => {
     vi.mocked(findThemes).mockResolvedValue([theme1])
 
     // When
-    await deleteThemes(session, {...options, development: true})
+    await themesDelete(session, {...options, development: true})
 
     // Then
-    expect(deleteTheme).toBeCalledWith(theme1.id, session)
+    expect(themeDelete).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', "'my theme'", {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
@@ -62,10 +62,10 @@ describe('deleteThemes', () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
 
     // When
-    await deleteThemes(session, options)
+    await themesDelete(session, options)
 
     // Then
-    expect(deleteTheme).toBeCalledWith(theme1.id, session)
+    expect(themeDelete).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', "'my theme'", {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
@@ -79,11 +79,11 @@ describe('deleteThemes', () => {
     vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
 
     // When
-    await deleteThemes(session, {...options, themes: ['my theme', '2']})
+    await themesDelete(session, {...options, themes: ['my theme', '2']})
 
     // Then
-    expect(deleteTheme).toBeCalledWith(theme1.id, session)
-    expect(deleteTheme).toBeCalledWith(theme2.id, session)
+    expect(themeDelete).toBeCalledWith(theme1.id, session)
+    expect(themeDelete).toBeCalledWith(theme2.id, session)
     expect(renderSuccess).toBeCalledWith({
       body: [
         'The following themes were deleted from my-shop.myshopify.com:',
@@ -107,11 +107,11 @@ describe('deleteThemes', () => {
     vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
 
     // When
-    await deleteThemes(session, {...options, force: true, themes: ['my theme', '2']})
+    await themesDelete(session, {...options, force: true, themes: ['my theme', '2']})
 
     // Then
-    expect(deleteTheme).toBeCalledWith(theme1.id, session)
-    expect(deleteTheme).toBeCalledWith(theme2.id, session)
+    expect(themeDelete).toBeCalledWith(theme1.id, session)
+    expect(themeDelete).toBeCalledWith(theme2.id, session)
     expect(renderSuccess).toBeCalledWith({
       body: [
         'The following themes were deleted from my-shop.myshopify.com:',
@@ -135,10 +135,10 @@ describe('deleteThemes', () => {
     vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
 
     // When
-    await deleteThemes(session, {...options, themes: ['my theme', '2']})
+    await themesDelete(session, {...options, themes: ['my theme', '2']})
 
     // Then
-    expect(deleteTheme).not.toBeCalled()
+    expect(themeDelete).not.toBeCalled()
     expect(renderSuccess).not.toBeCalled()
   })
 })

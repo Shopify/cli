@@ -1,6 +1,9 @@
 import {storeAdminUrl} from './urls.js'
 import * as throttler from '../api/rest-api-throttler.js'
-import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
+import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
+import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
+import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -74,32 +77,59 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
   return []
 }
 
-interface UpgradeThemeOptions {
-  fromTheme: number
-  toTheme: number
-  script?: string
-  session: AdminSession
+export async function themeUpdate(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
+  const name = params.name
+  if (name === undefined) {
+    throw new Error('Theme name is required')
+  }
+  const response = await adminRequestDoc(
+    ThemeUpdate,
+    session,
+    {
+      id: themeGid(id),
+      input: {name},
+    },
+    'unstable',
+  )
+  const theme = response.themeUpdate?.theme
+  if (!theme) {
+    const userErrors = response.themeUpdate?.userErrors.map((error) => error.message).join(', ')
+    throw new Error(userErrors)
+  }
+
+  return buildTheme({
+    id: parseInt((theme.id as unknown as string).split('/').pop() as string, 10),
+    name: theme.name,
+    role: theme.role.toLowerCase(),
+  })
 }
 
-export async function upgradeTheme(upgradeOptions: UpgradeThemeOptions): Promise<Theme | undefined> {
-  const {fromTheme, toTheme, session, script} = upgradeOptions
-  const params = {from_theme: fromTheme, to_theme: toTheme, ...(script && {script})}
-  const response = await request('POST', `/themes`, session, params)
-  return buildTheme(response.json.theme)
+export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
+  const response = await adminRequestDoc(ThemePublish, session, {id: themeGid(id)}, 'unstable')
+
+  const theme = response.themePublish?.theme
+  if (!theme) {
+    const userErrors = response.themePublish?.userErrors.map((error) => error.message).join(', ')
+    throw new Error(userErrors)
+  }
+
+  return buildTheme({
+    id: parseInt((theme.id as unknown as string).split('/').pop() as string, 10),
+    name: theme.name,
+    role: theme.role.toLowerCase(),
+  })
 }
 
-export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('PUT', `/themes/${id}`, session, {theme: {id, ...params}})
-  return buildTheme(response.json.theme)
-}
+export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
+  const response = await adminRequestDoc(ThemeDelete, session, {id: themeGid(id)}, 'unstable')
 
-export async function publishTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  return updateTheme(id, {role: 'main'}, session)
-}
+  const themeId = response.themeDelete?.deletedThemeId
 
-export async function deleteTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('DELETE', `/themes/${id}`, session)
-  return buildTheme(response.json.theme)
+  if (!themeId) {
+    const userErrors = response.themeDelete?.userErrors.map((error) => error.message).join(', ')
+    throw new Error(userErrors)
+  }
+  return true
 }
 
 async function request<T>(
@@ -174,4 +204,8 @@ function errorMessage(response: RestResponse): string {
   }
 
   return ''
+}
+
+function themeGid(id: number): string {
+  return `gid://shopify/OnlineStoreTheme/${id}`
 }

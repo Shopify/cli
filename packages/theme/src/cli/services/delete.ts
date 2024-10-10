@@ -2,7 +2,7 @@ import {removeDevelopmentTheme} from './local-storage.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {deleteTheme} from '@shopify/cli-kit/node/themes/api'
+import {themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {
   renderConfirmationPrompt,
@@ -23,7 +23,7 @@ interface DeleteOptions {
   themes: string[]
 }
 
-export async function deleteThemes(adminSession: AdminSession, options: DeleteOptions) {
+export async function themesDelete(adminSession: AdminSession, options: DeleteOptions) {
   let themeIds = options.themes
   if (options.development) {
     const theme = await new DevelopmentThemeManager(adminSession).find()
@@ -42,7 +42,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
       if (isDevelopmentTheme(theme)) {
         removeDevelopmentTheme()
       }
-      return deleteTheme(theme.id, adminSession)
+      return themeDelete(theme.id, adminSession)
     }),
   )
 
