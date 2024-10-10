@@ -1,7 +1,7 @@
 import {functionFlags, inFunctionContext, getOrGenerateSchemaPath} from '../../../services/function/common.js'
 import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
@@ -9,7 +9,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'
 
-export default class FunctionRun extends Command {
+export default class FunctionRun extends AppCommand {
   static summary = 'Run a function locally for testing.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
@@ -39,12 +39,12 @@ export default class FunctionRun extends Command {
     }),
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FunctionRun)
-    await inFunctionContext({
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
+      callback: async (app, developerPlatformClient, ourFunction) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
         if (flags.export !== undefined) {
@@ -80,7 +80,7 @@ export default class FunctionRun extends Command {
 
         const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
         const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
-        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app)
+        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, developerPlatformClient)
 
         await runFunction({
           functionExtension: ourFunction,
@@ -91,7 +91,10 @@ export default class FunctionRun extends Command {
           schemaPath,
           queryPath,
         })
+        return app
       },
     })
+
+    return {app}
   }
 }

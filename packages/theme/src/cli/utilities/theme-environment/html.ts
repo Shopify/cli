@@ -2,16 +2,19 @@ import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
-import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
-import {renderError} from '@shopify/cli-kit/node/ui'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {timestampDateFormat} from '../../constants.js'
+import {defineEventHandler, getCookie, H3Event, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
+const CHARACTER_TRUNCATION_LIMIT = 80
+
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
-    outputInfo(`${event.method} ${event.path}`)
-
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
     return render(ctx.session, {
@@ -25,9 +28,11 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {
+        logRequestLine(event, response)
+
         let html = await patchRenderingResponse(ctx, event, response)
 
-        html = prettifySyntaxErrors(html)
+        assertThemeId(response, html, String(theme.id))
 
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)
@@ -50,7 +55,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         let errorPageHtml = getErrorPage({
           title,
           header: title,
-          message: [...rest, error.message].join('<br>'),
+          message: [...rest, cause?.message ?? error.message].join('<br>'),
           code: error.stack?.replace(`${error.message}\n`, '') ?? '',
         })
 
@@ -63,22 +68,20 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-export function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid(?: syntax)? error \([^\n]+(?:\n|<)/g, getErrorSection)
-}
+function logRequestLine(event: H3Event, response: Response) {
+  const truncatedPath =
+    event.path.length > CHARACTER_TRUNCATION_LIMIT
+      ? `${event.path.substring(0, CHARACTER_TRUNCATION_LIMIT)}...`
+      : event.path
+  const serverTiming = response.headers.get('server-timing')
+  const requestDuration = serverTiming?.match(/cfRequestDuration;dur=([\d.]+)/)?.[1]
+  const durationString = requestDuration ? `${Math.round(Number(requestDuration))}ms` : ''
 
-function getErrorSection(error: string) {
-  const html = String.raw
-  const color = 'orangered'
-
-  return html`
-    <div
-      id="section-error"
-      style="border: solid thick ${color}; background: color(from ${color} srgb r g b / 0.2); padding: 20px;"
-    >
-      <pre>${error}</pre>
-    </div>
-  `
+  outputInfo(
+    outputContent`• ${timestampDateFormat.format(new Date())} Request ${outputToken.raw('»')} ${outputToken.gray(
+      `${event.method} ${truncatedPath} ${durationString}`,
+    )}`,
+  )
 }
 
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
@@ -97,4 +100,34 @@ function getErrorPage(options: {title: string; header: string; message: string; 
       <pre>${options.code}</pre>
     </body>
   </html>`
+}
+
+function assertThemeId(response: Response, html: string, expectedThemeId: string) {
+  /**
+   * DOM example:
+   *
+   * ```
+   * <script>var Shopify = Shopify || {};
+   * Shopify.locale = "en";
+   * Shopify.theme = {"name":"Development","id":143509762348,"theme_store_id":null,"role":"development"};
+   * Shopify.theme.handle = "null";
+   * ...;</script>
+   * ```
+   */
+  const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
+
+  if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
+    renderFatalError(
+      new AbortError(
+        `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.` +
+          `\nRequest ID: ${response.headers.get('x-request-id')}` +
+          `\nURL: ${response.url}`,
+        `This is likely related to an issue in upstream Shopify APIs.` +
+          `\nPlease try again in a few minutes and report this issue:` +
+          `\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
+      ),
+    )
+
+    process.exit(1)
+  }
 }

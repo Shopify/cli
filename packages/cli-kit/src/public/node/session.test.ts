@@ -8,7 +8,7 @@ import {
 
 import {getPartnersToken} from './environment.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {vi, describe, expect, test} from 'vitest'
 
@@ -35,14 +35,28 @@ describe('ensureAuthenticatedStorefront', () => {
 
     // Then
     expect(got).toEqual('storefront_token')
+    expect(setLastSeenAuthMethod).not.toBeCalled()
+    expect(setLastSeenUserIdAfterAuth).not.toBeCalled()
   })
 
-  test('returns the password if provided', async () => {
+  test('returns the password if provided, and auth method is custom_app_token', async () => {
     // Given/When
     const got = await ensureAuthenticatedStorefront([], 'theme_access_password')
 
     // Then
     expect(got).toEqual('theme_access_password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('dd5e7850-e2de-d283-9c5f-79c8190a19d18b52e0ce')
+  })
+
+  test('returns the password if provided, and auth method is theme_access_token', async () => {
+    // Given/When
+    const got = await ensureAuthenticatedStorefront([], 'shptka_theme_access_password')
+
+    // Then
+    expect(got).toEqual('shptka_theme_access_password')
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('730a64df-ab2c-3d92-8b11-76a66aadee947aa5c1ce')
   })
 
   test('throws error if there is no storefront token', async () => {
@@ -109,7 +123,10 @@ describe('ensureAuthenticatedPartners', () => {
 
   test('returns custom partners token if envvar is defined', async () => {
     // Given
-    vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce(partnersToken)
+    vi.mocked(exchangeCustomPartnerToken).mockResolvedValueOnce({
+      accessToken: partnersToken.accessToken,
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
     vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
 
     // When
@@ -134,6 +151,8 @@ describe('ensureAuthenticatedTheme', () => {
 
     // Then
     expect(got).toEqual({token: 'admin_token', storeFqdn: 'mystore.myshopify.com'})
+    expect(setLastSeenAuthMethod).not.toBeCalled()
+    expect(setLastSeenUserIdAfterAuth).not.toBeCalled()
   })
 
   test('throws error if there is no token when no password is provided', async () => {
@@ -147,12 +166,24 @@ describe('ensureAuthenticatedTheme', () => {
     await expect(got).rejects.toThrow(`No admin token`)
   })
 
-  test('returns the password when is provided', async () => {
+  test('returns the password when is provided and custom_app_token', async () => {
     // When
     const got = await ensureAuthenticatedThemes('mystore', 'password')
 
     // Then
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
+    expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('f5c7086f-320b-3b93-bcdc-a2296adbec02d71eb733')
+  })
+
+  test('returns the password when is provided and theme_access_token', async () => {
+    // When
+    const got = await ensureAuthenticatedThemes('mystore', 'shptka_password')
+
+    // Then
+    expect(got).toEqual({token: 'shptka_password', storeFqdn: 'mystore.myshopify.com'})
+    expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
+    expect(setLastSeenUserIdAfterAuth).toBeCalledWith('e3d08cca-4e68-504a-00ec-23e2cea12a6340bb257b')
   })
 })
 

@@ -4,7 +4,7 @@ import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderWarning, Task} from '@shopify/cli-kit/node/ui'
+import {renderError, renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
@@ -127,9 +127,13 @@ function buildDeleteJob(
   const progress = {current: 0, total: orderedFiles.length}
   const promise = Promise.all(
     orderedFiles.map((file) =>
-      deleteThemeAsset(theme.id, file.key, session).then(() => {
-        progress.current++
-      }),
+      deleteThemeAsset(theme.id, file.key, session)
+        .catch((error) => {
+          renderError({headline: `Failed to delete file "${file.key}" from remote theme.`, body: error.message})
+        })
+        .finally(() => {
+          progress.current++
+        }),
     ),
   ).then(() => {
     progress.current = progress.total

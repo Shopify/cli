@@ -1,4 +1,4 @@
-import {isValidURL} from './url.js'
+import {isValidURL, safeParseURL} from './url.js'
 import {describe, expect, test} from 'vitest'
 
 describe('isValidURL', () => {
@@ -32,5 +32,28 @@ describe('isValidURL', () => {
 
     // Then
     expect(got).toBe(false)
+  })
+})
+
+describe('safeParseURL', () => {
+  test('returns URL object for valid URL', () => {
+    const validURL = 'https://shopify.com/'
+    const result = safeParseURL(validURL)
+
+    expect(result).toBeInstanceOf(URL)
+    expect(result?.href).toBe(validURL)
+  })
+
+  test('returns undefined for invalid URL', () => {
+    const invalidURL = 'not a url'
+    const result = safeParseURL(invalidURL)
+
+    expect(result).toBeUndefined()
+  })
+
+  test('returns undefined for empty string', () => {
+    const result = safeParseURL('')
+
+    expect(result).toBeUndefined()
   })
 })

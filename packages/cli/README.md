@@ -234,6 +234,9 @@ DESCRIPTION
   store" (https://shopify.dev/docs/apps/tools/development-stores) or "Plus sandbox store"
   (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).
 
+  > Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your
+  app.
+
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps.
   If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these
   configurations using `dev --reset` to go through all of them again:
@@ -524,13 +527,15 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [-d npm|yarn|pnpm|bun] [-p <value>]
-    [--template <value>] [--verbose]
+  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [-d
+    npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
   -n, --name=<value>
   -p, --path=<value>              [default: .]
+      --client-id=<value>         The Client ID of your app. Use this to automatically link your new project to an
+                                  existing app. Using this flag avoids the app selection prompt.
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
       --template=<value>          The app template. Accepts one of the following:

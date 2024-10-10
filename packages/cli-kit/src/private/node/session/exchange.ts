@@ -6,8 +6,10 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
+import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import * as jose from 'jose'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
@@ -94,11 +96,15 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
  * @param token - The CLI token passed as ENV variable
  * @returns An instance with the application access tokens.
  */
-export async function exchangeCustomPartnerToken(token: string): Promise<ApplicationToken> {
+export async function exchangeCustomPartnerToken(token: string): Promise<{accessToken: string; userId: string}> {
   const appId = applicationId('partners')
   try {
     const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
-    return newToken[appId]!
+    const accessToken = newToken[appId]!.accessToken
+    const userId = nonRandomUUID(token)
+    setLastSeenUserIdAfterAuth(userId)
+    setLastSeenAuthMethod('partners_token')
+    return {accessToken, userId}
   } catch (error) {
     throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
   }

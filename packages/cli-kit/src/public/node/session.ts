@@ -5,7 +5,8 @@ import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {isThemeAccessSession} from '../../private/node/api/rest.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -39,7 +40,8 @@ ${outputToken.json(scopes)}
 `)
   const envToken = getPartnersToken()
   if (envToken) {
-    return {token: (await exchangeCustomPartnerToken(envToken)).accessToken, userId: nonRandomUUID(envToken)}
+    const result = await exchangeCustomPartnerToken(envToken)
+    return {token: result.accessToken, userId: result.userId}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
   if (!tokens.partners) {
@@ -84,7 +86,13 @@ export async function ensureAuthenticatedStorefront(
   password: string | undefined = undefined,
   forceRefresh = false,
 ): Promise<string> {
-  if (password) return password
+  if (password) {
+    const session = {token: password, storeFqdn: ''}
+    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
+    setLastSeenAuthMethod(authMethod)
+    setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    return password
+  }
 
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
@@ -146,7 +154,13 @@ export async function ensureAuthenticatedThemes(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+  if (password) {
+    const session = {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
+    setLastSeenAuthMethod(authMethod)
+    setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    return session
+  }
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 

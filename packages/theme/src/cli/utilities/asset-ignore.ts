@@ -51,7 +51,12 @@ export async function getPatternsFromShopifyIgnore(root: string) {
 }
 
 function matchGlob(key: string, pattern: string) {
-  const result = originalMatchGlob(key, pattern)
+  const matchOpts = {
+    matchBase: true,
+    noglobstar: true,
+  }
+
+  const result = originalMatchGlob(key, pattern, matchOpts)
 
   if (result) return true
 
@@ -59,7 +64,7 @@ function matchGlob(key: string, pattern: string) {
   // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
   // based on 'File.fnmatch'.
   if (shouldReplaceGlobPattern(pattern)) {
-    return originalMatchGlob(key, pattern.replace('/*.', '/**/*.'))
+    return originalMatchGlob(key, pattern.replace('/*.', '/**/*.'), matchOpts)
   }
 
   return false

@@ -4,6 +4,13 @@ import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 describe('did-you-mean config', async () => {
+  test('isAutocorrectEnabled returns false if no cached value exists', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      const conf = new LocalStorage<ConfigSchema>({cwd})
+      expect(isAutocorrectEnabled(conf)).toBe(false)
+    })
+  })
+
   test('isAutocorrectEnabled returns true if cached value is true', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
