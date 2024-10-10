@@ -14,7 +14,6 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
-// vi.mock('../metadata.js')
 
 async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
