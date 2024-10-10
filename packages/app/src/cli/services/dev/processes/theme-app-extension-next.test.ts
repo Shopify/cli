@@ -1,5 +1,4 @@
 import {setupPreviewThemeAppExtensionsProcess, findOrCreateHostTheme} from './theme-app-extension-next.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {testApp, testOrganizationApp, testThemeExtensions} from '../../../models/app/app.test-data.js'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
@@ -22,7 +21,6 @@ vi.mock('@shopify/cli-kit/node/ui', async (realImport) => {
 
 describe('setupPreviewThemeAppExtensionsProcess', () => {
   const mockAdminSession = {storeFqdn: 'test.myshopify.com'} as any as AdminSession
-  const mockDeveloperPlatformClient = {} as DeveloperPlatformClient
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
@@ -33,14 +31,12 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
     const localApp = testApp()
     const remoteApp = testOrganizationApp()
     const storeFqdn = 'test.myshopify.com'
-    const developerPlatformClient = mockDeveloperPlatformClient
 
     // When
     const result = await setupPreviewThemeAppExtensionsProcess({
       localApp,
       remoteApp,
       storeFqdn,
-      developerPlatformClient,
     })
 
     // Then
@@ -54,7 +50,6 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
 
     const storeFqdn = 'test.myshopify.com'
     const theme = '123'
-    const developerPlatformClient = mockDeveloperPlatformClient
     const remoteApp = testOrganizationApp()
     const localApp = testApp({allExtensions: [await testThemeExtensions()]})
 
@@ -64,12 +59,10 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
       remoteApp,
       storeFqdn,
       theme,
-      developerPlatformClient,
     })
 
     // Then
     expect(result).toBeDefined()
-    expect(result?.options.developerPlatformClient).toBe(developerPlatformClient)
     expect(renderInfo).toBeCalledWith({
       headline: 'The theme app extension development server is ready.',
       nextSteps: [

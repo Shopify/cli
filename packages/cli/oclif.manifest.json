@@ -412,14 +412,6 @@
           "name": "graphiql-port",
           "type": "option"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",

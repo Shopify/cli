@@ -133,11 +133,6 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for managing theme app extensions.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -185,7 +180,6 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      devPreview: !flags.legacy,
     }
 
     const result = await dev(devOptions)
