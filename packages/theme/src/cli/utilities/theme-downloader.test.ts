@@ -1,6 +1,6 @@
 import {downloadTheme} from './theme-downloader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
 
@@ -85,7 +85,7 @@ describe('theme-downloader', () => {
       ]
       const spy = vi.spyOn(fileSystem, 'write')
 
-      vi.mocked(fetchThemeAsset).mockResolvedValue(fileToDownload)
+      vi.mocked(fetchThemeAssets).mockResolvedValue([fileToDownload])
 
       // When
       await downloadTheme(remoteTheme, adminSession, remote, fileSystem, downloadOptions)
