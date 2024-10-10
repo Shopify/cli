@@ -15,6 +15,7 @@ import {
   isCurrentAppSchema,
   CurrentAppConfiguration,
   AppCreationDefaultOptions,
+  AppLinkedInterface,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -341,25 +342,8 @@ function buildOutput(
   }
 }
 
-interface ReleaseContextOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: boolean
-  force: boolean
-  developerPlatformClient?: DeveloperPlatformClient
-}
-
-interface ReleaseContextOutput {
-  developerPlatformClient: DeveloperPlatformClient
-  app: AppInterface
-  remoteApp: OrganizationApp
-}
-
 interface DeployContextOutput {
-  app: AppInterface
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>
   identifiers: Identifiers
-  release: boolean
 }
 
 /**
@@ -417,10 +401,10 @@ export async function ensureThemeExtensionDevContext(
 }
 
 export interface DeployContextOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: boolean
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   force: boolean
+  reset: boolean
   noRelease: boolean
   commitReference?: string
   developerPlatformClient: DeveloperPlatformClient
@@ -439,20 +423,8 @@ export interface DeployContextOptions {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
-  const {reset, force, noRelease} = options
-  let developerPlatformClient = options.developerPlatformClient
-  const enableLinkingPrompt = !options.apiKey && !isCurrentAppSchema(options.app.configuration)
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, enableLinkingPrompt)
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const {app, remoteApp, developerPlatformClient, force, noRelease, reset} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
-
-  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
-  const app: AppInterface = await loadApp({
-    specifications,
-    directory: options.app.directory,
-    userProvidedConfigName: getAppConfigurationShorthand(options.app.configuration.path),
-    remoteFlags: remoteApp.flags,
-  })
 
   const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 
@@ -470,34 +442,11 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     activeAppVersion,
   })
 
-  // eslint-disable-next-line no-param-reassign
-  options = {
-    ...options,
-    app: await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient}),
-  }
+  await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
 
-  const result: DeployContextOutput = {
-    app: options.app,
-    remoteApp: {
-      id: remoteApp.id,
-      apiKey: remoteApp.apiKey,
-      title: remoteApp.title,
-      appType: remoteApp.appType,
-      organizationId: remoteApp.organizationId,
-      grantedScopes: remoteApp.grantedScopes,
-      flags: remoteApp.flags,
-      developerPlatformClient,
-    },
-    identifiers,
-    release: !noRelease,
-  }
-
-  await logMetadataForLoadedContext({
-    organizationId: result.remoteApp.organizationId,
-    apiKey: result.identifiers.app,
-  })
-  return result
+  return {identifiers}
 }
+
 interface ShouldOrPromptIncludeConfigDeployOptions {
   appDirectory: string
   localApp: AppInterface
@@ -555,40 +504,6 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
     confirmationMessage: 'Yes, always (Recommended)',
     cancellationMessage: 'No, never',
   })
-}
-
-/**
- * Make sure there is a valid context to execute `release`
- * That means we have a valid session, organization and app.
- *
- * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
- * If there is no API key (or is invalid), show prompts to select an org and app.
- * Finally, the info is updated in the env file.
- *
- * @param options - Current dev context options
- * @returns The selected org, app and dev store
- */
-export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
-  let developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, true)
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-  const identifiers: Identifiers = envIdentifiers as Identifiers
-
-  // eslint-disable-next-line no-param-reassign
-  options = {
-    ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release', developerPlatformClient}),
-  }
-  const result = {
-    app: options.app,
-    apiKey: remoteApp.apiKey,
-    remoteApp,
-    developerPlatformClient,
-  }
-
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
-  return result
 }
 
 interface VersionListContextOptions {

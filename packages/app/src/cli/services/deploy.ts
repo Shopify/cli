@@ -1,11 +1,11 @@
-/* eslint-disable require-atomic-updates */
 import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {OrganizationApp} from '../models/organization.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -16,10 +16,10 @@ import type {Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
-  app: AppInterface
+  app: AppLinkedInterface
 
-  /** API key of the app in Partners admin */
-  apiKey?: string
+  /** The remote app to be deployed */
+  remoteApp: OrganizationApp
 
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
@@ -40,7 +40,7 @@ interface DeployOptions {
   commitReference?: string
 
   /** The API client to send authenticated requests  */
-  developerPlatformClient?: DeveloperPlatformClient
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 interface TasksContext {
@@ -49,12 +49,12 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  let developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
+  const {app, remoteApp, developerPlatformClient, noRelease} = options
+  const release = !noRelease
+
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, remoteApp, release} = await ensureDeployContext({...options, developerPlatformClient})
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-  const apiKey = identifiers?.app ?? remoteApp.apiKey
+  let {identifiers} = await ensureDeployContext({...options, developerPlatformClient})
+  const apiKey = remoteApp.apiKey
 
   outputNewline()
   if (release) {
@@ -122,7 +122,7 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
             }
 
-            app = await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+            await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
           },
         },
       ]
@@ -145,8 +145,6 @@ export async function deploy(options: DeployOptions) {
       throw error
     }
   })
-
-  return {app}
 }
 
 async function outputCompletionMessage({
