@@ -37,7 +37,6 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
 
 import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
-import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
@@ -2325,7 +2324,7 @@ wrong = "property"
 
       // Then
       expect(use).toHaveBeenCalledWith({
-        directory: normalizePath(resolve(tmpDir)),
+        directory: normalizePath(tmpDir),
         shouldRenderSuccess: false,
         warningContent: {
           headline: "Couldn't find shopify.app.non-existent.toml",

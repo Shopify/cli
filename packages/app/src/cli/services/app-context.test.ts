@@ -5,22 +5,19 @@ import {appFromId} from './context.js'
 
 import * as localStorage from './local-storage.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
 
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
-vi.mock('@shopify/cli-kit/node/is-global')
 
-async function writeAppConfig(tmp: string, content: string, packageJsonContent = '{}') {
+async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
   const packageJsonPath = joinPath(tmp, 'package.json')
   await writeFile(appConfigPath, content)
-  await writeFile(packageJsonPath, packageJsonContent)
+  await writeFile(packageJsonPath, '{}')
 }
 
 const mockDeveloperPlatformClient = testDeveloperPlatformClient()
@@ -34,10 +31,6 @@ const mockRemoteApp = testOrganizationApp({
 beforeEach(() => {
   vi.mocked(fetchSpecifications).mockResolvedValue([])
   vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
-})
-
-afterEach(() => {
-  mockAndCaptureOutput().clear()
 })
 
 describe('linkedAppContext', () => {
