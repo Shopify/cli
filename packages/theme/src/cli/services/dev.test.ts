@@ -1,4 +1,4 @@
-import {showDeprecationWarnings, refreshTokens, dev, DevOptions} from './dev.js'
+import {showDeprecationWarnings, dev, DevOptions} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
@@ -9,7 +9,6 @@ import {initializeDevServerSession} from '../utilities/theme-environment/dev-ser
 import {DevServerSession} from '../utilities/theme-environment/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
@@ -27,7 +26,6 @@ describe('dev', () => {
   const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
   const options: DevOptions = {
     adminSession,
-    storefrontToken: 'my-storefront-token',
     directory: 'my-directory',
     store: 'my-store',
     theme: buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!,
@@ -139,27 +137,5 @@ describe('showDeprecationWarnings', () => {
 
     // Then
     expect(outputMock.output()).toMatch(/The CLI flag --poll is now deprecated/)
-  })
-})
-
-describe('refreshTokens', () => {
-  test('returns the admin session and storefront token', async () => {
-    // When
-    const result = await refreshTokens('my-store', 'my-password')
-
-    // Then
-    expect(result).toEqual({
-      adminSession: {storeFqdn: 'my-store.myshopify.com', token: 'my-password'},
-      storefrontToken: 'my-password',
-    })
-  })
-
-  test('refreshes CLI2 cache with theme token command', async () => {
-    // When
-    await refreshTokens('my-store', 'my-password')
-
-    // Then
-    const expectedParams = ['theme', 'token', '--admin', 'my-password', '--sfr', 'my-password']
-    expect(execCLI2).toHaveBeenCalledWith(expectedParams)
   })
 })
