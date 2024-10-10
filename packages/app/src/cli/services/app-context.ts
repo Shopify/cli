@@ -7,6 +7,9 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utiliti
 import {AppLoaderMode, getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface} from '../models/app/app.js'
+import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
+import {isLocalCLIInstalled} from '@shopify/cli-kit/node/node-package-manager'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -48,6 +51,8 @@ export async function linkedAppContext({
   userProvidedConfigName,
   mode,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
+  await showMultipleInstallationsWarning(directory)
+
   // Get current app configuration state
   let configState = await getAppConfigurationState(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
@@ -93,4 +98,16 @@ export async function linkedAppContext({
   }
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications}
+}
+
+/**
+ * Shows a warning if there are multiple installations of the CLI.
+ */
+async function showMultipleInstallationsWarning(directory: string): Promise<void> {
+  if ((await isGlobalCLIInstalled()) && (await isLocalCLIInstalled(directory))) {
+    renderWarning({
+      headline: 'There are two installations of the CLI: global and as a dependency of the project.',
+      body: 'We recommend to remove the @shopify/cli and @shopify/app dependencies from your package.json.',
+    })
+  }
 }

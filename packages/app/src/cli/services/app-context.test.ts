@@ -5,19 +5,22 @@ import {appFromId} from './context.js'
 
 import * as localStorage from './local-storage.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
 
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
+vi.mock('@shopify/cli-kit/node/is-global')
 
-async function writeAppConfig(tmp: string, content: string) {
+async function writeAppConfig(tmp: string, content: string, packageJsonContent = '{}') {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
   const packageJsonPath = joinPath(tmp, 'package.json')
   await writeFile(appConfigPath, content)
-  await writeFile(packageJsonPath, '{}')
+  await writeFile(packageJsonPath, packageJsonContent)
 }
 
 const mockDeveloperPlatformClient = testDeveloperPlatformClient()
@@ -31,6 +34,10 @@ const mockRemoteApp = testOrganizationApp({
 beforeEach(() => {
   vi.mocked(fetchSpecifications).mockResolvedValue([])
   vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
+})
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
 })
 
 describe('linkedAppContext', () => {
@@ -205,6 +212,62 @@ describe('linkedAppContext', () => {
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
+    })
+  })
+
+  test('shows a warning when there are multiple installations of the CLI', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      const content = `client_id="test-api-key"`
+      const packageJsonContent = `{"dependencies": {"@shopify/cli": "3.60.0"}}`
+      await writeAppConfig(tmp, content, packageJsonContent)
+      vi.mocked(isGlobalCLIInstalled).mockResolvedValue(true)
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        mode: 'report',
+      })
+
+      // Then
+      expect(outputMock.warn()).toMatchInlineSnapshot(`
+        "╭─ warning ────────────────────────────────────────────────────────────────────╮
+        │                                                                              │
+        │  There are two installations of the CLI: global and as a dependency of the   │
+        │  project.                                                                    │
+        │                                                                              │
+        │  We recommend to remove the @shopify/cli and @shopify/app dependencies from  │
+        │   your package.json.                                                         │
+        │                                                                              │
+        ╰──────────────────────────────────────────────────────────────────────────────╯
+        "
+      `)
+    })
+  })
+
+  test('does not show the multiple installations warning when there is a single CLI installation', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      const content = `client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+      vi.mocked(isGlobalCLIInstalled).mockResolvedValue(true)
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        mode: 'report',
+      })
+
+      // Then
+      expect(outputMock.warn()).toMatchInlineSnapshot(`""`)
     })
   })
 })
