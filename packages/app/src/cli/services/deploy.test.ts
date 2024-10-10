@@ -257,7 +257,7 @@ describe('deploy', () => {
       title: functionExtension.configuration.name,
       module_id: moduleId,
       description: functionExtension.configuration.description,
-      app_key: 'app-id',
+      app_key: 'api-key',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
@@ -265,14 +265,7 @@ describe('deploy', () => {
     }
 
     // When
-    await testDeployBundle({
-      app,
-      remoteApp: testOrganizationApp({
-        id: 'app-id',
-        organizationId: 'org-id',
-      }),
-      developerPlatformClient,
-    })
+    await testDeployBundle({app, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -586,7 +579,7 @@ async function testDeployBundle({
 
   await deploy({
     app,
-    remoteApp: remoteApp ?? testOrganizationApp({}),
+    remoteApp: remoteApp ?? testOrganizationApp({id: 'app-id', organizationId: 'org-id'}),
     reset: false,
     force: Boolean(options?.force),
     noRelease: Boolean(options?.noRelease),
