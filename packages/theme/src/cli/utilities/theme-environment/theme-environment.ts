@@ -14,9 +14,13 @@ import type {DevServerContext} from './types.js'
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   const watcherPromise = setupInMemoryTemplateWatcher(ctx)
   const envSetup = ensureThemeEnvironmentSetup(theme, ctx)
-  const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() =>
-    ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session),
-  )
+  const workPromise = Promise.all([
+    watcherPromise,
+    envSetup.workPromise.then((result) => {
+      console.log(result.operationResults)
+      console.log('adsf')
+    }),
+  ]).then(() => ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session))
   const server = createDevelopmentServer(theme, ctx, workPromise)
 
   return {
@@ -43,7 +47,9 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   })
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise),
+    workPromise: uploadPromise.then((result) => {
+      return {workPromise: result.workPromise, operationResults: result.operationResults}
+    }),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise
