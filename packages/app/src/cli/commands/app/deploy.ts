@@ -1,13 +1,12 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {getAppConfigurationState} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -100,18 +99,25 @@ export default class Deploy extends AppCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const app: AppInterface = await loadApp({
-      directory: flags.path,
-      userProvidedConfigName: flags.config,
-      specifications: await loadLocalExtensionsSpecifications(),
-    })
-
     const requiredNonTTYFlags = ['force']
-    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
+
+    const state = await getAppConfigurationState(flags.path, flags.config)
+    if (state.state === 'template-only' && !apiKey) {
+      requiredNonTTYFlags.push('client-id')
+    }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    const result = await deploy({
+    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
+      directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+      mode: 'strict',
+    })
+
+    await deploy({
       app,
+      remoteApp,
       apiKey,
       reset: flags.reset,
       force: flags.force,
@@ -119,8 +125,9 @@ export default class Deploy extends AppCommand {
       message: flags.message,
       version: flags.version,
       commitReference: flags['source-control-url'],
+      developerPlatformClient,
     })
 
-    return {app: result.app}
+    return {app}
   }
 }
