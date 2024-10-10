@@ -1,6 +1,5 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
-import {CodeAuthResult} from './authorize.js'
 import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
@@ -21,26 +20,6 @@ export interface ExchangeScopes {
   storefront: string[]
   businessPlatform: string[]
   appManagement: string[]
-}
-/**
- * Given a valid authorization code, request an identity access token.
- * This token can then be used to get API specific tokens.
- * @param codeData - code and codeVerifier from the authorize endpoint
- * @returns An instance with the identity access tokens.
- */
-export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Promise<IdentityToken> {
-  const clientId = await getIdentityClientId()
-  const params = {
-    grant_type: 'authorization_code',
-    code: codeData.code,
-    redirect_uri: 'http://127.0.0.1:3456',
-    client_id: clientId,
-    code_verifier: codeData.codeVerifier,
-  }
-
-  const tokenResult = await tokenRequest(params)
-  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  return buildIdentityToken(value)
 }
 
 /**
