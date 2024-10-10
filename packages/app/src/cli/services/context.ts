@@ -342,20 +342,6 @@ function buildOutput(
   }
 }
 
-interface ReleaseContextOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: boolean
-  force: boolean
-  developerPlatformClient?: DeveloperPlatformClient
-}
-
-interface ReleaseContextOutput {
-  developerPlatformClient: DeveloperPlatformClient
-  app: AppInterface
-  remoteApp: OrganizationApp
-}
-
 interface DeployContextOutput {
   identifiers: Identifiers
 }
@@ -518,40 +504,6 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
     confirmationMessage: 'Yes, always (Recommended)',
     cancellationMessage: 'No, never',
   })
-}
-
-/**
- * Make sure there is a valid context to execute `release`
- * That means we have a valid session, organization and app.
- *
- * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
- * If there is no API key (or is invalid), show prompts to select an org and app.
- * Finally, the info is updated in the env file.
- *
- * @param options - Current dev context options
- * @returns The selected org, app and dev store
- */
-export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
-  let developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  const [remoteApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, true)
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-  const identifiers: Identifiers = envIdentifiers as Identifiers
-
-  // eslint-disable-next-line no-param-reassign
-  options = {
-    ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release', developerPlatformClient}),
-  }
-  const result = {
-    app: options.app,
-    apiKey: remoteApp.apiKey,
-    remoteApp,
-    developerPlatformClient,
-  }
-
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
-  return result
 }
 
 interface VersionListContextOptions {

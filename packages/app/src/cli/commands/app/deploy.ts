@@ -100,7 +100,6 @@ export default class Deploy extends AppCommand {
     }))
 
     const requiredNonTTYFlags = ['force']
-
     const state = await getAppConfigurationState(flags.path, flags.config)
     if (state.state === 'template-only' && !apiKey) {
       requiredNonTTYFlags.push('client-id')
