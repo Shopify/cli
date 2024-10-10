@@ -24,7 +24,7 @@ export type Scalars = {
    */
   ExtensionType: {input: any; output: any}
   /** Represents untyped JSON */
-  JSON: {input: any; output: any}
+  JSON: {input: string; output: string}
   /** A valid URL, transported as a string. */
   Url: {input: any; output: any}
   /** A valid webhook subscription endpoint string. */

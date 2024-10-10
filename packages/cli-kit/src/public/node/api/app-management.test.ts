@@ -1,8 +1,9 @@
-import {appManagementRequest, handleDeprecations} from './app-management.js'
-import {graphqlRequest, GraphQLResponse} from './graphql.js'
+import {appManagementRequestDoc, handleDeprecations} from './app-management.js'
+import {graphqlRequestDoc, GraphQLResponse} from './graphql.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/context/deprecations-store.js')
@@ -19,16 +20,17 @@ beforeEach(() => {
   vi.mocked(appManagementFqdn).mockResolvedValue(appManagementFqdnValue)
 })
 
-describe('appManagementRequest', () => {
+describe('appManagementRequestDoc', () => {
   test('graphqlRequest is called with correct parameters', async () => {
     // Given
-    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequestDoc).mockResolvedValue(mockedResult)
 
     // When
-    await appManagementRequest(orgId, 'query', mockedToken, {variables: 'variables'})
+    const query = 'query' as unknown as TypedDocumentNode<object, {variables: string}>
+    await appManagementRequestDoc(orgId, query, mockedToken, {variables: 'variables'})
 
     // Then
-    expect(graphqlRequest).toHaveBeenLastCalledWith({
+    expect(graphqlRequestDoc).toHaveBeenLastCalledWith({
       query: 'query',
       api: 'App Management',
       url,
