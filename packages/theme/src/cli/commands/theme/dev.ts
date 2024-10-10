@@ -4,7 +4,6 @@ import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
 import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -130,7 +129,6 @@ You can run this command only in a directory that matches the [default Shopify t
   ]
 
   async run(): Promise<void> {
-    showEmbeddedCLIWarning()
     showDeprecationWarnings(this.argv)
 
     const parsed = await this.parse(Dev)
