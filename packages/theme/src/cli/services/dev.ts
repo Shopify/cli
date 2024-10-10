@@ -7,9 +7,7 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -20,7 +18,6 @@ const DEFAULT_PORT = '9292'
 
 export interface DevOptions {
   adminSession: AdminSession
-  storefrontToken: string
   directory: string
   store: string
   password?: string
@@ -173,17 +170,6 @@ export function showDeprecationWarnings(args: string[]) {
       body: 'The CLI flag --poll is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
     })
   }
-}
-
-export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
-  const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-  const storefrontToken = await ensureAuthenticatedStorefront([], password)
-
-  if (refreshRubyCLI && useEmbeddedThemeCLI()) {
-    await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
-  }
-
-  return {adminSession, storefrontToken}
 }
 
 function showNewVersionInfo() {

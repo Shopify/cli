@@ -1,12 +1,13 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
-import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
+import {dev, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import type {LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
@@ -118,10 +119,10 @@ You can run this command only in a directory that matches the [default Shopify t
 
     const parsed = await this.parse(Dev)
     let flags = parsed.flags as typeof parsed.flags & FlagValues
-    const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
+    const store = ensureThemeStore(flags)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     let theme: Theme
 
@@ -139,7 +140,6 @@ You can run this command only in a directory that matches the [default Shopify t
 
     await dev({
       adminSession,
-      storefrontToken,
       directory: flags.path,
       store,
       password: flags.password,
