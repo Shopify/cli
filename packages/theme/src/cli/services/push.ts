@@ -224,7 +224,7 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
   }
 
   if (hasErrors) {
-    const message = `The theme ${themeComponent(theme).join(' ')} was pushed with errors`
+    const message = `The theme '${theme.name}' was pushed with errors`
     output.theme.warning = message
   }
   outputInfo(JSON.stringify(output))
