@@ -21,6 +21,7 @@ function projectFactory(name: string, schemaName: string) {
                 GlobalID: 'string',
                 PropertyId: 'string',
                 PropertyPublicID: 'string',
+                JSON: 'string',
               },
             },
           },
@@ -43,13 +44,13 @@ function projectFactory(name: string, schemaName: string) {
                     GlobalID: 'string',
                     PropertyId: 'string',
                     PropertyPublicID: 'string',
+                    JSON: 'string',
                   },
                 },
               },
               {
                 'typed-document-node': {
                   addTypenameToSelectionSets: true,
-                  nameSuffix: 'Funky',
                 },
               },
             ],
@@ -73,5 +74,6 @@ export default {
     businessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql'),
     businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
+    appManagement: projectFactory('app-management', 'app_management_schema.graphql'),
   },
 }
