@@ -6,7 +6,7 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
-import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -36,8 +36,6 @@ export interface DevOptions {
 }
 
 export async function dev(options: DevOptions) {
-  showNewVersionInfo()
-
   if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
     return
   }
@@ -171,11 +169,4 @@ export function showDeprecationWarnings(args: string[]) {
       body: 'The CLI flag --poll is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
     })
   }
-}
-
-function showNewVersionInfo() {
-  renderInfo({
-    headline: [`You're using the new version of`, {command: 'shopify theme dev'}, {char: '.'}],
-    body: ['Run', {command: 'shopify theme dev --legacy'}, 'to switch back to the previous version.'],
-  })
 }
