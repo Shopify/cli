@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.69.0
+
+### Patch Changes
+
+- 0b297075f: Removed deprecated extension templates
+- Updated dependencies [82dd1daf8]
+- Updated dependencies [87b52747d]
+- Updated dependencies [3b6159e8a]
+- Updated dependencies [df7b178da]
+- Updated dependencies [3f10612f0]
+- Updated dependencies [41bfd221f]
+- Updated dependencies [a6abeb289]
+- Updated dependencies [d9fff2c30]
+- Updated dependencies [51178f2f6]
+  - @shopify/theme@3.69.0
+  - @shopify/cli-kit@3.69.0
+  - @shopify/plugin-cloudflare@3.69.0
+
 ## 3.68.0
 
 ### Patch Changes

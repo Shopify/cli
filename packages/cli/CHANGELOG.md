@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.69.0
+
+### Minor Changes
+
+- 0b587dff5: Improve user logging for render requests
+
 ## 3.68.0
 
 ### Minor Changes
