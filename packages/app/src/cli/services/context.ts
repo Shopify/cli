@@ -763,7 +763,7 @@ interface AppContext {
  * @param directory - The directory containing the app.
  * @param developerPlatformClient - The client to access the platform API
  */
-export async function getAppContext({
+async function getAppContext({
   reset,
   directory,
   configName,

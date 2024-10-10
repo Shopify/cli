@@ -3,7 +3,7 @@ import {fetchOrganizations} from '../../dev/fetch.js'
 import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
-import {testDeveloperPlatformClient, testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
@@ -20,6 +20,7 @@ describe('env show', () => {
     vi.spyOn(file, 'writeFile')
 
     const app = mockApp()
+    const remoteApp = testOrganizationApp()
     const organization = {
       id: '123',
       flags: {},
@@ -33,12 +34,7 @@ describe('env show', () => {
     vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
 
     // When
-    const result = await showEnv(
-      app,
-      testDeveloperPlatformClient({
-        orgAndApps: () => Promise.resolve({organization, apps: [organizationApp], hasMorePages: false}),
-      }),
-    )
+    const result = await showEnv(app, remoteApp)
 
     // Then
     expect(file.writeFile).not.toHaveBeenCalled()
