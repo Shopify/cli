@@ -7,11 +7,9 @@ import {
   ensureDevContext,
   ensureDeployContext,
   ensureThemeExtensionDevContext,
-  ensureGenerateContext,
   DeployContextOptions,
   ensureReleaseContext,
   ensureVersionsListContext,
-  GenerateContextOptions,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -29,7 +27,6 @@ import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   DEFAULT_CONFIG,
-  testPartnersUserSession,
   testDeveloperPlatformClient,
   testApp,
   testAppWithConfig,
@@ -46,7 +43,6 @@ import {
   isWebType,
   loadApp,
   loadAppConfiguration,
-  loadAppName,
 } from '../models/app/loader.js'
 import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
@@ -231,187 +227,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
-})
-
-describe('ensureGenerateContext', () => {
-  beforeEach(async () => {
-    const {schema: configSchema} = await buildVersionedAppSchema()
-    vi.mocked(loadAppConfiguration).mockResolvedValue({
-      directory: '/app',
-      configuration: {
-        path: '/app/shopify.app.toml',
-        scopes: 'read_products',
-      },
-      configSchema,
-      specifications: [],
-      remoteFlags: [],
-    })
-  })
-
-  test('returns the provided app apiKey if valid, without cached state', async () => {
-    // Given
-    const input = {
-      apiKey: 'key2',
-      directory: '/app',
-      reset: false,
-      partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient({
-        appFromId: () => Promise.resolve(APP2),
-      }),
-      commandConfig: COMMAND_CONFIG,
-    }
-
-    // When
-    const got = await ensureGenerateContext(input)
-
-    // Then
-    expect(got).toEqual(APP2)
-  })
-
-  test('returns the cached api key', async () => {
-    // Given
-    const input = {
-      directory: '/app',
-      reset: false,
-      partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient(),
-      commandConfig: COMMAND_CONFIG,
-    }
-    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, appId: APP2.apiKey})
-
-    // When
-    const got = await ensureGenerateContext(input)
-
-    // Then
-    expect(got).toEqual(APP2)
-  })
-
-  test('returns the api key from the current config', async () => {
-    // Given
-    const input = {
-      directory: '/app',
-      reset: false,
-      partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient(),
-      commandConfig: COMMAND_CONFIG,
-    }
-    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
-    vi.mocked(loadAppConfiguration).mockReset()
-    const {schema: configSchema} = await buildVersionedAppSchema()
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      directory: '/app',
-      configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
-        .configuration,
-      configSchema,
-      specifications: [],
-      remoteFlags: [],
-    })
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(input.developerPlatformClient)
-
-    // When
-    const got = await ensureGenerateContext(input)
-
-    // Then
-    expect(got).toEqual(APP2)
-  })
-
-  test('links an app on first command run', async () => {
-    // Given
-    const input = {
-      directory: '/app',
-      reset: false,
-      partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient({
-        appFromId: () => Promise.resolve(APP2),
-      }),
-      commandConfig: COMMAND_CONFIG,
-    }
-    vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
-    vi.mocked(loadAppConfiguration).mockReset()
-    const {schema: configSchema} = await buildVersionedAppSchema()
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      directory: '/app',
-      configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
-        .configuration,
-      configSchema,
-      specifications: [],
-      remoteFlags: [],
-    })
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(input.developerPlatformClient)
-
-    // When
-    const got = await ensureGenerateContext(input)
-
-    // Then
-    expect(link).toBeCalled()
-    expect(got).toEqual(APP2)
-  })
-
-  test('links an app on reset if already opted into config in code', async () => {
-    // Given
-    const input = {
-      directory: '/app',
-      reset: true,
-      partnersSession: testPartnersUserSession,
-      developerPlatformClient: buildDeveloperPlatformClient({
-        appFromId: () => Promise.resolve(APP2),
-      }),
-      commandConfig: COMMAND_CONFIG,
-    }
-    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
-    vi.mocked(loadAppConfiguration).mockReset()
-    const {schema: configSchema} = await buildVersionedAppSchema()
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      directory: '/app',
-      configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
-        .configuration,
-      configSchema,
-      specifications: [],
-      remoteFlags: [],
-    })
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(input.developerPlatformClient)
-
-    // When
-    const got = await ensureGenerateContext(input)
-
-    // Then
-    expect(link).toBeCalled()
-    expect(got).toEqual(APP2)
-  })
-
-  test('selects a new app and returns the api key', async () => {
-    // Given
-    const developerPlatformClient = buildDeveloperPlatformClient({
-      async orgAndApps(_orgId: string) {
-        return {
-          organization: ORG1,
-          apps: [APP1, APP2],
-          hasMorePages: false,
-        }
-      },
-    })
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
-    const input: GenerateContextOptions = {
-      directory: '/app',
-      reset: true,
-      developerPlatformClient,
-    }
-    vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
-    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-
-    // When
-    const got = await ensureGenerateContext(input)
-
-    // Then
-    expect(got).toEqual(APP1)
-    expect(selectOrCreateApp).toHaveBeenCalledWith('my-app', [APP1, APP2], false, ORG1, input.developerPlatformClient)
-    expect(setCachedAppInfo).toHaveBeenCalledWith({
-      appId: APP1.apiKey,
-      title: APP1.title,
-      directory: '/app',
-      orgId: ORG1.id,
-    })
-  })
 })
 
 describe('ensureDevContext', async () => {
