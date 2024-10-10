@@ -5,13 +5,16 @@ import {appFromId} from './context.js'
 
 import * as localStorage from './local-storage.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
+import metadata from '../metadata.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {tryParseInt} from '@shopify/cli-kit/common/string'
 
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
+// vi.mock('../metadata.js')
 
 async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
@@ -205,6 +208,31 @@ describe('linkedAppContext', () => {
 
       // Then
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
+    })
+  })
+
+  test('logs metadata', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const content = `client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        mode: 'report',
+      })
+
+      const meta = metadata.getAllPublicMetadata()
+      expect(meta).toEqual(
+        expect.objectContaining({
+          partner_id: tryParseInt(mockRemoteApp.organizationId),
+          api_key: mockRemoteApp.apiKey,
+        }),
+      )
     })
   })
 })

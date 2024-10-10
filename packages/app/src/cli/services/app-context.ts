@@ -7,6 +7,8 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utiliti
 import {AppLoaderMode, getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface} from '../models/app/app.js'
+import metadata from '../metadata.js'
+import {tryParseInt} from '@shopify/cli-kit/common/string'
 
 interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -92,5 +94,14 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
+  await logMetadata(remoteApp)
+
   return {app: localApp, remoteApp, developerPlatformClient, specifications}
+}
+
+async function logMetadata(app: {organizationId: string; apiKey: string}) {
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(app.organizationId),
+    api_key: app.apiKey,
+  }))
 }
