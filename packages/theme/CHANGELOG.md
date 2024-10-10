@@ -1,5 +1,24 @@
 # @shopify/theme
 
+## 3.69.0
+
+### Minor Changes
+
+- 82dd1daf8: Add a new option to create a theme on `shopify theme push`
+
+### Patch Changes
+
+- 87b52747d: Remove Liquid syntax error prettifier to avoid breaking the rest of the document.
+- 3b6159e8a: Use the new implementation of shopify theme share that no longer depends on Ruby to work.
+  This also fixes the command so it no longer ignores `.shopifyignore`.
+- df7b178da: Avoid process exit when failing to delete a file from the remote theme.
+- 3f10612f0: Fix CDN URls in .css.liquid files
+- 41bfd221f: Fix cart requests in the local proxy to avoid 401-Unauthorized errors
+- a6abeb289: Show preview url for gift cards in the initial server logs.
+- d9fff2c30: Update the ignore module (`--only`/`--ignore`/`.shopifyignore`) to be backward compatible with (Ruby) Shopify CLI 2
+- 51178f2f6: Fix `shopify theme pull --only <value>` so it does not delete ignored files
+  - @shopify/cli-kit@3.69.0
+
 ## 3.68.0
 
 ### Patch Changes
