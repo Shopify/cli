@@ -7,7 +7,7 @@ import {
 import {Notifier} from './notifier.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
@@ -193,17 +193,28 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     files.delete(fileKey)
     unsyncedFileKeys.add(fileKey)
 
+    // Emit 'unlink' event immediately for non-liquid assets
+    const isLiquidAsset = fileKey.startsWith('assets/') && extname(fileKey) === '.liquid'
+    if (!isLiquidAsset) {
+      emitEvent('unlink', {fileKey})
+    }
+
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
-        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+        if (!success) {
+          throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+        }
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
-      .finally(() => {
-        emitEvent('unlink', {fileKey})
-      })
       .catch((error) => {
         outputDebug(error.message)
+      })
+      .finally(() => {
+        // Emit 'unlink' event after remote deletion for liquid assets
+        if (isLiquidAsset) {
+          emitEvent('unlink', {fileKey})
+        }
       })
   }
 
