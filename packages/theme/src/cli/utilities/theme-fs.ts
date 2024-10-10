@@ -192,13 +192,15 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     // Optimistically delete the file from the local file system.
     files.delete(fileKey)
     unsyncedFileKeys.add(fileKey)
-    emitEvent('unlink', {fileKey})
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
         if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
+      })
+      .finally(() => {
+        emitEvent('unlink', {fileKey})
       })
       .catch((error) => {
         outputDebug(error.message)
