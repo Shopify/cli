@@ -113,21 +113,6 @@ You can run this command only in a directory that matches the [default Shopify t
     }),
   }
 
-  static cli2Flags = [
-    'host',
-    'live-reload',
-    'poll',
-    'theme-editor-sync',
-    'overwrite-json',
-    'port',
-    'theme',
-    'nodelete',
-    'only',
-    'ignore',
-    'force',
-    'notify',
-  ]
-
   async run(): Promise<void> {
     showDeprecationWarnings(this.argv)
 
@@ -152,8 +137,6 @@ You can run this command only in a directory that matches the [default Shopify t
       flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
-
     await dev({
       adminSession,
       storefrontToken,
@@ -167,7 +150,6 @@ You can run this command only in a directory that matches the [default Shopify t
       'live-reload': flags['live-reload'] as LiveReload,
       force: flags.force,
       open: flags.open,
-      flagsToPass,
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
       ignore,
