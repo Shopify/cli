@@ -574,7 +574,7 @@ export function testOrganizationStore({shopId, shopDomain}: {shopId?: string; sh
   }
 }
 
-const testRemoteSpecifications: RemoteSpecification[] = [
+export const testRemoteSpecifications: RemoteSpecification[] = [
   {
     name: 'Checkout Post Purchase',
     externalName: 'Post-purchase UI',

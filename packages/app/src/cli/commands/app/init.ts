@@ -8,6 +8,7 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {OrganizationApp} from '../../models/organization.js'
 import {loadApp} from '../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -127,6 +128,7 @@ export default class Init extends AppCommand {
       userProvidedConfigName: undefined,
     })
 
-    return {app}
+    // PENDING: Use linkedAppContext
+    return {app: app as AppLinkedInterface}
   }
 }

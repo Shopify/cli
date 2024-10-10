@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
@@ -83,6 +83,7 @@ export default class Release extends AppCommand {
       version: flags.version,
     })
 
-    return {app}
+    // PENDING: Use linkedAppContext
+    return {app: app as AppLinkedInterface}
   }
 }
