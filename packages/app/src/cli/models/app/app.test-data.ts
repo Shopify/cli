@@ -861,7 +861,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
-export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
+const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
   identifier: 'subscription_ui',
   name: 'Subscription UI',
   defaultName: 'subscription-ui',
@@ -890,6 +890,39 @@ export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
       name: 'TypeScript',
       value: 'typescript',
       path: 'templates/ui-extensions/projects/product_subscription',
+    },
+  ],
+}
+
+export const checkoutUITemplate: ExtensionTemplate = {
+  identifier: 'checkout_ui',
+  name: 'Checkout UI',
+  defaultName: 'checkout-ui',
+  group: 'Discounts and checkout',
+  supportLinks: ['https://shopify.dev/api/checkout-extensions/checkout/configuration'],
+  url: 'https://github.com/Shopify/extensions-templates',
+  type: 'ui_extension',
+  extensionPoints: [],
+  supportedFlavors: [
+    {
+      name: 'JavaScript React',
+      value: 'react',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'JavaScript',
+      value: 'vanilla-js',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'TypeScript React',
+      value: 'typescript-react',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'TypeScript',
+      value: 'typescript',
+      path: 'checkout-extension',
     },
   ],
 }
