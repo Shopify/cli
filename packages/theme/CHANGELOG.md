@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.68.1
+
+### Patch Changes
+
+- 6733066f4: Remove Liquid syntax error prettifier to avoid breaking the rest of the document.
+- 5daa2eda4: Avoid process exit when failing to delete a file from the remote theme.
+- e4f4d9713: Fix CDN URls in .css.liquid files
+- b808eb1fc: Fix cart requests in the local proxy to avoid 401-Unauthorized errors
+- 7f6d2718c: Update the ignore module (`--only`/`--ignore`/`.shopifyignore`) to be backward compatible with (Ruby) Shopify CLI 2
+- 966b0b966: Fix `shopify theme pull --only <value>` so it does not delete ignored files
+  - @shopify/cli-kit@3.68.1
+
 ## 3.68.0
 
 ### Patch Changes
