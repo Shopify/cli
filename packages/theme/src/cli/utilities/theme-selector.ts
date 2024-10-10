@@ -1,5 +1,6 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
+import {configureCLIEnvironment} from './cli-config.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -25,6 +26,15 @@ interface FindOrSelectOptions {
    * The filter applied in the list of themes in the store.
    */
   filter: FilterProps
+  /**
+   * Disable color output.
+   */
+  noColor?: boolean
+
+  /**
+   * Increase the verbosity of the output.
+   */
+  verbose?: boolean
 }
 
 /**
@@ -35,6 +45,7 @@ interface FindOrSelectOptions {
  * @returns the selected {@link Theme}
  */
 export async function findOrSelectTheme(session: AdminSession, options: FindOrSelectOptions) {
+  configureCLIEnvironment({verbose: options.verbose, noColor: options.noColor})
   const themes = await fetchStoreThemes(session)
   const filter = new Filter(options.filter)
   const store = session.storeFqdn
