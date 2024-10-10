@@ -1,19 +1,17 @@
 import {InfoOptions, info} from './info.js'
-import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
-import {AppInterface, AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {MinimalAppIdentifiers, OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
-  testApp,
   testOrganizationApp,
   testUIExtension,
   testAppConfigExtensions,
   testAppLinked,
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -21,7 +19,6 @@ import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
-vi.mock('./local-storage.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -95,100 +92,6 @@ describe('info', () => {
       const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
-    })
-  })
-
-  test('returns the current config when present', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const testConfig = `
-      name = "my app"
-      client_id = "123"
-      application_url = "https://example.com/lala"
-      embedded = true
-
-      [webhooks]
-      api_version = "2023-07"
-
-      [auth]
-      redirect_urls = [ "https://example.com/api/auth" ]
-      `
-      vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-
-      const configuration: CurrentAppConfiguration = {
-        path: joinPath(tmp, 'shopify.app.toml'),
-        name: 'my app',
-        client_id: '123',
-        application_url: 'https://example.com/lala',
-        webhooks: {api_version: '2023-07'},
-        access_scopes: {scopes: 'read_products'},
-      }
-      const app = mockApp({
-        directory: tmp,
-        app: testApp({
-          name: 'my app',
-          directory: tmp,
-          configuration,
-        }),
-        configContents: testConfig,
-      })
-      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
-
-      // Then
-      expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
-      expect(unstyled(result)).toMatch(/App name\s*my app/)
-      expect(unstyled(result)).toMatch(/Client ID\s*12345/)
-      expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
-      expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
-    })
-  })
-
-  test('returns the current cache from dev when present', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const cachedAppInfo = {
-        directory: '/path',
-        title: 'My App',
-        appId: '123',
-        storeFqdn: 'my-app.example.com',
-        updateURLs: true,
-      }
-      vi.mocked(getCachedAppInfo).mockReturnValue(cachedAppInfo)
-      const app = mockApp({directory: tmp})
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
-
-      // Then
-      expect(unstyled(result)).toMatch(/Configuration file\s*shopify.app.toml/)
-      expect(unstyled(result)).toMatch(/App name\s*My App/)
-      expect(unstyled(result)).toMatch(/Client ID\s*123/)
-      expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
-      expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
-      expect(unstyled(result)).toMatch(/Update URLs\s*Yes/)
-      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
-    })
-  })
-
-  test('returns empty configs for dev when not present', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const app = mockApp({directory: tmp})
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
-
-      // Then
-      expect(unstyled(result)).toMatch(/App name\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Client ID\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
-      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 

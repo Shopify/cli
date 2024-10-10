@@ -138,7 +138,7 @@ class AppInfo {
 
     let updateUrls = NOT_CONFIGURED_TEXT
     if (this.app.configuration.build?.automatically_update_urls_on_dev !== undefined) {
-      updateUrls = this.app.configuration.build?.automatically_update_urls_on_dev ? 'Yes' : 'No'
+      updateUrls = this.app.configuration.build.automatically_update_urls_on_dev ? 'Yes' : 'No'
     }
 
     let partnersAccountInfo = ['Partners account', 'unknown']
