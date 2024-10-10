@@ -4,6 +4,7 @@ import {
   AppConfigurationSchema,
   AppConfigurationWithoutPath,
   AppInterface,
+  AppLinkedInterface,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
   WebType,
@@ -120,6 +121,10 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
   return newApp
+}
+
+export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
+  return testApp(app, 'current') as AppLinkedInterface
 }
 
 interface TestAppWithConfigOptions {
