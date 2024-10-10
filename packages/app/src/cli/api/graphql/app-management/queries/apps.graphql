@@ -1,0 +1,20 @@
+query listApps {
+  apps {
+    id
+    key
+    activeRelease {
+      id
+      version {
+        name
+        appModules {
+          uuid
+          handle
+          config
+          specification {
+            externalIdentifier
+          }
+        }
+      }
+    }
+  }
+}

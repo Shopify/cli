@@ -1,0 +1,20 @@
+query AppVersions($appId: ID!) {
+  app(id: $appId) {
+    id
+    activeRelease {
+      id
+      version {
+        id
+      }
+    }
+  }
+  versions(appId: $appId) {
+    id
+    createdAt
+    createdBy
+    metadata {
+      message
+      versionTag
+    }
+  }
+}

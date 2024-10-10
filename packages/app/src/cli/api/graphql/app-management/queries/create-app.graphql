@@ -1,0 +1,13 @@
+mutation CreateApp($appSource: AppSourceInput!, $name: String!) {
+  appCreate(appSource: $appSource, name: $name) {
+    app {
+      id
+      key
+    }
+    userErrors {
+      category
+      message
+      on
+    }
+  }
+}

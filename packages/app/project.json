@@ -79,14 +79,16 @@
         "{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts",
-        "{projectRoot}/src/cli/api/graphql/app-dev/generated/**/*.ts"
+        "{projectRoot}/src/cli/api/graphql/app-dev/generated/**/*.ts",
+        "{projectRoot}/src/cli/api/graphql/app-management/generated/**/*.ts"
       ],
       "options": {
         "commands": [
           "pnpm eslint 'src/cli/api/graphql/partners/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.{ts,tsx}' --fix",
           "pnpm eslint 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix",
-          "pnpm eslint 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}' --fix"
+          "pnpm eslint 'src/cli/api/graphql/app-dev/generated/**/*.{ts,tsx}' --fix",
+          "pnpm eslint 'src/cli/api/graphql/app-management/generated/**/*.{ts,tsx}' --fix"
         ],
         "cwd": "packages/app"
       }
@@ -135,26 +137,41 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "graphql-codegen:generate:app-management": {
+      "executor": "nx:run-commands",
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-management/**/*.graphql"],
+      "outputs": ["{projectRoot}/src/cli/api/graphql/app-management/generated/**/*.ts"],
+      "options": {
+        "commands": [
+          "pnpm exec graphql-codegen --project=appManagement"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "graphql-codegen:postfix": {
       "executor": "nx:run-commands",
       "dependsOn": [
         "graphql-codegen:generate:partners",
         "graphql-codegen:generate:business-platform-destinations",
         "graphql-codegen:generate:business-platform-organizations",
-        "graphql-codegen:generate:app-dev"
+        "graphql-codegen:generate:app-dev",
+        "graphql-codegen:generate:app-management"
       ],
       "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts",
-        "{projectRoot}/src/cli/api/graphql/app-dev/generated/**/*.ts"],
+        "{projectRoot}/src/cli/api/graphql/app-dev/generated/**/*.ts",
+        "{projectRoot}/src/cli/api/graphql/app-management/generated/**/*.ts"
+      ],
       "options": {
         "commands": [
           "find ./packages/app/src/cli/api/graphql/partners/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
           "find ./packages/app/src/cli/api/graphql/business-platform-destinations/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
           "find ./packages/app/src/cli/api/graphql/business-platform-organizations/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
-          "find ./packages/app/src/cli/api/graphql/app-dev/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+          "find ./packages/app/src/cli/api/graphql/app-dev/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
+          "find ./packages/app/src/cli/api/graphql/app-management/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
         ],
         "cwd": "{workspaceRoot}"
       }
