@@ -6,10 +6,8 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -20,7 +18,6 @@ const DEFAULT_PORT = '9292'
 
 export interface DevOptions {
   adminSession: AdminSession
-  storefrontToken: string
   directory: string
   store: string
   password?: string
@@ -112,9 +109,6 @@ export async function dev(options: DevOptions) {
 }
 
 function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
-  const remoteUrl = `https://${store}`
-  const localUrl = `http://${host}:${port}`
-
   renderSuccess({
     body: [
       {
@@ -123,7 +117,7 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
           items: [
             {
               link: {
-                url: localUrl,
+                url: `http://${host}:${port}`,
               },
             },
           ],
@@ -134,16 +128,8 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
       [
         {
           link: {
-            label: 'Preview your gift cards',
-            url: `${localUrl}/gift_cards/[store_id]/preview`,
-          },
-        },
-      ],
-      [
-        {
-          link: {
             label: 'Customize your theme at the theme editor',
-            url: `${remoteUrl}/admin/themes/${themeId}/editor`,
+            url: `https://${store}/admin/themes/${themeId}/editor`,
           },
         },
       ],
@@ -151,11 +137,11 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
         {
           link: {
             label: 'Share your theme preview',
-            url: `${remoteUrl}/?preview_theme_id=${themeId}`,
+            url: `https://${store}/?preview_theme_id=${themeId}`,
           },
         },
         {
-          subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
+          subdued: `(https://${store}/?preview_theme_id=${themeId})`,
         },
       ],
     ],
@@ -187,13 +173,9 @@ export function showDeprecationWarnings(args: string[]) {
   }
 }
 
-export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
-  const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-  const storefrontToken = await ensureAuthenticatedStorefront([], password)
-
-  if (refreshRubyCLI && useEmbeddedThemeCLI()) {
-    await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
-  }
-
-  return {adminSession, storefrontToken}
+function showNewVersionInfo() {
+  renderInfo({
+    headline: [`You're using the new version of`, {command: 'shopify theme dev'}, {char: '.'}],
+    body: ['Run', {command: 'shopify theme dev --legacy'}, 'to switch back to the previous version.'],
+  })
 }
