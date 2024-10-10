@@ -1723,23 +1723,6 @@
       "strict": true,
       "summary": "Print out a list of sources that may be used with the logs command."
     },
-    "app:migrate": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
-      "id": "app:migrate",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
     "app:release": {
       "aliases": [
       ],

@@ -25,7 +25,6 @@ import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
 import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
-import Migrate from './commands/app/migrate.js'
 
 export const commands = {
   'app:build': Build,
@@ -52,7 +51,6 @@ export const commands = {
   'app:webhook:trigger': WebhookTrigger,
   'webhook:trigger': WebhookTriggerDeprecated,
   'demo:watcher': DemoWatcher,
-  'app:migrate': Migrate,
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata

@@ -18,7 +18,6 @@
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
-* [`shopify app migrate`](#shopify-app-migrate)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
@@ -595,13 +594,6 @@ DESCRIPTION
 
   The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
   only function extensions are supported as sources.
-```
-
-## `shopify app migrate`
-
-```
-USAGE
-  $ shopify app migrate
 ```
 
 ## `shopify app:release --version <version>`
