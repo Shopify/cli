@@ -742,7 +742,6 @@ export function inferPackageManager(optionsPackageManager: string | undefined, e
 export async function isLocalCLIInstalled(directory: string): Promise<boolean> {
   try {
     const packageJSONPath = joinPath(directory, 'package.json')
-    console.log(packageJSONPath)
     const dependencies = await getDependencies(packageJSONPath)
     return dependencies['@shopify/cli'] !== undefined
     // eslint-disable-next-line no-catch-all/no-catch-all
