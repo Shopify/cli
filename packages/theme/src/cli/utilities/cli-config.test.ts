@@ -1,5 +1,6 @@
 import {configureCLIEnvironment} from './cli-config.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import colors from '@shopify/cli-kit/node/colors'
 import {describe, expect, beforeEach, afterAll, test} from 'vitest'
 
 describe('configureCLIEnvironment', () => {
@@ -7,6 +8,7 @@ describe('configureCLIEnvironment', () => {
 
   beforeEach(() => {
     process.env = {...originalEnv}
+    colors.level = 1
   })
 
   afterAll(() => {
@@ -46,7 +48,8 @@ describe('configureCLIEnvironment', () => {
       configureCLIEnvironment({noColor: true})
 
       // Then
-      expect(process.env[globalFlags['no-color'].env!]).toBe('true')
+      expect(colors.level).toBe(0)
+      expect(process.env.FORCE_COLOR).toBe('0')
     })
 
     test('does not set no-color environment variable when noColor is false', () => {
@@ -57,7 +60,8 @@ describe('configureCLIEnvironment', () => {
       configureCLIEnvironment({noColor: false})
 
       // Then
-      expect(process.env[globalFlags['no-color'].env!]).toBeUndefined()
+      expect(colors.level).toBe(1)
+      expect(process.env.FORCE_COLOR).toBe('1')
     })
   })
 })

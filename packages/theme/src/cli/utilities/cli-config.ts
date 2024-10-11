@@ -1,4 +1,5 @@
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import colors from '@shopify/cli-kit/node/colors'
 
 interface CLIConfigOptions {
   verbose?: boolean
@@ -17,6 +18,7 @@ export function configureCLIEnvironment(options: CLIConfigOptions): void {
   }
 
   if (options.noColor) {
-    process.env[globalFlags['no-color'].env!] = 'true'
+    colors.level = 0
+    process.env.FORCE_COLOR = '0'
   }
 }
