@@ -25,11 +25,15 @@ describe('hot-reload server', () => {
     const testSectionType = 'my-test'
     const testSectionFileKey = `sections/${testSectionType}.liquid`
     const assetJsonKey = 'templates/asset.json'
+    const liquidAssetKey = 'assets/style.css.liquid'
     const assetJsonValue = {
       sections: {first: {type: testSectionType}, second: {type: testSectionType}, third: {type: 'something-else'}},
     }
     const {ctx, addEventListenerSpy, triggerFileEvent, nextTick, hotReloadHandler} = createTestContext({
-      files: [[assetJsonKey, JSON.stringify(assetJsonValue)]],
+      files: [
+        [assetJsonKey, JSON.stringify(assetJsonValue)],
+        [liquidAssetKey, ''],
+      ],
     })
 
     await setupInMemoryTemplateWatcher(ctx)
@@ -119,13 +123,20 @@ describe('hot-reload server', () => {
     await nextTick()
 
     // -- Unlinks the JSON file properly with all its side effects:
-    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', assetJsonKey)
-    expect(unlinkSyncSpy).toHaveBeenCalled()
-    await nextTick()
+    await triggerFileEvent('unlink', assetJsonKey)
     // We don't know if this file is referenced or not in code so it emits a full reload event:
     expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${assetJsonKey}"}`)
     // Removes the JSON file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
+    await nextTick()
+
+    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', liquidAssetKey)
+    expect(unlinkSyncSpy).toHaveBeenCalled()
+    await nextTick()
+
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${liquidAssetKey}"}`)
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+
     // Since the JSON file was removed, the section file is not referenced anymore:
     await triggerFileEvent('change', testSectionFileKey)
     expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${testSectionFileKey}"}`)

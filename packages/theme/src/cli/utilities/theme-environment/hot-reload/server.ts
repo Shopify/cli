@@ -93,9 +93,8 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
-    const isAsset = fileKey.startsWith('assets/')
 
-    if (isAsset) {
+    if (isAsset(fileKey)) {
       if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
         onSync(() => triggerHotReload(fileKey, ctx))
@@ -118,10 +117,16 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
-    onSync?.(() => {
-      triggerHotReload(fileKey, ctx)
+    const extension = extname(fileKey)
+    if (isAsset(fileKey) && extension === '.liquid') {
+      onSync?.(() => {
+        sectionNamesByFile.delete(fileKey)
+        triggerHotReload(fileKey, ctx)
+      })
+    } else {
       sectionNamesByFile.delete(fileKey)
-    })
+      triggerHotReload(fileKey, ctx)
+    }
   })
 
   // Once the initial files are loaded, read all the JSON files so that
@@ -312,4 +317,8 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
  */
 export function injectHotReloadScript(html: string) {
   return html.replace(/<\/head>/, `${getClientScripts()}</head>`)
+}
+
+function isAsset(key: string) {
+  return key.startsWith('assets/')
 }
