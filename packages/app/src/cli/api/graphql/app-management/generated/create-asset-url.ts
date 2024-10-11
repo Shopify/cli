@@ -6,10 +6,10 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 export type CreateAssetUrlMutationVariables = Types.Exact<{[key: string]: never}>
 
 export type CreateAssetUrlMutation = {
-  appRequestSourceUploadUrl?: {
-    sourceUploadUrl?: unknown | null
+  appRequestSourceUploadUrl: {
+    sourceUploadUrl?: string | null
     userErrors: {field?: string[] | null; message: string}[]
-  } | null
+  }
 }
 
 export const CreateAssetUrl = {

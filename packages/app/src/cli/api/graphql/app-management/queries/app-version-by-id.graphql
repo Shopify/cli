@@ -5,14 +5,7 @@ query AppVersionById($versionId: ID!) {
       versionTag
     }
     appModules {
-      uuid
-      handle
-      config
-      specification {
-        identifier
-        externalIdentifier
-        name
-      }
+      ...ReleasedAppModule
     }
   }
 }

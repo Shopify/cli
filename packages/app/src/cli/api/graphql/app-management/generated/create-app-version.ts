@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -11,25 +12,25 @@ export type CreateAppVersionMutationVariables = Types.Exact<{
 }>
 
 export type CreateAppVersionMutation = {
-  appVersionCreate?: {
+  appVersionCreate: {
     version?: {
       id: string
       appModules: {
         uuid: string
         handle: string
-        config: string
-        specification: {identifier: string; name: string}
+        config: JsonMapType
+        specification: {identifier: string; externalIdentifier: string; name: string}
       }[]
-      metadata: {versionTag?: string | null}
+      metadata: {versionTag?: string | null; message?: string | null}
     } | null
     userErrors: {
       field?: string[] | null
       message: string
       category: string
       code?: Types.Code | null
-      on: string
+      on: JsonMapType
     }[]
-  } | null
+  }
 }
 
 export const CreateAppVersion = {
@@ -105,21 +106,7 @@ export const CreateAppVersion = {
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
-                            {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
-                            {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
-                            {kind: 'Field', name: {kind: 'Name', value: 'config'}},
-                            {
-                              kind: 'Field',
-                              name: {kind: 'Name', value: 'specification'},
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: 'name'}},
-                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                ],
-                              },
-                            },
+                            {kind: 'FragmentSpread', name: {kind: 'Name', value: 'ReleasedAppModule'}},
                             {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                           ],
                         },
@@ -131,6 +118,7 @@ export const CreateAppVersion = {
                           kind: 'SelectionSet',
                           selections: [
                             {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'message'}},
                             {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                           ],
                         },
@@ -155,6 +143,31 @@ export const CreateAppVersion = {
                   },
                 },
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: {kind: 'Name', value: 'ReleasedAppModule'},
+      typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'AppModule'}},
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'specification'},
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'name'}},
               ],
             },
           },

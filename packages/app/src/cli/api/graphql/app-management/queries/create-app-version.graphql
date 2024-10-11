@@ -3,16 +3,11 @@ mutation CreateAppVersion($appId: ID!, $appSource: AppSourceInput!, $name: Strin
     version {
       id
       appModules {
-        uuid
-        handle
-        config
-        specification {
-          identifier
-          name
-        }
+        ...ReleasedAppModule
       }
       metadata {
         versionTag
+        message
       }
     }
     userErrors {

@@ -7,12 +7,7 @@ query listApps {
       version {
         name
         appModules {
-          uuid
-          handle
-          config
-          specification {
-            externalIdentifier
-          }
+          ...ReleasedAppModule
         }
       }
     }

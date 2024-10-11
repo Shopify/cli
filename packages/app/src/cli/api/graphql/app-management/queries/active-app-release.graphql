@@ -14,16 +14,20 @@ query activeAppRelease($appId: ID!) {
       version {
         name
         appModules {
-          uuid
-          handle
-          config
-          specification {
-            identifier
-            externalIdentifier
-            name
-          }
+          ...ReleasedAppModule
         }
       }
     }
+  }
+}
+
+fragment ReleasedAppModule on AppModule {
+  uuid
+  handle
+  config
+  specification {
+    identifier
+    externalIdentifier
+    name
   }
 }

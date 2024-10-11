@@ -9,7 +9,7 @@ export type FetchSpecificationsQuery = {
   specifications: {
     name: string
     identifier: string
-    externalIdentifier?: string | null
+    externalIdentifier: string
     features: string[]
     uidStrategy: {appModuleLimit: number} | {appModuleLimit: number}
   }[]
