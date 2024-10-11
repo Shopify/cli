@@ -44,7 +44,7 @@ describe('patchAppConfigurationFile', () => {
         },
       }
 
-      await patchTomlConfigurationFile(configPath, patch, schema)
+      await patchTomlConfigurationFile({path: configPath, patch, schema, includeAppDefaultComments: true})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -81,7 +81,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchTomlConfigurationFile(configPath, patch, schema)
+      await patchTomlConfigurationFile({path: configPath, patch, schema, includeAppDefaultComments: true})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -121,7 +121,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchTomlConfigurationFile(configPath, patch, schema)
+      await patchTomlConfigurationFile({path: configPath, patch, schema, includeAppDefaultComments: true})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -160,7 +160,7 @@ random_toml_field = "random_value"
       )
       const patch = {name: 123}
 
-      await patchTomlConfigurationFile(configPath, patch, undefined, false)
+      await patchTomlConfigurationFile({path: configPath, patch, schema: undefined, includeAppDefaultComments: false})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile).toEqual(`random_toml_field = "random_value"

@@ -218,7 +218,12 @@ export async function updateURLs(
         : {}),
     }
 
-    await patchTomlConfigurationFile(localApp.configuration.path, patch, localApp.configSchema)
+    await patchTomlConfigurationFile({
+      path: localApp.configuration.path,
+      patch,
+      schema: localApp.configSchema,
+      includeAppDefaultComments: true,
+    })
   }
 }
 
@@ -264,7 +269,12 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
       const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
-      await patchTomlConfigurationFile(options.localApp.configuration.path, patch, options.localApp.configSchema)
+      await patchTomlConfigurationFile({
+        path: options.localApp.configuration.path,
+        patch,
+        schema: options.localApp.configSchema,
+        includeAppDefaultComments: true,
+      })
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

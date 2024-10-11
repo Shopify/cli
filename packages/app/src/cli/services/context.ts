@@ -245,7 +245,12 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     localApp.configuration = newConfiguration
 
     const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
-    await patchTomlConfigurationFile(configuration.path, patch, localApp.configSchema)
+    await patchTomlConfigurationFile({
+      path: configuration.path,
+      patch,
+      schema: localApp.configSchema,
+      includeAppDefaultComments: true,
+    })
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -547,7 +552,12 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   }
 
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchTomlConfigurationFile(localConfiguration.path, patch, options.localApp.configSchema)
+  await patchTomlConfigurationFile({
+    path: localConfiguration.path,
+    patch,
+    schema: options.localApp.configSchema,
+    includeAppDefaultComments: true,
+  })
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 
