@@ -347,7 +347,8 @@ wrong = "property"
       │  For more information, see Shopify CLI documentation [1]                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/tools/cli
+      [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executab
+      le-or-local-dependency
       "
     `)
     mockOutput.clear()

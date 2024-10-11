@@ -370,7 +370,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         body: [`We recommend to remove the @shopify/cli and @shopify/app dependencies from your package.json.`],
         link: {
           label: 'For more information, see Shopify CLI documentation',
-          url: 'https://shopify.dev/docs/apps/tools/cli',
+          url: 'https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency',
         },
       }
       renderInfo(warningContent)
