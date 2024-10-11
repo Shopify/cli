@@ -1,4 +1,3 @@
-import {ensureReleaseContext} from './context.js'
 import {
   configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersReleaseBreakdown,
@@ -6,6 +5,9 @@ import {
 import {AppInterface} from '../models/app/app.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
+import {OrganizationApp} from '../models/organization.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {getAppIdentifiers, Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -13,11 +15,11 @@ interface ReleaseOptions {
   /** The app to be built and uploaded */
   app: AppInterface
 
-  /** API key of the app in Partners admin */
-  apiKey?: string
+  /** The remote app to be released */
+  remoteApp: OrganizationApp
 
-  /** If true, ignore any cached appId or extensionId */
-  reset: boolean
+  /** The developer platform client */
+  developerPlatformClient: DeveloperPlatformClient
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
@@ -27,7 +29,11 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  const {developerPlatformClient, app, remoteApp} = await ensureReleaseContext(options)
+  const {developerPlatformClient, app, remoteApp} = options
+
+  // IS THIS NECESSARY?
+  const identifiers = getAppIdentifiers({app}, developerPlatformClient) as Identifiers
+  await updateAppIdentifiers({app, identifiers, command: 'release', developerPlatformClient})
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
     developerPlatformClient,

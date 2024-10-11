@@ -1,4 +1,3 @@
-import {ensureReleaseContext} from './context.js'
 import {release} from './release.js'
 import {
   configExtensionsIdentifiersBreakdown,
@@ -148,12 +147,6 @@ async function testRelease(
   {developerPlatformClient = testDeveloperPlatformClient()} = {},
 ) {
   // Given
-  vi.mocked(ensureReleaseContext).mockResolvedValue({
-    app,
-    developerPlatformClient,
-    remoteApp: APP,
-  })
-
   vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())
   vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue(buildConfigExtensionsBreakdown())
 
