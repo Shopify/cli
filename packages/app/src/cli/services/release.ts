@@ -77,7 +77,7 @@ export async function release(options: ReleaseOptions) {
   } = await renderTasks<Context>(tasks)
 
   const linkAndMessage: TokenItem = [
-    {link: {label: versionDetails.versionTag, url: versionDetails.location}},
+    {link: {label: versionDetails.versionTag ?? undefined, url: versionDetails.location}},
     versionDetails.message ? `\n${versionDetails.message}` : '',
   ]
 
