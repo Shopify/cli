@@ -130,11 +130,13 @@ describe('hot-reload server', () => {
     expect(getInMemoryTemplates(ctx)).toEqual({})
     await nextTick()
 
+    // -- Unlinks CSS Liquid files
     const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', liquidAssetKey)
-    expect(unlinkSyncSpy).toHaveBeenCalled()
+    // We wait for syncing to finish on liquid assets before emitting a full reload event:
     await nextTick()
-
+    expect(unlinkSyncSpy).toHaveBeenCalled()
     expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${liquidAssetKey}"}`)
+    // Removes the CSS Liquid file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
 
     // Since the JSON file was removed, the section file is not referenced anymore:
