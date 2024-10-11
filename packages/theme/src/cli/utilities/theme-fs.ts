@@ -8,7 +8,7 @@ import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
@@ -202,13 +202,30 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       .then((success) => {
         if (!success) throw new Error(`Response was not successful.`)
 
+    const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
+      .then(async (success) => {
+        if (!success) {
+          throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+        }
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
+        return true
       })
-      .finally(() => {
-        emitEvent('unlink', {fileKey})
+      .catch((error) => {
+        outputDebug(error.message)
+        return false
       })
-      .catch(createSyncingCatchError(fileKey, 'delete'))
+
+    emitEvent('unlink', {
+      fileKey,
+      onSync: (fn) => {
+        syncPromise
+          .then((didSync) => {
+            if (didSync) fn()
+          })
+          .catch(() => {})
+      },
+    }).catch(createSyncingCatchError(fileKey, 'delete'))
   }
 
   const directoriesToWatch = new Set(
