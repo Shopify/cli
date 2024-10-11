@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax  */
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
@@ -34,7 +36,7 @@ export type Scalars = {
    *   }
    * }`
    */
-  JSON: {input: string; output: string}
+  JSON: {input: JsonMapType | string; output: JsonMapType}
   /**
    * Represents an [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and
    * [RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987)-compliant URI string.
@@ -42,7 +44,7 @@ export type Scalars = {
    * For example, `"https://example.myshopify.com"` is a valid URL. It includes a scheme (`https`) and a host
    * (`example.myshopify.com`).
    */
-  URL: {input: any; output: any}
+  URL: {input: string; output: string}
 }
 
 /** The input fields for an app module. */

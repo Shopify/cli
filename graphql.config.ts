@@ -11,7 +11,7 @@ function projectFactory(name: string, schemaName: string) {
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */',
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
             ],
@@ -21,7 +21,8 @@ function projectFactory(name: string, schemaName: string) {
                 GlobalID: 'string',
                 PropertyId: 'string',
                 PropertyPublicID: 'string',
-                JSON: 'string',
+                JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
+                URL: 'string',
               },
             },
           },
@@ -31,7 +32,7 @@ function projectFactory(name: string, schemaName: string) {
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types */',
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
               {
@@ -44,7 +45,8 @@ function projectFactory(name: string, schemaName: string) {
                     GlobalID: 'string',
                     PropertyId: 'string',
                     PropertyPublicID: 'string',
-                    JSON: 'string',
+                    JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
+                    URL: 'string',
                   },
                 },
               },
