@@ -83,13 +83,17 @@ import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
-import {ActiveAppRelease, ActiveAppReleaseQuery} from '../../api/graphql/app-management/generated/active-app-release.js'
+import {
+  ActiveAppRelease,
+  ActiveAppReleaseQuery,
+  ReleasedAppModuleFragment,
+} from '../../api/graphql/app-management/generated/active-app-release.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
-import {CreateApp} from '../../api/graphql/app-management/generated/create-app.js'
+import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
@@ -231,7 +235,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.businessPlatformToken(),
       variables,
     )
-    const org = organizationResult.currentUserAccount.organization
+    const org = organizationResult.currentUserAccount?.organization
     if (!org) {
       return
     }
@@ -332,7 +336,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const mutation = CreateApp
     const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
-    if (result.appCreate.userErrors?.length > 0) {
+    if (!result.appCreate.app || result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
     }
@@ -463,7 +467,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             '/',
           ),
           message: '',
-          appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
+          appModuleVersions: versionInfo.appModules.map((mod: ReleasedAppModuleFragment) => {
             return {
               registrationId: mod.uuid,
               registrationUid: mod.uuid,
@@ -497,7 +501,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const selectedVersionModules = selectedVersion.version.appModules
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
-    function formattedModule(mod: AppModuleReturnType) {
+    function formattedModule(mod: ReleasedAppModuleFragment) {
       return {
         uuid: mod.uuid,
         registrationTitle: mod.handle,
@@ -648,6 +652,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       releaseVariables,
     )
+    if (!releaseResult.appReleaseCreate?.release) {
+      throw new AbortError('Failed to release version')
+    }
     return {
       appRelease: {
         appVersion: {
@@ -907,14 +914,14 @@ export async function versionDeepLink(organizationId: string, appId: string, ver
 }
 
 interface DiffAppModulesInput {
-  currentModules: AppModuleReturnType[]
-  selectedVersionModules: AppModuleReturnType[]
+  currentModules: ReleasedAppModuleFragment[]
+  selectedVersionModules: ReleasedAppModuleFragment[]
 }
 
 interface DiffAppModulesOutput {
-  added: AppModuleReturnType[]
-  removed: AppModuleReturnType[]
-  updated: AppModuleReturnType[]
+  added: ReleasedAppModuleFragment[]
+  removed: ReleasedAppModuleFragment[]
+  updated: ReleasedAppModuleFragment[]
 }
 
 export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
