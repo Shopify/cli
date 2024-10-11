@@ -3,9 +3,10 @@ import {
   configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
-import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
-import {AppInterface} from '../models/app/app.js'
+import {testAppLinked, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
+import {AppLinkedInterface} from '../models/app/app.js'
+import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -17,7 +18,7 @@ vi.mock('../api/graphql/app_release.js')
 vi.mock('./context/breakdown-extensions.js')
 vi.mock('../prompts/deploy-release.js')
 
-const APP = {
+const APP: OrganizationApp = {
   id: 'app-id',
   title: 'app-title',
   apiKey: 'api-key',
@@ -46,7 +47,7 @@ beforeEach(() => {
 describe('release', () => {
   test("doesn't trigger mutations if the user doesn't confirm", async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
     vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(false)
 
     // When/Then
@@ -55,7 +56,7 @@ describe('release', () => {
 
   test('triggers mutations if the user confirms', async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
     vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
@@ -97,7 +98,7 @@ describe('release', () => {
 
   test('shows a custom error message with link and message if errors are returned', async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
     vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
@@ -142,7 +143,7 @@ describe('release', () => {
 })
 
 async function testRelease(
-  app: AppInterface,
+  app: AppLinkedInterface,
   version: string,
   {developerPlatformClient = testDeveloperPlatformClient()} = {},
 ) {
@@ -152,7 +153,8 @@ async function testRelease(
 
   await release({
     app,
-    reset: false,
+    remoteApp: APP,
+    developerPlatformClient,
     force: false,
     version,
   })

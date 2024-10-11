@@ -2,7 +2,7 @@ import {
   configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -13,7 +13,7 @@ import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
-  app: AppInterface
+  app: AppLinkedInterface
 
   /** The remote app to be released */
   remoteApp: OrganizationApp
