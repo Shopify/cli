@@ -1,7 +1,7 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
-import {createRenderCatchError} from './errors.js'
+import {createSyncingCatchError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -139,7 +139,7 @@ function buildDeleteJob(
         .catch((error: Error) => {
           failedDeleteAttempts++
           if (failedDeleteAttempts > 3) throw error
-          createRenderCatchError(file.key, 'delete')(error)
+          createSyncingCatchError(file.key, 'delete')(error)
         })
         .finally(() => {
           progress.current++
