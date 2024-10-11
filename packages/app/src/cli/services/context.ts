@@ -8,6 +8,7 @@ import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {DeployOptions} from './deploy.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -275,13 +276,6 @@ interface ReleaseContextOutput {
   remoteApp: OrganizationApp
 }
 
-interface DeployContextOutput {
-  app: AppInterface
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>
-  identifiers: Identifiers
-  release: boolean
-}
-
 /**
  * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
  * @param app - The local app object
@@ -336,16 +330,6 @@ export async function ensureThemeExtensionDevContext(
   return registration
 }
 
-export interface DeployContextOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: boolean
-  force: boolean
-  noRelease: boolean
-  commitReference?: string
-  developerPlatformClient: DeveloperPlatformClient
-}
-
 /**
  * Make sure there is a valid context to execute `deploy`
  * That means we have a valid session, organization and app.
@@ -358,21 +342,9 @@ export interface DeployContextOptions {
  * @param developerPlatformClient - The client to access the platform API
  * @returns The selected org, app and dev store
  */
-export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
-  const {reset, force, noRelease} = options
-  let developerPlatformClient = options.developerPlatformClient
-  const enableLinkingPrompt = !options.apiKey && !isCurrentAppSchema(options.app.configuration)
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient, true, enableLinkingPrompt)
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+export async function ensureDeployContext(options: DeployOptions): Promise<Identifiers> {
+  const {reset, force, noRelease, app, remoteApp, developerPlatformClient} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
-
-  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
-  const app: AppInterface = await loadApp({
-    specifications,
-    directory: options.app.directory,
-    userProvidedConfigName: getAppConfigurationShorthand(options.app.configuration.path),
-    remoteFlags: remoteApp.flags,
-  })
 
   const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 
@@ -390,34 +362,11 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     activeAppVersion,
   })
 
-  // eslint-disable-next-line no-param-reassign
-  options = {
-    ...options,
-    app: await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient}),
-  }
+  await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
 
-  const result: DeployContextOutput = {
-    app: options.app,
-    remoteApp: {
-      id: remoteApp.id,
-      apiKey: remoteApp.apiKey,
-      title: remoteApp.title,
-      appType: remoteApp.appType,
-      organizationId: remoteApp.organizationId,
-      grantedScopes: remoteApp.grantedScopes,
-      flags: remoteApp.flags,
-      developerPlatformClient,
-    },
-    identifiers,
-    release: !noRelease,
-  }
-
-  await logMetadataForLoadedContext({
-    organizationId: result.remoteApp.organizationId,
-    apiKey: result.identifiers.app,
-  })
-  return result
+  return identifiers
 }
+
 interface ShouldOrPromptIncludeConfigDeployOptions {
   appDirectory: string
   localApp: AppInterface
