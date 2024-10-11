@@ -119,13 +119,13 @@ describe('hot-reload server', () => {
     await nextTick()
 
     // -- Unlinks the JSON file properly with all its side effects:
-    await triggerFileEvent('unlink', assetJsonKey)
+    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', assetJsonKey)
+    expect(unlinkSyncSpy).toHaveBeenCalled()
+    await nextTick()
     // We don't know if this file is referenced or not in code so it emits a full reload event:
     expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${assetJsonKey}"}`)
     // Removes the JSON file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
-    await nextTick()
-    const hotReloadEventsLengthBeforeChange = hotReloadEvents.length
     // Since the JSON file was removed, the section file is not referenced anymore:
     await triggerFileEvent('change', testSectionFileKey)
     expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${testSectionFileKey}"}`)
@@ -287,13 +287,13 @@ function createTestContext(options?: {files?: [string, string][]}) {
       upsertFile(fileKey, content)
     }
 
-    handler(isUnlink ? {fileKey} : {fileKey, onContent: contentSpy, onSync: syncSpy})
+    handler(isUnlink ? {fileKey, onSync: syncSpy} : {fileKey, onContent: contentSpy, onSync: syncSpy})
 
     // Waits for the event to be processed. Since we are using a tick here,
     // the previous async operations need to be deferred by at least 2 ticks.
     await nextTick()
 
-    return isUnlink ? {} : {contentSpy, syncSpy}
+    return isUnlink ? {syncSpy} : {contentSpy, syncSpy}
   }
 
   const ctx: DevServerContext = {
