@@ -114,9 +114,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     }
   }
 
-  ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
+  const handleFileUnlink = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
     const extension = extname(fileKey)
     if (isAsset(fileKey) && extension === '.liquid') {
       onSync?.(() => {
@@ -127,7 +125,11 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       sectionNamesByFile.delete(fileKey)
       triggerHotReload(fileKey, ctx)
     }
-  })
+  }
+
+  ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
+  ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
+  ctx.localThemeFileSystem.addEventListener('unlink', handleFileUnlink)
 
   // Once the initial files are loaded, read all the JSON files so that
   // we gather the existing section names early. This way, when a section
