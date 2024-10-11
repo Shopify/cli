@@ -6,6 +6,7 @@ import {appFromId} from './context.js'
 import * as localStorage from './local-storage.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
+import * as loader from '../models/app/loader.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -48,7 +49,6 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        mode: 'report',
       })
 
       // Then
@@ -97,7 +97,6 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        mode: 'report',
       })
 
       // Then
@@ -130,7 +129,6 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        mode: 'report',
       })
       const result = localStorage.getCachedAppInfo(tmp)
 
@@ -161,7 +159,6 @@ describe('linkedAppContext', () => {
         clientId: newClientId,
         forceRelink: false,
         userProvidedConfigName: undefined,
-        mode: 'report',
       })
 
       // Then
@@ -202,7 +199,6 @@ describe('linkedAppContext', () => {
         forceRelink: true,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        mode: 'report',
       })
 
       // Then
@@ -222,7 +218,6 @@ describe('linkedAppContext', () => {
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        mode: 'report',
       })
 
       const meta = metadata.getAllPublicMetadata()
@@ -232,6 +227,49 @@ describe('linkedAppContext', () => {
           api_key: mockRemoteApp.apiKey,
         }),
       )
+    })
+  })
+
+  test('uses unsafeReportMode when provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const content = `client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+      const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+        unsafeReportMode: true,
+      })
+
+      // Then
+      expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'report'}))
+      loadSpy.mockRestore()
+    })
+  })
+
+  test('does not use unsafeReportMode when not provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const content = `client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
+      const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
+
+      // When
+      await linkedAppContext({
+        directory: tmp,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+        clientId: undefined,
+      })
+
+      // Then
+      expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'strict'}))
+      loadSpy.mockRestore()
     })
   })
 })

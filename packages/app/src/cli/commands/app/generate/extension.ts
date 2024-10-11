@@ -110,8 +110,6 @@ export default class AppGenerateExtension extends AppCommand {
       clientId: flags['client-id'] || flags['api-key'],
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      // Using report because a bad extension config shouldn't prevent the user from generating another extension
-      mode: 'report',
     })
 
     await generate({
