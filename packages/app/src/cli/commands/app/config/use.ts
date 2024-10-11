@@ -47,8 +47,6 @@ export default class ConfigUse extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: args.config,
-      // Using report because a bad extension config shouldn't prevent the app from changing the default app config
-      mode: 'report',
     })
 
     return {app}

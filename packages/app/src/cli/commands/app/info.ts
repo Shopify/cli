@@ -42,7 +42,7 @@ export default class AppInfo extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
+      unsafeReportMode: true,
     })
     outputInfo(
       await info(app, remoteApp, {

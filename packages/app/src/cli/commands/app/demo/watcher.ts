@@ -24,7 +24,6 @@ export default class DemoWatcher extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
     })
 
     const watcher = new AppEventWatcher(app)

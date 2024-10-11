@@ -24,8 +24,6 @@ export default class Sources extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      // Using report because a bad extension config shouldn't prevent the user from running this command
-      mode: 'report',
     })
 
     if (app.errors) {

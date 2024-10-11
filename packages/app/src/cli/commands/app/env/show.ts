@@ -24,8 +24,6 @@ export default class EnvShow extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      // Using report because a bad extension config shouldn't prevent the app from showing the env values
-      mode: 'report',
     })
     outputInfo(await showEnv(app, remoteApp))
     return {app}

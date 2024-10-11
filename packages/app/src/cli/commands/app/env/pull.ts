@@ -35,8 +35,6 @@ export default class EnvPull extends AppCommand {
       clientId: undefined,
       forceRelink: false,
       userProvidedConfigName: flags.config,
-      // Using report because a bad extension config shouldn't prevent the app from pulling the env values
-      mode: 'report',
     })
     const envFile = joinPath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configuration.path))
     outputInfo(await pullEnv({app, remoteApp, envFile}))
