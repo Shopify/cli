@@ -204,9 +204,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
-        if (!success) {
-          throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
-        }
+        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
         return true
