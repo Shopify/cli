@@ -117,9 +117,11 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
-    sectionNamesByFile.delete(fileKey)
-    triggerHotReload(fileKey, ctx)
+  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey, onSync}) => {
+    onSync?.(() => {
+      triggerHotReload(fileKey, ctx)
+      sectionNamesByFile.delete(fileKey)
+    })
   })
 
   // Once the initial files are loaded, read all the JSON files so that
