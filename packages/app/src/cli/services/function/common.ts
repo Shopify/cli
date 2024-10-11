@@ -42,7 +42,6 @@ export async function inFunctionContext({
     clientId: apiKey,
     forceRelink: false,
     userProvidedConfigName,
-    mode: 'strict',
   })
 
   const allFunctions = app.allExtensions.filter(

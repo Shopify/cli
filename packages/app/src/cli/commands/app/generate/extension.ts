@@ -108,7 +108,7 @@ export default class AppGenerateExtension extends AppCommand {
     const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'] || flags['api-key'],
-      forceRelink: false,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
