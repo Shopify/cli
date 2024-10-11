@@ -36,7 +36,7 @@ import {
   testThemeExtensions,
   testAppConfigExtensions,
   buildVersionedAppSchema,
-  testAppWithLegacyConfig,
+  testAppLinked,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {
@@ -47,7 +47,7 @@ import {
   loadAppConfiguration,
   loadAppName,
 } from '../models/app/loader.js'
-import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
@@ -144,9 +144,10 @@ const state: AppConfigurationStateLinked = {
 
 const remoteApp: OrganizationApp = APP1
 
-const deployOptions = (app: AppInterface, reset = false, force = false): DeployContextOptions => {
+const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployContextOptions => {
   return {
     app,
+    remoteApp: testOrganizationApp(),
     reset,
     force,
     noRelease: false,
@@ -1047,18 +1048,14 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.remoteApp.id).toEqual(APP2.id)
-    expect(got.remoteApp.title).toEqual(APP2.title)
-    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.release).toEqual(true)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 
   test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1077,11 +1074,7 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
-    expect(got.remoteApp.id).toEqual(APP2.id)
-    expect(got.remoteApp.title).toEqual(APP2.title)
-    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.release).toEqual(true)
   })
 
   test("fetches the app from the partners' API and returns it alongside the id when config as code is enabled", async () => {
@@ -1116,17 +1109,13 @@ describe('ensureDeployContext', () => {
       apiKey: APP2.apiKey,
       organizationId: '0',
     })
-    expect(got.remoteApp.id).toEqual(APP2.id)
-    expect(got.remoteApp.title).toEqual(APP2.title)
-    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
     // Given
-    const legacyApp = testAppWithLegacyConfig({config: {}})
+    const legacyApp = testAppLinked()
     const app = testAppWithConfig({config: {client_id: APP1.apiKey}})
     const identifiers = {
       app: APP1.apiKey,
@@ -1166,11 +1155,7 @@ describe('ensureDeployContext', () => {
       command: 'deploy',
       developerPlatformClient,
     })
-    expect(got.remoteApp.id).toEqual(APP1.id)
-    expect(got.remoteApp.title).toEqual(APP1.title)
-    expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
-    expect(got.release).toEqual(true)
   })
 
   test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
@@ -1196,7 +1181,7 @@ describe('ensureDeployContext', () => {
 
   test('prompts the user to create or select an app if reset is true', async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
     const identifiers = {
       app: APP1.apiKey,
       extensions: {},
@@ -1245,11 +1230,7 @@ describe('ensureDeployContext', () => {
       command: 'deploy',
       developerPlatformClient,
     })
-    expect(got.remoteApp.id).toEqual(APP1.id)
-    expect(got.remoteApp.title).toEqual(APP1.title)
-    expect(got.remoteApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
-    expect(got.release).toEqual(true)
     writeAppConfigurationFileSpy.mockRestore()
   })
 
@@ -1278,12 +1259,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.remoteApp.id).toEqual(APP2.id)
-    expect(got.remoteApp.title).toEqual(APP2.title)
-    expect(got.remoteApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.release).toEqual(true)
-    expect(got.app.allExtensions).toEqual(appWithExtensions.allExtensions)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -1589,7 +1565,7 @@ describe('ensureDeployContext', () => {
 
   test('uses the right developer platform client when it changes', async () => {
     // Given
-    const legacyApp = testAppWithLegacyConfig({config: {}})
+    const legacyApp = testAppLinked()
     const app = testAppWithConfig({config: {client_id: APP1.apiKey}})
     const identifiers = {
       app: APP1.apiKey,
