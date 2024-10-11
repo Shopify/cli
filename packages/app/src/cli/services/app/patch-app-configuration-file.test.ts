@@ -1,4 +1,4 @@
-import {patchAppConfigurationFile} from './patch-app-configuration-file.js'
+import {patchTomlConfigurationFile} from './patch-app-configuration-file.js'
 import {getAppVersionedSchema} from '../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -44,7 +44,7 @@ describe('patchAppConfigurationFile', () => {
         },
       }
 
-      await patchAppConfigurationFile(configPath, patch, schema)
+      await patchTomlConfigurationFile(configPath, patch, schema)
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -81,7 +81,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchAppConfigurationFile(configPath, patch, schema)
+      await patchTomlConfigurationFile(configPath, patch, schema)
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -121,7 +121,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchAppConfigurationFile(configPath, patch, schema)
+      await patchTomlConfigurationFile(configPath, patch, schema)
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -145,6 +145,26 @@ redirect_urls = [
 
 [webhooks]
 api_version = "2023-04"
+`)
+    })
+  })
+
+  test('does not validate the toml if no schema is provided', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = joinPath(tmpDir, 'shopify.app.toml')
+      writeFileSync(
+        configPath,
+        `
+random_toml_field = "random_value"
+`,
+      )
+      const patch = {name: 123}
+
+      await patchTomlConfigurationFile(configPath, patch, undefined, false)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toEqual(`random_toml_field = "random_value"
+name = 123
 `)
     })
   })

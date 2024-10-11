@@ -7,7 +7,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {patchTomlConfigurationFile} from './app/patch-app-configuration-file.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -245,7 +245,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     localApp.configuration = newConfiguration
 
     const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
-    await patchAppConfigurationFile(configuration.path, patch, localApp.configSchema)
+    await patchTomlConfigurationFile(configuration.path, patch, localApp.configSchema)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -547,7 +547,7 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   }
 
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchAppConfigurationFile(localConfiguration.path, patch, options.localApp.configSchema)
+  await patchTomlConfigurationFile(localConfiguration.path, patch, options.localApp.configSchema)
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 

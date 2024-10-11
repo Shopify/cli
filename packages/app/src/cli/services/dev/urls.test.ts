@@ -15,7 +15,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
+import {patchTomlConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -91,7 +91,7 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
       appWithConfig.configuration.path,
       {
         application_url: 'https://example.com',
@@ -177,7 +177,7 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
       appWithConfig.configuration.path,
       {
         application_url: 'https://example.com',
@@ -320,7 +320,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchAppConfigurationFile).not.toHaveBeenCalled()
+    expect(patchTomlConfigurationFile).not.toHaveBeenCalled()
   })
 
   test('updates the config file if current config client matches remote', async () => {
@@ -340,7 +340,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
       localApp.configuration.path,
       {
         build: {automatically_update_urls_on_dev: true},
