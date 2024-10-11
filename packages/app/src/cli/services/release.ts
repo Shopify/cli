@@ -7,7 +7,6 @@ import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppIdentifiers, Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -30,10 +29,6 @@ interface ReleaseOptions {
 
 export async function release(options: ReleaseOptions) {
   const {developerPlatformClient, app, remoteApp} = options
-
-  // IS THIS NECESSARY?
-  const identifiers = getAppIdentifiers({app}, developerPlatformClient) as Identifiers
-  await updateAppIdentifiers({app, identifiers, command: 'release', developerPlatformClient})
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
     developerPlatformClient,
