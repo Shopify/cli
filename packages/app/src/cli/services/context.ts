@@ -560,7 +560,6 @@ export async function fetchOrCreateOrganizationApp(
     scopesArray,
     directory,
   })
-  remoteApp.developerPlatformClient = developerPlatformClient
 
   await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
 
