@@ -86,7 +86,12 @@ export async function fetchOrganizations(): Promise<Organization[]> {
     // We don't want to run this in parallel because there could be port conflicts
     // eslint-disable-next-line no-await-in-loop
     const clientOrganizations = await client.organizations()
-    organizations.push(...clientOrganizations)
+    clientOrganizations.forEach((newOrg) => {
+      // Add organizations that are not already in the list
+      if (!organizations.some((org) => org.businessName === newOrg.businessName)) {
+        organizations.push(newOrg)
+      }
+    })
   }
 
   if (organizations.length === 0) {
