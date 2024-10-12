@@ -120,7 +120,7 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
   }
 }
 
-function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
+export function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
   const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
 
   const env: {[variable: string]: string | undefined} = {...options.env, ...validEnvs}
