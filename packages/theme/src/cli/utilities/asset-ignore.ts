@@ -24,7 +24,9 @@ function filterBy(patterns: string[], type: string, invertMatch = false) {
   return ({key}: {key: string}) => {
     if (patterns.length === 0) return true
 
-    const match = patterns.some((pattern) => matchGlob(key, pattern) || regexMatch(key, pattern))
+    const match = patterns.some(
+      (pattern) => matchGlob(key, pattern) || (isRegex(pattern) && regexMatch(key, asRegex(pattern))),
+    )
     const shouldIgnore = invertMatch ? !match : match
 
     if (shouldIgnore) {
@@ -88,11 +90,16 @@ function shouldReplaceGlobPattern(pattern: string): boolean {
   return pattern.includes('/*.') && !pattern.includes('/**/*.') && pattern.includes('templates/')
 }
 
-function regexMatch(key: string, pattern: string) {
-  try {
-    return key.match(pattern)
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
-  }
+function regexMatch(key: string, regex: RegExp) {
+  return regex.test(key)
+}
+
+// https://github.com/Shopify/cli/blob/2ddbd3eee70c50814c5527d6d3eeb7ca601de5f8/packages/cli-kit/assets/cli-ruby/lib/shopify_cli/theme/filter/path_matcher.rb#L17
+function isRegex(pattern: string) {
+  return pattern.startsWith('/') && pattern.endsWith('/')
+}
+
+// https://github.com/Shopify/cli/blob/2ddbd3eee70c50814c5527d6d3eeb7ca601de5f8/packages/cli-kit/assets/cli-ruby/lib/shopify_cli/theme/filter/path_matcher.rb#L21
+function asRegex(pattern: string) {
+  return new RegExp(pattern.slice(1, -1))
 }

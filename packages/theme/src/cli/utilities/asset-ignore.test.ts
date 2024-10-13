@@ -89,7 +89,7 @@ describe('asset-ignore', () => {
           'sections/*',
           'templates/*',
           'config/*_data.json',
-          '.*settings_schema.json',
+          '/settings_schema/',
         ],
       }
 
