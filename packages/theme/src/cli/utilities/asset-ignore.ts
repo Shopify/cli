@@ -63,10 +63,10 @@ function matchGlob(key: string, pattern: string) {
   if (result) return true
 
   // When the the standard match fails and the pattern includes '/*.', we
-  // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
+  // replace '/*' with '/**/*' to emulate Shopify CLI 2.x behavior, as it was
   // based on 'File.fnmatch'.
   if (shouldReplaceGlobPattern(pattern)) {
-    return originalMatchGlob(key, pattern.replace('/*.', '/**/*.'), matchOpts)
+    return originalMatchGlob(key, pattern.replace('/*', '/**/*'), matchOpts)
   }
 
   return false
@@ -78,8 +78,8 @@ export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
     if (shouldReplaceGlobPattern(pattern)) {
       outputWarn(
         `Warning: The pattern '${pattern}' does not include subdirectories. To maintain backwards compatibility, we have modified your pattern to ${pattern.replace(
-          '/*.',
-          '/**/*.',
+          '/*',
+          '/**/*',
         )} to explicitly include subdirectories.`,
       )
     }
@@ -87,7 +87,7 @@ export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
 }
 
 function shouldReplaceGlobPattern(pattern: string): boolean {
-  return pattern.includes('/*.') && !pattern.includes('/**/*.') && pattern.includes('templates/')
+  return pattern.includes('/*') && !pattern.includes('/**/*') && pattern.includes('templates/')
 }
 
 function regexMatch(key: string, regex: RegExp) {
