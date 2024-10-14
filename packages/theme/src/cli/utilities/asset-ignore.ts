@@ -56,7 +56,7 @@ export async function getPatternsFromShopifyIgnore(root: string) {
 function matchGlob(key: string, pattern: string) {
   const matchOpts = {
     matchBase: true,
-    noglobstar: true,
+    noglobstar: false,
   }
 
   const result = originalMatchGlob(key, pattern, matchOpts)
@@ -78,10 +78,10 @@ export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
   allPatterns.forEach((pattern) => {
     if (shouldReplaceGlobPattern(pattern)) {
       outputWarn(
-        `Warning: The pattern '${pattern}' does not include subdirectories. To maintain backwards compatibility, we have modified your pattern to ${pattern.replace(
-          '/*',
-          '/**/*',
-        )} to explicitly include subdirectories.`,
+        `Warning: The pattern '${pattern}' excludes subdirectories. To maintain backwards compatibility, we've changed it to '${pattern.replace(
+          templatesRegex,
+          'templates/**/*$1',
+        )}'. Use '${pattern.replace(templatesRegex, 'templates/**/*$1')}' to avoid this warning.`,
       )
     }
   })

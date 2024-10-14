@@ -162,7 +162,7 @@ describe('asset-ignore', () => {
       ])
     })
 
-    test(`matching is backward compatible with Shopify CLI 2 with the templates/**/*.json pattern`, async () => {
+    test(`matching supports minimatch patterns like templates/**/*.json`, async () => {
       // Given
       const options = {only: ['templates/**/*.json']}
 
@@ -171,6 +171,7 @@ describe('asset-ignore', () => {
 
       // Then
       expect(actualChecksums).toEqual([
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
         {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
       ])
     })
