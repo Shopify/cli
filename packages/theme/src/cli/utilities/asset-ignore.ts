@@ -3,6 +3,7 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
+const templatesRegex = /templates\/\*(\.(json|liquid))?$/
 
 export function applyIgnoreFilters<T extends {key: string}>(
   files: T[],
@@ -66,7 +67,7 @@ function matchGlob(key: string, pattern: string) {
   // replace '/*' with '/**/*' to emulate Shopify CLI 2.x behavior, as it was
   // based on 'File.fnmatch'.
   if (shouldReplaceGlobPattern(pattern)) {
-    return originalMatchGlob(key, pattern.replace('/*', '/**/*'), matchOpts)
+    return originalMatchGlob(key, pattern.replace(templatesRegex, 'templates/**/*$1'), matchOpts)
   }
 
   return false
@@ -87,7 +88,7 @@ export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
 }
 
 function shouldReplaceGlobPattern(pattern: string): boolean {
-  return pattern.includes('/*') && !pattern.includes('/**/*') && pattern.includes('templates/')
+  return templatesRegex.test(pattern)
 }
 
 function regexMatch(key: string, regex: RegExp) {
