@@ -4816,8 +4816,8 @@
       "strict": true,
       "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
       "usage": [
-        "theme:console",
-        "theme:console --url /products/classic-leather-jacket"
+        "theme console",
+        "theme console --url /products/classic-leather-jacket"
       ]
     },
     "theme:delete": {
@@ -5271,7 +5271,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Clones a Git repository to use as a starting point for building a new theme.",
-      "usage": "theme:init [name]"
+      "usage": "theme init [name]"
     },
     "theme:language-server": {
       "aliases": [
@@ -5918,8 +5918,8 @@
       "strict": true,
       "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
       "usage": [
-        "theme:push",
-        "theme:push --unpublished --json"
+        "theme push",
+        "theme push --unpublished --json"
       ]
     },
     "theme:rename": {
