@@ -160,6 +160,12 @@
       "auth": {
         "description": "Auth operations."
       },
+      "config": {
+        "description": "CLI configuration options."
+      },
+      "config:autocorrect": {
+        "description": "Command autocorrection options. If enabled, Shopify CLI will automatically run a corrected version of your command if a correction is available. Off by default."
+      },
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true
