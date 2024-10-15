@@ -1,40 +1,48 @@
-import {fetchOrgFromId, fetchStoreByDomain} from './dev/fetch.js'
+import {fetchStore} from './dev/fetch.js'
 import {selectStore} from './dev/select-store.js'
-import {OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationStore} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../models/app/app.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
-export async function storeContext(
-  app: AppLinkedInterface,
-  remoteApp: OrganizationApp,
-  developerPlatformClient: DeveloperPlatformClient,
-  storeFqdn?: string,
-) {
+/**
+ * Input options for the `storeContext` function.
+ *
+ * @param app - The local app, used to get the dev store url from the toml configuration.
+ * @param organization - The organization to get the store from.
+ * @param developerPlatformClient - The developer platform client to use to fetch the store.
+ * @param storeFqdn - The store FQDN, optional, when explicitly provided it has preference over anything else.
+ */
+interface StoreContextOptions {
+  app: AppLinkedInterface
+  organization: Organization
+  developerPlatformClient: DeveloperPlatformClient
+  storeFqdn?: string
+}
+
+/**
+ * Returns a Store based on the provided options. If a store can't be retrieved, it throws an error.
+ *
+ * If a storeFqdn is explicitly provided, it has preferences over anything else.
+ * If not, check if there is a cached storeFqdn in the app toml configuration.
+ * If not, fetch all stores for the organization and let the user select one.
+ */
+export async function storeContext({
+  app,
+  organization,
+  developerPlatformClient,
+  storeFqdn,
+}: StoreContextOptions): Promise<OrganizationStore> {
   let selectedStore: OrganizationStore
 
-  // If a storeFqdn is provided, it has preferences over anything.
-  // If not, check if there is a cached storeFqdn in the app toml configuration.
-  // If not, force the user to select a store.
+  // An explicit storeFqdn has preference over anything else.
   const storeFqdnToUse = storeFqdn || app.configuration.build?.dev_store_url
   if (storeFqdnToUse) {
-    const result = await fetchStoreByDomain(remoteApp.organizationId, storeFqdnToUse, developerPlatformClient)
-    if (!result) throw new AbortError(`Could not find Organization for id ${remoteApp.organizationId}.`)
-    const org = result.organization
-    if (!result.store) {
-      throw new AbortError(`Could not find ${storeFqdn} in the Organization ${org.businessName} as a valid store.`)
-    }
-    selectedStore = result.store
+    selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
   } else {
-    const allStores = await developerPlatformClient.devStoresForOrg(remoteApp.organizationId)
-    const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
-    if (!organization) throw new AbortError(`Could not find Organization for id ${remoteApp.organizationId}.`)
+    // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
+    const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
     selectedStore = await selectStore(allStores, organization, developerPlatformClient)
   }
 
-  return {
-    store: selectedStore,
-    remoteApp,
-    developerPlatformClient,
-  }
+  return selectedStore
 }
